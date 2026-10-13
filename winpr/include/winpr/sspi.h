@@ -913,16 +913,16 @@ typedef SECURITY_STATUS (*psSspiNtlmHashCallback)(void* client,
 
 #if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
-WINPR_DEPRECATED_VAR(
-    "[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2", typedef struct {
+struct SEC_WINPR_NTLM_SETTINGS {
 	    char* samFile; /**< File name (with path) of a SAM file */
 	    WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
 	        hashCallback;      /**< Callback to be called to generate a NTLM hash. */
 	    void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
-    } SEC_WINPR_NTLM_SETTINGS);
+};
+WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2",
+                     typedef struct SEC_WINPR_NTLM_SETTINGS SEC_WINPR_NTLM_SETTINGS);
 
-WINPR_DEPRECATED_VAR(
-    "[since 3.31.0] use SEC_WINPR_KERBEROS_SETTINGS_V2", typedef struct {
+struct SEC_WINPR_KERBEROS_SETTINGS {
 	    char* kdcUrl;
 	    char* keytab;
 	    char* cache;
@@ -934,14 +934,17 @@ WINPR_DEPRECATED_VAR(
 	    INT32 renewLifeTime;
 	    INT32 lifeTime;
 	    BYTE certSha1[20];
-    } SEC_WINPR_KERBEROS_SETTINGS);
+};
+WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINPR_KERBEROS_SETTINGS_V2",
+                     typedef struct SEC_WINPR_KERBEROS_SETTINGS SEC_WINPR_KERBEROS_SETTINGS);
 
-WINPR_DEPRECATED_VAR(
-    "[since 3.31.0] use SEC_WINNT_AUTH_IDENTITY_WINPR_V2", typedef struct {
+struct SEC_WINNT_AUTH_IDENTITY_WINPR {
 	    SEC_WINNT_AUTH_IDENTITY_EXW identity;
-	    SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
-	    SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
-    } SEC_WINNT_AUTH_IDENTITY_WINPR);
+	    struct SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
+	    struct SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+};
+WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINNT_AUTH_IDENTITY_WINPR_V2",
+                     typedef struct SEC_WINNT_AUTH_IDENTITY_WINPR SEC_WINNT_AUTH_IDENTITY_WINPR);
 
 #endif
 
