@@ -41,7 +41,8 @@ typedef enum
 {
 	MT_EVENT_READY,
 	MT_EVENT_FAILED,
-	MT_EVENT_DATA
+	MT_EVENT_DATA,
+	MT_EVENT_AUTODETECT_REQUEST
 } MT_EVENT_TYPE;
 
 /* Tunnel events travel from the tunnel thread to the thread that runs the main loop, which is
@@ -287,9 +288,11 @@ static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT 
 		case RDPEMT_EVENT_FAILED:
 			ev->type = MT_EVENT_FAILED;
 			break;
+		case RDPEMT_EVENT_AUTODETECT_REQUEST:
 		case RDPEMT_EVENT_DATA:
 		default:
-			ev->type = MT_EVENT_DATA;
+			ev->type = (event == RDPEMT_EVENT_AUTODETECT_REQUEST) ? MT_EVENT_AUTODETECT_REQUEST
+			                                                      : MT_EVENT_DATA;
 			if (length == 0)
 				break; /* nothing to hand up, malloc(0) may return nullptr */
 			WINPR_ASSERT(data);
@@ -495,6 +498,19 @@ static BOOL multitransport_deliver_data(rdpMultitransport* multi, const mt_event
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL multitransport_deliver_autodetect(rdpMultitransport* multi, const mt_event* ev)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
+	WINPR_ASSERT(ev);
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, ev->data, ev->length);
+	return !state_run_failed(
+	    autodetect_recv_tunnel_request(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, s));
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event* ev)
 {
 	WINPR_ASSERT(multi);
@@ -563,6 +579,9 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 				return FALSE;
 		}
 		break;
+
+		case MT_EVENT_AUTODETECT_REQUEST:
+			return multitransport_deliver_autodetect(multi, ev);
 
 		case MT_EVENT_DATA:
 		default:

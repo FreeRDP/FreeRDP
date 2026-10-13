@@ -55,6 +55,9 @@
 
 #define RDPTUNNEL_HEADER_LENGTH 4
 
+/* [MS-RDPEMT] 2.2.1.1.1 RDP_TUNNEL_SUBHEADER SubHeaderType */
+#define RDPTUNNEL_SUBHEADER_AUTODETECT_REQUEST 0x00
+
 /* Time allowed from the first SYN until the server accepts the tunnel. */
 #define RDPEMT_SETUP_TIMEOUT_MS 20000
 
@@ -297,6 +300,36 @@ static BOOL emt_verify_peer(rdpEmt* emt)
 	return rc;
 }
 
+/* [MS-RDPEMT] 2.2.1.1.1: the SubHeaders field holds any number of RDP_TUNNEL_SUBHEADER. An
+ * auto-detect request is a whole subheader, its headerLength and headerTypeId are the
+ * SubHeaderLength and SubHeaderType ([MS-RDPBCGR] 2.2.14.1). */
+WINPR_ATTR_NODISCARD
+static BOOL emt_process_subheaders(rdpEmt* emt, const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(data || (length == 0));
+
+	while (length > 0)
+	{
+		const size_t subHeaderLength = data[0];
+		if ((length < 2) || (subHeaderLength < 2) || (subHeaderLength > length))
+		{
+			emt_fail(emt, "invalid tunnel subheader");
+			return FALSE;
+		}
+
+		const BYTE subHeaderType = data[1];
+		if (subHeaderType == RDPTUNNEL_SUBHEADER_AUTODETECT_REQUEST)
+			emt->callback(emt->custom, emt, RDPEMT_EVENT_AUTODETECT_REQUEST, data, subHeaderLength);
+		else
+			WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel subheader of type 0x%02" PRIx8,
+			           subHeaderType);
+		data += subHeaderLength;
+		length -= subHeaderLength;
+	}
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL emt_process_pdus(rdpEmt* emt)
 {
@@ -331,7 +364,10 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 				return FALSE;
 			break;
 		}
-		/* subheaders (auto-detect requests) are skipped */
+		/* the subheaders go up ahead of the payload of their PDU */
+		if (!emt_process_subheaders(emt, Stream_ConstPointer(s),
+		                            headerLength - RDPTUNNEL_HEADER_LENGTH))
+			return FALSE;
 		Stream_Seek(s, headerLength - RDPTUNNEL_HEADER_LENGTH);
 
 		switch (action)

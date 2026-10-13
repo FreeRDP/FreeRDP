@@ -34,12 +34,15 @@ typedef struct rdp_emt rdpEmt;
 
 typedef enum
 {
-	RDPEMT_EVENT_READY,  /**< the server accepted the Tunnel Create Request */
-	RDPEMT_EVENT_FAILED, /**< the tunnel could not be set up, or broke down */
-	RDPEMT_EVENT_DATA    /**< HigherLayerData of one Tunnel Data PDU */
+	RDPEMT_EVENT_READY,             /**< the server accepted the Tunnel Create Request */
+	RDPEMT_EVENT_FAILED,            /**< the tunnel could not be set up, or broke down */
+	RDPEMT_EVENT_DATA,              /**< HigherLayerData of one Tunnel Data PDU */
+	RDPEMT_EVENT_AUTODETECT_REQUEST /**< one RDP_TUNNEL_SUBHEADER of type
+	                                     TYPE_ID_AUTODETECT_REQUEST, from SubHeaderLength on */
 } RDPEMT_EVENT;
 
-/** Called on the tunnel thread. For RDPEMT_EVENT_DATA the data is only valid during the call. */
+/** Called on the tunnel thread. The data of RDPEMT_EVENT_DATA and
+ * RDPEMT_EVENT_AUTODETECT_REQUEST is only valid during the call. */
 typedef void (*rdpEmtEventFn)(void* custom, rdpEmt* emt, RDPEMT_EVENT event, const BYTE* data,
                               size_t length);
 

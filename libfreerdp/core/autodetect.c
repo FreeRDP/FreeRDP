@@ -932,6 +932,37 @@ fail:
 	return success ? STATE_RUN_SUCCESS : STATE_RUN_FAILED;
 }
 
+state_run_t autodetect_recv_tunnel_request(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+                                           wStream* s)
+{
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(s);
+
+	/* [MS-RDPBCGR] 1.3.9: Continuous Auto-Detection over a sideband channel sends Bandwidth
+	 * Measure Start, Bandwidth Measure Stop and Network Characteristics Result. Only the result
+	 * is handled, it needs no answer ([MS-RDPBCGR] 3.2.5.17). */
+	UINT16 requestType = 0;
+	if (Stream_GetRemainingLength(s) >= 6)
+	{
+		const BYTE* header = Stream_ConstPointer(s);
+		requestType = winpr_Data_Get_UINT16(&header[4]);
+	}
+
+	switch (requestType)
+	{
+		case RDP_NETCHAR_RESULTS_0x0840:
+		case RDP_NETCHAR_RESULTS_0x0880:
+		case RDP_NETCHAR_RESULTS_0x08C0:
+			return autodetect_recv_request_packet(autodetect, transport, s);
+
+		default:
+			WLog_Print(autodetect->log, WLOG_DEBUG,
+			           "ignoring auto-detect request 0x%04" PRIx16 " in a tunnel subheader",
+			           requestType);
+			return STATE_RUN_SUCCESS;
+	}
+}
+
 state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
                                             wStream* s)
 {
