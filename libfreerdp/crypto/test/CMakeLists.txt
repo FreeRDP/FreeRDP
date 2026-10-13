@@ -8,7 +8,7 @@ set(DRIVER ${MODULE_NAME}.c)
 set(TESTS TestKnownHosts.c TestBase64.c)
 
 if(BUILD_TESTING_INTERNAL)
-  list(APPEND TESTS Test_x509_utils.c)
+  list(APPEND TESTS Test_x509_utils.c TestServerCertificateWrite.c)
 endif()
 
 create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
