@@ -236,7 +236,7 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 		utf8 = strndup(data, size);
 		if (!utf8)
 			return nullptr;
-		utf8len = size;
+		utf8len = strlen(utf8);
 	}
 	else if ((clipboard->formatId == CF_TEXT) || (clipboard->formatId == CF_OEMTEXT) ||
 	         (clipboard->formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))

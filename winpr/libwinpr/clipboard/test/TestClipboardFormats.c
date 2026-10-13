@@ -241,7 +241,7 @@ static BOOL test_text_conversion(void)
 		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_OEMTEXT, "a\nb\ncሴ՞", 10,
 		  "a\nb\nc\\u1234\\u055e", 18 },
 		{ CF_OEMTEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\rc\\u1234\\u055e", 17,
-		  "a\nb\ncሴ՞", 11 }
+		  "a\nb\ncሴ՞", 11 },
 #else
 		{ ClipboardRegisterFormat(clipboard, "text/plain"),
 		  ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"), "a\nb\rc\\u1234\\u055e",
@@ -262,8 +262,13 @@ static BOOL test_text_conversion(void)
 		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_OEMTEXT, "a\nb\rc\\u1234\\u055e", 17,
 		  "a\nb\nc\\u1234\\u055e", 18 },
 		{ CF_OEMTEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\rc\\u1234\\u055e", 17,
-		  "a\nb\nc\\u1234\\u055e", 18 }
+		  "a\nb\nc\\u1234\\u055e", 18 },
 #endif
+		/* UTF-8 set with its terminator */
+		{ ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"),
+		  ClipboardRegisterFormat(clipboard, "UTF8_STRING"), "ab", 3, "ab", 3 },
+		{ ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"), CF_UNICODETEXT, "ab", 3,
+		  "\x61\x00\x62\x00\x00\x00", 6 }
 	};
 
 	BOOL rc = FALSE;
