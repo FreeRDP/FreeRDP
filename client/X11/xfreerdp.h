@@ -208,7 +208,6 @@ struct xf_context
 	{
 		UINT32 pending;
 		UINT32 sent;
-		BOOL blocked;
 	} deferredAlt;
 	XModifierKeymap* modifierMap;
 	wArrayList* keyCombinations;

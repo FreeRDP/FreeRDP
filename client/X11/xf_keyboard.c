@@ -889,8 +889,7 @@ static UINT32 xf_keyboard_alt_mask(xfContext* xfc, KeyCode code)
 
 BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
 {
-	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt) ||
-	    xfc->deferredAlt.blocked)
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 		return TRUE;
 
 	/* A fixed left/right order is sufficient; no modifier press queue is kept. */
@@ -924,18 +923,12 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 		if (defer)
 		{
 			xfc->deferredAlt.pending = 0;
-			xfc->deferredAlt.blocked = FALSE;
 			xfc->KeyboardState[event->keycode] = last;
 		}
 		return;
 	}
 	if (defer)
 	{
-		if (xfc->deferredAlt.blocked)
-		{
-			xfc->KeyboardState[event->keycode] = last;
-			return;
-		}
 		const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)event->keycode);
 		if (mask)
 		{
@@ -971,8 +964,6 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
 	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 	{
-		if (xfc->deferredAlt.blocked)
-			return;
 		const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)event->keycode);
 		if (mask)
 		{
@@ -1091,10 +1082,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 	WINPR_ASSERT(xfc);
 
 	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
-	{
 		xfc->deferredAlt.pending = 0;
-		xfc->deferredAlt.blocked = TRUE;
-	}
 	release_keys(xfc, FALSE);
 	release_keys(xfc, TRUE);
 	xfc->deferredAlt.sent = 0;
@@ -1312,7 +1300,6 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 		/* Focus return starts a new sequence; do not restore held modifiers. */
 		xfc->deferredAlt.pending = 0;
 		xfc->deferredAlt.sent = 0;
-		xfc->deferredAlt.blocked = FALSE;
 		return;
 	}
 

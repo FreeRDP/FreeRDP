@@ -13,6 +13,7 @@ static char trace[1024];
 static size_t used;
 static BOOL failAlt;
 static BOOL minimized;
+static unsigned ungrabs;
 static BOOL altGr;
 static char physical[32];
 static const struct
@@ -89,6 +90,14 @@ int XIconifyWindow(Display* display, Window window, int screen)
 }
 
 int XUngrabKeyboard(Display* display, Time time)
+{
+	WINPR_UNUSED(display);
+	WINPR_UNUSED(time);
+	ungrabs++;
+	return 1;
+}
+
+int XUngrabPointer(Display* display, Time time)
 {
 	WINPR_UNUSED(display);
 	WINPR_UNUSED(time);
@@ -198,6 +207,9 @@ typedef enum
 	RIGHT_SHIFT_UP,
 	M_DOWN,
 	M_UP,
+	RIGHT_CTRL_DOWN,
+	RIGHT_CTRL_UP,
+	TAB_DOWN,
 	GRAB_OUT,
 	GRAB_IN,
 	FOCUS_OUT,
@@ -217,10 +229,11 @@ static const struct
 	KeySym sym;
 	BOOL down;
 } keyEvents[] = {
-	{ 0, FALSE },          { XK_Alt_L, TRUE },     { XK_Alt_L, FALSE },     { XK_Shift_L, TRUE },
-	{ XK_Shift_L, FALSE }, { XK_Control_L, TRUE }, { XK_Control_L, FALSE }, { XK_Alt_R, TRUE },
-	{ XK_Alt_R, FALSE },   { XK_f, TRUE },         { XK_f, FALSE },         { XK_Tab, FALSE },
-	{ XK_Shift_R, TRUE },  { XK_Shift_R, FALSE },  { XK_m, TRUE },          { XK_m, FALSE }
+	{ 0, FALSE },           { XK_Alt_L, TRUE },      { XK_Alt_L, FALSE },     { XK_Shift_L, TRUE },
+	{ XK_Shift_L, FALSE },  { XK_Control_L, TRUE },  { XK_Control_L, FALSE }, { XK_Alt_R, TRUE },
+	{ XK_Alt_R, FALSE },    { XK_f, TRUE },          { XK_f, FALSE },         { XK_Tab, FALSE },
+	{ XK_Shift_R, TRUE },   { XK_Shift_R, FALSE },   { XK_m, TRUE },          { XK_m, FALSE },
+	{ XK_Control_R, TRUE }, { XK_Control_R, FALSE }, { XK_Tab, TRUE }
 };
 
 enum
@@ -229,7 +242,9 @@ enum
 	UNICODE_MODE = 2,
 	FAIL_ALT = 4,
 	ALTGR_MODE = 8,
-	EXPECT_MINIMIZED = 32
+	EXPECT_MINIMIZED = 32,
+	GRAB_KEYBOARD = 64,
+	EXPECT_UNGRAB = 128
 };
 static const struct
 {
@@ -238,6 +253,19 @@ static const struct
 	const char* expected;
 	unsigned flags;
 } cases[] = {
+	{ "right Ctrl ungrab forwards release and subsequent input",
+	  { RIGHT_CTRL_DOWN, RIGHT_CTRL_UP, F_DOWN, F_UP },
+	  "D+D-F+F-",
+	  EXPECT_UNGRAB },
+	{ "right Ctrl ungrab with keyboard grabbing enabled",
+	  { RIGHT_CTRL_DOWN, RIGHT_CTRL_UP, F_DOWN, F_UP },
+	  "D+D-F+F-",
+	  EXPECT_UNGRAB | GRAB_KEYBOARD },
+	{ "default right Ctrl ungrab",
+	  { RIGHT_CTRL_DOWN, RIGHT_CTRL_UP, F_DOWN, F_UP },
+	  "D+D-F+F-",
+	  EXPECT_UNGRAB | DEFAULT_MODE },
+	{ "remote Alt+Tab", { ALT_DOWN, TAB_DOWN, TAB_UP, ALT_UP }, "A+T+T-A-", GRAB_KEYBOARD },
 	{ "default sends immediately", { ALT_DOWN }, "A+", DEFAULT_MODE },
 	{ "default Alt tap", { ALT_DOWN, ALT_UP }, "A+A-", DEFAULT_MODE },
 	{ "pending repeats", { ALT_DOWN, ALT_DOWN }, "" },
@@ -348,7 +376,6 @@ static BOOL dispatch(xfContext* xfc, Event event)
 			return xf_generic_RawButtonEvent(xfc, 8, FALSE, TRUE);
 		case LOCAL_CANCEL:
 			xfc->deferredAlt.pending = 0;
-			xfc->deferredAlt.blocked = FALSE; /* Local action without losing focus. */
 			return TRUE;
 		default:
 			return FALSE;
@@ -393,8 +420,13 @@ int main(int argc, char* argv[])
 		trace[0] = '\0';
 		failAlt = (cases[i].flags & FAIL_ALT) != 0;
 		minimized = FALSE;
+		ungrabs = 0;
+		xfc.wasRightCtrlAlreadyPressed = FALSE;
+		xfc.ungrabKeyboardWithRightCtrl = FALSE;
+		xfc.grab_keyboard = (cases[i].flags & GRAB_KEYBOARD) != 0;
 		altGr = (cases[i].flags & ALTGR_MODE) != 0;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_KeyboardDeferAlt,
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard, xfc.grab_keyboard) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_KeyboardDeferAlt,
 		                               !(cases[i].flags & DEFAULT_MODE)) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
 		                               (cases[i].flags & UNICODE_MODE) != 0))
@@ -406,6 +438,11 @@ int main(int argc, char* argv[])
 				fprintf(stderr, "%s: event %zu failed\n", cases[i].name, j);
 				goto out;
 			}
+		}
+		if ((cases[i].flags & EXPECT_UNGRAB) && (ungrabs != 1))
+		{
+			fprintf(stderr, "%s: expected one keyboard ungrab, got %u\n", cases[i].name, ungrabs);
+			goto out;
 		}
 		if ((cases[i].flags & EXPECT_MINIMIZED) && !minimized)
 		{
