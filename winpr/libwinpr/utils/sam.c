@@ -50,7 +50,7 @@ struct winpr_sam
 	BOOL readOnly;
 };
 
-WINPR_ATTR_MALLOC(SamFreeEntry, 1)
+WINPR_ATTR_MALLOC(SamFreeEntry, 2)
 static WINPR_SAM_ENTRY* SamEntryFromDataA(LPCSTR User, DWORD UserLength, LPCSTR Domain,
                                           DWORD DomainLength)
 {
