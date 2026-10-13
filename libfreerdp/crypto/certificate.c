@@ -959,17 +959,20 @@ static BOOL cert_write_rsa_signature(wStream* s, const void* sigData, size_t sig
 static BOOL cert_write_server_certificate_v1(wStream* s, const rdpCertificate* certificate)
 {
 	const size_t start = Stream_GetPosition(s);
-	const BYTE* sigData = Stream_PointerAs(s, const BYTE) - sizeof(UINT32);
 
 	WINPR_ASSERT(start >= 4);
 	if (!Stream_EnsureRemainingCapacity(s, 10))
 		return FALSE;
+
 	Stream_Write_UINT32(s, SIGNATURE_ALG_RSA);
 	Stream_Write_UINT32(s, KEY_EXCHANGE_ALG_RSA);
 	Stream_Write_UINT16(s, BB_RSA_KEY_BLOB);
 	if (!cert_write_rsa_public_key(s, certificate))
 		return FALSE;
 
+	/* The writes above may have reallocated the stream buffer, so only take
+	 * the pointer to the signed data (starting at dwVersion) now. */
+	const BYTE* sigData = Stream_BufferAs(s, const BYTE) + start - sizeof(UINT32);
 	const size_t end = Stream_GetPosition(s);
 	return cert_write_rsa_signature(s, sigData, end - start + sizeof(UINT32));
 }

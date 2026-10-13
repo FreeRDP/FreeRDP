@@ -947,7 +947,10 @@ static int pf_client_verify_strict(pClientContext* pc, const proxyConfig* config
 
 	rdpCertificate* cert = fromPem(policy, pc, hostname, port, data, length);
 	if (!cert)
+	{
+		free(policy);
 		return 0;
+	}
 	BOOL rc = freerdp_certificate_verify(cert, config->CertStorePath);
 	if (rc && hostMustMatch)
 	{
