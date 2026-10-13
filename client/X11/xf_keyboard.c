@@ -873,11 +873,6 @@ enum
 	XF_ALT_RIGHT = 0x02
 };
 
-static BOOL xf_keyboard_defer_alt_enabled(const xfContext* xfc)
-{
-	return freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt);
-}
-
 static UINT32 xf_keyboard_alt_mask(xfContext* xfc, KeyCode code)
 {
 	if (!code || (code == XKeysymToKeycode(xfc->display, XK_ISO_Level3_Shift)) ||
@@ -894,7 +889,7 @@ static UINT32 xf_keyboard_alt_mask(xfContext* xfc, KeyCode code)
 
 void xf_keyboard_discard_deferred_alt(xfContext* xfc)
 {
-	if (!xf_keyboard_defer_alt_enabled(xfc))
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 		return;
 	xfc->deferredAlt.pending = 0;
 	xfc->deferredAlt.blocked = TRUE;
@@ -902,7 +897,8 @@ void xf_keyboard_discard_deferred_alt(xfContext* xfc)
 
 BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
 {
-	if (!xf_keyboard_defer_alt_enabled(xfc) || xfc->deferredAlt.blocked)
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt) ||
+	    xfc->deferredAlt.blocked)
 		return TRUE;
 
 	/* A fixed left/right order is sufficient; no modifier press queue is kept. */
@@ -925,7 +921,7 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	const BOOL defer = xf_keyboard_defer_alt_enabled(xfc);
+	const BOOL defer = freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt);
 	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
 
@@ -979,7 +975,7 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = FALSE;
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
-	if (xf_keyboard_defer_alt_enabled(xfc))
+	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 	{
 		if (xfc->deferredAlt.blocked)
 			return;
@@ -1074,7 +1070,7 @@ static void release_keys(xfContext* xfc, BOOL modifiers)
 		if (xfc->KeyboardState[keycode])
 		{
 			/* Physical Alt may never have reached the guest. */
-			if (xf_keyboard_defer_alt_enabled(xfc))
+			if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 			{
 				const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)keycode);
 				if (mask && !(xfc->deferredAlt.sent & mask))
@@ -1313,7 +1309,7 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 		                       XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
 
 	xf_keyboard_clear(xfc);
-	if (xf_keyboard_defer_alt_enabled(xfc))
+	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 	{
 		/* Focus return starts a new sequence; do not restore held modifiers. */
 		xfc->deferredAlt.pending = 0;
@@ -1713,7 +1709,7 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 BOOL xf_ungrab(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
-	if (xf_keyboard_defer_alt_enabled(xfc))
+	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
 		xf_keyboard_release_all_keypress(xfc);
 	XUngrabKeyboard(xfc->display, CurrentTime);
 	XUngrabPointer(xfc->display, CurrentTime);
