@@ -914,7 +914,8 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	const BOOL defer = freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt);
+	const BOOL defer =
+	    freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt);
 	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
 
