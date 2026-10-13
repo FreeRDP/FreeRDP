@@ -361,7 +361,11 @@ static UINT rail_server_handshake(RailClientContext* context, const RAIL_HANDSHA
 	const UINT32 buildnumber =
 	    freerdp_settings_get_uint32(rail->rdpcontext->settings, FreeRDP_ClientBuild);
 	const RAIL_HANDSHAKE_ORDER clientHandshake = { buildnumber };
-	return context->ClientHandshake(context, &clientHandshake);
+	const UINT status = context->ClientHandshake(context, &clientHandshake);
+	if (status != CHANNEL_RC_OK)
+		return status;
+	/* Advertise client status before waiting for monitored-desktop orders. */
+	return rail_send_client_status(context);
 }
 
 static UINT rail_server_handshake_ex(RailClientContext* context,
