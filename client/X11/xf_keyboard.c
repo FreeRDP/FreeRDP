@@ -894,8 +894,10 @@ BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
 		return TRUE;
 
 	/* A fixed left/right order is sufficient; no modifier press queue is kept. */
-	for (UINT32 mask = XF_ALT_LEFT; mask <= XF_ALT_RIGHT; mask <<= 1)
+	const UINT32 masks[] = { XF_ALT_LEFT, XF_ALT_RIGHT };
+	for (size_t i = 0; i < ARRAYSIZE(masks); i++)
 	{
+		const UINT32 mask = masks[i];
 		if (!(xfc->deferredAlt.pending & mask))
 			continue;
 		const DWORD scancode = (mask == XF_ALT_LEFT) ? RDP_SCANCODE_LMENU : RDP_SCANCODE_RMENU;
