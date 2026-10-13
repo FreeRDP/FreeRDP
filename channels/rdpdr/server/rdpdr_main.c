@@ -74,6 +74,9 @@ struct s_rdpdr_server_private
 	UINT32 smartcardDeviceId;
 };
 
+static UINT32 g_ClientId = 0;
+
+WINPR_ATTR_NODISCARD
 static const char* fileInformation2str(uint8_t val)
 {
 	switch (val)
@@ -95,6 +98,7 @@ static const char* fileInformation2str(uint8_t val)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static const char* DR_DRIVE_LOCK_REQ2str(uint32_t op)
 {
 	switch (op)
@@ -126,12 +130,14 @@ static void rdpdr_device_free_h(void* obj)
 	rdpdr_device_free(other);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 rdpdr_deviceid_hash(const void* id)
 {
 	WINPR_ASSERT(id);
 	return *((const UINT32*)id);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpdr_device_equal(const void* v1, const void* v2)
 {
 	const UINT32* p1 = (const UINT32*)v1;
@@ -143,11 +149,13 @@ static BOOL rdpdr_device_equal(const void* v1, const void* v2)
 	return *p1 == *p2;
 }
 
+WINPR_ATTR_MALLOC(rdpdr_device_free, 1)
 static RdpdrDevice* rdpdr_device_new(void)
 {
 	return calloc(1, sizeof(RdpdrDevice));
 }
 
+WINPR_ATTR_MALLOC(rdpdr_device_free_h, 1)
 static void* rdpdr_device_clone(const void* val)
 {
 	const RdpdrDevice* other = val;
@@ -174,6 +182,12 @@ fail:
 	return nullptr;
 }
 
+static void rdpdr_device_key_free(void* obj)
+{
+	free(obj);
+}
+
+WINPR_ATTR_MALLOC(rdpdr_device_key_free, 1)
 static void* rdpdr_device_key_clone(const void* pvval)
 {
 	const UINT32* val = pvval;
@@ -187,17 +201,14 @@ static void* rdpdr_device_key_clone(const void* pvval)
 	return ptr;
 }
 
-static void rdpdr_device_key_free(void* obj)
-{
-	free(obj);
-}
-
+WINPR_ATTR_NODISCARD
 static RdpdrDevice* rdpdr_get_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
 {
 	WINPR_ASSERT(priv);
 	return HashTable_GetItemValue(priv->devicelist, &DeviceId);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpdr_remove_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
 {
 	WINPR_ASSERT(priv);
@@ -215,6 +226,7 @@ static BOOL rdpdr_remove_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
 	return HashTable_Remove(priv->devicelist, &DeviceId);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpdr_add_device(RdpdrServerPrivate* priv, const RdpdrDevice* device)
 {
 	WINPR_ASSERT(priv);
@@ -227,8 +239,7 @@ static BOOL rdpdr_add_device(RdpdrServerPrivate* priv, const RdpdrDevice* device
 	return HashTable_Insert(priv->devicelist, &device->DeviceId, device);
 }
 
-static UINT32 g_ClientId = 0;
-
+WINPR_ATTR_NODISCARD
 static const WCHAR* rdpdr_read_ustring(wLog* log, wStream* s, size_t bytelen)
 {
 	const size_t charlen = bytelen / sizeof(WCHAR);
@@ -244,12 +255,6 @@ static const WCHAR* rdpdr_read_ustring(wLog* log, wStream* s, size_t bytelen)
 	return str;
 }
 
-static RDPDR_IRP* rdpdr_server_irp_new(void)
-{
-	RDPDR_IRP* irp = (RDPDR_IRP*)calloc(1, sizeof(RDPDR_IRP));
-	return irp;
-}
-
 static void rdpdr_server_irp_free(RDPDR_IRP* irp)
 {
 	if (!irp)
@@ -260,11 +265,20 @@ static void rdpdr_server_irp_free(RDPDR_IRP* irp)
 	free(irp);
 }
 
+WINPR_ATTR_MALLOC(rdpdr_server_irp_free, 1)
+static RDPDR_IRP* rdpdr_server_irp_new(void)
+{
+	RDPDR_IRP* irp = (RDPDR_IRP*)calloc(1, sizeof(RDPDR_IRP));
+	return irp;
+}
+
 static void rdpdr_server_list_free(void* ptr)
 {
 	RDPDR_IRP* irp = ptr;
 	rdpdr_server_irp_free(irp);
 }
+
+WINPR_ATTR_NODISCARD
 static BOOL rdpdr_server_enqueue_irp(RdpdrServerContext* context, RDPDR_IRP* irp)
 {
 	WINPR_ASSERT(context);
@@ -275,6 +289,7 @@ static BOOL rdpdr_server_enqueue_irp(RdpdrServerContext* context, RDPDR_IRP* irp
 	return ListDictionary_Add(priv->IrpList, (void*)key, irp);
 }
 
+WINPR_ATTR_MALLOC(rdpdr_server_irp_free, 1)
 static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 completionId)
 {
 	WINPR_ASSERT(context);
@@ -286,6 +301,7 @@ static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 c
 	return irp;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -323,6 +339,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -357,6 +374,7 @@ static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s,
                                                    const RDPDR_HEADER* header)
 {
@@ -389,6 +407,7 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context, wStream* s,
                                                      const RDPDR_HEADER* header)
 {
@@ -485,6 +504,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	                    priv->ClientComputerName);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* context, wStream* s,
                                                         const RDPDR_CAPABILITY_HEADER* header)
 {
@@ -504,6 +524,7 @@ static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* cont
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s,
                                                      const RDPDR_CAPABILITY_HEADER* header)
 {
@@ -622,6 +643,7 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -686,6 +708,7 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_read_printer_capability_set(RdpdrServerContext* context, wStream* s,
                                                      const RDPDR_CAPABILITY_HEADER* header)
 {
@@ -705,6 +728,7 @@ static UINT rdpdr_server_read_printer_capability_set(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_write_printer_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_UNUSED(context);
@@ -722,6 +746,7 @@ static UINT rdpdr_server_write_printer_capability_set(RdpdrServerContext* contex
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_read_port_capability_set(RdpdrServerContext* context, wStream* s,
                                                   const RDPDR_CAPABILITY_HEADER* header)
 {
@@ -739,6 +764,7 @@ static UINT rdpdr_server_read_port_capability_set(RdpdrServerContext* context, w
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_write_port_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_UNUSED(context);
@@ -756,6 +782,7 @@ static UINT rdpdr_server_write_port_capability_set(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, wStream* s,
                                                    const RDPDR_CAPABILITY_HEADER* header)
 {
@@ -773,6 +800,7 @@ static UINT rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -790,6 +818,7 @@ static UINT rdpdr_server_write_drive_capability_set(RdpdrServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* context, wStream* s,
                                                        const RDPDR_CAPABILITY_HEADER* header)
 {
@@ -807,6 +836,7 @@ static UINT rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* conte
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -824,6 +854,7 @@ static UINT rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* cont
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -920,6 +951,7 @@ out:
 	return error;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT16 rdpdr_cap_type_to_dtyp(UINT16 capabilityType)
 {
 	switch (capabilityType)
@@ -943,6 +975,7 @@ static UINT16 rdpdr_cap_type_to_dtyp(UINT16 capabilityType)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s,
                                                           const RDPDR_HEADER* header)
 {
@@ -1066,6 +1099,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -1096,6 +1130,7 @@ static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_reply(RdpdrServerContext* context, UINT32 deviceId,
                                            UINT32 resultCode)
 {
@@ -1126,6 +1161,7 @@ static UINT rdpdr_server_send_device_reply(RdpdrServerContext* context, UINT32 d
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context,
                                                               wStream* s,
                                                               const RDPDR_HEADER* header)
@@ -1239,6 +1275,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* context, wStream* s,
                                                             const RDPDR_HEADER* header)
 {
@@ -1325,6 +1362,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, wStream* s,
                                                    WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                    WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1355,6 +1393,7 @@ static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, 
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_close_request(RdpdrServerContext* context, wStream* s,
                                                   WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                   WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1377,6 +1416,7 @@ static UINT rdpdr_server_receive_io_close_request(RdpdrServerContext* context, w
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_read_request(RdpdrServerContext* context, wStream* s,
                                                  WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                  WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1403,6 +1443,7 @@ static UINT rdpdr_server_receive_io_read_request(RdpdrServerContext* context, wS
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, wStream* s,
                                                   WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                   WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1435,6 +1476,7 @@ static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, w
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* context, wStream* s,
                                                            WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                            WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1466,6 +1508,7 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_query_volume_information_request(
     RdpdrServerContext* context, wStream* s, WINPR_ATTR_UNUSED UINT32 DeviceId,
     WINPR_ATTR_UNUSED UINT32 FileId, WINPR_ATTR_UNUSED UINT32 CompletionId)
@@ -1497,6 +1540,7 @@ static UINT rdpdr_server_receive_io_query_volume_information_request(
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_set_volume_information_request(
     RdpdrServerContext* context, wStream* s, WINPR_ATTR_UNUSED UINT32 DeviceId,
     WINPR_ATTR_UNUSED UINT32 FileId, WINPR_ATTR_UNUSED UINT32 CompletionId)
@@ -1530,6 +1574,7 @@ static UINT rdpdr_server_receive_io_set_volume_information_request(
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext* context,
                                                               wStream* s,
                                                               WINPR_ATTR_UNUSED UINT32 DeviceId,
@@ -1565,6 +1610,7 @@ static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* context, wStream* s,
                                                             WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                             WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1599,6 +1645,7 @@ static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* 
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* context, wStream* s,
                                                             WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                             WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1637,6 +1684,7 @@ static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* 
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_change_directory_request(RdpdrServerContext* context,
                                                              wStream* s,
                                                              WINPR_ATTR_UNUSED UINT32 DeviceId,
@@ -1663,6 +1711,7 @@ static UINT rdpdr_server_receive_io_change_directory_request(RdpdrServerContext*
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_directory_control_request(RdpdrServerContext* context,
                                                               wStream* s, UINT32 DeviceId,
                                                               UINT32 FileId, UINT32 CompletionId,
@@ -1689,6 +1738,7 @@ static UINT rdpdr_server_receive_io_directory_control_request(RdpdrServerContext
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* context, wStream* s,
                                                          WINPR_ATTR_UNUSED UINT32 DeviceId,
                                                          WINPR_ATTR_UNUSED UINT32 FileId,
@@ -1735,6 +1785,7 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, wStream* s,
                                                    WINPR_ATTR_UNUSED const RDPDR_HEADER* header)
 {
@@ -1811,6 +1862,7 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* context, wStream* s,
                                                       const RDPDR_HEADER* header)
 {
@@ -1856,6 +1908,7 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -1878,6 +1931,7 @@ static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	return rdpdr_seal_send_free_request(context, s);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -1915,6 +1969,7 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -1943,6 +1998,7 @@ static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* co
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_prn_cache_delete_printer(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -1966,6 +2022,7 @@ static UINT rdpdr_server_receive_prn_cache_delete_printer(RdpdrServerContext* co
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_prn_cache_rename_cachedata(RdpdrServerContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
@@ -1993,6 +2050,7 @@ static UINT rdpdr_server_receive_prn_cache_rename_cachedata(RdpdrServerContext* 
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT
 rdpdr_server_receive_prn_cache_data_request(RdpdrServerContext* context, wStream* s,
                                             WINPR_ATTR_UNUSED const RDPDR_HEADER* header)
@@ -2023,6 +2081,7 @@ rdpdr_server_receive_prn_cache_data_request(RdpdrServerContext* context, wStream
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_prn_using_xps_request(RdpdrServerContext* context, wStream* s,
                                                        WINPR_ATTR_UNUSED const RDPDR_HEADER* header)
 {
@@ -2051,6 +2110,7 @@ static UINT rdpdr_server_receive_prn_using_xps_request(RdpdrServerContext* conte
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
                                      const RDPDR_HEADER* header)
 {
@@ -2171,6 +2231,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 	return IFCALLRESULT(error, context->ReceivePDU, context, header, error);
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 {
 	RdpdrServerContext* context = (RdpdrServerContext*)arg;
@@ -2280,6 +2341,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_start(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -2327,6 +2389,7 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_stop(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -2377,6 +2440,7 @@ static void rdpdr_server_write_device_iorequest(wStream* s, UINT32 deviceId, UIN
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_read_file_directory_information(wLog* log, wStream* s,
                                                          FILE_DIRECTORY_INFORMATION* fdi)
 {
@@ -2488,12 +2552,14 @@ static UINT prepare_path_irp(RdpdrServerContext* context, UINT32 deviceId,
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_Callback callback,
                         void* callbackData, RDPDR_IRP** outIrp)
 {
 	return prepare_path_irp(context, deviceId, callback, callbackData, nullptr, nullptr, outIrp);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT prepare_smartcard_irp(RdpdrServerContext* context, UINT32 ioControlCode,
                                   RDPDR_IRP_Callback callback, void* callbackData,
                                   RDPDR_IRP** outIrp)
@@ -2526,6 +2592,7 @@ static UINT prepare_smartcard_irp(RdpdrServerContext* context, UINT32 ioControlC
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context, UINT32 deviceId,
                                                     UINT32 completionId, const char* path,
                                                     UINT32 desiredAccess, UINT32 createOptions,
@@ -2585,6 +2652,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, UINT32 deviceId,
                                                    UINT32 fileId, UINT32 completionId)
 {
@@ -2614,6 +2682,7 @@ static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, UINT32 deviceId,
                                                   UINT32 fileId, UINT32 completionId, UINT32 length,
                                                   UINT32 offset)
@@ -2648,6 +2717,7 @@ static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, U
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, UINT32 deviceId,
                                                    UINT32 fileId, UINT32 completionId,
                                                    const char* data, UINT32 length, UINT32 offset)
@@ -2683,6 +2753,7 @@ static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext* context,
                                                              UINT32 deviceId, UINT32 fileId,
                                                              UINT32 completionId, const char* path)
@@ -2742,6 +2813,7 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* context,
                                                          UINT32 deviceId, UINT32 fileId,
                                                          UINT32 completionId, const char* path)
@@ -2800,6 +2872,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	return rdpdr_seal_send_free_request(context, s);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioControlCode,
                                                      UINT32 outputBufferLength,
@@ -2858,6 +2931,7 @@ static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* context, wStream* s,
                                                           RDPDR_IRP* irp, UINT32 deviceId,
                                                           UINT32 completionId, UINT32 ioStatus)
@@ -2885,6 +2959,7 @@ static UINT rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* context, wStream* s,
                                                           RDPDR_IRP* irp, UINT32 deviceId,
                                                           UINT32 completionId, UINT32 ioStatus)
@@ -2939,6 +3014,7 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, void* callbackData,
                                                 UINT32 deviceId, const char* path)
 {
@@ -2968,6 +3044,7 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* context, wStream* s,
                                                           RDPDR_IRP* irp, UINT32 deviceId,
                                                           UINT32 completionId, UINT32 ioStatus)
@@ -2994,6 +3071,7 @@ static UINT rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* context, wStream* s,
                                                           RDPDR_IRP* irp, UINT32 deviceId,
                                                           UINT32 completionId, UINT32 ioStatus)
@@ -3047,6 +3125,7 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, void* callbackData,
                                                 UINT32 deviceId, const char* path)
 {
@@ -3074,6 +3153,7 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_query_directory_callback3(RdpdrServerContext* context, wStream* s,
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
@@ -3089,6 +3169,7 @@ static UINT rdpdr_server_drive_query_directory_callback3(RdpdrServerContext* con
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s,
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
@@ -3174,6 +3255,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* context, wStream* s,
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
@@ -3235,6 +3317,7 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void* callbackData,
                                                UINT32 deviceId, const char* path)
 {
@@ -3262,6 +3345,7 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, wStream* s,
                                                   RDPDR_IRP* irp, UINT32 deviceId,
                                                   UINT32 completionId, UINT32 ioStatus)
@@ -3296,6 +3380,7 @@ static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* callbackData,
                                          UINT32 deviceId, const char* path, UINT32 desiredAccess,
                                          UINT32 createDisposition)
@@ -3324,6 +3409,7 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, wStream* s,
                                                   RDPDR_IRP* irp, UINT32 deviceId,
                                                   UINT32 completionId, UINT32 ioStatus)
@@ -3364,6 +3450,7 @@ static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* callbackData,
                                          UINT32 deviceId, UINT32 fileId, UINT32 length,
                                          UINT32 offset)
@@ -3393,6 +3480,7 @@ static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, wStream* s,
                                                    RDPDR_IRP* irp, UINT32 deviceId,
                                                    UINT32 completionId, UINT32 ioStatus)
@@ -3427,6 +3515,7 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* callbackData,
                                           UINT32 deviceId, UINT32 fileId, const char* buffer,
                                           UINT32 length, UINT32 offset)
@@ -3458,6 +3547,7 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, wStream* s,
                                                    RDPDR_IRP* irp, UINT32 deviceId,
                                                    UINT32 completionId, UINT32 ioStatus)
@@ -3492,6 +3582,7 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* callbackData,
                                           UINT32 deviceId, UINT32 fileId)
 {
@@ -3522,6 +3613,7 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context, wStream* s,
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
@@ -3548,6 +3640,7 @@ static UINT rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context, wStream* s,
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
@@ -3602,6 +3695,7 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* callbackData,
                                            UINT32 deviceId, const char* path)
 {
@@ -3629,6 +3723,7 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context, wStream* s,
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
@@ -3654,6 +3749,7 @@ static UINT rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context, wStream* s,
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
@@ -3700,6 +3796,7 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context, wStream* s,
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
@@ -3754,6 +3851,7 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* callbackData,
                                            UINT32 deviceId, const char* oldPath,
                                            const char* newPath)
@@ -3784,6 +3882,7 @@ static void rdpdr_server_private_free(RdpdrServerPrivate* ctx)
 }
 
 #define TAG CHANNELS_TAG("rdpdr.server")
+WINPR_ATTR_MALLOC(rdpdr_server_private_free, 1)
 static RdpdrServerPrivate* rdpdr_server_private_new(void)
 {
 	RdpdrServerPrivate* priv = (RdpdrServerPrivate*)calloc(1, sizeof(RdpdrServerPrivate));
@@ -3833,6 +3932,7 @@ fail:
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_establish_context_callback(RdpdrServerContext* context,
                                                               wStream* s, RDPDR_IRP* irp,
                                                               UINT32 deviceId, UINT32 completionId,
@@ -3877,6 +3977,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context,
                                                      void* callbackData, UINT32 dwScope,
                                                      UINT32* completionId)
@@ -3943,6 +4044,7 @@ out:
 }
 
 /* ReleaseContext */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_release_context_callback(RdpdrServerContext* context, wStream* s,
                                                             RDPDR_IRP* irp, UINT32 deviceId,
                                                             UINT32 completionId, UINT32 ioStatus)
@@ -3986,6 +4088,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, void* callbackData,
                                                    const REDIR_SCARDCONTEXT* hContext,
                                                    UINT32* completionId)
@@ -4041,6 +4144,7 @@ out:
 }
 
 /* IsValidContext */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_is_valid_context_callback(RdpdrServerContext* context,
                                                              wStream* s, RDPDR_IRP* irp,
                                                              UINT32 deviceId, UINT32 completionId,
@@ -4085,6 +4189,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context, void* callbackData,
                                                     const REDIR_SCARDCONTEXT* hContext,
                                                     UINT32* completionId)
@@ -4141,6 +4246,7 @@ out:
 }
 
 /* ListReaderGroups */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_reader_groups_callback(RdpdrServerContext* context,
                                                                wStream* s, RDPDR_IRP* irp,
                                                                UINT32 deviceId, UINT32 completionId,
@@ -4185,6 +4291,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* context,
                                                       void* callbackData, UINT32 ioControlCode,
                                                       const ListReaderGroups_Call* call,
@@ -4243,6 +4350,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_reader_groupsA(RdpdrServerContext* context,
                                                        void* callbackData,
                                                        const ListReaderGroups_Call* call,
@@ -4252,6 +4360,7 @@ static UINT rdpdr_server_smartcard_list_reader_groupsA(RdpdrServerContext* conte
 	    context, callbackData, SCARD_IOCTL_LISTREADERGROUPSA, call, completionId);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_reader_groupsW(RdpdrServerContext* context,
                                                        void* callbackData,
                                                        const ListReaderGroups_Call* call,
@@ -4262,6 +4371,7 @@ static UINT rdpdr_server_smartcard_list_reader_groupsW(RdpdrServerContext* conte
 }
 
 /* ListReaders */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_readers_callback(RdpdrServerContext* context, wStream* s,
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
@@ -4305,6 +4415,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, void* callbackData,
                                                 UINT32 ioControlCode, const ListReaders_Call* call,
                                                 UINT32* completionId)
@@ -4363,6 +4474,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_readersA(RdpdrServerContext* context, void* callbackData,
                                                  const ListReaders_Call* call, UINT32* completionId)
 {
@@ -4370,6 +4482,7 @@ static UINT rdpdr_server_smartcard_list_readersA(RdpdrServerContext* context, vo
 	                                           call, completionId);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_list_readersW(RdpdrServerContext* context, void* callbackData,
                                                  const ListReaders_Call* call, UINT32* completionId)
 {
@@ -4378,6 +4491,7 @@ static UINT rdpdr_server_smartcard_list_readersW(RdpdrServerContext* context, vo
 }
 
 /* GetStatusChange */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_get_status_change_callback(RdpdrServerContext* context,
                                                               wStream* s, RDPDR_IRP* irp,
                                                               UINT32 deviceId, UINT32 completionId,
@@ -4422,6 +4536,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context,
                                                      void* callbackData, UINT32 ioControlCode,
                                                      const void* call, DWORD cReaders,
@@ -4489,6 +4604,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_get_status_changeA(RdpdrServerContext* context,
                                                       void* callbackData,
                                                       const GetStatusChangeA_Call* call,
@@ -4498,6 +4614,7 @@ static UINT rdpdr_server_smartcard_get_status_changeA(RdpdrServerContext* contex
 	    context, callbackData, SCARD_IOCTL_GETSTATUSCHANGEA, call, call->cReaders, completionId);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_get_status_changeW(RdpdrServerContext* context,
                                                       void* callbackData,
                                                       const GetStatusChangeW_Call* call,
@@ -4508,6 +4625,7 @@ static UINT rdpdr_server_smartcard_get_status_changeW(RdpdrServerContext* contex
 }
 
 /* Cancel */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_cancel_callback(RdpdrServerContext* context, wStream* s,
                                                    RDPDR_IRP* irp, UINT32 deviceId,
                                                    UINT32 completionId, UINT32 ioStatus)
@@ -4550,6 +4668,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* callbackData,
                                           const REDIR_SCARDCONTEXT* hContext, UINT32* completionId)
 {
@@ -4604,6 +4723,7 @@ out:
 }
 
 /* Connect */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_connect_callback(RdpdrServerContext* context, wStream* s,
                                                     RDPDR_IRP* irp, UINT32 deviceId,
                                                     UINT32 completionId, UINT32 ioStatus)
@@ -4647,6 +4767,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* callbackData,
                                            UINT32 ioControlCode, const void* call,
                                            UINT32* completionId)
@@ -4712,6 +4833,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_connectA(RdpdrServerContext* context, void* callbackData,
                                             const ConnectA_Call* call, UINT32* completionId)
 {
@@ -4719,6 +4841,7 @@ static UINT rdpdr_server_smartcard_connectA(RdpdrServerContext* context, void* c
 	                                      completionId);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_connectW(RdpdrServerContext* context, void* callbackData,
                                             const ConnectW_Call* call, UINT32* completionId)
 {
@@ -4727,6 +4850,7 @@ static UINT rdpdr_server_smartcard_connectW(RdpdrServerContext* context, void* c
 }
 
 /* Reconnect */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_reconnect_callback(RdpdrServerContext* context, wStream* s,
                                                       RDPDR_IRP* irp, UINT32 deviceId,
                                                       UINT32 completionId, UINT32 ioStatus)
@@ -4770,6 +4894,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* callbackData,
                                              const Reconnect_Call* call, UINT32* completionId)
 {
@@ -4829,6 +4954,7 @@ out:
 }
 
 /* Disconnect */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_disconnect_callback(RdpdrServerContext* context, wStream* s,
                                                        RDPDR_IRP* irp, UINT32 deviceId,
                                                        UINT32 completionId, UINT32 ioStatus)
@@ -4871,6 +4997,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void* callbackData,
                                               const HCardAndDisposition_Call* call,
                                               UINT32* completionId)
@@ -4929,6 +5056,7 @@ out:
 }
 
 /* BeginTransaction */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_begin_transaction_callback(RdpdrServerContext* context,
                                                               wStream* s, RDPDR_IRP* irp,
                                                               UINT32 deviceId, UINT32 completionId,
@@ -4973,6 +5101,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context,
                                                      void* callbackData,
                                                      const HCardAndDisposition_Call* call,
@@ -5032,6 +5161,7 @@ out:
 }
 
 /* EndTransaction */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_end_transaction_callback(RdpdrServerContext* context, wStream* s,
                                                             RDPDR_IRP* irp, UINT32 deviceId,
                                                             UINT32 completionId, UINT32 ioStatus)
@@ -5075,6 +5205,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, void* callbackData,
                                                    const HCardAndDisposition_Call* call,
                                                    UINT32* completionId)
@@ -5133,6 +5264,7 @@ out:
 }
 
 /* Status */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_status_callback(RdpdrServerContext* context, wStream* s,
                                                    RDPDR_IRP* irp, UINT32 deviceId,
                                                    UINT32 completionId, UINT32 ioStatus)
@@ -5176,6 +5308,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* callbackData,
                                           UINT32 ioControlCode, const Status_Call* call,
                                           UINT32* completionId)
@@ -5234,6 +5367,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_statusA(RdpdrServerContext* context, void* callbackData,
                                            const Status_Call* call, UINT32* completionId)
 {
@@ -5241,6 +5375,7 @@ static UINT rdpdr_server_smartcard_statusA(RdpdrServerContext* context, void* ca
 	                                     completionId);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_statusW(RdpdrServerContext* context, void* callbackData,
                                            const Status_Call* call, UINT32* completionId)
 {
@@ -5249,6 +5384,7 @@ static UINT rdpdr_server_smartcard_statusW(RdpdrServerContext* context, void* ca
 }
 
 /* Transmit */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_transmit_callback(RdpdrServerContext* context, wStream* s,
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
@@ -5292,6 +5428,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* callbackData,
                                             const Transmit_Call* call, UINT32* completionId)
 {
@@ -5345,6 +5482,7 @@ out:
 }
 
 /* Control */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_control_callback(RdpdrServerContext* context, wStream* s,
                                                     RDPDR_IRP* irp, UINT32 deviceId,
                                                     UINT32 completionId, UINT32 ioStatus)
@@ -5388,6 +5526,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* callbackData,
                                            const Control_Call* call, UINT32* completionId)
 {
@@ -5448,6 +5587,7 @@ out:
 }
 
 /* getAttrib */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_get_attrib_callback(RdpdrServerContext* context, wStream* s,
                                                        RDPDR_IRP* irp, UINT32 deviceId,
                                                        UINT32 completionId, UINT32 ioStatus)
@@ -5491,6 +5631,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void* callbackData,
                                               const GetAttrib_Call* call, UINT32* completionId)
 {
@@ -5544,6 +5685,7 @@ out:
 }
 
 /* SetAttrib */
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_set_attrib_callback(RdpdrServerContext* context, wStream* s,
                                                        RDPDR_IRP* irp, UINT32 deviceId,
                                                        UINT32 completionId, UINT32 ioStatus)
@@ -5586,6 +5728,7 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void* callbackData,
                                               const SetAttrib_Call* call, UINT32* completionId)
 {
