@@ -2986,15 +2986,27 @@ static BOOL client_helper_get_access_token_va(freerdp* instance,
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
 
-	aad_auth_helper_stop(cctx->aadHelper);
-	cctx->aadHelper = aad_auth_helper_start(cctx);
-	if (!cctx->aadHelper)
-		return FALSE;
+	/* Keep one helper for the whole client lifetime (it is stopped when the context is freed):
+	 * its browser session then carries over from one token request to the next, e.g. AVD
+	 * gateway then session host, instead of prompting for a login each time. Only start a new
+	 * one if there's none yet or the previous one exited. */
+	if (!aad_auth_helper_is_running(cctx->aadHelper))
+	{
+		aad_auth_helper_stop(cctx->aadHelper);
+		cctx->aadHelper = aad_auth_helper_start(cctx);
+		if (!cctx->aadHelper)
+			return FALSE;
+	}
 
 	const BOOL rc =
 	    aad_auth_helper_get_access_token_v(cctx->aadHelper, tokenType, token, count, ap);
-	aad_auth_helper_stop(cctx->aadHelper);
-	cctx->aadHelper = nullptr;
+
+	/* a helper that died during the request (crash, user killed it) is restarted next time */
+	if (!rc && !aad_auth_helper_is_running(cctx->aadHelper))
+	{
+		aad_auth_helper_stop(cctx->aadHelper);
+		cctx->aadHelper = nullptr;
+	}
 	return rc;
 #else
 	WLog_ERR(TAG, "Build does not support AAD authentication");
