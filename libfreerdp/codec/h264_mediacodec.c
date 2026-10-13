@@ -145,7 +145,9 @@ static AMediaFormat* mediacodec_format_new(wLog* log, int width, int height)
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420Planar);
 	/* Low-latency decode for remote desktop: drop frame reordering, ask for realtime scheduling. */
 	AMediaFormat_setInt32(format, MEDIACODEC_KEY_LOW_LATENCY, 1);
+#if __ANDROID_API__ >= 28
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_PRIORITY, 0);
+#endif
 
 	media_format = AMediaFormat_toString(format);
 	if (media_format == nullptr)
@@ -200,12 +202,17 @@ static int update_mediacodec_inputformat(H264_CONTEXT* h264)
 	sys = (H264_CONTEXT_MEDIACODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
+#if __ANDROID_API__ >= 28
 	inputFormat = AMediaCodec_getInputFormat(sys->decoder);
 	if (inputFormat == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputFormat failed");
 		return -1;
 	}
+#else
+	/* Reuse the format we configured the decoder with. */
+	inputFormat = sys->inputFormat;
+#endif
 	set_mediacodec_format(h264, &sys->inputFormat, inputFormat);
 
 	mediaFormatName = AMediaFormat_toString(sys->inputFormat);
@@ -269,10 +276,16 @@ static int update_mediacodec_outputformat(H264_CONTEXT* h264)
 	if (!AMediaFormat_getInt32(sys->outputFormat, AMEDIAFORMAT_KEY_STRIDE, &outputStride) ||
 	    outputStride < outputWidth)
 		outputStride = outputWidth;
-	if (!AMediaFormat_getInt32(sys->outputFormat, AMEDIAFORMAT_KEY_SLICE_HEIGHT,
-	                           &outputSliceHeight) ||
-	    outputSliceHeight < outputHeight)
-		outputSliceHeight = outputHeight;
+	outputSliceHeight = outputHeight; /* tight-pack below API 28 */
+#if __ANDROID_API__ >= 28
+	{
+		int32_t reportedSliceHeight = 0;
+		if (AMediaFormat_getInt32(sys->outputFormat, AMEDIAFORMAT_KEY_SLICE_HEIGHT,
+		                          &reportedSliceHeight) &&
+		    reportedSliceHeight >= outputHeight)
+			outputSliceHeight = reportedSliceHeight;
+	}
+#endif
 	if ((outputWidth <= 0) || (outputHeight <= 0) ||
 	    (outputStride > MEDIACODEC_MAXIMUM_DIMENSION) ||
 	    (outputSliceHeight > MEDIACODEC_MAXIMUM_DIMENSION))
@@ -395,7 +408,9 @@ static BOOL mediacodec_encoder_probe(wLog* log)
 		AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, MEDIACODEC_MINIMUM_HEIGHT);
 		AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420SemiPlanar);
 		AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, MEDIACODEC_DEFAULT_BITRATE);
+#if __ANDROID_API__ >= 28
 		AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BITRATE_MODE, MEDIACODEC_BITRATE_MODE_VBR);
+#endif
 		AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, MEDIACODEC_DEFAULT_FRAMERATE);
 		AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL,
 		                      MEDIACODEC_IFRAME_INTERVAL);
@@ -470,7 +485,9 @@ static BOOL mediacodec_encoder_configure(H264_CONTEXT* h264)
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420SemiPlanar);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, bitrate);
 	/* Hardware AVC encoders commonly reject CQ, so CQP requests are served as VBR. */
+#if __ANDROID_API__ >= 28
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BITRATE_MODE, MEDIACODEC_BITRATE_MODE_VBR);
+#endif
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, framerate);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL, MEDIACODEC_IFRAME_INTERVAL);
 	AMediaFormat_setInt32(format, MEDIACODEC_KEY_PREPEND_HEADER, 1);
@@ -503,19 +520,23 @@ static BOOL mediacodec_encoder_configure(H264_CONTEXT* h264)
 	/* Encoder stride/slice-height may be padded. Align stride to even for NV12. */
 	sys->encoderStride = sys->encoderWidth + (sys->encoderWidth & 1);
 	sys->encoderSliceHeight = sys->encoderHeight;
-	AMediaFormat* inputFormat = AMediaCodec_getInputFormat(sys->encoder);
-	if (inputFormat)
+#if __ANDROID_API__ >= 28
 	{
-		int32_t stride = 0;
-		int32_t sliceHeight = 0;
-		if (AMediaFormat_getInt32(inputFormat, AMEDIAFORMAT_KEY_STRIDE, &stride) &&
-		    (stride >= sys->encoderWidth))
-			sys->encoderStride = stride;
-		if (AMediaFormat_getInt32(inputFormat, AMEDIAFORMAT_KEY_SLICE_HEIGHT, &sliceHeight) &&
-		    (sliceHeight >= sys->encoderHeight))
-			sys->encoderSliceHeight = sliceHeight;
-		mediacodec_warn(h264->log, AMediaFormat_delete(inputFormat), "AMediaFormat_delete");
+		AMediaFormat* inputFormat = AMediaCodec_getInputFormat(sys->encoder);
+		if (inputFormat)
+		{
+			int32_t stride = 0;
+			int32_t sliceHeight = 0;
+			if (AMediaFormat_getInt32(inputFormat, AMEDIAFORMAT_KEY_STRIDE, &stride) &&
+			    (stride >= sys->encoderWidth))
+				sys->encoderStride = stride;
+			if (AMediaFormat_getInt32(inputFormat, AMEDIAFORMAT_KEY_SLICE_HEIGHT, &sliceHeight) &&
+			    (sliceHeight >= sys->encoderHeight))
+				sys->encoderSliceHeight = sliceHeight;
+			mediacodec_warn(h264->log, AMediaFormat_delete(inputFormat), "AMediaFormat_delete");
+		}
 	}
+#endif
 
 	if ((sys->encoderStride > MEDIACODEC_MAXIMUM_DIMENSION) ||
 	    (sys->encoderSliceHeight > MEDIACODEC_MAXIMUM_DIMENSION))
@@ -695,7 +716,9 @@ static int mediacodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		sys->encoderFailedHeight = 0;
 	}
 
-	/* Adapt the encoder bitrate on the fly when the caller changes it. */
+	/* Adapt the encoder bitrate on the fly when the caller changes it; below API 26 it only
+	 * takes effect on the next full reconfigure. */
+#if __ANDROID_API__ >= 26
 	const int32_t bitrate = mediacodec_rate(h264->BitRate, sys->encoderBitrate);
 	if (bitrate != sys->encoderBitrate)
 	{
@@ -708,7 +731,11 @@ static int mediacodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 			mediacodec_warn(h264->log, AMediaFormat_delete(params), "AMediaFormat_delete");
 		}
 	}
+#endif
 
+	/* Below API 26 there is no way to force an early IDR; firstLumaFrameDone catches up once
+	 * the next natural keyframe arrives. */
+#if __ANDROID_API__ >= 26
 	if (!h264->firstLumaFrameDone && (sys->frameIndex > 0) && !sys->syncRequested)
 	{
 		AMediaFormat* syncParams = AMediaFormat_new();
@@ -720,6 +747,7 @@ static int mediacodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 			mediacodec_warn(h264->log, AMediaFormat_delete(syncParams), "AMediaFormat_delete");
 		}
 	}
+#endif
 
 	const int32_t dstStride = sys->encoderStride;
 	const int32_t dstSliceHeight = sys->encoderSliceHeight;
@@ -934,15 +962,23 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 
 		AMediaFormat_setInt32(sys->inputFormat, AMEDIAFORMAT_KEY_WIDTH, sys->width);
 		AMediaFormat_setInt32(sys->inputFormat, AMEDIAFORMAT_KEY_HEIGHT, sys->height);
-		const media_status_t status = AMediaCodec_setParameters(sys->decoder, sys->inputFormat);
-		if (status != AMEDIA_OK)
+#if __ANDROID_API__ >= 26
 		{
-			/* Decoder adapts via in-band SPS/PPS; ignoring failure here. */
-			WLog_Print(h264->log, WLOG_DEBUG,
-			           "AMediaCodec_setParameters returned %d, relying on "
-			           "in-band SPS/PPS for the size change",
-			           status);
+			const media_status_t status = AMediaCodec_setParameters(sys->decoder, sys->inputFormat);
+			if (status != AMEDIA_OK)
+			{
+				/* Decoder adapts via in-band SPS/PPS; ignoring failure here. */
+				WLog_Print(h264->log, WLOG_DEBUG,
+				           "AMediaCodec_setParameters returned %d, relying on "
+				           "in-band SPS/PPS for the size change",
+				           status);
+			}
 		}
+#else
+		WLog_Print(h264->log, WLOG_DEBUG,
+		           "AMediaCodec_setParameters unavailable below API 26, relying on "
+		           "in-band SPS/PPS for the size change");
+#endif
 
 		/* The codec can change output width and height */
 		if (update_mediacodec_outputformat(h264) < 0)
@@ -1241,16 +1277,23 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
-	char* codec_name = nullptr;
-	status = AMediaCodec_getName(sys->decoder, &codec_name);
-	if (status != AMEDIA_OK)
+	/* Codec name is purely informational; skip logging it below that instead of failing init. */
+#if __ANDROID_API__ >= 28
 	{
-		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getName failed: %d", status);
-		goto EXCEPTION;
-	}
+		char* codec_name = nullptr;
+		status = AMediaCodec_getName(sys->decoder, &codec_name);
+		if (status != AMEDIA_OK)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getName failed: %d", status);
+			goto EXCEPTION;
+		}
 
-	WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec using %s codec [%s]", CODEC_NAME, codec_name);
-	AMediaCodec_releaseName(sys->decoder, codec_name);
+		WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec using %s codec [%s]", CODEC_NAME, codec_name);
+		AMediaCodec_releaseName(sys->decoder, codec_name);
+	}
+#else
+	WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec using %s codec", CODEC_NAME);
+#endif
 
 	set_mediacodec_format(h264, &sys->inputFormat,
 	                      mediacodec_format_new(h264->log, sys->width, sys->height));
