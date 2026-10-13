@@ -913,35 +913,38 @@ typedef SECURITY_STATUS (*psSspiNtlmHashCallback)(void* client,
 
 #if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
-struct SEC_WINPR_NTLM_SETTINGS {
-	    char* samFile; /**< File name (with path) of a SAM file */
-	    WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
-	        hashCallback;      /**< Callback to be called to generate a NTLM hash. */
-	    void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
+struct SEC_WINPR_NTLM_SETTINGS
+{
+	char* samFile; /**< File name (with path) of a SAM file */
+	WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
+	    hashCallback;      /**< Callback to be called to generate a NTLM hash. */
+	void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
 };
 WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2",
                      typedef struct SEC_WINPR_NTLM_SETTINGS SEC_WINPR_NTLM_SETTINGS);
 
-struct SEC_WINPR_KERBEROS_SETTINGS {
-	    char* kdcUrl;
-	    char* keytab;
-	    char* cache;
-	    char* armorCache;
-	    char* pkinitX509Anchors;
-	    char* pkinitX509Identity;
-	    BOOL withPac;
-	    INT32 startTime;
-	    INT32 renewLifeTime;
-	    INT32 lifeTime;
-	    BYTE certSha1[20];
+struct SEC_WINPR_KERBEROS_SETTINGS
+{
+	char* kdcUrl;
+	char* keytab;
+	char* cache;
+	char* armorCache;
+	char* pkinitX509Anchors;
+	char* pkinitX509Identity;
+	BOOL withPac;
+	INT32 startTime;
+	INT32 renewLifeTime;
+	INT32 lifeTime;
+	BYTE certSha1[20];
 };
 WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINPR_KERBEROS_SETTINGS_V2",
                      typedef struct SEC_WINPR_KERBEROS_SETTINGS SEC_WINPR_KERBEROS_SETTINGS);
 
-struct SEC_WINNT_AUTH_IDENTITY_WINPR {
-	    SEC_WINNT_AUTH_IDENTITY_EXW identity;
-	    struct SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
-	    struct SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+struct SEC_WINNT_AUTH_IDENTITY_WINPR
+{
+	SEC_WINNT_AUTH_IDENTITY_EXW identity;
+	struct SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
+	struct SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
 };
 WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINNT_AUTH_IDENTITY_WINPR_V2",
                      typedef struct SEC_WINNT_AUTH_IDENTITY_WINPR SEC_WINNT_AUTH_IDENTITY_WINPR);
