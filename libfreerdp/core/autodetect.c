@@ -183,6 +183,30 @@ static BOOL autodetect_send_rtt_measure_response(rdpAutoDetect* autodetect, UINT
 	                                    sec_flags | SEC_AUTODETECT_RSP);
 }
 
+static BOOL autodetect_send_netchar_sync(rdpAutoDetect* autodetect, UINT16 sequenceNumber)
+{
+	UINT16 sec_flags = 0;
+
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(autodetect->context);
+
+	wStream* s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
+	if (!s)
+		return FALSE;
+
+	WLog_Print(autodetect->log, WLOG_TRACE,
+	           "sending Network Characteristics Sync PDU -> bandwidth=%" PRIu32 ", rtt=%" PRIu32,
+	           autodetect->netCharBandwidth, autodetect->netCharAverageRTT);
+	Stream_Write_UINT8(s, 0x0E);                            /* headerLength (1 byte) */
+	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE);     /* headerTypeId (1 byte) */
+	Stream_Write_UINT16(s, sequenceNumber);                 /* sequenceNumber (2 bytes) */
+	Stream_Write_UINT16(s, RDP_NETCHAR_SYNC_RESPONSE_TYPE); /* responseType (2 bytes) */
+	Stream_Write_UINT32(s, autodetect->netCharBandwidth);   /* bandwidth (4 bytes) */
+	Stream_Write_UINT32(s, autodetect->netCharAverageRTT);  /* rtt (4 bytes) */
+	return rdp_send_message_channel_pdu(autodetect->context->rdp, s,
+	                                    sec_flags | SEC_AUTODETECT_RSP);
+}
+
 static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
                                                     WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
                                                     UINT16 sequenceNumber)
@@ -538,6 +562,18 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpAutoDetect* autodetect,
 	autodetect->bandwidthMeasureStartTime = GetTickCount64();
 	autodetect->bandwidthMeasureByteCount = 0;
 
+	/* [MS-RDPBCGR] 3.2.5.17: an auto-reconnect can answer the connect-time measurement with
+	 * the bandwidth and RTT the server reported before, which ends the measurement
+	 * ([MS-RDPBCGR] 2.2.14.2.3). */
+	if ((autodetectReqPdu->requestType == RDP_BW_START_REQUEST_TYPE_CONNECTTIME) &&
+	    (autodetect->netCharBandwidth > 0))
+	{
+		const ARC_SC_PRIVATE_PACKET* cookie = freerdp_settings_get_pointer(
+		    autodetect->context->settings, FreeRDP_ServerAutoReconnectCookie);
+		if (cookie && (cookie->cbLen > 0))
+			return autodetect_send_netchar_sync(autodetect, autodetectReqPdu->sequenceNumber);
+	}
+
 	/* Continuous Auto-Detection: mark the start of the measurement */
 	if (autodetectReqPdu->requestType == RDP_BW_START_REQUEST_TYPE_CONTINUOUS)
 	{
@@ -753,6 +789,7 @@ static BOOL autodetect_recv_netchar_request(rdpAutoDetect* autodetect, RDP_TRANS
 			result.type = RDP_NETCHAR_RESULT_TYPE_BASE_RTT_AVG_RTT;
 			Stream_Read_UINT32(s, result.baseRTT);    /* baseRTT (4 bytes) */
 			Stream_Read_UINT32(s, result.averageRTT); /* averageRTT (4 bytes) */
+			autodetect->netCharBaseRTT = result.baseRTT;
 			break;
 
 		case RDP_NETCHAR_RESULTS_0x0880:
@@ -771,6 +808,7 @@ static BOOL autodetect_recv_netchar_request(rdpAutoDetect* autodetect, RDP_TRANS
 			result.type = RDP_NETCHAR_RESULT_TYPE_BW_AVG_RTT;
 			Stream_Read_UINT32(s, result.bandwidth);  /* bandwidth (4 bytes) */
 			Stream_Read_UINT32(s, result.averageRTT); /* averageRTT (4 bytes) */
+			autodetect->netCharBandwidth = result.bandwidth;
 			break;
 
 		case RDP_NETCHAR_RESULTS_0x08C0:
@@ -790,12 +828,16 @@ static BOOL autodetect_recv_netchar_request(rdpAutoDetect* autodetect, RDP_TRANS
 			Stream_Read_UINT32(s, result.baseRTT);    /* baseRTT (4 bytes) */
 			Stream_Read_UINT32(s, result.bandwidth);  /* bandwidth (4 bytes) */
 			Stream_Read_UINT32(s, result.averageRTT); /* averageRTT (4 bytes) */
+			autodetect->netCharBaseRTT = result.baseRTT;
+			autodetect->netCharBandwidth = result.bandwidth;
 			break;
 
 		default:
 			WINPR_ASSERT(FALSE);
 			break;
 	}
+	/* [MS-RDPBCGR] 3.2.5.17: the metrics are kept for a Network Characteristics Sync */
+	autodetect->netCharAverageRTT = result.averageRTT;
 
 	WLog_Print(autodetect->log, WLOG_TRACE,
 	           "received Network Characteristics Result PDU -> baseRTT=%" PRIu32
