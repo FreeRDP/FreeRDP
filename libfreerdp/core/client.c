@@ -68,6 +68,73 @@ static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpCha
 	return nullptr;
 }
 
+#if defined(WITH_RDPEUDP)
+/* A dynamic channel that carries a static channel's data, see
+ * freerdp_channels_set_static_bridge. The channel holds one reference and a send in progress
+ * another, so custom outlives both. */
+struct rdp_channel_bridge
+{
+	volatile LONG refs;
+	freerdp_channels_bridge_send_fkt_t send;
+	void (*fnFree)(void* custom);
+	void* custom;
+};
+
+static void channel_bridge_unref(struct rdp_channel_bridge* bridge)
+{
+	if (!bridge || (InterlockedDecrement(&bridge->refs) != 0))
+		return;
+	IFCALL(bridge->fnFree, bridge->custom);
+	free(bridge);
+}
+
+/* Drops the channel's bridge, the static channel sends on itself again. */
+static void channel_clear_bridge(CHANNEL_OPEN_DATA* pChannelOpenData)
+{
+	WINPR_ASSERT(pChannelOpenData);
+	WINPR_ASSERT(pChannelOpenData->channels);
+
+	EnterCriticalSection(&pChannelOpenData->channels->channelsLock);
+	struct rdp_channel_bridge* old = pChannelOpenData->bridge;
+	pChannelOpenData->bridge = nullptr;
+	LeaveCriticalSection(&pChannelOpenData->channels->channelsLock);
+	channel_bridge_unref(old);
+}
+
+/* Sends a static channel's message on the dynamic channel that carries it, if one does: FALSE
+ * leaves the message to the static channel. A channel without a bridge costs one atomic read. */
+WINPR_ATTR_NODISCARD
+static BOOL channel_bridge_send(CHANNEL_OPEN_DATA* pChannelOpenData, const CHANNEL_OPEN_EVENT* item,
+                                BOOL* ret)
+{
+	WINPR_ASSERT(pChannelOpenData);
+	WINPR_ASSERT(pChannelOpenData->channels);
+	WINPR_ASSERT(item);
+	WINPR_ASSERT(ret);
+
+	if (!InterlockedCompareExchangePointer((PVOID volatile*)&pChannelOpenData->bridge, nullptr,
+	                                       nullptr))
+		return FALSE;
+
+	/* the send runs without the lock, the dynamic channel takes locks of its own */
+	rdpChannels* channels = pChannelOpenData->channels;
+	EnterCriticalSection(&channels->channelsLock);
+	struct rdp_channel_bridge* bridge = pChannelOpenData->bridge;
+	if (bridge)
+		(void)InterlockedIncrement(&bridge->refs);
+	LeaveCriticalSection(&channels->channelsLock);
+	if (!bridge)
+		return FALSE;
+
+	pChannelOpenData->stats.bytesOut += item->DataLength;
+	pChannelOpenData->stats.packetsOut++;
+	pChannelOpenData->stats.fragmentsOut++;
+	*ret = bridge->send(bridge->custom, item->Data, item->DataLength);
+	channel_bridge_unref(bridge);
+	return TRUE;
+}
+#endif
+
 /* returns rdpChannel for the channel name passed in */
 static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
@@ -640,6 +707,68 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 	return TRUE;
 }
 
+#if !defined(WITH_RDPEUDP)
+/* Static channels are only tunnelled along with UDP multitransport. */
+BOOL freerdp_channels_set_static_bridge(WINPR_ATTR_UNUSED freerdp* instance,
+                                        WINPR_ATTR_UNUSED const char* name,
+                                        WINPR_ATTR_UNUSED freerdp_channels_bridge_send_fkt_t send,
+                                        WINPR_ATTR_UNUSED void (*fnFree)(void* custom),
+                                        WINPR_ATTR_UNUSED void* custom)
+{
+	return FALSE;
+}
+#else
+BOOL freerdp_channels_set_static_bridge(freerdp* instance, const char* name,
+                                        freerdp_channels_bridge_send_fkt_t send,
+                                        void (*fnFree)(void* custom), void* custom)
+{
+	if (!instance || !name)
+		return FALSE;
+
+	WINPR_ASSERT(instance->context);
+	rdpChannels* channels = instance->context->channels;
+	if (!channels)
+		return FALSE;
+
+	struct rdp_channel_bridge* bridge = nullptr;
+	if (send)
+	{
+		bridge = calloc(1, sizeof(struct rdp_channel_bridge));
+		if (!bridge)
+			return FALSE;
+		bridge->refs = 1;
+		bridge->send = send;
+		bridge->fnFree = fnFree;
+		bridge->custom = custom;
+	}
+
+	/* the channel list changes when the channels close, which can happen on another thread */
+	struct rdp_channel_bridge* old = nullptr;
+	BOOL found = FALSE;
+	EnterCriticalSection(&channels->channelsLock);
+	CHANNEL_OPEN_DATA* pChannelOpenData =
+	    freerdp_channels_find_channel_open_data_by_name(channels, name);
+	if (pChannelOpenData)
+	{
+		found = TRUE;
+		old = pChannelOpenData->bridge;
+		if (!send && custom && old && (old->custom != custom))
+			old = nullptr; /* another bridge was set since, it stays */
+		else
+			pChannelOpenData->bridge = bridge;
+	}
+	LeaveCriticalSection(&channels->channelsLock);
+
+	if (!found)
+	{
+		free(bridge);
+		return FALSE;
+	}
+	channel_bridge_unref(old);
+	return TRUE;
+}
+#endif
+
 UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name)
 {
 	if (!instance || !channel_name)
@@ -732,6 +861,12 @@ static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* messag
 		}
 		rdpMcsChannel* channel = freerdp_channels_find_channel_by_name(
 		    instance->context->rdp, pChannelOpenData->stats.channelName);
+
+#if defined(WITH_RDPEUDP)
+		/* a dynamic channel that carries the static channel sends it instead */
+		if (channel_bridge_send(pChannelOpenData, item, &ret))
+			channel = nullptr;
+#endif
 
 		if (channel)
 		{
@@ -1014,6 +1149,9 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	{
 		CHANNEL_OPEN_DATA* pChannelOpenData = &channels->openDataList[index];
 		HashTable_Remove(g_ChannelHandles, (void*)(UINT_PTR)pChannelOpenData->stats.channelId);
+#if defined(WITH_RDPEUDP)
+		channel_clear_bridge(pChannelOpenData);
+#endif
 	}
 
 	channels->openDataCount = 0;
