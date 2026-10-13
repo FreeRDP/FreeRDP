@@ -82,6 +82,9 @@ struct rdp_multitransport
 	FreeRDP_MultitransportDvcCallbacks callbacks;
 	void* custom;
 
+	/* Main loop thread only: the connection was ended because its tunnel broke down. */
+	BOOL endedConnection;
+
 	/* Set by the tunnel thread when it could not queue an event, received data that was
 	 * acknowledged to the server already among them. Accessed with Interlocked functions. */
 	LONG tunnelEventLost;
@@ -566,6 +569,7 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 			if (wasReady)
 			{
 				WLog_WARN(TAG, "the UDP tunnel broke down, ending the connection");
+				multi->endedConnection = TRUE;
 				freerdp_set_last_error_if_not(multi->rdp->context,
 				                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 				return FALSE;
@@ -620,6 +624,12 @@ HANDLE multitransport_get_event_handle(rdpMultitransport* multi)
 	return multi->event;
 }
 
+BOOL multitransport_ended_connection(const rdpMultitransport* multi)
+{
+	WINPR_ASSERT(multi);
+	return multi->endedConnection;
+}
+
 void multitransport_reset(rdpMultitransport* multi)
 {
 	if (!multi)
@@ -631,6 +641,7 @@ void multitransport_reset(rdpMultitransport* multi)
 	multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_NONE;
 	multi->reliableResponseSent = FALSE;
 	LeaveCriticalSection(&multi->lock);
+	multi->endedConnection = FALSE;
 
 	rdpemt_free(emt);
 	if (multi->events)

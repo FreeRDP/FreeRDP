@@ -773,10 +773,27 @@ static BOOL rdp_client_reconnect_via_broker(rdpRdp* rdp, BOOL* viaBroker)
 	return TRUE;
 }
 
+/* Pause before reconnecting a connection that its UDP tunnel ended, see rdp_client_reconnect. */
+#define TUNNEL_RECONNECT_PAUSE_MS 2000
+
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
+	/* A connection ended by its UDP tunnel closes TCP cleanly, and the server starts tearing
+	 * the session down at once. Windows drops a reconnect that arrives during that teardown,
+	 * and the auto-reconnect then waits out its whole retry delay. */
+	const BOOL tunnelEnded = multitransport_ended_connection(rdp->multitransport);
+
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
+
+	if (tunnelEnded)
+	{
+		WLog_DBG(TAG, "the UDP tunnel ended the connection, reconnecting in %d ms",
+		         TUNNEL_RECONNECT_PAUSE_MS);
+		if (WaitForSingleObject(utils_get_abort_event(rdp), TUNNEL_RECONNECT_PAUSE_MS) ==
+		    WAIT_OBJECT_0)
+			return FALSE;
+	}
 
 	if (!freerdp_settings_set_bool(rdp->settings, FreeRDP_SessionHasBeenReconnected, TRUE))
 		return FALSE;

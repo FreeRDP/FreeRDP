@@ -65,6 +65,11 @@ FREERDP_LOCAL HANDLE multitransport_get_event_handle(rdpMultitransport* multi);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_check(rdpMultitransport* multi);
 
+/** TRUE when the connection was ended because its UDP tunnel broke down. Cleared by
+ * multitransport_reset(). */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_ended_connection(const rdpMultitransport* multi);
+
 /** Tears down any tunnel, e.g. when the main connection goes away. */
 FREERDP_LOCAL void multitransport_reset(rdpMultitransport* multi);
 
