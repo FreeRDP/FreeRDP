@@ -2975,6 +2975,9 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 		case FreeRDP_PreconnectionBlob:
 			return settings->PreconnectionBlob;
 
+		case FreeRDP_ProxyCommand:
+			return settings->ProxyCommand;
+
 		case FreeRDP_ProxyHostname:
 			return settings->ProxyHostname;
 
@@ -3321,6 +3324,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_PreconnectionBlob:
 			return settings->PreconnectionBlob;
+
+		case FreeRDP_ProxyCommand:
+			return settings->ProxyCommand;
 
 		case FreeRDP_ProxyHostname:
 			return settings->ProxyHostname;
@@ -3680,6 +3686,9 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_PreconnectionBlob:
 			return update_string_(&settings->PreconnectionBlob, cnv.c, len);
+
+		case FreeRDP_ProxyCommand:
+			return update_string_(&settings->ProxyCommand, cnv.c, len);
 
 		case FreeRDP_ProxyHostname:
 			return update_string_(&settings->ProxyHostname, cnv.c, len);
@@ -4058,6 +4067,9 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_PreconnectionBlob:
 			return update_string_copy_(&settings->PreconnectionBlob, cnv.cc, len, cleanup);
+
+		case FreeRDP_ProxyCommand:
+			return update_string_copy_(&settings->ProxyCommand, cnv.cc, len, cleanup);
 
 		case FreeRDP_ProxyHostname:
 			return update_string_copy_(&settings->ProxyHostname, cnv.cc, len, cleanup);

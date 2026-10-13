@@ -401,6 +401,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  nullptr, "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>[,default]]", nullptr, nullptr, -1,
 	  nullptr, "Redirect printer device" },
+	{ "proxy-command", COMMAND_LINE_VALUE_REQUIRED, "<command>", nullptr, nullptr, -1, nullptr,
+	  "Connect through a command's stdin/stdout (%h: host, %p: port, %%: percent)" },
 	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>[:<port>]",
 	  nullptr, nullptr, -1, nullptr,
 	  "Proxy settings: override env. var (see also environment variable below). Protocol "

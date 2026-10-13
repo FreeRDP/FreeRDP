@@ -553,6 +553,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_PkinitAnchors, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_PkinitAnchors" },
 	{ FreeRDP_PlayRemoteFxFile, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_PlayRemoteFxFile" },
 	{ FreeRDP_PreconnectionBlob, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_PreconnectionBlob" },
+	{ FreeRDP_ProxyCommand, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyCommand" },
 	{ FreeRDP_ProxyHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyHostname" },
 	{ FreeRDP_ProxyPassword, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyPassword" },
 	{ FreeRDP_ProxyUsername, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyUsername" },

@@ -131,6 +131,12 @@ static BOOL check_settings_aad_user_agent(rdpSettings* settings)
 	return TRUE;
 }
 
+static BOOL check_settings_proxy_command(rdpSettings* settings)
+{
+	const char* command = freerdp_settings_get_string(settings, FreeRDP_ProxyCommand);
+	return command && strcmp(command, "ssh -W %h:%p bastion") == 0;
+}
+
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -285,6 +291,18 @@ typedef struct
 
 // NOLINTBEGIN(bugprone-suspicious-missing-comma)
 static const test tests[] = {
+	{ 0,
+	  check_settings_proxy_command,
+	  { "testfreerdp", "/proxy-command:ssh -W %h:%p bastion", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_proxy_command,
+	  { "testfreerdp", "--proxy-command", "ssh -W %h:%p bastion", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/proxy-command:", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
 	{ COMMAND_LINE_STATUS_PRINT_HELP,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "--help", nullptr },

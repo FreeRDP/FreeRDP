@@ -32,6 +32,7 @@
 
 #include "connection.h"
 #include "transport.h"
+#include "proxy_command.h"
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
@@ -312,6 +313,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
+	if (!proxy_command_validate_settings(settings))
+		return FALSE;
 	if (!rdp_client_reset_codecs(rdp->context))
 		return FALSE;
 
@@ -607,7 +610,7 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_FQDN)
 	{
-		if (settings->GatewayEnabled ||
+		if (settings->GatewayEnabled || settings->ProxyCommand ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
 		{
 			return (freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
@@ -633,7 +636,7 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 	{
-		if (settings->GatewayEnabled ||
+		if (settings->GatewayEnabled || settings->ProxyCommand ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
 		{
 			return (freerdp_settings_set_string(settings, FreeRDP_ServerHostname,

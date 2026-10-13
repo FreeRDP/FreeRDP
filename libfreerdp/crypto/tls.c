@@ -1142,6 +1142,12 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 static int pollAndHandshake(rdpTls* tls)
 {
 	WINPR_ASSERT(tls);
+	/* A ProxyCommand can exist before it has opened its destination. Periodically retry
+	 * nonblocking BIO I/O so its startup deadline is checked, even when RDP negotiation
+	 * is disabled and TLS is the first exchange. Ordinary socket transports keep their
+	 * existing event-driven wait. */
+	const BOOL proxyCommand =
+	    freerdp_settings_get_string(tls->context->settings, FreeRDP_ProxyCommand) != nullptr;
 
 	do
 	{
@@ -1159,7 +1165,8 @@ static int pollAndHandshake(rdpTls* tls)
 			return -1;
 		}
 
-		status = WaitForMultipleObjectsEx(ARRAYSIZE(events), events, FALSE, INFINITE, TRUE);
+		status = WaitForMultipleObjectsEx(ARRAYSIZE(events), events, FALSE,
+		                                  proxyCommand ? 100 : INFINITE, TRUE);
 		switch (status)
 		{
 			case WAIT_OBJECT_0 + 1:
@@ -1168,6 +1175,9 @@ static int pollAndHandshake(rdpTls* tls)
 				WLog_DBG(TAG, "Abort event set, cancel connect");
 				return -1;
 			case WAIT_TIMEOUT:
+				if (proxyCommand)
+					break;
+				continue;
 			case WAIT_IO_COMPLETION:
 				continue;
 			default:

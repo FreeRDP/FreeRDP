@@ -18,6 +18,17 @@
 set(MODULE_NAME "freerdp-core")
 set(MODULE_PREFIX "FREERDP_CORE")
 
+if(NOT WIN32)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  check_symbol_exists(posix_spawn_file_actions_addclosefrom_np "spawn.h" HAVE_PROXY_COMMAND_CLOSEFROM)
+  cmake_pop_check_state()
+  if(HAVE_PROXY_COMMAND_CLOSEFROM)
+    freerdp_definition_add(HAVE_PROXY_COMMAND_CLOSEFROM)
+  endif()
+endif()
+
 # We use some fields that are only defined in linux 5.11+
 check_symbol_exists(VMADDR_FLAG_TO_HOST "ctype.h;sys/socket.h;linux/vm_sockets.h" HAVE_AF_VSOCK_H)
 
@@ -119,6 +130,10 @@ set(${MODULE_PREFIX}_SRCS
     tcp.h
     proxy.c
     proxy.h
+    proxy_command.c
+    proxy_command.h
+    proxy_command_posix.c
+    proxy_command_win.c
     tpdu.c
     tpdu.h
     tpkt.c

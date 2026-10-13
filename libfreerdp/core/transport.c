@@ -51,6 +51,7 @@
 #include "tpkt.h"
 #include "fastpath.h"
 #include "transport.h"
+#include "proxy_command.h"
 #include "rdp.h"
 #include "proxy.h"
 #include "utils.h"
@@ -544,6 +545,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	WINPR_ASSERT(settings);
 
 	BOOL rpcFallback = !settings->GatewayHttpTransport;
+	if (!proxy_command_validate_settings(settings))
+		return FALSE;
 
 	if (transport->GatewayEnabled)
 	{
@@ -635,6 +638,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		const char* proxyUsername = nullptr;
 		const char* proxyPassword = nullptr;
 		BOOL isProxyConnection =
+		    !freerdp_settings_get_string(settings, FreeRDP_ProxyCommand) &&
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 		rdpTransportLayer* layer = nullptr;
@@ -1592,6 +1596,8 @@ static rdpTransportLayer* transport_default_connect_layer(rdpTransport* transpor
 	rdpContext* context = transport_get_context(transport);
 	WINPR_ASSERT(context);
 
+	if (freerdp_settings_get_string(context->settings, FreeRDP_ProxyCommand))
+		return proxy_command_connect(context, hostname, port, timeout);
 	return freerdp_tcp_connect_layer(context, hostname, port, timeout);
 }
 

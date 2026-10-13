@@ -9,6 +9,14 @@ set(DRIVER ${MODULE_NAME}.c)
 
 set(TESTS TestVersion.c TestSettings.c TestUtils.c)
 
+if(NOT WIN32 AND NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
+  list(APPEND TESTS TestProxyCommand.c)
+elseif(WIN32 AND NOT CYGWIN)
+  list(APPEND TESTS TestProxyCommandWin.c)
+  add_executable(TestProxyCommandHelper TestProxyCommandHelper.c)
+  set_target_properties(TestProxyCommandHelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+endif()
+
 if(BUILD_TESTING_INTERNAL)
   list(APPEND TESTS TestStreamDump.c TestRdstls.c TestServerChannels.c)
 endif()
@@ -31,6 +39,10 @@ endif()
 create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 
 add_executable(${MODULE_NAME} ${SRCS})
+
+if(TARGET TestProxyCommandHelper)
+  add_dependencies(${MODULE_NAME} TestProxyCommandHelper)
+endif()
 
 if(WITH_RESOURCE_VERSIONING)
   target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RESOURCE_VERSIONING)
@@ -73,5 +85,11 @@ foreach(test ${TESTS})
   get_filename_component(TestName ${test} NAME_WE)
   add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
+
+if(NOT WIN32 AND NOT ANDROID AND NOT EMSCRIPTEN AND NOT IOS)
+  set_tests_properties(TestProxyCommand PROPERTIES TIMEOUT 30)
+elseif(WIN32 AND NOT CYGWIN)
+  set_tests_properties(TestProxyCommandWin PROPERTIES TIMEOUT 90)
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Core/Test")

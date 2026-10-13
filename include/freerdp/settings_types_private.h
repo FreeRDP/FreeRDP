@@ -555,7 +555,14 @@ struct rdp_settings
 		                                                             * native UA.
 		                                                             * @since version 3.32.2
 		                                                             */
-	UINT64 padding2112[2112 - 2030];                                /* 2030 */
+	SETTINGS_DEPRECATED(ALIGN64 char* ProxyCommand);                /** 2030
+		                                                             * External command whose
+		                                                             * stdin/stdout carry the
+		                                                             * transport byte stream
+		                                                             * (/proxy-command).
+		                                                             * @since version 3.32.3
+		                                                             */
+	UINT64 padding2112[2112 - 2031];                                /* 2031 */
 
 	/**
 	 * RemoteApp

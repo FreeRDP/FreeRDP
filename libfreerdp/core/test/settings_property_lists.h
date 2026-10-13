@@ -439,6 +439,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_PkinitAnchors,
 	FreeRDP_PlayRemoteFxFile,
 	FreeRDP_PreconnectionBlob,
+	FreeRDP_ProxyCommand,
 	FreeRDP_ProxyHostname,
 	FreeRDP_ProxyPassword,
 	FreeRDP_ProxyUsername,

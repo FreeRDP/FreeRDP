@@ -722,6 +722,11 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 #endif
 	printf("    %s /gateway:g:rdp.contoso.com ...\n", name);
 	printf("\n");
+	printf("Connect through an external command's stdin/stdout:\n");
+	printf("    %s /v:rdp.internal /proxy-command:\"ssh -o BatchMode=yes -W %%h:%%p bastion\"\n",
+	       name);
+	printf("    Tokens: %%h = target hostname, %%p = target port, %%%% = literal percent\n");
+	printf("    Requires a stream command; gateway/proxy chaining and UDP are disabled.\n\n");
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 	return TRUE;
@@ -5111,6 +5116,13 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			const int rc = parse_proxy_options(settings, arg);
 			if (rc != 0)
 				return fail_at(arg, rc);
+		}
+		CommandLineSwitchCase(arg, "proxy-command")
+		{
+			if (!arg->Value || !arg->Value[0])
+				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+			if (!freerdp_settings_set_string(settings, FreeRDP_ProxyCommand, arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
 
 		CommandLineSwitchCase(arg, "azure")
