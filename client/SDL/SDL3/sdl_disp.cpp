@@ -180,9 +180,8 @@ Uint32 sdlDispContext::OnTimer(void* param, [[maybe_unused]] SDL_TimerID timerID
 
 	WLog_Print(sdl->getWLog(), WLOG_TRACE, "checking for display changes...");
 
-	auto rc = sdlDisp->sendResize();
-	if (!rc)
-		WLog_Print(sdl->getWLog(), WLOG_TRACE, "sent new display layout, result %d", rc);
+	if (!sdlDisp->sendResize())
+		WLog_Print(sdl->getWLog(), WLOG_TRACE, "failed to send the display layout");
 
 	if (sdlDisp->_timer_retries++ >= MAX_RETRIES)
 	{
