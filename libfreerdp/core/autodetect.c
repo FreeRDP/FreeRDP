@@ -23,6 +23,7 @@
 #include <winpr/assert.h>
 
 #include "autodetect.h"
+#include "multitransport.h"
 
 #define TYPE_ID_AUTODETECT_REQUEST 0x00
 #define TYPE_ID_AUTODETECT_RESPONSE 0x01
@@ -345,6 +346,22 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
 	                                    sec_flags | SEC_AUTODETECT_REQ);
 }
 
+/* [MS-RDPBCGR] 2.2.14.2.2 Bandwidth Measure Results (RDP_BW_RESULTS), 14 bytes */
+static void autodetect_write_bandwidth_measure_results(const rdpAutoDetect* autodetect, wStream* s,
+                                                       UINT16 responseType, UINT16 sequenceNumber,
+                                                       UINT32 timeDelta)
+{
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(s);
+
+	Stream_Write_UINT8(s, 0x0E);                                   /* headerLength (1 byte) */
+	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE);            /* headerTypeId (1 byte) */
+	Stream_Write_UINT16(s, sequenceNumber);                        /* sequenceNumber (2 bytes) */
+	Stream_Write_UINT16(s, responseType);                          /* responseType (2 bytes) */
+	Stream_Write_UINT32(s, timeDelta);                             /* timeDelta (4 bytes) */
+	Stream_Write_UINT32(s, autodetect->bandwidthMeasureByteCount); /* byteCount (4 bytes) */
+}
+
 static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
                                                       RDP_TRANSPORT_TYPE transport,
                                                       UINT16 responseType, UINT16 sequenceNumber)
@@ -368,34 +385,38 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
 	else
 		timeDelta -= autodetect->bandwidthMeasureStartTime;
 
-	/* Send the result PDU to the server */
-	wStream* s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
-
-	if (!s)
-		return FALSE;
-
+	const UINT32 delta = (UINT32)MIN(timeDelta, UINT32_MAX);
 	WLog_Print(autodetect->log, WLOG_TRACE,
-	           "sending Bandwidth Measure Results PDU -> timeDelta=%" PRIu64 ", byteCount=%" PRIu32
-	           "",
-	           timeDelta, autodetect->bandwidthMeasureByteCount);
+	           "sending Bandwidth Measure Results PDU -> timeDelta=%" PRIu32 ", byteCount=%" PRIu32
+	           "%s",
+	           delta, autodetect->bandwidthMeasureByteCount,
+	           (transport == RDP_TRANSPORT_UDP_R) ? " in the UDP tunnel" : "");
 
-	Stream_Write_UINT8(s, 0x0E);                                   /* headerLength (1 byte) */
-	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE);            /* headerTypeId (1 byte) */
-	Stream_Write_UINT16(s, sequenceNumber);                        /* sequenceNumber (2 bytes) */
-	Stream_Write_UINT16(s, responseType);                          /* responseType (1 byte) */
-	Stream_Write_UINT32(s, (UINT32)MIN(timeDelta, UINT32_MAX));    /* timeDelta (4 bytes) */
-	Stream_Write_UINT32(s, autodetect->bandwidthMeasureByteCount); /* byteCount (4 bytes) */
 	IFCALLRET(autodetect->ClientBandwidthMeasureResult, success, autodetect, transport,
-	          responseType, sequenceNumber, (UINT32)MIN(timeDelta, UINT32_MAX),
-	          autodetect->bandwidthMeasureByteCount);
-
+	          responseType, sequenceNumber, delta, autodetect->bandwidthMeasureByteCount);
 	if (!success)
 	{
 		WLog_Print(autodetect->log, WLOG_ERROR, "ClientBandwidthMeasureResult failed");
-		Stream_Release(s);
 		return FALSE;
 	}
 
+	/* [MS-RDPBCGR] 3.2.5.17: a measurement stopped in a tunnel subheader is answered in one on
+	 * the same tunnel ([MS-RDPEMT] 2.2.1.1.1), all others on the main channel */
+	if (transport == RDP_TRANSPORT_UDP_R)
+	{
+		BYTE buffer[0x0E] = WINPR_C_ARRAY_INIT;
+		wStream sbuffer = WINPR_C_ARRAY_INIT;
+		wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
+		autodetect_write_bandwidth_measure_results(autodetect, s, responseType, sequenceNumber,
+		                                           delta);
+		return multitransport_send_autodetect_response(autodetect->context->rdp->multitransport,
+		                                               buffer, sizeof(buffer));
+	}
+
+	wStream* s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
+	if (!s)
+		return FALSE;
+	autodetect_write_bandwidth_measure_results(autodetect, s, responseType, sequenceNumber, delta);
 	return rdp_send_message_channel_pdu(autodetect->context->rdp, s,
 	                                    sec_flags | SEC_AUTODETECT_RSP);
 }
@@ -981,8 +1002,9 @@ state_run_t autodetect_recv_tunnel_request(rdpAutoDetect* autodetect, RDP_TRANSP
 	WINPR_ASSERT(s);
 
 	/* [MS-RDPBCGR] 1.3.9: Continuous Auto-Detection over a sideband channel sends Bandwidth
-	 * Measure Start, Bandwidth Measure Stop and Network Characteristics Result. Only the result
-	 * is handled, it needs no answer ([MS-RDPBCGR] 3.2.5.17). */
+	 * Measure Start, Bandwidth Measure Stop and Network Characteristics Result. The result needs
+	 * no answer, a Stop on the reliable tunnel is answered on it ([MS-RDPBCGR] 3.2.5.17). Start
+	 * and Stop of a lossy tunnel (0x0114, 0x0629) are not, there is none. */
 	UINT16 requestType = 0;
 	if (Stream_GetRemainingLength(s) >= 6)
 	{
@@ -992,6 +1014,8 @@ state_run_t autodetect_recv_tunnel_request(rdpAutoDetect* autodetect, RDP_TRANSP
 
 	switch (requestType)
 	{
+		case RDP_BW_START_REQUEST_TYPE_CONTINUOUS:
+		case RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS:
 		case RDP_NETCHAR_RESULTS_0x0840:
 		case RDP_NETCHAR_RESULTS_0x0880:
 		case RDP_NETCHAR_RESULTS_0x08C0:

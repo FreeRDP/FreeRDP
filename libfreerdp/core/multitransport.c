@@ -486,7 +486,13 @@ WINPR_ATTR_NODISCARD
 static BOOL multitransport_deliver_data(rdpMultitransport* multi, const mt_event* ev)
 {
 	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
 	WINPR_ASSERT(ev);
+
+	/* [MS-RDPBCGR] 3.2.5.17: a bandwidth measurement counts the data after the tunnel header */
+	rdpAutoDetect* autodetect = multi->rdp->autodetect;
+	if (autodetect && autodetect->bandwidthMeasureStarted)
+		autodetect->bandwidthMeasureByteCount += WINPR_ASSERTING_INT_CAST(UINT32, ev->length);
 
 	if (!multi->callbacks.TunnelDataReceived)
 	{
@@ -622,6 +628,19 @@ HANDLE multitransport_get_event_handle(rdpMultitransport* multi)
 {
 	WINPR_ASSERT(multi);
 	return multi->event;
+}
+
+BOOL multitransport_send_autodetect_response(rdpMultitransport* multi, const BYTE* data,
+                                             size_t length)
+{
+	WINPR_ASSERT(multi);
+
+	BOOL rc = FALSE;
+	EnterCriticalSection(&multi->lock);
+	if (multi->reliable && (multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY))
+		rc = rdpemt_send_subheader(multi->reliable, data, length);
+	LeaveCriticalSection(&multi->lock);
+	return rc;
 }
 
 BOOL multitransport_ended_connection(const rdpMultitransport* multi)

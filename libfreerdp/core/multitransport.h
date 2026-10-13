@@ -65,6 +65,12 @@ FREERDP_LOCAL HANDLE multitransport_get_event_handle(rdpMultitransport* multi);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_check(rdpMultitransport* multi);
 
+/** Sends an auto-detect response, a whole RDP_TUNNEL_SUBHEADER of type
+ * TYPE_ID_AUTODETECT_RESPONSE, over the reliable UDP tunnel. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_send_autodetect_response(rdpMultitransport* multi,
+                                                           const BYTE* data, size_t length);
+
 /** TRUE when the connection was ended because its UDP tunnel broke down. Cleared by
  * multitransport_reset(). */
 WINPR_ATTR_NODISCARD

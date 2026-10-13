@@ -217,24 +217,29 @@ static BOOL emt_flush_tls(rdpEmt* emt)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t length)
+static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* subHeader, size_t subHeaderLength,
+                          const BYTE* payload, size_t length)
 {
 	WINPR_ASSERT(emt);
+	WINPR_ASSERT(subHeader || (subHeaderLength == 0));
 	WINPR_ASSERT(payload || (length == 0));
 
-	if (length > UINT16_MAX)
+	if ((length > UINT16_MAX) || (subHeaderLength > UINT8_MAX - RDPTUNNEL_HEADER_LENGTH))
 		return FALSE;
 
-	wStream* s = Stream_New(nullptr, RDPTUNNEL_HEADER_LENGTH + length);
+	wStream* s = Stream_New(nullptr, RDPTUNNEL_HEADER_LENGTH + subHeaderLength + length);
 	if (!s)
 		return FALSE;
 
-	/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
+	/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER, HeaderLength includes the SubHeaders */
 	const UINT8 actionByte = WINPR_ASSERTING_INT_CAST(UINT8, action & 0x0F);
 	const UINT16 payloadLength = WINPR_ASSERTING_INT_CAST(UINT16, length);
-	Stream_Write_UINT8(s, actionByte);              /* Action (4 bits), Flags (4 bits) */
-	Stream_Write_UINT16(s, payloadLength);          /* PayloadLength */
-	Stream_Write_UINT8(s, RDPTUNNEL_HEADER_LENGTH); /* HeaderLength */
+	const UINT8 headerLength =
+	    WINPR_ASSERTING_INT_CAST(UINT8, RDPTUNNEL_HEADER_LENGTH + subHeaderLength);
+	Stream_Write_UINT8(s, actionByte);     /* Action (4 bits), Flags (4 bits) */
+	Stream_Write_UINT16(s, payloadLength); /* PayloadLength */
+	Stream_Write_UINT8(s, headerLength);   /* HeaderLength */
+	Stream_Write(s, subHeader, subHeaderLength);
 	Stream_Write(s, payload, length);
 
 	const int total = WINPR_ASSERTING_INT_CAST(int, Stream_GetPosition(s));
@@ -264,7 +269,7 @@ static BOOL emt_send_create_request(rdpEmt* emt)
 
 	WLog_Print(emt->log, WLOG_DEBUG, "sending Tunnel Create Request for request id %" PRIu32,
 	           emt->requestId);
-	return emt_write_pdu(emt, RDPTUNNEL_ACTION_CREATEREQUEST, Stream_Buffer(s),
+	return emt_write_pdu(emt, RDPTUNNEL_ACTION_CREATEREQUEST, nullptr, 0, Stream_Buffer(s),
 	                     Stream_GetPosition(s));
 }
 
@@ -810,9 +815,27 @@ BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length)
 	EnterCriticalSection(&emt->lock);
 	if (emt->ready && !emt->failed)
 	{
-		rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, data, length);
+		rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, nullptr, 0, data, length);
 		if (!rc)
 			emt_fail(emt, "failed to send tunnel data");
+	}
+	LeaveCriticalSection(&emt->lock);
+	return rc;
+}
+
+BOOL rdpemt_send_subheader(rdpEmt* emt, const BYTE* subHeader, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(subHeader);
+
+	BOOL rc = FALSE;
+	EnterCriticalSection(&emt->lock);
+	if (emt->ready && !emt->failed)
+	{
+		/* a Tunnel Data PDU without HigherLayerData, as Windows sends its auto-detect requests */
+		rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, subHeader, length, nullptr, 0);
+		if (!rc)
+			emt_fail(emt, "failed to send a tunnel subheader");
 	}
 	LeaveCriticalSection(&emt->lock);
 	return rc;
