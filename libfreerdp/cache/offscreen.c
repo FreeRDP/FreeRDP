@@ -177,7 +177,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 		WINPR_ASSERT(offscreenCache->context);
 
 		/* Ensure that the bitmap is no longer used in GDI */
-		if (prevBitmap->SetSurface)
+		if ((offscreenCache->currentSurface == index) && prevBitmap->SetSurface)
 		{
 			if (!prevBitmap->SetSurface(offscreenCache->context, nullptr, FALSE))
 				WLog_WARN(TAG, "prevBitmap->SetSurface failed");
