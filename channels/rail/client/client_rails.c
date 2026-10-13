@@ -6,26 +6,31 @@
 
 #include "rail_main.h"
 
+UINT rail_send_client_status(RailClientContext* context)
+{
+	WINPR_ASSERT(context);
+	railPlugin* rail = context->handle;
+	WINPR_ASSERT(rail);
+	WINPR_ASSERT(rail->rdpcontext);
+	const rdpSettings* settings = rail->rdpcontext->settings;
+	WINPR_ASSERT(settings);
+	RAIL_CLIENT_STATUS_ORDER clientStatus = { .flags = freerdp_settings_get_uint32(
+		                                          settings, FreeRDP_RemoteAppFeatureFlags) };
+	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
+		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
+	else
+		clientStatus.flags &= ~TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
+	return context->ClientInformation(context, &clientStatus);
+}
 UINT client_rail_server_start_cmd(RailClientContext* context)
 {
 	WINPR_ASSERT(context);
 	railPlugin* rail = context->handle;
 	WINPR_ASSERT(rail);
 	WINPR_ASSERT(rail->rdpcontext);
-
 	const rdpSettings* settings = rail->rdpcontext->settings;
 	WINPR_ASSERT(settings);
-
-	RAIL_CLIENT_STATUS_ORDER clientStatus = { .flags = freerdp_settings_get_uint32(
-		                                          settings, FreeRDP_RemoteAppFeatureFlags) };
-
-	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
-		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
-	else
-		clientStatus.flags &= ~TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
-
-	UINT status = context->ClientInformation(context, &clientStatus);
-
+	UINT status = rail_send_client_status(context);
 	if (status != CHANNEL_RC_OK)
 		return status;
 
