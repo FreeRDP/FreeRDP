@@ -506,7 +506,11 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
+			{
+				if (!xf_keyboard_flush_deferred_alt(xfc))
+					return FALSE;
 				freerdp_client_send_wheel_event(&xfc->common, flags);
+			}
 		}
 		else
 		{
@@ -540,6 +544,8 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 
 			xf_event_adjust_coordinates(xfc, &x, &y);
 
+			if (!xf_keyboard_flush_deferred_alt(xfc))
+				return FALSE;
 			if (extended)
 				freerdp_client_send_extended_button_event(&xfc->common, FALSE, flags, x, y);
 			else
@@ -718,6 +724,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 	if (event->mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
+	/* NotifyGrab matters even when the WM consumes Tab without changing focus. */
 	xf_keyboard_release_all_keypress(xfc);
 	if (app)
 	{
@@ -1465,7 +1472,11 @@ BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down,
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
+			{
+				if (!xf_keyboard_flush_deferred_alt(xfc))
+					return FALSE;
 				freerdp_client_send_wheel_event(&xfc->common, flags);
+			}
 		}
 		else
 		{
@@ -1484,6 +1495,8 @@ BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down,
 					flags |= PTR_FLAGS_DOWN;
 			}
 
+			if (!xf_keyboard_flush_deferred_alt(xfc))
+				return FALSE;
 			if (extended)
 				freerdp_client_send_extended_button_event(&xfc->common, TRUE, flags, 0, 0);
 			else

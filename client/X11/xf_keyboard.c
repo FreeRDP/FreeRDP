@@ -517,6 +517,7 @@ BOOL xf_keyboard_update_modifier_map(xfContext* xfc)
 }
 
 static void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* ev);
+static DWORD get_rdp_scancode_from_x11_keycode(xfContext* xfc, DWORD keycode);
 
 static BOOL xf_sync_kbd_state(xfContext* xfc)
 {
@@ -865,20 +866,107 @@ void xf_keyboard_free(xfContext* xfc)
 	xf_keyboard_action_script_free(xfc);
 }
 
+/* Only ordinary Alt is deferred. Shift keeps the existing immediate path. */
+enum
+{
+	XF_ALT_LEFT = 0x01,
+	XF_ALT_RIGHT = 0x02
+};
+
+static BOOL xf_keyboard_defer_alt_enabled(const xfContext* xfc)
+{
+	return freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt);
+}
+
+static UINT32 xf_keyboard_alt_mask(xfContext* xfc, KeyCode code)
+{
+	if (!code || (code == XKeysymToKeycode(xfc->display, XK_ISO_Level3_Shift)) ||
+	    (code == XKeysymToKeycode(xfc->display, XK_Mode_switch)))
+		return 0;
+
+	const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, code);
+	if ((code == XKeysymToKeycode(xfc->display, XK_Alt_L)) && (scancode == RDP_SCANCODE_LMENU))
+		return XF_ALT_LEFT;
+	if ((code == XKeysymToKeycode(xfc->display, XK_Alt_R)) && (scancode == RDP_SCANCODE_RMENU))
+		return XF_ALT_RIGHT;
+	return 0;
+}
+
+void xf_keyboard_discard_deferred_alt(xfContext* xfc)
+{
+	if (!xf_keyboard_defer_alt_enabled(xfc))
+		return;
+	xfc->deferredAlt.pending = 0;
+	xfc->deferredAlt.blocked = TRUE;
+}
+
+BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
+{
+	if (!xf_keyboard_defer_alt_enabled(xfc) || xfc->deferredAlt.blocked)
+		return TRUE;
+
+	/* A fixed left/right order is sufficient; no modifier press queue is kept. */
+	for (UINT32 mask = XF_ALT_LEFT; mask <= XF_ALT_RIGHT; mask <<= 1)
+	{
+		if (!(xfc->deferredAlt.pending & mask))
+			continue;
+		const DWORD scancode = (mask == XF_ALT_LEFT) ? RDP_SCANCODE_LMENU : RDP_SCANCODE_RMENU;
+		if (!freerdp_input_send_keyboard_event_ex(xfc->common.context.input, TRUE, FALSE, scancode))
+			return FALSE;
+		xfc->deferredAlt.pending &= ~mask;
+		xfc->deferredAlt.sent |= mask;
+	}
+	return TRUE;
+}
+
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	BOOL last = 0;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	last = xfc->KeyboardState[event->keycode];
+	const BOOL defer = xf_keyboard_defer_alt_enabled(xfc);
+	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
 
 	if (xf_keyboard_handle_special_keys(xfc, keysym))
+	{
+		if (defer)
+		{
+			xf_keyboard_discard_deferred_alt(xfc);
+			xfc->deferredAlt.blocked = FALSE;
+			xfc->KeyboardState[event->keycode] = last;
+		}
 		return;
-
+	}
+	if (defer)
+	{
+		if (xfc->deferredAlt.blocked)
+		{
+			xfc->KeyboardState[event->keycode] = last;
+			return;
+		}
+		const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)event->keycode);
+		if (mask)
+		{
+			if (!(xfc->deferredAlt.sent & mask))
+			{
+				xfc->deferredAlt.pending |= mask;
+				return;
+			}
+			const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, event->keycode);
+			(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, TRUE, last,
+			                                           scancode);
+			return;
+		}
+		/* Shift must not commit Alt before a host Alt+Shift+Tab shortcut. */
+		if ((keysym != XK_Shift_L) && (keysym != XK_Shift_R) &&
+		    !xf_keyboard_flush_deferred_alt(xfc))
+		{
+			xfc->KeyboardState[event->keycode] = last;
+			return;
+		}
+	}
 	xf_keyboard_send_key(xfc, TRUE, last, event);
 }
 
@@ -888,9 +976,36 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	BOOL last = xfc->KeyboardState[event->keycode];
+	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = FALSE;
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
+	if (xf_keyboard_defer_alt_enabled(xfc))
+	{
+		if (xfc->deferredAlt.blocked)
+			return;
+		const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)event->keycode);
+		if (mask)
+		{
+			/* An unmatched release after cancellation must not create an Alt tap. */
+			if (xfc->deferredAlt.pending & mask)
+				(void)xf_keyboard_flush_deferred_alt(xfc);
+			if (xfc->deferredAlt.sent & mask)
+			{
+				const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, event->keycode);
+				(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
+				                                           scancode);
+			}
+			xfc->deferredAlt.pending &= ~mask;
+			xfc->deferredAlt.sent &= ~mask;
+			return;
+		}
+		if (!last)
+			return;
+		/* Shift release commits Alt before Windows interprets Alt+Shift. */
+		if (((keysym == XK_Shift_L) || (keysym == XK_Shift_R)) &&
+		    !xf_keyboard_flush_deferred_alt(xfc))
+			return;
+	}
 	xf_keyboard_send_key(xfc, FALSE, last, event);
 }
 
@@ -958,6 +1073,16 @@ static void release_keys(xfContext* xfc, BOOL modifiers)
 	{
 		if (xfc->KeyboardState[keycode])
 		{
+			/* Physical Alt may never have reached the guest. */
+			if (xf_keyboard_defer_alt_enabled(xfc))
+			{
+				const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)keycode);
+				if (mask && !(xfc->deferredAlt.sent & mask))
+				{
+					xfc->KeyboardState[keycode] = FALSE;
+					continue;
+				}
+			}
 			const DWORD rdp_scancode =
 			    get_rdp_scancode_from_x11_keycode(xfc, WINPR_ASSERTING_INT_CAST(UINT32, keycode));
 
@@ -975,8 +1100,10 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
+	xf_keyboard_discard_deferred_alt(xfc);
 	release_keys(xfc, FALSE);
 	release_keys(xfc, TRUE);
+	xfc->deferredAlt.sent = 0;
 }
 
 static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
@@ -1186,6 +1313,14 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 		                       XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
 
 	xf_keyboard_clear(xfc);
+	if (xf_keyboard_defer_alt_enabled(xfc))
+	{
+		/* Focus return starts a new sequence; do not restore held modifiers. */
+		xfc->deferredAlt.pending = 0;
+		xfc->deferredAlt.sent = 0;
+		xfc->deferredAlt.blocked = FALSE;
+		return;
+	}
 
 	const int state = xf_keyboard_read_keyboard_state(xfc);
 
@@ -1578,6 +1713,8 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 BOOL xf_ungrab(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
+	if (xf_keyboard_defer_alt_enabled(xfc))
+		xf_keyboard_release_all_keypress(xfc);
 	XUngrabKeyboard(xfc->display, CurrentTime);
 	XUngrabPointer(xfc->display, CurrentTime);
 	xfc->common.mouse_grabbed = FALSE;

@@ -277,12 +277,15 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 #endif
 	{ "kbd", COMMAND_LINE_VALUE_REQUIRED,
 	  "[layout:[0x<id>|<name>],lang:<0x<id>>,fn-key:<value>,type:<value>,subtype:<value>,unicode[:"
-	  "on|off],remap:<key1>=<value1>,remap:<key2>=<value2>,pipe:<filename>]",
+	  "on|off],defer-alt[:on|off],remap:<key1>=<value1>,remap:<key2>=<value2>,pipe:<filename>]",
 	  nullptr, nullptr, -1, nullptr,
 	  "Keyboard related options:\n"
 	  " * layout: set the keybouard layout announced to the server\n"
 	  " * lang: set the keyboard language identifier sent to the server\n"
 	  " * fn-key: Function key value\n"
+	  " * defer-alt: [X11] Defer Alt (except AltGr); Shift stays immediate. Discard unused Alt on "
+	  "host focus/grab "
+	  "changes (default: off)\n"
 	  " * remap: RDP scancode to another one. Use /list:kbd-scancode to get the mapping. Example: "
 	  "To switch "
 	  "'a' and 's' on a US keyboard: /kbd:remap:0x1e=0x1f,remap:0x1f=0x1e\n"

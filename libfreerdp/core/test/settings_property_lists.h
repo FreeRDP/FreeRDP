@@ -190,6 +190,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_TransportDump,
 	FreeRDP_TransportDumpReplay,
 	FreeRDP_TransportDumpReplayNodelay,
+	FreeRDP_KeyboardDeferAlt,
 	FreeRDP_UnicodeInput,
 	FreeRDP_UnmapButtons,
 	FreeRDP_UseCommonStdioCallbacks,

@@ -3087,6 +3087,15 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				                                      (UINT32)ival))
 					rc = COMMAND_LINE_ERROR;
 			}
+			else if (option_equals("defer-alt", val) || option_starts_with("defer-alt:", val))
+			{
+				const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+				if (bval == PARSE_FAIL)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_KeyboardDeferAlt,
+				                                    bval != PARSE_OFF))
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
 			else if (option_starts_with("unicode", val))
 			{
 				const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
