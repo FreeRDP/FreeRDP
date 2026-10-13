@@ -28,6 +28,9 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/multitransport.h>
+#if defined(WITH_RDPEUDP)
+#include <freerdp/channels/channels.h>
+#endif
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/utils/drdynvc.h>
 #include <freerdp/codec/zgfx.h>
@@ -619,6 +622,11 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 					error = IFCALLRESULT(CHANNEL_RC_OK, cb->OnClose, cb);
 			}
 
+#if defined(WITH_RDPEUDP)
+			/* not announced to the application, see dvcman_create_channel */
+			if (channel->staticBridge)
+				context = nullptr;
+#endif
 			if (channel->dvcman && channel->dvcman->drdynvc)
 			{
 				if (context)
@@ -870,6 +878,185 @@ static DrdynvcClientChannelStat* drdynvc_get_channel_stats(DrdynvcClientContext*
 	return args.stats;
 }
 
+#if defined(WITH_RDPEUDP)
+/* [MS-RDPEDYC] 3.1.5.4: a server tunnelling static virtual channel traffic opens a dynamic
+ * channel with the name of a static one for it, and both ends then send and receive that static
+ * channel's data on the dynamic channel. Servers have been seen doing so also when the client did
+ * not advertise TRANSPORTTYPE_UDP_PREFERRED, so with UDP multitransport any such channel is
+ * taken: what arrives on it is handed to the static channel's plugin as if it had come on the
+ * static channel, and what the plugin writes goes out on it (freerdp_channels_set_static_bridge).
+ * Windows 11 reads the clipboard's answers only there. Without UDP multitransport such a channel
+ * is refused, as any channel without a listener. */
+typedef struct
+{
+	IWTSVirtualChannelCallback iface;
+	freerdp* instance;
+	UINT16 staticChannelId;
+	char staticChannelName[CHANNEL_NAME_LEN + 1];
+
+	/* the custom of the sends it set; the static channel owns it, here it is only compared */
+	void* target;
+} DVCMAN_STATIC_BRIDGE;
+
+/* What the static channel's sends are passed, see dvcman_static_bridge_send. */
+typedef struct
+{
+	drdynvcPlugin* drdynvc;
+	UINT32 channelId;
+} DVCMAN_STATIC_BRIDGE_TARGET;
+
+/* [MS-RDPEDYC] 3.1.5.4.2: the static channel's data is sent on the dynamic channel that carries
+ * it. Called for each message the static channel's plugin writes; one for a dynamic channel that
+ * closed since is discarded. */
+WINPR_ATTR_NODISCARD
+static BOOL dvcman_static_bridge_send(void* custom, const BYTE* data, size_t length)
+{
+	const DVCMAN_STATIC_BRIDGE_TARGET* target = custom;
+	WINPR_ASSERT(target);
+	WINPR_ASSERT(target->drdynvc);
+
+	if (length > UINT32_MAX)
+		return FALSE;
+
+	/* the reference keeps the channel, the table is not held while it writes */
+	IWTSVirtualChannelManager* mgr = target->drdynvc->channel_mgr;
+	DVCMAN_CHANNEL* channel = dvcman_get_channel_by_id(mgr, target->channelId, TRUE);
+	if (!channel)
+		return TRUE;
+	dvcman_return_channel(mgr, channel);
+
+	UINT rc = CHANNEL_RC_OK;
+	if ((channel->state == DVC_CHANNEL_RUNNING) && channel->staticBridge)
+		rc = dvcman_write_channel(&channel->iface, (ULONG)length, data, nullptr);
+	dvcman_channel_unref(channel);
+	return rc == CHANNEL_RC_OK;
+}
+
+/* One chunk for the static channel, with the Channel PDU Header flags and total length it would
+ * have had there. A plugin that closed its static channel takes no data, which is then
+ * discarded ([MS-RDPEDYC] 3.1.5.4.5). */
+static void dvcman_static_bridge_deliver(DVCMAN_STATIC_BRIDGE* bridge, const BYTE* data,
+                                         size_t length, UINT32 flags, size_t totalLength)
+{
+	WINPR_ASSERT(bridge);
+
+	if ((length > 0) && !freerdp_channels_data(bridge->instance, bridge->staticChannelId, data,
+	                                           length, flags, totalLength))
+		WLog_DBG(TAG, "static channel %" PRIu16 " took no data, %" PRIuz " bytes discarded",
+		         bridge->staticChannelId, length);
+}
+
+/* dvcman_receive_channel_data hands a bridge its chunks without this, see
+ * dvcman_static_bridge_receive; anything else is one whole message. */
+WINPR_ATTR_NODISCARD
+static UINT dvcman_static_bridge_on_data(IWTSVirtualChannelCallback* pChannelCallback,
+                                         wStream* data)
+{
+	WINPR_ASSERT(data);
+	const size_t length = Stream_GetRemainingLength(data);
+	dvcman_static_bridge_deliver((DVCMAN_STATIC_BRIDGE*)pChannelCallback, Stream_ConstPointer(data),
+	                             length, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, length);
+	return CHANNEL_RC_OK;
+}
+
+/* [MS-RDPEDYC] 3.1.5.4.2: the data is not reassembled, each chunk of the data PDUs goes to the
+ * static channel as it came so that its endpoint reassembles it. 3.1.5.4.4: CHANNEL_FLAG_FIRST
+ * comes from a DATA_FIRST PDU or a DATA PDU with a whole message, CHANNEL_FLAG_LAST from the DATA
+ * PDU that completes the message. */
+WINPR_ATTR_NODISCARD
+static UINT dvcman_static_bridge_receive(DVCMAN_CHANNEL* channel, wStream* data)
+{
+	WINPR_ASSERT(channel);
+	WINPR_ASSERT(data);
+
+	const size_t length = Stream_GetRemainingLength(data);
+	UINT32 flags = CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST;
+	size_t totalLength = length;
+
+	if (channel->bridgeFragmented)
+	{
+		if (length > channel->dvc_data_length - channel->bridgeReceived)
+		{
+			WLog_Print(channel->dvcman->drdynvc->log, WLOG_ERROR,
+			           "data exceeding declared length!");
+			channel->bridgeFragmented = FALSE;
+			return ERROR_INVALID_DATA;
+		}
+
+		flags = (channel->bridgeReceived == 0) ? CHANNEL_FLAG_FIRST : 0;
+		channel->bridgeReceived += (UINT32)length;
+		totalLength = channel->dvc_data_length;
+		channel->stats.fragmentsIn++;
+		if (channel->bridgeReceived >= channel->dvc_data_length)
+		{
+			flags |= CHANNEL_FLAG_LAST;
+			channel->bridgeFragmented = FALSE;
+		}
+	}
+	if (flags & CHANNEL_FLAG_LAST)
+		channel->stats.packetsIn++;
+
+	dvcman_static_bridge_deliver((DVCMAN_STATIC_BRIDGE*)channel->channel_callback,
+	                             Stream_ConstPointer(data), length, flags, totalLength);
+	return CHANNEL_RC_OK;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT dvcman_static_bridge_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+{
+	DVCMAN_STATIC_BRIDGE* bridge = (DVCMAN_STATIC_BRIDGE*)pChannelCallback;
+	WINPR_ASSERT(bridge);
+
+	/* the static channel sends on itself again (3.1.5.4.5), unless it is gone already or another
+	 * dynamic channel carries it since */
+	if (bridge->target &&
+	    !freerdp_channels_set_static_bridge(bridge->instance, bridge->staticChannelName, nullptr,
+	                                        nullptr, bridge->target))
+		WLog_DBG(TAG, "static channel %s is gone already", bridge->staticChannelName);
+	free(bridge);
+	return CHANNEL_RC_OK;
+}
+
+/* A bridge for a dynamic channel named like a joined static channel, nullptr for any other. */
+WINPR_ATTR_NODISCARD
+static DVCMAN_STATIC_BRIDGE* dvcman_static_bridge_new(drdynvcPlugin* drdynvc,
+                                                      const char* ChannelName)
+{
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(ChannelName);
+
+	/* the channel that carries the dynamic ones stays static (3.1.5.4.2) */
+	if (_stricmp(ChannelName, DRDYNVC_SVC_CHANNEL_NAME) == 0)
+		return nullptr;
+	if (!drdynvc->rdpcontext || !drdynvc->rdpcontext->instance)
+		return nullptr;
+
+	/* only along with UDP multitransport: Soft-Sync, which the tunnelling goes with (3.1.5.4.1),
+	 * is negotiated when both ends do it */
+	const rdpSettings* settings = drdynvc->rdpcontext->settings;
+	if (!settings || !freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport) ||
+	    ((freerdp_settings_get_uint32(settings, FreeRDP_MultitransportFlags) &
+	      SOFTSYNC_TCP_TO_UDP) == 0))
+		return nullptr;
+
+	freerdp* instance = drdynvc->rdpcontext->instance;
+	const UINT16 id = freerdp_channels_get_id_by_name(instance, ChannelName);
+	if (id == 0)
+		return nullptr;
+
+	DVCMAN_STATIC_BRIDGE* bridge = calloc(1, sizeof(DVCMAN_STATIC_BRIDGE));
+	if (!bridge)
+		return nullptr;
+	bridge->iface.OnDataReceived = dvcman_static_bridge_on_data;
+	bridge->iface.OnClose = dvcman_static_bridge_on_close;
+	bridge->instance = instance;
+	bridge->staticChannelId = id;
+	(void)_snprintf(bridge->staticChannelName, sizeof(bridge->staticChannelName), "%s",
+	                ChannelName);
+	return bridge;
+}
+#endif
+
 /**
  * Function description
  *
@@ -893,7 +1080,14 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 	 * ChannelId leaves no state behind and the server may reuse it. */
 	DVCMAN_LISTENER* listener =
 	    (DVCMAN_LISTENER*)HashTable_GetItemValue(dvcman->listeners, ChannelName);
+#if defined(WITH_RDPEUDP)
+	/* or a static channel to carry */
+	DVCMAN_STATIC_BRIDGE* bridge =
+	    listener ? nullptr : dvcman_static_bridge_new(drdynvc, ChannelName);
+	if (!listener && !bridge)
+#else
 	if (!listener)
+#endif
 	{
 		HashTable_Unlock(dvcman->listeners);
 		*res = ERROR_NOT_FOUND;
@@ -948,6 +1142,40 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 	channel->iface.Close = dvcman_close_channel_iface;
 	bAccept = TRUE;
 
+#if defined(WITH_RDPEUDP)
+	if (bridge)
+	{
+		/* No OnChannelConnected: clients take the pInterface of a channel named like a static
+		 * one for that channel's interface, and a bridge has none. */
+		WLog_Print(drdynvc->log, WLOG_INFO,
+		           "dynamic channel %" PRIu32 " carries the data of static channel %s",
+		           channel->channel_id, ChannelName);
+		channel->staticBridge = TRUE;
+		channel->state = DVC_CHANNEL_RUNNING;
+		channel->channel_callback = &bridge->iface;
+
+		DVCMAN_STATIC_BRIDGE_TARGET* target = calloc(1, sizeof(DVCMAN_STATIC_BRIDGE_TARGET));
+		if (target)
+		{
+			target->drdynvc = drdynvc;
+			target->channelId = channel->channel_id;
+		}
+		if (target && freerdp_channels_set_static_bridge(bridge->instance, ChannelName,
+		                                                 dvcman_static_bridge_send, free, target))
+			bridge->target = target;
+		else
+		{
+			WLog_Print(drdynvc->log, WLOG_WARN,
+			           "static channel %s goes on sending on itself, the server may not read it",
+			           ChannelName);
+			free(target);
+		}
+		bridge = nullptr;
+		*res = CHANNEL_RC_OK;
+		goto out;
+	}
+#endif
+
 	*res = listener->listener_callback->OnNewChannelConnection(
 	    listener->listener_callback, &channel->iface, nullptr, &bAccept, &pCallback);
 
@@ -987,6 +1215,9 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 out:
 	HashTable_Unlock(dvcman->listeners);
 	HashTable_Unlock(dvcman->channelsById);
+#if defined(WITH_RDPEUDP)
+	free(bridge);
+#endif
 
 	return channel;
 }
@@ -1037,6 +1268,16 @@ static UINT dvcman_receive_channel_data_first(DVCMAN_CHANNEL* channel, UINT32 le
 {
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->dvcman);
+#if defined(WITH_RDPEUDP)
+	if (channel->staticBridge)
+	{
+		/* not reassembled here, see dvcman_static_bridge_receive */
+		channel->dvc_data_length = length;
+		channel->bridgeReceived = 0;
+		channel->bridgeFragmented = TRUE;
+		return CHANNEL_RC_OK;
+	}
+#endif
 	if (channel->dvc_data)
 		Stream_Release(channel->dvc_data);
 
@@ -1069,6 +1310,10 @@ static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
 	WINPR_ASSERT(channel->dvcman);
 
 	channel->stats.bytesIn += Stream_Length(data);
+#if defined(WITH_RDPEUDP)
+	if (channel->staticBridge)
+		return dvcman_static_bridge_receive(channel, data);
+#endif
 	if (channel->dvc_data)
 	{
 		drdynvcPlugin* drdynvc = channel->dvcman->drdynvc;

@@ -22,6 +22,8 @@
 #ifndef FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H
 
+#include <freerdp/config.h>
+
 #include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <freerdp/settings.h>
@@ -110,6 +112,14 @@ typedef struct
 	 * lock: a writer holds it for a whole message, so Soft-Sync cannot move the channel between
 	 * two fragments, nor while a message is still on its way out over TCP. */
 	UINT32 tunnelType;
+#if defined(WITH_RDPEUDP)
+	/* The channel carries a static virtual channel's traffic, see dvcman_static_bridge_new. Its
+	 * data is passed on in the chunks it came in: bridgeFragmented is set from a DATA_FIRST PDU
+	 * until bridgeReceived reaches its length (dvc_data_length). */
+	BOOL staticBridge;
+	BOOL bridgeFragmented;
+	UINT32 bridgeReceived;
+#endif
 } DVCMAN_CHANNEL;
 
 typedef enum
