@@ -347,7 +347,7 @@ static BOOL dispatch(xfContext* xfc, Event event)
 		case RAW_BUTTON_DOWN:
 			return xf_generic_RawButtonEvent(xfc, 8, FALSE, TRUE);
 		case LOCAL_CANCEL:
-			xf_keyboard_discard_deferred_alt(xfc);
+			xfc->deferredAlt.pending = 0;
 			xfc->deferredAlt.blocked = FALSE; /* Local action without losing focus. */
 			return TRUE;
 		default:

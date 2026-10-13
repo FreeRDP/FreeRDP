@@ -887,14 +887,6 @@ static UINT32 xf_keyboard_alt_mask(xfContext* xfc, KeyCode code)
 	return 0;
 }
 
-void xf_keyboard_discard_deferred_alt(xfContext* xfc)
-{
-	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
-		return;
-	xfc->deferredAlt.pending = 0;
-	xfc->deferredAlt.blocked = TRUE;
-}
-
 BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
 {
 	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt) ||
@@ -929,7 +921,7 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 	{
 		if (defer)
 		{
-			xf_keyboard_discard_deferred_alt(xfc);
+			xfc->deferredAlt.pending = 0;
 			xfc->deferredAlt.blocked = FALSE;
 			xfc->KeyboardState[event->keycode] = last;
 		}
@@ -1096,7 +1088,11 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
-	xf_keyboard_discard_deferred_alt(xfc);
+	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_KeyboardDeferAlt))
+	{
+		xfc->deferredAlt.pending = 0;
+		xfc->deferredAlt.blocked = TRUE;
+	}
 	release_keys(xfc, FALSE);
 	release_keys(xfc, TRUE);
 	xfc->deferredAlt.sent = 0;
