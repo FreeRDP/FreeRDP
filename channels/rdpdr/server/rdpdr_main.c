@@ -2855,6 +2855,10 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
 	}
 
+	/* Covers the stream size and Length, FileNameLength plus the 6 bytes before FileName */
+	if (pathLength > UINT32_MAX - 64U)
+		return ERROR_INVALID_PARAMETER;
+
 	wStream* s = Stream_New(nullptr, 64 + pathLength);
 
 	if (!s)
@@ -2865,8 +2869,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_SET_INFORMATION,
 	                                    0);
-	Stream_Write_UINT32(s, FileRenameInformation); /* FsInformationClass (4 bytes) */
-	WINPR_ASSERT(pathLength <= UINT32_MAX - 6U);
+	Stream_Write_UINT32(s, FileRenameInformation);   /* FsInformationClass (4 bytes) */
 	Stream_Write_UINT32(s, (UINT32)pathLength + 6U); /* Length (4 bytes) */
 	Stream_Zero(s, 24);                              /* Padding (24 bytes) */
 	/* RDP_FILE_RENAME_INFORMATION */
