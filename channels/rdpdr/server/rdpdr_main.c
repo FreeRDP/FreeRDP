@@ -2587,19 +2587,31 @@ static UINT prepare_smartcard_irp(RdpdrServerContext* context, UINT32 ioControlC
 	return CHANNEL_RC_OK;
 }
 
+static void dequeueAndDiscard(RdpdrServerContext* context, RDPDR_IRP* irp)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(irp);
+	RDPDR_IRP* val = rdpdr_server_dequeue_irp(context, irp->CompletionId);
+	rdpdr_server_irp_free(val);
+}
+
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD
-static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context, UINT32 deviceId,
-                                                    UINT32 completionId, const char* path,
+static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context, RDPDR_IRP* irp,
                                                     UINT32 desiredAccess, UINT32 createOptions,
                                                     UINT32 createDisposition)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
+
+	const UINT32 deviceId = irp->DeviceId;
+	const UINT32 completionId = irp->CompletionId;
+	const char* path = irp->PathName;
 
 	RdpdrServerPrivate* priv = context->priv;
 
@@ -2624,6 +2636,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2642,9 +2655,13 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	                                        TRUE) < 0)
 	{
 		Stream_Release(s);
+		dequeueAndDiscard(context, irp);
 		return ERROR_INTERNAL_ERROR;
 	}
-	return rdpdr_seal_send_free_request(context, s);
+	const UINT rc = rdpdr_seal_send_free_request(context, s);
+	if (rc != CHANNEL_RC_OK)
+		dequeueAndDiscard(context, irp);
+	return rc;
 }
 
 /**
@@ -3031,7 +3048,7 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp, FILE_READ_DATA | SYNCHRONIZE,
 	    FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_CREATE);
 }
 
@@ -3140,7 +3157,7 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName, DELETE | SYNCHRONIZE,
+	    context, irp, DELETE | SYNCHRONIZE,
 	    FILE_DIRECTORY_FILE | FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3332,7 +3349,7 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 
 	/* Send a request to open the directory. */
 	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp, FILE_READ_DATA | SYNCHRONIZE,
 	    FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3395,8 +3412,7 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 		return ret;
 
 	/* Send a request to open the file. */
-	return rdpdr_server_send_device_create_request(context, irp->DeviceId, irp->CompletionId,
-	                                               irp->PathName, desiredAccess | SYNCHRONIZE,
+	return rdpdr_server_send_device_create_request(context, irp, desiredAccess | SYNCHRONIZE,
 	                                               FILE_SYNCHRONOUS_IO_NONALERT, createDisposition);
 }
 
@@ -3710,8 +3726,8 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 
 	/* Send a request to open the file. FILE_DELETE_ON_CLOSE needs DELETE access. */
 	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName, DELETE | SYNCHRONIZE,
-	    FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
+	    context, irp, DELETE | SYNCHRONIZE, FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT,
+	    FILE_OPEN);
 }
 
 /*************************************************
@@ -3866,9 +3882,9 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 		return ret;
 
 	/* Send a request to open the file. Renaming needs DELETE access. */
-	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName,
-	    DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
+	return rdpdr_server_send_device_create_request(context, irp,
+	                                               DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
 static void rdpdr_server_private_free(RdpdrServerPrivate* ctx)
