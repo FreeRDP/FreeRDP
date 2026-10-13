@@ -498,7 +498,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!transport_set_recv_callbacks(rdp->transport, rdp_recv_callback, rdp))
 		return FALSE;
 
-	return rdp_client_wait_for_activation(rdp);
+	/* A tunnel the server asked for during the connection sequence is of no use when the
+	 * sequence fails. It is stopped now: the next disconnect, which would stop it too, can be a
+	 * long way off, an auto-reconnect waits between attempts. */
+	const BOOL activated = rdp_client_wait_for_activation(rdp);
+	if (!activated)
+		multitransport_reset(rdp->multitransport);
+	return activated;
 }
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
