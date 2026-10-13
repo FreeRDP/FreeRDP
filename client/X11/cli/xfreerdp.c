@@ -31,6 +31,49 @@
 #include "../xf_client.h"
 #include "../xfreerdp.h"
 
+static const char xfreerdp_clipboard_raw_transfer[] = "clipboard-raw-transfer";
+
+static COMMAND_LINE_ARGUMENT_A xfreerdp_args[] = {
+	{ xfreerdp_clipboard_raw_transfer, COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL,
+	  "on|off", BoolValueTrue, nullptr, -1, nullptr,
+	  "direct FreeRDP-to-FreeRDP clipboard transfer path" },
+	{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
+};
+
+static int xfreerdp_parse_command_line_option(const COMMAND_LINE_ARGUMENT_A* arg, void* custom)
+{
+	xfContext* xfc = custom;
+
+	WINPR_ASSERT(arg);
+	WINPR_ASSERT(xfc);
+
+	if (strcmp(arg->Name, xfreerdp_clipboard_raw_transfer) == 0)
+	{
+		if (arg->Value == BoolValueTrue)
+		{
+			xfc->clipboardRawTransfer = TRUE;
+		}
+		else if (arg->Value == BoolValueFalse)
+		{
+			xfc->clipboardRawTransfer = FALSE;
+		}
+		else if (_stricmp(arg->Value, "on") == 0)
+		{
+			xfc->clipboardRawTransfer = TRUE;
+		}
+		else if (_stricmp(arg->Value, "off") == 0)
+		{
+			xfc->clipboardRawTransfer = FALSE;
+		}
+		else
+		{
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		}
+	}
+
+	return 0;
+}
+
 static void xfreerdp_print_help(void)
 {
 	printf("Keyboard Shortcuts:\n");
@@ -75,10 +118,13 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 	xfc = (xfContext*)context;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	status = freerdp_client_settings_parse_command_line_ex(
+	    settings, argc, argv, FALSE, xfreerdp_args, ARRAYSIZE(xfreerdp_args) - 1,
+	    xfreerdp_parse_command_line_option, xfc);
 	if (status)
 	{
-		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		rc = freerdp_client_settings_command_line_status_print_ex(settings, status, argc, argv,
+		                                                       xfreerdp_args);
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			xf_list_monitors(xfc);
