@@ -40,15 +40,15 @@ static BOOL test_version(const rdpCertificate* cert, UINT32 version)
 	size_t smallLen = 0;
 	size_t largeLen = 0;
 
-	void* smallBuf = test_write_cert(cert, version, 16u, &smallLen);
-	void* largeBuf = test_write_cert(cert, version, 0x10000u, &largeLen);
+	void* small = test_write_cert(cert, version, 16u, &smallLen);
+	void* large = test_write_cert(cert, version, 0x10000u, &largeLen);
 
-	if (!smallBuf || !largeBuf)
+	if (!small || !large)
 	{
 		(void)fprintf(stderr, "failed to write server certificate version 0x%08" PRIx32 "\n",
 		              version);
 	}
-	else if ((smallLen != largeLen) || (memcmp(smallBuf, largeBuf, smallLen) != 0))
+	else if ((smallLen != largeLen) || (memcmp(small, large, smallLen) != 0))
 	{
 		(void)fprintf(stderr,
 		              "server certificate version 0x%08" PRIx32
@@ -58,8 +58,8 @@ static BOOL test_version(const rdpCertificate* cert, UINT32 version)
 	else
 		rc = TRUE;
 
-	free(smallBuf);
-	free(largeBuf);
+	free(small);
+	free(large);
 	return rc;
 }
 
