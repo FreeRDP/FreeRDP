@@ -425,9 +425,8 @@ int main(int argc, char* argv[])
 		xfc.ungrabKeyboardWithRightCtrl = FALSE;
 		xfc.grab_keyboard = (cases[i].flags & GRAB_KEYBOARD) != 0;
 		altGr = (cases[i].flags & ALTGR_MODE) != 0;
+		xfc.deferAlt = !(cases[i].flags & DEFAULT_MODE);
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard, xfc.grab_keyboard) ||
-		    !freerdp_settings_set_bool(settings, FreeRDP_KeyboardDeferAlt,
-		                               !(cases[i].flags & DEFAULT_MODE)) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
 		                               (cases[i].flags & UNICODE_MODE) != 0))
 			goto out;

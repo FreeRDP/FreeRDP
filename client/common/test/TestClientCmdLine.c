@@ -256,16 +256,6 @@ static BOOL check_settings_smart_sizing_size(rdpSettings* settings)
 	return result;
 }
 
-static BOOL check_defer_alt_on(rdpSettings* settings)
-{
-	return freerdp_settings_get_bool(settings, FreeRDP_KeyboardDeferAlt);
-}
-
-static BOOL check_defer_alt_off(rdpSettings* settings)
-{
-	return !freerdp_settings_get_bool(settings, FreeRDP_KeyboardDeferAlt);
-}
-
 typedef struct
 {
 	int expected_status;
@@ -281,23 +271,6 @@ typedef struct
 
 // NOLINTBEGIN(bugprone-suspicious-missing-comma)
 static const test tests[] = {
-	{ 0, check_defer_alt_off, { "testfreerdp", "/v:localhost", nullptr }, { WINPR_C_ARRAY_INIT } },
-	{ 0,
-	  check_defer_alt_on,
-	  { "testfreerdp", "/v:localhost", "/kbd:defer-alt", nullptr },
-	  { WINPR_C_ARRAY_INIT } },
-	{ 0,
-	  check_defer_alt_on,
-	  { "testfreerdp", "/v:localhost", "/kbd:defer-alt:on", nullptr },
-	  { WINPR_C_ARRAY_INIT } },
-	{ 0,
-	  check_defer_alt_off,
-	  { "testfreerdp", "/v:localhost", "/kbd:defer-alt:off", nullptr },
-	  { WINPR_C_ARRAY_INIT } },
-	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
-	  check_defer_alt_off,
-	  { "testfreerdp", "/v:localhost", "/kbd:defer-alt:invalid", nullptr },
-	  { WINPR_C_ARRAY_INIT } },
 	{ COMMAND_LINE_STATUS_PRINT_HELP,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "--help", nullptr },

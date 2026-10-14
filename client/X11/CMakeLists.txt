@@ -81,6 +81,8 @@ set(SRCS
     xf_window.h
     xf_client.c
     xf_client.h
+    xf_cmdline.c
+    xf_cmdline.h
 )
 
 if(CHANNEL_TSMF_CLIENT)

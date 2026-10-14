@@ -659,8 +659,7 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* KeyboardPipeName);     /* 2637 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL HasRelativeMouseEvent); /* 2638 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL HasQoeEvent);           /* 2639 */
-	SETTINGS_DEPRECATED(ALIGN64 BOOL KeyboardDeferAlt);      /* 2640 */
-	UINT64 padding2688[2688 - 2641];                         /* 2641 */
+	UINT64 padding2688[2688 - 2640];                         /* 2640 */
 
 	/* Brush Capabilities */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 BrushSupportLevel); /* 2688 */

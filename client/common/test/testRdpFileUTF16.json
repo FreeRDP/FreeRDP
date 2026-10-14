@@ -144,7 +144,6 @@
 		"FreeRDP_BitmapCacheEnabled": false,
 		"FreeRDP_AllowCacheWaitingList": true,
 		"FreeRDP_BitmapCachePersistEnabled": true,
-		"FreeRDP_KeyboardDeferAlt": false,
 		"FreeRDP_UnicodeInput": true,
 		"FreeRDP_FastPathInput": true,
 		"FreeRDP_MultiTouchInput": false,

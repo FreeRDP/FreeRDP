@@ -621,8 +621,6 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_TransportDumpReplayNodelay:
 			return settings->TransportDumpReplayNodelay;
 
-		case FreeRDP_KeyboardDeferAlt:
-			return settings->KeyboardDeferAlt;
 		case FreeRDP_UnicodeInput:
 			return settings->UnicodeInput;
 
@@ -1425,9 +1423,6 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->TransportDumpReplayNodelay = cnv.c;
 			break;
 
-		case FreeRDP_KeyboardDeferAlt:
-			settings->KeyboardDeferAlt = cnv.c;
-			break;
 		case FreeRDP_UnicodeInput:
 			settings->UnicodeInput = cnv.c;
 			break;
