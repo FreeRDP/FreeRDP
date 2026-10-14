@@ -399,10 +399,12 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 				if (rc < 0)
 				{
 				}
+#if !defined(__EMSCRIPTEN__)
 				else
 				{
 					initgroups(token->Username, (gid_t)token->GroupId);
 				}
+#endif
 			}
 
 			if (token->UserId)
