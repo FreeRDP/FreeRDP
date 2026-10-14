@@ -70,8 +70,13 @@ typedef struct
 /* Read only the RBSP identifiers needed to select the matching SPS/PPS. VideoToolbox
  * parses the complete parameter sets and slices. Keep emulation-prevention handling
  * here as the identifiers are Exp-Golomb coded, not necessarily byte aligned. */
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_read_bit(H264_VT_BITS* bits, UINT32* value)
 {
+	WINPR_ASSERT(bits);
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(bits->data);
+
 	if (bits->bits == 0)
 	{
 		if (bits->offset >= bits->size)
@@ -92,8 +97,12 @@ static BOOL videotoolbox_read_bit(H264_VT_BITS* bits, UINT32* value)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_read_ue(H264_VT_BITS* bits, UINT32* value)
 {
+	WINPR_ASSERT(bits);
+	WINPR_ASSERT(value);
+
 	UINT32 bit = 0;
 	UINT32 zeros = 0;
 	while (TRUE)
@@ -116,8 +125,12 @@ static BOOL videotoolbox_read_ue(H264_VT_BITS* bits, UINT32* value)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static size_t videotoolbox_start_code(const BYTE* data, size_t size, size_t* offset)
 {
+	WINPR_ASSERT(data);
+	WINPR_ASSERT(offset);
+
 	for (; (*offset < size) && ((size - *offset) >= 3); (*offset)++)
 	{
 		const BYTE* p = &data[*offset];
@@ -132,9 +145,15 @@ static size_t videotoolbox_start_code(const BYTE* data, size_t size, size_t* off
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_next_nal(const BYTE* data, size_t size, size_t* offset, const BYTE** nal,
                                   size_t* length)
 {
+	WINPR_ASSERT(data);
+	WINPR_ASSERT(offset);
+	WINPR_ASSERT(nal);
+	WINPR_ASSERT(length);
+
 	const size_t previous = *offset;
 	const size_t prefix = videotoolbox_start_code(data, size, offset);
 	if (prefix == 0)
@@ -158,9 +177,13 @@ static BOOL videotoolbox_next_nal(const BYTE* data, size_t size, size_t* offset,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_save_parameter(H264_CONTEXT_VIDEOTOOLBOX* sys, const BYTE* nal,
                                         size_t length)
 {
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(nal);
+
 	H264_VT_BITS bits = { .data = nal + 1, .size = length - 1 };
 	UINT32 id = 0;
 	UINT32 spsId = 0;
@@ -200,7 +223,11 @@ static BOOL videotoolbox_save_parameter(H264_CONTEXT_VIDEOTOOLBOX* sys, const BY
 
 static void videotoolbox_release_image(H264_CONTEXT* h264)
 {
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
+	WINPR_ASSERT(sys);
+
 	if (sys->image)
 	{
 		if (sys->imageLocked)
@@ -220,7 +247,11 @@ static void videotoolbox_release_image(H264_CONTEXT* h264)
 
 static void videotoolbox_destroy_session(H264_CONTEXT* h264)
 {
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
+	WINPR_ASSERT(sys);
+
 	if (sys->session)
 	{
 		VTDecompressionSessionInvalidate(sys->session);
@@ -240,6 +271,8 @@ static void videotoolbox_output(WINPR_ATTR_UNUSED void* context, void* sourceFra
                                 WINPR_ATTR_UNUSED VTDecodeInfoFlags flags, CVImageBufferRef image,
                                 WINPR_ATTR_UNUSED CMTime pts, WINPR_ATTR_UNUSED CMTime duration)
 {
+	WINPR_ASSERT(sourceFrame);
+	/* context is unused; image may be NULL on failure or when a frame is dropped. */
 	H264_VT_OUTPUT* output = sourceFrame;
 	output->count++;
 	output->status = status;
@@ -251,9 +284,14 @@ static void videotoolbox_output(WINPR_ATTR_UNUSED void* context, void* sourceFra
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_ensure_session(H264_CONTEXT* h264, UINT32 ppsId)
 {
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
+	WINPR_ASSERT(sys);
+
 	if (sys->session && !sys->parametersChanged && (sys->ppsId == ppsId))
 		return TRUE;
 	const H264_VT_PARAMETER_SET* pps = &sys->pps[ppsId];
@@ -341,10 +379,17 @@ static BOOL videotoolbox_ensure_session(H264_CONTEXT* h264, UINT32 ppsId)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_map_image(H264_CONTEXT* h264)
 {
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
+	WINPR_ASSERT(sys);
+
 	CVPixelBufferRef image = sys->image;
+	WINPR_ASSERT(image);
+
 	const size_t width = CVPixelBufferGetWidth(image);
 	const size_t height = CVPixelBufferGetHeight(image);
 	if ((width == 0) || (height == 0) || (width > UINT32_MAX) || (height > UINT32_MAX) ||
@@ -372,10 +417,16 @@ static BOOL videotoolbox_map_image(H264_CONTEXT* h264)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static int videotoolbox_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
                                    const BYTE* WINPR_RESTRICT data, UINT32 size)
 {
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(data || (size == 0));
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
+	WINPR_ASSERT(sys);
+
 	CMBlockBufferRef block = nullptr;
 	CMSampleBufferRef sample = nullptr;
 	H264_VT_OUTPUT output = { 0 };
@@ -387,8 +438,6 @@ static int videotoolbox_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	videotoolbox_release_image(h264);
 	if (size == 0)
 		return 0;
-	if (!data)
-		goto fail;
 	while (offset < size)
 	{
 		const BYTE* nal = nullptr;
@@ -501,6 +550,8 @@ fail:
 
 static void videotoolbox_uninit(H264_CONTEXT* h264)
 {
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
 	if (!sys)
 		return;
@@ -514,8 +565,11 @@ static void videotoolbox_uninit(H264_CONTEXT* h264)
 	h264->pSystemData = nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_init(H264_CONTEXT* h264)
 {
+	WINPR_ASSERT(h264);
+
 	/* Let registration continue to an encoder-capable backend for compressor contexts. */
 	if (h264->Compressor)
 		return FALSE;

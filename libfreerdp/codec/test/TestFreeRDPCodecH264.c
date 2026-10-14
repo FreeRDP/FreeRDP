@@ -9,8 +9,11 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 
+WINPR_ATTR_NODISCARD
 static const char* print_ns(UINT64 start, UINT64 end, char* buffer, size_t len)
 {
+	WINPR_ASSERT(buffer);
+
 	const UINT64 diff = end - start;
 	const unsigned ns = diff % 1000;
 	const unsigned us = (diff / 1000) % 1000;
@@ -20,6 +23,7 @@ static const char* print_ns(UINT64 start, UINT64 end, char* buffer, size_t len)
 	return buffer;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL testContextOptions(BOOL compressor, uint32_t width, uint32_t height)
 {
 	BOOL rc = FALSE;
@@ -70,6 +74,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t* pstride)
 {
 	const size_t bpp = FreeRDPGetBytesPerPixel(format);
@@ -92,9 +97,13 @@ static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t
 	return rgb;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL compareRGB(const uint8_t* src, const uint8_t* dst, uint32_t format, size_t width,
                        size_t stride, size_t height)
 {
+	WINPR_ASSERT(src);
+	WINPR_ASSERT(dst);
+
 	const size_t bpp = FreeRDPGetBytesPerPixel(format);
 	for (size_t y = 0; y < height; y++)
 	{
@@ -111,6 +120,7 @@ static BOOL compareRGB(const uint8_t* src, const uint8_t* dst, uint32_t format, 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 {
 	BOOL rc = FALSE;
@@ -186,6 +196,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL testEncodeOffsetRegion(void)
 {
 	BOOL rc = FALSE;
@@ -260,6 +271,7 @@ static const BYTE solid_idr_64x64[] = {
 	0x85, 0x8c, 0x9c, 0x9c, 0x9d, 0x75, 0xd7, 0x5d, 0x75, 0xd7, 0x5d, 0x75, 0xd7, 0x5e
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL testDecode(BOOL separateParameters)
 {
 	BOOL rc = FALSE;
@@ -335,6 +347,7 @@ static const BYTE avc444_p[] = {
 	0xA5, 0x7B, 0x00, 0x00, 0x01, 0x41, 0x12, 0x68, 0xEC, 0x7F, 0xFA, 0xE1, 0x80,
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL testDecodeAvc444(UINT32 codec)
 {
 	BOOL rc = FALSE;
@@ -404,8 +417,11 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 int TestFreeRDPCodecH264(int argc, char* argv[])
 {
+	WINPR_ASSERT(argv);
+
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
