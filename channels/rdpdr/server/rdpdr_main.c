@@ -2595,6 +2595,16 @@ static void dequeueAndDiscard(RdpdrServerContext* context, RDPDR_IRP* irp)
 	rdpdr_server_irp_free(val);
 }
 
+/* Send a request for an enqueued IRP, drop the IRP if the request can not be sent */
+WINPR_ATTR_NODISCARD
+static UINT rdpdr_seal_send_irp_request(RdpdrServerContext* context, RDPDR_IRP* irp, wStream* s)
+{
+	const UINT rc = rdpdr_seal_send_free_request(context, s);
+	if (rc != CHANNEL_RC_OK)
+		dequeueAndDiscard(context, irp);
+	return rc;
+}
+
 /**
  * Function description
  *
@@ -2628,7 +2638,10 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 		pathStrLength = strlen(path);
 		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
 		if (wlen < 0)
+		{
+			dequeueAndDiscard(context, irp);
 			return ERROR_INTERNAL_ERROR;
+		}
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
 	}
 	wStream* s = Stream_New(nullptr, 256U + pathLength);
@@ -2658,10 +2671,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 		dequeueAndDiscard(context, irp);
 		return ERROR_INTERNAL_ERROR;
 	}
-	const UINT rc = rdpdr_seal_send_free_request(context, s);
-	if (rc != CHANNEL_RC_OK)
-		dequeueAndDiscard(context, irp);
-	return rc;
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 /**
@@ -2670,28 +2680,30 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD
-static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, UINT32 deviceId,
-                                                   UINT32 fileId, UINT32 completionId)
+static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, RDPDR_IRP* irp)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceCloseRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32 "",
-	           deviceId, fileId);
+	           irp->DeviceId, irp->FileId);
 	wStream* s = Stream_New(nullptr, 128);
 
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_CLOSE, 0);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
+	                                    IRP_MJ_CLOSE, 0);
 	Stream_Zero(s, 32); /* Padding (32 bytes) */
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 /**
@@ -2700,32 +2712,34 @@ static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, 
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD
-static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, UINT32 deviceId,
-                                                  UINT32 fileId, UINT32 completionId, UINT32 length,
-                                                  UINT64 offset)
+static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, RDPDR_IRP* irp,
+                                                  UINT32 length, UINT64 offset)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceReadRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", length=%" PRIu32 ", offset=%" PRIu64 "",
-	           deviceId, fileId, length, offset);
+	           irp->DeviceId, irp->FileId, length, offset);
 	wStream* s = Stream_New(nullptr, 128);
 
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_READ, 0);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
+	                                    IRP_MJ_READ, 0);
 	Stream_Write_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Write_UINT64(s, offset); /* Offset (8 bytes) */
 	Stream_Zero(s, 20);             /* Padding (20 bytes) */
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 /**
@@ -2734,33 +2748,35 @@ static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, U
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD
-static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, UINT32 deviceId,
-                                                   UINT32 fileId, UINT32 completionId,
+static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, RDPDR_IRP* irp,
                                                    const char* data, UINT32 length, UINT64 offset)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceWriteRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", length=%" PRIu32 ", offset=%" PRIu64 "",
-	           deviceId, fileId, length, offset);
+	           irp->DeviceId, irp->FileId, length, offset);
 	wStream* s = Stream_New(nullptr, 64 + length);
 
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_WRITE, 0);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
+	                                    IRP_MJ_WRITE, 0);
 	Stream_Write_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Write_UINT64(s, offset); /* Offset (8 bytes) */
 	Stream_Zero(s, 20);             /* Padding (20 bytes) */
-	Stream_Write(s, data, length); /* WriteData (variable) */
-	return rdpdr_seal_send_free_request(context, s);
+	Stream_Write(s, data, length);  /* WriteData (variable) */
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 /**
@@ -2770,18 +2786,18 @@ static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, 
  */
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext* context,
-                                                             UINT32 deviceId, UINT32 fileId,
-                                                             UINT32 completionId, const char* path)
+                                                             RDPDR_IRP* irp, const char* path)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceQueryDirectoryRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", path=%s",
-	           deviceId, fileId, path);
+	           irp->DeviceId, irp->FileId, path);
 	/* Compute the required Unicode size. */
 	size_t pathStrLength = 0;
 	size_t pathLength = 0;
@@ -2790,7 +2806,10 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 		pathStrLength = strlen(path);
 		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
 		if (wlen < 0)
+		{
+			dequeueAndDiscard(context, irp);
 			return ERROR_INTERNAL_ERROR;
+		}
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
 	}
 	wStream* s = Stream_New(nullptr, 64 + pathLength);
@@ -2798,11 +2817,12 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_DIRECTORY_CONTROL,
-	                                    IRP_MN_QUERY_DIRECTORY);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
+	                                    IRP_MJ_DIRECTORY_CONTROL, IRP_MN_QUERY_DIRECTORY);
 	Stream_Write_UINT32(s, FileDirectoryInformation); /* FsInformationClass (4 bytes) */
 	Stream_Write_UINT8(s, path ? 1 : 0);              /* InitialQuery (1 byte) */
 	WINPR_ASSERT(pathLength <= UINT32_MAX);
@@ -2816,11 +2836,12 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 		                                        TRUE) < 0)
 		{
 			Stream_Release(s);
+			dequeueAndDiscard(context, irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
 
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 /**
@@ -2830,19 +2851,19 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
  */
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* context,
-                                                         UINT32 deviceId, UINT32 fileId,
-                                                         UINT32 completionId, const char* path,
+                                                         RDPDR_IRP* irp, const char* path,
                                                          BOOL replaceIfExists)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceFileNameRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", path=%s",
-	           deviceId, fileId, path);
+	           irp->DeviceId, irp->FileId, path);
 	/* Compute the required Unicode size. */
 	size_t pathStrLength = 0;
 	size_t pathLength = 0;
@@ -2851,24 +2872,31 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 		pathStrLength = strlen(path);
 		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
 		if (wlen < 0)
+		{
+			dequeueAndDiscard(context, irp);
 			return ERROR_INTERNAL_ERROR;
+		}
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
 	}
 
 	/* Covers the stream size and Length, FileNameLength plus the 6 bytes before FileName */
 	if (pathLength > UINT32_MAX - 64U)
+	{
+		dequeueAndDiscard(context, irp);
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	wStream* s = Stream_New(nullptr, 64 + pathLength);
 
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_SET_INFORMATION,
-	                                    0);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
+	                                    IRP_MJ_SET_INFORMATION, 0);
 	Stream_Write_UINT32(s, FileRenameInformation);   /* FsInformationClass (4 bytes) */
 	Stream_Write_UINT32(s, (UINT32)pathLength + 6U); /* Length (4 bytes) */
 	Stream_Zero(s, 24);                              /* Padding (24 bytes) */
@@ -2884,71 +2912,80 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 		                                        TRUE) < 0)
 		{
 			Stream_Release(s);
+			dequeueAndDiscard(context, irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
 
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_set_information_request(RdpdrServerContext* context,
-                                                             UINT32 deviceId, UINT32 fileId,
-                                                             UINT32 completionId,
+                                                             RDPDR_IRP* irp,
                                                              UINT32 fsInformationClass,
                                                              const BYTE* buffer, UINT32 length)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceSetInformationRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", class=%" PRIu32 ", length=%" PRIu32 "",
-	           deviceId, fileId, fsInformationClass, length);
+	           irp->DeviceId, irp->FileId, fsInformationClass, length);
 
 	if (length > UINT32_MAX - 64U)
+	{
+		dequeueAndDiscard(context, irp);
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	wStream* s = Stream_New(nullptr, 64U + length);
 	if (!s)
+	{
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_SET_INFORMATION,
-	                                    0);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
+	                                    IRP_MJ_SET_INFORMATION, 0);
 	Stream_Write_UINT32(s, fsInformationClass); /* FsInformationClass (4 bytes) */
 	Stream_Write_UINT32(s, length);             /* Length (4 bytes) */
 	Stream_Zero(s, 24);                         /* Padding (24 bytes) */
 	Stream_Write(s, buffer, length);            /* SetBuffer (variable) */
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_send_device_query_volume_information_request(RdpdrServerContext* context,
-                                                                      UINT32 deviceId,
-                                                                      UINT32 fileId,
-                                                                      UINT32 completionId,
+                                                                      RDPDR_IRP* irp,
                                                                       UINT32 fsInformationClass)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 
 	RdpdrServerPrivate* priv = context->priv;
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceQueryVolumeInformationRequest: deviceId=%" PRIu32
 	           ", fileId=%" PRIu32 ", class=%" PRIu32 "",
-	           deviceId, fileId, fsInformationClass);
+	           irp->DeviceId, irp->FileId, fsInformationClass);
 
 	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
+	{
+		dequeueAndDiscard(context, irp);
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
-	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId,
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, irp->FileId, irp->CompletionId,
 	                                    IRP_MJ_QUERY_VOLUME_INFORMATION, 0);
 	Stream_Write_UINT32(s, fsInformationClass); /* FsInformationClass (4 bytes) */
 	Stream_Write_UINT32(s, 0);                  /* Length (4 bytes) */
 	Stream_Zero(s, 24);                         /* Padding (24 bytes) */
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 WINPR_ATTR_NODISCARD
@@ -3085,7 +3122,7 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	}
 
 	/* Send a request to close the file */
-	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 }
 
 /**
@@ -3196,7 +3233,7 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	}
 
 	/* Send a request to close the file */
-	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 }
 
 /**
@@ -3306,8 +3343,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		}
 
 		/* Send a request to query the directory. */
-		return rdpdr_server_send_device_query_directory_request(context, irp->DeviceId, irp->FileId,
-		                                                        irp->CompletionId, nullptr);
+		return rdpdr_server_send_device_query_directory_request(context, irp, nullptr);
 	}
 	else
 	{
@@ -3324,8 +3360,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
-		                                              irp->CompletionId);
+		return rdpdr_server_send_device_close_request(context, irp);
 	}
 }
 
@@ -3387,8 +3422,7 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	}
 
 	/* Send a request to query the directory. */
-	return rdpdr_server_send_device_query_directory_request(context, deviceId, fileId,
-	                                                        irp->CompletionId, irp->PathName);
+	return rdpdr_server_send_device_query_directory_request(context, irp, irp->PathName);
 }
 
 /**
@@ -3545,8 +3579,7 @@ static UINT rdpdr_server_drive_read_file_ex(RdpdrServerContext* context, void* c
 	irp->FileId = fileId;
 
 	/* Send a request to open the directory. */
-	return rdpdr_server_send_device_read_request(context, irp->DeviceId, irp->FileId,
-	                                             irp->CompletionId, length, offset);
+	return rdpdr_server_send_device_read_request(context, irp, length, offset);
 }
 
 /*************************************************
@@ -3611,8 +3644,7 @@ static UINT rdpdr_server_drive_write_file_ex(RdpdrServerContext* context, void* 
 
 	/* Send a request to open the directory. */
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	return rdpdr_server_send_device_write_request(context, irp->DeviceId, irp->FileId,
-	                                              irp->CompletionId, buffer, length, offset);
+	return rdpdr_server_send_device_write_request(context, irp, buffer, length, offset);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 }
 
@@ -3677,8 +3709,7 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 
 	/* Send a request to open the directory. */
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
-	                                              irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 }
 
@@ -3764,8 +3795,7 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	}
 
 	/* Send a request to close the file */
-	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
-	                                              irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 }
 
 /**
@@ -3865,8 +3895,7 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	}
 
 	/* Send a request to close the file */
-	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
-	                                              irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 }
 
 /**
@@ -3920,8 +3949,7 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	}
 
 	/* Send a request to rename the file */
-	return rdpdr_server_send_device_file_rename_request(context, irp->DeviceId, irp->FileId,
-	                                                    irp->CompletionId, irp->ExtraBuffer,
+	return rdpdr_server_send_device_file_rename_request(context, irp, irp->ExtraBuffer,
 	                                                    irp->ReplaceIfExists);
 }
 
@@ -4028,8 +4056,7 @@ static UINT rdpdr_server_drive_set_information_callback2(RdpdrServerContext* con
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
-	                                              irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 }
 
 WINPR_ATTR_NODISCARD
@@ -4065,8 +4092,7 @@ static UINT rdpdr_server_drive_set_information_callback1(RdpdrServerContext* con
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return rdpdr_server_send_device_set_information_request(context, irp->DeviceId, irp->FileId,
-	                                                        irp->CompletionId, irp->InfoClass,
+	return rdpdr_server_send_device_set_information_request(context, irp, irp->InfoClass,
 	                                                        irp->InfoBuffer, irp->InfoLength);
 }
 
@@ -4207,8 +4233,7 @@ static UINT rdpdr_server_drive_query_volume_information_callback2(RdpdrServerCon
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
-	                                              irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp);
 }
 
 WINPR_ATTR_NODISCARD
@@ -4247,8 +4272,8 @@ static UINT rdpdr_server_drive_query_volume_information_callback1(RdpdrServerCon
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return rdpdr_server_send_device_query_volume_information_request(
-	    context, irp->DeviceId, irp->FileId, irp->CompletionId, FileFsFullSizeInformation);
+	return rdpdr_server_send_device_query_volume_information_request(context, irp,
+	                                                                 FileFsFullSizeInformation);
 }
 
 WINPR_ATTR_NODISCARD
