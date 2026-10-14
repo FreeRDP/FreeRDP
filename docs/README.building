@@ -46,9 +46,13 @@ We support
 
 * OpenH264 (enable with -DWITH_OPENH264=ON)
 * FFMPEG (x264 or OpenH264, enable with -DWITH_FFMPEG=ON)
+* Apple VideoToolbox (decoding only, enable with -DWITH_APPLE_VIDEOTOOLBOX=ON)
 
-There are some platform specific implementations too (e.g. mediacodec on android) but these
-two are the options that are always required.
+There are other platform specific implementations too (e.g. MediaCodec on Android).
+
+VideoToolbox is enabled by default on macOS 10.10+ and iOS 8.0+.
+It uses Apple's system frameworks and default hardware/software selection.
+It can replace OpenH264/FFmpeg for H.264 decoding; encoding requires another backend.
 
 5. Graphics scaling support (optional, required for HighDPI support)
 

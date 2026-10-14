@@ -103,6 +103,9 @@ extern "C"
 #ifdef WITH_OPENH264
 	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264;
 #endif
+#ifdef WITH_APPLE_VIDEOTOOLBOX
+	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_VideoToolbox;
+#endif
 #ifdef WITH_VIDEO_FFMPEG
 	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
 #endif

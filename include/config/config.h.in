@@ -54,6 +54,7 @@
 #cmakedefine WITH_OPENH264
 #cmakedefine WITH_OPENH264_LOADING
 #cmakedefine WITH_VIDEO_FFMPEG
+#cmakedefine WITH_APPLE_VIDEOTOOLBOX
 #cmakedefine WITH_DSP_EXPERIMENTAL
 #cmakedefine WITH_DSP_FFMPEG
 #cmakedefine WITH_OPENCL

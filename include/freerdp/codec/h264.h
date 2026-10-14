@@ -62,6 +62,8 @@ extern "C"
 		H264_CONTEXT_OPTION_QP,
 		H264_CONTEXT_OPTION_USAGETYPE, /** @since version 3.6.0 */
 		H264_CONTEXT_OPTION_HW_ACCEL,  /** set to request hw accel, get to check if hw accel is on,
+		                                  Apple VideoToolbox ignores set and reports get when the
+		                                  system supports querying it (otherwise FALSE),
 		                                  @since version 3.11.0 */
 	} H264_CONTEXT_OPTION;
 
