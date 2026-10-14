@@ -751,6 +751,12 @@ static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
 		i++;
 	}
 #endif
+#ifdef WITH_APPLE_VIDEOTOOLBOX
+	{
+		subSystems[i] = &g_Subsystem_VideoToolbox;
+		i++;
+	}
+#endif
 #ifdef WITH_OPENH264
 	{
 		subSystems[i] = &g_Subsystem_OpenH264;
@@ -918,6 +924,12 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			h264->UsageType = value;
 			return TRUE;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
+#ifdef WITH_APPLE_VIDEOTOOLBOX
+			/* VideoToolbox follows Apple's decoder-selection policy;
+			 * ignore this option without reinitializing the decoder. */
+			if (h264->subsystem == &g_Subsystem_VideoToolbox)
+				return TRUE;
+#endif
 			if (h264->hwAccel == value)
 				return TRUE;
 			h264->hwAccel = (value);

@@ -144,6 +144,17 @@ if(WITH_YUV AND YUV_FOUND)
   freerdp_pc_add_requires_private("yuv")
 endif()
 
+if(WITH_APPLE_VIDEOTOOLBOX)
+  list(APPEND CODEC_SRCS h264_videotoolbox.c)
+  find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
+  find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
+  find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
+  find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+  list(APPEND CODEC_LIBS ${VIDEOTOOLBOX_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${COREVIDEO_FRAMEWORK}
+       ${COREFOUNDATION_FRAMEWORK}
+  )
+endif()
+
 if(WITH_OPENH264)
   set(CODEC_SRCS ${CODEC_SRCS} h264_openh264.c)
   include_directories(SYSTEM ${OPENH264_INCLUDE_DIR})

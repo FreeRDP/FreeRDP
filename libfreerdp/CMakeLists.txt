@@ -294,6 +294,11 @@ list(JOIN FREERDP_PC_LIBRARY_PRIVATE " -l" FREERDP_PC_LIBRARY_PRIVATE)
 if(FREERDP_PC_LIBRARY_PRIVATE)
   string(PREPEND FREERDP_PC_LIBRARY_PRIVATE "-l")
 endif()
+if(WITH_APPLE_VIDEOTOOLBOX)
+  string(APPEND FREERDP_PC_LIBRARY_PRIVATE
+         " -framework VideoToolbox -framework CoreMedia -framework CoreVideo -framework CoreFoundation"
+  )
+endif()
 
 # Do not set Requires.Private if not a static build
 if(BUILD_SHARED_LIBS)
