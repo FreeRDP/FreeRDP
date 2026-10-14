@@ -245,12 +245,16 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data,
 		krb5_prompt_type type = krb5glue_get_prompt_type(context, prompts, i);
 		if (type && (type == KRB5_PROMPT_TYPE_PREAUTH || type == KRB5_PROMPT_TYPE_PASSWORD) && data)
 		{
-			prompts[i].reply->data = _strdup((const char*)data);
-
+			/* the reply buffer is allocated by the library, it holds reply->length bytes */
+			krb5_data* reply = prompts[i].reply;
 			const size_t len = strlen((const char*)data);
-			if (len > UINT32_MAX)
+			if (!reply->data || (len > reply->length))
 				return KRB5KRB_ERR_GENERIC;
-			prompts[i].reply->length = (UINT32)len;
+
+			memcpy(reply->data, data, len);
+			if (len < reply->length)
+				reply->data[len] = '\0';
+			reply->length = (UINT32)len;
 		}
 	}
 	return 0;
