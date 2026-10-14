@@ -5,6 +5,8 @@
 #include <winpr/clipboard.h>
 #include <winpr/stream.h>
 #include <winpr/user.h>
+#include <winpr/file.h>
+#include <winpr/shell.h>
 
 #define test_log(fmt, ...) test_log_fn(__FILE__, __func__, __LINE__, (fmt), ##__VA_ARGS__)
 static void test_log_fn(const char* file, const char* func, size_t line, const char* fmt, ...)
@@ -280,6 +282,76 @@ fail:
 	return rc;
 }
 
+static BOOL set_descriptor_name(FILEDESCRIPTORW* dsc, const char* name, const char* trailing)
+{
+	/* what follows the '\0' of cFileName is garbage the converter must ignore */
+	memset(dsc->cFileName, 0xff, sizeof(dsc->cFileName));
+	const size_t len = strlen(name);
+	if (ConvertUtf8NToWChar(name, len + 1, dsc->cFileName, ARRAYSIZE(dsc->cFileName)) < 0)
+		return FALSE;
+	if (trailing && (ConvertUtf8NToWChar(trailing, strlen(trailing), &dsc->cFileName[len + 1],
+	                                     ARRAYSIZE(dsc->cFileName) - len - 1) < 0))
+		return FALSE;
+	return TRUE;
+}
+
+static BOOL test_file_descriptors_to_uri_list(void)
+{
+	BOOL rc = FALSE;
+	char basePath[] = "/tmp/frdp-test";
+	char* uris = nullptr;
+
+	struct
+	{
+		UINT32 count;
+		FILEDESCRIPTORW dsc[3];
+	} data = WINPR_C_ARRAY_INIT;
+
+	wClipboard* clipboard = ClipboardCreate();
+	if (!clipboard)
+		return FALSE;
+
+	wClipboardDelegate* delegate = ClipboardGetDelegate(clipboard);
+	if (!delegate)
+		goto fail;
+	delegate->basePath = basePath;
+
+	data.count = ARRAYSIZE(data.dsc);
+	data.dsc[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+	if (!set_descriptor_name(&data.dsc[0], "dir", nullptr))
+		goto fail;
+	if (!set_descriptor_name(&data.dsc[1], "dir\\b.txt", nullptr))
+		goto fail;
+	/* a stale '\' after the name must not make a top level file look nested */
+	if (!set_descriptor_name(&data.dsc[2], "a.txt", "old\\name"))
+		goto fail;
+
+	{
+		const UINT32 srcId = ClipboardRegisterFormat(clipboard, "FileGroupDescriptorW");
+		const UINT32 dstId = ClipboardRegisterFormat(clipboard, "text/uri-list");
+		if (!test_ClipboardSetData(clipboard, srcId, &data, sizeof(data)))
+			goto fail;
+
+		UINT32 size = 0;
+		uris = test_ClipboardGetData(clipboard, dstId, &size);
+		if (!uris)
+			goto fail;
+		test_log("text/uri-list: '%s'", uris);
+
+		if (!strstr(uris, "file:///tmp/frdp-test/dir\r\n") ||
+		    !strstr(uris, "file:///tmp/frdp-test/a.txt") || strstr(uris, "b.txt"))
+			goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	if (!rc)
+		test_log("FileGroupDescriptorW -> text/uri-list conversion failed");
+	free(uris);
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
 int TestClipboardFormats(int argc, char* argv[])
 {
 	int rc = -1;
@@ -295,6 +367,9 @@ int TestClipboardFormats(int argc, char* argv[])
 		return -1;
 
 	if (!test_text_conversion())
+		return -1;
+
+	if (!test_file_descriptors_to_uri_list())
 		return -1;
 
 	wClipboard* clipboard = ClipboardCreate();
