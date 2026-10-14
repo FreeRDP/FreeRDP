@@ -1035,3 +1035,99 @@ WCHAR* winpr_wcsnrchr(const WCHAR* str, size_t charLen, WCHAR c)
 	}
 	return cnv.w;
 }
+
+WINPR_ATTR_NODISCARD
+static BOOL validHostChar(char c)
+{
+	if ((c >= 'a') && (c <= 'z'))
+		return TRUE;
+	if ((c >= 'A') && (c <= 'Z'))
+		return TRUE;
+	if ((c >= '0') && (c <= '9'))
+		return TRUE;
+
+	switch (c)
+	{
+		case '-':
+		case '.':
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+BOOL winpr_str_is_valid_hostname(const char* str)
+{
+	if (!str)
+		return FALSE;
+	/* do a limited strnlen with DNS max length + 1, so we can abort early.
+	 */
+	const size_t len = strnlen(str, 256);
+	return winpr_str_is_valid_hostnameN(str, len);
+}
+
+BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
+{
+	if (!str || (len == 0))
+		return FALSE;
+
+	if (len > 255)
+		return FALSE;
+
+	// may not start or end with dot
+	if (str[0] == '.')
+		return FALSE;
+	if (str[len - 1] == '.')
+		return FALSE;
+
+	size_t segment = 0;
+	BOOL segmentHasHyphen = FALSE;
+	for (size_t x = 0; x < len; x++)
+	{
+		char c = str[x];
+		if (!validHostChar(c))
+			return FALSE;
+
+		if (c == '.')
+		{
+			segment = 0;
+			segmentHasHyphen = FALSE;
+
+			// may not start with dot
+			if (x == 0)
+				return FALSE;
+			// filter dotdot
+			else if (str[x - 1] == c)
+				return FALSE;
+			// segments may not end with a hyphen
+			else if (str[x - 1] == '-')
+				return FALSE;
+		}
+		else
+		{
+			segment++;
+			if (segment > 63)
+				return FALSE;
+
+			// - may not occur as first in segment
+			if (c == '-')
+			{
+				segmentHasHyphen = TRUE;
+
+				// segments may not start with a hyphen
+				if ((x == 0) || (str[x - 1] == '.'))
+					return FALSE;
+			}
+		}
+	}
+
+	// last segment may not contain a hyphen
+	if (segmentHasHyphen)
+		return FALSE;
+
+	// assume TLD is at least 2 char
+	if (segment < 2)
+		return FALSE;
+
+	return TRUE;
+}
