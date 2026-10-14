@@ -111,6 +111,10 @@ const char* audio_format_get_tag_string(UINT16 wFormatTag)
 
 		case WAVE_FORMAT_AAC_MS:
 			return "WAVE_FORMAT_AAC_MS";
+
+		case WAVE_FORMAT_OPUS:
+			return "WAVE_FORMAT_OPUS";
+
 		default:
 			return "WAVE_FORMAT_UNKNOWN";
 	}
