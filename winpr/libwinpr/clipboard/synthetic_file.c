@@ -752,13 +752,13 @@ static const char* stop_at_special_chars(const char* str)
 	return nullptr;
 }
 
-/* The universal converter from filedescriptors to different file lists */
-WINPR_ATTR_MALLOC(free, 1)
-static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 formatId,
-                                                  const void* data, UINT32* pSize,
-                                                  const char* header, const char* lineprefix,
-                                                  const char* lineending, BOOL skip_last_lineending)
+/** @return TRUE if the descriptor is for an entry inside a copied folder (its name contains a
+ *  '\\'), FALSE for a top level file or folder */
+WINPR_ATTR_NODISCARD
+static BOOL descriptor_is_nested(const FILEDESCRIPTORW* dsc)
 {
+	WINPR_ASSERT(dsc);
+
 	union
 	{
 		char c[2];
@@ -767,6 +767,18 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	backslash.c[0] = '\\';
 	backslash.c[1] = '\0';
 
+	/* only search the name: what follows its '\0' in cFileName is not guaranteed to be zeroed */
+	const size_t len = _wcsnlen(dsc->cFileName, ARRAYSIZE(dsc->cFileName));
+	return winpr_wcsnchr(dsc->cFileName, len, backslash.w) != nullptr;
+}
+
+/* The universal converter from filedescriptors to different file lists */
+WINPR_ATTR_MALLOC(free, 1)
+static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 formatId,
+                                                  const void* data, UINT32* pSize,
+                                                  const char* header, const char* lineprefix,
+                                                  const char* lineending, BOOL skip_last_lineending)
+{
 	UINT32 nrDescriptors = 0;
 	size_t baseLength = 0;
 	size_t header_len = strlen(header);
@@ -799,7 +811,9 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	const FILEDESCRIPTORW* descriptors = Stream_ConstPointer(s);
 
-	if (formatId != ClipboardGetFormatId(clipboard, mime_FileGroupDescriptorW))
+	/* formatId is the destination format (see ClipboardRegisterSynthesizerEx), the descriptors
+	 * are the source data */
+	if (clipboard->formatId != ClipboardGetFormatId(clipboard, mime_FileGroupDescriptorW))
 		return nullptr;
 
 	/* Plus 1 for '/' between basepath and filename*/
@@ -811,7 +825,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 
-		if (winpr_wcsnchr(dsc->cFileName, ARRAYSIZE(dsc->cFileName), backslash.w) == nullptr)
+		if (!descriptor_is_nested(dsc))
 		{
 			alloc += ARRAYSIZE(dsc->cFileName) *
 			         8; /* Overallocate, just take the biggest value the result path can have */
@@ -837,7 +851,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 		BOOL fail = TRUE;
-		if (winpr_wcsnchr(dsc->cFileName, ARRAYSIZE(dsc->cFileName), backslash.w) != nullptr)
+		if (descriptor_is_nested(dsc))
 		{
 			continue;
 		}
