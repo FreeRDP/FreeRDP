@@ -105,7 +105,7 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
 	{
 		*lpPeerHostname = freerdp_settings_get_string(settings, FreeRDP_ProxyHostname);
-		if (!*lpPeerHostname || !winpr_str_is_valid_url(*lpPeerHostname))
+		if (!*lpPeerHostname || !winpr_str_is_valid_hostname(*lpPeerHostname))
 			return FALSE;
 		*lpPeerPort = freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort);
 		*lpProxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
@@ -643,7 +643,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	// Check for IPv6 (max 45) or DNS (max 255) name. Bounded length to 256 so too long hostnames do
 	// not silently pass
 	const size_t hostLen = strnlen(hostname, 255 + 1);
-	if (!is_ipv6_addr(hostname, hostLen) && !winpr_str_is_valid_urlN(hostname, hostLen))
+	if (!is_ipv6_addr(hostname, hostLen) && !winpr_str_is_valid_hostnameN(hostname, hostLen))
 		return FALSE;
 
 	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
@@ -961,7 +961,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 	// Check for IPv6 (max 45) or DNS (max 255) name. Bounded length to 256 so too long hostnames do
 	// not silently pass
 	const size_t hostnlen = strnlen(hostname, 255 + 1);
-	if (!is_ipv6_addr(hostname, hostnlen) && !winpr_str_is_valid_urlN(hostname, hostnlen))
+	if (!is_ipv6_addr(hostname, hostnlen) && !winpr_str_is_valid_hostnameN(hostname, hostnlen))
 		return FALSE;
 
 	BYTE nauthMethods = 1;
