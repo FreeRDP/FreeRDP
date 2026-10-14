@@ -65,6 +65,16 @@ extern "C"
 	WINPR_ATTR_MALLOC(aad_auth_helper_stop, 1)
 	FREERDP_API AadAuthHelper* aad_auth_helper_start(rdpClientContext* context);
 
+	/** @brief checks if the helper process is still alive, i.e. the instance can be reused for
+	 *  another token request (keeping its browser session)
+	 *
+	 * @param helper a helper started with aad_auth_helper_start(), may be NULL
+	 * @return TRUE if the helper process is running, FALSE if it exited or helper is NULL
+	 * @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL aad_auth_helper_is_running(const AadAuthHelper* helper);
+
 	/** @brief va_list-taking implementation, so a caller that's already inside its own variadic
 	 *  function (see the SDL2/SDL3 GetAccessToken trampolines) can forward its va_list here
 	 * directly

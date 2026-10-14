@@ -2769,6 +2769,34 @@ static char* get_redirect_uri(const rdpSettings* settings)
 	return redirect_uri;
 }
 
+/** @return a "&login_hint=<user>" query parameter pre-selecting the account in the login form,
+ *  an empty string when no usable user name is configured, nullptr on allocation failure */
+WINPR_ATTR_MALLOC(free, 1)
+static char* get_login_hint(const rdpSettings* settings, FreeRDP_Settings_Keys_String primary,
+                            FreeRDP_Settings_Keys_String secondary)
+{
+	const FreeRDP_Settings_Keys_String keys[] = { primary, secondary };
+	for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+	{
+		const char* user = freerdp_settings_get_string(settings, keys[x]);
+		/* AAD accounts are UPNs: a DOMAIN\user or bare name would only prefill the form with an
+		 * account that can't sign in */
+		if (!user || !strchr(user, '@') || strchr(user, '\\'))
+			continue;
+
+		char* encoded = winpr_str_url_encode(user, strlen(user));
+		if (!encoded)
+			return nullptr;
+
+		char* param = nullptr;
+		size_t len = 0;
+		winpr_asprintf(&param, &len, "&login_hint=%s", encoded);
+		free(encoded);
+		return param;
+	}
+	return _strdup("");
+}
+
 WINPR_ATTR_MALLOC(free, 1)
 static char* avd_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list ap, size_t* plen)
 {
@@ -2790,12 +2818,13 @@ static char* avd_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list 
 		return nullptr;
 
 	char* redirect_uri = get_redirect_uri(settings);
-	if (!redirect_uri)
-		return nullptr;
-
+	/* the AVD token is for the gateway: prefer the gateway user */
+	char* login_hint = get_login_hint(settings, FreeRDP_GatewayUsername, FreeRDP_Username);
 	char* url = nullptr;
-	winpr_asprintf(&url, plen, "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s", ep,
-	               client_id, scope, redirect_uri);
+	if (redirect_uri && login_hint)
+		winpr_asprintf(&url, plen, "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s%s",
+		               ep, client_id, scope, redirect_uri, login_hint);
+	free(login_hint);
 	free(redirect_uri);
 	return url;
 }
@@ -2848,9 +2877,11 @@ static char* aad_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list 
 	const rdpSettings* settings = cctx->context.settings;
 	char* url = nullptr;
 	char* redirect_uri = get_redirect_uri(settings);
+	/* the RDSTLS token is for the session host: prefer the host user */
+	char* login_hint = get_login_hint(settings, FreeRDP_Username, FreeRDP_GatewayUsername);
 
 	const char* client_id = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdClientID);
-	if (!client_id || !redirect_uri)
+	if (!client_id || !redirect_uri || !login_hint)
 		goto cleanup;
 
 	{
@@ -2862,12 +2893,13 @@ static char* aad_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list 
 			const char* ep = freerdp_utils_aad_get_wellknown_string(
 			    &cctx->context, AAD_WELLKNOWN_authorization_endpoint);
 			winpr_asprintf(&url, plen,
-			               "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s", ep,
-			               client_id, scope, redirect_uri);
+			               "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s%s", ep,
+			               client_id, scope, redirect_uri, login_hint);
 		}
 	}
 
 cleanup:
+	free(login_hint);
 	free(redirect_uri);
 	return url;
 }
@@ -2986,15 +3018,27 @@ static BOOL client_helper_get_access_token_va(freerdp* instance,
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
 
-	aad_auth_helper_stop(cctx->aadHelper);
-	cctx->aadHelper = aad_auth_helper_start(cctx);
-	if (!cctx->aadHelper)
-		return FALSE;
+	/* Keep one helper for the whole client lifetime (it is stopped when the context is freed):
+	 * its browser session then carries over from one token request to the next, e.g. AVD
+	 * gateway then session host, instead of prompting for a login each time. Only start a new
+	 * one if there's none yet or the previous one exited. */
+	if (!aad_auth_helper_is_running(cctx->aadHelper))
+	{
+		aad_auth_helper_stop(cctx->aadHelper);
+		cctx->aadHelper = aad_auth_helper_start(cctx);
+		if (!cctx->aadHelper)
+			return FALSE;
+	}
 
 	const BOOL rc =
 	    aad_auth_helper_get_access_token_v(cctx->aadHelper, tokenType, token, count, ap);
-	aad_auth_helper_stop(cctx->aadHelper);
-	cctx->aadHelper = nullptr;
+
+	/* a helper that died during the request (crash, user killed it) is restarted next time */
+	if (!rc && !aad_auth_helper_is_running(cctx->aadHelper))
+	{
+		aad_auth_helper_stop(cctx->aadHelper);
+		cctx->aadHelper = nullptr;
+	}
 	return rc;
 #else
 	WLog_ERR(TAG, "Build does not support AAD authentication");
