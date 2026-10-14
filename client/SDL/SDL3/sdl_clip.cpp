@@ -25,6 +25,7 @@
 #include <iterator>
 #include <algorithm>
 #include <utility>
+#include <cstring>
 
 #include <winpr/wlog.h>
 #include <winpr/image.h>
@@ -151,6 +152,18 @@ static const char s_mime_html[] = "text/html";
 			return m;
 	}
 	return nullptr;
+}
+
+/* WinPR synthesizes text with its terminating '\0' included in the size, as the RDP
+ * wire formats require. Local applications expect the bare string, so cut it at the
+ * first '\0' (as the X11 client does). */
+[[nodiscard]] static uint32_t textLength(const void* data, uint32_t size)
+{
+	const auto end = memchr(data, '\0', size);
+	if (!end)
+		return size;
+	return WINPR_ASSERTING_INT_CAST(uint32_t,
+	                                static_cast<const char*>(end) - static_cast<const char*>(data));
 }
 
 static const char s_mime_gnome_copied_files[] = "x-special/gnome-copied-files";
@@ -574,8 +587,21 @@ uint32_t sdlClip::serverIdForMime(const std::string& mime)
 			return format.formatId();
 	}
 
-	if (mime_is_image(mime))
-		return CF_DIB;
+	if (mime_is_image(mime) || mime_is_bmp(mime))
+	{
+		/* not offered under this name: CF_DIB, or any other image format of the server; the
+		 * WinPR clipboard converts it */
+		uint32_t named = 0;
+		for (auto& format : _serverFormats)
+		{
+			if ((format.formatId() == CF_DIB) || (format.formatId() == CF_DIBV5))
+				return format.formatId();
+			if (!named && format.formatName() &&
+			    (mime_is_image(format.formatName()) || mime_is_bmp(format.formatName())))
+				named = format.formatId();
+		}
+		return named ? named : CF_DIB;
+	}
 	if (mime_is_text(mime))
 		return CF_UNICODETEXT;
 
@@ -657,6 +683,11 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 			{
 				file = TRUE;
 				text = TRUE;
+			}
+			else if (mime_is_image(format->formatName) || mime_is_bmp(format->formatName))
+			{
+				/* e.g. GNOME Remote Desktop offers image/png alone for PNG-only sources */
+				image = TRUE;
 			}
 		}
 		else
@@ -832,6 +863,17 @@ std::shared_ptr<BYTE> sdlClip::getLocalData(uint32_t formatId, uint32_t& len)
 				{
 					/* the name is owned by _system and outlives this function */
 					candidates.push_back({ formatName, Store::Lookup });
+				}
+				else if (formatName && (mime_is_image(formatName) || mime_is_bmp(formatName)))
+				{
+					/* We announce every image format WinPR can convert to, but the SDL backend
+					 * may only provide some of them (Windows: image/bmp). Take the ones on
+					 * offer and let the WinPR clipboard convert to the requested format. */
+					for (const auto& mime : s_mime_dib_sources())
+					{
+						if (hasMime(offered, mime))
+							candidates.push_back({ mime, Store::Register });
+					}
 				}
 			}
 			break;
@@ -1043,6 +1085,10 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 					{
 						srcFormatId = ClipboardGetFormatId(clipboard->_system, s_type_HtmlFormat);
 					}
+					else if (mime_is_image(name) || mime_is_bmp(name))
+					{
+						srcFormatId = ClipboardGetFormatId(clipboard->_system, name.c_str());
+					}
 				}
 			}
 			break;
@@ -1111,6 +1157,8 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		if (fptr)
 		{
 			auto ptr = std::shared_ptr<void>(fptr, free);
+			if (mime_is_text(mime_type))
+				fsize = textLength(fptr, fsize);
 			clip->_cache_data.insert({ mime_type, { fsize, ptr } });
 
 			auto fcache = clip->_cache_data.find(mime_type);
@@ -1187,6 +1235,8 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 			}
 
 			auto ptr = std::shared_ptr<void>(data, free);
+			if (mime_is_text(mime_type))
+				len = textLength(data, len);
 			clip->_cache_data.insert({ mime_type, { len, ptr } });
 			*size = len;
 			return ptr.get();

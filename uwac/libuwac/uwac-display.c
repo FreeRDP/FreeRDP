@@ -41,6 +41,7 @@
 #define TARGET_DDM_INTERFACE 1U
 #define TARGET_SEAT_INTERFACE 5U
 #define TARGET_XDG_VERSION 5U /* The version of xdg-shell that we implement */
+#define TARGET_LINUX_DMABUF_VERSION 1U
 
 #if !defined(NDEBUG)
 static const char* event_names[] = {
@@ -62,6 +63,11 @@ static bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code
 }
 
 UwacErrorHandler uwacErrorHandler = uwac_default_error_handler;
+
+bool UwacDisplayHasLinuxDmabuf(const UwacDisplay* display)
+{
+	return display && display->linux_dmabuf;
+}
 
 void UwacInstallErrorHandler(UwacErrorHandler handler)
 {
@@ -85,6 +91,16 @@ static void cb_shm_format(void* data, struct wl_shm* wl_shm, uint32_t format)
 }
 
 static struct wl_shm_listener shm_listener = { cb_shm_format };
+
+static void cb_linux_dmabuf_format(WINPR_ATTR_UNUSED void* data,
+	                               WINPR_ATTR_UNUSED struct zwp_linux_dmabuf_v1* dmabuf,
+	                               WINPR_ATTR_UNUSED uint32_t format)
+{
+}
+
+static const struct zwp_linux_dmabuf_v1_listener linux_dmabuf_listener = {
+	cb_linux_dmabuf_format,
+};
 
 static void xdg_shell_ping(void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial)
 {
@@ -166,6 +182,12 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 		d->shm =
 		    wl_registry_bind(registry, id, &wl_shm_interface, min(TARGET_SHM_INTERFACE, version));
 		wl_shm_add_listener(d->shm, &shm_listener, d);
+	}
+	else if (strcmp(interface, "zwp_linux_dmabuf_v1") == 0)
+	{
+		d->linux_dmabuf = wl_registry_bind(registry, id, &zwp_linux_dmabuf_v1_interface,
+		                                   min(TARGET_LINUX_DMABUF_VERSION, version));
+		zwp_linux_dmabuf_v1_add_listener(d->linux_dmabuf, &linux_dmabuf_listener, d);
 	}
 	else if (strcmp(interface, "wl_output") == 0)
 	{
@@ -580,6 +602,9 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->shm)
 		wl_shm_destroy(display->shm);
+
+	if (display->linux_dmabuf)
+		zwp_linux_dmabuf_v1_destroy(display->linux_dmabuf);
 
 	if (display->viewporter)
 		wp_viewporter_destroy(display->viewporter);

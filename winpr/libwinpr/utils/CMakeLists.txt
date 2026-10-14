@@ -160,6 +160,7 @@ set(ASN1_SRCS asn1/asn1.c)
 
 set(SRCS
     atexit.c
+    i18n.c
     ini.c
     sam.c
     ntlm.c
@@ -174,6 +175,18 @@ set(SRCS
     ssl.c
     config-readers.c
 )
+
+option(WITH_WINPR_I18N "Enable gettext localization support in WinPR" OFF)
+if(WITH_WINPR_I18N)
+  find_package(Intl REQUIRED)
+  if(TARGET Intl::Intl)
+    set_property(TARGET Intl::Intl PROPERTY IMPORTED_GLOBAL TRUE)
+    winpr_library_add_public(Intl::Intl)
+  else()
+    winpr_system_include_directory_add(${Intl_INCLUDE_DIRS})
+    winpr_library_add_public(${Intl_LIBRARIES})
+  endif()
+endif()
 
 if(ANDROID)
   list(APPEND SRCS android.h android.c)

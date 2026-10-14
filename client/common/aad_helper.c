@@ -611,12 +611,21 @@ static AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helpe
 	                                  : AAD_AUTH_HELPER_NAVIGATE_ERROR;
 }
 
+BOOL aad_auth_helper_is_running(const AadAuthHelper* helper)
+{
+	if (!helper || !helper->hProcess)
+		return FALSE;
+	return WaitForSingleObject(helper->hProcess, 0) == WAIT_TIMEOUT;
+}
+
 void aad_auth_helper_stop(AadAuthHelper* helper)
 {
 	if (!helper)
 		return;
 
-	if (helper->hProcess)
+	/* no shutdown handshake with a helper that already exited: nobody reads the pipe anymore
+	 * (writing there would raise SIGPIPE) */
+	if (aad_auth_helper_is_running(helper))
 	{
 		const UINT32 id = ++helper->nextId;
 		char* req = build_shutdown_request(id);
@@ -638,8 +647,10 @@ void aad_auth_helper_stop(AadAuthHelper* helper)
 			WLog_WARN(TAG, "aad-auth-helper: did not exit in time, terminating");
 			(void)TerminateProcess(helper->hProcess, 0);
 		}
-		(void)CloseHandle(helper->hProcess);
 	}
+
+	if (helper->hProcess)
+		(void)CloseHandle(helper->hProcess);
 
 	if (helper->hCmdInWrite)
 		(void)CloseHandle(helper->hCmdInWrite);

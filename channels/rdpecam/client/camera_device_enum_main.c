@@ -19,6 +19,7 @@
 
 #include <winpr/assert.h>
 #include <winpr/cast.h>
+#include <winpr/cmdline.h>
 #include <winpr/string.h>
 
 #include "camera.h"
@@ -535,6 +536,42 @@ static UINT ecam_load_hal_plugin(CameraPlugin* ecam, const char* name, const ADD
 /**
  * Function description
  *
+ * picks the subsystem given by sys:<name>, the other arguments are left to the subsystem
+ *
+ * @return TRUE on success
+ */
+WINPR_ATTR_NODISCARD
+static BOOL ecam_process_addin_args(CameraPlugin* ecam, const ADDIN_ARGV* args)
+{
+	WINPR_ASSERT(ecam);
+
+	COMMAND_LINE_ARGUMENT_A ecam_args[] = { { "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>",
+		                                      nullptr, nullptr, -1, nullptr, "subsystem" },
+		                                    { nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr,
+		                                      nullptr } };
+
+	if (!args || (args->argc <= 1))
+		return TRUE;
+
+	const DWORD flags =
+	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	const int status = CommandLineParseArgumentsA(args->argc, args->argv, ecam_args, flags, ecam,
+	                                              nullptr, nullptr);
+	if (status != 0)
+		return FALSE;
+
+	const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(ecam_args, "sys");
+	if (arg && (arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+	{
+		/* the value points into args, which outlive the plugin */
+		ecam->subsystem = arg->Value;
+	}
+	return TRUE;
+}
+
+/**
+ * Function description
+ *
  * @return 0 on success, otherwise a Win32 error code
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpecam_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
@@ -573,9 +610,17 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpecam_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS*
 	ecam->subsystem = nullptr;
 #endif
 
+	const ADDIN_ARGV* args = pEntryPoints->GetPluginData(pEntryPoints);
+	if (!ecam_process_addin_args(ecam, args))
+	{
+		WLog_ERR(TAG, "Invalid rdpecam arguments");
+		error = ERROR_INVALID_PARAMETER;
+		goto out;
+	}
+
 	if (ecam->subsystem)
 	{
-		if ((error = ecam_load_hal_plugin(ecam, ecam->subsystem, nullptr /*args*/)))
+		if ((error = ecam_load_hal_plugin(ecam, ecam->subsystem, args)))
 		{
 			WLog_ERR(TAG,
 			         "Unable to load camera redirection subsystem %s because of error %" PRIu32 "",
