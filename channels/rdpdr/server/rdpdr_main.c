@@ -4217,7 +4217,7 @@ static UINT rdpdr_server_drive_query_volume_information_callback2(RdpdrServerCon
 		availableBytes = callerUnits * unitSize;
 	}
 	else if (ioStatus == STATUS_SUCCESS)
-		ioStatus = STATUS_INVALID_PARAMETER;
+		ioStatus = ERROR_INVALID_PARAMETER;
 
 	IFCALL(context->OnDriveQueryVolumeInformationComplete, context, irp->CallbackData, ioStatus,
 	       totalBytes, availableBytes);
