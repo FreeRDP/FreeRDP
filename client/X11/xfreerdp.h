@@ -170,6 +170,7 @@ struct xf_context
 	xfWindow* window;
 	Window reconnectWindow;
 	char reconnectMessage[128];
+	UINT32 monitorScales[16][2];
 	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;
