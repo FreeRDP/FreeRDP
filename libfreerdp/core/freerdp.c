@@ -66,8 +66,7 @@
 
 BOOL freerdp_enable_translation(const char* locale, const char* searchPath)
 {
-	return winpr_i18n_enable_translation(locale) &&
-	       winpr_i18n_bind_domain("freerdp", searchPath);
+	return winpr_i18n_enable_translation(locale) && winpr_i18n_bind_domain("freerdp", searchPath);
 }
 
 static void sig_abort_connect(int signum, const char* signame, void* ctx)
