@@ -446,6 +446,7 @@ extern "C"
 	 *
 	 * @param display the display to query
 	 * @return true if linux-dmabuf is available
+	 * @since version 3.33.0
 	 */
 	UWAC_API bool UwacDisplayHasLinuxDmabuf(const UwacDisplay* display);
 
