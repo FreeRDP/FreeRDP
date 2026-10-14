@@ -27,7 +27,7 @@
 #include "utils.h"
 #include "timer.h"
 
-#if !defined(EMSCRIPTEN)
+#if !defined(__EMSCRIPTEN__)
 #define FREERDP_TIMER_SUPPORTED
 #endif
 #define TAG FREERDP_TAG("timer")

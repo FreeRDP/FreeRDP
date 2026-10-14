@@ -991,7 +991,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 		inet_pton(ifreq->ifr_addr.sa_family, netmask, (void*)&pNetmask->sin_addr);
 		numInterfaces++;
 	next_ifreq:
-#if !defined(__linux__) && !defined(__sun__) && !defined(__CYGWIN__) && !defined(EMSCRIPTEN)
+#if !defined(__linux__) && !defined(__sun__) && !defined(__CYGWIN__) && !defined(__EMSCRIPTEN__)
 		ifreq_len = IFNAMSIZ + ifreq->ifr_addr.sa_len;
 #else
 		ifreq_len = sizeof(*ifreq);
