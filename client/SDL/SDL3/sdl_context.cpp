@@ -1304,9 +1304,6 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
 	if (_floatbar.owns(ev.windowID))
 		return handleFloatbar(ev);
-	// Ignore local SDL windows before RAIL routes input to a remote window.
-	if (!getWindowForId(ev.windowID))
-		return true;
 	SDL_Event copy = {};
 	copy.button = ev;
 	if (_rail.enabled())
@@ -1917,18 +1914,10 @@ bool SdlContext::setFullscreen(bool enter, bool forceOriginalDisplay)
 
 bool SdlContext::setFloatbar(bool visible)
 {
-	if (!visible)
-	{
-		_floatbar.hide();
-		return true;
-	}
-
-	if (_windows.empty())
-		return true;
-
 	const auto options = freerdp_settings_get_uint32(context()->settings, FreeRDP_Floatbar);
-	auto* parent = _windows.begin()->second.window();
-	return _floatbar.show(parent, (options & 0x02u) != 0, (options & 0x04u) != 0);
+	auto* parent = _windows.empty() ? nullptr : _windows.begin()->second.window();
+	return _floatbar.setVisible(parent, visible, (options & 0x02u) != 0,
+	                            (options & 0x04u) != 0);
 }
 
 bool SdlContext::handleFloatbar(const SDL_MouseButtonEvent& ev)

@@ -18,10 +18,15 @@ SdlFloatbar::~SdlFloatbar()
 	hide();
 }
 
-bool SdlFloatbar::show(SDL_Window* parent, bool sticky, bool defaultVisible)
+bool SdlFloatbar::setVisible(SDL_Window* parent, bool visible, bool sticky, bool defaultVisible)
 {
+	if (!visible)
+	{
+		hide();
+		return true;
+	}
 	if (!parent)
-		return false;
+		return true;
 	if (_window && (_parent != parent))
 		hide();
 

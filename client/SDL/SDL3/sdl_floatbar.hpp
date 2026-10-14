@@ -33,7 +33,7 @@ class SdlFloatbar
 	SdlFloatbar& operator=(const SdlFloatbar&) = delete;
 	SdlFloatbar& operator=(SdlFloatbar&&) = delete;
 
-	[[nodiscard]] bool show(SDL_Window* parent, bool sticky, bool defaultVisible);
+	[[nodiscard]] bool setVisible(SDL_Window* parent, bool visible, bool sticky, bool defaultVisible);
 	void hide();
 	[[nodiscard]] bool owns(SDL_WindowID windowId) const;
 	[[nodiscard]] bool ownsParent(SDL_WindowID windowId) const;
