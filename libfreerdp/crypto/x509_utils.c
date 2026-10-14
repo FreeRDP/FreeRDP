@@ -325,7 +325,7 @@ static BOOL check_string_is_email(WINPR_ATTR_UNUSED const X509* x509, const unsi
 	const char* domain = &email[at_pos + 1];
 	size_t domain_len = strnlen(domain, len);
 
-	if (!winpr_str_is_valid_urlN(domain, domain_len))
+	if (!winpr_str_is_valid_hostnameN(domain, domain_len))
 		return FALSE;
 
 	/* local part */
@@ -348,7 +348,7 @@ static BOOL check_string_is_host_or_ip(WINPR_ATTR_UNUSED const X509* x509,
 	const char* str = (const char*)ustr;
 	if (strnlen(str, length) != length)
 		return FALSE;
-	return winpr_str_is_valid_urlN(str, length);
+	return winpr_str_is_valid_hostnameN(str, length);
 }
 
 WINPR_ATTR_NODISCARD

@@ -801,7 +801,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetFQDN), 512))
 			return STATE_RUN_FAILED;
-		if (!winpr_str_is_valid_url(redirection->TargetFQDN))
+		if (!winpr_str_is_valid_hostname(redirection->TargetFQDN))
 			return STATE_RUN_FAILED;
 		WLog_DBG(TAG, "TargetFQDN: %s", redirection->TargetFQDN);
 	}
@@ -810,7 +810,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetBiosName), 32))
 			return STATE_RUN_FAILED;
-		if (!winpr_str_is_valid_url(redirection->TargetNetBiosName))
+		if (!winpr_str_is_valid_hostname(redirection->TargetNetBiosName))
 			return STATE_RUN_FAILED;
 		WLog_DBG(TAG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);
 	}

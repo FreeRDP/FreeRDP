@@ -24,7 +24,8 @@ static void* test_write_cert(const rdpCertificate* cert, UINT32 version, size_t 
 		goto fail;
 
 	*plen = Stream_GetPosition(s);
-	data = malloc(*plen);
+	if (*plen > 0)
+		data = malloc(*plen);
 	if (data)
 		memcpy(data, Stream_Buffer(s), *plen);
 

@@ -591,7 +591,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	if (bi.biHeight < 0)
 	{
 		vFlip = FALSE;
-		image->height = (UINT32)(-1 * bi.biHeight);
+		image->height = (UINT32)(-1ll * bi.biHeight);
 	}
 	else
 	{

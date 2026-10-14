@@ -708,9 +708,9 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 			return FALSE;
 		}
 
-		if (!winpr_str_is_valid_url(addr))
+		if (!winpr_str_is_valid_hostname(addr))
 		{
-			WLog_ERR(TAG, "TargetNetAddress[%" PRIuz "]: %s not an URL or IP", j, addr);
+			WLog_ERR(TAG, "TargetNetAddress[%" PRIuz "]: %s not an FQDN or IP", j, addr);
 			return FALSE;
 		}
 

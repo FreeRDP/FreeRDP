@@ -774,10 +774,10 @@ static BOOL descriptor_is_nested(const FILEDESCRIPTORW* dsc)
 
 /* The universal converter from filedescriptors to different file lists */
 WINPR_ATTR_MALLOC(free, 1)
-static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 formatId,
-                                                  const void* data, UINT32* pSize,
-                                                  const char* header, const char* lineprefix,
-                                                  const char* lineending, BOOL skip_last_lineending)
+static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const void* data,
+                                                  UINT32* pSize, const char* header,
+                                                  const char* lineprefix, const char* lineending,
+                                                  BOOL skip_last_lineending)
 {
 	UINT32 nrDescriptors = 0;
 	size_t baseLength = 0;
@@ -962,8 +962,8 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 		         ClipboardGetFormatName(clipboard, clipboard->formatId), clipboard->formatId);
 		return nullptr;
 	}
-	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "", "file://",
-	                                            "\r\n", FALSE);
+	return convert_filedescriptors_to_file_list(clipboard, data, pSize, "", "file://", "\r\n",
+	                                            FALSE);
 }
 
 /* Prepend header of common gnome format to file list*/
@@ -989,8 +989,8 @@ static void* convert_filedescriptors_to_gnome_copied_files(wClipboard* clipboard
 		         ClipboardGetFormatName(clipboard, clipboard->formatId), clipboard->formatId);
 		return nullptr;
 	}
-	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "copy\n",
-	                                            "file://", "\n", TRUE);
+	return convert_filedescriptors_to_file_list(clipboard, data, pSize, "copy\n", "file://", "\n",
+	                                            TRUE);
 }
 
 WINPR_ATTR_MALLOC(free, 1)
@@ -1015,8 +1015,8 @@ static void* convert_filedescriptors_to_mate_copied_files(wClipboard* clipboard,
 		         ClipboardGetFormatName(clipboard, clipboard->formatId), clipboard->formatId);
 		return nullptr;
 	}
-	char* pDstData = convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize,
-	                                                      "copy\n", "file://", "\n", TRUE);
+	char* pDstData = convert_filedescriptors_to_file_list(clipboard, data, pSize, "copy\n",
+	                                                      "file://", "\n", TRUE);
 	if (!pDstData)
 	{
 		return pDstData;
