@@ -577,7 +577,10 @@ autodetect_recv_bandwidth_measure_payload(rdpAutoDetect* autodetect,
 	WLog_Print(autodetect->log, WLOG_DEBUG,
 	           "received Bandwidth Measure Payload PDU -> payloadLength=%" PRIu16 "",
 	           payloadLength);
-	/* Add the payload length to the bandwidth measurement parameters */
+	/* Add the message to the bandwidth measurement parameters: Windows counts the whole
+	 * Bandwidth Measure Payload message, header included (mstsc reports 4000 bytes for a
+	 * 3992 byte payload), and ends the connect-time detection with a 5 s delay otherwise */
+	autodetect->bandwidthMeasureByteCount += autodetectReqPdu->headerLength;
 	autodetect->bandwidthMeasureByteCount += payloadLength;
 	return TRUE;
 }
@@ -627,8 +630,13 @@ static BOOL autodetect_recv_bandwidth_measure_stop(rdpAutoDetect* autodetect,
 
 	WLog_Print(autodetect->log, WLOG_TRACE,
 	           "received Bandwidth Measure Stop PDU -> payloadLength=%" PRIu16 "", payloadLength);
-	/* Add the payload length to the bandwidth measurement parameters */
-	autodetect->bandwidthMeasureByteCount += payloadLength;
+	/* Add the payload to the bandwidth measurement parameters, with its header as for a
+	 * Bandwidth Measure Payload message (see autodetect_recv_bandwidth_measure_payload) */
+	if (payloadLength > 0)
+	{
+		autodetect->bandwidthMeasureByteCount += autodetectReqPdu->headerLength;
+		autodetect->bandwidthMeasureByteCount += payloadLength;
+	}
 
 	/* Continuous Auto-Detection: mark the stop of the measurement */
 	if (autodetectReqPdu->requestType == RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS)
