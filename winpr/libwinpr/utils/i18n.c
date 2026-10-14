@@ -7,6 +7,7 @@
  */
 
 #include <winpr/i18n.h>
+#include <winpr/build-config.h>
 
 #ifdef WITH_WINPR_I18N
 #include <libintl.h>
@@ -30,7 +31,10 @@ BOOL winpr_i18n_bind_domain(const char* domain, const char* searchPath)
 		return FALSE;
 
 #ifdef WITH_WINPR_I18N
-	if (searchPath && (searchPath[0] != '\0') && !bindtextdomain(domain, searchPath))
+	const char* catalogPath = searchPath;
+	if (!catalogPath || (catalogPath[0] == '\0'))
+		catalogPath = WINPR_INSTALL_LOCALEDIR;
+	if (catalogPath && (catalogPath[0] != '\0') && !bindtextdomain(domain, catalogPath))
 		return FALSE;
 	return bind_textdomain_codeset(domain, "UTF-8") ? TRUE : FALSE;
 #else

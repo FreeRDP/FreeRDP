@@ -33,7 +33,8 @@ extern "C"
 	 * applications choose an installation-specific locale directory.
 	 *
 	 * @param domain Gettext domain name.
-	 * @param searchPath Optional gettext catalog directory for the domain.
+	 * @param searchPath Optional gettext catalog directory for the domain; defaults
+	 *                   to the configured installation locale directory.
 	 * @return TRUE on success, otherwise FALSE.
 	 * @since version 3.33.0
 	 */
@@ -51,7 +52,11 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API const char* winpr_i18n_dgettext(const char* domain, const char* msgid);
 
+#ifdef WITH_WINPR_I18N
 #define WINPR_I18N_GETTEXT(domain, msgid) winpr_i18n_dgettext((domain), (msgid))
+#else
+#define WINPR_I18N_GETTEXT(domain, msgid) (msgid)
+#endif
 
 #ifdef __cplusplus
 }

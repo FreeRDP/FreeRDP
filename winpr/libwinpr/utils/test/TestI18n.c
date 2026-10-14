@@ -10,11 +10,13 @@
 
 #include <string.h>
 
+#include <winpr/i18n.h>
+#include <winpr/build-config.h>
+
 #ifdef WITH_WINPR_I18N
+#include <libintl.h>
 #include <locale.h>
 #endif
-
-#include <winpr/i18n.h>
 
 int TestI18n(int argc, char* argv[])
 {
@@ -39,6 +41,16 @@ int TestI18n(int argc, char* argv[])
 		return -1;
 	if (!winpr_i18n_bind_domain("winpr-test", nullptr))
 		return -1;
+#ifdef WITH_WINPR_I18N
+	if (WINPR_INSTALL_LOCALEDIR[0])
+	{
+		const char* bound = bindtextdomain("winpr-test", nullptr);
+		if (!bound || (strcmp(bound, WINPR_INSTALL_LOCALEDIR) != 0))
+			return -1;
+	}
+#endif
 	const char* const result = winpr_i18n_dgettext("winpr-test", msgid);
-	return result && (strcmp(result, msgid) == 0) ? 0 : -1;
+	if (!result || (strcmp(result, msgid) != 0))
+		return -1;
+	return strcmp(WINPR_I18N_GETTEXT("winpr-test", msgid), msgid) == 0 ? 0 : -1;
 }
