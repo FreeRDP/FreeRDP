@@ -43,9 +43,9 @@ FREERDP_LOCAL int bulk_compress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_
 
 FREERDP_LOCAL void bulk_reset(rdpBulk* WINPR_RESTRICT bulk);
 
-FREERDP_LOCAL void bulk_free(rdpBulk* bulk);
+FREERDP_LOCAL void freerdp_bulk_free(rdpBulk* bulk);
 
-WINPR_ATTR_MALLOC(bulk_free, 1)
+WINPR_ATTR_MALLOC(freerdp_bulk_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpBulk* bulk_new(rdpContext* context);
 
