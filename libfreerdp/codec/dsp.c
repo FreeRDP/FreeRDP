@@ -689,7 +689,7 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                     const BYTE* WINPR_RESTRICT src, size_t size,
                                     wStream* WINPR_RESTRICT out)
 {
-	if (!context || !src || !out)
+	if (!context || !context->opus_decoder || !src || !out)
 		return FALSE;
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
@@ -712,7 +712,7 @@ static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                     const BYTE* WINPR_RESTRICT src, size_t size,
                                     wStream* WINPR_RESTRICT out)
 {
-	if (!context || !src || !out)
+	if (!context || !context->opus_encoder || !src || !out)
 		return FALSE;
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
@@ -1697,8 +1697,18 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 #if defined(WITH_OPUS)
 
-	if (opus_is_valid_samplerate(&context->common.format))
+	if (context->opus_decoder)
+		opus_decoder_destroy(context->opus_decoder);
+	context->opus_decoder = nullptr;
+	if (context->opus_encoder)
+		opus_encoder_destroy(context->opus_encoder);
+	context->opus_encoder = nullptr;
+
+	if (context->common.format.wFormatTag == WAVE_FORMAT_OPUS)
 	{
+		if (!opus_is_valid_samplerate(&context->common.format))
+			return FALSE;
+
 		if (!context->common.encoder)
 		{
 			int opus_error = OPUS_OK;
