@@ -699,6 +699,16 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Audio Input Redirection: /microphone:sys:oss,dev:1,format:1\n");
 	printf("Audio Input Redirection: /microphone:sys:alsa\n");
 	printf("\n");
+#if defined(CHANNEL_RDPECAM_CLIENT)
+	printf("Camera Redirection: /dvc:rdpecam[,sys:<sys>]\n");
+	printf("Camera Redirection, playing a movie file as camera (requires FFmpeg):\n");
+	printf("    /dvc:rdpecam,sys:movie,file:<path>[,name:<camera name>]\n");
+	printf("Camera Redirection, GStreamer pipeline as camera (requires GStreamer):\n");
+	printf("    /dvc:rdpecam,sys:gst,pipeline:<pipeline>|pipeline-file:<path>|file:<path>"
+	       "[,name:<camera name>][,loop:on|off]\n");
+	printf("    /dvc:rdpecam,sys:gst,'\"pipeline:pipewiresrc ! video/x-raw,width=640\"'\n");
+	printf("\n");
+#endif
 	printf("Multimedia Redirection: /video\n");
 #ifdef CHANNEL_URBDRC_CLIENT
 	printf("USB Device Redirection: /usb:id:054c:0268#4669:6e6b,addr:04:0c\n");

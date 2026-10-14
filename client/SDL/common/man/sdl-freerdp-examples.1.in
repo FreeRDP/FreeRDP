@@ -103,6 +103,39 @@ Activate audio input redirection using device
 \fIsys:alsa\fR
 .RE
 .PP
+\fB/dvc:rdpecam,sys:v4l\fR
+.RS 4
+Activate camera redirection using the
+\fIsys:v4l\fR
+backend (the platform default when
+\fIsys\fR
+is omitted)
+.RE
+.PP
+\fB/dvc:rdpecam,sys:movie,file:/path/to/movie.ogv,name:Webcam\fR
+.RS 4
+Announce a camera named
+\fIWebcam\fR
+that plays the given movie file in a loop instead of capturing a real camera\&. The only mode announced is the size (cropped to even dimensions) and frame rate of the movie\&.
+\fIname\fR
+is optional and defaults to
+\fIMovie: <file name>\fR\&. Requires a build with FFmpeg\&.
+.RE
+.PP
+\fB/dvc:rdpecam,sys:gst,pipeline-file:/path/to/pipeline.txt,name:Webcam\fR
+.RS 4
+Announce a camera named
+\fIWebcam\fR
+whose frames come from the GStreamer pipeline (gst\-launch syntax) stored in the given file, for instance
+\fIpipewiresrc target\-object=<serial> ! video/x\-raw,width=640,height=480\fR\&. The pipeline can also be given inline with
+\fIpipeline:<pipeline>\fR\&; as it usually contains commas, the whole option must then be quoted, e\&.g\&.
+\fI\*(Aq"pipeline:videotestsrc ! video/x\-raw,width=640"\*(Aq\fR\&.
+\fIfile:<path>\fR
+plays a media file instead\&. The only mode announced is the size (cropped to even dimensions) and frame rate the pipeline negotiates\&. A pipeline that ends is played again unless
+\fIloop:off\fR
+is given\&. Requires a build with GStreamer\&.
+.RE
+.PP
 \fB/multimedia:sys:alsa\fR
 .RS 4
 Activate multimedia redirection using device
