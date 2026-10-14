@@ -42,6 +42,9 @@
 
 #include "rdpsnd_main.h"
 
+/* target latency when /sound:latency is not given */
+#define PULSE_DEFAULT_LATENCY_MS 100
+
 typedef struct
 {
 	rdpsndDevicePlugin device;
@@ -413,23 +416,23 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	/* register essential callbacks */
 	pa_stream_set_state_callback(pulse->stream, rdpsnd_pulse_stream_state_callback, pulse);
 	pa_stream_set_write_callback(pulse->stream, rdpsnd_pulse_stream_request_callback, pulse);
-	flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE;
+	flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_ADJUST_LATENCY;
 
-	if (pulse->latency > 0)
-	{
-		const size_t val = pa_usec_to_bytes(1000ULL * pulse->latency, &pulse->sample_spec);
-		buffer_attr.maxlength = UINT32_MAX;
-		buffer_attr.tlength = (val > UINT32_MAX) ? UINT32_MAX : (UINT32)val;
-		buffer_attr.prebuf = UINT32_MAX;
-		buffer_attr.minreq = UINT32_MAX;
-		buffer_attr.fragsize = UINT32_MAX;
-		flags |= PA_STREAM_ADJUST_LATENCY;
-	}
+	/* Always ask for a target latency: without one the server picks its
+	 * own buffering, and after a pause PulseAudio drops the start of the
+	 * next sound (as much as its sink latency) while PipeWire runs dry
+	 * shortly after the start */
+	const UINT32 ms = (pulse->latency > 0) ? pulse->latency : PULSE_DEFAULT_LATENCY_MS;
+	const size_t val = pa_usec_to_bytes(1000ULL * ms, &pulse->sample_spec);
+	buffer_attr.maxlength = UINT32_MAX;
+	buffer_attr.tlength = (val > UINT32_MAX) ? UINT32_MAX : (UINT32)val;
+	buffer_attr.prebuf = UINT32_MAX;
+	buffer_attr.minreq = UINT32_MAX;
+	buffer_attr.fragsize = UINT32_MAX;
 
 	// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 	pa_stream_flags_t eflags = (pa_stream_flags_t)flags;
-	if (pa_stream_connect_playback(pulse->stream, pulse->device_name,
-	                               pulse->latency > 0 ? &buffer_attr : nullptr, eflags, nullptr,
+	if (pa_stream_connect_playback(pulse->stream, pulse->device_name, &buffer_attr, eflags, nullptr,
 	                               nullptr) < 0)
 	{
 		WLog_ERR(TAG, "error connecting playback stream");
