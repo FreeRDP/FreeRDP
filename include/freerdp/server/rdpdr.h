@@ -112,25 +112,57 @@ extern "C"
 	                                       UINT32 deviceId, const char* oldPath,
 	                                       const char* newPath);
 
+	/**
+	 * @brief Read from a file, with a 64-bit offset
+	 * @since version 3.33.0
+	 */
 	typedef UINT (*psRdpdrDriveReadFileEx)(RdpdrServerContext* context, void* callbackData,
 	                                       UINT32 deviceId, UINT32 fileId, UINT32 length,
 	                                       UINT64 offset);
+	/**
+	 * @brief Write to a file, with a 64-bit offset
+	 * @since version 3.33.0
+	 */
 	typedef UINT (*psRdpdrDriveWriteFileEx)(RdpdrServerContext* context, void* callbackData,
 	                                        UINT32 deviceId, UINT32 fileId, const char* buffer,
 	                                        UINT32 length, UINT64 offset);
+	/**
+	 * @brief Rename a file, optionally replacing an existing target
+	 * @since version 3.33.0
+	 */
 	typedef UINT (*psRdpdrDriveRenameFileEx)(RdpdrServerContext* context, void* callbackData,
 	                                         UINT32 deviceId, const char* oldPath,
 	                                         const char* newPath, BOOL replaceIfExists);
+	/**
+	 * @brief Set the size of a file
+	 * @since version 3.33.0
+	 */
 	typedef UINT (*psRdpdrDriveSetFileSize)(RdpdrServerContext* context, void* callbackData,
 	                                        UINT32 deviceId, const char* path, UINT64 size);
+	/**
+	 * @brief Set the access and write times of a file or directory
+	 * @since version 3.33.0
+	 */
 	typedef UINT (*psRdpdrDriveSetFileTimes)(RdpdrServerContext* context, void* callbackData,
 	                                         UINT32 deviceId, const char* path,
 	                                         INT64 lastAccessTime, INT64 lastWriteTime);
+	/**
+	 * @brief Query the size and free space of a drive
+	 * @since version 3.33.0
+	 */
 	typedef UINT (*psRdpdrDriveQueryVolumeInformation)(RdpdrServerContext* context,
 	                                                   void* callbackData, UINT32 deviceId);
 
+	/**
+	 * @brief Completion callback for DriveSetFileSize and DriveSetFileTimes
+	 * @since version 3.33.0
+	 */
 	typedef void (*psRdpdrOnDriveSetFileInformationComplete)(RdpdrServerContext* context,
 	                                                         void* callbackData, UINT32 ioStatus);
+	/**
+	 * @brief Completion callback for DriveQueryVolumeInformation
+	 * @since version 3.33.0
+	 */
 	typedef void (*psRdpdrOnDriveQueryVolumeInformationComplete)(RdpdrServerContext* context,
 	                                                             void* callbackData,
 	                                                             UINT32 ioStatus, UINT64 totalBytes,
