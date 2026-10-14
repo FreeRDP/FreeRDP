@@ -1029,6 +1029,8 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 
 			switch (rdp_scancode)
 			{
+				case RDP_SCANCODE_BACKSPACE:
+				case RDP_SCANCODE_DELETE:
 				case RDP_SCANCODE_RETURN:
 					break;
 				default:
