@@ -17,6 +17,11 @@
  * limitations under the License.
  */
 
+/* Must precede any NDK header: without it, APIs gated by __INTRODUCED_IN are annotated
+ * "strict", making any use a hard compile error that no __builtin_available guard can
+ * suppress. This switches them to weak symbols, which __builtin_available guards against. */
+#define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
@@ -83,12 +88,15 @@ static void rdpsnd_aaudio_close_stream(rdpsndAAudioPlugin* aaudio)
 	if (!aaudio->stream)
 		return;
 
-	aaudio_result_t rc = AAudioStream_requestStop(aaudio->stream);
-	if (rc != AAUDIO_OK)
-		WLog_WARN(TAG, "AAudioStream_requestStop: %s", AAudio_convertResultToText(rc));
-	rc = AAudioStream_close(aaudio->stream);
-	if (rc != AAUDIO_OK)
-		WLog_WARN(TAG, "AAudioStream_close: %s", AAudio_convertResultToText(rc));
+	if (__builtin_available(android 26, *))
+	{
+		aaudio_result_t rc = AAudioStream_requestStop(aaudio->stream);
+		if (rc != AAUDIO_OK)
+			WLog_WARN(TAG, "AAudioStream_requestStop: %s", AAudio_convertResultToText(rc));
+		rc = AAudioStream_close(aaudio->stream);
+		if (rc != AAUDIO_OK)
+			WLog_WARN(TAG, "AAudioStream_close: %s", AAudio_convertResultToText(rc));
+	}
 	aaudio->stream = nullptr;
 }
 
@@ -97,92 +105,99 @@ static BOOL rdpsnd_aaudio_open_stream(rdpsndAAudioPlugin* aaudio)
 {
 	WINPR_ASSERT(aaudio);
 
-	AAudioStreamBuilder* builder = nullptr;
-
 	if (aaudio->stream)
 		return TRUE;
 
-	aaudio_result_t rc = AAudio_createStreamBuilder(&builder);
-	if (rc != AAUDIO_OK)
+	if (__builtin_available(android 26, *))
 	{
-		WLog_ERR(TAG, "AAudio_createStreamBuilder: %s", AAudio_convertResultToText(rc));
-		return FALSE;
-	}
+		AAudioStreamBuilder* builder = nullptr;
 
-	AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_OUTPUT);
-	AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_SHARED);
-	AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_NONE);
-	AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
-	AAudioStreamBuilder_setSampleRate(builder, WINPR_ASSERTING_INT_CAST(int32_t, aaudio->rate));
-	AAudioStreamBuilder_setChannelCount(builder,
-	                                    WINPR_ASSERTING_INT_CAST(int32_t, aaudio->channels));
+		aaudio_result_t rc = AAudio_createStreamBuilder(&builder);
+		if (rc != AAUDIO_OK)
+		{
+			WLog_ERR(TAG, "AAudio_createStreamBuilder: %s", AAudio_convertResultToText(rc));
+			return FALSE;
+		}
+
+		AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_OUTPUT);
+		AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_SHARED);
+		AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_NONE);
+		AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
+		AAudioStreamBuilder_setSampleRate(builder, WINPR_ASSERTING_INT_CAST(int32_t, aaudio->rate));
+		AAudioStreamBuilder_setChannelCount(builder,
+		                                    WINPR_ASSERTING_INT_CAST(int32_t, aaudio->channels));
 #if __ANDROID_API__ >= 28
-	AAudioStreamBuilder_setUsage(builder, AAUDIO_USAGE_MEDIA);
-	AAudioStreamBuilder_setContentType(builder, AAUDIO_CONTENT_TYPE_MUSIC);
+		AAudioStreamBuilder_setUsage(builder, AAUDIO_USAGE_MEDIA);
+		AAudioStreamBuilder_setContentType(builder, AAUDIO_CONTENT_TYPE_MUSIC);
 #endif
 
-	const UINT32 targetMs = (aaudio->latency > 0) ? aaudio->latency : AAUDIO_DEFAULT_LATENCY_MS;
-	const UINT64 targetFrames = (UINT64)targetMs * aaudio->rate / 1000;
-	const int32_t targetCapacity =
-	    (targetFrames > INT32_MAX) ? INT32_MAX : WINPR_ASSERTING_INT_CAST(int32_t, targetFrames);
-	AAudioStreamBuilder_setBufferCapacityInFrames(builder, targetCapacity);
+		const UINT32 targetMs = (aaudio->latency > 0) ? aaudio->latency : AAUDIO_DEFAULT_LATENCY_MS;
+		const UINT64 targetFrames = (UINT64)targetMs * aaudio->rate / 1000;
+		const int32_t targetCapacity = (targetFrames > INT32_MAX)
+		                                   ? INT32_MAX
+		                                   : WINPR_ASSERTING_INT_CAST(int32_t, targetFrames);
+		AAudioStreamBuilder_setBufferCapacityInFrames(builder, targetCapacity);
 
-	rc = AAudioStreamBuilder_openStream(builder, &aaudio->stream);
-	AAudioStreamBuilder_delete(builder);
+		rc = AAudioStreamBuilder_openStream(builder, &aaudio->stream);
+		AAudioStreamBuilder_delete(builder);
 
-	if (rc != AAUDIO_OK)
-	{
-		WLog_ERR(TAG, "AAudioStreamBuilder_openStream: %s", AAudio_convertResultToText(rc));
-		aaudio->stream = nullptr;
-		return FALSE;
+		if (rc != AAUDIO_OK)
+		{
+			WLog_ERR(TAG, "AAudioStreamBuilder_openStream: %s", AAudio_convertResultToText(rc));
+			aaudio->stream = nullptr;
+			return FALSE;
+		}
+
+		const int32_t actualRate = AAudioStream_getSampleRate(aaudio->stream);
+		const int32_t actualChannels = AAudioStream_getChannelCount(aaudio->stream);
+		const aaudio_format_t actualFormat = AAudioStream_getFormat(aaudio->stream);
+
+		/* The frame size comes from the negotiated format and nothing converts here, so a stream
+		 * with a different channel count or sample format would have AAudioStream_write read past
+		 * the end of the caller's buffer. */
+		if ((actualChannels < 0) || ((UINT32)actualChannels != aaudio->channels) ||
+		    (actualFormat != AAUDIO_FORMAT_PCM_I16))
+		{
+			WLog_ERR(TAG, "AAudio opened as %dch/fmt%d, need %" PRIu32 "ch/I16", actualChannels,
+			         (int)actualFormat, aaudio->channels);
+			rdpsnd_aaudio_close_stream(aaudio);
+			return FALSE;
+		}
+
+		if ((actualRate < 0) || ((UINT32)actualRate != aaudio->rate))
+		{
+			WLog_WARN(TAG, "AAudio rate adjusted: requested %" PRIu32 "Hz, got %dHz", aaudio->rate,
+			          actualRate);
+		}
+
+		/* fixed buffer cushion */
+		const int32_t burst = AAudioStream_getFramesPerBurst(aaudio->stream);
+		const int32_t capacity = AAudioStream_getBufferCapacityInFrames(aaudio->stream);
+		int32_t target = targetCapacity;
+
+		if ((burst > 0) && (burst <= INT32_MAX / 2) && (target < burst * 2))
+			target = burst * 2;
+		if ((capacity > 0) && (target > capacity))
+			target = capacity;
+
+		const aaudio_result_t size = AAudioStream_setBufferSizeInFrames(aaudio->stream, target);
+		if (size < 0)
+			WLog_WARN(TAG, "AAudioStream_setBufferSizeInFrames(%d): %s", target,
+			          AAudio_convertResultToText(size));
+
+		rc = AAudioStream_requestStart(aaudio->stream);
+		if (rc != AAUDIO_OK)
+		{
+			WLog_ERR(TAG, "AAudioStream_requestStart: %s", AAudio_convertResultToText(rc));
+			rdpsnd_aaudio_close_stream(aaudio);
+			return FALSE;
+		}
+
+		return TRUE;
 	}
 
-	const int32_t actualRate = AAudioStream_getSampleRate(aaudio->stream);
-	const int32_t actualChannels = AAudioStream_getChannelCount(aaudio->stream);
-	const aaudio_format_t actualFormat = AAudioStream_getFormat(aaudio->stream);
-
-	/* The frame size comes from the negotiated format and nothing converts here, so a stream
-	 * with a different channel count or sample format would have AAudioStream_write read past
-	 * the end of the caller's buffer. */
-	if ((actualChannels < 0) || ((UINT32)actualChannels != aaudio->channels) ||
-	    (actualFormat != AAUDIO_FORMAT_PCM_I16))
-	{
-		WLog_ERR(TAG, "AAudio opened as %dch/fmt%d, need %" PRIu32 "ch/I16", actualChannels,
-		         (int)actualFormat, aaudio->channels);
-		rdpsnd_aaudio_close_stream(aaudio);
-		return FALSE;
-	}
-
-	if ((actualRate < 0) || ((UINT32)actualRate != aaudio->rate))
-	{
-		WLog_WARN(TAG, "AAudio rate adjusted: requested %" PRIu32 "Hz, got %dHz", aaudio->rate,
-		          actualRate);
-	}
-
-	/* fixed buffer cushion */
-	const int32_t burst = AAudioStream_getFramesPerBurst(aaudio->stream);
-	const int32_t capacity = AAudioStream_getBufferCapacityInFrames(aaudio->stream);
-	int32_t target = targetCapacity;
-
-	if ((burst > 0) && (burst <= INT32_MAX / 2) && (target < burst * 2))
-		target = burst * 2;
-	if ((capacity > 0) && (target > capacity))
-		target = capacity;
-
-	const aaudio_result_t size = AAudioStream_setBufferSizeInFrames(aaudio->stream, target);
-	if (size < 0)
-		WLog_WARN(TAG, "AAudioStream_setBufferSizeInFrames(%d): %s", target,
-		          AAudio_convertResultToText(size));
-
-	rc = AAudioStream_requestStart(aaudio->stream);
-	if (rc != AAUDIO_OK)
-	{
-		WLog_ERR(TAG, "AAudioStream_requestStart: %s", AAudio_convertResultToText(rc));
-		rdpsnd_aaudio_close_stream(aaudio);
-		return FALSE;
-	}
-
-	return TRUE;
+	WLog_ERR(TAG, "AAudio requires Android 26 or newer");
+	return FALSE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -363,77 +378,88 @@ static UINT rdpsnd_aaudio_play(rdpsndDevicePlugin* device, const BYTE* data, siz
 		}
 	}
 
-	const size_t bytesPerFrame = aaudio->channels * sizeof(INT16);
-	if (bytesPerFrame == 0)
+	UINT latency = 0;
+	if (__builtin_available(android 26, *))
 	{
-		LeaveCriticalSection(&aaudio->lock);
-		return 0;
-	}
-
-	const short* samples =
-	    rdpsnd_aaudio_apply_volume(aaudio, (const short*)data, size / sizeof(short));
-	size_t frames = size / bytesPerFrame;
-	const BYTE* pos = (const BYTE*)samples;
-
-	while (frames > 0)
-	{
-		const int32_t chunk =
-		    (frames > INT32_MAX) ? INT32_MAX : WINPR_ASSERTING_INT_CAST(int32_t, frames);
-		aaudio_result_t written =
-		    AAudioStream_write(aaudio->stream, pos, chunk, AAUDIO_WRITE_TIMEOUT_NS);
-
-		if (written < 0)
+		const size_t bytesPerFrame = aaudio->channels * sizeof(INT16);
+		if (bytesPerFrame == 0)
 		{
-			/* A timeout is transient. Everything else (route change, audioserver restart,
-			 * internal fault) leaves the stream unusable, so drop it and let the next play
-			 * call reopen; keeping it would mute audio for the rest of the session. */
-			if (written != AAUDIO_ERROR_TIMEOUT)
-			{
-				WLog_WARN(TAG, "AAudio stream unusable (%s), closing",
-				          AAudio_convertResultToText(written));
-				rdpsnd_aaudio_close_stream(aaudio);
-			}
-			else
-			{
-				WLog_ERR(TAG, "AAudioStream_write: %s", AAudio_convertResultToText(written));
-			}
-
 			LeaveCriticalSection(&aaudio->lock);
 			return 0;
 		}
 
-		if ((written == 0) || (written > chunk))
-			break;
+		const short* samples =
+		    rdpsnd_aaudio_apply_volume(aaudio, (const short*)data, size / sizeof(short));
+		size_t frames = size / bytesPerFrame;
+		const BYTE* pos = (const BYTE*)samples;
 
-		pos += (size_t)written * bytesPerFrame;
-		frames -= (size_t)written;
-	}
-
-	if (aaudio->rate == 0)
-	{
-		LeaveCriticalSection(&aaudio->lock);
-		return 0;
-	}
-
-	/* report accurate presentation latency (A/V sync) */
-	int64_t framePosition = 0;
-	int64_t timeNanoseconds = 0;
-	int64_t queued = 0;
-
-	if (AAudioStream_getTimestamp(aaudio->stream, CLOCK_MONOTONIC, &framePosition,
-	                              &timeNanoseconds) == AAUDIO_OK)
-	{
-		struct timespec ts = { 0 };
-		if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+		while (frames > 0)
 		{
-			const int64_t nowNanos = (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
-			int64_t elapsedNanos = nowNanos - timeNanoseconds;
-			if (elapsedNanos < 0)
-				elapsedNanos = 0;
-			if (elapsedNanos > INT64_MAX / AAUDIO_MAX_RATE)
-				elapsedNanos = INT64_MAX / AAUDIO_MAX_RATE;
-			const int64_t framesPlayed = elapsedNanos * aaudio->rate / 1000000000LL;
-			queued = AAudioStream_getFramesWritten(aaudio->stream) - (framePosition + framesPlayed);
+			const int32_t chunk =
+			    (frames > INT32_MAX) ? INT32_MAX : WINPR_ASSERTING_INT_CAST(int32_t, frames);
+			aaudio_result_t written =
+			    AAudioStream_write(aaudio->stream, pos, chunk, AAUDIO_WRITE_TIMEOUT_NS);
+
+			if (written < 0)
+			{
+				/* A timeout is transient. Everything else (route change, audioserver restart,
+				 * internal fault) leaves the stream unusable, so drop it and let the next play
+				 * call reopen; keeping it would mute audio for the rest of the session. */
+				if (written != AAUDIO_ERROR_TIMEOUT)
+				{
+					WLog_WARN(TAG, "AAudio stream unusable (%s), closing",
+					          AAudio_convertResultToText(written));
+					rdpsnd_aaudio_close_stream(aaudio);
+				}
+				else
+				{
+					WLog_ERR(TAG, "AAudioStream_write: %s", AAudio_convertResultToText(written));
+				}
+
+				LeaveCriticalSection(&aaudio->lock);
+				return 0;
+			}
+
+			if ((written == 0) || (written > chunk))
+				break;
+
+			pos += (size_t)written * bytesPerFrame;
+			frames -= (size_t)written;
+		}
+
+		if (aaudio->rate == 0)
+		{
+			LeaveCriticalSection(&aaudio->lock);
+			return 0;
+		}
+
+		/* report accurate presentation latency (A/V sync) */
+		int64_t framePosition = 0;
+		int64_t timeNanoseconds = 0;
+		int64_t queued = 0;
+
+		if (AAudioStream_getTimestamp(aaudio->stream, CLOCK_MONOTONIC, &framePosition,
+		                              &timeNanoseconds) == AAUDIO_OK)
+		{
+			struct timespec ts = { 0 };
+			if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+			{
+				const int64_t nowNanos = (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+				int64_t elapsedNanos = nowNanos - timeNanoseconds;
+				if (elapsedNanos < 0)
+					elapsedNanos = 0;
+				if (elapsedNanos > INT64_MAX / AAUDIO_MAX_RATE)
+					elapsedNanos = INT64_MAX / AAUDIO_MAX_RATE;
+				const int64_t framesPlayed = elapsedNanos * aaudio->rate / 1000000000LL;
+				queued =
+				    AAudioStream_getFramesWritten(aaudio->stream) - (framePosition + framesPlayed);
+			}
+			else
+			{
+				const int64_t written = AAudioStream_getFramesWritten(aaudio->stream);
+				const int64_t read = AAudioStream_getFramesRead(aaudio->stream);
+				queued = written - read;
+			}
 		}
 		else
 		{
@@ -441,19 +467,13 @@ static UINT rdpsnd_aaudio_play(rdpsndDevicePlugin* device, const BYTE* data, siz
 			const int64_t read = AAudioStream_getFramesRead(aaudio->stream);
 			queued = written - read;
 		}
-	}
-	else
-	{
-		const int64_t written = AAudioStream_getFramesWritten(aaudio->stream);
-		const int64_t read = AAudioStream_getFramesRead(aaudio->stream);
-		queued = written - read;
-	}
 
-	if (queued < 0)
-		queued = 0;
-	const UINT64 latencyMs = (UINT64)queued / aaudio->rate * 1000 +
-	                         ((UINT64)queued % aaudio->rate) * 1000 / aaudio->rate;
-	const UINT latency = (latencyMs > UINT32_MAX) ? UINT32_MAX : (UINT)latencyMs;
+		if (queued < 0)
+			queued = 0;
+		const UINT64 latencyMs = (UINT64)queued / aaudio->rate * 1000 +
+		                         ((UINT64)queued % aaudio->rate) * 1000 / aaudio->rate;
+		latency = (latencyMs > UINT32_MAX) ? UINT32_MAX : (UINT)latencyMs;
+	}
 	LeaveCriticalSection(&aaudio->lock);
 	return latency;
 }

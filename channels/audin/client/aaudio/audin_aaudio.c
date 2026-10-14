@@ -17,6 +17,11 @@
  * limitations under the License.
  */
 
+/* Must precede any NDK header: without it, APIs gated by __INTRODUCED_IN are annotated
+ * "strict", making any use a hard compile error that no __builtin_available guard can
+ * suppress. This switches them to weak symbols, which __builtin_available guards against. */
+#define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+
 #include <freerdp/config.h>
 
 #include <stdio.h>
@@ -84,10 +89,13 @@ static void audin_aaudio_stop_stream(AudinAAudioDevice* aaudio, AAudioStream* st
 	WINPR_ASSERT(aaudio);
 	WINPR_ASSERT(stream);
 
-	const aaudio_result_t rc = AAudioStream_requestStop(stream);
-	if (rc != AAUDIO_OK)
-		WLog_Print(aaudio->log, WLOG_WARN, "AAudioStream_requestStop: %s",
-		           AAudio_convertResultToText(rc));
+	if (__builtin_available(android 26, *))
+	{
+		const aaudio_result_t rc = AAudioStream_requestStop(stream);
+		if (rc != AAUDIO_OK)
+			WLog_Print(aaudio->log, WLOG_WARN, "AAudioStream_requestStop: %s",
+			           AAudio_convertResultToText(rc));
+	}
 }
 
 static void audin_aaudio_close_stream(AudinAAudioDevice* aaudio, AAudioStream* stream)
@@ -95,10 +103,13 @@ static void audin_aaudio_close_stream(AudinAAudioDevice* aaudio, AAudioStream* s
 	WINPR_ASSERT(aaudio);
 	WINPR_ASSERT(stream);
 
-	const aaudio_result_t rc = AAudioStream_close(stream);
-	if (rc != AAUDIO_OK)
-		WLog_Print(aaudio->log, WLOG_WARN, "AAudioStream_close: %s",
-		           AAudio_convertResultToText(rc));
+	if (__builtin_available(android 26, *))
+	{
+		const aaudio_result_t rc = AAudioStream_close(stream);
+		if (rc != AAUDIO_OK)
+			WLog_Print(aaudio->log, WLOG_WARN, "AAudioStream_close: %s",
+			           AAudio_convertResultToText(rc));
+	}
 }
 
 WINPR_ATTR_NODISCARD
@@ -106,76 +117,82 @@ static BOOL audin_aaudio_open_stream(AudinAAudioDevice* aaudio)
 {
 	WINPR_ASSERT(aaudio);
 
-	AAudioStreamBuilder* builder = nullptr;
-
-	aaudio_result_t rc = AAudio_createStreamBuilder(&builder);
-	if (rc != AAUDIO_OK)
+	if (__builtin_available(android 26, *))
 	{
-		WLog_Print(aaudio->log, WLOG_ERROR, "AAudio_createStreamBuilder: %s",
-		           AAudio_convertResultToText(rc));
-		return FALSE;
-	}
+		AAudioStreamBuilder* builder = nullptr;
 
-	AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_INPUT);
-	AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_SHARED);
-	AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_NONE);
-	AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
-	AAudioStreamBuilder_setSampleRate(
-	    builder, WINPR_ASSERTING_INT_CAST(int32_t, aaudio->format.nSamplesPerSec));
-	AAudioStreamBuilder_setChannelCount(
-	    builder, WINPR_ASSERTING_INT_CAST(int32_t, aaudio->format.nChannels));
+		aaudio_result_t rc = AAudio_createStreamBuilder(&builder);
+		if (rc != AAUDIO_OK)
+		{
+			WLog_Print(aaudio->log, WLOG_ERROR, "AAudio_createStreamBuilder: %s",
+			           AAudio_convertResultToText(rc));
+			return FALSE;
+		}
+
+		AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_INPUT);
+		AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_SHARED);
+		AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_NONE);
+		AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
+		AAudioStreamBuilder_setSampleRate(
+		    builder, WINPR_ASSERTING_INT_CAST(int32_t, aaudio->format.nSamplesPerSec));
+		AAudioStreamBuilder_setChannelCount(
+		    builder, WINPR_ASSERTING_INT_CAST(int32_t, aaudio->format.nChannels));
 #if __ANDROID_API__ >= 28
-	AAudioStreamBuilder_setInputPreset(builder, AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION);
+		AAudioStreamBuilder_setInputPreset(builder, AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION);
 #endif
 
-	AAudioStream* stream = nullptr;
-	rc = AAudioStreamBuilder_openStream(builder, &stream);
-	AAudioStreamBuilder_delete(builder);
+		AAudioStream* stream = nullptr;
+		rc = AAudioStreamBuilder_openStream(builder, &stream);
+		AAudioStreamBuilder_delete(builder);
 
-	if (rc != AAUDIO_OK)
-	{
-		WLog_Print(aaudio->log, WLOG_ERROR, "AAudioStreamBuilder_openStream: %s",
-		           AAudio_convertResultToText(rc));
-		return FALSE;
+		if (rc != AAUDIO_OK)
+		{
+			WLog_Print(aaudio->log, WLOG_ERROR, "AAudioStreamBuilder_openStream: %s",
+			           AAudio_convertResultToText(rc));
+			return FALSE;
+		}
+
+		/* The frame size is fixed by the negotiated format and there is no conversion here, so a
+		 * stream that came back with a different channel count or sample format would have
+		 * AAudioStream_read write past the accumulation buffer. */
+		const int32_t actualRate = AAudioStream_getSampleRate(stream);
+		const int32_t actualChannels = AAudioStream_getChannelCount(stream);
+		const aaudio_format_t actualFormat = AAudioStream_getFormat(stream);
+
+		if ((actualChannels < 0) || ((UINT32)actualChannels != aaudio->format.nChannels) ||
+		    (actualFormat != AAUDIO_FORMAT_PCM_I16))
+		{
+			WLog_Print(aaudio->log, WLOG_ERROR,
+			           "AAudio input opened as %dch/fmt%d, need %" PRIu16 "ch/I16", actualChannels,
+			           (int)actualFormat, aaudio->format.nChannels);
+			audin_aaudio_close_stream(aaudio, stream);
+			return FALSE;
+		}
+
+		if ((actualRate < 0) || ((UINT32)actualRate != aaudio->format.nSamplesPerSec))
+		{
+			WLog_Print(aaudio->log, WLOG_WARN,
+			           "AAudio input rate adjusted: requested %" PRIu32 "Hz, got %dHz",
+			           aaudio->format.nSamplesPerSec, actualRate);
+		}
+
+		rc = AAudioStream_requestStart(stream);
+		if (rc != AAUDIO_OK)
+		{
+			WLog_Print(aaudio->log, WLOG_ERROR, "AAudioStream_requestStart: %s",
+			           AAudio_convertResultToText(rc));
+			audin_aaudio_close_stream(aaudio, stream);
+			return FALSE;
+		}
+
+		EnterCriticalSection(&aaudio->lock);
+		aaudio->stream = stream;
+		LeaveCriticalSection(&aaudio->lock);
+		return TRUE;
 	}
 
-	/* The frame size is fixed by the negotiated format and there is no conversion here, so a
-	 * stream that came back with a different channel count or sample format would have
-	 * AAudioStream_read write past the accumulation buffer. */
-	const int32_t actualRate = AAudioStream_getSampleRate(stream);
-	const int32_t actualChannels = AAudioStream_getChannelCount(stream);
-	const aaudio_format_t actualFormat = AAudioStream_getFormat(stream);
-
-	if ((actualChannels < 0) || ((UINT32)actualChannels != aaudio->format.nChannels) ||
-	    (actualFormat != AAUDIO_FORMAT_PCM_I16))
-	{
-		WLog_Print(aaudio->log, WLOG_ERROR,
-		           "AAudio input opened as %dch/fmt%d, need %" PRIu16 "ch/I16", actualChannels,
-		           (int)actualFormat, aaudio->format.nChannels);
-		audin_aaudio_close_stream(aaudio, stream);
-		return FALSE;
-	}
-
-	if ((actualRate < 0) || ((UINT32)actualRate != aaudio->format.nSamplesPerSec))
-	{
-		WLog_Print(aaudio->log, WLOG_WARN,
-		           "AAudio input rate adjusted: requested %" PRIu32 "Hz, got %dHz",
-		           aaudio->format.nSamplesPerSec, actualRate);
-	}
-
-	rc = AAudioStream_requestStart(stream);
-	if (rc != AAUDIO_OK)
-	{
-		WLog_Print(aaudio->log, WLOG_ERROR, "AAudioStream_requestStart: %s",
-		           AAudio_convertResultToText(rc));
-		audin_aaudio_close_stream(aaudio, stream);
-		return FALSE;
-	}
-
-	EnterCriticalSection(&aaudio->lock);
-	aaudio->stream = stream;
-	LeaveCriticalSection(&aaudio->lock);
-	return TRUE;
+	WLog_Print(aaudio->log, WLOG_ERROR, "AAudio requires Android 26 or newer");
+	return FALSE;
 }
 
 /* Close and forget the capture stream, if it is still the one the caller saw. */
@@ -244,9 +261,12 @@ static DWORD WINAPI audin_aaudio_thread(LPVOID arg)
 		BYTE* writePtr = accumulationBuffer + (currentFrames * bytesPerFrame);
 
 		/* Read outside the lock: this thread is the only one closing the stream it reads from,
-		 * Close stops it from outside and only closes it after joining. */
-		aaudio_result_t r =
-		    AAudioStream_read(stream, writePtr, framesToRead, AAUDIO_READ_TIMEOUT_NS);
+		 * Close stops it from outside and only closes it after joining. stream is only ever
+		 * non-nullptr once open_stream succeeded, which requires API 26, so the fallback value
+		 * below is never actually reached. */
+		aaudio_result_t r = AAUDIO_ERROR_TIMEOUT;
+		if (__builtin_available(android 26, *))
+			r = AAudioStream_read(stream, writePtr, framesToRead, AAUDIO_READ_TIMEOUT_NS);
 
 		if (r < 0)
 		{
