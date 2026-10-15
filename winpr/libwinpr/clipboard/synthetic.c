@@ -719,7 +719,7 @@ static void* clipboard_synthesize_ms_html_format(wClipboard* clipboard, UINT32 f
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(pSize);
 
-	if (formatId == ClipboardGetFormatId(clipboard, mime_html))
+	if (formatId == ClipboardGetFormatId(clipboard, mime_ms_html))
 	{
 		const size_t SrcSize = (size_t)*pSize;
 		const size_t DstSize = SrcSize + 200;
@@ -1047,7 +1047,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 	char* pDstData = nullptr;
 
-	if (formatId == ClipboardGetFormatId(clipboard, mime_ms_html))
+	if (formatId == ClipboardGetFormatId(clipboard, mime_html))
 	{
 		const char* str = (const char*)data;
 		const size_t SrcSize = *pSize;
