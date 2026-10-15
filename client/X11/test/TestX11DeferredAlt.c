@@ -23,16 +23,16 @@ static const struct
 	DWORD scan;
 	char name;
 } keys[] = { { XK_Alt_L, 64, RDP_SCANCODE_LMENU, 'A' },
-             { XK_Alt_R, 108, RDP_SCANCODE_RMENU, 'R' },
-             { XK_Shift_L, 50, RDP_SCANCODE_LSHIFT, 'S' },
-             { XK_Shift_R, 62, RDP_SCANCODE_RSHIFT, 'H' },
-             { XK_Control_L, 37, RDP_SCANCODE_LCONTROL, 'C' },
-             { XK_Control_R, 105, RDP_SCANCODE_RCONTROL, 'D' },
-             { XK_Super_L, 133, RDP_SCANCODE_LWIN, 'L' },
-             { XK_Super_R, 134, RDP_SCANCODE_RWIN, 'G' },
-             { XK_f, 41, RDP_SCANCODE_KEY_F, 'F' },
-             { XK_Tab, 23, RDP_SCANCODE_TAB, 'T' },
-             { XK_m, 58, RDP_SCANCODE_KEY_M, 'N' } };
+	         { XK_Alt_R, 108, RDP_SCANCODE_RMENU, 'R' },
+	         { XK_Shift_L, 50, RDP_SCANCODE_LSHIFT, 'S' },
+	         { XK_Shift_R, 62, RDP_SCANCODE_RSHIFT, 'H' },
+	         { XK_Control_L, 37, RDP_SCANCODE_LCONTROL, 'C' },
+	         { XK_Control_R, 105, RDP_SCANCODE_RCONTROL, 'D' },
+	         { XK_Super_L, 133, RDP_SCANCODE_LWIN, 'L' },
+	         { XK_Super_R, 134, RDP_SCANCODE_RWIN, 'G' },
+	         { XK_f, 41, RDP_SCANCODE_KEY_F, 'F' },
+	         { XK_Tab, 23, RDP_SCANCODE_TAB, 'T' },
+	         { XK_m, 58, RDP_SCANCODE_KEY_M, 'N' } };
 
 static void record(char name, char direction)
 {

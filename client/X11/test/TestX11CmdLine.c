@@ -14,11 +14,11 @@ int main(int argc, char* argv[])
 		BOOL enabled;
 		BOOL valid;
 	} cases[] = { { nullptr, FALSE, TRUE },
-	              { "/defer-alt", TRUE, TRUE },
-	              { "+defer-alt", TRUE, TRUE },
-	              { "-defer-alt", FALSE, TRUE },
-	              { "/defer-alt:invalid", FALSE, FALSE },
-	              { "/kbd:defer-alt", FALSE, FALSE } };
+		          { "/defer-alt", TRUE, TRUE },
+		          { "+defer-alt", TRUE, TRUE },
+		          { "-defer-alt", FALSE, TRUE },
+		          { "/defer-alt:invalid", FALSE, FALSE },
+		          { "/kbd:defer-alt", FALSE, FALSE } };
 
 	for (size_t i = 0; i < ARRAYSIZE(cases); i++)
 	{
