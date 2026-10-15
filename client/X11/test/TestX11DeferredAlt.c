@@ -1,9 +1,11 @@
 /* FreeRDP: Licensed under the Apache License, Version 2.0. */
 #include <freerdp/config.h>
 #include <X11/keysym.h>
+#include <X11/XKBlib.h>
 #include <X11/Xutil.h>
 #include <freerdp/input.h>
 #include <freerdp/client.h>
+#include <freerdp/locale/locale.h>
 #include "../xf_keyboard.h"
 #include "../xf_event.h"
 
@@ -16,6 +18,11 @@ static BOOL minimized;
 static unsigned ungrabs;
 static BOOL altGr;
 static char physical[32];
+static XkbDescRec keyboard_map;
+static XkbNamesRec keyboard_names;
+static XkbKeyNameRec keyboard_key_names[256];
+static XModifierKeymap modifier_map;
+static KeySym keyboard_keysym;
 static const struct
 {
 	KeySym sym;
@@ -53,6 +60,58 @@ KeyCode XKeysymToKeycode(Display* display, KeySym sym)
 			return keys[i].code;
 	}
 	return 0;
+}
+
+XkbDescPtr XkbGetMap(Display* display, unsigned int which, unsigned int device_spec)
+{
+	WINPR_UNUSED(display);
+	WINPR_UNUSED(which);
+	WINPR_UNUSED(device_spec);
+	return &keyboard_map;
+}
+
+Status XkbGetNames(Display* display, unsigned int which, XkbDescPtr desc)
+{
+	WINPR_UNUSED(display);
+	WINPR_UNUSED(which);
+	WINPR_UNUSED(desc);
+	return Success;
+}
+
+void XkbFreeKeyboard(XkbDescPtr xkb, unsigned int which, Bool free_desc)
+{
+	WINPR_UNUSED(xkb);
+	WINPR_UNUSED(which);
+	WINPR_UNUSED(free_desc);
+}
+
+KeySym XkbKeycodeToKeysym(Display* display, KeyCode keycode, int group, int level)
+{
+	WINPR_UNUSED(display);
+	WINPR_UNUSED(keycode);
+	WINPR_UNUSED(group);
+	WINPR_UNUSED(level);
+	return keyboard_keysym;
+}
+
+int XDisplayKeycodes(Display* display, int* min_keycodes_return, int* max_keycodes_return)
+{
+	WINPR_UNUSED(display);
+	*min_keycodes_return = keyboard_map.min_key_code;
+	*max_keycodes_return = keyboard_map.max_key_code;
+	return 1;
+}
+
+XModifierKeymap* XGetModifierMapping(Display* display)
+{
+	WINPR_UNUSED(display);
+	return &modifier_map;
+}
+
+int XFreeModifiermap(XModifierKeymap* modmap)
+{
+	WINPR_UNUSED(modmap);
+	return 1;
 }
 
 int XQueryKeymap(Display* display, char map[32])
@@ -382,10 +441,56 @@ static BOOL dispatch(xfContext* xfc, Event event)
 	}
 }
 
+static BOOL test_keyboard_mapping_reload(void)
+{
+	BOOL rc = FALSE;
+	xfContext xfc = { 0 };
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		return FALSE;
+
+	keyboard_map = (XkbDescRec){ 0 };
+	keyboard_names = (XkbNamesRec){ 0 };
+	memset(keyboard_key_names, 0, sizeof(keyboard_key_names));
+	keyboard_map.min_key_code = 38;
+	keyboard_map.max_key_code = 39;
+	keyboard_map.names = &keyboard_names;
+	keyboard_names.keys = keyboard_key_names;
+	keyboard_keysym = XK_a;
+	xfc.common.context.settings = settings;
+	xfc.display = (Display*)&keyboard_map;
+	xfc.log = WLog_Get("com.freerdp.client.x11.test.keyboard");
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, ENGLISH_UNITED_STATES))
+		goto out;
+
+	memcpy(keyboard_key_names[38].name, "AC01", XkbKeyNameLength);
+	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+		goto out;
+
+	/* A new map with non-standard key names must be recovered through keysyms. */
+	memset(keyboard_key_names[38].name, 0, XkbKeyNameLength);
+	memcpy(keyboard_key_names[38].name, "L001", XkbKeyNameLength);
+	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+		goto out;
+
+	/* If the replacement map is unusable, retain the last working mapping. */
+	keyboard_keysym = NoSymbol;
+	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+		goto out;
+
+	rc = TRUE;
+out:
+	xf_keyboard_free(&xfc);
+	freerdp_settings_free(settings);
+	return rc;
+}
+
 int main(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+	if (!test_keyboard_mapping_reload())
+		return 1;
 	int rc = 1;
 	xfContext xfc = { 0 };
 	xfWindow window = { 0 };

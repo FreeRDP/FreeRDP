@@ -533,6 +533,25 @@ static void xf_keyboard_clear(xfContext* xfc)
 	ZeroMemory(xfc->KeyboardState, sizeof(xfc->KeyboardState));
 }
 
+static BOOL xf_keyboard_mapping_is_set(const xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	for (size_t i = 0; i < ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE); i++)
+	{
+		if (xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] != RDP_SCANCODE_UNKNOWN)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static void xf_keyboard_clear_mapping(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	ZeroMemory(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE, sizeof(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE));
+}
+
 static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size,
                                     WINPR_ATTR_UNUSED void* user, const char* what, const char* arg)
 {
@@ -801,6 +820,8 @@ static BOOL compareKey(const struct x11_key_scancode_t* a, size_t counta,
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	rdpSettings* settings = nullptr;
+	DWORD previous_mapping[ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE)] = { 0 };
+	BOOL previous_mapping_is_set = FALSE;
 
 	WINPR_ASSERT(xfc);
 
@@ -850,12 +871,27 @@ BOOL xf_keyboard_init(xfContext* xfc)
 			return FALSE;
 	}
 
+	previous_mapping_is_set = xf_keyboard_mapping_is_set(xfc);
+	memcpy(previous_mapping, xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE, sizeof(previous_mapping));
+	xf_keyboard_clear_mapping(xfc);
+
 	const int rc = load_map_from_xkbfile(xfc);
 
 	const BOOL keysym_mapped = load_map_from_keysym(xfc);
 
 	if (rc != 0 && !keysym_mapped)
-		return FALSE;
+	{
+		if (!previous_mapping_is_set)
+			return FALSE;
+
+		/* A MappingNotify may carry a keymap without names or usable keysyms.
+		 * Keep the last working physical-key mapping instead of ending the RDP
+		 * session just because the new map cannot be decoded. */
+		memcpy(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE, previous_mapping,
+		       sizeof(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE));
+		WLog_Print(xfc->log, WLOG_WARN,
+		           "Could not map the new X11 keyboard map, keeping the previous mapping");
+	}
 
 	return xf_keyboard_update_modifier_map(xfc);
 }
