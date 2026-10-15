@@ -592,6 +592,7 @@ void SdlContext::sdl_client_cleanup(int exit_code, const std::string& error_msg)
 				break;
 			default:
 			{
+				showError = true;
 				getDialog().showError(error_msg);
 			}
 			break;
