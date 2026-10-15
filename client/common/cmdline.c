@@ -2073,25 +2073,38 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 	return TRUE;
 }
 
-static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args,
-                                     BOOL rdp_file)
+static int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg);
+
+/* The connection type only sets defaults: codecs, wallpaper, font smoothing, themes... It is
+ * applied here, before the other options, so that an explicit /gfx, /rfx, /bpp, +fonts... wins
+ * whatever its place in the argument table: /network:auto would otherwise turn on the H.264 codecs
+ * that /gfx:AVC420:off,AVC444:off turned off. Without /network, autodetect is the default when
+ * nothing about the line or the codecs was given. */
+static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args,
+                                    BOOL rdp_file)
 {
-	const char* arguments[] = { "network", "gfx", "rfx", "bpp" };
+	const char* arguments[] = { "gfx", "rfx", "bpp" };
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(args);
 
+	const COMMAND_LINE_ARGUMENT_A* network = CommandLineFindArgumentA(args, "network");
+	if (network && (network->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		return fail_at(network, parse_network_options(settings, network));
+
 	if (rdp_file)
-		return FALSE;
+		return 0;
 
 	for (size_t x = 0; x < ARRAYSIZE(arguments); x++)
 	{
 		const char* arg = arguments[x];
 		const COMMAND_LINE_ARGUMENT_A* p = CommandLineFindArgumentA(args, arg);
 		if (p && (p->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-			return FALSE;
+			return 0;
 	}
 
-	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
+	if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+		return COMMAND_LINE_ERROR;
+	return 0;
 }
 
 static BOOL setSmartcardEmulation(WINPR_ATTR_UNUSED const char* value, rdpSettings* settings)
@@ -5222,9 +5235,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "network")
 		{
-			const int rc = parse_network_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -5811,7 +5822,9 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	if (status < 0)
 		return status;
 
-	prepare_default_settings(settings, largs, ext);
+	status = prepare_default_settings(settings, largs, ext);
+	if (status != 0)
+		return status;
 	if ((cmdflags & FREERDP_SETTINGS_CMD_PARSE_SUPPRESS_WARNINGS) == 0)
 		warn_credential_args(largs);
 
