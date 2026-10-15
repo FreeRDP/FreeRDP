@@ -233,6 +233,15 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		return FALSE;
 
 	sdl->_credentialsRead = false;
+
+	/* Settings are consistent at this point, the dialog can be created. */
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		sdl->getDialog().create(instance->context);
+		sdl->getDialog().setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
+		sdl->getDialog().showInfo("The connection is being established\n\nPlease wait...");
+	}
+
 	/* TODO: Any code your client requires */
 	return TRUE;
 }
