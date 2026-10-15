@@ -393,9 +393,12 @@ int main(int argc, char* argv[])
 	freerdp instance = { 0 };
 	rdpInput input = { 0 };
 	rdpSettings* settings = freerdp_settings_new(0);
-	if (!settings)
-		return 1;
+	/* xf_minimize() publishes a window state change */
+	wPubSub* pubSub = PubSub_New(TRUE);
+	if (!settings || !pubSub)
+		goto out;
 	xfc.common.context.settings = settings;
+	xfc.common.context.pubSub = pubSub;
 	xfc.common.context.input = &input;
 	xfc.common.context.instance = &instance;
 	instance.context = &xfc.common.context;
@@ -457,6 +460,7 @@ int main(int argc, char* argv[])
 	}
 	rc = 0;
 out:
+	PubSub_Free(pubSub);
 	freerdp_settings_free(settings);
 	return rc;
 }
