@@ -662,6 +662,20 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 	if (fchmod(fd, st.st_mode) != 0)
 		goto fail;
 
+#ifdef UF_HIDDEN
+	if (dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+	{
+		st.st_flags |= UF_HIDDEN;
+	}
+	else
+	{
+		st.st_flags &= ~UF_HIDDEN;
+	}
+	if (fchflags(fd, st.st_flags) != 0)
+		if (errno != ENOTSUP && errno != EOPNOTSUPP && errno != EINVAL && errno != ENOTTY)
+			goto fail;
+#endif
+
 	rc = TRUE;
 fail:
 	close(fd);
@@ -1145,6 +1159,11 @@ static DWORD FileAttributesFromStat(const char* path, const struct stat* fileSta
 		if ((namelen > 1) && (name[0] == '.') && (name[1] != '.'))
 			dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
 	}
+
+#ifdef UF_HIDDEN
+	if (fileStat->st_flags & UF_HIDDEN)
+		dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+#endif
 
 	if (!(fileStat->st_mode & S_IWUSR))
 		dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
