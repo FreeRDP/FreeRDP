@@ -1557,16 +1557,6 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		case CONNECTION_TYPE_AUTODETECT:
 			if (!freerdp_apply_connection_type(settings, type))
 				return FALSE;
-			/* Automatically activate GFX and RFX codec support */
-#ifdef WITH_GFX_H264
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
-				return FALSE;
-#endif
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
-				return FALSE;
 			break;
 		default:
 			WLog_WARN(TAG, "Unknown ConnectionType %" PRIu32 ", aborting", type);
@@ -2145,25 +2135,92 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args,
-                                     BOOL rdp_file)
+static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args)
 {
 	const char* arguments[] = { "network", "gfx", "rfx", "bpp" };
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(args);
 
-	if (rdp_file)
-		return FALSE;
-
+	/* what to do:
+	 *
+	 * 1. if none of the arguments[] elements is found
+	 *   * enable GFX
+	 *   * set /network to auto
+	 *
+	 * 2. if only /network is found
+	 *   * enable GFX
+	 * 3. if any other element is found as well
+	 *   * skip defaults
+	 */
+	BOOL narg = FALSE;
+	BOOL garg = FALSE;
 	for (size_t x = 0; x < ARRAYSIZE(arguments); x++)
 	{
 		const char* arg = arguments[x];
 		const COMMAND_LINE_ARGUMENT_A* p = CommandLineFindArgumentA(args, arg);
-		if (p && (p->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-			return FALSE;
+		if (!p || ((p->Flags & COMMAND_LINE_ARGUMENT_PRESENT) == 0))
+			continue;
+
+		const BOOL enable = p->Value != nullptr;
+
+		switch (x)
+		{
+			case 0:
+			{
+				const int rc = parse_network_options(settings, p);
+				if (rc != 0)
+					return fail_at(p, rc);
+				narg++;
+			}
+			break;
+			case 1:
+			{
+				int rc = parse_gfx_options(settings, p);
+				if (rc != 0)
+					return fail_at(p, rc);
+				garg = TRUE;
+			}
+			break;
+			case 2:
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, enable))
+					return fail_at(p, COMMAND_LINE_ERROR);
+				garg = TRUE;
+			}
+			break;
+			case 3:
+			{
+				const int rc = parse_bpp_options(settings, p);
+				if (rc != 0)
+					return fail_at(p, rc);
+				garg = TRUE;
+			}
+			break;
+			default:
+				break;
+		}
 	}
 
-	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
+	if (!narg)
+	{
+		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+			return -1;
+	}
+
+	if (!garg)
+	{
+		/* Automatically activate GFX and RFX codec support */
+#ifdef WITH_GFX_H264
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
+			return -1;
+#endif
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+			return -1;
+	}
+	return 0;
 }
 
 WINPR_ATTR_NODISCARD
@@ -5132,9 +5189,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
-			const int rc = parse_bpp_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "admin")
 		{
@@ -5327,9 +5382,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "network")
 		{
-			const int rc = parse_network_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -5401,15 +5454,12 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "gfx")
 		{
-			int rc = parse_gfx_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 
 		CommandLineSwitchCase(arg, "rfx")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, enable))
-				return fail_at(arg, COMMAND_LINE_ERROR);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{
@@ -5917,7 +5967,10 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	if (status < 0)
 		return status;
 
-	prepare_default_settings(settings, largs, ext);
+	status = prepare_default_settings(settings, largs);
+	if (status != 0)
+		return status;
+
 	if ((cmdflags & FREERDP_SETTINGS_CMD_PARSE_SUPPRESS_WARNINGS) == 0)
 		warn_credential_args(largs);
 
