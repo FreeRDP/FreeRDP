@@ -42,6 +42,8 @@ class SdlPref
 	                                                 const std::vector<std::string>& fallback = {},
 	                                                 bool systemConfigOnly = false) const;
 
+	[[nodiscard]] bool is_commandline_override_allowed() const;
+
 	static void print_config_file_help(int version);
 
   private:

@@ -20,6 +20,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <vector>
 #include <mutex>
@@ -249,6 +250,7 @@ class SdlContext
 	WinPREvent _windowsCreatedEvent;
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
+	std::optional<bool> _connectionDialog;
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
 };

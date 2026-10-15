@@ -76,6 +76,14 @@ bool SdlPref::is_user_config_enabled() const
 	return get_bool(config, "isUserConfigEnabled", true);
 }
 
+bool SdlPref::is_commandline_override_allowed() const
+{
+	auto& config = _system_config;
+	if (!config)
+		return true;
+	return get_bool(config, "allowCommandlineToOverride", true);
+}
+
 std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
 {
 	if (!item || !WINPR_JSON_IsString(item))
@@ -95,8 +103,10 @@ std::string SdlPref::get_string(const std::string& key, const std::string& fallb
 
 bool SdlPref::get_bool(const std::string& key, bool fallback, bool systemConfigOnly) const
 {
-	auto& config = systemConfigOnly ? _system_config : _config;
-	return get_bool(config, key, fallback);
+	auto item = get_item(key, systemConfigOnly);
+	if (!item || !WINPR_JSON_IsBool(item))
+		return fallback;
+	return WINPR_JSON_IsTrue(item);
 }
 
 int64_t SdlPref::get_int(const std::string& key, int64_t fallback, bool systemConfigOnly) const
@@ -142,6 +152,12 @@ void SdlPref::print_config_file_help(int version)
 	std::cout << std::endl;
 	std::cout << "    isUserConfigEnabled" << std::endl;
 	std::cout << "      Allows to enable/disable user specific configuration files." << std::endl;
+	std::cout << "      Default enabled" << std::endl;
+	std::cout << std::endl;
+	std::cout << "    allowCommandlineToOverride" << std::endl;
+	std::cout
+	    << "      Allows command line options to override values from the configuration files."
+	    << std::endl;
 	std::cout << "      Default enabled" << std::endl;
 	std::cout << std::endl;
 	std::cout << "    All options of the following user configuration file are also supported here."
@@ -200,6 +216,15 @@ void SdlPref::print_config_file_help(int version)
 	std::cout << "      Disconnects from the RDP session." << std::endl;
 	std::cout << "      Default SDL_SCANCODE_D." << std::endl;
 	std::cout << "      A string as defined at " << url << "/SDLScancodeLookup" << std::endl;
+	if (version >= 3)
+	{
+		std::cout << std::endl;
+		std::cout << "    SDL_ConnectionDialog" << std::endl;
+		std::cout << "      Shows the connection dialog with progress and errors." << std::endl;
+		std::cout << "      Default true. +/-sdl-connection-dialog overrides it unless "
+		             "allowCommandlineToOverride is disabled."
+		          << std::endl;
+	}
 
 #endif
 }
