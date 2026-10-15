@@ -95,8 +95,10 @@ std::string SdlPref::get_string(const std::string& key, const std::string& fallb
 
 bool SdlPref::get_bool(const std::string& key, bool fallback, bool systemConfigOnly) const
 {
-	auto& config = systemConfigOnly ? _system_config : _config;
-	return get_bool(config, key, fallback);
+	auto item = get_item(key, systemConfigOnly);
+	if (!item || !WINPR_JSON_IsBool(item))
+		return fallback;
+	return WINPR_JSON_IsTrue(item);
 }
 
 int64_t SdlPref::get_int(const std::string& key, int64_t fallback, bool systemConfigOnly) const
