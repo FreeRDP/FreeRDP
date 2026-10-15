@@ -774,6 +774,18 @@ int SdlContext::sdl_client_thread_run(std::string& error_msg)
 		}
 	}
 
+	if ((exit_code != sdl::error::SUCCESS) && error_msg.empty())
+	{
+		const auto last = freerdp_get_last_error(context());
+		char* msg = nullptr;
+		size_t len = 0;
+		winpr_asprintf(&msg, &len, "%s [0x%08" PRIx32 "]\n%s", freerdp_get_last_error_name(last),
+		               last, freerdp_get_last_error_string(last));
+		if (msg)
+			error_msg = msg;
+		free(msg);
+	}
+
 	freerdp_disconnect(instance);
 
 	return exit_code;
