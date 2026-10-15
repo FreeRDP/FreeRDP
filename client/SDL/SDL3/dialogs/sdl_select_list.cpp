@@ -92,11 +92,6 @@ int SdlSelectList::run()
 								running = false;
 								res = static_cast<int>(CurrentActiveTextInput);
 								break;
-							case SDL_EVENT_WINDOW_OCCLUDED:
-							case SDL_EVENT_WINDOW_MINIMIZED:
-							case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-							case SDL_EVENT_TERMINATING:
-							case SDL_EVENT_WINDOW_DESTROYED:
 							case SDLK_ESCAPE:
 								running = false;
 								res = INPUT_BUTTON_CANCEL;
@@ -136,6 +131,18 @@ int SdlSelectList::run()
 						}
 					}
 					break;
+					case SDL_EVENT_WINDOW_OCCLUDED:
+					case SDL_EVENT_WINDOW_MINIMIZED:
+					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					case SDL_EVENT_WINDOW_DESTROYED:
+						/* Only events of our own window cancel the dialog, see
+						 * SdlInputWidgetPairList::run() */
+						if (event.window.windowID != SDL_GetWindowID(_window.get()))
+							break;
+						res = INPUT_BUTTON_CANCEL;
+						running = false;
+						break;
+					case SDL_EVENT_TERMINATING:
 					case SDL_EVENT_QUIT:
 						res = INPUT_BUTTON_CANCEL;
 						running = false;
