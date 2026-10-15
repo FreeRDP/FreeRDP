@@ -53,6 +53,7 @@ set(SRCS
     sdl_rail_platform.cpp
     sdl_rail_window.hpp
     sdl_rail_window.cpp
+    sdl_rail_window_style.hpp
     sdl_wayland.hpp
     sdl_wayland.cpp
     sdl_x11.hpp
