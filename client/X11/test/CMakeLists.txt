@@ -6,3 +6,11 @@ if(XVFB_RUN_EXECUTABLE AND WITH_XRANDR AND X11_Xrandr_FOUND)
                                        $<TARGET_FILE:TestX11Monitor>
   )
 endif()
+
+add_executable(TestX11DeferredAlt TestX11DeferredAlt.c)
+target_link_libraries(TestX11DeferredAlt PRIVATE xfreerdp-client)
+add_test(NAME TestX11DeferredAlt COMMAND TestX11DeferredAlt)
+
+add_executable(TestX11CmdLine TestX11CmdLine.c)
+target_link_libraries(TestX11CmdLine PRIVATE xfreerdp-client)
+add_test(NAME TestX11CmdLine COMMAND TestX11CmdLine)

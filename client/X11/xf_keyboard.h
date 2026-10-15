@@ -36,6 +36,7 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 void xf_keyboard_release_all_keypress(xfContext* xfc);
 
 void xf_keyboard_focus_in(xfContext* xfc);
+BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc);
 BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
 BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                 UINT32 imeConvMode);

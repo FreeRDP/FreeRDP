@@ -204,6 +204,12 @@ struct xf_context
 	BOOL mouse_active;
 	BOOL fullscreen_toggle;
 	BOOL KeyboardState[256];
+	BOOL deferAlt;
+	struct
+	{
+		UINT32 pending;
+		UINT32 sent;
+	} deferredAlt;
 	XModifierKeymap* modifierMap;
 	wArrayList* keyCombinations;
 	wArrayList* xevents;
