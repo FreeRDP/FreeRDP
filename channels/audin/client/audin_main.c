@@ -508,7 +508,10 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
 	audin->format = &callback->formats[initialFormat];
 
 	if (!audin_open_device(audin, callback))
+	{
+		audin->format = nullptr;
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	if ((error = audin_send_format_change_pdu(audin, callback, initialFormat)))
 	{
@@ -527,6 +530,27 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+/* Two formats of the same stream: same codec, channels, sample rate, sample size, block alignment
+ * and codec data. Only the bit rate (nAvgBytesPerSec) may differ. */
+static BOOL audin_same_stream(const AUDIO_FORMAT* a, const AUDIO_FORMAT* b)
+{
+	if (!a || !b)
+		return FALSE;
+
+	if ((a->wFormatTag != b->wFormatTag) || (a->nChannels != b->nChannels) ||
+	    (a->nSamplesPerSec != b->nSamplesPerSec) || (a->nBlockAlign != b->nBlockAlign) ||
+	    (a->wBitsPerSample != b->wBitsPerSample) || (a->cbSize != b->cbSize))
+		return FALSE;
+
+	if (a->cbSize == 0)
+		return TRUE;
+
+	if (!a->data || !b->data)
+		return FALSE;
+
+	return memcmp(a->data, b->data, a->cbSize) == 0;
+}
+
 static UINT audin_process_format_change(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callback,
                                         wStream* s)
 {
@@ -546,21 +570,37 @@ static UINT audin_process_format_change(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLB
 		return ERROR_INVALID_DATA;
 	}
 
+	const AUDIO_FORMAT* previous = audin->format;
 	audin->format = &callback->formats[NewFormat];
 
-	if (audin->device)
+	/* The server follows the line by changing the bit rate of the same codec (Windows offers eight
+	 * AAC formats that differ only there), several times a second on a busy session. Closing and
+	 * opening the device and resetting the encoder for each change dropped the audio queued in
+	 * both, and the microphone came through with gaps: within the same stream the capture and the
+	 * encoder go on. */
+	if (audin->device && audin_same_stream(previous, audin->format))
 	{
-		IFCALLRET(audin->device->Close, error, audin->device);
-
-		if (error != CHANNEL_RC_OK)
+		WLog_Print(audin->log, WLOG_DEBUG, "only the bit rate changed, the capture goes on");
+	}
+	else
+	{
+		if (audin->device)
 		{
-			WLog_ERR(TAG, "Close failed with errorcode %" PRIu32 "", error);
-			return error;
+			IFCALLRET(audin->device->Close, error, audin->device);
+
+			if (error != CHANNEL_RC_OK)
+			{
+				WLog_ERR(TAG, "Close failed with errorcode %" PRIu32 "", error);
+				return error;
+			}
+		}
+
+		if (!audin_open_device(audin, callback))
+		{
+			audin->format = nullptr;
+			return ERROR_INTERNAL_ERROR;
 		}
 	}
-
-	if (!audin_open_device(audin, callback))
-		return ERROR_INTERNAL_ERROR;
 
 	if ((error = audin_send_format_change_pdu(audin, callback, NewFormat)))
 		WLog_ERR(TAG, "audin_send_format_change_pdu failed!");
