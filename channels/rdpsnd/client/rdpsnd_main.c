@@ -930,6 +930,50 @@ static BOOL rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, const char* device_name
 	return (rdpsnd->device_name != nullptr);
 }
 
+/* format:<format> accepts a numeric wFormatTag (e.g. 0x704F) or the name
+ * audio_format_get_tag_string() returns for it, with or without the
+ * WAVE_FORMAT_ prefix (e.g. opus, alaw, aac_ms).
+ * Anything else is rejected instead of silently becoming WAVE_FORMAT_UNKNOWN,
+ * which would allow any format. */
+WINPR_ATTR_NODISCARD
+static BOOL rdpsnd_parse_format_tag(const char* value, UINT16* tag)
+{
+	static const char prefix[] = "WAVE_FORMAT_";
+	const size_t prefixlen = strnlen(prefix, sizeof(prefix));
+
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(tag);
+
+	char* end = nullptr;
+	errno = 0;
+	const unsigned long val = strtoul(value, &end, 0);
+	if ((errno == 0) && (end != value) && (*end == '\0'))
+	{
+		if (val > UINT16_MAX)
+			return FALSE;
+		*tag = (UINT16)val;
+		return TRUE;
+	}
+
+	const char* name = value;
+	if (_strnicmp(name, prefix, prefixlen) == 0)
+		name += prefixlen;
+
+	for (UINT32 x = 0; x <= UINT16_MAX; x++)
+	{
+		const char* str = audio_format_get_tag_string((UINT16)x);
+		if (strncmp(str, prefix, prefixlen) == 0)
+			str += prefixlen;
+		if (_stricmp(name, str) == 0)
+		{
+			*tag = (UINT16)x;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 /**
  * Function description
  *
@@ -987,12 +1031,18 @@ static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, const ADDIN_ARGV* ar
 			}
 			CommandLineSwitchCase(arg, "format")
 			{
-				unsigned long val = strtoul(arg->Value, nullptr, 0);
+				UINT16 tag = WAVE_FORMAT_UNKNOWN;
 
-				if ((errno != 0) || (val > UINT16_MAX))
+				if (!rdpsnd_parse_format_tag(arg->Value, &tag))
+				{
+					WLog_Print(rdpsnd->log, WLOG_ERROR,
+					           "invalid format '%s', expected a format tag (e.g. 0x704F) or "
+					           "a WAVE_FORMAT_ name (e.g. opus, pcm, alaw, aac_ms)",
+					           arg->Value);
 					return CHANNEL_RC_INITIALIZATION_ERROR;
+				}
 
-				rdpsnd->fixed_format->wFormatTag = (UINT16)val;
+				rdpsnd->fixed_format->wFormatTag = tag;
 			}
 			CommandLineSwitchCase(arg, "rate")
 			{

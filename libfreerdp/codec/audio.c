@@ -101,7 +101,7 @@ const char* audio_format_get_tag_string(UINT16 wFormatTag)
 			return "WAVE_FORMAT_MSG723";
 
 		case WAVE_FORMAT_DSPGROUP_TRUESPEECH:
-			return "WAVE_FORMAT_DSPGROUP_TRUESPEECH	";
+			return "WAVE_FORMAT_DSPGROUP_TRUESPEECH";
 
 		case WAVE_FORMAT_MPEGLAYER3:
 			return "WAVE_FORMAT_MPEGLAYER3";
