@@ -1094,6 +1094,9 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #if defined(WITH_SNDIO)
 		{ "sndio", "" },
 #endif
+#if defined(__EMSCRIPTEN__)
+		{ "emscripten", "" },
+#endif
 		{ "fake", "" }
 	};
 	const ADDIN_ARGV* args = nullptr;
