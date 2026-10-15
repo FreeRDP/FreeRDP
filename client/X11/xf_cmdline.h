@@ -22,7 +22,10 @@
 
 #include "xf_types.h"
 
+WINPR_ATTR_NODISCARD
 int xf_client_settings_parse_command_line(xfContext* xfc, int argc, char** argv);
+
+WINPR_ATTR_NODISCARD
 int xf_client_settings_command_line_status_print(xfContext* xfc, int status, int argc, char** argv);
 
 #endif /* FREERDP_CLIENT_X11_CMDLINE_H */
