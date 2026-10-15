@@ -914,8 +914,7 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	const BOOL defer =
-	    xfc->deferAlt;
+	const BOOL defer = xfc->deferAlt;
 	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
 
