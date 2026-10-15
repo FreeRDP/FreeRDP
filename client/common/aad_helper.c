@@ -335,7 +335,7 @@ static BOOL aad_auth_helper_config(AadAuthHelper* helper)
 			updateBoolFromConfig(user, "allow-commandline", &useArg);
 			updateBoolFromConfig(user, "allow-autodetect", &useDetect);
 			updateStringFromConfig(user, "helper-binary", &helper->exe);
-			updateStringFromConfig(sys, "user-agent", &helper->userAgent);
+			updateStringFromConfig(user, "user-agent", &helper->userAgent);
 		}
 		WINPR_JSON_Delete(user);
 	}
@@ -505,8 +505,8 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 
 	{
 		size_t cmdlineLen = 0;
-		const int rc = winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s",
-		                              context->aadHelper->exe, cmdInArg, cmdOutArg);
+		const int rc =
+		    winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s", helper->exe, cmdInArg, cmdOutArg);
 		if (rc < 0)
 			goto cleanup;
 
@@ -516,7 +516,7 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 	}
 
 	if (!created)
-		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", context->aadHelper->exe);
+		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", helper->exe);
 
 cleanup:
 	free(cmdline);
