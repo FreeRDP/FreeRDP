@@ -76,6 +76,14 @@ bool SdlPref::is_user_config_enabled() const
 	return get_bool(config, "isUserConfigEnabled", true);
 }
 
+bool SdlPref::is_commandline_override_allowed() const
+{
+	auto& config = _system_config;
+	if (!config)
+		return true;
+	return get_bool(config, "allowCommandlineToOverride", true);
+}
+
 std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
 {
 	if (!item || !WINPR_JSON_IsString(item))
@@ -144,6 +152,12 @@ void SdlPref::print_config_file_help(int version)
 	std::cout << std::endl;
 	std::cout << "    isUserConfigEnabled" << std::endl;
 	std::cout << "      Allows to enable/disable user specific configuration files." << std::endl;
+	std::cout << "      Default enabled" << std::endl;
+	std::cout << std::endl;
+	std::cout << "    allowCommandlineToOverride" << std::endl;
+	std::cout
+	    << "      Allows command line options to override values from the configuration files."
+	    << std::endl;
 	std::cout << "      Default enabled" << std::endl;
 	std::cout << std::endl;
 	std::cout << "    All options of the following user configuration file are also supported here."
