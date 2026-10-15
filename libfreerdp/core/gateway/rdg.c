@@ -392,6 +392,8 @@ static int rdg_socket_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t 
 			return http_chuncked_read(bio, context, pBuffer, size,
 			                          &encodingContext->context.chunked);
 		default:
+			WLog_ERR(TAG, "Unknown HTTP transfer encoding %u, aborting",
+			         encodingContext->httpTransferEncoding);
 			return -1;
 	}
 }
@@ -425,7 +427,7 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t si
 			if (!BIO_should_retry(tls->bio))
 				return FALSE;
 
-			Sleep(10);
+			BIO_wait_read(tls->bio, 50);
 			continue;
 		}
 
@@ -2056,11 +2058,15 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(rdg->tlsOut->bio))
-					return -1;
-
-				BIO_wait_read(rdg->tlsOut->bio, 50);
-				continue;
+				/* bio_rdp_tls_read always returns -1 if no read succeeded.
+				 * but if a retry reason was given pass that on as no data read to the upper layers.
+				 */
+				if (status < 0)
+				{
+					if (BIO_should_retry(rdg->tlsOut->bio))
+						return 0;
+				}
+				return status;
 			}
 
 			readCount += (size_t)status;
