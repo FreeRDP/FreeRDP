@@ -1595,9 +1595,12 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 
 	udp->ackPending = TRUE;
 	const UINT16 ahead = seq16_diff(dataSeq, udp->v3Expected);
-	if (ahead >= 0x8000)
-		return TRUE; /* resent because our ACK got lost, acknowledged again above */
-	if (ahead >= RDPUDP_RECEIVE_REACH)
+	/* Behind the window: resent because our ACK got lost, or given up by an AckOfAcks. Windows
+	 * at times puts the next sequence number in the AckOfAcks of a data packet, past the packet
+	 * itself. The window only tracks acknowledgements ([MS-RDPEUDP2] 3.1.1.2.2), the chunk still
+	 * goes to the channel sequence, which drops it if it was handed up already (3.1.1.2.4.2). */
+	const BOOL behind = (ahead >= 0x8000);
+	if (!behind && (ahead >= RDPUDP_RECEIVE_REACH))
 		return TRUE;
 
 	/* A dummy packet occupies a sequence number but its body means nothing. */
@@ -1614,11 +1617,14 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 			return TRUE;
 	}
 
-	if (seq16_after(dataSeq, udp->v3Highest))
-		udp->v3Highest = dataSeq;
-	udp->v3Received[dataSeq % RDPUDP_RECEIVE_SLOTS] = TRUE;
-	udp->v3Arrival[dataSeq % RDPUDP_RECEIVE_SLOTS] = udp->v3LatestArrival;
-	v3_advance_window(udp);
+	if (!behind)
+	{
+		if (seq16_after(dataSeq, udp->v3Highest))
+			udp->v3Highest = dataSeq;
+		udp->v3Received[dataSeq % RDPUDP_RECEIVE_SLOTS] = TRUE;
+		udp->v3Arrival[dataSeq % RDPUDP_RECEIVE_SLOTS] = udp->v3LatestArrival;
+		v3_advance_window(udp);
+	}
 
 	if (!withChunk)
 		return TRUE;

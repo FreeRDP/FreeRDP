@@ -683,6 +683,91 @@ fail:
 	return rc;
 }
 
+static BOOL send_data_aoa(TestCtx* ctx, UINT16 dataSeq, UINT16 channelSeq, const char* text,
+                          UINT16 aoa)
+{
+	const V3Out out = { .hasAoA = TRUE,
+		                .aoa = aoa,
+		                .hasData = TRUE,
+		                .dataSeq = dataSeq,
+		                .channelSeq = channelSeq,
+		                .payload = (const BYTE*)text,
+		                .payloadLength = strlen(text) };
+	return server_send_v3(ctx, &out);
+}
+
+/* Windows at times sends a data packet with the next sequence number as its AckOfAcks, past the
+ * packet itself. Its chunk is still data: dropped but acknowledged, it is never resent and the
+ * stream stops for good behind it. */
+static BOOL ack_of_acks_past_its_own_packet_keeps_the_chunk(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, 100, 1, "a"));
+	CHECK(send_data_aoa(&ctx, 101, 2, "b", 102));
+	CHECK(send_data_aoa(&ctx, 102, 3, "c", 102));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "abc"));
+	CHECK(drain(&ctx, 20));
+	const V3Packet* ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 102));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
+/* The same further ahead: the chunk is kept and the sequence numbers the AckOfAcks gives up are
+ * not reported missing afterwards. */
+static BOOL ack_of_acks_far_past_its_own_packet_keeps_the_chunk(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, 100, 1, "a"));
+	CHECK(send_data_aoa(&ctx, 101, 2, "b", 104));
+	CHECK(send_data(&ctx, 104, 3, "c"));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "abc"));
+	CHECK(drain(&ctx, 20));
+	const V3Packet* ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 104));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
+/* A packet the peer gave up on with an AckOfAcks can still arrive late. Its chunk fills the hole
+ * at once ([MS-RDPEUDP2] 3.1.1.2.4.2), and the resend that follows is not handed up twice. */
+static BOOL late_packet_behind_the_window_fills_the_hole(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, 100, 1, "a"));
+	/* 101, carrying channel sequence 2, is delayed */
+	CHECK(send_data(&ctx, 102, 3, "c"));
+	CHECK(send_aoa(&ctx, 102));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "a"));
+
+	CHECK(send_data(&ctx, 101, 2, "b"));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "abc"));
+
+	/* the peer's resend of channel sequence 2 */
+	CHECK(send_data(&ctx, 103, 2, "b"));
+	CHECK(send_data(&ctx, 104, 4, "d"));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "abcd"));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 /* The peer resends a packet when our acknowledgement got lost. Staying silent would make it
  * resend until it gives up. */
 static BOOL retransmitted_packets_are_acknowledged_again(void)
@@ -947,6 +1032,12 @@ static const TestCase cases[] = {
 	  retransmission_is_reordered_back_into_the_stream },
 	{ "ack_of_acks_advances_the_window_without_touching_the_stream",
 	  ack_of_acks_advances_the_window_without_touching_the_stream },
+	{ "ack_of_acks_past_its_own_packet_keeps_the_chunk",
+	  ack_of_acks_past_its_own_packet_keeps_the_chunk },
+	{ "ack_of_acks_far_past_its_own_packet_keeps_the_chunk",
+	  ack_of_acks_far_past_its_own_packet_keeps_the_chunk },
+	{ "late_packet_behind_the_window_fills_the_hole",
+	  late_packet_behind_the_window_fills_the_hole },
 	{ "retransmitted_packets_are_acknowledged_again",
 	  retransmitted_packets_are_acknowledged_again },
 	{ "retransmitted_channel_data_is_not_delivered_twice",
