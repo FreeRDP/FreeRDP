@@ -24,8 +24,7 @@
 #include "xfreerdp.h"
 
 static const COMMAND_LINE_ARGUMENT_A xf_args[] = {
-	{ "defer-alt", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG, nullptr, BoolValueFalse,
-	  nullptr, -1, nullptr,
+	{ "defer-alt", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Defer Alt key down until another key is pressed. When enabled, Alt-Tab will not activate "
 	  "the remote application menu. Useful when used together with -grab-keyboard (default: off)" },
 	{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
