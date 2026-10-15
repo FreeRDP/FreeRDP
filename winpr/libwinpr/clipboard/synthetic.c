@@ -195,14 +195,12 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
 WINPR_ATTR_NODISCARD
 static BOOL format_is_utf8(wClipboard* clipboard, UINT32 formatId)
 {
-	if ((formatId == ClipboardGetFormatId(clipboard, mime_text_utf8)) ||
-	    (formatId == ClipboardGetFormatId(clipboard, mime_text_UTF8_STRING)))
-		return TRUE;
 #if defined(_WIN32)
 	if (formatId == ClipboardGetFormatId(clipboard, mime_text_plain))
 		return TRUE;
 #endif
-	return FALSE;
+	return (formatId == ClipboardGetFormatId(clipboard, mime_text_utf8)) ||
+	       (formatId == ClipboardGetFormatId(clipboard, mime_text_UTF8_STRING));
 }
 
 /**
