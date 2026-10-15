@@ -44,7 +44,9 @@
 
 #define TAG FREERDP_TAG("core.auth")
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #define SERVER_KEY "Software\\%s\\Server"
+#endif
 
 enum AUTH_STATE
 {

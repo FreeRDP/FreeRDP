@@ -57,11 +57,13 @@
 
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #define SERVER_KEY "Software\\%s\\Server"
 #define CLIENT_KEY "Software\\%s\\Client"
 #define BITMAP_CACHE_KEY CLIENT_KEY "\\BitmapCacheV2"
 #define GLYPH_CACHE_KEY CLIENT_KEY "\\GlyphCache"
 #define POINTER_CACHE_KEY CLIENT_KEY "\\PointerCache"
+#endif
 
 struct bounds_t
 {

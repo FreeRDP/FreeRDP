@@ -58,8 +58,9 @@
 
 #define TAG FREERDP_TAG("codec")
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #define RFX_KEY "Software\\%s\\RemoteFX"
-
+#endif
 /**
  * The quantization values control the compression rate and quality. The value
  * range is between 6 and 15. The higher value, the higher compression rate
