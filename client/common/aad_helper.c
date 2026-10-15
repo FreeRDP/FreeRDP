@@ -49,6 +49,9 @@ struct AadAuthHelper
 
 	BYTE* buf;
 	size_t bufLen;
+
+	char* exe;
+	char* userAgent;
 };
 
 WINPR_ATTR_MALLOC(free, 1)
@@ -77,7 +80,8 @@ static char* build_hello_request(UINT32 id)
 
 WINPR_ATTR_MALLOC(free, 1)
 static char* build_navigate_request(UINT32 id, const char* title, const char* url,
-                                    const char* redirect_uri, UINT32 timeout_ms)
+                                    const char* redirect_uri, const char* user_agent,
+                                    UINT32 timeout_ms)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
 	if (!obj)
@@ -92,6 +96,8 @@ static char* build_navigate_request(UINT32 id, const char* title, const char* ur
 	     WINPR_JSON_AddStringToObject(params, "url", url) &&
 	     WINPR_JSON_AddStringToObject(params, "redirect_uri", redirect_uri) &&
 	     WINPR_JSON_AddIntegerToObject(params, "timeout_ms", timeout_ms);
+	if (ok && user_agent && (user_agent[0] != '\0'))
+		ok = ok && WINPR_JSON_AddStringToObject(params, "user_agent", user_agent);
 
 	char* str = ok ? WINPR_JSON_PrintUnformatted(obj) : nullptr;
 	WINPR_JSON_Delete(obj);
@@ -301,18 +307,10 @@ static void updateStringFromConfig(WINPR_JSON* obj, const char* what, char** pVa
 	*pVal = _strdup(WINPR_JSON_GetStringValue(val));
 }
 
-WINPR_ATTR_MALLOC(free, 1)
-static char* getHelperBinary(const rdpClientContext* context)
+WINPR_ATTR_NODISCARD
+static BOOL aad_auth_helper_config(AadAuthHelper* helper)
 {
-	/* TODO: Detection of helper binary:
-	 *
-	 * 1. TODO system wide config file? (config value/deny user level/deny command line/deny
-	 * auto-detect)
-	 * 2. TODO user level config file? (config value/deny command line/deny auto-detect)
-	 * 3. command line parameter
-	 * 4. auto detection (default)
-	 */
-	char* exe = nullptr;
+	WINPR_ASSERT(helper);
 
 	BOOL useArg = TRUE;
 	BOOL useDetect = TRUE;
@@ -325,7 +323,8 @@ static char* getHelperBinary(const rdpClientContext* context)
 		updateBoolFromConfig(sys, "allow-commandline", &useArg);
 		updateBoolFromConfig(sys, "allow-autodetect", &useDetect);
 		updateBoolFromConfig(sys, "allow-user-config", &useUserConfig);
-		updateStringFromConfig(sys, "helper-binary", &exe);
+		updateStringFromConfig(sys, "helper-binary", &helper->exe);
+		updateStringFromConfig(sys, "user-agent", &helper->userAgent);
 		WINPR_JSON_Delete(sys);
 	}
 	if (useUserConfig)
@@ -335,30 +334,54 @@ static char* getHelperBinary(const rdpClientContext* context)
 		{
 			updateBoolFromConfig(user, "allow-commandline", &useArg);
 			updateBoolFromConfig(user, "allow-autodetect", &useDetect);
-			updateStringFromConfig(user, "helper-binary", &exe);
+			updateStringFromConfig(user, "helper-binary", &helper->exe);
+			updateStringFromConfig(sys, "user-agent", &helper->userAgent);
 		}
 		WINPR_JSON_Delete(user);
 	}
 
-	if (!exe && useArg)
+	if (useArg)
 	{
 		const char* args =
-		    freerdp_settings_get_string(context->context.settings, FreeRDP_AadAuthHelper);
+		    freerdp_settings_get_string(helper->context->context.settings, FreeRDP_AadAuthHelper);
 		if (args && (strcmp("autodetect", args) == 0))
-			exe = aad_auth_helper_detect_helper();
+		{
+			free(helper->exe);
+			helper->exe = aad_auth_helper_detect_helper();
+			if (!helper->exe)
+				return FALSE;
+		}
 		else if (args)
-			exe = _strdup(args);
+		{
+			free(helper->exe);
+			helper->exe = _strdup(args);
+			if (!helper->exe)
+				return FALSE;
+		}
 	}
 
-	if (!exe && useDetect)
-		exe = aad_auth_helper_detect_helper();
+	if (useArg)
+	{
+		const char* args = freerdp_settings_get_string(helper->context->context.settings,
+		                                               FreeRDP_AadAuthUserAgent);
+		if (args)
+		{
+			free(helper->userAgent);
+			helper->userAgent = _strdup(args);
+			if (!helper->userAgent)
+				return FALSE;
+		}
+	}
 
-	if (!exe)
+	if (useDetect && !helper->exe)
+		helper->exe = aad_auth_helper_detect_helper();
+
+	if (!helper->exe)
 	{
 		WLog_ERR(TAG, "aad-auth-helper: no helper application detected, aborting");
-		return nullptr;
+		return FALSE;
 	}
-	return exe;
+	return TRUE;
 }
 
 /* ---- public API ------------------------------------------------------------------------ */
@@ -367,7 +390,6 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 {
 	WINPR_ASSERT(context);
 
-	char* exe = nullptr;
 	AadAuthHelper* helper = calloc(1, sizeof(AadAuthHelper));
 	if (!helper)
 		return nullptr;
@@ -387,16 +409,20 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 	STARTUPINFOEXA siStartInfoEx = {
 		.StartupInfo.cb = sizeof(siStartInfoEx),
 		/* the JSON-RPC channel travels over two dedicated pipes handed to the helper via
-		 * --cmdInFd=/--cmdOutFd= command line arguments (see winpr_exportHandleToString() below),
-		 * not stdin/stdout - so the helper's stdio is left as a plain passthrough of this process'
-		 * own, the same way hStdError already was. This keeps the protocol immune to anything the
-		 * helper (or a library it links, e.g. Chromium/Qt) happens to print to stdout/stderr for
-		 * its own diagnostics, and lets that output reach the user's terminal normally. */
+		 * --cmdInFd=/--cmdOutFd= command line arguments (see winpr_exportHandleToString()
+		 * below), not stdin/stdout - so the helper's stdio is left as a plain passthrough of
+		 * this process' own, the same way hStdError already was. This keeps the protocol immune
+		 * to anything the helper (or a library it links, e.g. Chromium/Qt) happens to print to
+		 * stdout/stderr for its own diagnostics, and lets that output reach the user's terminal
+		 * normally. */
 		.StartupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE),
 		.StartupInfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE),
 		.StartupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE),
 		.StartupInfo.dwFlags = STARTF_USESTDHANDLES
 	};
+
+	if (!aad_auth_helper_config(helper))
+		goto cleanup;
 
 	if (!CreatePipe(&helper->hCmdOutRead, &hCmdOutWrite, &saAttr, 0))
 	{
@@ -437,18 +463,18 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 	 * anything else in this process that happens to also be marked inheritable (e.g. by another
 	 * component linked into the same client). See winpr's CreateProcess /
 	 * PROC_THREAD_ATTRIBUTE_HANDLE_LIST support - without this, WinPR's CreateProcess already
-	 * defaults to closing everything not wired via STARTUPINFO, so this list exists to make that
-	 * contract explicit and portable to real Windows builds of this same file.
+	 * defaults to closing everything not wired via STARTUPINFO, so this list exists to make
+	 * that contract explicit and portable to real Windows builds of this same file.
 	 *
-	 * UpdateProcThreadAttribute() only stores a pointer to `handles`, it does not copy it (matches
-	 * real Windows - see winpr's own DeleteProcThreadAttributeList() comment) - so `handles` must
-	 * stay alive until the CreateProcessA() call below returns. Deliberately kept in the same
-	 * block as that call rather than a narrower nested scope: a variable can be read as
-	 * use-after-scope by AddressSanitizer once its enclosing block ends even while its storage is
-	 * technically still on the stack, and even though CreateProcessA() only reads it through this
-	 * still-live block, an earlier version of this function that closed `handles`' scope before
-	 * calling CreateProcessA() (relying only on `attrList`/`siStartInfoEx` still being valid)
-	 * tripped exactly that. */
+	 * UpdateProcThreadAttribute() only stores a pointer to `handles`, it does not copy it
+	 * (matches real Windows - see winpr's own DeleteProcThreadAttributeList() comment) - so
+	 * `handles` must stay alive until the CreateProcessA() call below returns. Deliberately
+	 * kept in the same block as that call rather than a narrower nested scope: a variable can
+	 * be read as use-after-scope by AddressSanitizer once its enclosing block ends even while
+	 * its storage is technically still on the stack, and even though CreateProcessA() only
+	 * reads it through this still-live block, an earlier version of this function that closed
+	 * `handles`' scope before calling CreateProcessA() (relying only on
+	 * `attrList`/`siStartInfoEx` still being valid) tripped exactly that. */
 	HANDLE handles[5] = { siStartInfoEx.StartupInfo.hStdOutput, siStartInfoEx.StartupInfo.hStdInput,
 		                  siStartInfoEx.StartupInfo.hStdError, hCmdInRead, hCmdOutWrite };
 	{
@@ -479,11 +505,8 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 
 	{
 		size_t cmdlineLen = 0;
-		exe = getHelperBinary(context);
-		if (!exe)
-			goto cleanup;
-		const int rc =
-		    winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s", exe, cmdInArg, cmdOutArg);
+		const int rc = winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s",
+		                              context->aadHelper->exe, cmdInArg, cmdOutArg);
 		if (rc < 0)
 			goto cleanup;
 
@@ -493,10 +516,9 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 	}
 
 	if (!created)
-		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", exe);
+		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", context->aadHelper->exe);
 
 cleanup:
-	free(exe);
 	free(cmdline);
 	if (attrList)
 	{
@@ -542,11 +564,10 @@ cleanup:
 	return helper;
 }
 
-static AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helper,
-                                                            const char* title, const char* url,
-                                                            const char* redirect_uri,
-                                                            UINT32 timeout_ms, char** redirect_url,
-                                                            size_t* redirect_url_len)
+static AadAuthHelperNavigateStatus
+aad_auth_helper_navigate(AadAuthHelper* helper, const char* title, const char* url,
+                         const char* redirect_uri, const char* user_agent, UINT32 timeout_ms,
+                         char** redirect_url, size_t* redirect_url_len)
 {
 	WINPR_ASSERT(helper);
 	WINPR_ASSERT(url);
@@ -558,7 +579,8 @@ static AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helpe
 	*redirect_url_len = 0;
 
 	const UINT32 id = ++helper->nextId;
-	char* req = build_navigate_request(id, title ? title : "", url, redirect_uri, timeout_ms);
+	char* req =
+	    build_navigate_request(id, title ? title : "", url, redirect_uri, user_agent, timeout_ms);
 	if (!req)
 		return AAD_AUTH_HELPER_NAVIGATE_ERROR;
 
@@ -658,6 +680,8 @@ void aad_auth_helper_stop(AadAuthHelper* helper)
 		(void)CloseHandle(helper->hCmdOutRead);
 
 	free(helper->buf);
+	free(helper->exe);
+	free(helper->userAgent);
 	free(helper);
 }
 
@@ -722,8 +746,9 @@ static AadAuthHelperNavigateStatus aad_helper_navigate(AadAuthHelper* helper, co
 
 	char* out = nullptr;
 	size_t outLen = 0;
-	const AadAuthHelperNavigateStatus status =
-	    aad_auth_helper_navigate(helper, title, url, redirectUri, 180000, &out, &outLen);
+	const char* user_agent = helper->userAgent;
+	const AadAuthHelperNavigateStatus status = aad_auth_helper_navigate(
+	    helper, title, url, redirectUri, user_agent, 180000, &out, &outLen);
 	winpr_zfree(redirectUri);
 	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
 	{

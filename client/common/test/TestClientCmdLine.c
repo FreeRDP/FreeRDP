@@ -117,6 +117,20 @@ static BOOL check_settings_gateway_response_timeout_custom(rdpSettings* settings
 	return check_settings_gateway_response_timeout(settings, 120000);
 }
 
+static const char test_aad_user_agent[] = "TestAgent/1.0 (KHTML, like Gecko)";
+
+static BOOL check_settings_aad_user_agent(rdpSettings* settings)
+{
+	const char* ua = freerdp_settings_get_string(settings, FreeRDP_AadAuthUserAgent);
+	if (!ua || (strcmp(ua, test_aad_user_agent) != 0))
+	{
+		TEST_FAILURE("Expected AadAuthUserAgent = \"%s\", but got %s!\n", test_aad_user_agent,
+		             ua ? ua : "(null)");
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -378,6 +392,11 @@ static const test tests[] = {
 	  check_settings_gateway_response_timeout_default,
 	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com,timeout:abc", "/v:test.freerdp.com",
 	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_aad_user_agent,
+	  { "testfreerdp", "/azure:tenantid:common,\"user-agent:TestAgent/1.0 (KHTML, like Gecko)\"",
+	    "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 	{ 0,
 	  check_settings_multimon_disabled,
