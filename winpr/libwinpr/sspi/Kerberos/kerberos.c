@@ -245,12 +245,16 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data,
 		krb5_prompt_type type = krb5glue_get_prompt_type(context, prompts, i);
 		if (type && (type == KRB5_PROMPT_TYPE_PREAUTH || type == KRB5_PROMPT_TYPE_PASSWORD) && data)
 		{
-			prompts[i].reply->data = _strdup((const char*)data);
-
+			/* the reply buffer is allocated by the library, it holds reply->length bytes */
+			krb5_data* reply = prompts[i].reply;
 			const size_t len = strlen((const char*)data);
-			if (len > UINT32_MAX)
+			if (!reply->data || (len > reply->length))
 				return KRB5KRB_ERR_GENERIC;
-			prompts[i].reply->length = (UINT32)len;
+
+			memcpy(reply->data, data, len);
+			if (len < reply->length)
+				reply->data[len] = '\0';
+			reply->length = (UINT32)len;
 		}
 	}
 	return 0;
@@ -423,21 +427,33 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 		CharUpperA(udomain);
 
-		/* A DNS-style domain that differs from the configured default realm is a UPN
-		 * suffix, e.g. user@example.com for an account in realm CORP.EXAMPLE.NET, which is
-		 * what /smartcard-logon takes from the certificate. AD rejects that as a realm
-		 * ("Realm not local to KDC") and only accepts it as an enterprise principal in
-		 * the account's realm, as Windows clients send it - so keep the configured realm. */
-		char* default_realm = nullptr;
-		if (strchr(udomain, '.') && (krb5_get_default_realm(ctx, &default_realm) == 0) &&
-		    (strcmp(default_realm, udomain) != 0))
-			enterprise = TRUE;
-		krb5_free_default_realm(ctx, default_realm);
+		/* the realm of a DNS-style domain, from the domain_realm mapping of krb5.conf */
+		const char* realm = udomain;
+		char** host_realms = nullptr;
+		if (strchr(udomain, '.') && (krb5_get_host_realm(ctx, domain, &host_realms) == 0) &&
+		    host_realms && host_realms[0] && (strnlen(host_realms[0], 1) > 0))
+			realm = host_realms[0];
+		else
+		{
+			/* A DNS-style domain that maps to no realm and differs from the configured
+			 * default realm is a UPN suffix, e.g. user@example.com for an account in realm
+			 * CORP.EXAMPLE.NET, which is what /smartcard-logon takes from the certificate. AD
+			 * rejects that as a realm ("Realm not local to KDC") and only accepts it as an
+			 * enterprise principal in the account's realm, as Windows clients send it - so
+			 * keep the configured realm. */
+			char* default_realm = nullptr;
+			if (strchr(udomain, '.') && (krb5_get_default_realm(ctx, &default_realm) == 0) &&
+			    (strcmp(default_realm, udomain) != 0))
+				enterprise = TRUE;
+			krb5_free_default_realm(ctx, default_realm);
+		}
 
 		krb5_error_code rv = 0;
 		/* Will use domain if realm is not specified in username */
 		if (!enterprise)
-			rv = krb_log_exec(krb5_set_default_realm, ctx, udomain);
+			rv = krb_log_exec(krb5_set_default_realm, ctx, realm);
+		if (host_realms)
+			krb5_free_host_realm(ctx, host_realms);
 		free(udomain);
 
 		if (rv)
