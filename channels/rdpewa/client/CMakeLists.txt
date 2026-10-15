@@ -24,3 +24,7 @@ include_directories(${LIBCBOR_INCLUDE_DIRS})
 include_directories(${LIBFIDO2_INCLUDE_DIRS})
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+
+if(BUILD_TESTING_INTERNAL)
+  add_subdirectory(test)
+endif()

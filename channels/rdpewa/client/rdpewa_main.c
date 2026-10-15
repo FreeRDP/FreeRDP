@@ -254,6 +254,7 @@ static UINT rdpewa_init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rconte
 	WINPR_UNUSED(settings);
 
 	RDPEWA_PLUGIN* rdpewa = (RDPEWA_PLUGIN*)base;
+	base->allowMultipleInstances = TRUE;
 	rdpewa->rdp_context = rcontext;
 	return CHANNEL_RC_OK;
 }
