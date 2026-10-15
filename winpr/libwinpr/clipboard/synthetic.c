@@ -467,7 +467,8 @@ static BOOL format_is_image(wClipboard* clipboard, UINT32 formatId)
 }
 
 WINPR_ATTR_NODISCARD
-static UINT32 image_format(wClipboard* clipboard, UINT32 formatId)
+static UINT32 image_format(WINPR_ATTR_UNUSED wClipboard* clipboard,
+                           WINPR_ATTR_UNUSED UINT32 formatId)
 {
 #if defined(WINPR_UTILS_IMAGE_PNG)
 	if (formatId == ClipboardRegisterFormat(clipboard, mime_png))
