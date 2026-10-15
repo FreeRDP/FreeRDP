@@ -1124,7 +1124,6 @@ BOOL sleep_or_timeout_(BIO* bio, rdpContext* context, UINT64 startMS, UINT32 tim
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(context);
 
-	USleep(100);
 	const UINT64 nowMS = GetTickCount64();
 	if (nowMS - startMS > timeoutMS)
 	{
@@ -1149,6 +1148,7 @@ BOOL sleep_or_timeout_(BIO* bio, rdpContext* context, UINT64 startMS, UINT32 tim
 	if (freerdp_shall_disconnect_context(context))
 		return TRUE;
 
+	SwitchToThread();
 	return FALSE;
 }
 
