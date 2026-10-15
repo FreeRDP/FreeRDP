@@ -236,6 +236,8 @@ static inline bool rdpecam_valid_MediaTypeDescriptionFlags_(UINT8 val, wLog* log
 {
 	switch (val)
 	{
+		/* Raw top-down samples require neither decoding nor bottom-up orientation. */
+		case 0:
 		case CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired:
 		case CAM_MEDIA_TYPE_DESCRIPTION_FLAG_BottomUpImage:
 			return true;

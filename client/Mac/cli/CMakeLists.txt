@@ -59,6 +59,15 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${RESOURCES}")
 set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
+# This target builds a standalone executable, without MACOSX_BUNDLE. The existing
+# configure_file and MACOSX_BUNDLE_INFO_PLIST property generate/select the plist
+# but do not embed it in this executable. Embed the entire plist so NSBundle can
+# read its bundle metadata and privacy usage descriptions.
+target_link_options(
+  ${PROJECT_NAME} PRIVATE "LINKER:-sectcreate,__TEXT,__info_plist,${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+)
+set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
+
 target_link_libraries(
   ${PROJECT_NAME} PRIVATE ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY} MacFreeRDP-library
 )

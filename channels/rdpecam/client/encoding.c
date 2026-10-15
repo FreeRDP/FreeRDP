@@ -123,6 +123,13 @@ BOOL ecam_encoder_context_init(CameraDeviceStream* stream)
 	if (!ecam_init_video_context(stream))
 		return FALSE;
 
+	/* When capture and negotiated output formats match, the video converter copies
+	 * samples unchanged. Skip the unused H.264 encoder setup so passthrough works
+	 * without an encoder. */
+	if ((ecamToVideoFormat(streamInputFormat(stream)) != FREERDP_VIDEO_FORMAT_NONE) &&
+	    (streamInputFormat(stream) == streamOutputFormat(stream)))
+		return TRUE;
+
 	const UINT32 framerate =
 	    stream->currMediaType.FrameRateNumerator / stream->currMediaType.FrameRateDenominator;
 
