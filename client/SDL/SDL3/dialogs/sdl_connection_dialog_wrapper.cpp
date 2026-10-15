@@ -51,6 +51,11 @@ void SdlConnectionDialogWrapper::destroy()
 bool SdlConnectionDialogWrapper::isRunning() const
 {
 	std::unique_lock lock(_mux);
+	/* Messages are queued here and handled on the main thread, so the dialog is still busy
+	 * while the queue is not empty. Without this the event loop can leave before an error
+	 * pushed by the RDP thread was ever shown. */
+	if (!_queue.empty())
+		return true;
 	if (!_connection_dialog)
 		return false;
 	return _connection_dialog->running();

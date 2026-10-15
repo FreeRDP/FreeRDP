@@ -233,6 +233,15 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		return FALSE;
 
 	sdl->_credentialsRead = false;
+
+	/* Settings are consistent at this point, the dialog can be created. */
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		sdl->getDialog().create(instance->context);
+		sdl->getDialog().setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
+		sdl->getDialog().showInfo("The connection is being established\n\nPlease wait...");
+	}
+
 	/* TODO: Any code your client requires */
 	return TRUE;
 }
@@ -583,6 +592,7 @@ void SdlContext::sdl_client_cleanup(int exit_code, const std::string& error_msg)
 				break;
 			default:
 			{
+				showError = true;
 				getDialog().showError(error_msg);
 			}
 			break;
@@ -721,7 +731,7 @@ int SdlContext::sdl_client_thread_run(std::string& error_msg)
 				 * did not succeed and no other error was specified.
 				 */
 				if (freerdp_error_info(instance) == 0)
-					exit_code = sdl::error::CONN_FAILED;
+					exit_code = sdl::error::errorToExitCode(freerdp_get_last_error(context()));
 			}
 
 			if (freerdp_get_last_error(context()) == FREERDP_ERROR_SUCCESS)
@@ -762,6 +772,18 @@ int SdlContext::sdl_client_thread_run(std::string& error_msg)
 			WLog_Print(getWLog(), WLOG_INFO, "%s", msg);
 			exit_code = sdl::error::LOGOFF;
 		}
+	}
+
+	if ((exit_code != sdl::error::SUCCESS) && error_msg.empty())
+	{
+		const auto last = freerdp_get_last_error(context());
+		char* msg = nullptr;
+		size_t len = 0;
+		winpr_asprintf(&msg, &len, "%s [0x%08" PRIx32 "]\n%s", freerdp_get_last_error_name(last),
+		               last, freerdp_get_last_error_string(last));
+		if (msg)
+			error_msg = msg;
+		free(msg);
 	}
 
 	freerdp_disconnect(instance);

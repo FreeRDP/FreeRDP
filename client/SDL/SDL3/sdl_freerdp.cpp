@@ -183,10 +183,12 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 
 				WLog_Print(sdl->getWLog(), WLOG_TRACE, "got event %s [0x%08" PRIx32 "]",
 				           sdl::utils::toString(windowEvent.type).c_str(), windowEvent.type);
-				if (sdl->shallAbort(true))
+				/* The connection dialog paints on window events, so let it see them even
+				 * after the session is gone: it may still show an error message. */
+				if (sdl->getDialog().handleEvent(windowEvent))
 					continue;
 
-				if (sdl->getDialog().handleEvent(windowEvent))
+				if (sdl->shallAbort(true))
 					continue;
 
 				if (!sdl->handleEvent(windowEvent))
