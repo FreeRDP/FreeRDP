@@ -731,7 +731,7 @@ int SdlContext::sdl_client_thread_run(std::string& error_msg)
 				 * did not succeed and no other error was specified.
 				 */
 				if (freerdp_error_info(instance) == 0)
-					exit_code = sdl::error::CONN_FAILED;
+					exit_code = sdl::error::errorToExitCode(freerdp_get_last_error(context()));
 			}
 
 			if (freerdp_get_last_error(context()) == FREERDP_ERROR_SUCCESS)
