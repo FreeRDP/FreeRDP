@@ -23,8 +23,9 @@
 #include "xf_cmdline.h"
 #include "xfreerdp.h"
 
-static COMMAND_LINE_ARGUMENT_A xf_args[] = {
-	{ "defer-alt", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+static const COMMAND_LINE_ARGUMENT_A xf_args[] = {
+	{ "defer-alt", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG, nullptr, BoolValueFalse,
+	  nullptr, -1, nullptr,
 	  "Defer Alt key down until another key is pressed. When enabled, Alt-Tab will not activate "
 	  "the remote application menu. Useful when used together with -grab-keyboard (default: off)" },
 	{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
@@ -41,15 +42,19 @@ static int xf_client_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* cus
 		xfc->deferAlt = arg->Value != nullptr;
 		return 0;
 	}
-	return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	return 0;
 }
 
 int xf_client_settings_parse_command_line(xfContext* xfc, int argc, char** argv)
 {
 	WINPR_ASSERT(xfc);
+
+	COMMAND_LINE_ARGUMENT_A args[ARRAYSIZE(xf_args)] = WINPR_C_ARRAY_INIT;
+	memcpy(args, xf_args, sizeof(args));
+
 	xfc->deferAlt = FALSE;
 	return freerdp_client_settings_parse_command_line_ex(xfc->common.context.settings, argc, argv,
-	                                                     FALSE, xf_args, ARRAYSIZE(xf_args) - 1,
+	                                                     FALSE, args, ARRAYSIZE(args) - 1,
 	                                                     xf_client_handle_option, xfc);
 }
 
