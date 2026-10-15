@@ -532,6 +532,11 @@ static UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
+/* Audio the client may queue beyond the current sample before it drops
+ * samples as an overrun. The check is meant to stop old servers from
+ * queueing seconds of audio; jitter and bursts are tens of milliseconds. */
+#define RDPSND_OVERRUN_SLACK_MS 200
+
 WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* format, size_t size)
 {
@@ -606,8 +611,10 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 		/* Calculate remaining duration to be played */
 		remainingDuration = totalDuration - (now - rdpsnd->startPlayTime);
 
-		/* Maximum allow duration calculation */
-		maxDuration = duration * 2 + rdpsnd->latency;
+		/* Maximum allow duration calculation: at least RDPSND_OVERRUN_SLACK_MS
+		 * on top, so samples that arrive in a burst (a late one followed by
+		 * an on-time one, or a server sending several at once) are kept */
+		maxDuration = duration * 2 + MAX(rdpsnd->latency, RDPSND_OVERRUN_SLACK_MS);
 
 		if (remainingDuration + duration > maxDuration)
 		{
