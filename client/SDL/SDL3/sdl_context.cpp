@@ -26,6 +26,7 @@
 #include "sdl_monitor.hpp"
 #include "sdl_pointer.hpp"
 #include "sdl_touch.hpp"
+#include "sdl_prefs.hpp"
 
 #include <sdl_common_utils.hpp>
 #include <scoped_guard.hpp>
@@ -34,6 +35,7 @@
 #include <freerdp/client/aad_helper.h>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
+static constexpr auto sdl_connection_dialog = "sdl-connection-dialog";
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
@@ -63,6 +65,9 @@ SdlContext::SdlContext(rdpContext* context)
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
 	                  nullptr, -1, nullptr, "Allow local screensaver to activate" });
+	/* BoolValueTrue does not compile in C++, any non null default means on */
+	_args.push_back({ sdl_connection_dialog, COMMAND_LINE_VALUE_BOOL, nullptr, "on", nullptr, -1,
+	                  nullptr, "the connection dialog with progress and errors" });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
@@ -235,7 +240,11 @@ BOOL SdlContext::preConnect(freerdp* instance)
 	sdl->_credentialsRead = false;
 
 	/* Settings are consistent at this point, the dialog can be created. */
-	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	auto prefs = SdlPref::instance();
+	auto dialog = prefs->get_bool("SDL_ConnectionDialog", true);
+	if (sdl->_connectionDialog && prefs->is_commandline_override_allowed())
+		dialog = *sdl->_connectionDialog;
+	if (dialog && !freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
 		sdl->getDialog().create(instance->context);
 		sdl->getDialog().setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
@@ -1608,6 +1617,8 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 				}
 			}
 		}
+		else if (strcmp(arg->Name, sdl_connection_dialog) == 0)
+			sdl->_connectionDialog = (arg->Value != nullptr);
 	}
 	return 0;
 }

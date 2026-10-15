@@ -216,6 +216,15 @@ void SdlPref::print_config_file_help(int version)
 	std::cout << "      Disconnects from the RDP session." << std::endl;
 	std::cout << "      Default SDL_SCANCODE_D." << std::endl;
 	std::cout << "      A string as defined at " << url << "/SDLScancodeLookup" << std::endl;
+	if (version >= 3)
+	{
+		std::cout << std::endl;
+		std::cout << "    SDL_ConnectionDialog" << std::endl;
+		std::cout << "      Shows the connection dialog with progress and errors." << std::endl;
+		std::cout << "      Default true. +/-sdl-connection-dialog overrides it unless "
+		             "allowCommandlineToOverride is disabled."
+		          << std::endl;
+	}
 
 #endif
 }
