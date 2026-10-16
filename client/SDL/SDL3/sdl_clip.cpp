@@ -61,6 +61,8 @@ static const char s_mime_jpg[] = "image/jpeg";
 
 static const char s_mime_tiff[] = "image/tiff";
 static const char s_mime_uri_list[] = "text/uri-list";
+/* SDL reports the native pasteboard types on macOS, Finder files have no MIME type */
+static const char s_type_file_url[] = "public.file-url";
 static const char s_mime_html[] = "text/html";
 
 #define BMP_MIME_LIST "image/bmp", "image/x-bmp", "image/x-MS-bmp", "image/x-win-bitmap"
@@ -306,6 +308,13 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 		cmimes.reserve(mimes.size());
 		for (const auto& m : mimes)
 			cmimes.push_back(m.c_str());
+
+		/* Server files need native clipboard items on some platforms (macOS), which only the
+		 * file context can offer. It requests the data with ClipDataCb like SDL does. */
+		if (cliprdr_file_context_set_local_clipboard_data(_file, sdlClip::ClipDataCb, this,
+		                                                  cmimes.data(), cmimes.size()))
+			return true;
+
 		/* SDL copies the mime type strings */
 		return SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this, cmimes.data(),
 		                            cmimes.size());
@@ -406,7 +415,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 			}
 			clientFormatNames.push_back(local_mime);
 		}
-		else if (mime_is_file(local_mime))
+		else if (mime_is_file(local_mime) || (local_mime == s_type_file_url))
 		{
 			if (!filePushed)
 			{
@@ -885,7 +894,12 @@ std::shared_ptr<BYTE> sdlClip::getLocalData(uint32_t formatId, uint32_t& len)
 		/* Read without holding our locks: on X11 this pumps events and can take a while, and
 		 * the channel thread needs the locks to deliver server data. */
 		size_t size = 0;
-		auto sdldata = std::shared_ptr<void>(SDL_GetClipboardData(candidate.mime, &size), SDL_free);
+		std::shared_ptr<void> sdldata;
+		if (formatId == fileFormatId)
+			sdldata =
+			    std::shared_ptr<void>(cliprdr_file_context_get_local_uri_list(_file, &size), free);
+		if (!sdldata)
+			sdldata = std::shared_ptr<void>(SDL_GetClipboardData(candidate.mime, &size), SDL_free);
 		if (!sdldata || (size > UINT32_MAX))
 			continue;
 
