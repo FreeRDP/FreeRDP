@@ -1125,9 +1125,5 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 	if (segmentHasHyphen)
 		return FALSE;
 
-	// assume TLD is at least 2 char
-	if (segment < 2)
-		return FALSE;
-
 	return TRUE;
 }
