@@ -2717,28 +2717,21 @@ static void drdynvc_queue_object_free(void* obj)
 		Stream_Release(s);
 }
 
-/* Multitransport hooks, called on the thread running the main loop. Like data from the static
- * channel, a failure here ends the connection. */
+/* Multitransport hooks, called on the thread running the main loop, and tunnel data on the
+ * tunnel thread when the plugin has its own thread. Like data from the static channel, a failure
+ * here ends the connection. */
 WINPR_ATTR_NODISCARD
-static BOOL drdynvc_on_tunnel_data(void* custom, UINT32 tunnelType, const BYTE* data, size_t length)
+static BOOL drdynvc_on_tunnel_data(void* custom, UINT32 tunnelType, wStream* s)
 {
 	drdynvcPlugin* drdynvc = custom;
 	WINPR_ASSERT(drdynvc);
-	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(s);
 
-	DVCMAN* mgr = (DVCMAN*)drdynvc->channel_mgr;
-	if (!mgr || (length == 0))
-		return TRUE;
-
-	wStream* s = StreamPool_Take(mgr->pool, length);
-	if (!s)
+	if (!drdynvc->channel_mgr || (Stream_Length(s) == 0))
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "StreamPool_Take failed!");
-		return FALSE;
+		Stream_Release(s);
+		return TRUE;
 	}
-	Stream_Write(s, data, length);
-	Stream_SealLength(s);
-	Stream_ResetPosition(s);
 
 	if (drdynvc->async)
 	{
@@ -2916,10 +2909,11 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	{
 		drdynvc_soft_sync_reset(drdynvc);
-		const FreeRDP_MultitransportDvcCallbacks callbacks = { .TunnelDataReceived =
-			                                                       drdynvc_on_tunnel_data,
-			                                                   .TunnelStateChanged =
-			                                                       drdynvc_on_tunnel_state };
+		const FreeRDP_MultitransportDvcCallbacks callbacks = {
+			.TunnelDataReceived = drdynvc_on_tunnel_data,
+			.TunnelStateChanged = drdynvc_on_tunnel_state,
+			.DataOnTunnelThread = drdynvc->async
+		};
 		if (!freerdp_multitransport_set_dvc_callbacks(drdynvc->rdpcontext, &callbacks, drdynvc))
 			WLog_Print(drdynvc->log, WLOG_WARN,
 			           "multitransport tunnels unavailable, using the static channel only");

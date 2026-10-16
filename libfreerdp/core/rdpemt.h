@@ -21,6 +21,8 @@
 #include <winpr/wtypes.h>
 #include <winpr/winsock.h>
 #include <winpr/wlog.h>
+#include <winpr/stream.h>
+#include <winpr/collections.h>
 
 #include <freerdp/config.h>
 #include <freerdp/api.h>
@@ -45,6 +47,10 @@ typedef enum
  * RDPEMT_EVENT_AUTODETECT_REQUEST is only valid during the call. */
 typedef void (*rdpEmtEventFn)(void* custom, rdpEmt* emt, RDPEMT_EVENT event, const BYTE* data,
                               size_t length);
+
+/** Called on the tunnel thread instead of RDPEMT_EVENT_DATA, see rdpemt_set_receiver(). It owns
+ * \b s, sealed and at position 0. \b FALSE fails the tunnel. */
+typedef BOOL (*rdpEmtReceiverFn)(void* custom, wStream* s);
 
 #if defined(WITH_RDPEUDP)
 
@@ -81,6 +87,24 @@ FREERDP_LOCAL BOOL rdpemt_send_subheader(rdpEmt* emt, const BYTE* subHeader, siz
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpemt_get_request_id(const rdpEmt* emt);
+
+/** Hands tunnel data to \b receiver from now on, instead of raising RDPEMT_EVENT_DATA. Thread
+ * safe.
+ * @param pending the queue the events go to. Without a receiver set already, it is only set
+ *        while pending is empty, so data does not overtake data still waiting there.
+ * @return \b FALSE if data may still wait in pending */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpemt_set_receiver(rdpEmt* emt, rdpEmtReceiverFn receiver, void* custom,
+                                       wQueue* pending);
+
+/** Raises RDPEMT_EVENT_DATA again. Once this returns, the tunnel thread is out of the receiver
+ * it had. Thread safe. */
+FREERDP_LOCAL void rdpemt_clear_receiver(rdpEmt* emt);
+
+/** The tunnel data handed to the receiver since the last call, after the tunnel headers. Thread
+ * safe. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT32 rdpemt_take_direct_bytes(rdpEmt* emt);
 
 #else
 
@@ -133,6 +157,19 @@ WINPR_ATTR_NODISCARD
 static inline UINT32 rdpemt_get_request_id(WINPR_ATTR_UNUSED const rdpEmt* emt)
 {
 	return 0;
+}
+
+WINPR_ATTR_NODISCARD
+static inline BOOL rdpemt_set_receiver(WINPR_ATTR_UNUSED rdpEmt* emt,
+                                       WINPR_ATTR_UNUSED rdpEmtReceiverFn receiver,
+                                       WINPR_ATTR_UNUSED void* custom,
+                                       WINPR_ATTR_UNUSED wQueue* pending)
+{
+	return FALSE;
+}
+
+static inline void rdpemt_clear_receiver(WINPR_ATTR_UNUSED rdpEmt* emt)
+{
 }
 
 #endif

@@ -40,7 +40,8 @@ extern "C"
 	/** @brief Dynamic virtual channel hooks of the client side tunnels.
 	 *
 	 *  Tunnel types are the TUNNELTYPE_ values of [MS-RDPEDYC]. Both callbacks run on the
-	 *  thread that runs freerdp_check_event_handles().
+	 *  thread that runs freerdp_check_event_handles(), except TunnelDataReceived with
+	 *  DataOnTunnelThread set.
 	 *
 	 *  Data that arrived on a tunnel has been acknowledged to the server already, so it cannot
 	 *  be dropped without corrupting the channel stream. A callback that fails returns \b FALSE,
@@ -50,12 +51,19 @@ extern "C"
 	 */
 	typedef struct
 	{
-		/** One dynamic virtual channel PDU arrived on a tunnel. */
+		/** One dynamic virtual channel PDU arrived on a tunnel. The callback owns \b s, at
+		 *  position 0 with its length sealed, and releases it with Stream_Release(), also when
+		 *  it fails. */
 		WINPR_ATTR_NODISCARD BOOL (*TunnelDataReceived)(void* custom, UINT32 tunnelType,
-		                                                const BYTE* data, size_t length);
+		                                                wStream* s);
 		/** A tunnel became ready, or went away. */
 		WINPR_ATTR_NODISCARD BOOL (*TunnelStateChanged)(void* custom, UINT32 tunnelType,
 		                                                FreeRDP_MultitransportTunnelState state);
+		/** \b TRUE: once TunnelStateChanged has reported the tunnel ready, TunnelDataReceived
+		 *  runs on the tunnel's own thread, which saves the way through the main loop. It must
+		 *  then only pass the stream on to the thread that reads the channels, without
+		 *  blocking: the tunnel waits for it. */
+		BOOL DataOnTunnelThread;
 	} FreeRDP_MultitransportDvcCallbacks;
 
 	/** @brief Registers the receiver of dynamic virtual channel data arriving on tunnels.

@@ -51,7 +51,7 @@ typedef enum
 typedef struct
 {
 	MT_EVENT_TYPE type;
-	BYTE* data;
+	wStream* s; /* sealed, at position 0 */
 	size_t length;
 } mt_event;
 
@@ -76,9 +76,10 @@ struct rdp_multitransport
 	FreeRDP_MultitransportTunnelState reliableState;
 	BOOL reliableResponseSent;
 
-	/* Not guarded by lock: set and read on the thread that runs the main loop, see
-	 * freerdp_multitransport_set_dvc_callbacks. Receiving tunnel data must not wait for a
-	 * sender, which holds lock while it writes to the tunnel. */
+	/* Written on the thread that runs the main loop, which reads them there without locking:
+	 * receiving tunnel data must not wait for a sender, which holds lock while it writes to the
+	 * tunnel. The tunnel thread reads them only while it hands data on directly, see
+	 * multitransport_direct. */
 	FreeRDP_MultitransportDvcCallbacks callbacks;
 	void* custom;
 
@@ -267,8 +268,18 @@ static void mt_event_free(void* obj)
 	mt_event* ev = obj;
 	if (!ev)
 		return;
-	free(ev->data);
+	if (ev->s)
+		Stream_Release(ev->s);
 	free(ev);
+}
+
+/* Runs on the tunnel thread, once multitransport_direct has let it. */
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_direct_data(void* custom, wStream* s)
+{
+	rdpMultitransport* multi = custom;
+	WINPR_ASSERT(multi);
+	return multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, s);
 }
 
 /* Runs on the tunnel thread. */
@@ -299,10 +310,13 @@ static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT 
 			if (length == 0)
 				break; /* nothing to hand up, malloc(0) may return nullptr */
 			WINPR_ASSERT(data);
-			ev->data = malloc(length);
-			if (!ev->data)
+			/* the receiver takes this stream over, the data is not copied again on the way */
+			ev->s = Stream_New(nullptr, length);
+			if (!ev->s)
 				goto fail;
-			memcpy(ev->data, data, length);
+			Stream_Write(ev->s, data, length);
+			Stream_SealLength(ev->s);
+			Stream_ResetPosition(ev->s);
 			ev->length = length;
 			break;
 	}
@@ -483,7 +497,7 @@ static BOOL multitransport_notify_state(rdpMultitransport* multi,
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL multitransport_deliver_data(rdpMultitransport* multi, const mt_event* ev)
+static BOOL multitransport_deliver_data(rdpMultitransport* multi, mt_event* ev)
 {
 	WINPR_ASSERT(multi);
 	WINPR_ASSERT(multi->rdp);
@@ -494,14 +508,15 @@ static BOOL multitransport_deliver_data(rdpMultitransport* multi, const mt_event
 	if (autodetect && autodetect->bandwidthMeasureStarted)
 		autodetect->bandwidthMeasureByteCount += WINPR_ASSERTING_INT_CAST(UINT32, ev->length);
 
-	if (!multi->callbacks.TunnelDataReceived)
+	if (!multi->callbacks.TunnelDataReceived || !ev->s)
 	{
 		WLog_DBG(TAG, "dropping %" PRIuz " bytes of tunnel data, no receiver", ev->length);
 		return TRUE;
 	}
 	/* The data was acknowledged to the server, losing it leaves a hole in the channel stream. */
-	if (!multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, ev->data,
-	                                         ev->length))
+	wStream* s = ev->s;
+	ev->s = nullptr; /* the callback owns it now */
+	if (!multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, s))
 		return multitransport_callback_failed(multi, "tunnel data");
 	return TRUE;
 }
@@ -513,14 +528,14 @@ static BOOL multitransport_deliver_autodetect(rdpMultitransport* multi, const mt
 	WINPR_ASSERT(multi->rdp);
 	WINPR_ASSERT(ev);
 
-	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	wStream* s = Stream_StaticConstInit(&sbuffer, ev->data, ev->length);
+	if (!ev->s)
+		return TRUE;
 	return !state_run_failed(
-	    autodetect_recv_tunnel_request(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, s));
+	    autodetect_recv_tunnel_request(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, ev->s));
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event* ev)
+static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
 {
 	WINPR_ASSERT(multi);
 	WINPR_ASSERT(ev);
@@ -600,6 +615,21 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 	return TRUE;
 }
 
+/* Main loop thread. Once the channels know the tunnel is ready and no data waits in events, a
+ * channel plugin with its own thread gets tunnel data on the tunnel thread, without the way
+ * through the main loop. */
+static void multitransport_direct(rdpMultitransport* multi)
+{
+	WINPR_ASSERT(multi);
+
+	/* reliable and reliableState change on this thread only */
+	if (!multi->reliable || (multi->reliableState != FREERDP_MULTITRANSPORT_TUNNEL_READY) ||
+	    !multi->callbacks.DataOnTunnelThread || !multi->callbacks.TunnelDataReceived)
+		return;
+	if (!rdpemt_set_receiver(multi->reliable, multitransport_direct_data, multi, multi->events))
+		WLog_DBG(TAG, "tunnel data still waits in events, the main loop comes back for it");
+}
+
 BOOL multitransport_check(rdpMultitransport* multi)
 {
 	WINPR_ASSERT(multi);
@@ -611,6 +641,19 @@ BOOL multitransport_check(rdpMultitransport* multi)
 		freerdp_set_last_error_if_not(multi->rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return FALSE;
 	}
+#if defined(WITH_RDPEUDP)
+	/* [MS-RDPBCGR] 3.2.5.17: tunnel data that went to the channels directly counts as the main
+	 * loop gets here, like the data it hands on below */
+	if (multi->reliable)
+	{
+		const UINT32 direct = rdpemt_take_direct_bytes(multi->reliable);
+		rdpAutoDetect* autodetect = multi->rdp->autodetect;
+		if (autodetect && autodetect->bandwidthMeasureStarted)
+			autodetect->bandwidthMeasureByteCount += direct;
+	}
+#endif
+
+	BOOL handled = FALSE;
 	while (Queue_Count(multi->events) > 0)
 	{
 		mt_event* ev = Queue_Dequeue(multi->events);
@@ -620,7 +663,10 @@ BOOL multitransport_check(rdpMultitransport* multi)
 		mt_event_free(ev);
 		if (!rc)
 			return FALSE;
+		handled = TRUE;
 	}
+	if (handled)
+		multitransport_direct(multi);
 	return TRUE;
 }
 
@@ -764,14 +810,19 @@ BOOL freerdp_multitransport_set_dvc_callbacks(rdpContext* context,
 	if (!multi)
 		return FALSE;
 
-	/* Copied once here and read by multitransport_check() without locking: both run on the
-	 * thread that drives the connection (channel events come from freerdp_connect() and
-	 * freerdp_disconnect(), tunnel events from freerdp_check_event_handles()). */
+	/* multitransport_check() reads the hooks without locking, it runs on this thread (channel
+	 * events come from freerdp_connect() and freerdp_disconnect(), tunnel events from
+	 * freerdp_check_event_handles()). The tunnel thread may be in the old TunnelDataReceived:
+	 * once it is back to raising events, it is out of it. */
+	if (multi->reliable)
+		rdpemt_clear_receiver(multi->reliable);
 	if (callbacks)
 		multi->callbacks = *callbacks;
 	else
 		memset(&multi->callbacks, 0, sizeof(multi->callbacks));
 	multi->custom = callbacks ? custom : nullptr;
+
+	multitransport_direct(multi);
 	return TRUE;
 }
 

@@ -83,6 +83,12 @@ struct rdp_emt
 	rdpEmtEventFn callback;
 	void* custom;
 
+	/* guarded by lock: tunnel data goes to receiver instead of callback when it is set */
+	rdpEmtReceiverFn receiver;
+	void* receiverCustom;
+	/* handed to receiver and not yet taken; Interlocked functions only */
+	LONG directBytes;
+
 	rdpUdp* udp;
 	SSL_CTX* ctx;
 	SSL* ssl;
@@ -126,6 +132,38 @@ static void emt_fail(rdpEmt* emt, const char* why)
 	emt->ready = FALSE;
 	WLog_Print(emt->log, WLOG_WARN, "UDP multitransport tunnel failed: %s", why);
 	emt->callback(emt->custom, emt, RDPEMT_EVENT_FAILED, nullptr, 0);
+}
+
+/* Called with lock held. */
+static void emt_hand_up(rdpEmt* emt, const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(data);
+
+	if (!emt->receiver)
+	{
+		emt->callback(emt->custom, emt, RDPEMT_EVENT_DATA, data, length);
+		return;
+	}
+
+	/* the receiver takes this stream over, the data is not copied again on the way */
+	wStream* s = Stream_New(nullptr, length);
+	if (!s)
+	{
+		emt_fail(emt, "out of memory for tunnel data");
+		return;
+	}
+	Stream_Write(s, data, length);
+	Stream_SealLength(s);
+	Stream_ResetPosition(s);
+	if (!emt->receiver(emt->receiverCustom, s))
+	{
+		emt_fail(emt, "the receiver of tunnel data failed");
+		return;
+	}
+	const LONG direct =
+	    InterlockedExchangeAdd(&emt->directBytes, WINPR_ASSERTING_INT_CAST(LONG, length));
+	WINPR_UNUSED(direct);
 }
 
 static void log_ssl_errors(rdpEmt* emt, const char* what)
@@ -408,8 +446,7 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 			case RDPTUNNEL_ACTION_DATA:
 				/* [MS-RDPEMT] 2.2.2.3 RDP_TUNNEL_DATA, HigherLayerData is a DVC PDU */
 				if (payloadLength > 0)
-					emt->callback(emt->custom, emt, RDPEMT_EVENT_DATA, Stream_ConstPointer(s),
-					              payloadLength);
+					emt_hand_up(emt, Stream_ConstPointer(s), payloadLength);
 				Stream_Seek(s, payloadLength);
 				break;
 
@@ -821,6 +858,61 @@ BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length)
 	}
 	LeaveCriticalSection(&emt->lock);
 	return rc;
+}
+
+BOOL rdpemt_set_receiver(rdpEmt* emt, rdpEmtReceiverFn receiver, void* custom, wQueue* pending)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(receiver);
+	WINPR_ASSERT(pending);
+
+	/* The tunnel thread raises its events while it holds the lock, so pending does not fill up
+	 * meanwhile. Once a receiver is set no data goes to pending any more, so whatever waits there
+	 * then may be overtaken. */
+	EnterCriticalSection(&emt->lock);
+	const BOOL rc = emt->receiver || (Queue_Count(pending) == 0);
+	if (rc)
+	{
+		if (!emt->receiver)
+			WLog_Print(emt->log, WLOG_DEBUG,
+			           "tunnel data goes to its receiver on the tunnel thread");
+		emt->receiver = receiver;
+		emt->receiverCustom = custom;
+	}
+	LeaveCriticalSection(&emt->lock);
+	return rc;
+}
+
+void rdpemt_clear_receiver(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	/* the tunnel thread hands data up while it holds the lock, so it is out of the receiver now */
+	EnterCriticalSection(&emt->lock);
+	if (emt->receiver)
+		WLog_Print(emt->log, WLOG_DEBUG, "tunnel data goes to the event callback again");
+	emt->receiver = nullptr;
+	emt->receiverCustom = nullptr;
+	LeaveCriticalSection(&emt->lock);
+}
+
+UINT32 rdpemt_take_direct_bytes(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	/* Not the lock: the main loop calls this on every pass. Swapped for 0 with compare-exchange,
+	 * WinPR's InterlockedExchange reads the old value non-atomically. */
+	LONG bytes = InterlockedCompareExchange(&emt->directBytes, 0, 0);
+	while (bytes != 0)
+	{
+		const LONG seen = InterlockedCompareExchange(&emt->directBytes, 0, bytes);
+		if (seen == bytes)
+			break;
+		bytes = seen;
+	}
+	/* The counter wraps when the main loop leaves more than 2 GiB untaken. The count stays right
+	 * modulo 2^32, like the UINT32 of a bandwidth measurement. */
+	return WINPR_CXX_COMPAT_CAST(UINT32, bytes);
 }
 
 BOOL rdpemt_send_subheader(rdpEmt* emt, const BYTE* subHeader, size_t length)
