@@ -1086,6 +1086,20 @@ static BOOL ack_of_acks_resyncs_after_a_silence(void)
 	CHECK(drain(&ctx, 20));
 	CHECK(last_ack(&ctx) == nullptr);
 
+	/* a packet without AckOfAcks: still no acknowledgement, and nothing left due, or the
+	 * tunnel thread would poll without waiting */
+	const V3Out unannounced = { .dummy = TRUE,
+		                        .hasData = TRUE,
+		                        .dataSeq = FIRST_SEQUENCE + 1,
+		                        .payload = (const BYTE*)"x",
+		                        .payloadLength = 1 };
+	CHECK(server_send_v3(&ctx, &unannounced));
+	CHECK(pump(&ctx));
+	CHECK(pump(&ctx));
+	CHECK(rdpudp_get_timeout(ctx.udp) > 0);
+	CHECK(drain(&ctx, 20));
+	CHECK(last_ack(&ctx) == nullptr);
+
 	const UINT16 ahead = (UINT16)(FIRST_SEQUENCE + 45000);
 	const V3Out out = { .hasAoA = TRUE,
 		                .aoa = ahead,

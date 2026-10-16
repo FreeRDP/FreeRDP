@@ -649,9 +649,15 @@ static BOOL v3_send_ack(rdpUdp* udp)
 		}
 	}
 
-	/* our position may lie ahead of the peer's numbers after a silence, see v3_resync_base */
+	/* After a silence our position may be ahead of the peer's numbers (v3_resync_base): no ACK
+	 * until its next AckOfAcks. Nothing stays due meanwhile, or the tunnel thread would spin. */
 	if (udp->v3Resync)
+	{
+		udp->ackPending = FALSE;
+		udp->v3UnackedPackets = 0;
+		udp->v3AckDue = 0;
 		return TRUE;
+	}
 
 	udp->ackPending = FALSE;
 	udp->v3WindowPending = FALSE;
