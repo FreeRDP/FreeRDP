@@ -56,6 +56,10 @@ cleaning_configure_file(
 )
 
 file(STRINGS freerdp/settings_types_private.h SETTINGS_KEYS REGEX "ALIGN64[ \ta-zA-Z0-9]*")
+# settings_keys.h is generated from this header, so re-run CMake when it changes
+set_property(
+  DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/freerdp/settings_types_private.h
+)
 
 set(SETTINGS_KEYS_BOOL "")
 set(SETTINGS_KEYS_INT16 "")
