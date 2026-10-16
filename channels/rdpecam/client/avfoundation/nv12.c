@@ -16,6 +16,7 @@
  */
 
 #include "nv12.h"
+#include "capture_policy.h"
 #include <winpr/assert.h>
 
 BOOL cam_avfoundation_pixel_buffer_to_nv12(CVPixelBufferRef image, wStream* output)
@@ -28,7 +29,8 @@ BOOL cam_avfoundation_pixel_buffer_to_nv12(CVPixelBufferRef image, wStream* outp
 		return FALSE;
 	const size_t width = CVPixelBufferGetWidth(image);
 	const size_t height = CVPixelBufferGetHeight(image);
-	if (!width || !height || (width % 2) || (height % 2) || (width > 1920) || (height > 1080))
+	if (!width || !height || (width % 2) || (height % 2) || (width > CAM_AVFOUNDATION_MAX_WIDTH) ||
+	    (height > CAM_AVFOUNDATION_MAX_HEIGHT))
 		return FALSE;
 	if ((CVPixelBufferGetHeightOfPlane(image, 0) != height) ||
 	    (CVPixelBufferGetHeightOfPlane(image, 1) != height / 2) ||

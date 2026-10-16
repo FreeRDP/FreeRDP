@@ -36,14 +36,14 @@ find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
 find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
 find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
 
-set(${MODULE_PREFIX}_SRCS camera_avfoundation.m nv12.c)
+set(${MODULE_PREFIX}_SRCS camera_avfoundation.m capture_policy.h frame_rate.h modes.h modes.m nv12.c)
 set(${MODULE_PREFIX}_LIBS winpr freerdp ${AVFOUNDATION_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${COREVIDEO_FRAMEWORK}
                           ${VIDEOTOOLBOX_FRAMEWORK}
 )
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 # Keep manual retain/release even when the iOS toolchain or parent project enables ARC.
-set_source_files_properties(camera_avfoundation.m PROPERTIES COMPILE_OPTIONS "-fno-objc-arc")
+set_source_files_properties(camera_avfoundation.m modes.m PROPERTIES COMPILE_OPTIONS "-fno-objc-arc")
 
 if((BUILD_TESTING OR BUILD_TESTING_INTERNAL) AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   add_subdirectory(test)

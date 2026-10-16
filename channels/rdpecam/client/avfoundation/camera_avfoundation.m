@@ -20,13 +20,10 @@
 #include <stdatomic.h>
 #include <winpr/assert.h>
 #include "../camera.h"
+#include "modes.h"
 #include "nv12.h"
 
 #define TAG CHANNELS_TAG("rdpecam-avfoundation.client")
-
-/* Bound both capture cost and sample size. Advertise only native camera resolutions. */
-#define CAM_AVFOUNDATION_MAX_WIDTH 1920
-#define CAM_AVFOUNDATION_MAX_HEIGHT 1080
 
 #define CAM_AVFOUNDATION_MEDIA_FORMAT CAM_MEDIA_FORMAT_NV12
 
@@ -96,23 +93,20 @@ static AVCaptureDeviceType cam_avfoundation_legacy_external_type(void)
 #endif
 
 WINPR_ATTR_NODISCARD
-static BOOL cam_avfoundation_format_matches(AVCaptureDeviceFormat *format,
-                                            const CAM_MEDIA_TYPE_DESCRIPTION *mediaType)
+static BOOL cam_avfoundation_configure_camera(AVCaptureDevice *camera,
+                                              AVCaptureDeviceFormat *format, CMTime duration)
 {
-	WINPR_ASSERT(format);
-	WINPR_ASSERT(mediaType);
-	const CMVideoDimensions size = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-	if ((size.width <= 0) || (size.height <= 0) || ((UINT32)size.width != mediaType->Width) ||
-	    ((UINT32)size.height != mediaType->Height) || (mediaType->FrameRateDenominator == 0))
-		return FALSE;
-
-	const double fps = (double)mediaType->FrameRateNumerator / mediaType->FrameRateDenominator;
-	for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges)
+	NSError *error = nil;
+	if (![camera lockForConfiguration:&error])
 	{
-		if ((fps >= range.minFrameRate) && (fps <= range.maxFrameRate))
-			return TRUE;
+		WLog_ERR(TAG, "Unable to configure camera: %s", error.localizedDescription.UTF8String);
+		return FALSE;
 	}
-	return FALSE;
+	camera.activeFormat = format;
+	camera.activeVideoMinFrameDuration = duration;
+	camera.activeVideoMaxFrameDuration = duration;
+	[camera unlockForConfiguration];
+	return TRUE;
 }
 
 @interface FreeRDPCameraAVFoundationStream : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
@@ -160,12 +154,17 @@ static void cam_avfoundation_deliver(FreeRDPCameraAVFoundationStream *stream, co
 WINPR_ATTR_NODISCARD
 static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStream *stream,
                                                     AVCaptureDevice *camera,
-                                                    const CAM_MEDIA_TYPE_DESCRIPTION *mediaType)
+                                                    const CAM_MEDIA_TYPE_DESCRIPTION *mediaType,
+                                                    AVCaptureDeviceFormat *selected,
+                                                    CMTime duration)
 {
 	WINPR_ASSERT(stream);
 	WINPR_ASSERT(camera);
 	WINPR_ASSERT(mediaType);
-	atomic_init(&stream->_drained, false);
+	WINPR_ASSERT(selected);
+	/* Suppress startup samples until the cached native mode is applied. The protocol
+	 * stream remains active during an idle capture restart. */
+	atomic_init(&stream->_drained, true);
 	stream->_width = mediaType->Width;
 	stream->_height = mediaType->Height;
 	WLog_INFO(TAG,
@@ -180,18 +179,6 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 	stream.output = [[[AVCaptureVideoDataOutput alloc] init] autorelease];
 	if (!stream->_sampleQueue || !stream->_controlQueue || !stream.session || !stream.output)
 		return CAM_ERROR_CODE_OutOfMemory;
-
-	AVCaptureDeviceFormat *selected = nil;
-	for (AVCaptureDeviceFormat *format in camera.formats)
-	{
-		if (cam_avfoundation_format_matches(format, mediaType))
-		{
-			selected = format;
-			break;
-		}
-	}
-	if (!selected)
-		return CAM_ERROR_CODE_InvalidMediaType;
 
 	NSError *error = nil;
 	AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:camera error:&error];
@@ -224,18 +211,13 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 	}
 	stream.output.videoSettings = @{(NSString *)kCVPixelBufferPixelFormatTypeKey: @(pixelFormat)};
 	stream.output.alwaysDiscardsLateVideoFrames = YES;
-	if (![camera lockForConfiguration:&error])
+#if !TARGET_OS_OSX
+	if (!cam_avfoundation_configure_camera(camera, selected, duration))
 	{
 		[stream.session commitConfiguration];
-		WLog_ERR(TAG, "Unable to configure camera: %s", error.localizedDescription.UTF8String);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
-	camera.activeFormat = selected;
-	const CMTime duration =
-	    CMTimeMake(mediaType->FrameRateDenominator, mediaType->FrameRateNumerator);
-	camera.activeVideoMinFrameDuration = duration;
-	camera.activeVideoMaxFrameDuration = duration;
-	[camera unlockForConfiguration];
+#endif
 	[stream.session commitConfiguration];
 
 	stream->_rawSample = Stream_New(NULL, (size_t)stream->_width * stream->_height * 3 / 2);
@@ -260,9 +242,22 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 	[stream.output setSampleBufferDelegate:stream queue:stream->_sampleQueue];
 	/* startRunning/stopRunning are blocking and must stay off the application's main queue. */
 	dispatch_sync(stream->_controlQueue, ^{
-		[stream.session startRunning];
+		@autoreleasepool
+		{
+			[stream.session startRunning];
+		}
 	});
-	return stream.session.running ? CAM_ERROR_CODE_None : CAM_ERROR_CODE_UnexpectedError;
+#if TARGET_OS_OSX
+	/* macOS has no InputPriority preset and startRunning replaces the device's
+	 * format/rate with the session preset. Apply the cached native selection after
+	 * startup, before enabling sample delivery. */
+	if (stream.session.running && !cam_avfoundation_configure_camera(camera, selected, duration))
+		return CAM_ERROR_CODE_UnexpectedError;
+#endif
+	if (!stream.session.running)
+		return CAM_ERROR_CODE_UnexpectedError;
+	atomic_store(&stream->_drained, false);
+	return CAM_ERROR_CODE_None;
 }
 
 @implementation FreeRDPCameraAVFoundationStream
@@ -315,7 +310,10 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 		{
 			AVCaptureSession *session = self.session;
 			dispatch_async(_controlQueue, ^{
-				[session stopRunning];
+				@autoreleasepool
+				{
+					[session stopRunning];
+				}
 			});
 		}
 	}
@@ -327,7 +325,10 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 	AVCaptureSession *session = self.session;
 	if (_controlQueue)
 		dispatch_sync(_controlQueue, ^{
-			[session stopRunning];
+			@autoreleasepool
+			{
+				[session stopRunning];
+			}
 		});
 	/* Drain the delegate before freeing buffers; do not capture self during deallocation. */
 	if (_sampleQueue)
@@ -367,12 +368,15 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 @property(nonatomic, retain) NSMutableDictionary<NSString *, AVCaptureDevice *> *cameras;
 @property(nonatomic, retain)
     NSMutableDictionary<NSString *, FreeRDPCameraAVFoundationStream *> *streams;
+@property(nonatomic, retain)
+    NSMutableDictionary<NSString *, FreeRDPCameraAVFoundationModes *> *modes;
 @end
 @implementation FreeRDPCameraAVFoundation
 - (void)dealloc
 {
 	[_cameras release];
 	[_streams release];
+	[_modes release];
 	[super dealloc];
 }
 @end
@@ -431,19 +435,24 @@ static UINT cam_avfoundation_enumerate(ICamHal *hal, ICamHalEnumCallback callbac
 		for (AVCaptureDevice *camera in discovery.devices)
 		{
 			NSString *deviceId = nil;
-			for (NSString *key in context.cameras)
+			@synchronized(context)
 			{
-				if ([context.cameras[key].uniqueID isEqualToString:camera.uniqueID])
+				for (NSString *key in context.cameras)
 				{
-					deviceId = key;
-					break;
+					if ([context.cameras[key].uniqueID isEqualToString:camera.uniqueID])
+					{
+						deviceId = key;
+						break;
+					}
 				}
+				/* Apple's uniqueID can exceed the channel's 32-byte device ID buffer. */
+				if (!deviceId)
+					deviceId = [NSString
+					    stringWithFormat:@"avfoundation-%lu", (unsigned long)context.cameras.count];
+				context.cameras[deviceId] = camera;
+				/* A new device enumeration refreshes the native mode snapshot. */
+				[context.modes removeObjectForKey:deviceId];
 			}
-			/* The channel's device ID buffer is 32 bytes; Apple's uniqueID can be much longer. */
-			if (!deviceId)
-				deviceId = [NSString
-				    stringWithFormat:@"avfoundation-%lu", (unsigned long)context.cameras.count];
-			context.cameras[deviceId] = camera;
 			if (callback(ecam, channel, deviceId.UTF8String, camera.localizedName.UTF8String) !=
 			    CHANNEL_RC_OK)
 				break;
@@ -484,9 +493,6 @@ static INT16 cam_avfoundation_media_types(ICamHal *hal, const char *deviceId, si
 		*mediaCount = 0;
 		if (streamIndex != 0)
 			return -1;
-		AVCaptureDevice *camera = cam_avfoundation_context(hal).cameras[@(deviceId)];
-		if (!camera)
-			return -1;
 		INT16 selected = -1;
 		/* Follow the shared format preference: encode NV12 as H.264 when offered,
 		 * otherwise use NV12 passthrough. Encoder selection stays in the shared codec. */
@@ -502,42 +508,26 @@ static INT16 cam_avfoundation_media_types(ICamHal *hal, const char *deviceId, si
 		}
 		if (selected < 0)
 			return -1;
-		for (AVCaptureDeviceFormat *format in camera.formats)
+		FreeRDPCameraAVFoundation *context = cam_avfoundation_context(hal);
+		FreeRDPCameraAVFoundationModes *modes = nil;
+		NSString *key = @(deviceId);
+		@synchronized(context)
 		{
-			const CMVideoDimensions size =
-			    CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-			if ((size.width < 160) || (size.height < 120) ||
-			    (size.width > CAM_AVFOUNDATION_MAX_WIDTH) ||
-			    (size.height > CAM_AVFOUNDATION_MAX_HEIGHT) || (size.width % 2) ||
-			    (size.height % 2))
-				continue;
-			const UINT32 rates[] = { 30, 15 };
-			for (size_t r = 0; r < ARRAYSIZE(rates); r++)
+			modes = context.modes[key];
+			AVCaptureDevice *camera = context.cameras[key];
+			if (!modes && camera)
 			{
-				CAM_MEDIA_TYPE_DESCRIPTION type = {
-					CAM_AVFOUNDATION_MEDIA_FORMAT,
-					(UINT32)size.width,
-					(UINT32)size.height,
-					rates[r],
-					1,
-					1,
-					1,
-					0 /* Native NV12 requires no remote decoding. */
-				};
-				if (!cam_avfoundation_format_matches(format, &type))
-					continue;
-				BOOL duplicate = FALSE;
-				for (size_t i = 0; i < *mediaCount; i++)
-				{
-					if ((mediaTypes[i].Width == type.Width) &&
-					    (mediaTypes[i].Height == type.Height) &&
-					    (mediaTypes[i].FrameRateNumerator == type.FrameRateNumerator))
-						duplicate = TRUE;
-				}
-				if (!duplicate && (*mediaCount < capacity))
-					mediaTypes[(*mediaCount)++] = type;
+				modes = [[[FreeRDPCameraAVFoundationModes alloc] initWithFormats:camera.formats]
+				    autorelease];
+				if (modes)
+					context.modes[key] = modes;
 			}
+			/* Discovery may replace this snapshot after we release the lock. */
+			modes = [[modes retain] autorelease];
 		}
+		if (!modes)
+			return -1;
+		*mediaCount = [modes copyMediaTypes:mediaTypes capacity:capacity];
 		return selected;
 	}
 }
@@ -589,9 +579,21 @@ static CAM_ERROR_CODE cam_avfoundation_start(ICamHal *hal, CameraDevice *device,
 			return CAM_ERROR_CODE_OperationNotSupported;
 		FreeRDPCameraAVFoundation *context = cam_avfoundation_context(hal);
 		NSString *key = @(device->deviceId);
-		AVCaptureDevice *camera = context.cameras[key];
+		AVCaptureDevice *camera = nil;
+		FreeRDPCameraAVFoundationModes *modes = nil;
+		/* Hold the matching camera/snapshot through startup and the surrounding HAL pool. */
+		@synchronized(context)
+		{
+			camera = [[context.cameras[key] retain] autorelease];
+			modes = [[context.modes[key] retain] autorelease];
+		}
 		if (!camera || !camera.connected)
 			return CAM_ERROR_CODE_ItemNotFound;
+		CMTime duration = kCMTimeInvalid;
+		AVCaptureDeviceFormat *selected = [modes formatForMediaType:mediaType
+		                                              frameDuration:&duration];
+		if (!selected)
+			return CAM_ERROR_CODE_InvalidMediaType;
 		/* Restart after request-driven idle release; drain the old delegate before replacing it. */
 		const CAM_ERROR_CODE stopError = cam_avfoundation_stop(hal, device->deviceId, streamIndex);
 		if (stopError != CAM_ERROR_CODE_None)
@@ -602,7 +604,8 @@ static CAM_ERROR_CODE cam_avfoundation_start(ICamHal *hal, CameraDevice *device,
 		stream->_device = device;
 		stream->_streamIndex = streamIndex;
 		stream->_callback = callback;
-		const CAM_ERROR_CODE error = cam_avfoundation_stream_start(stream, camera, mediaType);
+		const CAM_ERROR_CODE error =
+		    cam_avfoundation_stream_start(stream, camera, mediaType, selected, duration);
 		if (error != CAM_ERROR_CODE_None)
 		{
 			[stream release];
@@ -651,6 +654,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE avfoundation_freerdp_rdpecam_client_subsystem
 		}
 		context.cameras = [NSMutableDictionary dictionary];
 		context.streams = [NSMutableDictionary dictionary];
+		context.modes = [NSMutableDictionary dictionary];
 		hal->context = context;
 		hal->iface.RequestDrivenCapture = TRUE;
 		hal->iface.Enumerate = cam_avfoundation_enumerate;

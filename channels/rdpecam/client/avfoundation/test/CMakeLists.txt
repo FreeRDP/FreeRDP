@@ -14,13 +14,21 @@
 # limitations under the License.
 
 set(MODULE_NAME "TestRdpecamAVFoundation")
-set(TEST_RDPECAM_AVFOUNDATION_TESTS TestCameraAVFoundationNV12.c)
+set(TEST_RDPECAM_AVFOUNDATION_TESTS TestCameraAVFoundationNV12.c TestCameraAVFoundationFrameRate.c)
 create_test_sourcelist(TEST_RDPECAM_AVFOUNDATION_SRCS TestRdpecamAVFoundation.c ${TEST_RDPECAM_AVFOUNDATION_TESTS})
 add_executable(${MODULE_NAME} ${TEST_RDPECAM_AVFOUNDATION_SRCS} ../nv12.c)
-target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client winpr ${COREVIDEO_FRAMEWORK})
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client winpr ${COREVIDEO_FRAMEWORK} ${COREMEDIA_FRAMEWORK})
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 foreach(test ${TEST_RDPECAM_AVFOUNDATION_TESTS})
   get_filename_component(TestName ${test} NAME_WE)
   add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Channels/rdpecam/Test")
+
+# Keep this hardware-free Objective-C test independent of the client plugin's classes.
+add_executable(TestCameraAVFoundationModes TestCameraAVFoundationModes.m ../modes.m)
+target_link_libraries(TestCameraAVFoundationModes PRIVATE winpr ${AVFOUNDATION_FRAMEWORK} ${COREMEDIA_FRAMEWORK})
+target_compile_options(TestCameraAVFoundationModes PRIVATE -fno-objc-arc)
+set_target_properties(TestCameraAVFoundationModes PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+add_test(TestCameraAVFoundationModes ${TESTING_OUTPUT_DIRECTORY}/TestCameraAVFoundationModes)
+set_property(TARGET TestCameraAVFoundationModes PROPERTY FOLDER "FreeRDP/Channels/rdpecam/Test")
