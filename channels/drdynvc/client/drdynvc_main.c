@@ -896,6 +896,8 @@ typedef struct
 
 	/* the custom of the sends it set; the static channel owns it, here it is only compared */
 	void* target;
+	/* target until dvcman_static_bridge_publish sets it, owned here until then */
+	void* pending;
 } DVCMAN_STATIC_BRIDGE;
 
 /* What the static channel's sends are passed, see dvcman_static_bridge_send. */
@@ -1013,8 +1015,34 @@ static UINT dvcman_static_bridge_on_close(IWTSVirtualChannelCallback* pChannelCa
 	    !freerdp_channels_set_static_bridge(bridge->instance, bridge->staticChannelName, nullptr,
 	                                        nullptr, bridge->target))
 		WLog_DBG(TAG, "static channel %s is gone already", bridge->staticChannelName);
+	free(bridge->pending);
 	free(bridge);
 	return CHANNEL_RC_OK;
+}
+
+/* [MS-RDPEDYC] 3.1.5.4.2: the static channel's sends move to the dynamic channel once the
+ * Create Response is out, so none reaches the server ahead of it. */
+static void dvcman_static_bridge_publish(drdynvcPlugin* drdynvc, DVCMAN_CHANNEL* channel)
+{
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(channel);
+
+	if (!channel->staticBridge)
+		return;
+	DVCMAN_STATIC_BRIDGE* bridge = (DVCMAN_STATIC_BRIDGE*)channel->channel_callback;
+	WINPR_ASSERT(bridge);
+	void* target = bridge->pending;
+	bridge->pending = nullptr;
+	if (target && freerdp_channels_set_static_bridge(bridge->instance, bridge->staticChannelName,
+	                                                 dvcman_static_bridge_send, free, target))
+		bridge->target = target;
+	else
+	{
+		WLog_Print(drdynvc->log, WLOG_WARN,
+		           "static channel %s goes on sending on itself, the server may not read it",
+		           bridge->staticChannelName);
+		free(target);
+	}
 }
 
 /* A bridge for a dynamic channel named like a joined static channel, nullptr for any other. */
@@ -1154,22 +1182,14 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		channel->state = DVC_CHANNEL_RUNNING;
 		channel->channel_callback = &bridge->iface;
 
+		/* published once the Create Response is out, see dvcman_static_bridge_publish */
 		DVCMAN_STATIC_BRIDGE_TARGET* target = calloc(1, sizeof(DVCMAN_STATIC_BRIDGE_TARGET));
 		if (target)
 		{
 			target->drdynvc = drdynvc;
 			target->channelId = channel->channel_id;
 		}
-		if (target && freerdp_channels_set_static_bridge(bridge->instance, ChannelName,
-		                                                 dvcman_static_bridge_send, free, target))
-			bridge->target = target;
-		else
-		{
-			WLog_Print(drdynvc->log, WLOG_WARN,
-			           "static channel %s goes on sending on itself, the server may not read it",
-			           ChannelName);
-			free(target);
-		}
+		bridge->pending = target;
 		bridge = nullptr;
 		*res = CHANNEL_RC_OK;
 		goto out;
@@ -1856,6 +1876,9 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 
 	if (channel_status == CHANNEL_RC_OK)
 	{
+#if defined(WITH_RDPEUDP)
+		dvcman_static_bridge_publish(drdynvc, channel);
+#endif
 		if ((status = dvcman_open_channel(drdynvc, channel)))
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR,
@@ -2184,7 +2207,9 @@ static UINT drdynvc_receive_tunnel_pdu(drdynvcPlugin* drdynvc, wStream* s, UINT3
 		}
 		if (!drdynvc_tunnel_backlog_add(drdynvc, s, tunnelType))
 		{
+			/* acknowledged to the server already, dropping it leaves a hole in the stream */
 			Stream_Release(s);
+			drdynvc_tunnel_abort(drdynvc, "no memory to hold tunnel data until the Soft-Sync");
 			return CHANNEL_RC_NO_MEMORY;
 		}
 		return CHANNEL_RC_OK;
