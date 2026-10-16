@@ -86,6 +86,9 @@ macro(winpr_pc_add_requires_private)
   set(WINPR_PC_REQUIRES_PRIVATE ${WINPR_PC_REQUIRES_PRIVATE} CACHE INTERNAL "dependencies")
 endmacro()
 
+include(PackageConfigDependencies)
+set(WINPR_CMAKE_DEPENDENCIES "" CACHE INTERNAL "dependencies")
+
 if(WIN32 AND NOT UWP)
   set(NATIVE_SSPI ON)
 endif()
@@ -560,6 +563,7 @@ export(PACKAGE winpr)
 
 setfreerdpcmakeinstalldir(WINPR_CMAKE_INSTALL_DIR "WinPR${WINPR_VERSION_MAJOR}")
 
+package_config_dependencies(WINPR_CMAKE_DEPENDENCIES WINPR_CMAKE_FIND_DEPENDENCIES)
 configure_package_config_file(
   WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
   PATH_VARS WINPR_INCLUDE_DIR

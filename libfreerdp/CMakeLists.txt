@@ -36,6 +36,9 @@ macro(freerdp_pc_add_requires_private)
   set(FREERDP_PC_REQUIRES_PRIVATE ${FREERDP_PC_REQUIRES_PRIVATE} CACHE INTERNAL "dependencies")
 endmacro()
 
+include(PackageConfigDependencies)
+set(FREERDP_CMAKE_DEPENDENCIES "" CACHE INTERNAL "dependencies")
+
 set(FREERDP_PC_LIBRARY_PRIVATE "" CACHE INTERNAL "dependencies")
 macro(freerdp_pc_add_library_private)
   foreach(_lib ${ARGN})
@@ -126,6 +129,7 @@ option(WITH_FDK_AAC "Enable FDK_AAC support" OFF)
 if(WITH_FDK_AAC)
   find_package(fdk-aac)
   if(TARGET FDK-AAC::fdk-aac)
+    set_property(TARGET FDK-AAC::fdk-aac PROPERTY PACKAGE_CONFIG_NAME fdk-aac)
     freerdp_library_add(FDK-AAC::fdk-aac)
   else()
     find_package(PkgConfig REQUIRED)
@@ -262,6 +266,7 @@ endif()
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/freerdp${FREERDP_VERSION_MAJOR}>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${LIBFREERDP_PUB_LIBS})
+package_config_add_targets(FREERDP_CMAKE_DEPENDENCIES ${LIBFREERDP_LIBS} ${LIBFREERDP_PUB_LIBS})
 installwithrpath(
   TARGETS
   ${MODULE_NAME}
@@ -317,6 +322,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc DES
 ## cmake project
 export(PACKAGE freerdp)
 
+package_config_dependencies(FREERDP_CMAKE_DEPENDENCIES FREERDP_CMAKE_FIND_DEPENDENCIES)
 configure_package_config_file(
   FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
   INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR} PATH_VARS FREERDP_INCLUDE_DIR FREERDP_PLUGIN_PATH
