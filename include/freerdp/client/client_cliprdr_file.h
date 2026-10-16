@@ -111,6 +111,63 @@ extern "C"
 	                                                         wClipboard* clip, const void* data,
 	                                                         size_t size);
 
+	/** \brief returns the server clipboard data in a format, like \b SDL_ClipboardDataCallback
+	 *
+	 * \param userdata the \b userdata given to \b cliprdr_file_context_set_local_clipboard_data
+	 * \param mime_type the MIME type or clipboard format name of the data
+	 * \param size receives the length of the data
+	 *
+	 * \return the data, owned by the caller of \b cliprdr_file_context_set_local_clipboard_data,
+	 * or \b nullptr
+	 */
+	typedef const void* (*cliprdr_file_context_data_fkt)(void* userdata, const char* mime_type,
+	                                                     size_t* size);
+
+	/** \brief offers the server clipboard on the local clipboard, where only the file context
+	 * can offer files there
+	 *
+	 * On macOS the pasteboard needs one item per file, which a toolkit offering MIME types can
+	 * not provide. If \b mime_types contains text/uri-list there, the file list is requested
+	 * with \b fkt (format name FileGroupDescriptorW) right away, every file is offered as an
+	 * item of its own and downloaded with FILECONTENTS_RANGE only when an application pastes
+	 * it. The other \b mime_types are offered along with the files and requested with \b fkt on
+	 * paste, so text types become the native text and a private type still identifies the copy
+	 * when the local clipboard update comes back.
+	 *
+	 * Call this from the thread that handles local clipboard events, where the toolkit would
+	 * be given the data, and without holding locks \b fkt needs.
+	 *
+	 * \param file the file context to use
+	 * \param fkt the function returning the server data
+	 * \param userdata passed to \b fkt
+	 * \param mime_types the MIME types the server data is offered as
+	 * \param count the number of entries in \b mime_types
+	 *
+	 * \return \b TRUE if the file context now holds the local clipboard, \b FALSE if the caller
+	 * has to offer \b mime_types itself (no server files, no support on this platform)
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL cliprdr_file_context_set_local_clipboard_data(
+	    CliprdrFileContext* file, cliprdr_file_context_data_fkt fkt, void* userdata,
+	    const char** mime_types, size_t count);
+
+	/** \brief returns the files on the local clipboard as text/uri-list, where a toolkit can not
+	 * provide them
+	 *
+	 * On macOS the Finder offers files without a MIME type, so a toolkit working with MIME
+	 * types does not see them. Elsewhere this returns \b nullptr and the files are read from
+	 * the toolkit as text/uri-list.
+	 *
+	 * \param file the file context to use
+	 * \param size receives the length of the list
+	 *
+	 * \return a NUL terminated text/uri-list (free with \b free) or \b nullptr
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_API char* cliprdr_file_context_get_local_uri_list(CliprdrFileContext* file,
+	                                                          size_t* size);
+
 #ifdef __cplusplus
 }
 #endif
