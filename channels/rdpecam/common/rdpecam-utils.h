@@ -234,18 +234,15 @@ WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_MediaTypeDescriptionFlags_(UINT8 val, wLog* log, const char* file,
                                                             const char* fkt, size_t line)
 {
-	switch (val)
+	/* [MS-RDPECAM] 2.2.3.8.1 permits zero or more of the defined flags. */
+	if ((val & ~((UINT8)CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired |
+	             CAM_MEDIA_TYPE_DESCRIPTION_FLAG_BottomUpImage)) != 0)
 	{
-		/* Raw top-down samples require neither decoding nor bottom-up orientation. */
-		case 0:
-		case CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired:
-		case CAM_MEDIA_TYPE_DESCRIPTION_FLAG_BottomUpImage:
-			return true;
-		default:
-			rdpecam_PrintWarning(log, file, fkt, line,
-			                     "Invalid CAM_MEDIA_TYPE_DESCRIPTION_FLAGS %" PRIu8, val);
-			return false;
+		rdpecam_PrintWarning(log, file, fkt, line,
+		                     "Invalid CAM_MEDIA_TYPE_DESCRIPTION_FLAGS %" PRIu8, val);
+		return false;
 	}
+	return true;
 }
 
 /** @brief check input data is a valid \ref CAM_PROPERTY_MODE value

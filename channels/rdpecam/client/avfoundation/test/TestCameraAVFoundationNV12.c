@@ -140,12 +140,19 @@ int TestCameraAVFoundationNV12(int argc, char* argv[])
 	    (Stream_Buffer(sample)[0] != 0x5a) ||
 	    memcmp(Stream_Buffer(sample) + 1, expected, sizeof(expected)) != 0)
 		goto out;
-	/* Accept raw top-down samples without changing validation of existing single flags. */
-	for (UINT8 flags = 0; flags < 3; flags++)
+	/* MS-RDPECAM 2.2.3.8.1 permits 0, 1, 2 and 3; all other bytes contain unknown flags. */
+	wLog* flagsLog = WLog_Get("camera.test.flags");
+	if (!flagsLog || !WLog_SetLogLevel(flagsLog, WLOG_OFF))
+		goto out;
+	for (unsigned flags = 0; flags <= UINT8_MAX; flags++)
 	{
-		if (!rdpecam_valid_MediaTypeDescriptionFlags_(flags, WLog_Get("camera.test"), __FILE__,
-		                                              __func__, __LINE__))
+		const BOOL valid = rdpecam_valid_MediaTypeDescriptionFlags_((UINT8)flags, flagsLog,
+		                                                            __FILE__, __func__, __LINE__);
+		if (valid != (flags <= 3))
+		{
+			fprintf(stderr, "Incorrect media type flag validation for 0x%02x\n", flags);
 			goto out;
+		}
 	}
 	CVPixelBufferRef invalid = NULL;
 	if (CVPixelBufferCreate(NULL, 8, 4, kCVPixelFormatType_32ARGB, NULL, &invalid) !=
@@ -153,9 +160,7 @@ int TestCameraAVFoundationNV12(int argc, char* argv[])
 		goto out;
 	const BOOL accepted = cam_avfoundation_pixel_buffer_to_nv12(invalid, sample);
 	CFRelease(invalid);
-	if (rdpecam_valid_MediaTypeDescriptionFlags_(4, WLog_Get("camera.test"), __FILE__, __func__,
-	                                             __LINE__) ||
-	    accepted)
+	if (accepted)
 		goto out;
 	if (!test_h264_encoding())
 		goto out;
