@@ -17,6 +17,7 @@
 
 include(CheckFunctionExists)
 include(JsonDetect)
+include(PackageConfigDependencies)
 
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
@@ -267,6 +268,9 @@ target_compile_options(${MODULE_NAME} PRIVATE ${WINPR_COMPILE_OPTIONS})
 target_compile_definitions(${MODULE_NAME} PRIVATE ${WINPR_DEFINITIONS})
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_LIBS_PRIVATE} PUBLIC ${WINPR_LIBS_PUBLIC})
+# here, where the imported targets winpr links are visible; WinPRConfig.cmake is made one level up
+package_config_dependencies(${MODULE_NAME} WINPR_CMAKE_FIND_DEPENDENCIES)
+set(WINPR_CMAKE_FIND_DEPENDENCIES "${WINPR_CMAKE_FIND_DEPENDENCIES}" PARENT_SCOPE)
 installwithrpath(
   TARGETS
   ${MODULE_NAME}

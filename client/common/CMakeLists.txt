@@ -105,6 +105,7 @@ endif()
 list(APPEND PUB_LIBS freerdp winpr)
 
 include(CheckLibraryExists)
+include(PackageConfigDependencies)
 check_library_exists(m lround "" HAVE_LIB_M)
 if(HAVE_LIB_M)
   list(APPEND PUB_LIBS m)
@@ -114,6 +115,9 @@ target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
 target_link_libraries(${MODULE_NAME} PRIVATE ${PRIV_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${PUB_LIBS})
+# here, where the imported targets freerdp-client links are visible; the config file is made one level up
+package_config_dependencies(${MODULE_NAME} FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES)
+set(FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES "${FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES}" PARENT_SCOPE)
 
 installwithrpath(
   TARGETS
