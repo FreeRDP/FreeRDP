@@ -255,6 +255,12 @@ struct rdp_udp
 	size_t v3UnackedPackets; /* data packets received since our last acknowledgement */
 	UINT16 v3AckedSeq;       /* the SeqNum of our last ACK payload */
 	BOOL v3AckedGap;         /* whether our last acknowledgement reported a missing packet */
+	BOOL v3WindowPending;    /* the window has news for an acknowledgement */
+	/* data packets behind the window, acknowledged on their own, see v3_send_ack: a run of
+	 * consecutive sequence numbers from v3BehindBase, and when the newest of them arrived */
+	UINT16 v3BehindBase;
+	size_t v3BehindCount;
+	UINT64 v3BehindArrival;
 	UINT16 v3NextChannel;
 
 	/* One received datagram. Kept here rather than on the stack, rdpudp_check is not reentrant. */
@@ -576,18 +582,79 @@ static BOOL v3_send_packet(rdpUdp* udp, wStream* s, BYTE packetType)
 	return rdpudp_send_raw(udp, wire, length);
 }
 
+/* [MS-RDPEUDP2] 2.2.1.2.6 ACK vector payload. TimeStamp is when the newest packet it reports
+ * arrived, SendAckTimeGapInMs the time since the latest data packet arrived. */
 WINPR_ATTR_NODISCARD
-static BOOL v3_send_ack(rdpUdp* udp)
+static BOOL v3_send_ack_vector(rdpUdp* udp, UINT16 base, const BYTE* vec, size_t count,
+                               UINT64 arrival)
 {
 	BYTE buffer[64 + RDPUDP2_MAX_ACKVEC] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(udp);
+	WINPR_ASSERT(vec);
+	WINPR_ASSERT((count > 0) && (count <= RDPUDP2_MAX_ACKVEC));
+	wStream* s =
+	    v3_packet_init(&sbuffer, buffer, sizeof(buffer), RDPUDP2_OVERHEADSIZE | RDPUDP2_ACKVEC);
+	if (!s)
+		return FALSE;
+	const UINT64 now = winpr_GetTickCount64NS();
+	const BYTE control = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | count);
+	/* the Stream_Write macros evaluate their value more than once */
+	const BYTE ackGap = v3_ack_gap(udp->v3LatestArrival, now);
+	const UINT32 timestamp = v3_timestamp((arrival != 0) ? arrival : now);
+	Stream_Write_UINT8(s, 10);         /* OverheadSize */
+	Stream_Write_UINT16(s, base);      /* BaseSeqNum */
+	Stream_Write_UINT8(s, control);    /* TimeStampPresent, codedAckVecSize */
+	stream_write_uint24(s, timestamp); /* TimeStamp */
+	Stream_Write_UINT8(s, ackGap);     /* SendAckTimeGapInMs */
+	Stream_Write(s, vec, count);       /* codedAckVector */
+	return v3_send_packet(udp, s, RDPUDP2_PACKET_STANDARD);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL v3_send_ack(rdpUdp* udp)
+{
+	BYTE buffer[64] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(udp);
+	if (!udp->v3BaseKnown)
+		return TRUE;
+
+	/* Data packets behind our window, see v3_process_datagram, go in an ACK vector of their own:
+	 * received, as runs of up to 63. A cumulative ACK would name our own position, which after a
+	 * short outage at a high rate can lie ahead of what the peer has sent, and Windows ends the
+	 * connection for that. It would also mark everything below it received ([MS-RDPEUDP2] 4.1.3).
+	 * The vector reports what arrived and nothing more (4.2.2). */
+	if (udp->v3BehindCount > 0)
+	{
+		BYTE vec[RDPUDP2_MAX_ACKVEC] = WINPR_C_ARRAY_INIT;
+		size_t count = 0;
+		for (size_t left = udp->v3BehindCount; left > 0;)
+		{
+			const size_t run = (left > 63) ? 63 : left;
+			vec[count++] = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | 0x40 | run);
+			left -= run;
+		}
+		udp->v3BehindCount = 0;
+		if (!v3_send_ack_vector(udp, udp->v3BehindBase, vec, count, udp->v3BehindArrival))
+			return FALSE;
+		if (!udp->v3WindowPending)
+		{
+			udp->ackPending = FALSE;
+			udp->v3UnackedPackets = 0;
+			udp->v3AckDue = 0;
+			return TRUE;
+		}
+	}
+
 	/* our position may lie ahead of the peer's numbers after a silence, see v3_resync_base */
-	if (!udp->v3BaseKnown || udp->v3Resync)
+	if (udp->v3Resync)
 		return TRUE;
 
 	udp->ackPending = FALSE;
+	udp->v3WindowPending = FALSE;
 	udp->v3UnackedPackets = 0;
 	udp->v3AckDue = 0;
 
@@ -595,18 +662,16 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	 * what is missing gets resent. ACK and ACKVEC are mutually exclusive. */
 	const BOOL gap = v3_has_gap(udp);
 	udp->v3AckedGap = gap;
-	wStream* s = v3_packet_init(&sbuffer, buffer, sizeof(buffer),
-	                            RDPUDP2_OVERHEADSIZE | (gap ? RDPUDP2_ACKVEC : RDPUDP2_ACK));
-	if (!s)
-		return FALSE;
 	if (!gap)
 	{
+		wStream* s =
+		    v3_packet_init(&sbuffer, buffer, sizeof(buffer), RDPUDP2_OVERHEADSIZE | RDPUDP2_ACK);
+		if (!s)
+			return FALSE;
 		v3_write_ack(udp, s, RDPUDP2_MAX_DELAYED_ACKS);
 		Stream_Write_UINT8(s, 10); /* OverheadSize */
 		return v3_send_packet(udp, s, RDPUDP2_PACKET_STANDARD);
 	}
-
-	Stream_Write_UINT8(s, 10); /* OverheadSize */
 
 	const UINT16 base = udp->v3Expected;
 	size_t span = (size_t)seq16_diff(udp->v3Highest, base) + 1;
@@ -643,18 +708,9 @@ static BOOL v3_send_ack(rdpUdp* udp)
 		pos += 7;
 	}
 
-	/* TimeStamp is when the highest sequence number received arrived, SendAckTimeGapInMs the
-	 * time since the latest data packet arrived. */
-	const UINT64 now = winpr_GetTickCount64NS();
+	/* when the highest sequence number received arrived */
 	const UINT64 highest = udp->v3Arrival[udp->v3Highest % RDPUDP_RECEIVE_SLOTS];
-	const BYTE control = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | count);
-	Stream_Write_UINT16(s, base);   /* BaseSeqNum */
-	Stream_Write_UINT8(s, control); /* TimeStampPresent, codedAckVecSize */
-	stream_write_uint24(s, v3_timestamp((highest != 0) ? highest : now)); /* TimeStamp */
-	const BYTE ackGap = v3_ack_gap(udp->v3LatestArrival, now);
-	Stream_Write_UINT8(s, ackGap); /* SendAckTimeGapInMs */
-	Stream_Write(s, vec, count);   /* codedAckVector */
-	return v3_send_packet(udp, s, RDPUDP2_PACKET_STANDARD);
+	return v3_send_ack_vector(udp, base, vec, count, highest);
 }
 
 /* The lowest data sequence number of ours still awaiting acknowledgement, which is what
@@ -1326,6 +1382,7 @@ static void v3_resync_base(rdpUdp* udp, UINT16 base)
 	udp->v3Highest = seq16_diff(base, 1);
 	udp->v3InOrderReceived = FALSE;
 	udp->ackPending = TRUE;
+	udp->v3WindowPending = TRUE;
 }
 
 /* Marks a silence of RDPUDP2_RESYNC_MS, see v3_resync_base. */
@@ -1370,6 +1427,7 @@ static void v3_advance_base(rdpUdp* udp, UINT16 base)
 		udp->v3Highest = last;
 	v3_advance_window(udp);
 	udp->ackPending = TRUE;
+	udp->v3WindowPending = TRUE;
 }
 
 static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t count)
@@ -1593,15 +1651,38 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 		udp->v3AckedSeq = seq16_diff(base, 1);
 	}
 
-	udp->ackPending = TRUE;
 	const UINT16 ahead = seq16_diff(dataSeq, udp->v3Expected);
-	/* Behind the window: resent because our ACK got lost, or given up by an AckOfAcks. Windows
-	 * at times puts the next sequence number in the AckOfAcks of a data packet, past the packet
-	 * itself. The window only tracks acknowledgements ([MS-RDPEUDP2] 3.1.1.2.2), the chunk still
-	 * goes to the channel sequence, which drops it if it was handed up already (3.1.1.2.4.2). */
+	/* Behind the window: resent because our ACK got lost, given up by an AckOfAcks, or ahead of
+	 * a position of ours the peer's numbers wrapped past. Windows at times puts the next sequence
+	 * number in the AckOfAcks of a data packet, past the packet itself. The window only tracks
+	 * acknowledgements ([MS-RDPEUDP2] 3.1.1.2.2): the packet is acknowledged on its own, and its
+	 * chunk still goes to the channel sequence, which drops it if it was handed up already
+	 * (3.1.1.2.4.2). */
 	const BOOL behind = (ahead >= 0x8000);
-	if (!behind && (ahead >= RDPUDP_RECEIVE_REACH))
-		return TRUE;
+	if (behind)
+	{
+		/* a run of consecutive ones goes in one ACK vector, see v3_send_ack */
+		const BOOL extends = (udp->v3BehindCount > 0) &&
+		                     (dataSeq == seq16_add(udp->v3BehindBase, udp->v3BehindCount)) &&
+		                     (udp->v3BehindCount < 63ull * RDPUDP2_MAX_ACKVEC);
+		if ((udp->v3BehindCount > 0) && !extends && !v3_send_ack(udp))
+			return FALSE;
+		if (!extends)
+		{
+			udp->v3BehindBase = dataSeq;
+			udp->v3BehindCount = 0;
+		}
+		udp->v3BehindCount++;
+		udp->v3BehindArrival = udp->v3LatestArrival;
+		udp->ackPending = TRUE;
+	}
+	else
+	{
+		udp->ackPending = TRUE;
+		udp->v3WindowPending = TRUE;
+		if (ahead >= RDPUDP_RECEIVE_REACH)
+			return TRUE;
+	}
 
 	/* A dummy packet occupies a sequence number but its body means nothing. */
 	const BOOL withChunk =

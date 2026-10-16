@@ -784,8 +784,10 @@ static BOOL retransmitted_packets_are_acknowledged_again(void)
 	CHECK(pump(&ctx));
 	CHECK(delivered_is(&ctx, "first"));
 	CHECK(drain(&ctx, 20));
+	/* behind the window now, it is acknowledged on its own: one run of one received packet */
 	const V3Packet* ack = last_ack(&ctx);
-	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 100));
+	CHECK(ack && (ack->flags & V3_ACKVEC) && (ack->vecBase == 100) && (ack->vecLength == 1) &&
+	      (ack->vec[0] == (0x80 | 0x40 | 1)));
 	rc = TRUE;
 fail:
 	ctx_free(&ctx);
@@ -1015,6 +1017,82 @@ fail:
 	return rc;
 }
 
+/* Through a 2 s outage Windows went on sending at 20000 packets/s and used 42500 sequence numbers,
+ * more than half the space: its next packets look old to us. Acknowledging our own position then
+ * names numbers it has not sent, and Windows ends the connection. Each such packet is
+ * acknowledged on its own instead, and its chunk is kept. The numbers are those of the capture. */
+static BOOL packets_past_a_wrap_are_acknowledged_on_their_own(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, FIRST_SEQUENCE, 1, "a"));
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+
+	/* 23006 below our position as serial arithmetic sees it, 42530 ahead in fact: a run of
+	 * 100 such packets, 70 carrying chunks and 30 dummies */
+	const UINT16 wrapped = (UINT16)(FIRST_SEQUENCE + 1 + 42530);
+	const size_t total = 100;
+	char expected[80] = "a";
+	for (size_t x = 0; x < total; x++)
+	{
+		const UINT16 seq = (UINT16)(wrapped + x);
+		if (x < 70)
+		{
+			const char text[2] = { (char)('A' + (x % 26)), '\0' };
+			expected[x + 1] = text[0];
+			CHECK(send_data_aoa(&ctx, seq, (UINT16)(2 + x), text, (UINT16)(wrapped - 6976)));
+		}
+		else
+		{
+			const V3Out dummy = { .dummy = TRUE,
+				                  .hasData = TRUE,
+				                  .dataSeq = seq,
+				                  .channelSeq = 0,
+				                  .payload = (const BYTE*)"x",
+				                  .payloadLength = 1 };
+			CHECK(server_send_v3(&ctx, &dummy));
+		}
+		if ((x % 10) == 9)
+			CHECK(pump(&ctx));
+	}
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, expected));
+
+	/* the ACK vectors report exactly the run, nothing names our old position */
+	CHECK(drain(&ctx, 50));
+	BOOL reported[100] = { 0 };
+	size_t vectors = 0;
+	for (size_t x = 0; x < ctx.seenCount; x++)
+	{
+		const V3Packet* p = &ctx.seen[x];
+		CHECK(!(p->flags & V3_ACK) || (p->ack != FIRST_SEQUENCE));
+		if (!(p->flags & V3_ACKVEC))
+			continue;
+		vectors++;
+		size_t pos = (UINT16)(p->vecBase - wrapped);
+		for (size_t y = 0; y < p->vecLength; y++)
+		{
+			/* run-length entries of received packets only */
+			CHECK((p->vec[y] & 0xC0) == 0xC0);
+			for (size_t z = 0; z < (p->vec[y] & 0x3F); z++)
+			{
+				CHECK(pos < total);
+				reported[pos++] = TRUE;
+			}
+		}
+	}
+	for (size_t x = 0; x < total; x++)
+		CHECK(reported[x]);
+	/* batched like any acknowledgement, not one per packet */
+	CHECK(vectors < total / 4);
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 /* ---------------------------------------------------------------------------------------- */
 
 typedef struct
@@ -1052,6 +1130,8 @@ static const TestCase cases[] = {
 	{ "acknowledgements_survive_sequence_wraparound",
 	  acknowledgements_survive_sequence_wraparound },
 	{ "ack_of_acks_resyncs_after_a_silence", ack_of_acks_resyncs_after_a_silence },
+	{ "packets_past_a_wrap_are_acknowledged_on_their_own",
+	  packets_past_a_wrap_are_acknowledged_on_their_own },
 };
 
 int TestRdpUdp(int argc, char* argv[])
