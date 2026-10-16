@@ -421,7 +421,10 @@ static state_run_t multitransport_client_request(rdpMultitransport* multi, UINT3
 		return multitransport_decline(multi, reqId);
 	}
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
+	/* The transport says whether the gateway is used: with /gateway:usage-method:detect the
+	 * connection can go to the server directly while FreeRDP_GatewayEnabled stays set. */
+	const TRANSPORT_LAYER layer = transport_get_layer(rdp->transport);
+	if ((layer == TRANSPORT_LAYER_TSG) || (layer == TRANSPORT_LAYER_TSG_TLS))
 	{
 		WLog_INFO(TAG, "declining UDP, the main connection goes through a gateway");
 		return multitransport_decline(multi, reqId);
