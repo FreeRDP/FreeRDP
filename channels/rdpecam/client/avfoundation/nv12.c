@@ -18,6 +18,49 @@
 #include "nv12.h"
 #include "capture_policy.h"
 #include <winpr/assert.h>
+#include <VideoToolbox/VideoToolbox.h>
+
+OSStatus cam_avfoundation_pixel_transfer_create(CFTypeRef* transfer)
+{
+	WINPR_ASSERT(transfer);
+	*transfer = NULL;
+	VTPixelTransferSessionRef session = NULL;
+	OSStatus status = VTPixelTransferSessionCreate(NULL, &session);
+	if (status != noErr)
+		return status;
+	const int one = 1;
+	CFNumberRef spacing = CFNumberCreate(NULL, kCFNumberIntType, &one);
+	CFDictionaryRef aspect = NULL;
+	if (spacing)
+	{
+		const void* keys[] = { kCVImageBufferPixelAspectRatioHorizontalSpacingKey,
+			                   kCVImageBufferPixelAspectRatioVerticalSpacingKey };
+		const void* values[] = { spacing, spacing };
+		aspect = CFDictionaryCreate(NULL, keys, values, 2, &kCFTypeDictionaryKeyCallBacks,
+		                            &kCFTypeDictionaryValueCallBacks);
+		CFRelease(spacing);
+	}
+	if (!aspect)
+		status = kVTAllocationFailedErr;
+	else
+	{
+		/* RDPECAM advertises square pixels and transmits no CoreVideo attachments.
+		 * Fit the complete camera view without relying on pixel aspect metadata. */
+		status = VTSessionSetProperty(session, kVTPixelTransferPropertyKey_ScalingMode,
+		                              kVTScalingMode_Letterbox);
+		if (status == noErr)
+			status = VTSessionSetProperty(
+			    session, kVTPixelTransferPropertyKey_DestinationPixelAspectRatio, aspect);
+		CFRelease(aspect);
+	}
+	if (status != noErr)
+	{
+		CFRelease(session);
+		return status;
+	}
+	*transfer = session;
+	return status;
+}
 
 BOOL cam_avfoundation_pixel_buffer_to_nv12(CVPixelBufferRef image, wStream* output)
 {

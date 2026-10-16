@@ -229,9 +229,7 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 	{
 		if (@available(iOS 16.0, *))
 		{
-			VTPixelTransferSessionRef transfer = NULL;
-			status = VTPixelTransferSessionCreate(NULL, &transfer);
-			stream->_transfer = transfer;
+			status = cam_avfoundation_pixel_transfer_create(&stream->_transfer);
 		}
 	}
 	if (status != noErr)

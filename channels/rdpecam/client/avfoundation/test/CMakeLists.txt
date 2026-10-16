@@ -14,10 +14,14 @@
 # limitations under the License.
 
 set(MODULE_NAME "TestRdpecamAVFoundation")
-set(TEST_RDPECAM_AVFOUNDATION_TESTS TestCameraAVFoundationNV12.c TestCameraAVFoundationFrameRate.c)
+set(TEST_RDPECAM_AVFOUNDATION_TESTS TestCameraAVFoundationNV12.c TestCameraAVFoundationFrameRate.c
+                                    TestCameraAVFoundationScaling.c
+)
 create_test_sourcelist(TEST_RDPECAM_AVFOUNDATION_SRCS TestRdpecamAVFoundation.c ${TEST_RDPECAM_AVFOUNDATION_TESTS})
 add_executable(${MODULE_NAME} ${TEST_RDPECAM_AVFOUNDATION_SRCS} ../nv12.c)
-target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client winpr ${COREVIDEO_FRAMEWORK} ${COREMEDIA_FRAMEWORK})
+target_link_libraries(
+  ${MODULE_NAME} PRIVATE freerdp-client winpr ${COREVIDEO_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${VIDEOTOOLBOX_FRAMEWORK}
+)
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 foreach(test ${TEST_RDPECAM_AVFOUNDATION_TESTS})
   get_filename_component(TestName ${test} NAME_WE)

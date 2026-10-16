@@ -25,4 +25,8 @@
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL cam_avfoundation_pixel_buffer_to_nv12(CVPixelBufferRef image, wStream* output);
 
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL OSStatus cam_avfoundation_pixel_transfer_create(CFTypeRef* transfer)
+    API_AVAILABLE(macos(10.8), ios(16.0), tvos(16.0));
+
 #endif
