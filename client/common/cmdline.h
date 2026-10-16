@@ -476,7 +476,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<"
 	  "latency>,][quality:<quality>]",
-	  nullptr, nullptr, -1, "audio", "Audio output (sound)" },
+	  nullptr, nullptr, -1, "audio",
+	  "Audio output (sound). <format> is a format tag (e.g. 0x704F) or its WAVE_FORMAT_ "
+	  "name with or without the prefix (e.g. opus, pcm, alaw, aac_ms)" },
 	{ "span", COMMAND_LINE_VALUE_FLAG, nullptr, nullptr, nullptr, -1, nullptr,
 	  "Span screen over multiple monitors" },
 	{ "spn-class", COMMAND_LINE_VALUE_REQUIRED, "<service-class>", nullptr, nullptr, -1, nullptr,
