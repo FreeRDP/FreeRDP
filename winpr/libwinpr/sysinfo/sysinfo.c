@@ -48,7 +48,7 @@
 #endif
 
 #if !defined(_WIN32)
-#if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
+#if (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)) || defined(__EMSCRIPTEN__)
 #include <time.h>
 #elif !defined(__APPLE__)
 #include <sys/time.h>
@@ -357,7 +357,7 @@ BOOL GetSystemTimeAdjustment(WINPR_ATTR_UNUSED PDWORD lpTimeAdjustment,
 	return FALSE;
 }
 
-#ifdef CLOCK_MONOTONIC_RAW
+#if defined(CLOCK_MONOTONIC_RAW) && !defined(__EMSCRIPTEN__)
 #define CLOCK_ID CLOCK_MONOTONIC_RAW
 #else
 #define CLOCK_ID CLOCK_MONOTONIC
@@ -995,7 +995,7 @@ ULONGLONG winpr_GetTickCount64(void)
 UINT64 winpr_GetTickCount64NS(void)
 {
 	UINT64 ticks = 0;
-#if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
+#if (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)) || defined(__EMSCRIPTEN__)
 	struct timespec ts = WINPR_C_ARRAY_INIT;
 
 	if (clock_gettime(CLOCK_ID, &ts) == 0)

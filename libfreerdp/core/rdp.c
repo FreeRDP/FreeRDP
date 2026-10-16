@@ -2628,7 +2628,7 @@ void rdp_free(rdpRdp* rdp)
 		autodetect_free(rdp->autodetect);
 		heartbeat_free(rdp->heartbeat);
 		multitransport_free(rdp->multitransport);
-		bulk_free(rdp->bulk);
+		freerdp_bulk_free(rdp->bulk);
 		free(rdp->io);
 		PubSub_Free(rdp->pubSub);
 		if (rdp->abortEvent)
