@@ -593,9 +593,17 @@ static int func_claim_all_interface(URBDRC_PLUGIN* urbdrc, LIBUSB_DEVICE_HANDLE*
 		const int number = func_get_interface_number(config, index);
 		if (number < 0)
 			return -1;
-		const int ret = libusb_claim_interface(libusb_handle, number);
-		if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_claim_interface", ret))
-			return -1;
+		int ret = libusb_claim_interface(libusb_handle, number);
+		if (log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_claim_interface", ret))
+		{
+			/* With auto detach enabled the claim also fails when the kernel driver
+			 * cannot be detached, e.g. on FreeBSD where that requires root.
+			 * Retry without it, as claiming worked before auto detach was enabled. */
+			if (libusb_set_auto_detach_kernel_driver(libusb_handle, 0) == LIBUSB_SUCCESS)
+				ret = libusb_claim_interface(libusb_handle, number);
+			if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_claim_interface", ret))
+				return -1;
+		}
 	}
 	return 0;
 }
