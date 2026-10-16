@@ -181,6 +181,9 @@ typedef struct
 	BOOL dummy;
 	BOOL hasAck;
 	UINT16 ack;
+	BOOL hasDelayAck;
+	BYTE maxDelayedAcks;
+	UINT16 delayedAckTimeout;
 	BOOL hasAoA;
 	UINT16 aoa;
 	BOOL hasData;
@@ -201,6 +204,8 @@ static BOOL server_send_v3(TestCtx* ctx, const V3Out* out)
 	UINT16 flags = 0;
 	if (out->hasAck)
 		flags |= V3_ACK;
+	if (out->hasDelayAck)
+		flags |= V3_DELAYACKINFO;
 	if (out->hasAoA)
 		flags |= V3_AOA;
 	if (out->hasData)
@@ -214,6 +219,11 @@ static BOOL server_send_v3(TestCtx* ctx, const V3Out* out)
 		write_uint24(s, 0);               /* receivedTS */
 		Stream_Write_UINT8(s, 0);         /* sendAckTimeGapInMs */
 		Stream_Write_UINT8(s, 0);         /* numDelayedAcks */
+	}
+	if (out->hasDelayAck)
+	{
+		Stream_Write_UINT8(s, out->maxDelayedAcks);     /* MaxDelayedAcks */
+		Stream_Write_UINT16(s, out->delayedAckTimeout); /* DelayedAckTimeoutInMs */
 	}
 	if (out->hasAoA)
 		Stream_Write_UINT16(s, out->aoa);
@@ -718,6 +728,33 @@ fail:
 	return rc;
 }
 
+/* With its AckOfAcks past the packet itself, the peer has the acknowledgment for that packet
+ * already. Windows ends the connection on an ACK vector reporting it: 00e4 with AckOfAcks 00e5 in
+ * a capture, its ACK vector followed 0.8 s later. */
+static BOOL ack_of_acks_past_its_own_packet_gets_no_ack_vector(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, 100, 1, "a"));
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+
+	CHECK(send_data_aoa(&ctx, 101, 2, "b", 102));
+	CHECK(send_data_aoa(&ctx, 102, 3, "c", 102));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "abc"));
+	CHECK(drain(&ctx, 20));
+	for (size_t x = 0; x < ctx.seenCount; x++)
+		CHECK(!(ctx.seen[x].flags & V3_ACKVEC));
+	const V3Packet* ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 102));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 /* The same further ahead: the chunk is kept and the sequence numbers the AckOfAcks gives up are
  * not reported missing afterwards. */
 static BOOL ack_of_acks_far_past_its_own_packet_keeps_the_chunk(void)
@@ -788,6 +825,58 @@ static BOOL retransmitted_packets_are_acknowledged_again(void)
 	const V3Packet* ack = last_ack(&ctx);
 	CHECK(ack && (ack->flags & V3_ACKVEC) && (ack->vecBase == 100) && (ack->vecLength == 1) &&
 	      (ack->vec[0] == (0x80 | 0x40 | 1)));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
+/* A data packet of ours carries a cumulative ACK when one is pending. While a packet behind the
+ * window waits for its ACK vector, that ACK would take the vector's place, and nothing would send
+ * the vector until the next standalone ACK. */
+static BOOL ack_vector_is_not_lost_to_outgoing_data(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	/* the peer lets our acknowledgements wait 200 ms */
+	const V3Out first = { .hasDelayAck = TRUE,
+		                  .maxDelayedAcks = 8,
+		                  .delayedAckTimeout = 200,
+		                  .hasData = TRUE,
+		                  .dataSeq = 100,
+		                  .channelSeq = 1,
+		                  .payload = (const BYTE*)"first",
+		                  .payloadLength = 5 };
+	CHECK(server_send_v3(&ctx, &first));
+	CHECK(pump(&ctx));
+	Sleep(250);
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+	CHECK(last_ack(&ctx));
+
+	/* the peer resends it, behind the window now, and our data goes out before its ACK is due */
+	CHECK(send_data(&ctx, 100, 1, "first"));
+	CHECK(pump(&ctx));
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"x", 1));
+	CHECK(drain(&ctx, 20));
+	const V3Packet* sent = first_data(&ctx);
+	CHECK(sent && !(sent->flags & V3_ACK));
+
+	/* once due, the resent packet is acknowledged on its own */
+	Sleep(250);
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+	BOOL vector = FALSE;
+	for (size_t x = 0; x < ctx.seenCount; x++)
+	{
+		const V3Packet* p = &ctx.seen[x];
+		if ((p->flags & V3_ACKVEC) && (p->vecBase == 100) && (p->vecLength == 1) &&
+		    (p->vec[0] == (0x80 | 0x40 | 1)))
+			vector = TRUE;
+	}
+	CHECK(vector);
+	CHECK(delivered_is(&ctx, "first"));
 	rc = TRUE;
 fail:
 	ctx_free(&ctx);
@@ -1112,12 +1201,15 @@ static const TestCase cases[] = {
 	  ack_of_acks_advances_the_window_without_touching_the_stream },
 	{ "ack_of_acks_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_past_its_own_packet_keeps_the_chunk },
+	{ "ack_of_acks_past_its_own_packet_gets_no_ack_vector",
+	  ack_of_acks_past_its_own_packet_gets_no_ack_vector },
 	{ "ack_of_acks_far_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_far_past_its_own_packet_keeps_the_chunk },
 	{ "late_packet_behind_the_window_fills_the_hole",
 	  late_packet_behind_the_window_fills_the_hole },
 	{ "retransmitted_packets_are_acknowledged_again",
 	  retransmitted_packets_are_acknowledged_again },
+	{ "ack_vector_is_not_lost_to_outgoing_data", ack_vector_is_not_lost_to_outgoing_data },
 	{ "retransmitted_channel_data_is_not_delivered_twice",
 	  retransmitted_channel_data_is_not_delivered_twice },
 	{ "gap_produces_an_ack_vector_rather_than_a_cumulative_ack",

@@ -750,7 +750,10 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(p);
 
-	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp);
+	/* Not while packets behind the window wait for their ACK vector: the ACK here would clear
+	 * ackPending, and nothing would send the vector until the next standalone ACK. */
+	const BOOL withAck =
+	    udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) && (udp->v3BehindCount == 0);
 	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
 	/* repeated on a resend, the first announcement may have been lost with it */
 	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) || (p->retransmits > 0);
@@ -1669,13 +1672,16 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 
 	const UINT16 ahead = seq16_diff(dataSeq, udp->v3Expected);
 	/* Behind the window: resent because our ACK got lost, given up by an AckOfAcks, or ahead of
-	 * a position of ours the peer's numbers wrapped past. Windows at times puts the next sequence
-	 * number in the AckOfAcks of a data packet, past the packet itself. The window only tracks
-	 * acknowledgements ([MS-RDPEUDP2] 3.1.1.2.2): the packet is acknowledged on its own, and its
-	 * chunk still goes to the channel sequence, which drops it if it was handed up already
-	 * (3.1.1.2.4.2). */
+	 * a position of ours the peer's numbers wrapped past. The window only tracks acknowledgements
+	 * ([MS-RDPEUDP2] 3.1.1.2.2): the packet is acknowledged on its own, and its chunk still goes
+	 * to the channel sequence, which drops it if it was handed up already (3.1.1.2.4.2). */
 	const BOOL behind = (ahead >= 0x8000);
-	if (behind)
+	/* Windows at times puts the next sequence number in the AckOfAcks of a data packet, past the
+	 * packet itself. The peer has the acknowledgments for everything below its AckOfAcks, the
+	 * receiver does not report those again (2.2.1.2.4), and Windows ends the connection on an ACK
+	 * vector for such a packet. Only its chunk counts. */
+	const BOOL acknowledged = haveAoA && seq16_after(aoa, dataSeq);
+	if (behind && !acknowledged)
 	{
 		/* a run of consecutive ones goes in one ACK vector, see v3_send_ack */
 		const BOOL extends = (udp->v3BehindCount > 0) &&
@@ -1692,7 +1698,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 		udp->v3BehindArrival = udp->v3LatestArrival;
 		udp->ackPending = TRUE;
 	}
-	else
+	else if (!behind)
 	{
 		udp->ackPending = TRUE;
 		udp->v3WindowPending = TRUE;
