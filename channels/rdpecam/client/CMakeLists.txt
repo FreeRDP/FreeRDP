@@ -41,8 +41,8 @@ if(WITH_RDPECAM_GSTREAMER)
   endif()
 endif()
 
-# currently camera redirect client supported for platforms with Video4Linux or Android
-if(NOT ANDROID)
+# currently camera redirect client is supported for platforms with Video4Linux, Android or macOS/iOS
+if(NOT ANDROID AND NOT APPLE)
   find_package(V4L)
   if(V4L_FOUND)
     set(WITH_V4L ON)
@@ -65,6 +65,10 @@ endif()
 
 if(ANDROID)
   add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "android" "")
+endif()
+
+if(APPLE)
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "avfoundation" "")
 endif()
 
 if(WITH_RDPECAM_MOVIE)

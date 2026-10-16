@@ -74,6 +74,16 @@ static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
 	return formats;
 }
 
+/* DecodingRequired describes the transmitted format: compressed H.264 and MJPEG
+ * samples need decoding on the server; raw samples do not. */
+WINPR_ATTR_NODISCARD
+static CAM_MEDIA_TYPE_DESCRIPTION_FLAGS ecam_media_type_flags(CAM_MEDIA_FORMAT format)
+{
+	if ((format == CAM_MEDIA_FORMAT_H264) || (format == CAM_MEDIA_FORMAT_MJPG))
+		return CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+	return 0;
+}
+
 static void ecam_dev_write_media_type(wStream* s, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 {
 	WINPR_ASSERT(mediaType);
@@ -378,7 +388,8 @@ static BOOL media_type_valid(CameraDevice* dev, UINT8 streamIndex,
 	{
 		CAM_MEDIA_TYPE_DESCRIPTION cur = supported[x];
 		cur.Format = supportedFormats[formatIndex].outputFormat;
-		cur.Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+		/* Validate the same wire-format flags advertised in the media type list. */
+		cur.Flags = ecam_media_type_flags(cur.Format);
 		if (memcmp(&cur, type, sizeof(CAM_MEDIA_TYPE_DESCRIPTION)) == 0)
 			return TRUE;
 	}
@@ -733,7 +744,8 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 	for (size_t i = 0; i < nMediaTypes; i++)
 	{
 		mediaTypes[i].Format = streamOutputFormat(stream);
-		mediaTypes[i].Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+		/* Set decoding requirements for the transmitted format, not the capture format. */
+		mediaTypes[i].Flags = ecam_media_type_flags(mediaTypes[i].Format);
 	}
 
 	if (stream->currMediaType.Format == 0)

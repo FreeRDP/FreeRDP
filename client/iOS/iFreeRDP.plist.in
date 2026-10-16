@@ -68,5 +68,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>FreeRDP uses your camera when you enable camera redirection to a remote desktop.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FreeRDP uses your microphone when you enable microphone redirection to a remote desktop.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>FreeRDP connects to remote desktops and gateways on your local network.</string>
 </dict>
 </plist>
