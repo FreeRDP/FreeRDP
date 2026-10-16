@@ -1526,28 +1526,36 @@ static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 channelSeq, const BYTE* 
 	if (ahead >= RDPUDP_RECEIVE_REACH)
 		return TRUE;
 
+	/* The chunk next in line goes up straight from the datagram, without a copy in a slot. */
+	if ((ahead == 0) && !udp->slots[channelSeq % RDPUDP_RECEIVE_SLOTS].present)
+	{
+		udp->v3NextChannel = channel_seq_next(udp->v3NextChannel);
+		if (!deliver(udp, data, length))
+			return FALSE;
+		return v3_deliver_ready(udp);
+	}
+
 	if (!store_slot(udp, channelSeq, data, length))
 		return FALSE;
 	return v3_deliver_ready(udp);
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
+static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 {
-	BYTE buffer[RDPUDP_MTU + 1024] = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(udp);
-	WINPR_ASSERT(wire);
-	if ((length < 8) || (length > sizeof(buffer)))
+	WINPR_ASSERT(data);
+	if (length < 8)
 		return TRUE;
 
-	/* undo the swap of the first and eighth byte ([MS-RDPEUDP2] 2.2.1) */
-	memcpy(buffer, wire, length);
-	const BYTE eighth = buffer[7];
-	buffer[7] = buffer[0];
-	buffer[0] = eighth;
+	/* undo the swap of the first and eighth byte ([MS-RDPEUDP2] 2.2.1). In place: with only
+	 * DATA set the chunk starts at the eighth byte, so a copy of the header would not do. */
+	const BYTE eighth = data[7];
+	data[7] = data[0];
+	data[0] = eighth;
 
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	wStream* s = Stream_StaticConstInit(&sbuffer, buffer, length);
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 
 	const BYTE prefix = Stream_Get_UINT8(s);
 	if (prefix & 0x01)
@@ -1859,7 +1867,7 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
+static BOOL process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data);
