@@ -1182,6 +1182,55 @@ fail:
 	return rc;
 }
 
+/* An ACK that rode on our data before a jump of the peer's numbers is not repeated after it,
+ * where it would name a number the peer did not send. */
+static BOOL piggybacked_ack_is_not_repeated_after_a_jump(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	/* the peer lets our acknowledgements wait 200 ms, so our data carries the ACK */
+	const V3Out first = { .hasDelayAck = TRUE,
+		                  .maxDelayedAcks = 8,
+		                  .delayedAckTimeout = 200,
+		                  .hasData = TRUE,
+		                  .dataSeq = FIRST_SEQUENCE,
+		                  .channelSeq = 1,
+		                  .payload = (const BYTE*)"a",
+		                  .payloadLength = 1 };
+	CHECK(server_send_v3(&ctx, &first));
+	CHECK(pump(&ctx));
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"x", 1));
+	CHECK(drain(&ctx, 20));
+	const V3Packet* sent = first_data(&ctx);
+	CHECK(sent && (sent->flags & V3_ACK) && (sent->ack == FIRST_SEQUENCE));
+	CHECK(send_ack(&ctx, sent->dataSeq));
+
+	/* the peer's numbers jump past half the space */
+	const UINT16 wrapped = (UINT16)(FIRST_SEQUENCE + 1 + 42530);
+	for (size_t x = 0; x < 10; x++)
+		CHECK(send_data_aoa(&ctx, (UINT16)(wrapped + x), (UINT16)(2 + x), "b",
+		                    (UINT16)(wrapped - 6976)));
+	CHECK(pump(&ctx));
+	Sleep(250);
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+
+	BOOL vector = FALSE;
+	for (size_t x = 0; x < ctx.seenCount; x++)
+	{
+		const V3Packet* p = &ctx.seen[x];
+		CHECK(!(p->flags & V3_ACK) || (p->ack != FIRST_SEQUENCE));
+		if (p->flags & V3_ACKVEC)
+			vector = TRUE;
+	}
+	CHECK(vector);
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 /* ---------------------------------------------------------------------------------------- */
 
 typedef struct
@@ -1224,6 +1273,8 @@ static const TestCase cases[] = {
 	{ "ack_of_acks_resyncs_after_a_silence", ack_of_acks_resyncs_after_a_silence },
 	{ "packets_past_a_wrap_are_acknowledged_on_their_own",
 	  packets_past_a_wrap_are_acknowledged_on_their_own },
+	{ "piggybacked_ack_is_not_repeated_after_a_jump",
+	  piggybacked_ack_is_not_repeated_after_a_jump },
 };
 
 int TestRdpUdp(int argc, char* argv[])

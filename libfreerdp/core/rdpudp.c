@@ -751,9 +751,10 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	WINPR_ASSERT(p);
 
 	/* Not while packets behind the window wait for their ACK vector: the ACK here would clear
-	 * ackPending, and nothing would send the vector until the next standalone ACK. */
-	const BOOL withAck =
-	    udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) && (udp->v3BehindCount == 0);
+	 * ackPending, and nothing would send the vector until the next standalone ACK. Not after a
+	 * silence either, our position may lie ahead of the peer's numbers then (v3_resync_base). */
+	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) &&
+	                     (udp->v3BehindCount == 0) && !udp->v3Resync;
 	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
 	/* repeated on a resend, the first announcement may have been lost with it */
 	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) || (p->retransmits > 0);
@@ -772,7 +773,10 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 		/* arrival gaps only where the payload leaves room in the datagram */
 		const size_t used = RDPUDP2_DATA_OVERHEAD + p->length;
 		v3_write_ack(udp, s, (udp->mtu > used) ? udp->mtu - used : 0);
+		/* left pending, a later ACK would repeat this position, which after a jump of the
+		 * peer's numbers names a packet it did not send */
 		udp->ackPending = FALSE;
+		udp->v3WindowPending = FALSE;
 		udp->v3UnackedPackets = 0;
 		udp->v3AckDue = 0;
 		udp->v3AckedGap = FALSE;
