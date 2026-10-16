@@ -228,7 +228,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	p_cont_elem->reserved = 0;
 	CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
 	p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
-	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	p_cont_elem->transfer_syntaxes = calloc(1, sizeof(p_syntax_id_t));
 
 	if (!p_cont_elem->transfer_syntaxes)
 		goto fail;
@@ -241,7 +241,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	p_cont_elem->reserved = 0;
 	CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
 	p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
-	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	p_cont_elem->transfer_syntaxes = calloc(1, sizeof(p_syntax_id_t));
 
 	if (!p_cont_elem->transfer_syntaxes)
 		goto fail;

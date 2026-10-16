@@ -1407,6 +1407,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 				else
 					readContentLength = FALSE; /* prevent chunked read */
 
+				if (*cur == '\0')
+					break;
 				cur = strchr(cur + 1, ';');
 			}
 		}

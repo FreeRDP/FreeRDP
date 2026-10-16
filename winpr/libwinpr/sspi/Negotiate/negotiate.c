@@ -43,7 +43,9 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #define NEGO_REG_KEY "Software\\%s\\SSPI\\Negotiate"
+#endif
 
 static const char PACKAGE_NAME_DISABLE_ALL[] = "none";
 static const char PACKAGE_NAME_NTLM[] = "ntlm";

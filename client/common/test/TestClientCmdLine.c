@@ -1,3 +1,5 @@
+#include <freerdp/config.h>
+
 #include <freerdp/client.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/settings.h>
@@ -270,6 +272,76 @@ static BOOL check_settings_smart_sizing_size(rdpSettings* settings)
 	return result;
 }
 
+static BOOL check_settings_gfx_without_h264(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) != CONNECTION_TYPE_AUTODETECT)
+	{
+		TEST_FAILURE("Expected ConnectionType = AUTODETECT, but ConnectionType = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType));
+		result = FALSE;
+	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
+	    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) ||
+	    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444v2))
+	{
+		TEST_FAILURE(
+		    "Expected the H.264 codecs off as /gfx asked, but /network:auto turned them on!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive))
+	{
+		TEST_FAILURE("Expected GfxProgressive = TRUE, but GfxProgressive = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_network_auto_h264(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
+	    !freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444))
+	{
+		TEST_FAILURE("Expected /network:auto alone to turn the H.264 codecs on!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_modem_with_fonts(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) != CONNECTION_TYPE_MODEM)
+	{
+		TEST_FAILURE("Expected ConnectionType = MODEM, but ConnectionType = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType));
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AllowFontSmoothing))
+	{
+		TEST_FAILURE("Expected AllowFontSmoothing = TRUE as +fonts asked, but /network:modem "
+		             "turned it off!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_DisableWallpaper))
+	{
+		TEST_FAILURE("Expected DisableWallpaper = TRUE, the default of /network:modem!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
 typedef struct
 {
 	int expected_status;
@@ -443,6 +515,26 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_multimon_enabled,
 	  { "testfreerdp", "+multimon", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#if defined(WITH_GFX_H264)
+	{ 0,
+	  check_settings_gfx_without_h264,
+	  { "testfreerdp", "/gfx:progressive,AVC420:off,AVC444:off", "/network:auto",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_without_h264,
+	  { "testfreerdp", "/network:auto", "/gfx:progressive,AVC420:off,AVC444:off",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_network_auto_h264,
+	  { "testfreerdp", "/network:auto", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+	{ 0,
+	  check_settings_modem_with_fonts,
+	  { "testfreerdp", "+fonts", "/network:modem", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 };
 // NOLINTEND(bugprone-suspicious-missing-comma)

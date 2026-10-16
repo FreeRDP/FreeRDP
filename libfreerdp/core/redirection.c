@@ -650,17 +650,25 @@ static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	const BYTE* ptr = nullptr;
 
+	const char* msg = rdp_redirection_flags_to_string(flag, buffer, sizeof(buffer));
+
 	if (!rdp_redirection_get_data(s, pLength, &ptr))
+	{
+		WLog_ERR(TAG, "Reading %s failed", msg);
 		return FALSE;
+	}
 
 	redirection_free_data(pData, nullptr);
 	*pData = (BYTE*)malloc(*pLength);
 
 	if (!*pData)
+	{
+		WLog_ERR(TAG, "Allocating %" PRIu32 " for %s failed", *pLength, msg);
 		return FALSE;
+	}
 	memcpy(*pData, ptr, *pLength);
 
-	WLog_DBG(TAG, "%s:", rdp_redirection_flags_to_string(flag, buffer, sizeof(buffer)));
+	WLog_DBG(TAG, "%s:", msg);
 
 	return TRUE;
 }
@@ -709,10 +717,13 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
-		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddress), 80))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddress), 80) ||
+		    !utils_is_valid_ip(redirection->TargetNetAddress))
+		{
+			WLog_ERR(TAG, "TargetNetAddress %s invalid", redirection->TargetNetAddress);
 			return STATE_RUN_FAILED;
-		if (!utils_is_valid_ip(redirection->TargetNetAddress))
-			return STATE_RUN_FAILED;
+		}
+		WLog_DBG(TAG, "TargetNetAddress %s", redirection->TargetNetAddress);
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
@@ -725,24 +736,32 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 */
 		if (!rdp_redirection_read_data(LB_LOAD_BALANCE_INFO, s, &redirection->LoadBalanceInfoLength,
 		                               &redirection->LoadBalanceInfo))
+		{
+			WLog_ERR(TAG, "LoadBalanceInfo(%" PRIu32 ") invalid",
+			         redirection->LoadBalanceInfoLength);
 			return STATE_RUN_FAILED;
+		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		if (!rdp_redirection_read_unicode_string(s, &(redirection->Username), 512))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->Username), 512) ||
+		    winpr_str_has_newlines(redirection->Username))
+		{
+			WLog_ERR(TAG, "Username: %s invalid", redirection->Username);
 			return STATE_RUN_FAILED;
-		if (winpr_str_has_newlines(redirection->Username))
-			return STATE_RUN_FAILED;
+		}
 		WLog_DBG(TAG, "Username: %s", redirection->Username);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		if (!rdp_redirection_read_unicode_string(s, &(redirection->Domain), 52))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->Domain), 52) ||
+		    winpr_str_has_newlines(redirection->Domain))
+		{
+			WLog_ERR(TAG, "Domain: %s invalid", redirection->Domain);
 			return STATE_RUN_FAILED;
-		if (winpr_str_has_newlines(redirection->Domain))
-			return STATE_RUN_FAILED;
+		}
 		WLog_DBG(TAG, "Domain: %s", redirection->Domain);
 	}
 
@@ -799,19 +818,23 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
-		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetFQDN), 512))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetFQDN), 512) ||
+		    !winpr_str_is_valid_hostname(redirection->TargetFQDN))
+		{
+			WLog_ERR(TAG, "TargetFQDN: %s invalid", redirection->TargetFQDN);
 			return STATE_RUN_FAILED;
-		if (!winpr_str_is_valid_hostname(redirection->TargetFQDN))
-			return STATE_RUN_FAILED;
+		}
 		WLog_DBG(TAG, "TargetFQDN: %s", redirection->TargetFQDN);
 	}
 
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
-		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetBiosName), 32))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetBiosName), 32) ||
+		    !winpr_str_is_valid_hostname(redirection->TargetNetBiosName))
+		{
+			WLog_ERR(TAG, "TargetNteBiosName: %s invalid", redirection->TargetNetBiosName);
 			return STATE_RUN_FAILED;
-		if (!winpr_str_is_valid_hostname(redirection->TargetNetBiosName))
-			return STATE_RUN_FAILED;
+		}
 		WLog_DBG(TAG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);
 	}
 
@@ -819,20 +842,29 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_redirection_read_data(LB_CLIENT_TSV_URL, s, &redirection->TsvUrlLength,
 		                               &redirection->TsvUrl))
+		{
+			WLog_ERR(TAG, "Client TSV URL invalid");
 			return STATE_RUN_FAILED;
+		}
 	}
 
 	if (redirection->flags & LB_REDIRECTION_GUID)
 	{
 		if (!rdp_redirection_read_data(LB_REDIRECTION_GUID, s, &redirection->RedirectionGuidLength,
 		                               &redirection->RedirectionGuid))
+		{
+			WLog_ERR(TAG, "Redirection GUID invalid");
 			return STATE_RUN_FAILED;
+		}
 	}
 
 	if (redirection->flags & LB_TARGET_CERTIFICATE)
 	{
 		if (!rdp_redirection_read_target_cert_stream(s, redirection))
+		{
+			WLog_ERR(TAG, "TargetCertificate invalid");
 			return STATE_RUN_FAILED;
+		}
 	}
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
@@ -879,10 +911,14 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		for (UINT32 i = 0; i < TargetNetAddressesCount; i++)
 		{
-			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
+			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]),
+			                                         80) ||
+			    !utils_is_valid_ip(redirection->TargetNetAddresses[i]))
+			{
+				WLog_ERR(TAG, "TargetNetAddresses[%" PRIu32 "]: %s invalid", i,
+				         redirection->TargetNetAddresses[i]);
 				return STATE_RUN_FAILED;
-			if (!utils_is_valid_ip(redirection->TargetNetAddresses[i]))
-				return STATE_RUN_FAILED;
+			}
 			WLog_DBG(TAG, "TargetNetAddresses[%" PRIu32 "]: %s", i,
 			         redirection->TargetNetAddresses[i]);
 		}

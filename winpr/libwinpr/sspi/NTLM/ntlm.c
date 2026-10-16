@@ -49,7 +49,9 @@
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 #endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #define WINPR_KEY "Software\\%s\\WinPR\\NTLM"
+#endif
 
 #define check_context(ctx) check_context_((ctx), __FILE__, __func__, __LINE__)
 
