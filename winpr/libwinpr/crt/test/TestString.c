@@ -291,6 +291,24 @@ static BOOL test_crlf(void)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL test_hostname(const char** tests, size_t count, BOOL shouldSucceed)
+{
+	for (size_t x = 0; x < count; x++)
+	{
+		const char* test = tests[x];
+		size_t len = strlen(test);
+
+		const BOOL a = winpr_str_is_valid_hostname(test);
+		const BOOL b = winpr_str_is_valid_hostnameN(test, len);
+		if (a != b)
+			return FALSE;
+		if (a != shouldSucceed)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 int TestString(int argc, char* argv[])
 {
 	const WCHAR* p = nullptr;
@@ -429,6 +447,27 @@ int TestString(int argc, char* argv[])
 
 		const size_t rlen = strnlen(test, sizeof(test));
 		if (rlen != slen - 3)
+			return -1;
+	}
+	{
+		const char* tests[] = { "some.host.somewhere.tld", "somehost", "a", "sh25" };
+		const char* failtests[] = {
+			"",
+			".some.tld",
+			"some.tld.",
+			"-some.tld",
+			"some-.tld",
+			"some.-tld",
+			"some.tld-",
+			"abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789.tld",
+			"abcdef0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
+			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
+			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789."
+			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef"
+		};
+		if (!test_hostname(tests, ARRAYSIZE(tests), TRUE))
+			return -1;
+		if (!test_hostname(failtests, ARRAYSIZE(failtests), FALSE))
 			return -1;
 	}
 	return 0;
