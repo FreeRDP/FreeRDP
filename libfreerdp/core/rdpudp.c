@@ -801,14 +801,22 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 /* ------------------------------------------------------------------------------------------ */
 
 /* Writes an RDPUDP_ACK_VECTOR_HEADER covering the peer's packets up to the highest one seen,
- * using at most room bytes. */
+ * using at most room bytes. Windows encodes a run of n datagrams as n - 1 in an element, so a run
+ * holds 1 to 64 datagrams; before the peer's first data packet the vector is empty. */
 static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(s);
+	if (!udp->receivedData)
+	{
+		Stream_Write_UINT16_BE(s, 0); /* uAckVectorSize */
+		Stream_Zero(s, 2);            /* pad to a DWORD boundary */
+		return;
+	}
+
 	const UINT32 highest = udp->recvHighest;
 	UINT32 low = udp->ackVectorStart;
-	if (!udp->receivedData || seq32_after(low, highest))
+	if (seq32_after(low, highest))
 		low = highest;
 	if (seq32_diff(highest, low) >= RDPUDP_RECEIVE_REACH)
 		low = seq32_diff(highest, RDPUDP_RECEIVE_REACH - 1);
@@ -822,20 +830,20 @@ static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 	while (TRUE)
 	{
 		BYTE current = DATAGRAM_RECEIVED;
-		if (udp->receivedData && !seq32_after(udp->recvNext, seq))
+		if (!seq32_after(udp->recvNext, seq))
 		{
 			const rdpudp_slot* slot = &udp->slots[seq % RDPUDP_RECEIVE_SLOTS];
 			if (!slot->present || (slot->seq != seq))
 				current = DATAGRAM_NOT_YET_RECEIVED;
 		}
 
-		if ((current != state) || (run == 0x3F))
+		if ((current != state) || (run == 0x40))
 		{
 			if (run > 0)
 			{
 				if (count >= ARRAYSIZE(elements))
 					break;
-				elements[count++] = WINPR_ASSERTING_INT_CAST(BYTE, (state << 6) | run);
+				elements[count++] = WINPR_ASSERTING_INT_CAST(BYTE, (state << 6) | (run - 1));
 			}
 			state = current;
 			run = 0;
@@ -847,7 +855,7 @@ static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 		seq++;
 	}
 	if ((run > 0) && (count < ARRAYSIZE(elements)))
-		elements[count++] = WINPR_ASSERTING_INT_CAST(BYTE, (state << 6) | run);
+		elements[count++] = WINPR_ASSERTING_INT_CAST(BYTE, (state << 6) | (run - 1));
 
 	/* Too long to fit: keep the newest part, the older part has been reported before. */
 	size_t skip = 0;
@@ -1258,7 +1266,7 @@ static void v1_process_ack_vector(rdpUdp* udp, UINT32 snSourceAck, wStream* s, s
 	const size_t start = Stream_GetPosition(s);
 	UINT32 total = 0;
 	for (size_t x = 0; x < count; x++)
-		total += Stream_Get_UINT8(s) & 0x3F;
+		total += (Stream_Get_UINT8(s) & 0x3Fu) + 1u; /* a run of n datagrams is sent as n - 1 */
 	if ((total == 0) || !Stream_SetPosition(s, start))
 		return;
 
@@ -1267,7 +1275,7 @@ static void v1_process_ack_vector(rdpUdp* udp, UINT32 snSourceAck, wStream* s, s
 	{
 		const BYTE element = Stream_Get_UINT8(s);
 		const BYTE state = WINPR_ASSERTING_INT_CAST(BYTE, element >> 6);
-		const BYTE run = element & 0x3F;
+		const BYTE run = WINPR_ASSERTING_INT_CAST(BYTE, (element & 0x3F) + 1);
 		for (BYTE y = 0; y < run; y++)
 		{
 			if (state == DATAGRAM_RECEIVED)
