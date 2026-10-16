@@ -1069,16 +1069,28 @@ BOOL winpr_str_is_valid_hostname(const char* str)
 BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 {
 	if (!str || (len == 0))
+	{
+		WLog_VRB(TAG, "hostname %s [%" PRIuz "] is too short", str, len);
 		return FALSE;
+	}
 
 	if (len > 255)
+	{
+		WLog_VRB(TAG, "hostname %s [%" PRIuz "] is too long", str, len);
 		return FALSE;
+	}
 
 	// may not start or end with dot
 	if (str[0] == '.')
+	{
+		WLog_VRB(TAG, "hostname %s [%" PRIuz "] starts with a dot", str, len);
 		return FALSE;
+	}
 	if (str[len - 1] == '.')
+	{
+		WLog_VRB(TAG, "hostname %s [%" PRIuz "] starts ends a dot", str, len);
 		return FALSE;
+	}
 
 	size_t segment = 0;
 	BOOL segmentHasHyphen = FALSE;
@@ -1086,7 +1098,11 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 	{
 		char c = str[x];
 		if (!validHostChar(c))
+		{
+			WLog_VRB(TAG, "hostname %s [%" PRIuz "] invalid character %c at %" PRIuz, str, len, c,
+			         x);
 			return FALSE;
+		}
 
 		if (c == '.')
 		{
@@ -1095,19 +1111,32 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 
 			// may not start with dot
 			if (x == 0)
+			{
+				WLog_VRB(TAG, "hostname %s [%" PRIuz "] segment starts with a dot", str, len);
 				return FALSE;
+			}
 			// filter dotdot
 			else if (str[x - 1] == c)
+			{
+				WLog_VRB(TAG, "hostname %s [%" PRIuz "] segment contains dotdot", str, len);
 				return FALSE;
+			}
 			// segments may not end with a hyphen
 			else if (str[x - 1] == '-')
+			{
+				WLog_VRB(TAG, "hostname %s [%" PRIuz "] segment ends with a hyphen", str, len);
 				return FALSE;
+			}
 		}
 		else
 		{
 			segment++;
 			if (segment > 63)
+			{
+				WLog_VRB(TAG, "hostname %s [%" PRIuz "] segment longer than 63 characters", str,
+				         len);
 				return FALSE;
+			}
 
 			// - may not occur as first in segment
 			if (c == '-')
@@ -1116,18 +1145,21 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 
 				// segments may not start with a hyphen
 				if ((x == 0) || (str[x - 1] == '.'))
+				{
+					WLog_VRB(TAG, "hostname %s [%" PRIuz "] segment starts with a hyphen", str,
+					         len);
 					return FALSE;
+				}
 			}
 		}
 	}
 
 	// last segment may not contain a hyphen
 	if (segmentHasHyphen)
+	{
+		WLog_VRB(TAG, "hostname %s [%" PRIuz "] ends with a hyphen", str, len);
 		return FALSE;
-
-	// assume TLD is at least 2 char
-	if (segment < 2)
-		return FALSE;
+	}
 
 	return TRUE;
 }

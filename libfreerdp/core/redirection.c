@@ -832,7 +832,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetBiosName), 32) ||
 		    !winpr_str_is_valid_hostname(redirection->TargetNetBiosName))
 		{
-			WLog_ERR(TAG, "TargetNteBiosName: %s invalid", redirection->TargetNetBiosName);
+			WLog_ERR(TAG, "TargetNetBiosName: %s invalid", redirection->TargetNetBiosName);
 			return STATE_RUN_FAILED;
 		}
 		WLog_DBG(TAG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);

@@ -141,6 +141,11 @@ struct rdp_rdg
 
 	SmartcardCertInfo* smartcard;
 	wLog* log;
+
+	/* The header of the next packet, as much of it as has arrived: a read that would block returns
+	 * without losing it, and the next read goes on from there (rdg_read_data_packet). */
+	BYTE nextHeader[8];
+	size_t nextHeaderLengthRead;
 };
 
 enum
@@ -2048,13 +2053,14 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 		// NOLINTNEXTLINE(bugprone-sizeof-expression)
 		WINPR_ASSERT(sizeof(RdgPacketHeader) < INT_MAX);
 
-		while (readCount < sizeof(RdgPacketHeader))
+		while (rdg->nextHeaderLengthRead < sizeof(RdgPacketHeader))
 		{
 			if (rdg_shall_abort(rdg))
 				return -1;
 
-			status = rdg_socket_read(rdg->tlsOut->bio, rdg->context, (BYTE*)(&header) + readCount,
-			                         sizeof(RdgPacketHeader) - readCount, &rdg->transferEncoding);
+			status = rdg_socket_read(
+			    rdg->tlsOut->bio, rdg->context, &rdg->nextHeader[rdg->nextHeaderLengthRead],
+			    sizeof(RdgPacketHeader) - rdg->nextHeaderLengthRead, &rdg->transferEncoding);
 
 			if (status <= 0)
 			{
@@ -2069,11 +2075,14 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 				return status;
 			}
 
-			readCount += (size_t)status;
-
-			if (readCount > INT_MAX)
+			if ((size_t)status > sizeof(RdgPacketHeader) - rdg->nextHeaderLengthRead)
 				return -1;
+			rdg->nextHeaderLengthRead += (size_t)status;
 		}
+
+		WINPR_STATIC_ASSERT(sizeof(RdgPacketHeader) == sizeof(rdg->nextHeader));
+		if (rdg->nextHeaderLengthRead == sizeof(RdgPacketHeader))
+			memcpy(&header, rdg->nextHeader, sizeof(header));
 
 		if (header.type != PKT_TYPE_DATA)
 		{
@@ -2106,6 +2115,8 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 
 			readCount += (size_t)status;
 		}
+
+		rdg->nextHeaderLengthRead = 0;
 	}
 
 	readSize = (rdg->packetRemainingCount < size) ? rdg->packetRemainingCount : size;
