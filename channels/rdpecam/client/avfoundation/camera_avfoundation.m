@@ -220,6 +220,31 @@ static CAM_ERROR_CODE cam_avfoundation_stream_start(FreeRDPCameraAVFoundationStr
 #endif
 	[stream.session commitConfiguration];
 
+#if (TARGET_OS_OSX && (__MAC_OS_X_VERSION_MAX_ALLOWED >= 140000)) || \
+    (!TARGET_OS_OSX && (__IPHONE_OS_VERSION_MAX_ALLOWED >= 170000))
+	if (@available(macOS 14.0, iOS 17.0, *))
+	{
+		AVCaptureConnection *connection = [stream.output connectionWithMediaType:AVMediaTypeVideo];
+		if (!connection)
+			return CAM_ERROR_CODE_OperationNotSupported;
+		AVCaptureDeviceRotationCoordinator *coordinator =
+		    [[AVCaptureDeviceRotationCoordinator alloc] initWithDevice:camera previewLayer:nil];
+		if (!coordinator)
+			return CAM_ERROR_CODE_OutOfMemory;
+		const CGFloat angle = coordinator.videoRotationAngleForHorizonLevelCapture;
+		[coordinator release];
+		/* Fix rotation for this capture session before starting the render pipeline.
+		 * Use the absolute capture angle, including on cameras defaulting to 180 degrees. */
+		if ([connection isVideoRotationAngleSupported:angle])
+		{
+			connection.videoRotationAngle = angle;
+			WLog_INFO(TAG, "Camera capture rotation: %.0f degrees", angle);
+		}
+		else
+			WLog_WARN(TAG, "Camera does not support rotation by %.0f degrees", angle);
+	}
+#endif
+
 	stream->_rawSample = Stream_New(NULL, (size_t)stream->_width * stream->_height * 3 / 2);
 	if (!stream->_rawSample)
 		return CAM_ERROR_CODE_OutOfMemory;
