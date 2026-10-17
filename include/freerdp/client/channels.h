@@ -65,6 +65,8 @@ extern "C"
 		size_t channelCallbackSize;
 		const IWTSVirtualChannelCallback* channel_callbacks;
 		DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn;
+		/* Some dynamic channels, such as RDPEWA, support multiple instances. */
+		BOOL allowMultipleInstances;
 	};
 
 #if defined(WITH_CHANNELS)

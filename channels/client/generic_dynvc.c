@@ -55,7 +55,8 @@ static UINT generic_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	WINPR_ASSERT(plugin->channel_callbacks);
 	const UINT rc =
 	    IFCALLRESULT(CHANNEL_RC_OK, plugin->channel_callbacks->OnClose, pChannelCallback);
-	generic_update_connected_state(plugin, FALSE);
+	if (!plugin->allowMultipleInstances)
+		generic_update_connected_state(plugin, FALSE);
 
 	return rc;
 }
@@ -74,7 +75,7 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)listener_callback->plugin;
 	WLog_Print(plugin->log, WLOG_TRACE, "...");
 
-	if (generic_get_connected_state(plugin))
+	if (!plugin->allowMultipleInstances && generic_get_connected_state(plugin))
 	{
 		WLog_Print(plugin->log, WLOG_ERROR, "Channel already connected, terminating.");
 		return ERROR_DEVICE_ALREADY_ATTACHED;
@@ -100,7 +101,8 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 	listener_callback->channel = pChannel;
 
 	*ppCallback = &callback->iface;
-	generic_update_connected_state(plugin, TRUE);
+	if (!plugin->allowMultipleInstances)
+		generic_update_connected_state(plugin, TRUE);
 	return CHANNEL_RC_OK;
 }
 
