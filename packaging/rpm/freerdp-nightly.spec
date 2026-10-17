@@ -223,6 +223,7 @@ export NO_BRP_CHECK_RPATH true
 %defattr(-,root,root)
 %dir %{INSTALL_PREFIX}
 %dir %{INSTALL_PREFIX}/%{_lib}
+%dir %{INSTALL_PREFIX}/libexec
 %dir %{INSTALL_PREFIX}/bin
 %dir %{INSTALL_PREFIX}/share/
 %dir %{INSTALL_PREFIX}/share/man/
@@ -233,6 +234,7 @@ export NO_BRP_CHECK_RPATH true
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/*.so
 %{INSTALL_PREFIX}/bin/*
+%{INSTALL_PREFIX}/libexec/*
 %{INSTALL_PREFIX}/share/man/man1/*
 %{INSTALL_PREFIX}/share/man/man7/*
 %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/*
@@ -249,6 +251,8 @@ export NO_BRP_CHECK_RPATH true
 %postun -p /sbin/ldconfig
 
 %changelog
+* Sun Oct 17 2026 FreeRDP Team <team@freerdp.com> - 3.32.2-1
+- add libexec to install paths
 * Thu May 15 2025 FreeRDP Team <team@freerdp.com> - 3.15.0-1
 - update dependencies, fix build paths
 * Thu Oct 10 2024 FreeRDP Team <team@freerdp.com> - 3.10.0-1
