@@ -19,6 +19,9 @@
 
 include(CMakeDependentOption)
 include(InstallFreeRDPDesktop)
+include(PackageConfigDependencies)
+
+set(FREERDP_CLIENT_CMAKE_DEPENDENCIES "" CACHE INTERNAL "dependencies")
 
 if(WITH_CLIENT_COMMON)
   add_subdirectory(common)
@@ -126,6 +129,7 @@ export(PACKAGE freerdp-client)
 
 setfreerdpcmakeinstalldir(FREERDP_CLIENT_CMAKE_INSTALL_DIR "FreeRDP-Client${FREERDP_VERSION_MAJOR}")
 
+package_config_dependencies(FREERDP_CLIENT_CMAKE_DEPENDENCIES FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES)
 configure_package_config_file(
   FreeRDP-ClientConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfig.cmake
   INSTALL_DESTINATION ${FREERDP_CLIENT_CMAKE_INSTALL_DIR} PATH_VARS FREERDP_INCLUDE_DIR

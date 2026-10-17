@@ -267,6 +267,7 @@ target_compile_options(${MODULE_NAME} PRIVATE ${WINPR_COMPILE_OPTIONS})
 target_compile_definitions(${MODULE_NAME} PRIVATE ${WINPR_DEFINITIONS})
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_LIBS_PRIVATE} PUBLIC ${WINPR_LIBS_PUBLIC})
+package_config_add_targets(WINPR_CMAKE_DEPENDENCIES ${WINPR_LIBS_PRIVATE} ${WINPR_LIBS_PUBLIC})
 installwithrpath(
   TARGETS
   ${MODULE_NAME}

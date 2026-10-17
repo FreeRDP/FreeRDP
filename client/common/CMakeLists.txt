@@ -113,6 +113,7 @@ endif()
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/freerdp${FREERDP_VERSION_MAJOR}>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
 target_link_libraries(${MODULE_NAME} PRIVATE ${PRIV_LIBS})
+package_config_add_targets(FREERDP_CLIENT_CMAKE_DEPENDENCIES ${PRIV_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${PUB_LIBS})
 
 installwithrpath(
