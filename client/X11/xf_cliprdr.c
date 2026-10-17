@@ -449,6 +449,35 @@ static const xfCliprdrFormat* xf_cliprdr_get_client_format_by_atom(xfClipboard* 
 	return nullptr;
 }
 
+static const xfCliprdrFormat* xf_cliprdr_get_client_format_by_id(xfClipboard* clipboard,
+                                                                 UINT32 formatId)
+{
+	WINPR_ASSERT(clipboard);
+
+	for (UINT32 i = 0; i < clipboard->numClientFormats; i++)
+	{
+		const xfCliprdrFormat* format = &(clipboard->clientFormats[i]);
+
+		if (format->formatToRequest == formatId)
+			return format;
+	}
+
+	return nullptr;
+}
+
+/* CF_RAW is never listed in the owner's TARGETS (see
+ * xf_cliprdr_server_format_data_request), so it must not go through the
+ * available-atom filter, or the raw data would be discarded on arrival. */
+static const xfCliprdrFormat* xf_cliprdr_get_requested_client_format(xfClipboard* clipboard)
+{
+	WINPR_ASSERT(clipboard);
+
+	if (clipboard->requestedFormatId == CF_RAW)
+		return xf_cliprdr_get_client_format_by_id(clipboard, CF_RAW);
+
+	return xf_cliprdr_get_client_available_format_by_id(clipboard, clipboard->requestedFormatId);
+}
+
 static const CLIPRDR_FORMAT* xf_cliprdr_get_server_format_by_atom(xfClipboard* clipboard, Atom atom)
 {
 	WINPR_ASSERT(clipboard);
@@ -1013,7 +1042,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	 * this ensures on next event that the buffer is not reused. */
 	clipboard->incr_data_length = 0;
 
-	format = xf_cliprdr_get_client_available_format_by_id(clipboard, clipboard->requestedFormatId);
+	format = xf_cliprdr_get_requested_client_format(clipboard);
 
 	if (!hasData || !data || !format)
 	{
@@ -1149,8 +1178,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
-	const xfCliprdrFormat* format =
-	    xf_cliprdr_get_client_available_format_by_id(clipboard, clipboard->requestedFormatId);
+	const xfCliprdrFormat* format = xf_cliprdr_get_requested_client_format(clipboard);
 
 	if (!format || (format->atom != target))
 	{
@@ -1844,8 +1872,7 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, const XPr
 	else if ((xevent->window == xfc->drawable) && (xevent->state == PropertyNewValue) &&
 	         clipboard->incr_starts)
 	{
-		format =
-		    xf_cliprdr_get_client_available_format_by_id(clipboard, clipboard->requestedFormatId);
+		format = xf_cliprdr_get_requested_client_format(clipboard);
 
 		if (format)
 			xf_cliprdr_get_requested_data(clipboard, format->atom);
@@ -2271,7 +2298,11 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 
 	if (rawTransfer)
 	{
-		format = xf_cliprdr_get_client_available_format_by_id(clipboard, CF_RAW);
+		/* The owner is another FreeRDP client. It publishes its formats in
+		 * _FREERDP_CLIPRDR_FORMATS and never lists _FREERDP_RAW in TARGETS, so
+		 * the available-atom filter would always reject CF_RAW and every paste
+		 * between two sessions would get an empty response. */
+		format = xf_cliprdr_get_client_format_by_id(clipboard, CF_RAW);
 		LogDynAndXChangeProperty(clipboard->log, xfc->display, xfc->drawable,
 		                         clipboard->property_atom, XA_INTEGER, 32, PropModeReplace,
 		                         (const BYTE*)&formatId, 1);
