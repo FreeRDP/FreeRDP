@@ -487,7 +487,7 @@ static BOOL ctx_start(TestCtx* ctx, BOOL offerV3, SynInfo* syn)
 
 	BYTE buffer[1500] = { 0 };
 	struct sockaddr_in from = { 0 };
-	socklen_t fromLength = sizeof(from);
+	int fromLength = sizeof(from);
 	const UINT64 deadline = GetTickCount64() + 1000;
 	int rc = -1;
 	while ((rc = _recvfrom(ctx->server, (char*)buffer, sizeof(buffer), 0, (struct sockaddr*)&from,
