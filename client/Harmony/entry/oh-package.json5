@@ -1,0 +1,12 @@
+{
+  "modelVersion": "5.0.0",
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "FreeRDP Harmony entry module",
+  "main": "",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "libfreerdp_harmony_bridge.so": "file:./src/main/cpp/types/libfreerdp_harmony_bridge"
+  }
+}
