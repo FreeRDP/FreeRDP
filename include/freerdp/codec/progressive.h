@@ -37,6 +37,25 @@ extern "C"
 
 	typedef struct S_PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
+	/** @brief compress a bitmap with progressive codec
+	 *
+	 *  @param progressive A pointer to the context to use
+	 *  @param pSrcData A pointer to the bitmap to compress
+	 *  @param SrcSize The size in bytes of \ref pSrcData
+	 *  @param SrcFormat The image format of \ref pSrcData
+	 *  @param Width The width of the image in pixel
+	 *  @param Height The height of the image in lines
+	 *  @param ScanLine The width in bytes of a line. Must be >= \ref BPP(SrcFormat) * \ref Width
+	 * bytes
+	 *  @param invalidRegion The region of the image to compress, the whole image if NULL
+	 *  @param ppDstData A pointer that will be set to the compressed data. The data is owned by
+	 * \ref progressive context, so copy if it is required to stay valid afer another call to \ref
+	 * progressive_compress or \ref progressive_reset
+	 *  @param pDstSize A pointer to a UINT32 that will be set to the \ref ppDstData size in bytes
+	 *
+	 *  @return 1 for success with data available, 0 if no output data was produces or a negative
+	 * number for any error
+	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                     const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
