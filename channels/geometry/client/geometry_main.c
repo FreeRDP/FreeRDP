@@ -43,6 +43,8 @@ typedef struct
 {
 	GENERIC_DYNVC_PLUGIN base;
 	GeometryClientContext* context;
+	/* the generic plugin's Initialize, wrapped to accept several channel instances */
+	UINT (*genericInitialize)(IWTSPlugin* plugin, IWTSVirtualChannelManager* channelMgr);
 } GEOMETRY_PLUGIN;
 
 static UINT32 mappedGeometryHash(const void* v)
@@ -404,6 +406,43 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_
 	                                                           nullptr, /* Open */
 	                                                           geometry_on_close, nullptr };
 
+/** @brief like the generic plugin's handler, without its one-instance limit: a host with
+ *  multimedia redirection opens the channel again for the render-hint mappings of its media
+ *  windows. The instances share the context: an update names its mapping */
+static UINT geometry_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+                                               IWTSVirtualChannel* pChannel,
+                                               WINPR_ATTR_UNUSED BYTE* Data,
+                                               WINPR_ATTR_UNUSED BOOL* pbAccept,
+                                               IWTSVirtualChannelCallback** ppCallback)
+{
+	GENERIC_LISTENER_CALLBACK* listener = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
+	if (!listener || !listener->plugin)
+		return ERROR_INTERNAL_ERROR;
+
+	GENERIC_CHANNEL_CALLBACK* callback = calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
+	if (!callback)
+		return CHANNEL_RC_NO_MEMORY;
+	callback->iface = geometry_callbacks;
+	callback->plugin = listener->plugin;
+	callback->channel_mgr = listener->channel_mgr;
+	callback->channel = pChannel;
+	*ppCallback = &callback->iface;
+	return CHANNEL_RC_OK;
+}
+
+static UINT geometry_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+{
+	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)pPlugin;
+	WINPR_ASSERT(geometry);
+	WINPR_ASSERT(geometry->genericInitialize);
+
+	const UINT rc = geometry->genericInitialize(pPlugin, pChannelMgr);
+	if ((rc == CHANNEL_RC_OK) && geometry->base.listener_callback)
+		geometry->base.listener_callback->iface.OnNewChannelConnection =
+		    geometry_on_new_channel_connection;
+	return rc;
+}
+
 static void geometry_plugin_free(GeometryClientContext* context)
 {
 	if (!context)
@@ -434,7 +473,8 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, WINPR_ATTR_UNUSED rdpCont
 	if (!context)
 		goto fail;
 
-	context->geometries = HashTable_New(FALSE);
+	/* synchronized: other channels (video, mmr) look geometries up from their own threads */
+	context->geometries = HashTable_New(TRUE);
 	if (!context->geometries)
 		goto fail;
 
@@ -453,6 +493,10 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, WINPR_ATTR_UNUSED rdpCont
 
 	geometry->context = context;
 	geometry->base.iface.pInterface = (void*)context;
+
+	/* accept several channel instances (see geometry_on_new_channel_connection) */
+	geometry->genericInitialize = geometry->base.iface.Initialize;
+	geometry->base.iface.Initialize = geometry_initialize;
 
 	return CHANNEL_RC_OK;
 
