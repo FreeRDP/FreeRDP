@@ -169,8 +169,12 @@ int SdlSelectList::run()
 			}
 		}
 
+		/* Drop the input that was meant for the dialog, so it does not reach the session.
+		 * Other events, such as window and clipboard events, are still handled. */
 		SDL_PumpEvents();
-		SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_USER);
+		SDL_FlushEvents(SDL_EVENT_KEY_DOWN, SDL_EVENT_MOUSE_REMOVED);
+		SDL_FlushEvents(SDL_EVENT_FINGER_DOWN, SDL_EVENT_FINGER_CANCELED);
+		SDL_FlushEvents(SDL_EVENT_PEN_PROXIMITY_IN, SDL_EVENT_PEN_AXIS);
 		if (forward)
 			std::ignore = SDL_PushEvent(&*forward);
 	}
