@@ -1,4 +1,5 @@
 #include <cassert>
+#include <optional>
 #include <winpr/cast.h>
 #include "sdl_select_list.hpp"
 #include "../sdl_utils.hpp"
@@ -37,6 +38,7 @@ int SdlSelectList::run()
 	int res = -2;
 	ssize_t CurrentActiveTextInput = 0;
 	bool running = true;
+	std::optional<SDL_Event> forward;
 
 	if (!_window || !_renderer)
 		return -2;
@@ -92,11 +94,6 @@ int SdlSelectList::run()
 								running = false;
 								res = static_cast<int>(CurrentActiveTextInput);
 								break;
-							case SDL_EVENT_WINDOW_OCCLUDED:
-							case SDL_EVENT_WINDOW_MINIMIZED:
-							case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-							case SDL_EVENT_TERMINATING:
-							case SDL_EVENT_WINDOW_DESTROYED:
 							case SDLK_ESCAPE:
 								running = false;
 								res = INPUT_BUTTON_CANCEL;
@@ -136,6 +133,24 @@ int SdlSelectList::run()
 						}
 					}
 					break;
+					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						/* see SdlInputWidgetPairList::run() */
+						if (event.window.windowID != SDL_GetWindowID(_window.get()))
+							forward = event;
+						res = INPUT_BUTTON_CANCEL;
+						running = false;
+						break;
+					case SDL_EVENT_WINDOW_OCCLUDED:
+					case SDL_EVENT_WINDOW_MINIMIZED:
+					case SDL_EVENT_WINDOW_DESTROYED:
+						/* Only events of our own window cancel the dialog, see
+						 * SdlInputWidgetPairList::run() */
+						if (event.window.windowID != SDL_GetWindowID(_window.get()))
+							break;
+						res = INPUT_BUTTON_CANCEL;
+						running = false;
+						break;
+					case SDL_EVENT_TERMINATING:
 					case SDL_EVENT_QUIT:
 						res = INPUT_BUTTON_CANCEL;
 						running = false;
@@ -154,8 +169,14 @@ int SdlSelectList::run()
 			}
 		}
 
+		/* Drop the input that was meant for the dialog, so it does not reach the session.
+		 * Other events, such as window and clipboard events, are still handled. */
 		SDL_PumpEvents();
-		SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_USER);
+		SDL_FlushEvents(SDL_EVENT_KEY_DOWN, SDL_EVENT_MOUSE_REMOVED);
+		SDL_FlushEvents(SDL_EVENT_FINGER_DOWN, SDL_EVENT_FINGER_CANCELED);
+		SDL_FlushEvents(SDL_EVENT_PEN_PROXIMITY_IN, SDL_EVENT_PEN_AXIS);
+		if (forward)
+			std::ignore = SDL_PushEvent(&*forward);
 	}
 	catch (...)
 	{
