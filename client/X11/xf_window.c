@@ -1722,7 +1722,18 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 
 	RdpgfxClientContext* gfx = gdi->gfx;
 	UINT rc = CHANNEL_RC_OK;
-	EnterCriticalSection(&gfx->mux);
+
+	/* Called on the X11 event thread with the X11 lock held. The GFX channel thread takes
+	 * gfx->mux first and the X11 lock second (UpdateSurfaces and DeleteSurface reach
+	 * xf_rail_get_window()), so blocking here would deadlock. Like xf_OutputExpose, repaint
+	 * on a best-effort basis: if the mux is busy, the window stays surfaceStale and the next
+	 * UpdateSurfaces pass repaints it fully. */
+	if (!TryEnterCriticalSection(&gfx->mux))
+	{
+		WLog_VRB(TAG, "gfx mux busy, deferring repaint of window 0x%08" PRIx64, windowId);
+		return TRUE;
+	}
+
 	gdiGfxSurface* surface = gfx->GetSurfaceData(gfx, (UINT16)surfaceId);
 	if (surface && surface->windowMapped && (surface->windowId == windowId))
 		rc = xf_AppUpdateWindowFromSurface(xfc, surface);
