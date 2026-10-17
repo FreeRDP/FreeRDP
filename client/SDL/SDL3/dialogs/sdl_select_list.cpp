@@ -1,4 +1,5 @@
 #include <cassert>
+#include <optional>
 #include <winpr/cast.h>
 #include "sdl_select_list.hpp"
 #include "../sdl_utils.hpp"
@@ -37,6 +38,7 @@ int SdlSelectList::run()
 	int res = -2;
 	ssize_t CurrentActiveTextInput = 0;
 	bool running = true;
+	std::optional<SDL_Event> forward;
 
 	if (!_window || !_renderer)
 		return -2;
@@ -131,9 +133,15 @@ int SdlSelectList::run()
 						}
 					}
 					break;
+					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						/* see SdlInputWidgetPairList::run() */
+						if (event.window.windowID != SDL_GetWindowID(_window.get()))
+							forward = event;
+						res = INPUT_BUTTON_CANCEL;
+						running = false;
+						break;
 					case SDL_EVENT_WINDOW_OCCLUDED:
 					case SDL_EVENT_WINDOW_MINIMIZED:
-					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 					case SDL_EVENT_WINDOW_DESTROYED:
 						/* Only events of our own window cancel the dialog, see
 						 * SdlInputWidgetPairList::run() */
@@ -163,6 +171,8 @@ int SdlSelectList::run()
 
 		SDL_PumpEvents();
 		SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_USER);
+		if (forward)
+			std::ignore = SDL_PushEvent(&*forward);
 	}
 	catch (...)
 	{

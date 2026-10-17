@@ -19,6 +19,7 @@
  */
 #include <cassert>
 #include <algorithm>
+#include <optional>
 
 #include <winpr/cast.h>
 
@@ -156,6 +157,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 	if (!SDL_StartTextInput(_window.get()))
 		return -3;
 
+	std::optional<SDL_Event> forward;
 	try
 	{
 		bool running = true;
@@ -266,9 +268,17 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 						}
 					}
 					break;
+					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						/* Closing any window cancels the dialog. The event of another
+						 * window is queued again once the dialog is done, so the main
+						 * loop still handles it. */
+						if (event.window.windowID != SDL_GetWindowID(_window.get()))
+							forward = event;
+						res = INPUT_BUTTON_CANCEL;
+						running = false;
+						break;
 					case SDL_EVENT_WINDOW_OCCLUDED:
 					case SDL_EVENT_WINDOW_MINIMIZED:
-					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 					case SDL_EVENT_WINDOW_DESTROYED:
 						/* Only events of our own window cancel the dialog. Hiding the
 						 * connection dialog for this prompt destroys its window, and that
@@ -323,6 +333,8 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 
 	SDL_PumpEvents();
 	SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_USER);
+	if (forward)
+		std::ignore = SDL_PushEvent(&*forward);
 
 	if (!SDL_StopTextInput(_window.get()))
 		return -4;
