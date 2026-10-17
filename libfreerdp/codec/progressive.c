@@ -401,18 +401,23 @@ progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surf
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(surface->gridSize > 0);
 
+	UINT32 gridSize = surface->gridSize;
 	if (surface->tiles)
 	{
-		oldIndex = surface->gridSize;
-		while (surface->gridSize < min)
-			surface->gridSize += 1024;
+		oldIndex = gridSize;
+		while (gridSize < min)
+		{
+			if (gridSize > UINT32_MAX - 1024)
+				return FALSE;
+			gridSize += 1024;
+		}
 	}
 
-	void* tmp = winpr_aligned_recalloc((void*)surface->tiles, surface->gridSize,
-	                                   sizeof(RFX_PROGRESSIVE_TILE*), 32);
+	void* tmp =
+	    winpr_aligned_recalloc((void*)surface->tiles, gridSize, sizeof(RFX_PROGRESSIVE_TILE*), 32);
 	if (!tmp)
 		return FALSE;
-	surface->tilesSize = surface->gridSize;
+	surface->tilesSize = gridSize;
 	surface->tiles = (RFX_PROGRESSIVE_TILE**)tmp;
 
 	for (size_t x = oldIndex; x < surface->tilesSize; x++)
@@ -422,11 +427,11 @@ progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surf
 			return FALSE;
 	}
 
-	tmp =
-	    winpr_aligned_recalloc(surface->updatedTileIndices, surface->gridSize, sizeof(UINT32), 32);
+	tmp = winpr_aligned_recalloc(surface->updatedTileIndices, gridSize, sizeof(UINT32), 32);
 	if (!tmp)
 		return FALSE;
 
+	surface->gridSize = gridSize;
 	surface->updatedTileIndices = tmp;
 
 	return TRUE;
@@ -2343,7 +2348,7 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
                                 PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
                                 REGION16* WINPR_RESTRICT invalidRegion)
 {
-	BOOL rc = TRUE;
+	BOOL rc = FALSE;
 	REGION16 clippingRects = WINPR_C_ARRAY_INIT;
 	region16_init(&clippingRects);
 
@@ -2395,24 +2400,23 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 
 		for (UINT32 j = 0; j < nbUpdateRects; j++)
 		{
-			rc = FALSE;
 			const RECTANGLE_16* rect = &updateRects[j];
 			if (rect->left < updateRect.left)
-				break;
+				goto fail;
 			const UINT32 nXSrc = rect->left - updateRect.left;
 			const UINT32 nYSrc = rect->top - updateRect.top;
 			const UINT32 width = rect->right - rect->left;
 			const UINT32 height = rect->bottom - rect->top;
 
 			if (rect->left + width > surface->width)
-				break;
+				goto fail;
 			if (rect->top + height > surface->height)
-				break;
-			rc = freerdp_image_copy_no_overlap(
+				goto fail;
+			const BOOL res = freerdp_image_copy_no_overlap(
 			    pDstData, DstFormat, nDstStep, rect->left, rect->top, width, height, tile->data,
 			    progressive->format, tile->stride, nXSrc, nYSrc, nullptr, FREERDP_KEEP_DST_ALPHA);
-			if (!rc)
-				break;
+			if (!res)
+				goto fail;
 
 			if (invalidRegion)
 			{
@@ -2425,10 +2429,10 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		}
 
 		region16_uninit(&updateRegion);
-		if (!rc)
-			goto fail;
 		tile->dirty = FALSE;
 	}
+
+	rc = TRUE;
 
 fail:
 	region16_uninit(&clippingRects);
@@ -2441,7 +2445,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
                              UINT32 nXDst, UINT32 nYDst, REGION16* WINPR_RESTRICT invalidRegion,
                              UINT16 surfaceId, UINT32 frameId)
 {
-	INT32 rc = 1;
+	INT32 rc = -1;
 
 	WINPR_ASSERT(progressive);
 	PROGRESSIVE_SURFACE_CONTEXT* surface = progressive_get_surface_data(progressive, surfaceId);
@@ -2502,6 +2506,8 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	if (!update_tiles(progressive, surface, pDstData, DstFormat, nDstStep, nXDst, nYDst, region,
 	                  invalidRegion))
 		return -2002;
+
+	rc = 1;
 fail:
 	return rc;
 }
