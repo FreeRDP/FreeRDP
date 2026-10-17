@@ -73,6 +73,17 @@ if(WITH_FUSE)
   add_compile_definitions(_FILE_OFFSET_BITS=64)
 endif()
 
+if(APPLE AND NOT IOS AND NOT WITH_FUSE)
+  # Server files are offered and local files read on the pasteboard instead
+  list(APPEND SRCS client_cliprdr_file_apple.h client_cliprdr_file_apple.m)
+  set_source_files_properties(client_cliprdr_file_apple.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+  add_compile_definitions(WITH_CLIPRDR_FILE_APPLE)
+
+  find_library(APPKIT_FRAMEWORK AppKit REQUIRED)
+  find_library(UTI_FRAMEWORK UniformTypeIdentifiers REQUIRED)
+  list(APPEND PRIV_LIBS ${APPKIT_FRAMEWORK} ${UTI_FRAMEWORK})
+endif()
+
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 if(WITH_SSO_MIB)

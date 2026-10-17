@@ -54,6 +54,16 @@
 
 #include <freerdp/client/client_cliprdr_file.h>
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+#include <winpr/file.h>
+
+#include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
+#include <freerdp/utils/cliprdr_utils.h>
+
+#include "client_cliprdr_file_apple.h"
+#endif
+
 #define NO_CLIP_DATA_ID (UINT64_C(1) << 32)
 #define WIN32_FILETIME_TO_UNIX_EPOCH INT64_C(11644473600)
 
@@ -173,6 +183,23 @@ struct cliprdr_file_context
 	fuse_ino_t next_ino;
 	UINT32 next_clip_data_id;
 	UINT32 next_stream_id;
+#endif
+
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	/* Server files on the pasteboard, accessed on the main thread only */
+	FILEDESCRIPTORW* apple_files;
+	UINT32 apple_files_count;
+	size_t* apple_top_level;
+	size_t apple_top_level_count;
+	char* apple_download_dir;
+
+	/* The pending FILECONTENTS request, answered on the channel thread */
+	CRITICAL_SECTION apple_lock;
+	HANDLE apple_contents_event;
+	UINT32 apple_stream_id;
+	BOOL apple_contents_success;
+	BYTE* apple_contents_data;
+	UINT32 apple_contents_size;
 #endif
 
 	/* File clipping */
@@ -1324,6 +1351,341 @@ static UINT cliprdr_file_context_server_file_contents_response(
 }
 #endif
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+static char* apple_descriptor_name(const FILEDESCRIPTORW* descriptor)
+{
+	WINPR_ASSERT(descriptor);
+	return ConvertWCharNToUtf8Alloc(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName),
+	                                nullptr);
+}
+
+/* Map a server relative path (dir\file) to a local relative path (dir/file) */
+static char* apple_local_relative_path(const char* name)
+{
+	WINPR_ASSERT(name);
+
+	const size_t len = strlen(name);
+	if (len == 0)
+		return nullptr;
+
+	char* path = _strdup(name);
+	if (!path)
+		return nullptr;
+
+	size_t start = 0;
+	for (size_t x = 0; x <= len; x++)
+	{
+		if ((x < len) && (name[x] == '/'))
+			goto fail;
+		if ((x < len) && (name[x] != '\\'))
+			continue;
+
+		const char* component = &name[start];
+		const size_t clen = x - start;
+		if ((clen == 0) || ((clen == 1) && (component[0] == '.')) ||
+		    ((clen == 2) && (strncmp(component, "..", 2) == 0)))
+			goto fail;
+		if (x < len)
+			path[x] = '/';
+		start = x + 1;
+	}
+	return path;
+
+fail:
+	free(path);
+	return nullptr;
+}
+
+static void apple_clear_server_files(CliprdrFileContext* file)
+{
+	WINPR_ASSERT(file);
+
+	free(file->apple_files);
+	file->apple_files = nullptr;
+	file->apple_files_count = 0;
+	free(file->apple_top_level);
+	file->apple_top_level = nullptr;
+	file->apple_top_level_count = 0;
+	free(file->apple_download_dir);
+	file->apple_download_dir = nullptr;
+}
+
+static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 listIndex, UINT32 flags,
+                                        UINT64 offset, UINT32 size, BYTE** pdata, UINT32* plen)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(plen);
+
+	*pdata = nullptr;
+	*plen = 0;
+
+	CliprdrClientContext* cliprdr = file->context;
+	if (!cliprdr || !cliprdr->ClientFileContentsRequest)
+		return FALSE;
+
+	CLIPRDR_FILE_CONTENTS_REQUEST request = WINPR_C_ARRAY_INIT;
+	request.common.msgType = CB_FILECONTENTS_REQUEST;
+	request.listIndex = listIndex;
+	request.dwFlags = flags;
+	request.nPositionLow = (UINT32)(offset & 0xFFFFFFFF);
+	request.nPositionHigh = (UINT32)(offset >> 32);
+	request.cbRequested = size;
+
+	EnterCriticalSection(&file->apple_lock);
+	request.streamId = ++file->apple_stream_id;
+	file->apple_contents_success = FALSE;
+	free(file->apple_contents_data);
+	file->apple_contents_data = nullptr;
+	file->apple_contents_size = 0;
+	(void)ResetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+
+	if (cliprdr->ClientFileContentsRequest(cliprdr, &request) != CHANNEL_RC_OK)
+		return FALSE;
+
+	rdpContext* context = cliprdr->rdpcontext;
+	WINPR_ASSERT(context);
+
+	HANDLE hdl[2] = { freerdp_abort_event(context), file->apple_contents_event };
+	const UINT32 timeout = freerdp_settings_get_uint32(context->settings, FreeRDP_TcpAckTimeout);
+	if (WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, timeout) != WAIT_OBJECT_0 + 1)
+	{
+		WLog_Print(file->log, WLOG_ERROR, "no file contents reply for stream %" PRIu32,
+		           request.streamId);
+		return FALSE;
+	}
+
+	EnterCriticalSection(&file->apple_lock);
+	const BOOL rc = file->apple_contents_success;
+	if (rc)
+	{
+		*pdata = file->apple_contents_data;
+		*plen = file->apple_contents_size;
+		file->apple_contents_data = nullptr;
+		file->apple_contents_size = 0;
+	}
+	LeaveCriticalSection(&file->apple_lock);
+	return rc;
+}
+
+static UINT
+cliprdr_file_context_apple_contents_response(CliprdrClientContext* cliprdr_context,
+                                             const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
+{
+	WINPR_ASSERT(cliprdr_context);
+	WINPR_ASSERT(response);
+
+	CliprdrFileContext* file = cliprdr_context->custom;
+	WINPR_ASSERT(file);
+
+	EnterCriticalSection(&file->apple_lock);
+	if (response->streamId != file->apple_stream_id)
+	{
+		/* A late reply to a request that already timed out */
+		WLog_Print(file->log, WLOG_WARN,
+		           "file contents response for stale stream %" PRIu32 ", ignoring",
+		           response->streamId);
+		LeaveCriticalSection(&file->apple_lock);
+		return CHANNEL_RC_OK;
+	}
+
+	BOOL success = (response->common.msgFlags & CB_RESPONSE_OK) &&
+	               !(response->common.msgFlags & CB_RESPONSE_FAIL);
+	if (success && response->requestedData && (response->cbRequested > 0))
+	{
+		file->apple_contents_data = malloc(response->cbRequested);
+		if (file->apple_contents_data)
+		{
+			memcpy(file->apple_contents_data, response->requestedData, response->cbRequested);
+			file->apple_contents_size = response->cbRequested;
+		}
+		else
+			success = FALSE;
+	}
+	file->apple_contents_success = success;
+	(void)SetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+	return CHANNEL_RC_OK;
+}
+
+static BOOL apple_download_file(CliprdrFileContext* file, UINT32 listIndex,
+                                const FILEDESCRIPTORW* descriptor, const char* path)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(descriptor);
+	WINPR_ASSERT(path);
+
+	UINT64 size = 0;
+	if (descriptor->dwFlags & FD_FILESIZE)
+		size = ((UINT64)descriptor->nFileSizeHigh << 32) | descriptor->nFileSizeLow;
+	else
+	{
+		BYTE* data = nullptr;
+		UINT32 len = 0;
+		const BOOL rc = apple_request_file_contents(file, listIndex, FILECONTENTS_SIZE, 0,
+		                                            sizeof(UINT64), &data, &len);
+		if (rc && (len >= sizeof(UINT64)))
+			memcpy(&size, data, sizeof(size));
+		free(data);
+		if (!rc || (len < sizeof(UINT64)))
+			return FALSE;
+	}
+
+	FILE* fp = winpr_fopen(path, "wb");
+	if (!fp)
+		return FALSE;
+
+	BOOL rc = TRUE;
+	const UINT32 chunk = 1024 * 1024;
+	for (UINT64 offset = 0; offset < size;)
+	{
+		const UINT32 requested = (size - offset < chunk) ? (UINT32)(size - offset) : chunk;
+		BYTE* data = nullptr;
+		UINT32 len = 0;
+		if (!apple_request_file_contents(file, listIndex, FILECONTENTS_RANGE, offset, requested,
+		                                 &data, &len) ||
+		    (len == 0) || (fwrite(data, 1, len, fp) != len))
+		{
+			free(data);
+			rc = FALSE;
+			break;
+		}
+		free(data);
+		offset += len;
+	}
+
+	if (fclose(fp) != 0)
+		rc = FALSE;
+	if (!rc)
+		(void)winpr_DeleteFile(path);
+	return rc;
+}
+
+/* Download the file, or the directory with everything below it */
+static BOOL apple_download_entry(CliprdrFileContext* file, UINT32 listIndex, const char* name)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(name);
+
+	char* relative = apple_local_relative_path(name);
+	if (!relative)
+	{
+		WLog_Print(file->log, WLOG_WARN, "skipping invalid server file name %s", name);
+		return TRUE;
+	}
+
+	BOOL rc = FALSE;
+	const FILEDESCRIPTORW* descriptor = &file->apple_files[listIndex];
+	char* path = nullptr;
+	size_t pathlen = 0;
+	if (winpr_asprintf(&path, &pathlen, "%s/%s", file->apple_download_dir, relative) < 0)
+		goto fail;
+
+	if ((descriptor->dwFlags & FD_ATTRIBUTES) &&
+	    (descriptor->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		rc = winpr_PathMakePath(path, nullptr);
+	else
+	{
+		char* slash = strrchr(path, '/');
+		WINPR_ASSERT(slash);
+		*slash = '\0';
+		const BOOL parent = winpr_PathMakePath(path, nullptr);
+		*slash = '/';
+		if (parent)
+		{
+			rc = apple_download_file(file, listIndex, descriptor, path);
+			if (!rc)
+				WLog_Print(file->log, WLOG_ERROR, "failed to download %s", name);
+		}
+	}
+
+fail:
+	free(path);
+	free(relative);
+	return rc;
+}
+
+/* Called on the main thread when an application pastes top level item index */
+static char* apple_provide_file(void* userdata, size_t index)
+{
+	CliprdrFileContext* file = userdata;
+	WINPR_ASSERT(file);
+
+	if (!file->context || (index >= file->apple_top_level_count))
+		return nullptr;
+
+	char* top = apple_descriptor_name(&file->apple_files[file->apple_top_level[index]]);
+	if (!top)
+		return nullptr;
+	const size_t toplen = strlen(top);
+
+	char* result = nullptr;
+	for (UINT32 x = 0; x < file->apple_files_count; x++)
+	{
+		char* name = apple_descriptor_name(&file->apple_files[x]);
+		if (!name)
+			continue;
+
+		const BOOL below =
+		    (strncmp(name, top, toplen) == 0) && ((name[toplen] == '\0') || (name[toplen] == '\\'));
+		const BOOL rc = !below || apple_download_entry(file, x, name);
+		free(name);
+		if (!rc)
+			goto fail;
+	}
+
+	{
+		size_t len = 0;
+		if (winpr_asprintf(&result, &len, "%s/%s", file->apple_download_dir, top) < 0)
+			result = nullptr;
+	}
+
+fail:
+	free(top);
+	return result;
+}
+
+static BOOL apple_set_server_files(CliprdrFileContext* file, const void* data, size_t size)
+{
+	WINPR_ASSERT(file);
+
+	if (size > UINT32_MAX)
+		return FALSE;
+
+	FILEDESCRIPTORW* files = nullptr;
+	UINT32 count = 0;
+	if (cliprdr_parse_file_list(data, (UINT32)size, &files, &count) != 0)
+		return FALSE;
+
+	size_t* top_level = (count > 0) ? calloc(count, sizeof(size_t)) : nullptr;
+	size_t top_level_count = 0;
+	for (UINT32 x = 0; top_level && (x < count); x++)
+	{
+		char* name = apple_descriptor_name(&files[x]);
+		if (name && (name[0] != '\0') && !strchr(name, '\\'))
+			top_level[top_level_count++] = x;
+		free(name);
+	}
+
+	char* dir = (top_level_count > 0) ? cliprdr_file_apple_new_download_dir() : nullptr;
+	if (!dir)
+	{
+		free(top_level);
+		free(files);
+		return FALSE;
+	}
+
+	apple_clear_server_files(file);
+	file->apple_files = files;
+	file->apple_files_count = count;
+	file->apple_top_level = top_level;
+	file->apple_top_level_count = top_level_count;
+	file->apple_download_dir = dir;
+	return TRUE;
+}
+#endif
+
 static UINT cliprdr_file_context_send_file_contents_failure(
     CliprdrFileContext* file, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
@@ -1664,6 +2026,9 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 
 	CliprdrFuseFile* root_dir = fuse_file_new_root(file);
 	return root_dir != nullptr;
+#elif defined(WITH_CLIPRDR_FILE_APPLE)
+	cliprdr->ServerFileContentsResponse = cliprdr_file_context_apple_contents_response;
+	return TRUE;
 #else
 	return TRUE;
 #endif
@@ -1701,6 +2066,10 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 			return FALSE;
 	}
 #endif
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	/* The file list stays until cliprdr_file_context_free(), a paste might still read it */
+	cliprdr_file_apple_detach();
+#endif
 
 	HashTable_Clear(file->local_streams);
 
@@ -1709,8 +2078,8 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 
 	if (cliprdr)
 	{
-#if defined(WITH_FUSE)
-	cliprdr->ServerFileContentsResponse = nullptr;
+#if defined(WITH_FUSE) || defined(WITH_CLIPRDR_FILE_APPLE)
+		cliprdr->ServerFileContentsResponse = nullptr;
 #endif
 	}
 
@@ -2130,6 +2499,15 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	HashTable_Free(file->inode_table);
 
 #endif
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	apple_clear_server_files(file);
+	free(file->apple_contents_data);
+	if (file->apple_contents_event)
+	{
+		(void)CloseHandle(file->apple_contents_event);
+		DeleteCriticalSection(&file->apple_lock);
+	}
+#endif
 	HashTable_Free(file->local_streams);
 	winpr_RemoveDirectory(file->path);
 	free(file->path);
@@ -2491,6 +2869,16 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	if (!create_base_path(file))
 		goto fail;
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	if (!InitializeCriticalSectionAndSpinCount(&file->apple_lock, 4000))
+		goto fail;
+	if (!(file->apple_contents_event = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
+	{
+		DeleteCriticalSection(&file->apple_lock);
+		goto fail;
+	}
+#endif
+
 #if defined(WITH_FUSE)
 	if (!(file->fuse_start_sync = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail;
@@ -2614,5 +3002,61 @@ BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
 	return TRUE;
 #else
 	return FALSE;
+#endif
+}
+
+BOOL cliprdr_file_context_set_local_clipboard_data(CliprdrFileContext* file,
+                                                   cliprdr_file_context_data_fkt fkt,
+                                                   void* userdata, const char** mime_types,
+                                                   size_t count)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(fkt);
+	WINPR_ASSERT(mime_types || (count == 0));
+
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	if (!file->context)
+		return FALSE;
+
+	BOOL files = FALSE;
+	for (size_t x = 0; x < count; x++)
+	{
+		if (mime_types[x] && (strcmp(mime_types[x], "text/uri-list") == 0))
+			files = TRUE;
+	}
+	if (!files)
+		return FALSE;
+
+	/* Only the file list is fetched now, the contents follow on paste */
+	size_t size = 0;
+	const void* data = fkt(userdata, "FileGroupDescriptorW", &size);
+	if (!data || !apple_set_server_files(file, data, size))
+		return FALSE;
+
+	WLog_Print(file->log, WLOG_DEBUG, "offering %" PRIuz " server files (%" PRIu32 " entries)",
+	           file->apple_top_level_count, file->apple_files_count);
+	return cliprdr_file_apple_offer(file->apple_top_level_count, apple_provide_file, file,
+	                                mime_types, count, fkt, userdata);
+#else
+	WINPR_UNUSED(file);
+	WINPR_UNUSED(fkt);
+	WINPR_UNUSED(userdata);
+	WINPR_UNUSED(mime_types);
+	WINPR_UNUSED(count);
+	return FALSE;
+#endif
+}
+
+char* cliprdr_file_context_get_local_uri_list(CliprdrFileContext* file, size_t* size)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(size);
+
+	*size = 0;
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	return cliprdr_file_apple_get_uri_list(size);
+#else
+	WINPR_UNUSED(file);
+	return nullptr;
 #endif
 }
