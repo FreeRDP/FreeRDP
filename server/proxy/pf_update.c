@@ -21,7 +21,6 @@
  * limitations under the License.
  */
 
-#include <freerdp/display.h>
 #include <freerdp/session.h>
 #include <winpr/assert.h>
 #include <winpr/image.h>
@@ -166,22 +165,6 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 	if (!freerdp_settings_copy_item(ps->context.settings, context->settings, FreeRDP_DesktopHeight))
 		return FALSE;
 	return ps->context.update->DesktopResize(&ps->context);
-}
-
-WINPR_ATTR_NODISCARD
-static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
-                                      const MONITOR_DEF* monitors)
-{
-	pClientContext* pc = (pClientContext*)context;
-	WINPR_ASSERT(pc);
-
-	proxyData* pdata = pc->pdata;
-	WINPR_ASSERT(pdata);
-
-	pServerContext* ps = proxy_data_get_server_context(pdata);
-	WINPR_ASSERT(ps);
-	WLog_DBG(TAG, "called");
-	return freerdp_display_send_monitor_layout(&ps->context, count, monitors);
 }
 
 WINPR_ATTR_NODISCARD
@@ -671,7 +654,6 @@ void pf_client_register_update_callbacks(rdpUpdate* update)
 	update->EndPaint = pf_client_end_paint;
 	update->BitmapUpdate = pf_client_bitmap_update;
 	update->DesktopResize = pf_client_desktop_resize;
-	update->RemoteMonitors = pf_client_remote_monitors;
 	update->SaveSessionInfo = pf_client_save_session_info;
 	update->ServerStatusInfo = pf_client_server_status_info;
 	update->SetKeyboardIndicators = pf_client_set_keyboard_indicators;
