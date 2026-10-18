@@ -68,7 +68,8 @@ static BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, U
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 	WINPR_ASSERT(subsystem);
 
-	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16, client->mayInteract ? "use" : "discard", flags);
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16 " code=0x%04" PRIx16,
+	         client->mayInteract ? "use" : "discard", flags, code);
 	if (!client->mayInteract)
 		return TRUE;
 

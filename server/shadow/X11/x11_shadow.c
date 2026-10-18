@@ -260,14 +260,130 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL x11_shadow_input_unicode_keyboard_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
+static BOOL x11_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsystem,
                                                     WINPR_ATTR_UNUSED rdpShadowClient* client,
-                                                    WINPR_ATTR_UNUSED UINT16 flags,
-                                                    WINPR_ATTR_UNUSED UINT16 code)
+                                                    UINT16 flags, UINT16 code)
 {
-	/* TODO: Implement */
-	WLog_WARN(TAG, "not implemented");
+#ifdef WITH_XTEST
+	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
+	Display* display = nullptr;
+	KeySym keysym = NoSymbol;
+	KeyCode keycode = 0;
+	KeyCode spare = 0;
+	KeyCode shiftcode = 0;
+	BOOL needShift = FALSE;
+	int minKeycode = 0;
+	int maxKeycode = 0;
+	int perKeycode = 0;
+	KeySym* keymap = nullptr;
+
+	if (!subsystem)
+		return FALSE;
+
+	display = x11->display;
+	if (!display)
+		return FALSE;
+
+	/* Only the key press generates input, we always emit a full press/release pair */
+	if (flags & KBD_FLAGS_RELEASE)
+		return TRUE;
+
+	switch (code)
+	{
+		case 0x08:
+			keysym = XK_BackSpace;
+			break;
+		case 0x09:
+			keysym = XK_Tab;
+			break;
+		case 0x0D:
+			keysym = XK_Return;
+			break;
+		case 0x1B:
+			keysym = XK_Escape;
+			break;
+		case 0x7F:
+			keysym = XK_Delete;
+			break;
+		default:
+			if (code < 0x20)
+				return TRUE; /* unknown control character */
+			keysym = (code < 0x100) ? (KeySym)code : (KeySym)(0x01000000 | code);
+			break;
+	}
+
+	XLockDisplay(display);
+	XTestGrabControl(display, True);
+
+	XDisplayKeycodes(display, &minKeycode, &maxKeycode);
+	keymap =
+	    XGetKeyboardMapping(display, (KeyCode)minKeycode, maxKeycode - minKeycode + 1, &perKeycode);
+	if (keymap)
+	{
+		for (int kc = minKeycode; kc <= maxKeycode; kc++)
+		{
+			BOOL unused = TRUE;
+			for (int level = 0; level < perKeycode; level++)
+			{
+				const KeySym sym = keymap[(kc - minKeycode) * perKeycode + level];
+				if ((sym != NoSymbol) && (sym != (KeySym)0))
+					unused = FALSE;
+				if ((sym == keysym) && (keycode == 0))
+				{
+					keycode = (KeyCode)kc;
+					needShift = (level == 1);
+				}
+			}
+			if (unused && (spare == 0))
+				spare = (KeyCode)kc;
+		}
+		XFree(keymap);
+	}
+
+	if (keycode == 0)
+	{
+		/* Not present in the current keymap (e.g. CJK): use a spare keycode that stays
+		   mapped to the wanted keysym. Restoring the mapping right after injecting the
+		   key would race with clients that process the event later (they would look up
+		   NoSymbol), so the mapping is only changed when a different keysym is needed. */
+		static KeyCode unicode_keycode = 0;
+		static KeySym unicode_keysym = NoSymbol;
+
+		if (unicode_keycode == 0)
+			unicode_keycode = (spare != 0) ? spare : (KeyCode)maxKeycode;
+
+		keycode = unicode_keycode;
+		needShift = FALSE;
+
+		if (unicode_keysym != keysym)
+		{
+			XChangeKeyboardMapping(display, keycode, 1, &keysym, 1);
+			XSync(display, False);
+			usleep(30000); /* let clients pick up the changed mapping first */
+			unicode_keysym = keysym;
+		}
+	}
+
+	shiftcode = XKeysymToKeycode(display, XK_Shift_L);
+
+	if (needShift && shiftcode)
+		XTestFakeKeyEvent(display, shiftcode, True, CurrentTime);
+
+	XTestFakeKeyEvent(display, keycode, True, CurrentTime);
+	XTestFakeKeyEvent(display, keycode, False, CurrentTime);
+
+	if (needShift && shiftcode)
+		XTestFakeKeyEvent(display, shiftcode, False, CurrentTime);
+
+	XFlush(display);
+
+	XTestGrabControl(display, False);
+	XUnlockDisplay(display);
 	return TRUE;
+#else
+	WLog_WARN(TAG, "UnicodeKeyboardEvent not supported by backend, ignoring");
+	return TRUE;
+#endif
 }
 
 WINPR_ATTR_NODISCARD
