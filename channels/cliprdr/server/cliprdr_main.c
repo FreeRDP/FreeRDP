@@ -84,6 +84,10 @@ static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s
 
 	WINPR_ASSERT(cliprdr);
 
+	/* serialize channel writes: the shadow server clipboard watcher may send
+	   a format list from another thread while we answer a data request here */
+	EnterCriticalSection(&cliprdr->lock);
+
 	const size_t pos = Stream_GetPosition(s);
 	if ((pos < 8) || (pos > UINT32_MAX))
 	{
@@ -101,6 +105,7 @@ static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s
 	                                &written);
 	rc = status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 fail:
+	LeaveCriticalSection(&cliprdr->lock);
 	Stream_Free(s, TRUE);
 	return rc;
 }
@@ -1476,6 +1481,7 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 
 	cliprdr->log = WLog_Get(TAG);
 	cliprdr->vcm = vcm;
+	InitializeCriticalSection(&cliprdr->lock);
 
 	return context;
 
@@ -1489,6 +1495,11 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 	if (!context)
 		return;
 
-	free(context->handle);
+	if (context->handle)
+	{
+		CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
+		DeleteCriticalSection(&cliprdr->lock);
+		free(context->handle);
+	}
 	free(context);
 }

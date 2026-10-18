@@ -41,6 +41,7 @@ typedef struct
 	HANDLE ChannelHandle;
 	HANDLE ChannelEvent;
 	ChannelPduTracker* channelPduTracker;
+	CRITICAL_SECTION lock;
 
 	char temporaryDirectory[260];
 	wLog* log;
