@@ -772,6 +772,39 @@ static BOOL descriptor_is_nested(const FILEDESCRIPTORW* dsc)
 	return winpr_wcsnchr(dsc->cFileName, len, backslash.w) != nullptr;
 }
 
+WINPR_ATTR_NODISCARD
+static FILETIME readft(wStream* s)
+{
+	FILETIME ft = WINPR_C_ARRAY_INIT;
+	ft.dwLowDateTime = Stream_Get_UINT32(s);
+	ft.dwHighDateTime = Stream_Get_UINT32(s);
+	return ft;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL read_descriptor(wStream* s, FILEDESCRIPTORW* dsc)
+{
+	WINPR_ASSERT(dsc);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(FILEDESCRIPTORW)))
+		return FALSE;
+
+	dsc->dwFlags = Stream_Get_UINT32(s);
+	Stream_Read(s, &dsc->clsid, sizeof(dsc->clsid));
+	dsc->sizel.cx = Stream_Get_INT32(s);
+	dsc->sizel.cy = Stream_Get_INT32(s);
+	dsc->pointl.x = Stream_Get_INT32(s);
+	dsc->pointl.y = Stream_Get_INT32(s);
+	dsc->dwFileAttributes = Stream_Get_UINT32(s);
+	dsc->ftCreationTime = readft(s);
+	dsc->ftLastAccessTime = readft(s);
+	dsc->ftLastWriteTime = readft(s);
+	dsc->nFileSizeHigh = Stream_Get_UINT32(s);
+	dsc->nFileSizeLow = Stream_Get_UINT32(s);
+	Stream_Read(s, dsc->cFileName, sizeof(dsc->cFileName));
+	return TRUE;
+}
+
 /* The universal converter from filedescriptors to different file lists */
 WINPR_ATTR_MALLOC(free, 1)
 static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const void* data,
@@ -809,8 +842,6 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 	if ((count < 1) || (count != nrDescriptors))
 		return nullptr;
 
-	const FILEDESCRIPTORW* descriptors = Stream_ConstPointer(s);
-
 	/* formatId is the destination format (see ClipboardRegisterSynthesizerEx), the descriptors
 	 * are the source data */
 	if (clipboard->formatId != ClipboardGetFormatId(clipboard, mime_FileGroupDescriptorW))
@@ -820,20 +851,26 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 	const size_t decoration_len = lineprefix_len + lineending_len + baseLength + 1;
 	size_t alloc = header_len;
 
+	const size_t descriptorStartPos = Stream_GetPosition(s);
 	/* Get total size of file/folder names under first level folder only */
 	for (size_t x = 0; x < count; x++)
 	{
-		const FILEDESCRIPTORW* dsc = &descriptors[x];
+		FILEDESCRIPTORW dsc = WINPR_C_ARRAY_INIT;
+		if (!read_descriptor(s, &dsc))
+			return nullptr;
 
-		if (!descriptor_is_nested(dsc))
+		if (!descriptor_is_nested(&dsc))
 		{
-			alloc += ARRAYSIZE(dsc->cFileName) *
+			alloc += ARRAYSIZE(dsc.cFileName) *
 			         8; /* Overallocate, just take the biggest value the result path can have */
 			            /* # (1 char) -> %23 (3 chars) , the first char is replaced inplace */
-			alloc += count_special_chars(dsc->cFileName, ARRAYSIZE(dsc->cFileName)) * sizeof(WCHAR);
+			alloc += count_special_chars(dsc.cFileName, ARRAYSIZE(dsc.cFileName)) * sizeof(WCHAR);
 			alloc += decoration_len;
 		}
 	}
+
+	if (!Stream_SetPosition(s, descriptorStartPos))
+		return nullptr;
 
 	/* Append a prefix file:// and postfix \n for each file */
 	/* We need to keep last \n since snprintf is null terminated!!  */
@@ -849,18 +886,20 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 
 	for (size_t x = 0; x < count; x++)
 	{
-		const FILEDESCRIPTORW* dsc = &descriptors[x];
-		BOOL fail = TRUE;
-		if (descriptor_is_nested(dsc))
-		{
-			continue;
-		}
 		int rc = -1;
+		BOOL fail = TRUE;
+		FILEDESCRIPTORW dsc = WINPR_C_ARRAY_INIT;
+		if (!read_descriptor(s, &dsc))
+			goto loop_fail;
+
+		if (descriptor_is_nested(&dsc))
+			continue;
+
 		char curName[520] = WINPR_C_ARRAY_INIT;
 		const char* stop_at = nullptr;
 		const char* previous_at = nullptr;
 
-		if (ConvertWCharNToUtf8(dsc->cFileName, ARRAYSIZE(dsc->cFileName), curName,
+		if (ConvertWCharNToUtf8(dsc.cFileName, ARRAYSIZE(dsc.cFileName), curName,
 		                        ARRAYSIZE(curName)) < 0)
 			goto loop_fail;
 
