@@ -934,9 +934,16 @@ static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpSha
 		                                                               FREERDP_CODEC_AVC444) >= 0);
 		if (h264)
 		{
-			if (!freerdp_settings_set_bool(
-			        clientSettings, FreeRDP_GfxH264,
-			        (pdu->capsSet->flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) != 0))
+			/* Local patch: for caps versions >= 10.0 the AVC420_ENABLED flag is not
+			   defined anymore; AVC support is signalled via AVC_DISABLED instead.
+			   The original code only checked the (8.1 only) AVC420_ENABLED flag,
+			   which disabled H.264 for every modern client. */
+			BOOL avc = FALSE;
+			if (pdu->capsSet->version == RDPGFX_CAPVERSION_81)
+				avc = (pdu->capsSet->flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) != 0;
+			else
+				avc = (pdu->capsSet->flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0;
+			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, avc))
 				return rc;
 		}
 		else
