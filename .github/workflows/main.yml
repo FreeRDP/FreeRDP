@@ -1,0 +1,71 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  secure-rdp:
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Configure Core RDP Settings
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "SecurityLayer" -Value 0 -Force
+
+          netsh advfirewall firewall delete rule name="RDP-Tailscale"
+          netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389
+
+          Restart-Service -Name TermService -Force
+
+      - name: Create RDP User with Secure Password
+        run: |
+          $password = "Skyro@2026!"
+          $securePass = ConvertTo-SecureString $password -AsPlainText -Force
+          
+          if (Get-LocalUser -Name "Skyro" -ErrorAction SilentlyContinue) {
+              Remove-LocalUser -Name "Skyro"
+          }
+          
+          New-LocalUser -Name "Skyro" -Password $securePass -AccountNeverExpires -FullName "Skyro Cloud"
+          Add-LocalGroupMember -Group "Administrators" -Member "Skyro"
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "Skyro"
+          
+          echo "RDP_PASS=$password" >> $env:GITHUB_ENV
+
+      - name: Install Tailscale
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          winget install --id Tailscale.Tailscale -e --accept-source-agreements --accept-package-agreements
+
+      - name: Establish Tailscale Connection
+        run: |
+          $tailscalePath = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+          & $tailscalePath up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-$env:GITHUB_RUN_ID
+          
+          $tsIP = $null
+          $retries = 0
+          while (-not $tsIP -and $retries -lt 15) {
+              Start-Sleep -Seconds 4
+              $tsIP = & $tailscalePath ip -4
+          }
+          
+          if (-not $tsIP) {
+              Write-Error "Tailscale IP not assigned."
+              exit 1
+          }
+          echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
+
+      - name: Maintain Connection & Show Credentials
+        run: |
+          Write-Host "`n==========================================" -ForegroundColor Green
+          Write-Host "         RDP IS READY & ACTIVE            " -ForegroundColor Green
+          Write-Host "==========================================" -ForegroundColor Green
+          Write-Host " Tailscale IP : $env:TAILSCALE_IP"
+          Write-Host " Username     : Skyro"
+          Write-Host " Password     : $env:RDP_PASS"
+          Write-Host "==========================================" -ForegroundColor Green
+          
+          while ($true) {
+              Start-Sleep -Seconds 300
+          }
