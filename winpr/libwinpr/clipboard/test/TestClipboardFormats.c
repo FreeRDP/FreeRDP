@@ -7,6 +7,7 @@
 #include <winpr/user.h>
 #include <winpr/file.h>
 #include <winpr/shell.h>
+#include <winpr/path.h>
 
 #define test_log(fmt, ...) test_log_fn(__FILE__, __func__, __LINE__, (fmt), ##__VA_ARGS__)
 static void test_log_fn(const char* file, const char* func, size_t line, const char* fmt, ...)
@@ -326,7 +327,9 @@ static BOOL set_descriptor_name(FILEDESCRIPTORW* dsc, const char* name, const ch
 static BOOL test_file_descriptors_to_uri_list(void)
 {
 	BOOL rc = FALSE;
-	char basePath[] = "/tmp/frdp-test";
+	char* basePath = GetKnownSubPath(KNOWN_PATH_TEMP, "frdp-test");
+	if (!basePath)
+		return FALSE;
 	char* uris = nullptr;
 
 	struct
@@ -339,13 +342,22 @@ static BOOL test_file_descriptors_to_uri_list(void)
 	if (!clipboard)
 		return FALSE;
 
+	char* cmpdir = nullptr;
+	char* cmpa = nullptr;
 	wClipboardDelegate* delegate = ClipboardGetDelegate(clipboard);
 	if (!delegate)
 		goto fail;
 	delegate->basePath = basePath;
 
-	data.count = ARRAYSIZE(data.dsc);
-	data.dsc[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+	size_t len = 0;
+	winpr_asprintf(&cmpdir, &len, "file://%s/dir\r\n", basePath);
+	winpr_asprintf(&cmpa, &len, "file://%s/a.txt", basePath);
+	if (!cmpdir || !cmpa)
+		goto fail;
+
+	/* data must be little endian */
+	Data_Write_UINT32(&data.count, ARRAYSIZE(data.dsc));
+	Data_Write_UINT32(&data.dsc[0].dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY);
 	if (!set_descriptor_name(&data.dsc[0], "dir", nullptr))
 		goto fail;
 	if (!set_descriptor_name(&data.dsc[1], "dir\\b.txt", nullptr))
@@ -366,8 +378,7 @@ static BOOL test_file_descriptors_to_uri_list(void)
 			goto fail;
 		test_log("text/uri-list: '%s'", uris);
 
-		if (!strstr(uris, "file:///tmp/frdp-test/dir\r\n") ||
-		    !strstr(uris, "file:///tmp/frdp-test/a.txt") || strstr(uris, "b.txt"))
+		if (!strstr(uris, cmpdir) || !strstr(uris, cmpdir) || strstr(uris, "b.txt"))
 			goto fail;
 	}
 
@@ -376,6 +387,9 @@ fail:
 	if (!rc)
 		test_log("FileGroupDescriptorW -> text/uri-list conversion failed");
 	free(uris);
+	free(cmpdir);
+	free(cmpa);
+	free(basePath);
 	ClipboardDestroy(clipboard);
 	return rc;
 }
