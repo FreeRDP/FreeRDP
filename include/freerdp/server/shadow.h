@@ -37,6 +37,7 @@
 #include <freerdp/server/audin.h>
 #endif
 #include <freerdp/server/rdpgfx.h>
+#include <freerdp/server/cliprdr.h>
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
@@ -135,6 +136,8 @@ extern "C"
 		audin_server_context* audin;
 #endif
 		RdpgfxServerContext* rdpgfx;
+		CliprdrServerContext* cliprdr;
+		void* cliprdrPriv;
 
 		BOOL resizeRequested;
 		UINT32 resizeWidth;

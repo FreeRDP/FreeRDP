@@ -29,6 +29,7 @@
 #include "shadow_rdpsnd.h"
 #include "shadow_audin.h"
 #include "shadow_rdpgfx.h"
+#include "shadow_cliprdr.h"
 
 #ifdef __cplusplus
 extern "C"
