@@ -355,8 +355,9 @@ static BOOL test_file_descriptors_to_uri_list(void)
 	if (!cmpdir || !cmpa)
 		goto fail;
 
-	data.count = ARRAYSIZE(data.dsc);
-	data.dsc[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+	/* data must be little endian */
+	Data_Write_UINT32(&data.count, ARRAYSIZE(data.dsc));
+	Data_Write_UINT32(&data.dsc[0].dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY);
 	if (!set_descriptor_name(&data.dsc[0], "dir", nullptr))
 		goto fail;
 	if (!set_descriptor_name(&data.dsc[1], "dir\\b.txt", nullptr))
