@@ -121,28 +121,6 @@ static const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?" /* 0x41 - 0x46 */
 };
 
-#define rdp_check_monitor_layout_pdu_state(rdp, expected) \
-	rdp_check_monitor_layout_pdu_state_(rdp, expected, __FILE__, __func__, __LINE__)
-
-WINPR_ATTR_NODISCARD
-static BOOL rdp_check_monitor_layout_pdu_state_(const rdpRdp* rdp, BOOL expected, const char* file,
-                                                const char* fkt, size_t line)
-{
-	WINPR_ASSERT(rdp);
-	if (expected != rdp->monitor_layout_pdu)
-	{
-		const DWORD log_level = WLOG_ERROR;
-		if (WLog_IsLevelActive(rdp->log, log_level))
-		{
-			WLog_PrintTextMessage(rdp->log, log_level, line, file, fkt,
-			                      "Expected rdp->monitor_layout_pdu == %s",
-			                      expected ? "TRUE" : "FALSE");
-		}
-		return FALSE;
-	}
-	return TRUE;
-}
-
 #define rdp_set_monitor_layout_pdu_state(rdp, expected) \
 	rdp_set_monitor_layout_pdu_state_(rdp, expected, __FILE__, __func__, __LINE__)
 WINPR_ATTR_NODISCARD
@@ -1926,38 +1904,6 @@ static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
 }
 
 WINPR_ATTR_NODISCARD
-static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
-{
-	WINPR_ASSERT(rdp);
-
-	if (!rdp_check_monitor_layout_pdu_state(rdp, FALSE))
-		return STATE_RUN_FAILED;
-
-	/* We might receive unrelated messages from the server (channel traffic),
-	 * so only proceed if some flag changed
-	 */
-	const UINT32 old = rdp->finalize_sc_pdus;
-	state_run_t status = rdp_recv_pdu(rdp, s);
-	const UINT32 now = rdp->finalize_sc_pdus;
-	const BOOL changed = (old != now) || rdp->monitor_layout_pdu;
-
-	/* This PDU is optional, so if we received a finalize PDU continue there */
-	if (state_run_success(status) && changed)
-	{
-		if (!rdp->monitor_layout_pdu)
-		{
-			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_SC_SYNCHRONIZE_PDU))
-				return STATE_RUN_FAILED;
-		}
-
-		status = rdp_client_connect_finalize(rdp);
-		if (state_run_success(status) && !rdp->monitor_layout_pdu)
-			status = STATE_RUN_TRY_AGAIN;
-	}
-	return status;
-}
-
-WINPR_ATTR_NODISCARD
 static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s,
                                          void* extra)
 {
@@ -2195,10 +2141,6 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 				else
 					status = STATE_RUN_CONTINUE;
 			}
-			break;
-
-		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT:
-			status = rdp_client_exchange_monitor_layout(rdp, s);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:

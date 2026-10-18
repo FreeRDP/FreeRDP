@@ -2303,15 +2303,7 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 	if (!cache_resize(rdp->context))
 		return STATE_RUN_FAILED;
 
-	state_run_t status = STATE_RUN_SUCCESS;
-	if (!rdp->settings->SupportMonitorLayoutPdu)
-		status = rdp_client_connect_finalize(rdp);
-	else
-	{
-		if (!rdp_client_transition_to_state(rdp,
-		                                    CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))
-			status = STATE_RUN_FAILED;
-	}
+	state_run_t status = rdp_client_connect_finalize(rdp);
 	if (!rdp_finalize_reset_flags(rdp, FALSE))
 		status = STATE_RUN_FAILED;
 	return status;
