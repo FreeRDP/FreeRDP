@@ -11,6 +11,10 @@ set(TESTS TestVersion.c TestSettings.c TestUtils.c)
 
 if(BUILD_TESTING_INTERNAL)
   list(APPEND TESTS TestStreamDump.c TestRdstls.c TestServerChannels.c)
+  # uses POSIX sockets
+  if(NOT WIN32)
+    list(APPEND TESTS TestClientMonitorLayout.c)
+  endif()
 endif()
 
 set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c TestFuzzCryptoCertificateDataSetPEM.c)
