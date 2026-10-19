@@ -785,6 +785,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			case DYNCVC_READ_OK:
 				break;
 			case DYNCVC_READ_INCOMPLETE:
+				HashTable_Unlock(dynChannelContext->channels);
 				return PF_CHANNEL_RESULT_DROP;
 			case DYNCVC_READ_ERROR:
 			default:
@@ -820,6 +821,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			case DYNCVC_READ_OK:
 				break;
 			case DYNCVC_READ_INCOMPLETE:
+				HashTable_Unlock(dynChannelContext->channels);
 				return PF_CHANNEL_RESULT_DROP;
 			case DYNCVC_READ_ERROR:
 			default:
