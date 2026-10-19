@@ -1,0 +1,26 @@
+name: emscripten-builder
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  pull_request:
+    branches: [ master, stable* ]
+  schedule:
+    - cron: '30 5 * * SUN'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: "Run emscripten build and unit tests on ubuntu-latest"
+    container: emscripten/emsdk:6.0.12
+    steps:
+      - name: "Check out source"
+        uses: actions/checkout@v7
+
+      - name: "Prepare environment"
+        run: |
+          apt-get update -q -y
+          apt-get install -q -y ninja-build
+
+      - name: "Run emscripten build and unit tests..."
+        run: |
+          ./scripts/emscripten.sh --with-tests
