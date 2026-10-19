@@ -1092,6 +1092,7 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 		return FALSE;
 	}
 
+	size_t segmentCount = 1;
 	size_t segment = 0;
 	BOOL segmentHasHyphen = FALSE;
 	for (size_t x = 0; x < len; x++)
@@ -1106,6 +1107,7 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 
 		if (c == '.')
 		{
+			segmentCount++;
 			segment = 0;
 			segmentHasHyphen = FALSE;
 
@@ -1155,10 +1157,19 @@ BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len)
 	}
 
 	// last segment may not contain a hyphen
-	if (segmentHasHyphen)
+	if (segmentCount > 1)
 	{
-		WLog_VRB(TAG, "hostname %s [%" PRIuz "] ends with a hyphen", str, len);
-		return FALSE;
+		if (segmentHasHyphen)
+		{
+			WLog_VRB(TAG, "hostname %s [%" PRIuz "] ends with a hyphen", str, len);
+			return FALSE;
+		}
+
+		if (segment < 2)
+		{
+			WLog_VRB(TAG, "hostname %s [%" PRIuz "] TLD segment too short", str, len);
+			return FALSE;
+		}
 	}
 
 	return TRUE;
