@@ -9,6 +9,8 @@
 #include "../xf_keyboard.h"
 #include "../xf_event.h"
 
+static const Display* display_stub = 0x123456789abcdef;
+
 /* Run the real X11 keyboard/focus/button handlers with a deterministic X server
  * and input sink. No display, window manager, RDP server or sleeps are needed. */
 static char trace[1024];
@@ -49,9 +51,24 @@ static void record(char name, char direction)
 	trace[used] = '\0';
 }
 
+Bool XGetEventData(Display* display, XGenericEventCookie* cookie)
+{
+	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
+	memset(cookie, 0, sizeof(XGenericEventCookie));
+	return True;
+}
+
+void XFreeEventData(Display* display, XGenericEventCookie* cookie)
+{
+	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
+}
+
 KeyCode XKeysymToKeycode(Display* display, KeySym sym)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	if (sym == XK_ISO_Level3_Shift || sym == XK_Mode_switch)
 		return altGr ? 108 : 0;
 	for (size_t i = 0; i < ARRAYSIZE(keys); i++)
@@ -65,6 +82,7 @@ KeyCode XKeysymToKeycode(Display* display, KeySym sym)
 XkbDescPtr XkbGetMap(Display* display, unsigned int which, unsigned int device_spec)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(which);
 	WINPR_UNUSED(device_spec);
 	return &keyboard_map;
@@ -73,6 +91,7 @@ XkbDescPtr XkbGetMap(Display* display, unsigned int which, unsigned int device_s
 Status XkbGetNames(Display* display, unsigned int which, XkbDescPtr desc)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(which);
 	WINPR_UNUSED(desc);
 	return Success;
@@ -88,6 +107,7 @@ void XkbFreeKeyboard(XkbDescPtr xkb, unsigned int which, Bool free_desc)
 KeySym XkbKeycodeToKeysym(Display* display, KeyCode keycode, int group, int level)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(keycode);
 	WINPR_UNUSED(group);
 	WINPR_UNUSED(level);
@@ -97,6 +117,7 @@ KeySym XkbKeycodeToKeysym(Display* display, KeyCode keycode, int group, int leve
 int XDisplayKeycodes(Display* display, int* min_keycodes_return, int* max_keycodes_return)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	*min_keycodes_return = keyboard_map.min_key_code;
 	*max_keycodes_return = keyboard_map.max_key_code;
 	return 1;
@@ -105,6 +126,7 @@ int XDisplayKeycodes(Display* display, int* min_keycodes_return, int* max_keycod
 XModifierKeymap* XGetModifierMapping(Display* display)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	return &modifier_map;
 }
 
@@ -117,6 +139,7 @@ int XFreeModifiermap(XModifierKeymap* modmap)
 int XQueryKeymap(Display* display, char map[32])
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	memcpy(map, physical, sizeof(physical));
 	return 1;
 }
@@ -125,6 +148,7 @@ Bool XQueryPointer(Display* display, Window window, Window* root, Window* child,
                    int* x, int* y, unsigned int* mask)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(window);
 	*root = *child = None;
 	*rx = *ry = *x = *y = 0;
@@ -135,6 +159,7 @@ Bool XQueryPointer(Display* display, Window window, Window* root, Window* child,
 int XSync(Display* display, Bool discard)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(discard);
 	return 1;
 }
@@ -142,6 +167,7 @@ int XSync(Display* display, Bool discard)
 int XIconifyWindow(Display* display, Window window, int screen)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(window);
 	WINPR_UNUSED(screen);
 	minimized = TRUE;
@@ -151,6 +177,7 @@ int XIconifyWindow(Display* display, Window window, int screen)
 int XUngrabKeyboard(Display* display, Time time)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(time);
 	ungrabs++;
 	return 1;
@@ -159,6 +186,7 @@ int XUngrabKeyboard(Display* display, Time time)
 int XUngrabPointer(Display* display, Time time)
 {
 	WINPR_UNUSED(display);
+	WINPR_ASSERT(display == display_stub);
 	WINPR_UNUSED(time);
 	return 1;
 }
@@ -458,7 +486,7 @@ static BOOL test_keyboard_mapping_reload(void)
 	keyboard_names.keys = keyboard_key_names;
 	keyboard_keysym = XK_a;
 	xfc.common.context.settings = settings;
-	xfc.display = (Display*)&keyboard_map;
+	xfc.display = display_stub;
 	xfc.log = WLog_Get("com.freerdp.client.x11.test.keyboard");
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, ENGLISH_UNITED_STATES))
 		goto out;
@@ -508,7 +536,7 @@ int main(int argc, char* argv[])
 	xfc.common.context.instance = &instance;
 	instance.context = &xfc.common.context;
 	xfc.window = &window;
-	xfc.display = (Display*)&instance; /* All X calls used in this test are mocked. */
+	xfc.display = display_stub; /* All X calls used in this test are mocked. */
 	xfc.modifierMap = &modifiers;
 	xfc.log = WLog_Get("com.freerdp.client.x11.test.deferred-alt");
 	for (size_t i = 0; i < ARRAYSIZE(keys); i++)
