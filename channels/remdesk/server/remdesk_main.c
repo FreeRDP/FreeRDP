@@ -506,6 +506,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 			goto out;
 		}
 
+		UINT64 PduLength = 0;
 		while (1)
 		{
 			DWORD status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
@@ -531,42 +532,78 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 				break;
 			}
 
-			const size_t len = Stream_Capacity(s);
+			const size_t len = Stream_GetRemainingCapacity(s);
 			if (len > UINT32_MAX)
 			{
 				error = ERROR_INTERNAL_ERROR;
 				break;
 			}
-			if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
-			                          (UINT32)len, &BytesReturned))
+			if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_PointerAs(s, char),
+			                           (UINT32)len, &BytesReturned))
 			{
-				if (BytesReturned)
-					Stream_Seek(s, BytesReturned);
+				error = ERROR_INTERNAL_ERROR;
+				break;
 			}
-			else
-			{
-				if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
-				{
-					WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-					error = CHANNEL_RC_NO_MEMORY;
-					break;
-				}
-			}
+			Stream_Seek(s, BytesReturned);
 
 			const size_t pos = Stream_GetPosition(s);
 			if (pos >= 8)
 			{
-				Stream_ResetPosition(s);
-				const UINT32 LengthLow = Stream_Get_UINT32(s);
-				const UINT32 LengthHigh = Stream_Get_UINT32(s);
-				if (!Stream_SetPosition(s, pos))
+				/* First run. Extract PDU length and ensure capacity */
+				if (PduLength == 0)
 				{
-					error = ERROR_INTERNAL_ERROR;
-					break;
-				}
-				const UINT64 PduLength = LengthLow + LengthHigh + 8ull;
+					Stream_ResetPosition(s);
+					const UINT32 LengthName = Stream_Get_UINT32(s);
+					if (LengthName > 64)
+					{
+						WLog_ERR(TAG,
+						         "[MS-RA] 2.2.1.2 "
+						         "REMOTEDESKTOP_CTL_PACKETHEADER::ChannelNameLen(%" PRIu32
+						         ")) > 64",
+						         LengthName);
+						Stream_ResetPosition(s);
+						PduLength = 0;
+						continue;
+					}
+					const UINT32 LengthData = Stream_Get_UINT32(s);
 
-				if (PduLength >= pos)
+					/* Arbitrarily chosen length limit.
+					 *
+					 * Since the packets usually do not exceed a certain size we limit it to
+					 * 128MB - which is far beyond anything that should ever be sent by the server.
+					 */
+					const size_t DataLengthLimit = UINT32_MAX / 32;
+					if (LengthName > DataLengthLimit)
+					{
+						WLog_ERR(TAG,
+						         "[MS-RA] 2.2.1.2 REMOTEDESKTOP_CTL_PACKETHEADER::DataLen(%" PRIu32
+						         ")) > %" PRIuz,
+						         LengthData, DataLengthLimit);
+						Stream_ResetPosition(s);
+						PduLength = 0;
+						continue;
+					}
+					if (!Stream_SetPosition(s, pos))
+					{
+						error = ERROR_INTERNAL_ERROR;
+						break;
+					}
+					PduLength = LengthName + LengthData + 8ull;
+					if (pos < PduLength)
+					{
+						if (!Stream_EnsureRemainingCapacity(s, PduLength - pos))
+						{
+							WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+							error = CHANNEL_RC_NO_MEMORY;
+							break;
+						}
+					}
+				}
+
+				/* Check for completion.
+				 * If data read, process and reset stream
+				 */
+				if (pos >= PduLength)
 				{
 					Stream_SealLength(s);
 					Stream_ResetPosition(s);
@@ -580,6 +617,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 					}
 
 					Stream_ResetPosition(s);
+					PduLength = 0;
 				}
 			}
 		}
