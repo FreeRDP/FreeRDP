@@ -109,9 +109,6 @@ struct xf_app_window
 	/* Surface updates were skipped while the X window was unmapped, the next
 	 * paint has to cover the whole window. */
 	BOOL surfaceStale;
-	/* Timestamp of the last accepted WINDOW_ORDER_FIELD_WND_SIZE update. */
-	UINT64 lastWndSizeUpdate;
-
 	Pixmap pixmap;
 	UINT32 pixmapWidth;
 	UINT32 pixmapHeight;
@@ -135,6 +132,10 @@ WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
+                                       const XConfigureEvent* event);
 
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
 

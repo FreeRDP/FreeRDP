@@ -14,3 +14,7 @@ add_test(NAME TestX11DeferredAlt COMMAND TestX11DeferredAlt)
 add_executable(TestX11CmdLine TestX11CmdLine.c)
 target_link_libraries(TestX11CmdLine PRIVATE xfreerdp-client)
 add_test(NAME TestX11CmdLine COMMAND TestX11CmdLine)
+
+add_executable(TestX11RailGeometry TestX11RailGeometry.c)
+target_link_libraries(TestX11RailGeometry PRIVATE xfreerdp-client)
+add_test(NAME TestX11RailGeometry COMMAND TestX11RailGeometry)

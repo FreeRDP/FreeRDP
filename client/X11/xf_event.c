@@ -838,7 +838,6 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* event, BOOL app)
 {
-	Window childWindow = None;
 	xfAppWindow* appWindow = nullptr;
 
 	WINPR_ASSERT(xfc);
@@ -906,16 +905,11 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 
 		if (appWindow)
 		{
-			/*
-			 * ConfigureNotify coordinates are expressed relative to the window parent.
-			 * Translate these to root window coordinates.
-			 */
-			XTranslateCoordinates(xfc->display, appWindow->handle, RootWindowOfScreen(xfc->screen),
-			                      0, 0, &appWindow->x, &appWindow->y, &childWindow);
-			appWindow->width = event->width;
-			appWindow->height = event->height;
-
-			xf_AppWindowResize(xfc, appWindow);
+			if (!xf_rail_update_configure_geometry(xfc, appWindow, event))
+			{
+				xf_rail_return_window(appWindow, FALSE);
+				return TRUE;
+			}
 
 			/*
 			 * Additional checks for not in a local move and not ignoring configure to send
