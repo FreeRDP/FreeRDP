@@ -4,6 +4,9 @@ set(MODULE_PREFIX "TEST_SDL")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.cpp)
 
 set(${MODULE_PREFIX}_TESTS TestSDLPrefs.cpp TestSDLAadHelper.cpp)
+if(WITH_CLIENT_SDL3)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestSDLRailWindowStyle.cpp)
+endif()
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 

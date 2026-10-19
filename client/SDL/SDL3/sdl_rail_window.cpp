@@ -26,6 +26,7 @@
 
 #include "sdl_rail_platform.hpp"
 #include "sdl_rail_window.hpp"
+#include "sdl_rail_window_style.hpp"
 #include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
 #include "sdl_x11.hpp"
@@ -490,25 +491,11 @@ void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
 	/* Classify popup and layered window types once on creation. */
 	if (!_popupClassified)
 	{
-		/* WS_CAPTION is WS_BORDER | WS_DLGFRAME; partial match is only a border. */
-		const bool captioned = (style & WS_CAPTION) == WS_CAPTION;
-		const bool isDialogOrApp =
-		    captioned ||
-		    ((style & (WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)) != 0) ||
-		    ((exStyle & WS_EX_APPWINDOW) != 0);
-		const bool isToolOrPopup =
-		    ((exStyle & (WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW)) != 0) || ((style & WS_POPUP) != 0);
-		/* Non-activating windows are popups regardless of app style bits. */
-		const bool noActivate =
-		    ((exStyle & WS_EX_NOACTIVATE) != 0) && ((exStyle & WS_EX_APPWINDOW) == 0);
-		/* Route drag/feedback overlays through the popup path. */
-		constexpr uint32_t overlayEx = WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
-		const bool overlay = ((exStyle & overlayEx) == overlayEx) &&
-		                     ((exStyle & (WS_EX_NOACTIVATE | WS_EX_APPWINDOW)) == 0) && !captioned;
-		_overlay = overlay;
-		_isPopup = noActivate || overlay || (isToolOrPopup && !isDialogOrApp);
-		_layered = ((exStyle & WS_EX_LAYERED) != 0) && !isDialogOrApp;
-		_clickThrough = ((exStyle & WS_EX_TRANSPARENT) != 0);
+		const auto classification = classifySdlRailWindowStyle(style, exStyle, _ownerId != 0);
+		_isPopup = classification.popup;
+		_layered = classification.layered;
+		_clickThrough = classification.clickThrough;
+		_overlay = classification.overlay;
 		_popupClassified = true;
 	}
 }
