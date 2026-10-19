@@ -5,6 +5,7 @@
 #include <winpr/path.h>
 #include <winpr/image.h>
 #include <winpr/user.h>
+#include <winpr/endian.h>
 
 static const char test_src_filename[] = TEST_SOURCE_PATH "/rgb";
 static const char test_bin_filename[] = TEST_BINARY_PATH "/rgb";
@@ -438,14 +439,10 @@ static BOOL test_write_bottom_up(void)
 	}
 
 	{
-		UINT32 biSize = 0;
-		INT32 biHeight = 0;
-		UINT32 biCompression = 0;
-		UINT32 bfOffBits = 0;
-		memcpy(&bfOffBits, &out[10], sizeof(bfOffBits));
-		memcpy(&biSize, &out[14], sizeof(biSize));
-		memcpy(&biHeight, &out[22], sizeof(biHeight));
-		memcpy(&biCompression, &out[30], sizeof(biCompression));
+		const UINT32 bfOffBits = winpr_Data_Get_UINT32(&out[10]);
+		const UINT32 biSize = winpr_Data_Get_UINT32(&out[14]);
+		const INT32 biHeight = winpr_Data_Get_INT32(&out[22]);
+		const UINT32 biCompression = winpr_Data_Get_UINT32(&out[30]);
 		if ((biSize != 40) || (biHeight != (INT32)height) || (biCompression != BI_RGB) ||
 		    (bfOffBits + sizeof(pixels) > outSize))
 		{
