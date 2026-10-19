@@ -1954,6 +1954,11 @@ static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
 			else
 				return STATE_RUN_TRY_AGAIN;
 		}
+
+		/* The Monitor Layout PDU was consumed, wait for the server Synchronize PDU next.
+		 * Do not try again: the layout PDU must not be processed a second time. */
+		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC))
+			return STATE_RUN_FAILED;
 	}
 	return status;
 }
