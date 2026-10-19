@@ -124,6 +124,7 @@ void smartcardCertList_Free(SmartcardCertInfo** pscCert, size_t count)
 	free((void*)pscCert);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
                              SmartcardCertInfo* certInfo)
 {
@@ -157,6 +158,7 @@ static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 {
 	WINPR_ASSERT(scCert);
@@ -198,6 +200,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD cbCertBytes,
                                  const char* userFilter, const char* domainFilter)
 {
@@ -249,6 +252,7 @@ static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD
 }
 
 #ifndef _WIN32
+WINPR_ATTR_NODISCARD
 static BOOL build_pkinit_args(NCRYPT_PROV_HANDLE provider, SmartcardCertInfo* scCert)
 {
 	/* pkinit args only under windows
@@ -280,6 +284,7 @@ static BOOL build_pkinit_args(NCRYPT_PROV_HANDLE provider, SmartcardCertInfo* sc
 #endif /* _WIN32 */
 
 #ifdef _WIN32
+WINPR_ATTR_NODISCARD
 static BOOL list_capi_provider_keys(const rdpSettings* settings, LPCWSTR csp, LPCWSTR scope,
                                     const char* userFilter, const char* domainFilter,
                                     SmartcardCertInfo*** pcerts, size_t* pcount)
@@ -398,6 +403,7 @@ out:
 }
 #endif /* _WIN32 */
 
+WINPR_ATTR_NODISCARD
 static BOOL list_provider_keys(WINPR_ATTR_UNUSED const rdpSettings* settings,
                                NCRYPT_PROV_HANDLE provider, LPCWSTR csp, LPCWSTR scope,
                                const char* userFilter, const char* domainFilter,
@@ -576,6 +582,7 @@ out:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp,
                                         const char* reader, const char* userFilter,
                                         const char* domainFilter, SmartcardCertInfo*** scCerts,
@@ -723,6 +730,7 @@ out:
 	return ret;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
@@ -738,6 +746,7 @@ static char* create_temporary_file(void)
 	return path;
 }
 
+WINPR_ATTR_MALLOC(smartcardCertInfo_Free, 1)
 static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const char* certPEM)
 {
 	size_t size = 0;
@@ -829,6 +838,7 @@ fail:
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
                                         size_t* retCount)
 {
@@ -916,6 +926,7 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** 
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL set_settings_from_smartcard(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
                                         const char* value)
 {
