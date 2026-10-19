@@ -90,6 +90,11 @@ struct xf_app_window
 	UINT32 resizeMarginTop;
 	UINT32 resizeMarginRight;
 	UINT32 resizeMarginBottom;
+	/* Deduplicate only the last successfully queued, still-unanswered move.
+	 * A server geometry update ends this scope, including adjusted replies. */
+	BOOL windowMovePending;
+	UINT64 lastWindowMoveTime;
+	RAIL_WINDOW_MOVE_ORDER lastWindowMove;
 
 	GC gc;
 	int shmid;

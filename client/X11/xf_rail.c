@@ -279,32 +279,34 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 	WINPR_ASSERT(appWindow);
 	WINPR_ASSERT(event);
 
+	if ((event->width <= 0) || (event->height <= 0))
+		return FALSE;
+
 	int x = event->x;
 	int y = event->y;
 	if (!event->send_event)
 	{
-		/* A reparenting WM can first move the client inside its frame and
-		 * subsequently move that frame. Translating between those requests
-		 * observes a transient root position, not a user move. For an unchanged
-		 * server size outside a local move, wait for the WM's synthetic root
-		 * notification. Genuine local resizes and active local moves still
-		 * need the real notification below. */
-		if ((appWindow->local_move.state == LMS_NOT_ACTIVE) &&
-		    (event->width == (INT64)appWindow->windowWidth) &&
-		    (event->height == (INT64)appWindow->windowHeight) &&
-		    (event->width == appWindow->width) && (event->height == appWindow->height))
+		Window root = None;
+		Window parent = None;
+		Window* children = nullptr;
+		unsigned int count = 0;
+		const Status status = XQueryTree(xfc->display, appWindow->handle, &root, &parent,
+		                                 &children, &count);
+		if (children)
+			XFree(children);
+		if (!status)
+			return FALSE;
+
+		if (parent != root)
 		{
-			Window root = None;
-			Window parent = None;
-			Window* children = nullptr;
-			unsigned int count = 0;
-			const Status status = XQueryTree(xfc->display, appWindow->handle, &root, &parent,
-			                                 &children, &count);
-			if (children)
-				XFree(children);
-			/* Non-reparenting WMs deliver real root-space move events and do not
-			 * need a synthetic notification. Preserve those genuine moves. */
-			if (status && (parent != root))
+			/* Real positions are parent-relative. The WM can move the client
+			 * and frame in separate requests, including during LMS_ACTIVE.
+			 * Keep the last root-space snapshot until its synthetic notification;
+			 * never mix a queued event's size with a queried, newer position.
+			 * Pure resizes can still apply their size at that known position. */
+			x = appWindow->x;
+			y = appWindow->y;
+			if ((event->width == appWindow->width) && (event->height == appWindow->height))
 			{
 				WLog_Print(xfc->log, WLOG_DEBUG,
 				           "[rail-geometry] defer position-only configure windowId=0x%08" PRIx64
@@ -313,11 +315,7 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 				return FALSE;
 			}
 		}
-
-		Window child = None;
-		if (!XTranslateCoordinates(xfc->display, appWindow->handle,
-		                           RootWindowOfScreen(xfc->screen), 0, 0, &x, &y, &child))
-			return FALSE;
+		/* Without reparenting, the event coordinates are already root-space. */
 	}
 	/* ICCCM 4.1.5: synthetic coordinates are already in root space. Querying
 	 * the current X window instead mixes a newer position with this event's
@@ -336,7 +334,7 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 	return xf_AppWindowResize(xfc, appWindow);
 }
 
-static BOOL xf_rail_send_window_move(xfContext* xfc, const xfAppWindow* appWindow)
+static BOOL xf_rail_send_window_move(xfContext* xfc, xfAppWindow* appWindow)
 {
 	/* RAIL uses signed 16-bit rectangle coordinates. Validate before casting:
 	 * wrapping a drifting X11 coordinate creates another remote move. */
@@ -361,6 +359,24 @@ static BOOL xf_rail_send_window_move(xfContext* xfc, const xfAppWindow* appWindo
 	                                          .top = (INT16)top,
 	                                          .right = (INT16)right,
 	                                          .bottom = (INT16)bottom };
+	const RAIL_WINDOW_MOVE_ORDER* last = &appWindow->lastWindowMove;
+	const UINT64 now = winpr_GetTickCount64NS();
+	/* A clamped/no-op move need not generate a server update. Bound the
+	 * in-flight cache so a later identical user request can still retry.
+	 * This never delays or drops incoming server geometry or new rectangles. */
+	const UINT64 duplicateInterval = 500ULL * 1000000ULL;
+	if (appWindow->windowMovePending &&
+	    ((now - appWindow->lastWindowMoveTime) < duplicateInterval) &&
+	    (last->left == windowMove.left) &&
+	    (last->top == windowMove.top) && (last->right == windowMove.right) &&
+	    (last->bottom == windowMove.bottom))
+	{
+		WLog_Print(xfc->log, WLOG_DEBUG,
+		           "[rail-geometry] skip duplicate pending WINDOWMOVE windowId=0x%08" PRIx64,
+		           appWindow->windowId);
+		return TRUE;
+	}
+
 	WLog_Print(xfc->log, WLOG_DEBUG,
 	           "[rail-geometry] WINDOWMOVE windowId=0x%08" PRIx64
 	           " rect=%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64
@@ -369,7 +385,12 @@ static BOOL xf_rail_send_window_move(xfContext* xfc, const xfAppWindow* appWindo
 	           appWindow->resizeMarginTop, appWindow->resizeMarginRight,
 	           appWindow->resizeMarginBottom);
 	const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
-	return rc == CHANNEL_RC_OK;
+	if (rc != CHANNEL_RC_OK)
+		return FALSE;
+	appWindow->lastWindowMove = windowMove;
+	appWindow->lastWindowMoveTime = now;
+	appWindow->windowMovePending = TRUE;
+	return TRUE;
 }
 
 /**
@@ -423,13 +444,14 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	/*
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
-	XQueryPointer(xfc->display, appWindow->handle, &root_window, &child_window, &x, &y, &child_x,
-	              &child_y, &mask);
-
 	/* only send the mouse coordinates if not a keyboard move or size */
 	if ((appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
 	    (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
+		if (!XQueryPointer(xfc->display, appWindow->handle, &root_window, &child_window, &x, &y,
+		                   &child_x, &child_y, &mask))
+			return FALSE;
+
 		if (!freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1, x, y))
 			return FALSE;
 	}
@@ -604,6 +626,15 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	}
 
 	/* Update Parameters */
+	if (fieldFlags & (WINDOW_ORDER_FIELD_WND_OFFSET | WINDOW_ORDER_FIELD_WND_SIZE |
+	                  WINDOW_ORDER_FIELD_RESIZE_MARGIN_X | WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y))
+	{
+		/* RAIL reports visible bounds, whereas WINDOWMOVE includes resize
+		 * margins. A reply can legitimately differ from the requested rectangle.
+		 * Accept it as authoritative and permit subsequent genuine requests;
+		 * do not wait for an exact echo or permanently suppress retries. */
+		appWindow->windowMovePending = FALSE;
+	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
