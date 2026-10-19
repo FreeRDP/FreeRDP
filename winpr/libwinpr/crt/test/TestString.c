@@ -450,7 +450,14 @@ int TestString(int argc, char* argv[])
 			return -1;
 	}
 	{
-		const char* tests[] = { "some.host.somewhere.tld", "somehost", "a", "sh25" };
+		const char* tests[] = { "some.host.somewhere.tld",
+			                    "somehost",
+			                    "a",
+			                    "sh25",
+			                    "as-sh25",
+			                    "AS-SH25",
+			                    "a.co",
+			                    "some-x.tld" };
 		const char* failtests[] = {
 			"",
 			".some.tld",
@@ -459,6 +466,8 @@ int TestString(int argc, char* argv[])
 			"some-.tld",
 			"some.-tld",
 			"some.tld-",
+			"some-xx.tl-d",
+			"some-xx.t",
 			"abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789.tld",
 			"abcdef0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
 			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
