@@ -185,9 +185,9 @@ extern "C"
 
 	/**! @brief _wcschr for non '\0' terminated strings
 	 *
-	 * @param str The string to search in
+	 * @param str The string to search in (UTF-16LE)
 	 * @param charLen The length of the string in characters
-	 * @param c The character to search for
+	 * @param c The character to search for (UTF-16LE)
 	 * @return A pointer to the first location found or NULL
 	 * @since version 3.32.0
 	 */
@@ -196,9 +196,9 @@ extern "C"
 
 	/**! @brief _wcrschr for non '\0' terminated strings
 	 *
-	 * @param str The string to search in
+	 * @param str The string to search in (UTF-16LE)
 	 * @param charLen The length of the string in characters
-	 * @param c The character to search for
+	 * @param c The character to search for (UTF-16LE)
 	 * @return A pointer to the first location found or NULL
 	 * @since version 3.32.0
 	 */
