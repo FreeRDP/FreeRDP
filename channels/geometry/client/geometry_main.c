@@ -468,7 +468,8 @@ fail:
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE geometry_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
-	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, GEOMETRY_DVC_CHANNEL_NAME,
-	                                      sizeof(GEOMETRY_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),
-	                                      &geometry_callbacks, init_plugin_cb, terminate_plugin_cb);
+	return freerdp_generic_DVCPluginEntryWithOptions(
+	    pEntryPoints, TAG, GEOMETRY_DVC_CHANNEL_NAME, sizeof(GEOMETRY_PLUGIN),
+	    sizeof(GENERIC_CHANNEL_CALLBACK), &geometry_callbacks, init_plugin_cb, terminate_plugin_cb,
+	    GENERIC_CHANNEL_ENTRY_OPTION_MULTI_INSTANCE);
 }

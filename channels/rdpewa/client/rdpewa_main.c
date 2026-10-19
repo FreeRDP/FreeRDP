@@ -265,7 +265,8 @@ static UINT rdpewa_init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rconte
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpewa_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
-	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, RDPEWA_DVC_CHANNEL_NAME,
-	                                      sizeof(RDPEWA_PLUGIN), sizeof(RDPEWA_CHANNEL_CALLBACK),
-	                                      &rdpewa_callbacks, rdpewa_init_plugin_cb, nullptr);
+	return freerdp_generic_DVCPluginEntryWithOptions(
+	    pEntryPoints, TAG, RDPEWA_DVC_CHANNEL_NAME, sizeof(RDPEWA_PLUGIN),
+	    sizeof(RDPEWA_CHANNEL_CALLBACK), &rdpewa_callbacks, rdpewa_init_plugin_cb, nullptr,
+	    GENERIC_CHANNEL_ENTRY_OPTION_MULTI_INSTANCE);
 }
