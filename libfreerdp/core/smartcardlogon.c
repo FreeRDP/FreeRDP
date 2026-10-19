@@ -241,11 +241,32 @@ static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD
 		}
 	}
 
-	if (domainFilter && cert->domainHint && strcmp(cert->domainHint, domainFilter) != 0)
+	if (domainFilter && cert->domainHint)
 	{
-		WLog_DBG(TAG, "discarding non matching cert by domain(%s) %s@%s", domainFilter,
-		         cert->userHint, cert->domainHint);
-		return FALSE;
+		/* Try exact domain match. */
+		BOOL domainMatch = strcmp(cert->domainHint, domainFilter) != 0;
+		if (!domainMatch)
+		{
+			/* If our filter is a windows domain name and the hint in the cert a FQDN
+			 * then check if the first segment matches.
+			 * e.g. internal == internal.mydomain.com should match
+			 */
+			const char* dot = strchr(cert->domainHint, '.');
+			const char* ddot = strchr(domainFilter, '.');
+			if (!ddot && dot)
+			{
+				const size_t filterLen = strlen(domainFilter);
+				const size_t hlen = WINPR_ASSERTING_INT_CAST(size_t, (dot - cert->domainHint));
+				if ((hlen == filterLen) && (strncmp(domainFilter, cert->domainHint, hlen) == 0))
+					domainMatch = TRUE;
+			}
+		}
+		if (!domainMatch)
+		{
+			WLog_DBG(TAG, "discarding non matching cert by domain(%s) %s@%s", domainFilter,
+			         cert->userHint, cert->domainHint);
+			return FALSE;
+		}
 	}
 
 	return TRUE;
