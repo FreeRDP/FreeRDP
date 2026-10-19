@@ -1948,11 +1948,12 @@ static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_SC_SYNCHRONIZE_PDU))
 				return STATE_RUN_FAILED;
+			else if (!rdp_client_transition_to_state(rdp,
+			                                         CONNECTION_STATE_FINALIZATION_CLIENT_SYNC))
+				return STATE_RUN_FAILED;
+			else
+				return STATE_RUN_TRY_AGAIN;
 		}
-
-		status = rdp_client_connect_finalize(rdp);
-		if (state_run_success(status) && !rdp->monitor_layout_pdu)
-			status = STATE_RUN_TRY_AGAIN;
 	}
 	return status;
 }

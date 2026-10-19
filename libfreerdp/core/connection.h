@@ -72,9 +72,6 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL state_run_t rdp_client_connect_finalize(rdpRdp* rdp);
-
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 WINPR_ATTR_NODISCARD
