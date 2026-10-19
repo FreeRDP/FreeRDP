@@ -5,8 +5,14 @@ disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
-set(${MODULE_PREFIX}_TESTS TestCryptoHash.c TestCryptoRand.c TestCryptoCipher.c TestCryptoProtectData.c
-                           TestCryptoProtectMemory.c TestCryptoCertEnumCertificatesInStore.c
+set(${MODULE_PREFIX}_TESTS
+    TestCryptoHash.c
+    TestCryptoRand.c
+    TestCryptoCipher.c
+    TestCryptoCipherIV.c
+    TestCryptoProtectData.c
+    TestCryptoProtectMemory.c
+    TestCryptoCertEnumCertificatesInStore.c
 )
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})

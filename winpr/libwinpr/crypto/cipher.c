@@ -644,6 +644,20 @@ winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_CRYPTO_OPERATION op, const vo
 	if (mbedtls_cipher_setkey(ctx->mctx, key, key_bitlen, operation) != 0)
 		goto fail;
 
+	if (iv != nullptr)
+	{
+		const size_t ivsize = mbedtls_cipher_get_iv_size(ctx->mctx);
+
+		if (ivsize > 0)
+		{
+			if (ivlen == 0) /* winpr_Cipher_New() passes ivlen = 0 */
+				ivlen = ivsize;
+
+			if (mbedtls_cipher_set_iv(ctx->mctx, iv, ivlen) != 0)
+				goto fail;
+		}
+	}
+
 	if (mbedtls_cipher_set_padding_mode(ctx->mctx, MBEDTLS_PADDING_NONE) != 0)
 		goto fail;
 
