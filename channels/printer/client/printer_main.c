@@ -404,15 +404,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, PrinterNameLen))
 		goto fail;
 
-	union
-	{
-		char c[2];
-		WCHAR w;
-	} backslash;
-	backslash.c[0] = '\\';
-	backslash.c[1] = '\0';
-
-	for (WCHAR* wptr = wname; (wptr = winpr_wcsnchr(wptr, wlen, backslash.w));)
+	for (WCHAR* wptr = wname; (wptr = winpr_wcsnchr(wptr, wlen, winpr_wchar_ToLE('\\')));)
 		*wptr = L'_';
 	Stream_Write(printer_dev->device.data, wname, PrinterNameLen);
 

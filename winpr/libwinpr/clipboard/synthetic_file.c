@@ -720,11 +720,11 @@ static size_t count_special_chars(const WCHAR* str, size_t charLen)
 	WINPR_ASSERT(str);
 	while ((start < end) && (*start))
 	{
-		const WCHAR sharp = '#';
-		const WCHAR questionmark = '?';
-		const WCHAR star = '*';
-		const WCHAR exclamationmark = '!';
-		const WCHAR percent = '%';
+		const WCHAR sharp = winpr_wchar_ToLE('#');
+		const WCHAR questionmark = winpr_wchar_ToLE('?');
+		const WCHAR star = winpr_wchar_ToLE('*');
+		const WCHAR exclamationmark = winpr_wchar_ToLE('!');
+		const WCHAR percent = winpr_wchar_ToLE('%');
 
 		if ((*start == sharp) || (*start == questionmark) || (*start == star) ||
 		    (*start == exclamationmark) || (*start == percent))
@@ -759,17 +759,9 @@ static BOOL descriptor_is_nested(const FILEDESCRIPTORW* dsc)
 {
 	WINPR_ASSERT(dsc);
 
-	union
-	{
-		char c[2];
-		WCHAR w;
-	} backslash;
-	backslash.c[0] = '\\';
-	backslash.c[1] = '\0';
-
 	/* only search the name: what follows its '\0' in cFileName is not guaranteed to be zeroed */
 	const size_t len = _wcsnlen(dsc->cFileName, ARRAYSIZE(dsc->cFileName));
-	return winpr_wcsnchr(dsc->cFileName, len, backslash.w) != nullptr;
+	return winpr_wcsnchr(dsc->cFileName, len, winpr_wchar_ToLE('\\')) != nullptr;
 }
 
 WINPR_ATTR_NODISCARD
