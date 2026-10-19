@@ -244,7 +244,7 @@ static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD
 	if (domainFilter && cert->domainHint)
 	{
 		/* Try exact domain match. */
-		BOOL domainMatch = strcmp(cert->domainHint, domainFilter) != 0;
+		BOOL domainMatch = strcmp(cert->domainHint, domainFilter) == 0;
 		if (!domainMatch)
 		{
 			/* If our filter is a windows domain name and the hint in the cert a FQDN
