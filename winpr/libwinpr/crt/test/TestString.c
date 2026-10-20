@@ -554,6 +554,9 @@ int TestString(int argc, char* argv[])
 		const char* tests[] = { "some.host.somewhere.tld",
 			                    "somehost",
 			                    "a",
+			                    "xn--mnchen-3ya.de",
+			                    "foo.xn--fiqs8s",
+			                    "test.xn--h2brj9c",
 			                    "sh25",
 			                    "as-sh25",
 			                    "AS-SH25",
@@ -567,7 +570,6 @@ int TestString(int argc, char* argv[])
 			"some-.tld",
 			"some.-tld",
 			"some.tld-",
-			"some-xx.tl-d",
 			"some-xx.t",
 			"abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789.tld",
 			"abcdef0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
