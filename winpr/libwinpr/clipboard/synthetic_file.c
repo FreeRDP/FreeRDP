@@ -755,13 +755,24 @@ static const char* stop_at_special_chars(const char* str)
 /** @return TRUE if the descriptor is for an entry inside a copied folder (its name contains a
  *  '\\'), FALSE for a top level file or folder */
 WINPR_ATTR_NODISCARD
-static BOOL descriptor_is_nested(const FILEDESCRIPTORW* dsc)
+static BOOL descriptor_is_nested(wLog* log, const FILEDESCRIPTORW* dsc)
 {
 	WINPR_ASSERT(dsc);
 
 	/* only search the name: what follows its '\0' in cFileName is not guaranteed to be zeroed */
 	const size_t len = _wcsnlen(dsc->cFileName, ARRAYSIZE(dsc->cFileName));
-	return winpr_wcsnchr(dsc->cFileName, len, winpr_wchar_ToLE('\\')) != nullptr;
+	const WCHAR* found = winpr_wcsnchr(dsc->cFileName, len, winpr_wchar_ToLE('\\'));
+
+	const DWORD level = WLOG_TRACE;
+	if (WLog_IsLevelActive(log, level))
+	{
+		char cFileName[260] = WINPR_C_ARRAY_INIT;
+		const int clen = sizeof(cFileName);
+		ConvertWCharNToUtf8(dsc->cFileName, ARRAYSIZE(dsc->cFileName), cFileName,
+		                    ARRAYSIZE(cFileName));
+		WLog_Print(log, level, "%.*s %s nested", clen, cFileName, found ? "is" : "is NOT");
+	}
+	return found != nullptr;
 }
 
 WINPR_ATTR_NODISCARD
@@ -804,6 +815,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
                                                   const char* lineprefix, const char* lineending,
                                                   BOOL skip_last_lineending)
 {
+	wLog* log = WLog_Get(TAG);
 	UINT32 nrDescriptors = 0;
 	size_t baseLength = 0;
 	size_t header_len = strlen(header);
@@ -851,7 +863,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 		if (!read_descriptor(s, &dsc))
 			return nullptr;
 
-		if (!descriptor_is_nested(&dsc))
+		if (!descriptor_is_nested(log, &dsc))
 		{
 			alloc += ARRAYSIZE(dsc.cFileName) *
 			         8; /* Overallocate, just take the biggest value the result path can have */
@@ -884,7 +896,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 		if (!read_descriptor(s, &dsc))
 			goto loop_fail;
 
-		if (descriptor_is_nested(&dsc))
+		if (descriptor_is_nested(log, &dsc))
 			continue;
 
 		char curName[520] = WINPR_C_ARRAY_INIT;
@@ -893,6 +905,10 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 
 		if (ConvertWCharNToUtf8(dsc.cFileName, ARRAYSIZE(dsc.cFileName), curName,
 		                        ARRAYSIZE(curName)) < 0)
+			goto loop_fail;
+
+		HRESULT hr = PathCchConvertStyleA(curName, ARRAYSIZE(curName), PATH_STYLE_UNIX);
+		if (FAILED(hr))
 			goto loop_fail;
 
 		rc = _snprintf(&dst[pos], alloc - pos, "%s%s/", lineprefix, clipboard->delegate.basePath);
