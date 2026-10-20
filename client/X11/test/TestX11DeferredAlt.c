@@ -262,7 +262,7 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* context, UINT16 flags)
 
 static void key(xfContext* xfc, KeySym sym, BOOL down)
 {
-	XKeyEvent event = { 0 };
+	XKeyEvent event = WINPR_C_ARRAY_INIT;
 	event.keycode = XKeysymToKeycode(xfc->display, sym);
 	if (down)
 	{
@@ -276,9 +276,10 @@ static void key(xfContext* xfc, KeySym sym, BOOL down)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL focus(xfContext* xfc, int type, int mode)
 {
-	XEvent event = { 0 };
+	XEvent event = WINPR_C_ARRAY_INIT;
 	event.xfocus.type = type;
 	event.xfocus.mode = mode;
 	return xf_event_process(xfc->common.context.instance, &event);
@@ -440,6 +441,7 @@ static const struct
 	  EXPECT_MINIMIZED }
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL dispatch(xfContext* xfc, Event event)
 {
 	if (event > END && event < ARRAYSIZE(keyEvents))
@@ -477,16 +479,17 @@ static BOOL dispatch(xfContext* xfc, Event event)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_keyboard_mapping_reload(void)
 {
 	BOOL rc = FALSE;
-	xfContext xfc = { 0 };
+	xfContext xfc = WINPR_C_ARRAY_INIT;
 	rdpSettings* settings = freerdp_settings_new(0);
 	if (!settings)
 		return FALSE;
 
-	keyboard_map = (XkbDescRec){ 0 };
-	keyboard_names = (XkbNamesRec){ 0 };
+	keyboard_map = (XkbDescRec)WINPR_C_ARRAY_INIT;
+	keyboard_names = (XkbNamesRec)WINPR_C_ARRAY_INIT;
 	memset(keyboard_key_names, 0, sizeof(keyboard_key_names));
 	keyboard_map.min_key_code = 38;
 	keyboard_map.max_key_code = 39;
@@ -528,16 +531,20 @@ int main(int argc, char* argv[])
 	if (!test_keyboard_mapping_reload())
 		return 1;
 	int rc = 1;
-	xfContext xfc = { 0 };
-	xfWindow window = { 0 };
-	XModifierKeymap modifiers = { 0 };
-	freerdp instance = { 0 };
-	rdpInput input = { 0 };
+	xfContext xfc = WINPR_C_ARRAY_INIT;
+	xfWindow window = WINPR_C_ARRAY_INIT;
+	XModifierKeymap modifiers = WINPR_C_ARRAY_INIT;
+	freerdp instance = WINPR_C_ARRAY_INIT;
+	rdpInput input = WINPR_C_ARRAY_INIT;
 	rdpSettings* settings = freerdp_settings_new(0);
 	/* xf_minimize() publishes a window state change */
 	wPubSub* pubSub = PubSub_New(TRUE);
 	if (!settings || !pubSub)
+	{
+		(void)fprintf(stderr, "settings=%p, pubSub=%p\n", (const void*)settings,
+		              (const void*)pubSub);
 		goto out;
+	}
 	xfc.common.context.settings = settings;
 	xfc.common.context.pubSub = pubSub;
 	xfc.common.context.input = &input;
@@ -573,29 +580,34 @@ int main(int argc, char* argv[])
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard, xfc.grab_keyboard) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
 		                               (cases[i].flags & UNICODE_MODE) != 0))
+		{
+			(void)fprintf(stderr, "%s: GrabKeyboard or UnicodeInput or %" PRIu32 " != 0\n",
+			              cases[i].name, cases[i].flags & UNICODE_MODE);
 			goto out;
+		}
 		for (size_t j = 0; j < ARRAYSIZE(cases[i].events) && cases[i].events[j] != END; j++)
 		{
 			if (!dispatch(&xfc, cases[i].events[j]))
 			{
-				fprintf(stderr, "%s: event %zu failed\n", cases[i].name, j);
+				(void)fprintf(stderr, "%s: event %zu failed\n", cases[i].name, j);
 				goto out;
 			}
 		}
 		if ((cases[i].flags & EXPECT_UNGRAB) && (ungrabs != 1))
 		{
-			fprintf(stderr, "%s: expected one keyboard ungrab, got %u\n", cases[i].name, ungrabs);
+			(void)fprintf(stderr, "%s: expected one keyboard ungrab, got %u\n", cases[i].name,
+			              ungrabs);
 			goto out;
 		}
 		if ((cases[i].flags & EXPECT_MINIMIZED) && !minimized)
 		{
-			fprintf(stderr, "%s: local shortcut did not minimize\n", cases[i].name);
+			(void)fprintf(stderr, "%s: local shortcut did not minimize\n", cases[i].name);
 			goto out;
 		}
 		if (strcmp(trace, cases[i].expected) != 0)
 		{
-			fprintf(stderr, "%s: expected '%s', got '%s'\n", cases[i].name, cases[i].expected,
-			        trace);
+			(void)fprintf(stderr, "%s: expected '%s', got '%s'\n", cases[i].name, cases[i].expected,
+			              trace);
 			goto out;
 		}
 	}
