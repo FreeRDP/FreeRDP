@@ -51,7 +51,6 @@ static void record(char name, int direction)
 	WINPR_ASSERT(used + 2 < sizeof(trace));
 	trace[used++] = name;
 	trace[used++] = WINPR_CXX_COMPAT_CAST(char, (direction & 0xff));
-	;
 	trace[used] = '\0';
 }
 
@@ -202,15 +201,17 @@ int XUngrabPointer(Display* display, Time time)
 	return 1;
 }
 
-BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repeat, UINT32 scan)
+BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repeat,
+                                          UINT32 rdp_scancode)
 {
 	WINPR_UNUSED(input);
-	if (failAlt && down && ((scan == RDP_SCANCODE_LMENU) || (scan == RDP_SCANCODE_RMENU)))
+	if (failAlt && down &&
+	    ((rdp_scancode == RDP_SCANCODE_LMENU) || (rdp_scancode == RDP_SCANCODE_RMENU)))
 		return FALSE;
 	for (size_t i = 0; i < ARRAYSIZE(keys); i++)
 	{
 		const struct keys_t* cur = &keys[i];
-		if (cur->scan == scan)
+		if (cur->scan == rdp_scancode)
 		{
 
 			record(cur->name, down ? (repeat ? '*' : '+') : '-');
@@ -228,38 +229,38 @@ BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 	return TRUE;
 }
 
-BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 flags)
+BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
 	WINPR_UNUSED(input);
-	WINPR_UNUSED(flags);
+	WINPR_UNUSED(toggleStates);
 	return TRUE;
 }
 
-BOOL freerdp_client_send_button_event(rdpClientContext* context, BOOL relative, UINT16 flags,
-                                      INT32 x, INT32 y)
+BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags, INT32 x,
+                                      INT32 y)
 {
-	WINPR_UNUSED(context);
+	WINPR_UNUSED(cctx);
 	WINPR_UNUSED(relative);
 	WINPR_UNUSED(x);
 	WINPR_UNUSED(y);
-	record((flags & PTR_FLAGS_MOVE) ? 'M' : 'B', (flags & PTR_FLAGS_DOWN) ? '+' : '-');
+	record((mflags & PTR_FLAGS_MOVE) ? 'M' : 'B', (mflags & PTR_FLAGS_DOWN) ? '+' : '-');
 	return TRUE;
 }
 
-BOOL freerdp_client_send_extended_button_event(rdpClientContext* context, BOOL relative,
-                                               UINT16 flags, INT32 x, INT32 y)
+BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags,
+                                               INT32 x, INT32 y)
 {
-	WINPR_UNUSED(context);
+	WINPR_UNUSED(cctx);
 	WINPR_UNUSED(relative);
 	WINPR_UNUSED(x);
 	WINPR_UNUSED(y);
-	record('E', (flags & PTR_XFLAGS_DOWN) ? '+' : '-');
+	record('E', (mflags & PTR_XFLAGS_DOWN) ? '+' : '-');
 	return TRUE;
 }
 
-BOOL freerdp_client_send_wheel_event(rdpClientContext* context, UINT16 flags)
+BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 flags)
 {
-	WINPR_UNUSED(context);
+	WINPR_UNUSED(cctx);
 	WINPR_UNUSED(flags);
 	record('W', '+');
 	return TRUE;
