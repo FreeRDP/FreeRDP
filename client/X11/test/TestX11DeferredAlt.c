@@ -60,7 +60,7 @@ Bool XGetEventData(Display* display, XGenericEventCookie* cookie)
 	return True;
 }
 
-void XFreeEventData(Display* display, XGenericEventCookie* cookie)
+void XFreeEventData(Display* display, WINPR_ATTR_UNUSED XGenericEventCookie* cookie)
 {
 	WINPR_UNUSED(display);
 	WINPR_ASSERT(display == cdisplay_stub);
@@ -364,77 +364,97 @@ static const struct
 	{ "remote Alt+Tab", { ALT_DOWN, TAB_DOWN, TAB_UP, ALT_UP }, "A+T+T-A-", GRAB_KEYBOARD },
 	{ "default sends immediately", { ALT_DOWN }, "A+", DEFAULT_MODE },
 	{ "default Alt tap", { ALT_DOWN, ALT_UP }, "A+A-", DEFAULT_MODE },
-	{ "pending repeats", { ALT_DOWN, ALT_DOWN }, "" },
-	{ "bare tap", { ALT_DOWN, ALT_DOWN, ALT_UP }, "A+A-" },
+	{ "pending repeats", { ALT_DOWN, ALT_DOWN }, "", 0 },
+	{ "bare tap", { ALT_DOWN, ALT_DOWN, ALT_UP }, "A+A-", 0 },
 	{ "Unicode Alt tap uses scancodes", { ALT_DOWN, ALT_UP }, "A+A-", UNICODE_MODE },
-	{ "Alt+F ordering and repeat", { ALT_DOWN, F_DOWN, F_DOWN, F_UP, ALT_UP }, "A+F+F*F-A-" },
-	{ "Shift alone remains immediate", { SHIFT_DOWN, SHIFT_UP }, "S+S-" },
+	{ "Alt+F ordering and repeat", { ALT_DOWN, F_DOWN, F_DOWN, F_UP, ALT_UP }, "A+F+F*F-A-", 0 },
+	{ "Shift alone remains immediate", { SHIFT_DOWN, SHIFT_UP }, "S+S-", 0 },
 	{ "Shift before Alt",
 	  { SHIFT_DOWN, ALT_DOWN, F_DOWN, F_UP, ALT_UP, SHIFT_UP },
-	  "S+A+F+F-A-S-" },
-	{ "Shift does not flush Alt", { ALT_DOWN, SHIFT_DOWN }, "S+" },
-	{ "Shift repeats do not flush Alt", { ALT_DOWN, SHIFT_DOWN, SHIFT_DOWN }, "S+S*" },
+	  "S+A+F+F-A-S-",
+	  0 },
+	{ "Shift does not flush Alt", { ALT_DOWN, SHIFT_DOWN }, "S+", 0 },
+	{ "Shift repeats do not flush Alt", { ALT_DOWN, SHIFT_DOWN, SHIFT_DOWN }, "S+S*", 0 },
 	{ "Alt before Shift",
 	  { ALT_DOWN, SHIFT_DOWN, F_DOWN, F_UP, SHIFT_UP, ALT_UP },
-	  "S+A+F+F-S-A-" },
+	  "S+A+F+F-S-A-",
+	  0 },
 	{ "Alt first, Shift release commits chord",
 	  { ALT_DOWN, SHIFT_DOWN, SHIFT_UP, ALT_UP },
-	  "S+A+S-A-" },
+	  "S+A+S-A-",
+	  0 },
 	{ "Shift first, Alt release commits tap",
 	  { SHIFT_DOWN, ALT_DOWN, ALT_UP, SHIFT_UP },
-	  "S+A+A-S-" },
+	  "S+A+A-S-",
+	  0 },
 	{ "Shift first, Shift release commits chord",
 	  { SHIFT_DOWN, ALT_DOWN, SHIFT_UP, ALT_UP },
-	  "S+A+S-A-" },
+	  "S+A+S-A-",
+	  0 },
 	{ "right Shift release commits chord",
 	  { RIGHT_ALT_DOWN, RIGHT_SHIFT_DOWN, RIGHT_SHIFT_UP, RIGHT_ALT_UP },
-	  "H+R+H-R-" },
-	{ "other modifier flushes Alt", { ALT_DOWN, CTRL_DOWN, CTRL_UP, ALT_UP }, "A+C+C-A-" },
+	  "H+R+H-R-",
+	  0 },
+	{ "other modifier flushes Alt", { ALT_DOWN, CTRL_DOWN, CTRL_UP, ALT_UP }, "A+C+C-A-", 0 },
 	{ "right Alt default immediate", { RIGHT_ALT_DOWN }, "R+", DEFAULT_MODE },
-	{ "right Alt pending repeats", { RIGHT_ALT_DOWN, RIGHT_ALT_DOWN }, "" },
-	{ "right Alt tap", { RIGHT_ALT_DOWN, RIGHT_ALT_UP }, "R+R-" },
+	{ "right Alt pending repeats", { RIGHT_ALT_DOWN, RIGHT_ALT_DOWN }, "", 0 },
+	{ "right Alt tap", { RIGHT_ALT_DOWN, RIGHT_ALT_UP }, "R+R-", 0 },
 	{ "right Alt Unicode tap", { RIGHT_ALT_DOWN, RIGHT_ALT_UP }, "R+R-", UNICODE_MODE },
 	{ "AltGr immediate", { RIGHT_ALT_DOWN }, "R+", ALTGR_MODE },
 	{ "AltGr chord", { RIGHT_ALT_DOWN, F_DOWN, F_UP, RIGHT_ALT_UP }, "R+F+F-R-", ALTGR_MODE },
-	{ "both Alt keys remain pending", { ALT_DOWN, RIGHT_ALT_DOWN }, "" },
+	{ "both Alt keys remain pending", { ALT_DOWN, RIGHT_ALT_DOWN }, "", 0 },
 	{ "both Alt keys flush left then right",
 	  { RIGHT_ALT_DOWN, ALT_DOWN, ALT_UP, RIGHT_ALT_UP },
-	  "A+R+A-R-" },
+	  "A+R+A-R-",
+	  0 },
 	{ "both Alt keys canceled",
 	  { ALT_DOWN, RIGHT_ALT_DOWN, GRAB_OUT, GRAB_IN, ALT_UP, RIGHT_ALT_UP },
-	  "" },
-	{ "host consumes Tab without changing selection", { ALT_DOWN, GRAB_OUT, ALT_UP, GRAB_IN }, "" },
+	  "",
+	  0 },
+	{ "host consumes Tab without changing selection",
+	  { ALT_DOWN, GRAB_OUT, ALT_UP, GRAB_IN },
+	  "",
+	  0 },
 	{ "host Alt+Shift+Tab",
 	  { ALT_DOWN, SHIFT_DOWN, GRAB_OUT, FOCUS_OUT, SHIFT_UP, ALT_UP, FOCUS_IN, TAB_UP },
-	  "S+S-" },
-	{ "host Shift+Alt+Tab", { SHIFT_DOWN, ALT_DOWN, GRAB_OUT, SHIFT_UP, ALT_UP, GRAB_IN }, "S+S-" },
+	  "S+S-",
+	  0 },
+	{ "host Shift+Alt+Tab",
+	  { SHIFT_DOWN, ALT_DOWN, GRAB_OUT, SHIFT_UP, ALT_UP, GRAB_IN },
+	  "S+S-",
+	  0 },
 	{ "right Alt+right Shift host switch",
 	  { RIGHT_ALT_DOWN, RIGHT_SHIFT_DOWN, GRAB_OUT, RIGHT_SHIFT_UP, RIGHT_ALT_UP, GRAB_IN },
-	  "H+H-" },
-	{ "pending release after return is ignored", { ALT_DOWN, FOCUS_OUT, FOCUS_IN, ALT_UP }, "" },
+	  "H+H-",
+	  0 },
+	{ "pending release after return is ignored", { ALT_DOWN, FOCUS_OUT, FOCUS_IN, ALT_UP }, "", 0 },
 	{ "held Alt is not restored for guest input",
 	  { ALT_DOWN, GRAB_OUT, GRAB_IN, F_DOWN, F_UP, ALT_UP },
-	  "F+F-" },
-	{ "cleanup releases sent keys", { ALT_DOWN, F_DOWN, WHILE_GRABBED_OUT }, "A+F+F-A-" },
+	  "F+F-",
+	  0 },
+	{ "cleanup releases sent keys", { ALT_DOWN, F_DOWN, WHILE_GRABBED_OUT }, "A+F+F-A-", 0 },
 	{ "cleanup does not repeat releases",
 	  { ALT_DOWN, F_DOWN, WHILE_GRABBED_OUT, F_UP, ALT_UP, FOCUS_IN },
-	  "A+F+F-A-" },
-	{ "pointer motion leaves Alt pending", { ALT_DOWN, MOTION }, "M-" },
-	{ "Alt+button", { ALT_DOWN, MOTION, BUTTON_DOWN, BUTTON_UP, ALT_UP }, "M-A+B+B-A-" },
-	{ "right Alt+button", { RIGHT_ALT_DOWN, BUTTON_DOWN, BUTTON_UP, RIGHT_ALT_UP }, "R+B+B-R-" },
-	{ "wheel release does not flush", { ALT_DOWN, WHEEL_UP }, "" },
-	{ "Alt+wheel", { ALT_DOWN, WHEEL_UP, WHEEL_DOWN, ALT_UP }, "A+W+A-" },
-	{ "Alt+raw extended button", { ALT_DOWN, RAW_BUTTON_DOWN, ALT_UP }, "A+E+A-" },
-	{ "local action cancels unused Alt", { ALT_DOWN, LOCAL_CANCEL, ALT_UP }, "" },
+	  "A+F+F-A-",
+	  0 },
+	{ "pointer motion leaves Alt pending", { ALT_DOWN, MOTION }, "M-", 0 },
+	{ "Alt+button", { ALT_DOWN, MOTION, BUTTON_DOWN, BUTTON_UP, ALT_UP }, "M-A+B+B-A-", 0 },
+	{ "right Alt+button", { RIGHT_ALT_DOWN, BUTTON_DOWN, BUTTON_UP, RIGHT_ALT_UP }, "R+B+B-R-", 0 },
+	{ "wheel release does not flush", { ALT_DOWN, WHEEL_UP }, "", 0 },
+	{ "Alt+wheel", { ALT_DOWN, WHEEL_UP, WHEEL_DOWN, ALT_UP }, "A+W+A-", 0 },
+	{ "Alt+raw extended button", { ALT_DOWN, RAW_BUTTON_DOWN, ALT_UP }, "A+E+A-", 0 },
+	{ "local action cancels unused Alt", { ALT_DOWN, LOCAL_CANCEL, ALT_UP }, "", 0 },
 	{ "local action retains sent Alt release",
 	  { ALT_DOWN, F_DOWN, F_UP, LOCAL_CANCEL, ALT_UP },
-	  "A+F+F-A-" },
+	  "A+F+F-A-",
+	  0 },
 	{ "failed Alt-down produces no Alt-up", { ALT_DOWN, ALT_UP }, "", FAIL_ALT },
 	{ "failed right Alt-down produces no Alt-up", { RIGHT_ALT_DOWN, RIGHT_ALT_UP }, "", FAIL_ALT },
 	{ "failed Alt-down blocks guest key", { ALT_DOWN, F_DOWN, F_UP, ALT_UP }, "", FAIL_ALT },
 	{ "canceled Alt release leaves other Alt pending",
 	  { ALT_DOWN, GRAB_OUT, GRAB_IN, RIGHT_ALT_DOWN, ALT_UP, RIGHT_ALT_UP },
-	  "R+R-" },
+	  "R+R-",
+	  0 },
 	{ "local shortcut sees pending physical Alt",
 	  { CTRL_DOWN, ALT_DOWN, M_DOWN, M_UP, ALT_UP, CTRL_UP },
 	  "C+C-",
@@ -500,22 +520,37 @@ static BOOL test_keyboard_mapping_reload(void)
 	xfc.display = display_stub;
 	xfc.log = WLog_Get("com.freerdp.client.x11.test.keyboard");
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, ENGLISH_UNITED_STATES))
+	{
+		(void)fprintf(stderr, "%s: 1: KeyboardLayout could not be set\n", __func__);
 		goto out;
+	}
 
 	memcpy(keyboard_key_names[38].name, "AC01", XkbKeyNameLength);
 	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+	{
+		(void)fprintf(stderr, "%s: 2: xf_keyboard_init failed or %u != %u\n", __func__,
+		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], RDP_SCANCODE_KEY_A);
 		goto out;
+	}
 
 	/* A new map with non-standard key names must be recovered through keysyms. */
 	memset(keyboard_key_names[38].name, 0, XkbKeyNameLength);
 	memcpy(keyboard_key_names[38].name, "L001", XkbKeyNameLength);
 	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+	{
+		(void)fprintf(stderr, "%s: 3: xf_keyboard_init failed or %u != %u\n", __func__,
+		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], RDP_SCANCODE_KEY_A);
 		goto out;
+	}
 
 	/* If the replacement map is unusable, retain the last working mapping. */
 	keyboard_keysym = NoSymbol;
 	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+	{
+		(void)fprintf(stderr, "%s: 4: xf_keyboard_init failed or %u != %u\n", __func__,
+		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], RDP_SCANCODE_KEY_A);
 		goto out;
+	}
 
 	rc = TRUE;
 out:
@@ -530,6 +565,7 @@ int main(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	if (!test_keyboard_mapping_reload())
 		return 1;
+
 	int rc = 1;
 	xfContext xfc = WINPR_C_ARRAY_INIT;
 	xfWindow window = WINPR_C_ARRAY_INIT;
