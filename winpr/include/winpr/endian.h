@@ -376,7 +376,7 @@ extern "C"
 		winpr_Data_Write_UINT32_BE(b + 4, v & 0xFFFFFFFF);
 	}
 
-#if defined(WINPR_DEPRECATED)
+#if defined(WITH_WINPR_DEPRECATED)
 #define Data_Read_UINT8_NE(_d, _v) _v = winpr_Data_Get_UINT8(_d)
 
 #define Data_Read_UINT8(_d, _v) _v = winpr_Data_Get_UINT8(_d)
