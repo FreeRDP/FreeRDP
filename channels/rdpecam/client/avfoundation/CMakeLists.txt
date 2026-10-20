@@ -45,6 +45,6 @@ add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_N
 # Keep manual retain/release even when the iOS toolchain or parent project enables ARC.
 set_source_files_properties(camera_avfoundation.m modes.m PROPERTIES COMPILE_OPTIONS "-fno-objc-arc")
 
-if((BUILD_TESTING OR BUILD_TESTING_INTERNAL) AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(BUILD_TESTING AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   add_subdirectory(test)
 endif()

@@ -208,6 +208,6 @@ add_library(freerdp-codecs OBJECT ${CODEC_SRCS})
 freerdp_library_add(${CODEC_LIBS})
 freerdp_object_library_add(freerdp-codecs)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

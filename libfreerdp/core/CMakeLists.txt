@@ -174,6 +174,6 @@ endif()
 freerdp_library_add(${OPENSSL_LIBRARIES})
 freerdp_pc_add_requires_private("libssl")
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

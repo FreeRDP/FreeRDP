@@ -164,7 +164,7 @@ if(WITH_XDG_AAD_AUTH_HELPER)
   add_subdirectory(xdg-aad-helper)
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 

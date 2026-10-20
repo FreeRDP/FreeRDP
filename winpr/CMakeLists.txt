@@ -491,7 +491,7 @@ if(WITH_WINPR_TOOLS)
   add_subdirectory(tools)
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
   add_subdirectory(test-header)
 endif()

@@ -1,3 +1,4 @@
+set(BUILD_TESTING ON CACHE BOOL "qa default")
 set(BUILD_TESTING_INTERNAL ON CACHE BOOL "qa default")
 set(CMAKE_C_STANDARD 23 CACHE STRING "preload")
 set(CMAKE_C_FLAGS "-Wno-pre-c23-compat -Wno-nrvo -Wno-deprecated-declarations" CACHE STRING "preload")
