@@ -81,7 +81,7 @@ static CAM_MEDIA_TYPE_DESCRIPTION_FLAGS ecam_media_type_flags(CAM_MEDIA_FORMAT f
 {
 	if ((format == CAM_MEDIA_FORMAT_H264) || (format == CAM_MEDIA_FORMAT_MJPG))
 		return CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
-	return 0;
+	return AM_MEDIA_TYPE_DESCRIPTION_FLAG_Invalid;
 }
 
 static void ecam_dev_write_media_type(wStream* s, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
