@@ -105,7 +105,14 @@ void XkbFreeKeyboard(XkbDescPtr xkb, unsigned int which, Bool free_desc)
 	WINPR_UNUSED(free_desc);
 }
 
-KeySym XkbKeycodeToKeysym(Display* display, KeyCode keycode, int group, int level)
+KeySym XkbKeycodeToKeysym(Display* display,
+#if NeedWidePrototypes
+                          unsigned int
+#else
+                          KeyCode
+#endif
+                              keycode,
+                          int group, int level)
 {
 	WINPR_UNUSED(display);
 	WINPR_ASSERT(display == cdisplay_stub);
