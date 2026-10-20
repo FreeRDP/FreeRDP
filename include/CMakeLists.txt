@@ -17,12 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
-  option(WITH_OPAQUE_SETTINGS "Hide rdpSettings struct definition, only allow getter/setter access" OFF)
-else()
-  set(WITH_OPAQUE_SETTINGS ON CACHE INTERNAL "NOT WITHOUT_FREERDP_3x_DEPRECATED")
-endif()
-
 # prepare paths for C
 file(TO_NATIVE_PATH "${FREERDP_DATA_PATH}" NATIVE_FREERDP_DATA_PATH)
 file(TO_NATIVE_PATH "${FREERDP_KEYMAP_PATH}" NATIVE_FREERDP_KEYMAP_PATH)
