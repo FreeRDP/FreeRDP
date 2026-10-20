@@ -26,7 +26,7 @@ int TestI18n(int argc, char* argv[])
 
 #ifdef WITH_WINPR_I18N
 	/* A translation locale must not change number formatting in the application. */
-	char numericLocale[128] = { 0 };
+	char numericLocale[128] = WINPR_C_ARRAY_INIT;
 	const char* numeric = setlocale(LC_NUMERIC, "C.UTF-8");
 	if (numeric && (strlen(numeric) < sizeof(numericLocale)))
 		memcpy(numericLocale, numeric, strlen(numeric) + 1);

@@ -357,9 +357,9 @@ static BOOL testDecodeAvc444(UINT32 codec)
 	const UINT32 format = PIXEL_FORMAT_BGRX32;
 	const BYTE untouched[4] = { 0xA5, 0xA5, 0xA5, 0xA5 };
 	const size_t sampleOffset = partial.top * stride + partial.left * 4;
-	BYTE luma[4] = { 0 };
-	BYTE combined[64 * 64 * 4] = { 0 };
-	BYTE separate[64 * 64 * 4] = { 0 };
+	BYTE luma[4] = WINPR_C_ARRAY_INIT;
+	BYTE combined[64 * 64 * 4] = WINPR_C_ARRAY_INIT;
+	BYTE separate[64 * 64 * 4] = WINPR_C_ARRAY_INIT;
 	H264_CONTEXT* combinedContext = h264_context_new(FALSE);
 	H264_CONTEXT* separateContext = h264_context_new(FALSE);
 

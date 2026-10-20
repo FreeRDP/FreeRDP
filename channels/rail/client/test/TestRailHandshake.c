@@ -90,7 +90,7 @@ static BOOL check_handshake(rdpSettings* settings, BOOL extended, BOOL reconnect
 	g_execCount = 0;
 	g_failHandshake = failHandshake;
 	g_failStatus = failStatus;
-	const RAIL_HANDSHAKE_ORDER handshake = { 0 };
+	const RAIL_HANDSHAKE_ORDER handshake = WINPR_C_ARRAY_INIT;
 	const RAIL_HANDSHAKE_EX_ORDER handshakeEx = WINPR_C_ARRAY_INIT;
 	const UINT rc = extended ? g_rail->ServerHandshakeEx(g_rail, &handshakeEx)
 	                         : g_rail->ServerHandshake(g_rail, &handshake);
