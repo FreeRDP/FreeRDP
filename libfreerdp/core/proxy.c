@@ -689,37 +689,34 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 		goto fail;
 	Stream_Write(s, port_str, portLen);
 
-	if (proxyUsername && proxyPassword)
+	if (proxyUsername && proxyPassword && (strnlen(proxyUsername, 1) > 0) &&
+	    (strnlen(proxyPassword, 1) > 0))
 	{
-		const int length = _scprintf("%s:%s", proxyUsername, proxyPassword);
-		if (length > 0)
+		const char basic[] = CRLF "Proxy-Authorization: Basic ";
+		const size_t balen = strnlen(basic, sizeof(basic));
+		if (!Stream_EnsureRemainingCapacity(s, balen))
+			goto fail;
+		Stream_Write(s, basic, balen);
+
+		char* creds = nullptr;
+		size_t size = 0;
+		(void)winpr_asprintf(&creds, &size, "%s:%s", proxyUsername, proxyPassword);
+		if (!creds || (size < 1))
 		{
-			const char basic[] = CRLF "Proxy-Authorization: Basic ";
-			const size_t balen = strnlen(basic, sizeof(basic));
-			if (!Stream_EnsureRemainingCapacity(s, balen))
-				goto fail;
-			Stream_Write(s, basic, balen);
-
-			char* creds = nullptr;
-			size_t size = 0;
-			(void)winpr_asprintf(&creds, &size, "%s:%s", proxyUsername, proxyPassword);
-			if (!creds || (size < 1))
-			{
-				free(creds);
-				goto fail;
-			}
-			size_t b64len = 0;
-			char* base64 = crypto_base64_encode_len(creds, size - 1, &b64len);
 			free(creds);
-			if (!base64 || !Stream_EnsureRemainingCapacity(s, b64len))
-			{
-				free(base64);
-				goto fail;
-			}
-
-			Stream_Write(s, base64, strlen(base64));
-			free(base64);
+			goto fail;
 		}
+		size_t b64len = 0;
+		char* base64 = crypto_base64_encode_len(creds, size, &b64len);
+		free(creds);
+		if (!base64 || !Stream_EnsureRemainingCapacity(s, b64len))
+		{
+			free(base64);
+			goto fail;
+		}
+
+		Stream_Write(s, base64, strlen(base64));
+		free(base64);
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
