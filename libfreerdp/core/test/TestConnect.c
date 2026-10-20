@@ -99,6 +99,56 @@ static int testTimeout(int port)
 	return 0;
 }
 
+/* Without a monitor list (no fullscreen, no multimon) freerdp_connect makes one monitor from the
+ * desktop settings. Its scale factors must be the desktop and the device scale factor, in that
+ * order: /scale-desktop sets only the first. The connection itself fails (nothing listens on the
+ * port); the monitor is made before. */
+static int testMonitorScaleFactors(void)
+{
+	int rc = -1;
+	char* argv[] = { "test", "/v:127.0.0.1:1", "/scale-desktop:200" };
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
+	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
+	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
+	clientEntryPoints.ContextSize = sizeof(rdpClientContext);
+	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
+
+	if (!context)
+		return -1;
+
+	if (freerdp_client_settings_parse_command_line(context->settings, ARRAYSIZE(argv), argv,
+	                                               FALSE) < 0)
+		goto finish;
+
+	(void)freerdp_connect(context->instance);
+
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(context->settings, FreeRDP_MonitorDefArray, 0);
+		if (!monitor || (freerdp_settings_get_uint32(context->settings, FreeRDP_MonitorCount) != 1))
+			goto finish;
+
+		const UINT32 desktop =
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopScaleFactor);
+		const UINT32 device =
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_DeviceScaleFactor);
+		if ((monitor->attributes.desktopScaleFactor != desktop) ||
+		    (monitor->attributes.deviceScaleFactor != device) || (desktop != 200))
+		{
+			printf("%s: monitor scale %" PRIu32 "/%" PRIu32 ", expected %" PRIu32 "/%" PRIu32 "\n",
+			       __func__, monitor->attributes.desktopScaleFactor,
+			       monitor->attributes.deviceScaleFactor, desktop, device);
+			goto finish;
+		}
+	}
+
+	printf("%s: Success!\n", __func__);
+	rc = 0;
+finish:
+	freerdp_client_context_free(context);
+	return rc;
+}
+
 struct testThreadArgs
 {
 	int port;
@@ -319,6 +369,10 @@ int TestConnect(int argc, char* argv[])
 	if (winpr_RAND(&random, sizeof(random)) < 0)
 		return -1;
 	randomPort = 3389 + (random % 200);
+
+	/* The monitor made from the desktop settings keeps their scale factors apart. */
+	if (testMonitorScaleFactors())
+		return -1;
 
 	/* Test connect to not existing server,
 	 * check if timeout is honored. */

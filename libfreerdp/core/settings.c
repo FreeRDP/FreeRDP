@@ -1837,9 +1837,9 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		const UINT16 orientation =
 		    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 		const UINT32 desktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		const UINT32 deviceScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		const UINT32 deviceScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 1))
 			return FALSE;
