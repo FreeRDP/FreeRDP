@@ -2087,6 +2087,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 			if (!status)
 				return -1;
 
+			rdg->nextHeaderLengthRead = 0;
 			return 0;
 		}
 
