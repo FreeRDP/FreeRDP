@@ -533,22 +533,28 @@ static BOOL test_keyboard_mapping_reload(void)
 		goto out;
 	}
 
+#if defined(__APPLE__)
+	const DWORD expect = RDP_SCANCODE_OEM_6;
+#else
+	const DWORD expect = RDP_SCANCODE_KEY_A;
+#endif
+
 	/* A new map with non-standard key names must be recovered through keysyms. */
 	memset(keyboard_key_names[38].name, 0, XkbKeyNameLength);
 	memcpy(keyboard_key_names[38].name, "L001", XkbKeyNameLength);
-	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != expect))
 	{
 		(void)fprintf(stderr, "%s: 3: xf_keyboard_init failed or %u != %u\n", __func__,
-		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], RDP_SCANCODE_KEY_A);
+		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], expect);
 		goto out;
 	}
 
 	/* If the replacement map is unusable, retain the last working mapping. */
 	keyboard_keysym = NoSymbol;
-	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != RDP_SCANCODE_KEY_A))
+	if (!xf_keyboard_init(&xfc) || (xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38] != expect))
 	{
 		(void)fprintf(stderr, "%s: 4: xf_keyboard_init failed or %u != %u\n", __func__,
-		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], RDP_SCANCODE_KEY_A);
+		              xfc.X11_KEYCODE_TO_VIRTUAL_SCANCODE[38], expect);
 		goto out;
 	}
 
