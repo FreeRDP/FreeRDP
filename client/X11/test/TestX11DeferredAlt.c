@@ -9,8 +9,8 @@
 #include "../xf_keyboard.h"
 #include "../xf_event.h"
 
-static const Display* cdisplay_stub = 0x123456789abcdef;
-static Display* display_stub = 0x123456789abcdef;
+static const Display* cdisplay_stub = (const Display*)0x123456789abcdef;
+static Display* display_stub = (Display*)0x123456789abcdef;
 
 /* Run the real X11 keyboard/focus/button handlers with a deterministic X server
  * and input sink. No display, window manager, RDP server or sleeps are needed. */
