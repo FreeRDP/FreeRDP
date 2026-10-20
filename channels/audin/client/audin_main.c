@@ -1077,6 +1077,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 #if defined(WITH_SNDIO)
 		{ "sndio", "default" },
 #endif
+#if defined(__EMSCRIPTEN__)
+		{ "emscripten", "" },
+#endif
 		{ nullptr, nullptr }
 	};
 	struct SubsystemEntry* entry = &entries[0];
