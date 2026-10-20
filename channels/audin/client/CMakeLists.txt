@@ -60,3 +60,7 @@ endif()
 if(WITH_IOSAUDIO)
   add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ios" "")
 endif()
+
+if(EMSCRIPTEN)
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "emscripten" "")
+endif()
