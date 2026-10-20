@@ -505,8 +505,7 @@ static BOOL test_write_unpadded_rows(void)
 	}
 
 	{
-		UINT32 bfOffBits = 0;
-		memcpy(&bfOffBits, &out[10], sizeof(bfOffBits));
+		const UINT32 bfOffBits = winpr_Data_Get_UINT32(&out[10]);
 		const BYTE zero[3] = WINPR_C_ARRAY_INIT;
 		if ((outSize != bfOffBits + padded * height) ||
 		    (memcmp(&out[bfOffBits], &pixels[row], row) != 0) ||

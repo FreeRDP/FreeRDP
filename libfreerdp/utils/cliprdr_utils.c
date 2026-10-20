@@ -120,7 +120,7 @@ static BOOL contains_dotdot(const WCHAR* path, size_t path_length)
 	const WCHAR* tst = path;
 	do
 	{
-		tst = winpr_wcsnchr(tst, tstlen, '.');
+		tst = winpr_wcsnchr(tst, tstlen, winpr_wchar_ToLE('.'));
 		if (!tst)
 			return FALSE;
 		const size_t diff = WINPR_ASSERTING_INT_CAST(size_t, tst - path);

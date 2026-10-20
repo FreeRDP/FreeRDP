@@ -594,6 +594,13 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #endif /* __BYTE_ORDER */
 
+#if defined(_WIN32)
+#ifndef __LITTLE_ENDIAN__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define __LITTLE_ENDIAN__ 1
+#endif
+#endif
+
 WINPR_PRAGMA_DIAG_POP
 
 #if defined(__cplusplus) && (__cplusplus >= 201703L)

@@ -376,7 +376,32 @@ extern "C"
 		winpr_Data_Write_UINT32_BE(b + 4, v & 0xFFFFFFFF);
 	}
 
-#if defined(WINPR_DEPRECATED)
+	/** @brief Convert a WCHAR from native endianness to little endian
+	 *
+	 *  @param native The WCHAR in native endianness
+	 *  @return The WCHAR in little endian
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	static inline WCHAR winpr_wchar_ToLE(WCHAR native)
+	{
+#if defined(__LITTLE_ENDIAN__)
+		return native;
+#else
+	    union
+	    {
+		    char c[2];
+		    WCHAR wc;
+	    } cnv;
+	    cnv.wc = native;
+	    char tmp = cnv.c[0];
+	    cnv.c[0] = cnv.c[1];
+	    cnv.c[1] = tmp;
+	    return cnv.wc;
+#endif
+	}
+
+#if defined(WITH_WINPR_DEPRECATED)
 #define Data_Read_UINT8_NE(_d, _v) _v = winpr_Data_Get_UINT8(_d)
 
 #define Data_Read_UINT8(_d, _v) _v = winpr_Data_Get_UINT8(_d)

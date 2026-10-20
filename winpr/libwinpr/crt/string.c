@@ -995,7 +995,7 @@ WCHAR* winpr_wcsnchr(const WCHAR* str, size_t charLen, WCHAR c)
 
 	while (p != end)
 	{
-		const WCHAR wc = winpr_Data_Get_UINT16(p);
+		const WCHAR wc = *p;
 		if (wc == c)
 		{
 			union
@@ -1028,7 +1028,7 @@ WCHAR* winpr_wcsnrchr(const WCHAR* str, size_t charLen, WCHAR c)
 	cnv.cw = nullptr;
 	while (p != end)
 	{
-		const WCHAR wc = winpr_Data_Get_UINT16(p);
+		const WCHAR wc = *p;
 		if (wc == c)
 			cnv.cw = p;
 		p++;
