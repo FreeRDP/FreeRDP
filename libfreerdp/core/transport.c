@@ -1340,6 +1340,34 @@ static BOOL transport_default_get_public_key(rdpTransport* transport, const BYTE
 	return TRUE;
 }
 
+BOOL transport_get_peer_address(rdpTransport* transport, struct sockaddr_storage* address,
+                                size_t* length)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(address);
+	WINPR_ASSERT(length);
+
+	if (transport->GatewayEnabled)
+		return FALSE;
+
+	int sockfd = -1;
+	if (transport->frontBio)
+		(void)BIO_get_fd(transport->frontBio, &sockfd);
+	if ((sockfd < 0) && transport->tls && transport->tls->underlying)
+		(void)BIO_get_fd(transport->tls->underlying, &sockfd);
+	if (sockfd < 0)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "no socket found for the peer address");
+		return FALSE;
+	}
+
+	socklen_t len = sizeof(*address);
+	if (getpeername(sockfd, (struct sockaddr*)address, &len) != 0)
+		return FALSE;
+	*length = len;
+	return TRUE;
+}
+
 DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0; /* always the reread Event */
