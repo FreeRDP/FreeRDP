@@ -155,6 +155,10 @@ if(WITH_APPLE_VIDEOTOOLBOX)
   )
 endif()
 
+if(WITH_H264_WEBCODECS)
+  list(APPEND CODEC_SRCS h264_webcodecs.c)
+endif()
+
 if(WITH_OPENH264)
   set(CODEC_SRCS ${CODEC_SRCS} h264_openh264.c)
   include_directories(SYSTEM ${OPENH264_INCLUDE_DIR})
