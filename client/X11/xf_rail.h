@@ -90,6 +90,12 @@ struct xf_app_window
 	UINT32 resizeMarginTop;
 	UINT32 resizeMarginRight;
 	UINT32 resizeMarginBottom;
+	/* Omitted fields do not advertise zero margins (notably Server 2016 dialogs). */
+	BOOL resizeMarginXKnown;
+	BOOL resizeMarginYKnown;
+	BOOL unknownMarginWarning;
+	UINT64 lastUnknownMarginReconcile;
+	BOOL serverGeometryPending;
 	/* Deduplicate only the last successfully queued, still-unanswered move.
 	 * A server geometry update ends this scope, including adjusted replies. */
 	BOOL windowMovePending;
@@ -137,6 +143,10 @@ WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+
+BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow);
+
+void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
 
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,

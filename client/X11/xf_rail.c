@@ -299,21 +299,14 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 
 		if (parent != root)
 		{
-			/* Real positions are parent-relative. The WM can move the client
-			 * and frame in separate requests, including during LMS_ACTIVE.
-			 * Keep the last root-space snapshot until its synthetic notification;
-			 * never mix a queued event's size with a queried, newer position.
-			 * Pure resizes can still apply their size at that known position. */
-			x = appWindow->x;
-			y = appWindow->y;
-			if ((event->width == appWindow->width) && (event->height == appWindow->height))
-			{
-				WLog_Print(xfc->log, WLOG_DEBUG,
-				           "[rail-geometry] defer position-only configure windowId=0x%08" PRIx64
-				           " event=%d,%d %dx%d until synthetic root notification",
-				           appWindow->windowId, event->x, event->y, event->width, event->height);
-				return FALSE;
-			}
+			/* A real child notification is not a root-space snapshot, even
+			 * when it changes size. Do not report that new size at an old root
+			 * position before the WM's paired synthetic notification arrives. */
+			WLog_Print(xfc->log, WLOG_DEBUG,
+			           "[rail-geometry] defer child configure windowId=0x%08" PRIx64
+			           " event=%d,%d %dx%d until synthetic root notification",
+			           appWindow->windowId, event->x, event->y, event->width, event->height);
+			return FALSE;
 		}
 		/* Without reparenting, the event coordinates are already root-space. */
 	}
@@ -334,8 +327,48 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 	return xf_AppWindowResize(xfc, appWindow);
 }
 
+BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(appWindow);
+	return appWindow->resizeMarginXKnown && appWindow->resizeMarginYKnown;
+}
+
+void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	if ((appWindow->windowWidth == 0) || (appWindow->windowHeight == 0))
+		return;
+	appWindow->serverGeometryPending = FALSE;
+	if ((appWindow->x == appWindow->windowOffsetX) &&
+	    (appWindow->y == appWindow->windowOffsetY) &&
+	    (appWindow->width == (INT64)appWindow->windowWidth) &&
+	    (appWindow->height == (INT64)appWindow->windowHeight))
+		return;
+	xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX, appWindow->windowOffsetY,
+	              WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
+	              WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
+}
+
 static BOOL xf_rail_send_window_move(xfContext* xfc, xfAppWindow* appWindow)
 {
+	if (!xf_rail_has_resize_margins(appWindow))
+	{
+		/* A visible rectangle is not necessarily an outer rectangle, even
+		 * for a fixed-size dialog. Never silently turn a move into a resize.
+		 * Native mouse moves need only a final button release. Other native
+		 * operations remain server-driven until their margins are known. */
+		if (!appWindow->unknownMarginWarning)
+		{
+			WLog_Print(xfc->log, WLOG_WARN,
+			           "[rail-geometry] refusing WINDOWMOVE with unknown resize margins"
+			           " windowId=0x%08" PRIx64 " known-x=%d known-y=%d",
+			           appWindow->windowId, appWindow->resizeMarginXKnown,
+			           appWindow->resizeMarginYKnown);
+			appWindow->unknownMarginWarning = TRUE;
+		}
+		return FALSE;
+	}
 	/* RAIL uses signed 16-bit rectangle coordinates. Validate before casting:
 	 * wrapping a drifting X11 coordinate creates another remote move. */
 	const INT64 left = (INT64)appWindow->x - appWindow->resizeMarginLeft;
@@ -413,6 +446,24 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	    appWindow->width != (INT64)appWindow->windowWidth ||
 	    appWindow->height != (INT64)appWindow->windowHeight)
 	{
+		if (!xf_rail_has_resize_margins(appWindow))
+		{
+			/* An independent WM/client configure is not a native RAIL mouse
+			 * move. Reject its unsafe rectangle and restore authoritative
+			 * bounds, rather than shrink the remote window or leave input at
+			 * a different position from the local picture. */
+			(void)xf_rail_send_window_move(xfc, appWindow);
+			/* A broken WM can echo a different position while restoring.
+			 * Reconcile once per burst, never feed that into another X11 loop. */
+			const UINT64 now = winpr_GetTickCount64NS();
+			if ((appWindow->lastUnknownMarginReconcile == 0) ||
+			    (now - appWindow->lastUnknownMarginReconcile >= 500ULL * 1000000ULL))
+			{
+				appWindow->lastUnknownMarginReconcile = now;
+				xf_rail_reconcile_window(xfc, appWindow);
+			}
+			return TRUE;
+		}
 		return xf_rail_send_window_move(xfc, appWindow);
 	}
 	return TRUE;
@@ -431,12 +482,16 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
-	if ((appWindow->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
-	    (appWindow->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	if (appWindow->local_move.state == LMS_TERMINATING)
+		return TRUE;
+	if (appWindow->local_move.state == LMS_NOT_ACTIVE)
+		return FALSE;
+
+	if (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE)
 	{
-		/*
-		 * For keyboard moves send and explicit update to RDP server
-		 */
+		/* MS-RDPERP 1.3.2.5: all resizes and keyboard moves need a
+		 * WINDOWMOVE. A mouse move must end via its final button release,
+		 * not by treating visible dimensions as another outer rectangle. */
 		if (!xf_rail_send_window_move(xfc, appWindow))
 			return FALSE;
 	}
@@ -456,16 +511,12 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 			return FALSE;
 	}
 
-	/*
-	 * Proactively update the RAIL window dimensions.  There is a race condition where
-	 * we can start to receive GDI orders for the new window dimensions before we
-	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
-	 */
-	appWindow->windowOffsetX = appWindow->x;
-	appWindow->windowOffsetY = appWindow->y;
-	appWindow->windowWidth = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
-	appWindow->windowHeight = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
+	/* Keep server bounds authoritative. A local completion is not a server
+	 * acknowledgement, and the returned visible rectangle may be adjusted. */
 	appWindow->local_move.state = LMS_TERMINATING;
+	WLog_Print(xfc->log, WLOG_DEBUG,
+	           "[rail-geometry] local move completion windowId=0x%08" PRIx64 " direction=%d",
+	           appWindow->windowId, appWindow->local_move.direction);
 	return TRUE;
 }
 
@@ -658,13 +709,17 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	{
 		appWindow->resizeMarginLeft = windowState->resizeMarginLeft;
 		appWindow->resizeMarginRight = windowState->resizeMarginRight;
+		appWindow->resizeMarginXKnown = TRUE;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
 	{
 		appWindow->resizeMarginTop = windowState->resizeMarginTop;
 		appWindow->resizeMarginBottom = windowState->resizeMarginBottom;
+		appWindow->resizeMarginYKnown = TRUE;
 	}
+	if (xf_rail_has_resize_margins(appWindow))
+		appWindow->unknownMarginWarning = FALSE;
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
@@ -785,6 +840,8 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (position_or_size_updated)
 	{
+		if (appWindow->local_move.state != LMS_NOT_ACTIVE)
+			appWindow->serverGeometryPending = TRUE;
 		const INT32 visibilityRectsOffsetX =
 		    (appWindow->visibleOffsetX -
 		     (appWindow->clientOffsetX - appWindow->windowClientDeltaX));
@@ -1313,6 +1370,15 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	if (!appWindow)
 		return ERROR_INTERNAL_ERROR;
 
+	if (!localMoveSize->isMoveSizeStart)
+	{
+		/* End coordinates are a desktop position, not a mouse offset to
+		 * translate through the local window. Reconcile cached server bounds. */
+		xf_EndLocalMoveSize(xfc, appWindow);
+		xf_rail_return_window(appWindow, FALSE);
+		return CHANNEL_RC_OK;
+	}
+
 	WLog_Print(xfc->log, WLOG_TRACE, "%s [0x%08" PRIx32 "]",
 	           movetype2str(localMoveSize->moveSizeType), localMoveSize->moveSizeType);
 	switch (localMoveSize->moveSizeType)
@@ -1385,13 +1451,22 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 			/* FIXME: local keyboard moves not working */
 			break;
 		default:
-			break;
+			xf_rail_return_window(appWindow, FALSE);
+			return ERROR_INVALID_DATA;
 	}
 
-	if (localMoveSize->isMoveSizeStart)
-		xf_StartLocalMoveSize(xfc, appWindow, direction, x, y);
+	/* Keep keyboard moves and resizes server-driven if their required
+	 * outer rectangle cannot be formed safely. Do not inherit an owner's
+	 * frame or guess a DPI-dependent border for this window. */
+	if ((direction != NET_WM_MOVERESIZE_MOVE) && !xf_rail_has_resize_margins(appWindow))
+	{
+		WLog_Print(xfc->log, WLOG_DEBUG,
+		           "[rail-geometry] server-driven move/resize windowId=0x%08" PRIx64
+		           " direction=%d: resize margins unknown",
+		           appWindow->windowId, direction);
+	}
 	else
-		xf_EndLocalMoveSize(xfc, appWindow);
+		xf_StartLocalMoveSize(xfc, appWindow, direction, x, y);
 
 	xf_rail_return_window(appWindow, FALSE);
 	return CHANNEL_RC_OK;
