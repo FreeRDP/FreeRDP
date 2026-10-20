@@ -122,7 +122,7 @@ static BOOL server_open(TestCtx* ctx)
 	if (ctx->server == INVALID_SOCKET)
 		return FALSE;
 
-	struct sockaddr_in addr = { 0 };
+	struct sockaddr_in addr = WINPR_C_ARRAY_INIT;
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	addr.sin_port = 0;
@@ -197,8 +197,8 @@ typedef struct
  * padded to 7 bytes, then the first and eighth byte swapped. */
 static BOOL server_send_v3(TestCtx* ctx, const V3Out* out)
 {
-	BYTE wire[1500] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE wire[1500] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
 
 	UINT16 flags = 0;
@@ -274,7 +274,7 @@ static BOOL send_ack(TestCtx* ctx, UINT16 ack)
 
 static BOOL parse_v3(const BYTE* wire, size_t length, V3Packet* packet)
 {
-	BYTE buffer[1500] = { 0 };
+	BYTE buffer[1500] = WINPR_C_ARRAY_INIT;
 	if ((length < 8) || (length > sizeof(buffer)))
 		return FALSE;
 	memcpy(buffer, wire, length);
@@ -288,7 +288,7 @@ static BOOL parse_v3(const BYTE* wire, size_t length, V3Packet* packet)
 	if (shortLength < 7)
 		length = 1ull + shortLength;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer + 1, length - 1);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
@@ -353,12 +353,12 @@ static BOOL parse_v3(const BYTE* wire, size_t length, V3Packet* packet)
 /* Reads everything the client sent, until nothing more arrives for waitMs. */
 static BOOL drain(TestCtx* ctx, UINT32 waitMs)
 {
-	BYTE buffer[1500] = { 0 };
+	BYTE buffer[1500] = WINPR_C_ARRAY_INIT;
 	ctx->seenCount = 0;
 	size_t length = 0;
 	while ((length = server_recv(ctx, buffer, sizeof(buffer), waitMs)) > 0)
 	{
-		V3Packet packet = { 0 };
+		V3Packet packet = WINPR_C_ARRAY_INIT;
 		if (!parse_v3(buffer, length, &packet))
 			return FALSE;
 		if (ctx->seenCount == MAX_SEEN)
@@ -374,7 +374,7 @@ static BOOL drain(TestCtx* ctx, UINT32 waitMs)
 /* Reads what the client sent until want DATA packets are in, or timeoutMs passed. */
 static BOOL collect_data(TestCtx* ctx, size_t want, UINT32 timeoutMs)
 {
-	BYTE buffer[1500] = { 0 };
+	BYTE buffer[1500] = WINPR_C_ARRAY_INIT;
 	ctx->seenCount = 0;
 	size_t count = 0;
 	while (count < want)
@@ -485,8 +485,8 @@ static BOOL ctx_start(TestCtx* ctx, BOOL offerV3, SynInfo* syn)
 	                    sizeof(ctx->serverAddr)))
 		return FALSE;
 
-	BYTE buffer[1500] = { 0 };
-	struct sockaddr_in from = { 0 };
+	BYTE buffer[1500] = WINPR_C_ARRAY_INIT;
+	struct sockaddr_in from = WINPR_C_ARRAY_INIT;
 	int fromLength = sizeof(from);
 	const UINT64 deadline = GetTickCount64() + 1000;
 	int rc = -1;
@@ -500,7 +500,7 @@ static BOOL ctx_start(TestCtx* ctx, BOOL offerV3, SynInfo* syn)
 	if (_connect(ctx->server, (const struct sockaddr*)&from, fromLength) != 0)
 		return FALSE;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer, (size_t)rc);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return FALSE;
@@ -517,8 +517,8 @@ static BOOL ctx_start(TestCtx* ctx, BOOL offerV3, SynInfo* syn)
 
 static BOOL send_syn_ack(TestCtx* ctx, UINT32 acknowledged, UINT16 version)
 {
-	BYTE wire[20] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE wire[20] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
 	Stream_Write_UINT32_BE(s, acknowledged); /* snSourceAck */
 	Stream_Write_UINT16_BE(s, 64);           /* uReceiveWindowSize */
@@ -534,7 +534,7 @@ static BOOL send_syn_ack(TestCtx* ctx, UINT32 acknowledged, UINT16 version)
 /* A client connected with RDP-UDP version 3, the way a Windows server answers. */
 static BOOL ctx_connect(TestCtx* ctx)
 {
-	SynInfo syn = { 0 };
+	SynInfo syn = WINPR_C_ARRAY_INIT;
 	if (!ctx_start(ctx, TRUE, &syn))
 		return FALSE;
 	if (!send_syn_ack(ctx, syn.initialSequence, RDPUDP_PROTOCOL_VERSION_3))
@@ -578,8 +578,8 @@ static BOOL stream_ahead(TestCtx* ctx, UINT16* dataSeq, UINT16* channel, size_t 
 static BOOL syn_offers_version_3_with_the_cookie_hash(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
-	SynInfo syn = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
+	SynInfo syn = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_start(&ctx, TRUE, &syn));
 	/* [MS-RDPEUDP] 3.1.5.1.1: zero padded to the MTU, which validates the path MTU */
 	CHECK(syn.length == SYN_LENGTH);
@@ -595,8 +595,8 @@ fail:
 static BOOL syn_offers_version_2_without_a_cookie_hash(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
-	SynInfo syn = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
+	SynInfo syn = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_start(&ctx, FALSE, &syn));
 	CHECK(syn.length == SYN_LENGTH);
 	CHECK(syn.version == RDPUDP_PROTOCOL_VERSION_2);
@@ -613,7 +613,7 @@ fail:
 static BOOL dummy_packets_are_acknowledged_but_not_delivered(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 
 	const V3Out dummy = { .dummy = TRUE,
@@ -647,7 +647,7 @@ fail:
 static BOOL retransmission_is_reordered_back_into_the_stream(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(send_data(&ctx, 101, 3, "c"));
@@ -669,7 +669,7 @@ fail:
 static BOOL ack_of_acks_advances_the_window_without_touching_the_stream(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	/* 101 is a dummy that never arrives */
@@ -712,7 +712,7 @@ static BOOL send_data_aoa(TestCtx* ctx, UINT16 dataSeq, UINT16 channelSeq, const
 static BOOL ack_of_acks_past_its_own_packet_keeps_the_chunk(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(send_data_aoa(&ctx, 101, 2, "b", 102));
@@ -734,7 +734,7 @@ fail:
 static BOOL ack_of_acks_past_its_own_packet_gets_no_ack_vector(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(pump(&ctx));
@@ -760,7 +760,7 @@ fail:
 static BOOL ack_of_acks_far_past_its_own_packet_keeps_the_chunk(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(send_data_aoa(&ctx, 101, 2, "b", 104));
@@ -781,7 +781,7 @@ fail:
 static BOOL late_packet_behind_the_window_fills_the_hole(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	/* 101, carrying channel sequence 2, is delayed */
@@ -810,7 +810,7 @@ fail:
 static BOOL retransmitted_packets_are_acknowledged_again(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "first"));
 	CHECK(pump(&ctx));
@@ -837,7 +837,7 @@ fail:
 static BOOL ack_vector_is_not_lost_to_outgoing_data(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	/* the peer lets our acknowledgements wait 200 ms */
 	const V3Out first = { .hasDelayAck = TRUE,
@@ -888,7 +888,7 @@ fail:
 static BOOL retransmitted_channel_data_is_not_delivered_twice(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(send_data(&ctx, 101, 2, "b"));
@@ -905,7 +905,7 @@ fail:
 static BOOL gap_produces_an_ack_vector_rather_than_a_cumulative_ack(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(send_data(&ctx, 102, 3, "c"));
@@ -926,7 +926,7 @@ fail:
 static BOOL ack_advertises_the_largest_window(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, 100, 1, "a"));
 	CHECK(pump(&ctx));
@@ -946,7 +946,7 @@ fail:
 static BOOL channel_sequence_wraps_past_zero(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	UINT16 dataSeq = FIRST_SEQUENCE;
 	UINT16 channel = 1;
@@ -977,7 +977,7 @@ static BOOL real_server_ack_with_delayed_acks_and_data(void)
 		                        0x00, 0x01, 0x54, 0x08, 0xe0, 0x00, 0x02, 0x00,
 		                        0x17, 0x03, 0x03, 0x00, 0x62, 0x56, 0x2c, 0x9f };
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	/* the captured packet is data sequence 224 carrying channel sequence 2 */
 	CHECK(send_data(&ctx, 223, 1, "a"));
@@ -1001,7 +1001,7 @@ fail:
 static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"1", 1));
 	CHECK(drain(&ctx, 20));
@@ -1030,7 +1030,7 @@ fail:
 static BOOL acknowledgements_survive_sequence_wraparound(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 
 	/* send and acknowledge until the next data sequence is 0xFFFE */
@@ -1072,7 +1072,7 @@ fail:
 static BOOL ack_of_acks_resyncs_after_a_silence(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, FIRST_SEQUENCE, 1, "a"));
 	CHECK(pump(&ctx));
@@ -1127,7 +1127,7 @@ fail:
 static BOOL packets_past_a_wrap_are_acknowledged_on_their_own(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	CHECK(send_data(&ctx, FIRST_SEQUENCE, 1, "a"));
 	CHECK(pump(&ctx));
@@ -1165,7 +1165,7 @@ static BOOL packets_past_a_wrap_are_acknowledged_on_their_own(void)
 
 	/* the ACK vectors report exactly the run, nothing names our old position */
 	CHECK(drain(&ctx, 50));
-	BOOL reported[100] = { 0 };
+	BOOL reported[100] = WINPR_C_ARRAY_INIT;
 	size_t vectors = 0;
 	for (size_t x = 0; x < ctx.seenCount; x++)
 	{
@@ -1201,7 +1201,7 @@ fail:
 static BOOL piggybacked_ack_is_not_repeated_after_a_jump(void)
 {
 	BOOL rc = FALSE;
-	TestCtx ctx = { 0 };
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
 	CHECK(ctx_connect(&ctx));
 	/* the peer lets our acknowledgements wait 200 ms, so our data carries the ACK */
 	const V3Out first = { .hasDelayAck = TRUE,
@@ -1296,7 +1296,7 @@ int TestRdpUdp(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	WSADATA wsaData = { 0 };
+	WSADATA wsaData = WINPR_C_ARRAY_INIT;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		return -1;
 
