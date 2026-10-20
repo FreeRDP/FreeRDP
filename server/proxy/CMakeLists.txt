@@ -128,6 +128,6 @@ if(WITH_PROXY_MODULES)
   add_subdirectory("modules")
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

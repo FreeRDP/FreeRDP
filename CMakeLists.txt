@@ -515,7 +515,7 @@ endif()
 
 include(CTest)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   enable_testing()
 
   if(MSVC)

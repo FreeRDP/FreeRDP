@@ -35,6 +35,6 @@ freerdp_client_pc_add_library_private(rdpear-common-obj)
 channel_install(rdpear-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 channel_install(rdpear-common-obj ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

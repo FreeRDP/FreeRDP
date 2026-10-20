@@ -41,6 +41,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE winpr ${QT_AAD_AUTH_HELPER_LIBS})
 
 installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR} COMPONENT client)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
