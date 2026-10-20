@@ -26,29 +26,32 @@ static XkbNamesRec keyboard_names;
 static XkbKeyNameRec keyboard_key_names[256];
 static XModifierKeymap modifier_map;
 static KeySym keyboard_keysym;
-static const struct
+
+struct keys_t
 {
 	KeySym sym;
 	KeyCode code;
 	DWORD scan;
 	char name;
-} keys[] = { { XK_Alt_L, 64, RDP_SCANCODE_LMENU, 'A' },
-	         { XK_Alt_R, 108, RDP_SCANCODE_RMENU, 'R' },
-	         { XK_Shift_L, 50, RDP_SCANCODE_LSHIFT, 'S' },
-	         { XK_Shift_R, 62, RDP_SCANCODE_RSHIFT, 'H' },
-	         { XK_Control_L, 37, RDP_SCANCODE_LCONTROL, 'C' },
-	         { XK_Control_R, 105, RDP_SCANCODE_RCONTROL, 'D' },
-	         { XK_Super_L, 133, RDP_SCANCODE_LWIN, 'L' },
-	         { XK_Super_R, 134, RDP_SCANCODE_RWIN, 'G' },
-	         { XK_f, 41, RDP_SCANCODE_KEY_F, 'F' },
-	         { XK_Tab, 23, RDP_SCANCODE_TAB, 'T' },
-	         { XK_m, 58, RDP_SCANCODE_KEY_M, 'N' } };
+};
+static const struct keys_t keys[] = { { XK_Alt_L, 64, RDP_SCANCODE_LMENU, 'A' },
+	                                  { XK_Alt_R, 108, RDP_SCANCODE_RMENU, 'R' },
+	                                  { XK_Shift_L, 50, RDP_SCANCODE_LSHIFT, 'S' },
+	                                  { XK_Shift_R, 62, RDP_SCANCODE_RSHIFT, 'H' },
+	                                  { XK_Control_L, 37, RDP_SCANCODE_LCONTROL, 'C' },
+	                                  { XK_Control_R, 105, RDP_SCANCODE_RCONTROL, 'D' },
+	                                  { XK_Super_L, 133, RDP_SCANCODE_LWIN, 'L' },
+	                                  { XK_Super_R, 134, RDP_SCANCODE_RWIN, 'G' },
+	                                  { XK_f, 41, RDP_SCANCODE_KEY_F, 'F' },
+	                                  { XK_Tab, 23, RDP_SCANCODE_TAB, 'T' },
+	                                  { XK_m, 58, RDP_SCANCODE_KEY_M, 'N' } };
 
-static void record(char name, char direction)
+static void record(char name, int direction)
 {
 	WINPR_ASSERT(used + 2 < sizeof(trace));
 	trace[used++] = name;
-	trace[used++] = direction;
+	trace[used++] = WINPR_CXX_COMPAT_CAST(char, (direction & 0xff));
+	;
 	trace[used] = '\0';
 }
 
@@ -206,9 +209,11 @@ BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repea
 		return FALSE;
 	for (size_t i = 0; i < ARRAYSIZE(keys); i++)
 	{
-		if (keys[i].scan == scan)
+		const struct keys_t* cur = &keys[i];
+		if (cur->scan == scan)
 		{
-			record(keys[i].name, down ? (repeat ? '*' : '+') : '-');
+
+			record(cur->name, down ? (repeat ? '*' : '+') : '-');
 			return TRUE;
 		}
 	}
@@ -266,12 +271,14 @@ static void key(xfContext* xfc, KeySym sym, BOOL down)
 	event.keycode = XKeysymToKeycode(xfc->display, sym);
 	if (down)
 	{
-		physical[event.keycode / 8] |= (char)(1 << (event.keycode % 8));
+		const int val = physical[event.keycode / 8] | (1 << (event.keycode % 8));
+		physical[event.keycode / 8] = WINPR_CXX_COMPAT_CAST(char, (val & 0xff));
 		xf_keyboard_key_press(xfc, &event, sym);
 	}
 	else
 	{
-		physical[event.keycode / 8] &= (char)~(1 << (event.keycode % 8));
+		const int val = physical[event.keycode / 8] & ~(1 << (event.keycode % 8));
+		physical[event.keycode / 8] = WINPR_CXX_COMPAT_CAST(char, (val & 0xff));
 		xf_keyboard_key_release(xfc, &event, sym);
 	}
 }
