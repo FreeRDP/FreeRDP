@@ -3,6 +3,7 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/windows.h>
+#include <winpr/endian.h>
 
 static const CHAR testStringA[] = { 'T', 'h', 'e', ' ', 'q', 'u', 'i', 'c', 'k', ' ', 'b',
 	                                'r', 'o', 'w', 'n', ' ', 'f', 'o', 'x', ' ', 'j', 'u',
@@ -79,6 +80,7 @@ static BOOL test_url_escape(void)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_winpr_asprintf(void)
 {
 	BOOL rc = FALSE;
@@ -104,6 +106,102 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL test_winpr_strnchr(void)
+{
+	struct strnchr_test
+	{
+		const char* haystack;
+		const char needle;
+		size_t hlen;
+		int expected; /* offset of the match, or -1 when NULL is expected */
+	};
+	const struct strnchr_test tests[] = { { "ab", '\r', 0, -1 },
+		                                  { "x!", 'y', 1, -1 },
+		                                  { "abc", 'c', 2, -1 },
+		                                  { "abc", '\0', 4, 3 },
+		                                  { "a\r\nb", '\r', 4, 1 },
+		                                  { "xxab", 'a', 4, 2 },
+		                                  { "xxxx", 'b', 4, -1 },
+		                                  { "abc", 'b', 3, 1 },
+		                                  /* hlen == 0 finds nothing */
+		                                  { "abc", 'a', 0, -1 } };
+
+	union
+	{
+		char c[2];
+		WCHAR wc;
+	} cnv;
+
+	const char backslash = '\\';
+	cnv.c[0] = backslash;
+	cnv.c[1] = 0;
+
+	const WCHAR tle = winpr_wchar_ToLE(backslash);
+	if (tle != cnv.wc)
+	{
+		WLog_ERR(__func__, "test winpr_wchar_ToLE failed");
+		return FALSE;
+	}
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct strnchr_test* t = &tests[x];
+		WCHAR haystack[32] = WINPR_C_ARRAY_INIT;
+		const SSIZE_T cr = ConvertUtf8ToWChar(t->haystack, haystack, ARRAYSIZE(haystack));
+		WINPR_ASSERT(cr >= 0);
+
+		const WCHAR needle = winpr_wchar_ToLE(t->needle);
+
+		const WCHAR* rc = winpr_wcsnchr(haystack, t->hlen, needle);
+		const WCHAR* rrc = winpr_wcsnrchr(haystack, t->hlen, needle);
+
+		if (t->expected < 0)
+		{
+			if (rc || rrc)
+			{
+				WLog_ERR(__func__,
+				         "test %" PRIuz
+				         " failed: %s -> winpr_wcsnchr %p, winpr_wcsnrchr %p : expected NULL",
+				         x, t->haystack, rc, rrc);
+				return FALSE;
+			}
+		}
+		else
+		{
+			if (!rc || !rrc)
+			{
+				WLog_ERR(__func__,
+				         "test %" PRIuz
+				         " failed: %s -> winpr_wcsnchr %p, winpr_wcsnrchr %p : expected %d",
+				         x, t->haystack, rc, rrc, t->expected);
+				return FALSE;
+			}
+
+			const size_t off = rc - haystack;
+			const size_t roff = rrc - haystack;
+			if (off != t->expected)
+			{
+				WLog_ERR(__func__,
+				         "test %" PRIuz " failed: %s -> winpr_wcsnchr offset %" PRIuz
+				         ", expected %d",
+				         x, t->haystack, rc, t->expected);
+				return FALSE;
+			}
+			if (roff != t->expected)
+			{
+				WLog_ERR(__func__,
+				         "test %" PRIuz " failed: %s -> winpr_wcsnrchr offset %" PRIuz
+				         ", expected %d",
+				         x, t->haystack, rrc, t->expected);
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL test_winpr_strnstr(void)
 {
 	struct strnstr_test
@@ -332,6 +430,9 @@ int TestString(int argc, char* argv[])
 		return -1;
 
 	if (!test_winpr_strnstr())
+		return -1;
+
+	if (!test_winpr_strnchr())
 		return -1;
 
 	if (!test_crlf())
