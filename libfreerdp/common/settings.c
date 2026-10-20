@@ -42,6 +42,8 @@
 
 #define TAG FREERDP_TAG("common")
 
+static const char magic[] = "RDPDR_DEVICE_EX";
+
 struct RDPDR_DEVICE_EX
 {
 	union
@@ -53,6 +55,7 @@ struct RDPDR_DEVICE_EX
 		ALIGN64 RDPDR_PARALLEL parallel;
 		ALIGN64 RDPDR_SMARTCARD smartcard;
 	} u;
+	char magic[16];
 	ALIGN64 ADDIN_ARGV* args;
 };
 
@@ -339,6 +342,9 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* const ar
 	device->u.base.Id = 0;
 	device->u.base.Type = Type;
 
+	WINPR_STATIC_ASSERT(sizeof(magic) == sizeof(device->magic));
+	memcpy(device->magic, magic, sizeof(device->magic));
+
 	if (count > 0)
 	{
 		device->u.base.Name = _strdup(args[0]);
@@ -452,7 +458,15 @@ void freerdp_device_free(RDPDR_DEVICE* device)
 		default:
 			break;
 	}
-	freerdp_addin_argv_free(cnv.ex->args);
+
+	WINPR_STATIC_ASSERT(sizeof(magic) == sizeof(cnv.ex->magic));
+	if (memcmp(magic, cnv.ex->magic, sizeof(magic)) == 0)
+		freerdp_addin_argv_free(cnv.ex->args);
+	else
+		WLog_WARN(TAG,
+		          "freerdp_device_free called with argument not allocated by freerdp_device_new! "
+		          "This is not supported with FreeRDP 3.x and might crash your application");
+
 	free(cnv.dev->Name);
 	free(cnv.dev);
 }
