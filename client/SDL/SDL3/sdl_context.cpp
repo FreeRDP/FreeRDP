@@ -486,8 +486,6 @@ bool SdlContext::updateWindow(SDL_WindowID id)
 	auto r = w.rect();
 	m.width = r.w;
 	m.height = r.h;
-	m.attributes.physicalWidth = static_cast<UINT32>(r.w);
-	m.attributes.physicalHeight = static_cast<UINT32>(r.h);
 	w.setMonitor(m);
 	return true;
 }
