@@ -238,8 +238,24 @@
 				"WITH_SAMPLE": "ON",
 				"WITH_WINPR_TOOLS_CLI": "ON"
 			}
+		},
+		{
+			"name": "oss-scanner",
+			"displayName": "adapter full preset for oss-scanner",
+			"generator": "Ninja",
+			"description": "",
+			"inherits": [
+				"full-binaries"
+			],
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"BUILD_TESTING": "ON",
+				"WITH_UNICODE_BUILTIN": "ON",
+				"WITH_DSP_EXPERIMENTAL": "ON",
+				"WITH_XDG_AAD_AUTH_HELPER": "ON",
+				"WITH_SANITIZE_ADDRESS": "ON"
+			}
 		}
-
 	],
 	"buildPresets": [
 		{
