@@ -123,8 +123,6 @@ bool SdlInputWidgetPairList::updateInternal()
 	{
 		if (!btn->update())
 			return false;
-		if (!btn->update())
-			return false;
 	}
 
 	return true;
@@ -313,13 +311,6 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 			{
 				if (!cur->set_highlight(true))
 					throw std::exception();
-			}
-
-			auto rc = SDL_RenderPresent(_renderer.get());
-			if (!rc)
-			{
-				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "[%s] SDL_RenderPresent failed with %s",
-				            __func__, SDL_GetError());
 			}
 		}
 
