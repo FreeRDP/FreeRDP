@@ -396,6 +396,12 @@ static state_run_t multitransport_client_request(rdpMultitransport* multi, UINT3
 		return multitransport_decline(multi, reqId);
 	}
 
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransportUdp))
+	{
+		WLog_DBG(TAG, "declining UDP, switching transport disabled (/multitransport:tcp-only)");
+		return multitransport_decline(multi, reqId);
+	}
+
 	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport) ||
 	    !(freerdp_settings_get_uint32(settings, FreeRDP_MultitransportFlags) &
 	      TRANSPORT_TYPE_UDP_FECR))
