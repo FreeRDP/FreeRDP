@@ -17,6 +17,22 @@ jobs:
         run: |
           brew install autoconf automake git libtool meson
 
+      - name: Cache Dependencies
+        id: cache-dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            !build-macos/**/*freerdp*
+            !build-macos/**/*winpr*
+            build-macos/**
+          key: ${{ runner.os }}-macos-${{ hashFiles('scripts/bundle-mac-os.sh') }}
+
+      - name: Build Dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: |
+          ./scripts/bundle-mac-os.sh --build-deps-only
+
+
       - name: "Run mac os build..."
         run: |
-          ./scripts/bundle-mac-os.sh
+          ./scripts/bundle-mac-os.sh -d

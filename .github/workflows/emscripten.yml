@@ -21,6 +21,20 @@ jobs:
           apt-get update -q -y
           apt-get install -q -y ninja-build
 
+      - name: Cache Dependencies
+        id: cache-dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            !build-emscripten/**/freerdp
+            build-emscripten/**
+          key: ${{ runner.os }}-emscripten-${{ hashFiles('scripts/emscripten.sh') }}
+
+      - name: Build Dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: |
+          ./scripts/emscripten.sh --build-deps-only
+
       - name: "Run emscripten build and unit tests..."
         run: |
-          ./scripts/emscripten.sh --with-tests
+          ./scripts/emscripten.sh -c -d --with-tests
