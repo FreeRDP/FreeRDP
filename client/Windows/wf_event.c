@@ -55,15 +55,32 @@ static BOOL g_flipping_out = FALSE;
 
 static BOOL g_keystates[256] = WINPR_C_ARRAY_INIT;
 
+/* g_keystates is indexed by scan code without the extended flag,
+ * so left and right Ctrl (and Alt) share one entry. */
 static BOOL ctrl_down(void)
 {
-	return g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	return g_keystates[RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL)];
 }
 
 static BOOL alt_ctrl_down(void)
 {
-	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
+	const BOOL altDown = g_keystates[RDP_SCANCODE_CODE(RDP_SCANCODE_LMENU)];
 	return altDown && ctrl_down();
+}
+
+/* Release Ctrl and Alt on the server and locally before a fullscreen toggle.
+ * The toggle changes focus while the keys are still held, so without this
+ * the server keeps them down and the focus handlers start a flip. */
+static void release_ctrl_alt(rdpInput* input)
+{
+	const UINT32 keys[] = { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_RCONTROL, RDP_SCANCODE_LMENU,
+		                    RDP_SCANCODE_RMENU };
+
+	for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+	{
+		freerdp_input_send_keyboard_event_ex(input, FALSE, FALSE, keys[x]);
+		g_keystates[RDP_SCANCODE_CODE(keys[x])] = FALSE;
+	}
 }
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -82,6 +99,12 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 		if (!alt_ctrl_down())
 			g_flipping_in = FALSE;
+		else if ((nCode == HC_ACTION) && ((wParam == WM_KEYUP) || (wParam == WM_SYSKEYUP)))
+		{
+			/* key releases pass to the local system here, record them so the flip can end */
+			const PKBDLLHOOKSTRUCT up = (PKBDLLHOOKSTRUCT)lParam;
+			g_keystates[up->scanCode & 0xFF] = FALSE;
+		}
 
 		return CallNextHookEx(nullptr, nCode, wParam, lParam);
 	}
@@ -141,8 +164,9 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				{
 					if (alt_ctrl_down())
 					{
-						if (wParam == WM_KEYDOWN)
+						if ((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN))
 						{
+							release_ctrl_alt(input);
 							wf_toggle_fullscreen(wfc);
 							return 1;
 						}
@@ -186,6 +210,13 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), keystate,
 				                                     rdp_scancode);
+
+				/* the g_flipping_out check after this block is not reached for forwarded keys */
+				if (g_flipping_out && !alt_ctrl_down())
+				{
+					g_flipping_out = FALSE;
+					g_focus_hWnd = nullptr;
+				}
 
 				if (p->vkCode == VK_NUMLOCK || p->vkCode == VK_CAPITAL || p->vkCode == VK_SCROLL ||
 				    p->vkCode == VK_KANA)
