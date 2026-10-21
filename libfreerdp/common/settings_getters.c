@@ -2030,13 +2030,19 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftX:
 			return (UINT32)settings->MonitorLocalShiftX;
 
-		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_POP
+			// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftY:
 			return (UINT32)settings->MonitorLocalShiftY;
 
+			WINPR_PRAGMA_DIAG_POP
 #endif
 		default:
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
@@ -2572,15 +2578,21 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case FreeRDP_MonitorLocalShiftX:
 			settings->MonitorLocalShiftX = (int32_t)cnv.c;
 			break;
 
-		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_POP
+			// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case FreeRDP_MonitorLocalShiftY:
 			settings->MonitorLocalShiftY = (int32_t)cnv.c;
 			break;
 
+			WINPR_PRAGMA_DIAG_POP
 #endif
 		default:
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
