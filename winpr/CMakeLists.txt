@@ -268,9 +268,11 @@ else()
     ]]
     WINPR_HAVE_STRNSTR
   )
-  check_source_compiles(
-    C
-    [[
+
+  if(NOT MINGW)
+    check_source_compiles(
+      C
+      [[
     #include <string.h>
 
     int main(void) {
@@ -278,8 +280,9 @@ else()
     return 0;
     }
     ]]
-    WINPR_HAVE_STRNDUP
-  )
+      WINPR_HAVE_STRNDUP
+    )
+  endif()
 
   # pipe2()/accept4() are GNU/BSD extensions; glibc only declares them when _GNU_SOURCE is visible,
   # which this project does not set globally (see cmake/PlatformDefaults.cmake) - request it just
