@@ -6,6 +6,7 @@
  * contains the converted file '@FILENAME@'
  */
 
+#include <winpr/platform.h>
 #include <vector>
 #include "@CLASSNAME@.hpp"
 
@@ -16,6 +17,8 @@ std::string @CLASSNAME@::type() noexcept {
 	return "@CLASSTYPE@";
 }
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG("-Wglobal-constructors")
 // NOLINTNEXTLINE(clang-diagnostic-global-constructors)
 const SDLResourceFile @CLASSNAME@::_initializer(type(), name(), init());
 
@@ -25,4 +28,5 @@ std::vector<unsigned char> @CLASSNAME@::init() noexcept {
 	};
 	return std::vector<unsigned char>(data, data + sizeof(data));
 }
+WINPR_PRAGMA_DIAG_POP
 
