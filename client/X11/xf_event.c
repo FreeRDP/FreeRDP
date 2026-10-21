@@ -1234,7 +1234,7 @@ BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEve
 				default:
 					break;
 			}
-			/* A WM such as Xpra may send no configure until pointer release.
+			/* A window manager may send no configure until pointer release.
 			 * Starting and active gestures therefore share completion rules. */
 			WINPR_FALLTHROUGH
 
