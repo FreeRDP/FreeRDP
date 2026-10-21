@@ -44,8 +44,8 @@ Status XGetWindowAttributes(Display* display, Window window, XWindowAttributes* 
 	return attributesSuccess;
 }
 
-Bool XQueryPointer(Display* display, Window window, Window* root, Window* child,
-                    int* rx, int* ry, int* cx, int* cy, unsigned int* mask)
+Bool XQueryPointer(Display* display, Window window, Window* root, Window* child, int* rx, int* ry,
+                   int* cx, int* cy, unsigned int* mask)
 {
 	WINPR_UNUSED(display);
 	WINPR_UNUSED(window);
@@ -64,8 +64,8 @@ KeySym XLookupKeysym(XKeyEvent* event, int index)
 	return lookupKey;
 }
 
-BOOL freerdp_client_send_button_event(rdpClientContext* context, BOOL relative,
-                                      UINT16 flags, INT32 x, INT32 y)
+BOOL freerdp_client_send_button_event(rdpClientContext* context, BOOL relative, UINT16 flags,
+                                      INT32 x, INT32 y)
 {
 	WINPR_UNUSED(context);
 	WINPR_UNUSED(relative);
@@ -78,19 +78,19 @@ BOOL freerdp_client_send_button_event(rdpClientContext* context, BOOL relative,
 	return inputSuccess;
 }
 
-#define CHECK(condition)                                         \
-	do                                                           \
-	{                                                            \
-		if (!(condition))                                        \
-		{                                                        \
+#define CHECK(condition)                                                    \
+	do                                                                      \
+	{                                                                       \
+		if (!(condition))                                                   \
+		{                                                                   \
 			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
-			return 1;                                            \
-		}                                                        \
+			return 1;                                                       \
+		}                                                                   \
 	} while (0)
 
 /* Exercise the actual configure/RAIL logic without an X server or RDP server. */
-Status XQueryTree(Display* display, Window window, Window* root, Window* parent,
-                  Window** children, unsigned int* count)
+Status XQueryTree(Display* display, Window window, Window* root, Window* parent, Window** children,
+                  unsigned int* count)
 {
 	WINPR_UNUSED(display);
 	WINPR_UNUSED(window);
@@ -101,8 +101,8 @@ Status XQueryTree(Display* display, Window window, Window* root, Window* parent,
 	return querySuccess;
 }
 
-Bool XTranslateCoordinates(Display* display, Window src, Window dst, int sx, int sy,
-                            int* x, int* y, Window* child)
+Bool XTranslateCoordinates(Display* display, Window src, Window dst, int sx, int sy, int* x, int* y,
+                           Window* child)
 {
 	WINPR_UNUSED(display);
 	WINPR_UNUSED(src);
@@ -116,8 +116,8 @@ Bool XTranslateCoordinates(Display* display, Window src, Window dst, int sx, int
 	return translateSuccess;
 }
 
-Pixmap XCreatePixmap(Display* display, Drawable drawable, unsigned int width,
-                      unsigned int height, unsigned int depth)
+Pixmap XCreatePixmap(Display* display, Drawable drawable, unsigned int width, unsigned int height,
+                     unsigned int depth)
 {
 	WINPR_UNUSED(display);
 	WINPR_UNUSED(drawable);
@@ -154,8 +154,8 @@ int XMoveWindow(Display* display, Window window, int x, int y)
 	return 1;
 }
 
-int XMoveResizeWindow(Display* display, Window window, int x, int y,
-                       unsigned int width, unsigned int height)
+int XMoveResizeWindow(Display* display, Window window, int x, int y, unsigned int width,
+                      unsigned int height)
 {
 	xMoves++;
 	WINPR_UNUSED(display);
@@ -327,12 +327,12 @@ int main(int argc, char* argv[])
 	/* Execute the registered server callback: successive surface sizes must all
 	 * apply, including the initial title strip and its immediate expansion. */
 	const WINDOW_ORDER_INFO info = { .windowId = appWindow.windowId,
-	                                 .fieldFlags = WINDOW_ORDER_FIELD_WND_SIZE };
+		                             .fieldFlags = WINDOW_ORDER_FIELD_WND_SIZE };
 	const UINT32 sizes[][2] = { { 395, 375 }, { 381, 368 }, { 122, 32 }, { 409, 382 } };
 	for (size_t i = 0; i < ARRAYSIZE(sizes); i++)
 	{
 		const WINDOW_STATE_ORDER state = { .windowWidth = sizes[i][0],
-		                                   .windowHeight = sizes[i][1] };
+			                               .windowHeight = sizes[i][1] };
 		CHECK(windows.WindowUpdate(&xfc.common.context, &info, &state));
 		CHECK(appWindow.windowWidth == sizes[i][0] && appWindow.windowHeight == sizes[i][1]);
 		CHECK(appWindow.width == (int)sizes[i][0] && appWindow.height == (int)sizes[i][1]);
@@ -371,12 +371,12 @@ int main(int argc, char* argv[])
 	CHECK(xf_rail_adjust_position(&xfc, &appWindow));
 	CHECK(moves == before + 1);
 
-	const WINDOW_ORDER_INFO adjusted = {
-		.windowId = appWindow.windowId,
-		.fieldFlags = WINDOW_ORDER_FIELD_WND_OFFSET | WINDOW_ORDER_FIELD_WND_SIZE
+	const WINDOW_ORDER_INFO adjusted = { .windowId = appWindow.windowId,
+		                                 .fieldFlags = WINDOW_ORDER_FIELD_WND_OFFSET |
+		                                               WINDOW_ORDER_FIELD_WND_SIZE };
+	const WINDOW_STATE_ORDER normalized = {
+		.windowOffsetX = 707, .windowOffsetY = 245, .windowWidth = 436, .windowHeight = 393
 	};
-	const WINDOW_STATE_ORDER normalized = { .windowOffsetX = 707, .windowOffsetY = 245,
-	                                        .windowWidth = 436, .windowHeight = 393 };
 	CHECK(windows.WindowUpdate(&xfc.common.context, &adjusted, &normalized));
 	CHECK(!appWindow.windowMovePending);
 	CHECK(appWindow.x == 707 && appWindow.width == 436 && appWindow.height == 393);
@@ -416,12 +416,10 @@ int main(int argc, char* argv[])
 	const unsigned checkpoint = moves;
 	appWindow.resizeMarginXKnown = appWindow.resizeMarginYKnown = FALSE;
 	appWindow.ownerWindowId = 0x40118;
-	const WINDOW_ORDER_INFO marginX = {
-		.windowId = appWindow.windowId, .fieldFlags = WINDOW_ORDER_FIELD_RESIZE_MARGIN_X
-	};
-	const WINDOW_ORDER_INFO marginY = {
-		.windowId = appWindow.windowId, .fieldFlags = WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y
-	};
+	const WINDOW_ORDER_INFO marginX = { .windowId = appWindow.windowId,
+		                                .fieldFlags = WINDOW_ORDER_FIELD_RESIZE_MARGIN_X };
+	const WINDOW_ORDER_INFO marginY = { .windowId = appWindow.windowId,
+		                                .fieldFlags = WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y };
 	CHECK(windows.WindowUpdate(&xfc.common.context, &marginX, &empty));
 	CHECK(appWindow.resizeMarginXKnown && !appWindow.resizeMarginYKnown);
 	CHECK(!xf_rail_has_resize_margins(&appWindow));
@@ -450,8 +448,8 @@ int main(int argc, char* argv[])
 	appWindow.local_move.state = LMS_STARTING;
 	appWindow.local_move.direction = NET_WM_MOVERESIZE_MOVE;
 	XEvent input = { 0 };
-	const int incidental[] = { MotionNotify, EnterNotify, LeaveNotify, FocusIn, FocusOut,
-	                           ButtonPress, ClientMessage };
+	const int incidental[] = { MotionNotify, EnterNotify, LeaveNotify,  FocusIn,
+		                       FocusOut,     ButtonPress, ClientMessage };
 	for (size_t i = 0; i < ARRAYSIZE(incidental); i++)
 	{
 		input.type = incidental[i];
@@ -483,7 +481,7 @@ int main(int argc, char* argv[])
 	CHECK(!xf_rail_adjust_position(&xfc, &appWindow));
 
 	const RAIL_LOCALMOVESIZE_ORDER end = { .windowId = (UINT32)appWindow.windowId,
-	                                     .moveSizeType = RAIL_WMSZ_MOVE };
+		                                   .moveSizeType = RAIL_WMSZ_MOVE };
 	const WINDOW_STATE_ORDER movedDialog = {
 		.windowOffsetX = 228, .windowOffsetY = 239, .windowWidth = 413, .windowHeight = 229
 	};
@@ -502,8 +500,10 @@ int main(int argc, char* argv[])
 		event.y = 200 + i;
 		CHECK(xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
 		CHECK(xf_rail_end_local_move(&xfc, &appWindow));
-		const WINDOW_STATE_ORDER reply = { .windowOffsetX = event.x, .windowOffsetY = event.y,
-		                                  .windowWidth = 413, .windowHeight = 229 };
+		const WINDOW_STATE_ORDER reply = { .windowOffsetX = event.x,
+			                               .windowOffsetY = event.y,
+			                               .windowWidth = 413,
+			                               .windowHeight = 229 };
 		CHECK(windows.WindowUpdate(&xfc.common.context, &adjusted, &reply));
 		CHECK(rail.ServerLocalMoveSize(&rail, &end) == CHANNEL_RC_OK);
 		CHECK(xf_rail_adjust_position(&xfc, &appWindow));
@@ -548,7 +548,8 @@ int main(int argc, char* argv[])
 	/* Unknown-margin keyboard moves and resizes stay server-driven instead of
 	 * requesting an unsafe local interaction or emitting a zero-margin PDU. */
 	const RAIL_LOCALMOVESIZE_ORDER start = { .windowId = (UINT32)appWindow.windowId,
-	                                       .isMoveSizeStart = 1, .moveSizeType = RAIL_WMSZ_RIGHT };
+		                                     .isMoveSizeStart = 1,
+		                                     .moveSizeType = RAIL_WMSZ_RIGHT };
 	CHECK(rail.ServerLocalMoveSize(&rail, &start) == CHANNEL_RC_OK);
 	CHECK(appWindow.local_move.state == LMS_NOT_ACTIVE && moves == checkpoint);
 	input.type = MotionNotify;

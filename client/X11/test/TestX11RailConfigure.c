@@ -4,14 +4,14 @@
 #include "../xfreerdp.h"
 #include "../xf_rail.h"
 
-#define CHECK(condition)                                                  \
-	do                                                                    \
-	{                                                                     \
-		if (!(condition))                                                 \
-		{                                                                 \
+#define CHECK(condition)                                                    \
+	do                                                                      \
+	{                                                                       \
+		if (!(condition))                                                   \
+		{                                                                   \
 			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
-			goto out;                                                     \
-		}                                                                 \
+			goto out;                                                       \
+		}                                                                   \
 	} while (0)
 
 int main(int argc, char* argv[])

@@ -82,14 +82,14 @@ static UINT close_channel(IWTSVirtualChannelCallback* callback)
 	return CHANNEL_RC_OK;
 }
 
-#define CHECK(condition)                                                      \
-	do                                                                        \
-	{                                                                         \
-		if (!(condition))                                                     \
-		{                                                                     \
-			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition);     \
-			goto out;                                                         \
-		}                                                                     \
+#define CHECK(condition)                                                    \
+	do                                                                      \
+	{                                                                       \
+		if (!(condition))                                                   \
+		{                                                                   \
+			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
+			goto out;                                                       \
+		}                                                                   \
 	} while (0)
 
 static int test_channel(UINT32 flags, BOOL poison)
@@ -102,21 +102,22 @@ static int test_channel(UINT32 flags, BOOL poison)
 	BOOL accept = TRUE;
 	const IWTSVirtualChannelCallback callbacks = { .OnClose = close_channel };
 	IWTSVirtualChannelManager manager = { .CreateListener = create_listener,
-	                                     .DestroyListener = destroy_listener };
+		                                  .DestroyListener = destroy_listener };
 	IDRDYNVC_ENTRY_POINTS entry = { .GetPlugin = get_plugin,
-	                               .RegisterPlugin = register_plugin,
-	                               .GetRdpSettings = get_settings,
-	                               .GetRdpContext = get_context };
+		                            .RegisterPlugin = register_plugin,
+		                            .GetRdpSettings = get_settings,
+		                            .GetRdpContext = get_context };
 	poisonExtension = poison;
-	CHECK(freerdp_generic_DVCPluginEntryWithOptions(
-	          &entry, "com.freerdp.test.genericdynvc", "test-channel", sizeof(TEST_DYNVC_PLUGIN),
-	          sizeof(GENERIC_CHANNEL_CALLBACK), &callbacks, init_plugin, nullptr, flags) == CHANNEL_RC_OK);
+	CHECK(freerdp_generic_DVCPluginEntryWithOptions(&entry, "com.freerdp.test.genericdynvc",
+	                                                "test-channel", sizeof(TEST_DYNVC_PLUGIN),
+	                                                sizeof(GENERIC_CHANNEL_CALLBACK), &callbacks,
+	                                                init_plugin, nullptr, flags) == CHANNEL_RC_OK);
 	CHECK(registeredPlugin->Initialize(registeredPlugin, &manager) == CHANNEL_RC_OK);
-	CHECK(listenerCallback->OnNewChannelConnection(listenerCallback, &channel, nullptr,
-	                                               &accept, &first) == CHANNEL_RC_OK);
+	CHECK(listenerCallback->OnNewChannelConnection(listenerCallback, &channel, nullptr, &accept,
+	                                               &first) == CHANNEL_RC_OK);
 	CHECK(first);
-	const UINT secondStatus = listenerCallback->OnNewChannelConnection(
-	    listenerCallback, &channel, nullptr, &accept, &second);
+	const UINT secondStatus = listenerCallback->OnNewChannelConnection(listenerCallback, &channel,
+	                                                                   nullptr, &accept, &second);
 	if (flags & GENERIC_CHANNEL_ENTRY_OPTION_MULTI_INSTANCE)
 		CHECK(secondStatus == CHANNEL_RC_OK && second);
 	else
@@ -124,8 +125,8 @@ static int test_channel(UINT32 flags, BOOL poison)
 	CHECK(first->OnClose(first) == CHANNEL_RC_OK);
 	free(first);
 	first = nullptr;
-	CHECK(listenerCallback->OnNewChannelConnection(listenerCallback, &channel, nullptr,
-	                                               &accept, &reopened) == CHANNEL_RC_OK);
+	CHECK(listenerCallback->OnNewChannelConnection(listenerCallback, &channel, nullptr, &accept,
+	                                               &reopened) == CHANNEL_RC_OK);
 	CHECK(reopened && reopened->OnClose(reopened) == CHANNEL_RC_OK);
 	free(reopened);
 	reopened = nullptr;

@@ -422,9 +422,8 @@ BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL 
 	{
 		/* make sure window exists */
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
-		const BOOL localMove = appWindow &&
-		                       ((appWindow->local_move.state == LMS_STARTING) ||
-		                        (appWindow->local_move.state == LMS_ACTIVE));
+		const BOOL localMove = appWindow && ((appWindow->local_move.state == LMS_STARTING) ||
+		                                     (appWindow->local_move.state == LMS_ACTIVE));
 		xf_rail_return_window(appWindow, FALSE);
 		if (!appWindow || localMove)
 			return TRUE;
@@ -502,8 +501,7 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 		if (appWindow && ((appWindow->local_move.state == LMS_STARTING) ||
 		                  (appWindow->local_move.state == LMS_ACTIVE)))
 		{
-			const BOOL rc = (down || (button != Button1)) ||
-			                xf_rail_end_local_move(xfc, appWindow);
+			const BOOL rc = (down || (button != Button1)) || xf_rail_end_local_move(xfc, appWindow);
 			xf_rail_return_window(appWindow, FALSE);
 			return rc;
 		}

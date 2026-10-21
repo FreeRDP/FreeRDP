@@ -272,8 +272,8 @@ BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 
 	return rc == CHANNEL_RC_OK;
 }
 
-static BOOL xf_rail_apply_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
-                                            int x, int y, int width, int height)
+static BOOL xf_rail_apply_configure_geometry(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
+                                             int width, int height)
 {
 	appWindow->configureGeometryPending = FALSE;
 	appWindow->x = x;
@@ -301,8 +301,8 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 		Window parent = None;
 		Window* children = nullptr;
 		unsigned int count = 0;
-		const Status status = XQueryTree(xfc->display, appWindow->handle, &root, &parent,
-		                                 &children, &count);
+		const Status status =
+		    XQueryTree(xfc->display, appWindow->handle, &root, &parent, &children, &count);
 		if (children)
 			XFree(children);
 		if (!status)
@@ -327,8 +327,8 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 	 * older size and can reflect a transient reparenting position over RAIL. */
 	WLog_Print(xfc->log, WLOG_DEBUG,
 	           "[rail-geometry] configure windowId=0x%08" PRIx64
-	           " synthetic=%d event=%d,%d %dx%d root=%d,%d server=%" PRId32 ",%" PRId32
-	           " %" PRIu32 "x%" PRIu32,
+	           " synthetic=%d event=%d,%d %dx%d root=%d,%d server=%" PRId32 ",%" PRId32 " %" PRIu32
+	           "x%" PRIu32,
 	           appWindow->windowId, event->send_event, event->x, event->y, event->width,
 	           event->height, x, y, appWindow->windowOffsetX, appWindow->windowOffsetY,
 	           appWindow->windowWidth, appWindow->windowHeight);
@@ -351,11 +351,11 @@ BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow)
 		Window child = None;
 		int x = 0, y = 0, checkedX = 0, checkedY = 0;
 		if (!XGetWindowAttributes(xfc->display, appWindow->handle, &before) ||
-		    !XTranslateCoordinates(xfc->display, appWindow->handle, before.root, 0, 0,
-		                           &x, &y, &child) ||
+		    !XTranslateCoordinates(xfc->display, appWindow->handle, before.root, 0, 0, &x, &y,
+		                           &child) ||
 		    !XGetWindowAttributes(xfc->display, appWindow->handle, &after) ||
-		    !XTranslateCoordinates(xfc->display, appWindow->handle, after.root, 0, 0,
-		                           &checkedX, &checkedY, &child))
+		    !XTranslateCoordinates(xfc->display, appWindow->handle, after.root, 0, 0, &checkedX,
+		                           &checkedY, &child))
 			return FALSE;
 		if ((before.root != after.root) || (before.x != after.x) || (before.y != after.y) ||
 		    (before.width != after.width) || (before.height != after.height) ||
@@ -407,8 +407,7 @@ void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow)
 	if ((appWindow->windowWidth == 0) || (appWindow->windowHeight == 0))
 		return;
 	appWindow->serverGeometryPending = FALSE;
-	if ((appWindow->x == appWindow->windowOffsetX) &&
-	    (appWindow->y == appWindow->windowOffsetY) &&
+	if ((appWindow->x == appWindow->windowOffsetX) && (appWindow->y == appWindow->windowOffsetY) &&
 	    (appWindow->width == (INT64)appWindow->windowWidth) &&
 	    (appWindow->height == (INT64)appWindow->windowHeight))
 		return;
@@ -442,9 +441,9 @@ static BOOL xf_rail_send_window_move(xfContext* xfc, xfAppWindow* appWindow)
 	const INT64 top = (INT64)appWindow->y - appWindow->resizeMarginTop;
 	const INT64 right = (INT64)appWindow->x + appWindow->width + appWindow->resizeMarginRight;
 	const INT64 bottom = (INT64)appWindow->y + appWindow->height + appWindow->resizeMarginBottom;
-	if ((left < INT16_MIN) || (left > INT16_MAX) || (top < INT16_MIN) ||
-	    (top > INT16_MAX) || (right < INT16_MIN) || (right > INT16_MAX) ||
-	    (bottom < INT16_MIN) || (bottom > INT16_MAX) || (right <= left) || (bottom <= top))
+	if ((left < INT16_MIN) || (left > INT16_MAX) || (top < INT16_MIN) || (top > INT16_MAX) ||
+	    (right < INT16_MIN) || (right > INT16_MAX) || (bottom < INT16_MIN) ||
+	    (bottom > INT16_MAX) || (right <= left) || (bottom <= top))
 	{
 		WLog_Print(xfc->log, WLOG_WARN,
 		           "[rail-geometry] refusing invalid WINDOWMOVE windowId=0x%08" PRIx64
@@ -455,10 +454,10 @@ static BOOL xf_rail_send_window_move(xfContext* xfc, xfAppWindow* appWindow)
 
 	WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 	const RAIL_WINDOW_MOVE_ORDER windowMove = { .windowId = (UINT32)appWindow->windowId,
-	                                          .left = (INT16)left,
-	                                          .top = (INT16)top,
-	                                          .right = (INT16)right,
-	                                          .bottom = (INT16)bottom };
+		                                        .left = (INT16)left,
+		                                        .top = (INT16)top,
+		                                        .right = (INT16)right,
+		                                        .bottom = (INT16)bottom };
 	const RAIL_WINDOW_MOVE_ORDER* last = &appWindow->lastWindowMove;
 	const UINT64 now = winpr_GetTickCount64NS();
 	/* A clamped/no-op move need not generate a server update. Bound the
@@ -467,9 +466,8 @@ static BOOL xf_rail_send_window_move(xfContext* xfc, xfAppWindow* appWindow)
 	const UINT64 duplicateInterval = 500ULL * 1000000ULL;
 	if (appWindow->windowMovePending &&
 	    ((now - appWindow->lastWindowMoveTime) < duplicateInterval) &&
-	    (last->left == windowMove.left) &&
-	    (last->top == windowMove.top) && (last->right == windowMove.right) &&
-	    (last->bottom == windowMove.bottom))
+	    (last->left == windowMove.left) && (last->top == windowMove.top) &&
+	    (last->right == windowMove.right) && (last->bottom == windowMove.bottom))
 	{
 		WLog_Print(xfc->log, WLOG_DEBUG,
 		           "[rail-geometry] skip duplicate pending WINDOWMOVE windowId=0x%08" PRIx64,
@@ -478,9 +476,8 @@ static BOOL xf_rail_send_window_move(xfContext* xfc, xfAppWindow* appWindow)
 	}
 
 	WLog_Print(xfc->log, WLOG_DEBUG,
-	           "[rail-geometry] WINDOWMOVE windowId=0x%08" PRIx64
-	           " rect=%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64
-	           " margins=%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32,
+	           "[rail-geometry] WINDOWMOVE windowId=0x%08" PRIx64 " rect=%" PRId64 ",%" PRId64
+	           ",%" PRId64 ",%" PRId64 " margins=%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32,
 	           appWindow->windowId, left, top, right, bottom, appWindow->resizeMarginLeft,
 	           appWindow->resizeMarginTop, appWindow->resizeMarginRight,
 	           appWindow->resizeMarginBottom);
