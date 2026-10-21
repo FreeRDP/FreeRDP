@@ -152,6 +152,7 @@ static BOOL test_peer_activate(freerdp_peer* peer)
 	return TRUE;
 }
 
+// NOLINTNEXTLINE(readability-non-const-parameter)
 static int test_peer_virtual_channel_read(freerdp_peer* peer, HANDLE hChannel, BYTE* buffer,
                                           UINT32 length)
 {
