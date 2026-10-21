@@ -563,19 +563,14 @@ int TestString(int argc, char* argv[])
 			                    "a.co",
 			                    "some-x.tld" };
 		const char* failtests[] = {
-			"",
-			".some.tld",
-			"some.tld.",
-			"-some.tld",
-			"some-.tld",
-			"some.-tld",
-			"some.tld-",
-			"some-xx.t",
-			"abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789.tld",
+			"", ".some.tld", "some.tld.", "-some.tld", "some-.tld", "some.-tld", "some.tld-",
+			"some-xx.t", "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789.tld",
+			// NOLINTBEGIN(bugprone-suspicious-missing-comma)
 			"abcdef0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
 			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef."
 			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789."
 			"0123456789abcdef0123456789abcdef.0123456789abcdef0123456789abcdef"
+			// NOLINTEND(bugprone-suspicious-missing-comma)
 		};
 		if (!test_hostname(tests, ARRAYSIZE(tests), TRUE))
 			return -1;

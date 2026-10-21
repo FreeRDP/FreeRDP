@@ -144,7 +144,10 @@ def write_getter_body(f, values, ret, keys, isPointer, compat_values, typestr, e
             val = compat_values[i]
             cast = '(' + entry_type + ')'
             f.write('\t\t// API Compatibility section, remove with FreeRDP 4.x\n')
+            f.write('WINPR_PRAGMA_DIAG_PUSH\n')
+            f.write('WINPR_PRAGMA_DIAG("-Wswitch")\n')
             write_getter_case(f, val, cast, typestr)
+            f.write('WINPR_PRAGMA_DIAG_POP\n')
         f.write('#endif\n')
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),\n\t\t\t         freerdp_settings_get_type_name_for_key(id));\n')
@@ -266,7 +269,10 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
         for val in compat_values:
             cast = '(int32_t)'
             f.write('\t\t// API Compatibility section, remove with FreeRDP 4.x\n')
+            f.write('WINPR_PRAGMA_DIAG_PUSH\n')
+            f.write('WINPR_PRAGMA_DIAG("-Wswitch")\n')
             write_setter_case(f, val, postfix, isPointer, cast)
+            f.write('WINPR_PRAGMA_DIAG_POP\n')
         f.write('#endif\n')
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),\n\t\t\t         freerdp_settings_get_type_name_for_key(id));\n')

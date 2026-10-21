@@ -60,7 +60,10 @@
 /* one handle per standard stream (stdin, stdout, stderr), created on first use */
 static WINPR_FILE* pStdHandleFiles[3] = WINPR_C_ARRAY_INIT;
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG("-Wglobal-constructors")
 static void GetStdHandle_Uninit(void) __attribute__((destructor));
+WINPR_PRAGMA_DIAG_POP
 
 static BOOL FileIsStdHandle(HANDLE handle)
 {
