@@ -304,16 +304,29 @@ BOOL sdl_present_gateway_message(freerdp* instance, [[maybe_unused]] UINT32 type
 int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
 	int rc = -1;
-	const char* str_data = freerdp_get_logon_error_info_data(data);
-	const char* str_type = freerdp_get_logon_error_info_type(type);
 
 	if (!instance || !instance->context)
 		return -1;
 
 	/* ignore LOGON_MSG_SESSION_CONTINUE message */
-	if (type == LOGON_MSG_SESSION_CONTINUE)
-		return 0;
+	switch (type)
+	{
+		case LOGON_MSG_SESSION_CONTINUE:
+			return 0;
+		default:
+			break;
+	}
 
+	switch (data)
+	{
+		case LOGON_FAILED_OTHER:
+			return 0;
+		default:
+			break;
+	}
+
+	const char* str_data = freerdp_get_logon_error_info_data(data);
+	const char* str_type = freerdp_get_logon_error_info_type(type);
 	char* title = nullptr;
 	size_t tlen = 0;
 	winpr_asprintf(&title, &tlen, "[%s] info",

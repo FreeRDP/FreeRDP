@@ -1225,30 +1225,27 @@ const char* freerdp_get_logon_error_info_type(UINT32 type)
 		CASE_ENTRY(ERROR_CODE_ACCESS_DENIED);
 
 		default:
-			return "UNKNOWN";
+			return NtStatus2Tag((NTSTATUS)type);
 	}
 #undef CASE_ENTRY
 }
 
 const char* freerdp_get_logon_error_info_data(UINT32 data)
 {
+#define CASE_ENTRY(x) \
+	case x:           \
+		return #x
 	switch (data)
 	{
-		case LOGON_FAILED_BAD_PASSWORD:
-			return "LOGON_FAILED_BAD_PASSWORD";
-
-		case LOGON_FAILED_UPDATE_PASSWORD:
-			return "LOGON_FAILED_UPDATE_PASSWORD";
-
-		case LOGON_FAILED_OTHER:
-			return "LOGON_FAILED_OTHER";
-
-		case LOGON_WARNING:
-			return "LOGON_WARNING";
+		CASE_ENTRY(LOGON_FAILED_BAD_PASSWORD);
+		CASE_ENTRY(LOGON_FAILED_UPDATE_PASSWORD);
+		CASE_ENTRY(LOGON_FAILED_OTHER);
+		CASE_ENTRY(LOGON_WARNING);
 
 		default:
 			return "SESSION_ID";
 	}
+#undef CASE_ENTRY
 }
 
 const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer, size_t size)

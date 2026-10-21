@@ -1333,8 +1333,9 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
-	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%08" PRIX32 " Type: 0x%08" PRIX32 "",
-	         errorNotificationData, errorNotificationType);
+	WLog_DBG(TAG, "LogonErrorInfo: Data: %s [0x%08" PRIX32 "] Type: %s [0x%08" PRIX32 "]",
+	         freerdp_get_logon_error_info_data(errorNotificationData), errorNotificationData,
+	         freerdp_get_logon_error_info_type(errorNotificationType), errorNotificationType);
 	if (instance->LogonErrorInfo)
 	{
 		const int rc =
