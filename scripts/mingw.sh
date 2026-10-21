@@ -8,16 +8,13 @@
 SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
 SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
 
-SRC_BASE="$SCRIPT_PATH/../build-mingw/src"
-BUILD_BASE="$SCRIPT_PATH/../build-mingw/build"
-INSTALL_BASE="$SCRIPT_PATH/../build-mingw/install"
-
 CLEAN=0
 CLONE=1
 DEPS=1
 BUILD=1
 FFMPEG=0
 OPENH264=0
+BUILD_DEPS_ONLY=0
 
 ARG_SHARED=1
 ARG_STATIC=0
@@ -44,6 +41,9 @@ for i in "$@"; do
   -o | --with-openh264)
     OPENH264=1
     ;;
+  --build-deps-only)
+    BUILD_DEPS_ONLY=1
+    ;;
   -s | --static)
     ARG_SHARED=0
     ARG_STATIC=1
@@ -59,6 +59,18 @@ for i in "$@"; do
     ;;
   esac
 done
+
+if [ "$ARG_SHARED" -ne "0" ];
+then
+    TYPE="shared"
+else
+    TYPE="static"
+fi
+
+BASE_BUILD_DIR="$SCRIPT_PATH/../build-mingw"
+SRC_BASE="$BASE_BUILD_DIR/src"
+BUILD_BASE="$BASE_BUILD_DIR/$TYPE/build"
+INSTALL_BASE="$BASE_BUILD_DIR/$TYPE/install"
 
 ARG_COMPILED_RES=1
 if [ $ARG_SHARED -ne 0 ]; then
@@ -157,6 +169,7 @@ if [ $CLONE -ne 0 ]; then
 fi
 
 if [ $BUILD -eq 0 ]; then
+  echo "BUILD=$BUILD, exiting"
   exit 0
 fi
 
@@ -262,6 +275,11 @@ if [ $DEPS -ne 0 ]; then
       ninja -C "$BUILD_BASE/openh264" install
     )
   fi
+fi
+
+if [ $BUILD_DEPS_ONLY -ne 0 ]; then
+  echo "BUILD_DEPS_ONLY=$BUILD_DEPS_ONLY, exiting"
+  exit 0
 fi
 
 do_cmake_build \

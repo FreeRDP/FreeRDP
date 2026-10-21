@@ -478,7 +478,7 @@ static int set_hw_frames_ctx(H264_CONTEXT* WINPR_RESTRICT h264)
 		           av_hwdevice_get_type_name(sys->type));
 		return -1;
 	}
-	frames_ctx = (AVHWFramesContext*)(hw_frames_ref->data);
+	frames_ctx = WINPR_PACKED_ALIGN_CAST(AVHWFramesContext*, hw_frames_ref->data);
 	frames_ctx->format = get_hwctx_image_format(sys, h264->log);
 	frames_ctx->sw_format = AV_PIX_FMT_NV12;
 	frames_ctx->width = sys->codecEncoderContext->width;

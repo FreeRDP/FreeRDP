@@ -108,6 +108,8 @@ struct S_FREERDP_DSP_CONTEXT
 #if defined(WITH_OPUS)
 	OpusDecoder* opus_decoder;
 	OpusEncoder* opus_encoder;
+	wStream* opus_input;       /* samples not encoded yet */
+	size_t opus_packet_frames; /* the shortest packet to encode */
 #endif
 #if defined(WITH_FAAD2)
 	NeAACDecHandle faad;
@@ -708,26 +710,68 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	return TRUE;
 }
 
+/* Packet durations opus_encode() takes, in units of 2.5 ms, longest first. */
+static const UINT32 opus_packet_units[] = { 24, 16, 8, 4, 2, 1 };
+
+static BOOL opus_is_packet_frames(UINT32 rate, size_t frames)
+{
+	for (size_t x = 0; x < ARRAYSIZE(opus_packet_units); x++)
+	{
+		if (frames == 1ull * rate * opus_packet_units[x] / 400)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/*
+ * opus_encode() only takes 2.5, 5, 10, 20, 40 or 60 ms of audio, but callers hand over what their
+ * capture device delivered. Collect the samples and encode the longest valid packet, at least
+ * opus_packet_frames long; keep the rest for the next call. Nothing is written until enough
+ * samples arrived.
+ */
 static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                     const BYTE* WINPR_RESTRICT src, size_t size,
                                     wStream* WINPR_RESTRICT out)
 {
-	if (!context || !context->opus_encoder || !src || !out)
+	if (!context || !context->opus_encoder || !context->opus_input || !src || !out)
 		return FALSE;
+
+	wStream* input = context->opus_input;
+	const UINT32 rate = context->common.format.nSamplesPerSec;
+	const size_t frame_bytes = sizeof(opus_int16) * context->common.format.nChannels;
+	if (!Stream_EnsureRemainingCapacity(input, size))
+		return FALSE;
+	Stream_Write(input, src, size);
+
+	const size_t available = Stream_GetPosition(input) / frame_bytes;
+	if (available < context->opus_packet_frames)
+		return TRUE;
+
+	size_t frames = 0;
+	for (size_t x = 0; x < ARRAYSIZE(opus_packet_units); x++)
+	{
+		frames = 1ull * rate * opus_packet_units[x] / 400;
+		if (frames <= available)
+			break;
+	}
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
 	const size_t max_size = OPUS_MAX_FRAMES * context->common.format.nChannels * sizeof(int16_t);
 	if (!Stream_EnsureRemainingCapacity(out, max_size))
 		return FALSE;
 
-	const size_t src_frames = size / sizeof(opus_int16) / context->common.format.nChannels;
-	const opus_int16* src_data = WINPR_PACKED_ALIGN_CAST(const opus_int16*, src);
-	const opus_int32 bytes = opus_encode(
-	    context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, src_frames),
-	    Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
+	const opus_int16* src_data = WINPR_PACKED_ALIGN_CAST(const opus_int16*, Stream_Buffer(input));
+	const opus_int32 bytes =
+	    opus_encode(context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, frames),
+	                Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
 	if (bytes < 0)
 		return FALSE;
-	return Stream_SafeSeek(out, (size_t)bytes);
+	Stream_Seek(out, (size_t)bytes);
+
+	const size_t used = frames * frame_bytes;
+	const size_t left = Stream_GetPosition(input) - used;
+	memmove(Stream_Buffer(input), Stream_Buffer(input) + used, left);
+	return Stream_SetPosition(input, left);
 }
 #endif
 
@@ -1356,6 +1400,7 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 			opus_decoder_destroy(context->opus_decoder);
 		if (context->opus_encoder)
 			opus_encoder_destroy(context->opus_encoder);
+	    Stream_Free(context->opus_input, TRUE);
 
 #endif
 #if defined(WITH_FAAD2)
@@ -1620,7 +1665,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL
 
 BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,
-                               WINPR_ATTR_UNUSED UINT32 FramesPerPacket)
+                               UINT32 FramesPerPacket)
 {
 #if defined(WITH_MEDIACODEC)
 	if (!context || !targetFormat)
@@ -1734,6 +1779,17 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 			                     OPUS_SET_BITRATE(context->common.format.nAvgBytesPerSec * 8));
 			if (opus_error != OPUS_OK)
 				return FALSE;
+
+			/* the packets the peer asked for if Opus allows them, else 20 ms */
+			const UINT32 rate = context->common.format.nSamplesPerSec;
+			context->opus_packet_frames =
+			    opus_is_packet_frames(rate, FramesPerPacket) ? FramesPerPacket : rate / 50;
+			if (!context->opus_input)
+				context->opus_input = Stream_New(nullptr, OPUS_MAX_FRAMES * sizeof(opus_int16) *
+				                                              context->common.format.nChannels);
+			if (!context->opus_input)
+				return FALSE;
+			Stream_ResetPosition(context->opus_input);
 		}
 	}
 

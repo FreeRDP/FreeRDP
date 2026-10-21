@@ -49,15 +49,17 @@ static GENERIC_DYNVC_PLUGIN_PRIVATE* getFromGeneric(GENERIC_DYNVC_PLUGIN* plugin
 
 	for (size_t count = 0; count <= maxPrivateOffset; count++, ptr++)
 	{
-		/* A matching first byte is only a candidate. Always advance when the
-		 * full marker differs, including repeated or partially matching prefixes. */
+		/* Only bytes matching the first element of the magic pattern get the full memcmp. A
+		 * byte that matches it alone is skipped like any other. */
 		if ((*ptr == magic[0]) && (memcmp(ptr, magic, sizeof(magic)) == 0))
 			return WINPR_PACKED_ALIGN_CAST(GENERIC_DYNVC_PLUGIN_PRIVATE*, ptr);
 	}
+
 	WLog_ERR(TAG,
 	         "Failed to find GENERIC_DYNVC_PLUGIN_PRIVATE offset in the first %" PRIuz
 	         " bytes after GENERIC_DYNVC_PLUGIN, giving up.",
 	         maxPrivateOffset);
+	WINPR_ASSERT(FALSE);
 	return nullptr;
 }
 

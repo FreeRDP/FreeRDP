@@ -114,6 +114,8 @@
 #endif
 
 #if defined(__clang__)
+#define WINPR_PRAGMA_DIAG(x) \
+	WINPR_DO_PRAGMA(clang diagnostic ignored x) /** @since version 3.33.0 */
 #define WINPR_PRAGMA_DIAG_PUSH WINPR_DO_PRAGMA(clang diagnostic push)
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS                                          \
 	WINPR_DO_PRAGMA(clang diagnostic ignored "-Woverlength-strings") /** @since version 3.9.0 \
@@ -177,6 +179,9 @@
 	_Pragma("clang loop vectorize_width(8) interleave_count(8)") /** @since version 3.6.0 \
 	                                                              */
 #elif defined(__GNUC__)
+#define WINPR_PRAGMA_DIAG(x)                                             \
+	WINPR_DO_PRAGMA(GCC diagnostic ignored #x) /** @since version 3.33.0 \
+	                                            */
 #define WINPR_PRAGMA_DIAG_PUSH WINPR_DO_PRAGMA(GCC diagnostic push)
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
 	WINPR_DO_PRAGMA(GCC diagnostic ignored "-Woverlength-strings") /** @since version 3.9.0 */
@@ -229,6 +234,7 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_CAST_FUNCTION_TYPE \
 	WINPR_DO_PRAGMA(GCC diagnostic ignored "-Wcast-function-type") /** @since 3.32.0 */
 #else
+#define WINPR_PRAGMA_DIAG(x) /** @since version 3.33.0 */
 #define WINPR_PRAGMA_DIAG_PUSH
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
 #define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS         /** @since version 3.9.0 */
@@ -593,6 +599,13 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #endif
 
 #endif /* __BYTE_ORDER */
+
+#if defined(_WIN32)
+#ifndef __LITTLE_ENDIAN__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define __LITTLE_ENDIAN__ 1
+#endif
+#endif
 
 WINPR_PRAGMA_DIAG_POP
 

@@ -1,6 +1,7 @@
 include(CMakeFindDependencyMacro)
 find_dependency(WinPR @FREERDP_VERSION@)
 find_dependency(FreeRDP @FREERDP_VERSION@)
+@FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES@
 if("@WITH_SMARTCARD_EMULATE@")
 	find_dependency(ZLIB)
 endif()

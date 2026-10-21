@@ -152,6 +152,25 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
 
+	/** Sends one message of a static virtual channel on the dynamic channel that carries it.
+	 *  @since version 3.33.0 */
+	typedef BOOL (*freerdp_channels_bridge_send_fkt_t)(void* custom, const BYTE* data,
+	                                                   size_t length);
+
+	/** Sends the data of the static virtual channel @p name with @p send from now on, as
+	 *  [MS-RDPEDYC] 3.1.5.4 requires once a dynamic channel carries that channel. @p custom is
+	 *  passed to @p send and to @p fnFree, which is called once the channel no longer uses it
+	 *  and no send is in progress. On failure the caller keeps @p custom.
+	 *
+	 *  A @p send of nullptr sends the channel's data on the static channel again; @p fnFree is
+	 *  not used then, and a @p custom other than nullptr only removes the bridge set with that
+	 *  @p custom, not one set since.
+	 *  @since version 3.33.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_channels_set_static_bridge(freerdp* instance, const char* name,
+	                                                    freerdp_channels_bridge_send_fkt_t send,
+	                                                    void (*fnFree)(void* custom), void* custom);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_channels_get_name_by_id(freerdp* instance, UINT16 channelId);
 

@@ -36,6 +36,8 @@ macro(freerdp_pc_add_requires_private)
   set(FREERDP_PC_REQUIRES_PRIVATE ${FREERDP_PC_REQUIRES_PRIVATE} CACHE INTERNAL "dependencies")
 endmacro()
 
+include(PackageConfigDependencies)
+
 set(FREERDP_PC_LIBRARY_PRIVATE "" CACHE INTERNAL "dependencies")
 macro(freerdp_pc_add_library_private)
   foreach(_lib ${ARGN})
@@ -124,8 +126,9 @@ endmacro()
 
 option(WITH_FDK_AAC "Enable FDK_AAC support" OFF)
 if(WITH_FDK_AAC)
-  find_package(fdk-aac)
+  find_package(fdk-aac QUIET)
   if(TARGET FDK-AAC::fdk-aac)
+    set_property(TARGET FDK-AAC::fdk-aac PROPERTY PACKAGE_CONFIG_NAME fdk-aac)
     freerdp_library_add(FDK-AAC::fdk-aac)
   else()
     find_package(PkgConfig REQUIRED)
@@ -139,7 +142,7 @@ endif()
 
 set(OPUS_DEFAULT OFF)
 if(NOT WITH_DSP_FFMPEG)
-  find_package(Opus)
+  find_package(Opus QUIET)
   if(Opus_FOUND)
     set(OPUS_DEFAULT ${OPUS_FOUND})
   else()
@@ -155,7 +158,7 @@ endif()
 
 option(WITH_OPUS "compile with opus codec support" ${OPUS_DEFAULT})
 if(WITH_OPUS)
-  find_package(Opus)
+  find_package(Opus QUIET)
   if(Opus_FOUND)
     set_target_properties(Opus::opus PROPERTIES IMPORTED_GLOBAL TRUE)
     freerdp_library_add(Opus::opus)
@@ -317,6 +320,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc DES
 ## cmake project
 export(PACKAGE freerdp)
 
+package_config_dependencies(${MODULE_NAME} FREERDP_CMAKE_FIND_DEPENDENCIES)
 configure_package_config_file(
   FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
   INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR} PATH_VARS FREERDP_INCLUDE_DIR FREERDP_PLUGIN_PATH

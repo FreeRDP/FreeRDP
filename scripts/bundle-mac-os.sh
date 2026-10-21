@@ -2,7 +2,7 @@
 SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")" # relative
 SCRIPT_PATH="$(cd -- "$SCRIPT_PATH" && pwd)"    # absolutized and normalized
 
-BASE=$(pwd)
+BASE="$SCRIPT_PATH/../build-macos"
 SRC="$BASE/src"
 BUILD="$BASE/build"
 INSTALL="$BASE/install/MacFreeRDP.app/Contents"
@@ -10,6 +10,8 @@ INSTALL="$BASE/install/MacFreeRDP.app/Contents"
 BINDIR=MacOS
 LIBDIR=Frameworks
 DATADIR=Resources
+BUILD_DEPS=1
+BUILD_DEPS_ONLY=0
 
 DEPLOYMENT_ARCH='arm64 x86_64'
 DEPLOYMENT_TARGET=12
@@ -43,12 +45,18 @@ while [[ $# -gt 0 ]]; do
     shift # past argument
     shift # past value
     ;;
+  -d | --no-deps)
+    BUILD_DEPS=0
+    ;;
+  --build-deps-only)
+    BUILD_DEPS_ONLY=1
+    ;;
   -t | --target)
     DEPLOYMENT_TARGET="$2"
     shift # past argument
     shift # past value
     ;;
-  -t | --target)
+  -u | --usage)
     usage
     exit 0
     ;;
@@ -130,113 +138,121 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DCMAKE_IGNORE_PREFIX_PATH='/opt/local;/usr/local;/opt/homebrew;/Library;~/Library'
 	"
 
-if [ ! -d $SRC ]; then
-  mkdir -p $SRC
-  cd $SRC
-  git clone --depth 1 -b openssl-3.6.0 https://github.com/openssl/openssl.git
-  git clone --depth 1 -b v1.3.1.2 https://github.com/madler/zlib.git
-  git clone --depth 1 -b uriparser-1.0.2 https://github.com/uriparser/uriparser.git
-  git clone --depth 1 -b json-c-0.18-20240915 https://github.com/json-c/json-c.git
-  git clone --depth 1 -b release-3.2.28 https://github.com/libsdl-org/SDL.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.4 https://github.com/libsdl-org/SDL_image.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.29-0 https://github.com/libusb/libusb-cmake.git
-  git clone --depth 1 -b n8.0.1 https://github.com/FFmpeg/FFmpeg.git
-  git clone --depth 1 -b master https://github.com/cisco/openh264.git
-  git clone --depth 1 -b v1.6 https://gitlab.xiph.org/xiph/opus.git
-  git clone --depth 1 -b v2.0.3 https://github.com/mstorsjo/fdk-aac.git
+if [ $BUILD_DEPS -ne 0 ];
+then
+    if [ ! -d $SRC ]; then
+      mkdir -p $SRC
+      cd $SRC
+      git clone --depth 1 -b openssl-3.6.0 https://github.com/openssl/openssl.git
+      git clone --depth 1 -b v1.3.1.2 https://github.com/madler/zlib.git
+      git clone --depth 1 -b uriparser-1.0.2 https://github.com/uriparser/uriparser.git
+      git clone --depth 1 -b json-c-0.18-20240915 https://github.com/json-c/json-c.git
+      git clone --depth 1 -b release-3.2.28 https://github.com/libsdl-org/SDL.git
+      git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git
+      git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.4 https://github.com/libsdl-org/SDL_image.git
+      git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.29-0 https://github.com/libusb/libusb-cmake.git
+      git clone --depth 1 -b n8.0.1 https://github.com/FFmpeg/FFmpeg.git
+      git clone --depth 1 -b master https://github.com/cisco/openh264.git
+      git clone --depth 1 -b v1.6 https://gitlab.xiph.org/xiph/opus.git
+      git clone --depth 1 -b v2.0.3 https://github.com/mstorsjo/fdk-aac.git
+    fi
+
+    if [ -d $INSTALL ]; then
+      rm -rf $INSTALL
+    fi
+
+    if [ -d $BUILD ]; then
+      rm -rf $BUILD
+    fi
+
+    mkdir -p $BUILD
+    cd $BUILD
+
+    cmake -GNinja -Bzlib -S$SRC/zlib $CMAKE_ARGS
+    cmake --build zlib
+    cmake --install zlib
+
+    cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF \
+      -DURIPARSER_BUILD_TOOLS=OFF
+    cmake --build uriparser
+    cmake --install uriparser
+
+    cmake -GNinja -Bjson-c -S$SRC/json-c $CMAKE_ARGS -DBUILD_APPS=OFF -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF
+    cmake --build json-c
+    cmake --install json-c
+
+    cmake -GNinja -Bopus -S$SRC/opus $CMAKE_ARGS -DOPUS_BUILD_SHARED_LIBRARY=ON
+    cmake --build opus
+    cmake --install opus
+
+    cmake -GNinja -Bfdk-aac -S$SRC/fdk-aac $CMAKE_ARGS -DBUILD_PROGRAMS=OFF
+    cmake --build fdk-aac
+    cmake --install fdk-aac
+
+    cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_STATIC_PIC=ON
+    cmake --build SDL
+    cmake --install SDL
+
+    cmake -GNinja -BSDL_ttf -S$SRC/SDL_ttf $CMAKE_ARGS -DSDLTTF_HARFBUZZ=ON -DSDLTTF_FREETYPE=ON -DSDLTTF_VENDORED=ON \
+      -DFT_DISABLE_ZLIB=OFF -DSDLTTF_SAMPLES=OFF
+    cmake --build SDL_ttf
+    cmake --install SDL_ttf
+
+    cmake -GNinja -BSDL_image -S$SRC/SDL_image $CMAKE_ARGS -DSDLIMAGE_SAMPLES=OFF -DSDLIMAGE_DEPS_SHARED=OFF
+    cmake --build SDL_image
+    cmake --install SDL_image
+
+    cmake -GNinja -Blibusb-cmake -S$SRC/libusb-cmake $CMAKE_ARGS -DLIBUSB_BUILD_EXAMPLES=OFF -DLIBUSB_BUILD_TESTING=OFF \
+      -DLIBUSB_ENABLE_DEBUG_LOGGING=OFF -DLIBUSB_BUILD_SHARED_LIBS=ON
+    cmake --build libusb-cmake
+    cmake --install libusb-cmake
+
+    mkdir -p openssl
+    cd openssl
+
+    NPROC=$(sysctl -n hw.ncpu)
+    CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS $SRC/openssl/config --prefix=$INSTALL --libdir=lib no-asm no-tests no-docs no-apps zlib
+    CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC build_sw
+    CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC install_sw
+
+    cd $BUILD
+
+    meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS -Wno-error" -Dc_link_args="$OSSL_FLAGS" \
+      -Dcpp_args="$OSSL_FLAGS -Wno-error" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled -Dwerror=false \
+      -Dlibdir=lib openh264 $SRC/openh264
+    ninja -C openh264 install
+
+    for ARCH in $DEPLOYMENT_ARCH; do
+      mkdir -p $BUILD/FFmpeg/$ARCH
+      cd $BUILD/FFmpeg/$ARCH
+      FFCFLAGS="-arch $ARCH -mmacosx-version-min=$DEPLOYMENT_TARGET"
+      FINSTPATH=$BUILD/FFmpeg/install/$ARCH
+      CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --prefix=$FINSTPATH --disable-all \
+        --enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
+        --disable-securetransport --disable-xlib --enable-cross-compile
+      CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j $NPROC
+      CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j $NPROC install
+      fix_rpath "$FINSTPATH/lib"
+    done
+
+    BASE_ARCH="${DEPLOYMENT_ARCH%% *}"
+
+    cd $BUILD/FFmpeg/install/$ARCH
+    cp -r include/* $INSTALL/include/
+    find lib -type l -exec cp -P {} $INSTALL/lib/ \;
+    BASE_LIBS=$(find lib -type f -name "*.dylib" -exec basename {} \;)
+
+    cd $BUILD/FFmpeg/install
+    for LIB in $BASE_LIBS; do
+      LIBS=$(find . -name $LIB)
+      lipo $LIBS -output $INSTALL/lib/$LIB -create
+    done
 fi
 
-if [ -d $INSTALL ]; then
-  rm -rf $INSTALL
+if [ $BUILD_DEPS_ONLY -ne 0 ];
+then
+    exit 0
 fi
-
-if [ -d $BUILD ]; then
-  rm -rf $BUILD
-fi
-
-mkdir -p $BUILD
-cd $BUILD
-
-cmake -GNinja -Bzlib -S$SRC/zlib $CMAKE_ARGS
-cmake --build zlib
-cmake --install zlib
-
-cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF \
-  -DURIPARSER_BUILD_TOOLS=OFF
-cmake --build uriparser
-cmake --install uriparser
-
-cmake -GNinja -Bjson-c -S$SRC/json-c $CMAKE_ARGS -DBUILD_APPS=OFF -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF
-cmake --build json-c
-cmake --install json-c
-
-cmake -GNinja -Bopus -S$SRC/opus $CMAKE_ARGS -DOPUS_BUILD_SHARED_LIBRARY=ON
-cmake --build opus
-cmake --install opus
-
-cmake -GNinja -Bfdk-aac -S$SRC/fdk-aac $CMAKE_ARGS -DBUILD_PROGRAMS=OFF
-cmake --build fdk-aac
-cmake --install fdk-aac
-
-cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_STATIC_PIC=ON
-cmake --build SDL
-cmake --install SDL
-
-cmake -GNinja -BSDL_ttf -S$SRC/SDL_ttf $CMAKE_ARGS -DSDLTTF_HARFBUZZ=ON -DSDLTTF_FREETYPE=ON -DSDLTTF_VENDORED=ON \
-  -DFT_DISABLE_ZLIB=OFF -DSDLTTF_SAMPLES=OFF
-cmake --build SDL_ttf
-cmake --install SDL_ttf
-
-cmake -GNinja -BSDL_image -S$SRC/SDL_image $CMAKE_ARGS -DSDLIMAGE_SAMPLES=OFF -DSDLIMAGE_DEPS_SHARED=OFF
-cmake --build SDL_image
-cmake --install SDL_image
-
-cmake -GNinja -Blibusb-cmake -S$SRC/libusb-cmake $CMAKE_ARGS -DLIBUSB_BUILD_EXAMPLES=OFF -DLIBUSB_BUILD_TESTING=OFF \
-  -DLIBUSB_ENABLE_DEBUG_LOGGING=OFF -DLIBUSB_BUILD_SHARED_LIBS=ON
-cmake --build libusb-cmake
-cmake --install libusb-cmake
-
-mkdir -p openssl
-cd openssl
-
-NPROC=$(sysctl -n hw.ncpu)
-CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS $SRC/openssl/config --prefix=$INSTALL --libdir=lib no-asm no-tests no-docs no-apps zlib
-CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC build_sw
-CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC install_sw
-
-cd $BUILD
-
-meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS -Wno-error" -Dc_link_args="$OSSL_FLAGS" \
-  -Dcpp_args="$OSSL_FLAGS -Wno-error" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled -Dwerror=false \
-  -Dlibdir=lib openh264 $SRC/openh264
-ninja -C openh264 install
-
-for ARCH in $DEPLOYMENT_ARCH; do
-  mkdir -p $BUILD/FFmpeg/$ARCH
-  cd $BUILD/FFmpeg/$ARCH
-  FFCFLAGS="-arch $ARCH -mmacosx-version-min=$DEPLOYMENT_TARGET"
-  FINSTPATH=$BUILD/FFmpeg/install/$ARCH
-  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --prefix=$FINSTPATH --disable-all \
-    --enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
-    --disable-securetransport --disable-xlib --enable-cross-compile
-  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j $NPROC
-  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j $NPROC install
-  fix_rpath "$FINSTPATH/lib"
-done
-
-BASE_ARCH="${DEPLOYMENT_ARCH%% *}"
-
-cd $BUILD/FFmpeg/install/$ARCH
-cp -r include/* $INSTALL/include/
-find lib -type l -exec cp -P {} $INSTALL/lib/ \;
-BASE_LIBS=$(find lib -type f -name "*.dylib" -exec basename {} \;)
-
-cd $BUILD/FFmpeg/install
-for LIB in $BASE_LIBS; do
-  LIBS=$(find . -name $LIB)
-  lipo $LIBS -output $INSTALL/lib/$LIB -create
-done
 
 cd $BUILD
 cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." \

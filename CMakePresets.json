@@ -12,7 +12,6 @@
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-				"CMAKE_C_STANDARD": "23",
 				"ENABLE_WARNING_VERBOSE": "ON",
 				"WITHOUT_WINPR_3x_DEPRECATED": "ON",
 				"WITHOUT_FREERDP_3x_DEPRECATED": "ON",
@@ -29,10 +28,10 @@
 				"CHANNEL_PRINTER": "ON",
 				"CHANNEL_PRINTER_CLIENT": "ON",
 				"WITH_CLIENT_COMMON": "ON",
+				"WITH_CLIENT_INTERFACE": "ON",
 				"WITH_INTERNAL_MD4": "ON",
 				"WITH_INTERNAL_MD5": "ON",
 				"WITH_INTERNAL_RC4": "ON",
-				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
 				"WITH_UWAC": "OFF",
 				"WITH_RDTK": "OFF",
 				"WITH_WAYLAND": "OFF"
@@ -191,7 +190,13 @@
 				"WITH_PLATFORM_SERVER": "OFF",
 				"WITH_SHADOW_SUBSYSTEM": "OFF",
 				"WITH_SERVER_SHADOW_CLI": "OFF",
-				"WITH_CLIENT": "OFF"
+				"WITH_CLIENT": "OFF",
+				"WITH_PROXY_EMULATE_SMARTCARD": "ON",
+				"WITH_GFX_AV1": "ON",
+				"WITH_GFX_AZURE": "ON",
+				"WITH_YUV": "ON",
+				"WITH_DAV1D": "ON",
+				"WITH_CWALK": "ON"
 			}
 		},
 		{
@@ -216,6 +221,7 @@
 			"inherits": "full",
 			"cacheVariables": {
 				"WITH_CLIENT": "ON",
+				"WITH_SDL_IMAGE_DIALOGS": "ON",
 				"WITH_X11": "ON"
 			}
 		},
@@ -232,8 +238,24 @@
 				"WITH_SAMPLE": "ON",
 				"WITH_WINPR_TOOLS_CLI": "ON"
 			}
+		},
+		{
+			"name": "oss-scanner",
+			"displayName": "adapter full preset for oss-scanner",
+			"generator": "Ninja",
+			"description": "",
+			"inherits": [
+				"full-binaries"
+			],
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"BUILD_TESTING": "ON",
+				"WITH_UNICODE_BUILTIN": "ON",
+				"WITH_DSP_EXPERIMENTAL": "ON",
+				"WITH_XDG_AAD_AUTH_HELPER": "ON",
+				"WITH_SANITIZE_ADDRESS": "ON"
+			}
 		}
-
 	],
 	"buildPresets": [
 		{

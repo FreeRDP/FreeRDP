@@ -65,6 +65,6 @@ if(HAVE_LIB_M)
   freerdp_pc_add_library_private("m")
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

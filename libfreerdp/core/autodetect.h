@@ -42,6 +42,12 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect,
                                                          RDP_TRANSPORT_TYPE transport, wStream* s);
 
+/** An auto-detect request in an [MS-RDPEMT] 2.2.1.1.1 RDP_TUNNEL_SUBHEADER, which is the whole
+ * subheader. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL state_run_t autodetect_recv_tunnel_request(rdpAutoDetect* autodetect,
+                                                         RDP_TRANSPORT_TYPE transport, wStream* s);
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect,
                                                           RDP_TRANSPORT_TYPE transport, wStream* s);

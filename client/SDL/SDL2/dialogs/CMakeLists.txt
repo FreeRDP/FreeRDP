@@ -67,6 +67,6 @@ add_library(sdl2-dialogs STATIC ${SRCS})
 
 target_link_libraries(sdl2-dialogs PRIVATE ${LIBS})
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   #	add_subdirectory(test)
 endif()

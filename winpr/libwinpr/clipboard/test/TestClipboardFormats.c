@@ -25,6 +25,8 @@ static void test_log_fn(const char* file, const char* func, size_t line, const c
 
 #define test_ClipboardSetData(clipboard, formatId, data, size) \
 	test_ClipboardSetDataFn(__FILE__, __func__, __LINE__, (clipboard), (formatId), (data), (size))
+
+WINPR_ATTR_NODISCARD
 static BOOL test_ClipboardSetDataFn(const char* file, const char* func, size_t line,
                                     wClipboard* clipboard, UINT32 formatId, const void* data,
                                     UINT32 size)
@@ -40,6 +42,8 @@ static BOOL test_ClipboardSetDataFn(const char* file, const char* func, size_t l
 
 #define test_ClipboardGetData(clipboard, formatId, size) \
 	test_ClipboardGetDataFn(__FILE__, __func__, __LINE__, (clipboard), (formatId), (size))
+
+WINPR_ATTR_NODISCARD
 static void* test_ClipboardGetDataFn(const char* file, const char* func, size_t line,
                                      wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 {
@@ -311,19 +315,24 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL set_descriptor_name(FILEDESCRIPTORW* dsc, const char* name, const char* trailing)
 {
+	BOOL rc = TRUE;
 	/* what follows the '\0' of cFileName is garbage the converter must ignore */
 	memset(dsc->cFileName, 0xff, sizeof(dsc->cFileName));
 	const size_t len = strlen(name);
 	if (ConvertUtf8NToWChar(name, len + 1, dsc->cFileName, ARRAYSIZE(dsc->cFileName)) < 0)
-		return FALSE;
-	if (trailing && (ConvertUtf8NToWChar(trailing, strlen(trailing), &dsc->cFileName[len + 1],
-	                                     ARRAYSIZE(dsc->cFileName) - len - 1) < 0))
-		return FALSE;
+		rc = FALSE;
+	else if (trailing && (ConvertUtf8NToWChar(trailing, strlen(trailing), &dsc->cFileName[len],
+	                                          ARRAYSIZE(dsc->cFileName) - len - 1) < 0))
+		rc = FALSE;
+	if (!rc)
+		test_log("set_descriptor_name(%s, %s) failed", name, trailing);
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_file_descriptors_to_uri_list(void)
 {
 	BOOL rc = FALSE;
@@ -335,15 +344,19 @@ static BOOL test_file_descriptors_to_uri_list(void)
 	struct
 	{
 		UINT32 count;
-		FILEDESCRIPTORW dsc[3];
+		FILEDESCRIPTORW dsc[4];
 	} data = WINPR_C_ARRAY_INIT;
-
-	wClipboard* clipboard = ClipboardCreate();
-	if (!clipboard)
-		return FALSE;
 
 	char* cmpdir = nullptr;
 	char* cmpa = nullptr;
+	wClipboard* clipboard = ClipboardCreate();
+	if (!clipboard)
+		goto fail;
+
+	HRESULT hr = PathCchConvertStyleA(basePath, strlen(basePath), PATH_STYLE_UNIX);
+	if (FAILED(hr))
+		goto fail;
+
 	wClipboardDelegate* delegate = ClipboardGetDelegate(clipboard);
 	if (!delegate)
 		goto fail;
@@ -356,14 +369,16 @@ static BOOL test_file_descriptors_to_uri_list(void)
 		goto fail;
 
 	/* data must be little endian */
-	Data_Write_UINT32(&data.count, ARRAYSIZE(data.dsc));
-	Data_Write_UINT32(&data.dsc[0].dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY);
+	winpr_Data_Write_UINT32(&data.count, ARRAYSIZE(data.dsc));
+	winpr_Data_Write_UINT32(&data.dsc[0].dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY);
 	if (!set_descriptor_name(&data.dsc[0], "dir", nullptr))
 		goto fail;
 	if (!set_descriptor_name(&data.dsc[1], "dir\\b.txt", nullptr))
 		goto fail;
 	/* a stale '\' after the name must not make a top level file look nested */
 	if (!set_descriptor_name(&data.dsc[2], "a.txt", "old\\name"))
+		goto fail;
+	if (!set_descriptor_name(&data.dsc[3], "a.txt", "old\\"))
 		goto fail;
 
 	{
@@ -378,8 +393,16 @@ static BOOL test_file_descriptors_to_uri_list(void)
 			goto fail;
 		test_log("text/uri-list: '%s'", uris);
 
-		if (!strstr(uris, cmpdir) || !strstr(uris, cmpdir) || strstr(uris, "b.txt"))
+		if (!strstr(uris, cmpdir))
+		{
+			test_log("strstr(%s, %s) failed", uris, cmpdir);
 			goto fail;
+		}
+		if (strstr(uris, "b.txt"))
+		{
+			test_log("strstr(%s, %s) failed", uris, "b.txt");
+			goto fail;
+		}
 	}
 
 	rc = TRUE;

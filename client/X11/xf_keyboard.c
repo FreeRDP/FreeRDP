@@ -820,7 +820,7 @@ static BOOL compareKey(const struct x11_key_scancode_t* a, size_t counta,
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	rdpSettings* settings = nullptr;
-	DWORD previous_mapping[ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE)] = { 0 };
+	DWORD previous_mapping[ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE)] = WINPR_C_ARRAY_INIT;
 	BOOL previous_mapping_is_set = FALSE;
 
 	WINPR_ASSERT(xfc);

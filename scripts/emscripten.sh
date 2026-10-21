@@ -29,6 +29,7 @@ CLEAN=0
 CLONE=1
 DEPS=1
 BUILD=1
+BUILD_DEPS_ONLY=0
 TESTS=0
 
 for i in "$@"; do
@@ -47,6 +48,9 @@ for i in "$@"; do
     ;;
   -t | --with-tests)
     TESTS=1
+    ;;
+  --build-deps-only)
+    BUILD_DEPS_ONLY=1
     ;;
   *)
     # unknown option
@@ -205,6 +209,10 @@ if [ $DEPS -ne 0 ]; then
     -DOPUS_BUILD_TESTING=OFF \
     -DOPUS_DISABLE_INTRINSICS=ON
   cmake --install "$BUILD_BASE/opus"
+fi
+
+if [ $BUILD_DEPS_ONLY -ne 0 ]; then
+  exit 0
 fi
 
 # Features without a backend in the browser

@@ -350,25 +350,10 @@ static UINT audin_send_open_reply_pdu(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBAC
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_receive_wave_data(const AUDIO_FORMAT* format, const BYTE* data, size_t size,
-                                    void* user_data)
+static UINT audin_send_wave_data(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callback,
+                                 const AUDIO_FORMAT* format, const BYTE* data, size_t size,
+                                 BOOL encode)
 {
-	WINPR_ASSERT(format);
-
-	UINT error = ERROR_INTERNAL_ERROR;
-	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*)user_data;
-
-	if (!callback)
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-
-	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*)callback->plugin;
-
-	if (!audin)
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-
-	if (!audin->attached)
-		return CHANNEL_RC_OK;
-
 	Stream_ResetPosition(audin->data);
 
 	if (!Stream_EnsureRemainingCapacity(audin->data, 1))
@@ -376,8 +361,7 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format, const BYTE* data
 
 	Stream_Write_UINT8(audin->data, MSG_SNDIN_DATA);
 
-	const BOOL compatible = audio_format_compatible(format, audin->format);
-	if (compatible && audin->device->FormatSupported(audin->device, audin->format))
+	if (!encode)
 	{
 		if (!Stream_EnsureRemainingCapacity(audin->data, size))
 			return CHANNEL_RC_NO_MEMORY;
@@ -398,13 +382,59 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format, const BYTE* data
 	WLog_Print(audin->log, WLOG_TRACE, "[%" PRIuz "/%" PRIuz "]", size,
 	           Stream_GetPosition(audin->data) - 1);
 
-	if ((error = audin_send_incoming_data_pdu(callback)))
+	const UINT error = audin_send_incoming_data_pdu(callback);
+	if (error)
 	{
 		WLog_Print(audin->log, WLOG_ERROR, "audin_send_incoming_data_pdu failed!");
 		return error;
 	}
 
 	return audin_channel_write_and_free(callback, audin->data, FALSE);
+}
+
+static UINT audin_receive_wave_data(const AUDIO_FORMAT* format, const BYTE* data, size_t size,
+                                    void* user_data)
+{
+	WINPR_ASSERT(format);
+
+	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*)user_data;
+
+	if (!callback)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*)callback->plugin;
+
+	if (!audin)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	if (!audin->attached)
+		return CHANNEL_RC_OK;
+
+	const BOOL compatible = audio_format_compatible(format, audin->format);
+	if (compatible && audin->device->FormatSupported(audin->device, audin->format))
+		return audin_send_wave_data(audin, callback, format, data, size, FALSE);
+
+	/* Encode at most one packet of input at a time and send each packet on its own: the
+	 * device may deliver any amount, and codecs that collect samples into packets (Opus)
+	 * would otherwise fall behind. */
+	const size_t frame_bytes = 1ull * format->nChannels * format->wBitsPerSample / 8;
+	size_t chunk = size;
+	if ((frame_bytes > 0) && (audin->FramesPerPacket > 0) && (audin->format->nSamplesPerSec > 0))
+	{
+		const size_t frames =
+		    1ull * audin->FramesPerPacket * format->nSamplesPerSec / audin->format->nSamplesPerSec;
+		if (frames > 0)
+			chunk = frames * frame_bytes;
+	}
+
+	for (size_t offset = 0; offset < size; offset += chunk)
+	{
+		const UINT error = audin_send_wave_data(audin, callback, format, &data[offset],
+		                                        MIN(chunk, size - offset), TRUE);
+		if (error)
+			return error;
+	}
+	return CHANNEL_RC_OK;
 }
 
 static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callback)

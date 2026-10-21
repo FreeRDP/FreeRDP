@@ -86,6 +86,6 @@ endif()
 
 winpr_module_add(${CRT_FILES})
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	static const struct
 	{
-		const char* option;
+		char* option;
 		BOOL enabled;
 		BOOL valid;
 	} cases[] = { { nullptr, FALSE, TRUE },
@@ -22,14 +22,14 @@ int main(int argc, char* argv[])
 
 	for (size_t i = 0; i < ARRAYSIZE(cases); i++)
 	{
-		xfContext xfc = { 0 };
+		xfContext xfc = WINPR_C_ARRAY_INIT;
 		rdpSettings* settings = freerdp_settings_new(0);
 		if (!settings)
 			return 1;
 		xfc.common.context.settings = settings;
 		/* Parsing starts with the client's default, even when reusing a context. */
 		xfc.deferAlt = TRUE;
-		char* args[] = { "xfreerdp", "/v:localhost", (char*)cases[i].option, nullptr };
+		char* args[] = { "xfreerdp", "/v:localhost", cases[i].option, nullptr };
 		const int count = cases[i].option ? ARRAYSIZE(args) - 1 : ARRAYSIZE(args) - 2;
 		const int status = xf_client_settings_parse_command_line(&xfc, count, args);
 		const BOOL passed = ((status == 0) == cases[i].valid) &&
@@ -37,8 +37,8 @@ int main(int argc, char* argv[])
 		freerdp_settings_free(settings);
 		if (!passed)
 		{
-			fprintf(stderr, "option %s: status %d, enabled %d\n",
-			        cases[i].option ? cases[i].option : "(default)", status, xfc.deferAlt);
+			(void)fprintf(stderr, "option %s: status %d, enabled %d\n",
+			              cases[i].option ? cases[i].option : "(default)", status, xfc.deferAlt);
 			return 1;
 		}
 	}

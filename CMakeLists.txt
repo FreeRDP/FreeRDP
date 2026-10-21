@@ -153,6 +153,12 @@ if(WITH_FREERDP_3x_DEPRECATED)
   set(WITHOUT_FREERDP_3x_DEPRECATED OFF)
 endif()
 
+if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
+  option(WITH_OPAQUE_SETTINGS "Hide rdpSettings struct definition, only allow getter/setter access" OFF)
+else()
+  set(WITH_OPAQUE_SETTINGS ON CACHE INTERNAL "NOT WITHOUT_FREERDP_3x_DEPRECATED")
+endif()
+
 option(WITH_FREERDP_DEPRECATED_COMMANDLINE "Build FreeRDP deprecated command line options" OFF)
 if(WITH_FREERDP_DEPRECATED_COMMANDLINE)
   add_compile_definitions(WITH_FREERDP_DEPRECATED_COMMANDLINE)
@@ -509,7 +515,7 @@ endif()
 
 include(CTest)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   enable_testing()
 
   if(MSVC)

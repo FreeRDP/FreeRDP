@@ -127,7 +127,7 @@ int TestFreeRDPCodecYuv(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv
 			{
 				for (size_t s = 0; s < ARRAYSIZE(lefts); s++)
 				{
-					RECTANGLE_16 rect = { 0 };
+					RECTANGLE_16 rect = WINPR_C_ARRAY_INIT;
 					rect.left = lefts[s];
 					rect.right = rights[s];
 					rect.top = tops[t];

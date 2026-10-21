@@ -1097,9 +1097,22 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, 0))
 		goto out_fail;
 
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
-	                                 TRANSPORT_TYPE_UDP_FECR))
-		goto out_fail;
+	{
+		UINT32 multitransportFlags = TRANSPORT_TYPE_UDP_FECR;
+#if defined(WITH_RDPEUDP)
+		/* A client with UDP multitransport implements Soft-Sync (drdynvc), a server does not. */
+		if (!server)
+			multitransportFlags |= SOFTSYNC_TCP_TO_UDP;
+		/* A server has no UDP side, so it offers no tunnel: it waits for the client's Initiate
+		 * Multitransport Response, which a client that tries the tunnel only sends once the tunnel
+		 * failed. */
+		else
+			multitransportFlags = 0;
+#endif
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
+		                                 multitransportFlags))
+			goto out_fail;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, TRUE))
 		goto out_fail;
 
@@ -1824,9 +1837,9 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		const UINT16 orientation =
 		    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 		const UINT32 desktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		const UINT32 deviceScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		const UINT32 deviceScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 1))
 			return FALSE;

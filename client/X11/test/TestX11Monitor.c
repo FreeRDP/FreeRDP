@@ -32,8 +32,8 @@ static BOOL check_size(Display* display, const char* name, BOOL fullscreen, BOOL
 		rc = xf_detect_monitors(&xfc, &actual_width, &actual_height);
 	if (!rc || actual_width != width || actual_height != height || xfc.vscreen.nmonitors != 2)
 	{
-		fprintf(stderr, "%s: expected %ux%u, got %ux%u (%u monitors)\n", name, width, height,
-		        actual_width, actual_height, xfc.vscreen.nmonitors);
+		(void)fprintf(stderr, "%s: expected %ux%u, got %ux%u (%u monitors)\n", name, width, height,
+		              actual_width, actual_height, xfc.vscreen.nmonitors);
 		rc = FALSE;
 	}
 	freerdp_settings_free(settings);
