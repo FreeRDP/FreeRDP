@@ -26,10 +26,25 @@ jobs:
             mingw-w64-tools \
             binutils-mingw-w64
 
+      - name: Cache Dependencies
+        id: cache-dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            !build-mingw/**/freerdp
+            build-mingw/**
+          key: ${{ runner.os }}-mingw-${{ hashFiles('scripts/mingw.sh') }}
+
+      - name: Build Dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: |
+          ./scripts/mingw.sh --build-deps-only
+          ./scripts/mingw.sh -c -s --build-deps-only
+
       - name: "Run mingw [shared] build..."
         run: |
-          ./scripts/mingw.sh
+          ./scripts/mingw.sh -c -d
 
       - name: "Run mingw [static] build..."
         run: |
-          ./scripts/mingw.sh -c -s --clean-first
+          ./scripts/mingw.sh -c -d -s
