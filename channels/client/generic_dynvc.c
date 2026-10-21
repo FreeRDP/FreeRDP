@@ -47,26 +47,20 @@ static GENERIC_DYNVC_PLUGIN_PRIVATE* getFromGeneric(GENERIC_DYNVC_PLUGIN* plugin
 	 */
 	char* ptr = (char*)(&plugin[1]);
 
-	size_t count = 0;
-	while (memcmp(ptr, magic, sizeof(magic)) != 0)
+	for (size_t count = 0; count <= maxPrivateOffset; count++, ptr++)
 	{
-		/* Skip all values that do not match the first element of the magic pattern.
-		 * faster than a full memcmp */
-		while (*ptr != magic[0])
-		{
-			ptr++;
-			count++;
-			if (count > maxPrivateOffset)
-			{
-				WLog_ERR(TAG,
-				         "Failed to find GENERIC_DYNVC_PLUGIN_PRIVATE offset in the first %" PRIuz
-				         " bytes after GENERIC_DYNVC_PLUGIN, giving up.",
-				         maxPrivateOffset);
-				return nullptr;
-			}
-		}
+		/* Only bytes matching the first element of the magic pattern get the full memcmp. A
+		 * byte that matches it alone is skipped like any other. */
+		if ((*ptr == magic[0]) && (memcmp(ptr, magic, sizeof(magic)) == 0))
+			return WINPR_PACKED_ALIGN_CAST(GENERIC_DYNVC_PLUGIN_PRIVATE*, ptr);
 	}
-	return WINPR_PACKED_ALIGN_CAST(GENERIC_DYNVC_PLUGIN_PRIVATE*, ptr);
+
+	WLog_ERR(TAG,
+	         "Failed to find GENERIC_DYNVC_PLUGIN_PRIVATE offset in the first %" PRIuz
+	         " bytes after GENERIC_DYNVC_PLUGIN, giving up.",
+	         maxPrivateOffset);
+	WINPR_ASSERT(FALSE);
+	return nullptr;
 }
 
 WINPR_ATTR_NODISCARD
