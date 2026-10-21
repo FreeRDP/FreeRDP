@@ -26,6 +26,23 @@ static int releaseY;
 static Bool pointerSuccess = True;
 static BOOL inputSuccess = TRUE;
 static KeySym lookupKey = XK_Return;
+static Status attributesSuccess = 1;
+static Bool translateSuccess = True;
+static unsigned attributeQueries;
+static BOOL changingAttributes;
+static int currentWidth = 500;
+static int currentHeight = 420;
+
+Status XGetWindowAttributes(Display* display, Window window, XWindowAttributes* attributes)
+{
+	WINPR_UNUSED(display);
+	WINPR_UNUSED(window);
+	attributeQueries++;
+	*attributes = (XWindowAttributes){ .root = 1, .width = currentWidth, .height = currentHeight };
+	if (changingAttributes)
+		attributes->width += (int)(attributeQueries % 2);
+	return attributesSuccess;
+}
 
 Bool XQueryPointer(Display* display, Window window, Window* root, Window* child,
                     int* rx, int* ry, int* cx, int* cy, unsigned int* mask)
@@ -96,7 +113,7 @@ Bool XTranslateCoordinates(Display* display, Window src, Window dst, int sx, int
 	*x = rootX;
 	*y = rootY;
 	*child = None;
-	return True;
+	return translateSuccess;
 }
 
 Pixmap XCreatePixmap(Display* display, Drawable drawable, unsigned int width,
@@ -580,6 +597,90 @@ int main(int argc, char* argv[])
 	event.width = 0;
 	CHECK(!xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
 	CHECK(appWindow.width == 450 && appWindow.height == 400);
+
+	/* Real-only reparented resizes must converge without a synthetic event.
+	 * Query dimensions as well as position: this queued event is older than X11. */
+	const unsigned movesBeforeRealOnly = moves;
+	appWindow.local_move.state = LMS_NOT_ACTIVE;
+	event.send_event = False;
+	event.x = event.y = 0;
+	event.width = 460;
+	event.height = 410;
+	rootX = 620;
+	rootY = 170;
+	currentWidth = 500;
+	currentHeight = 420;
+	CHECK(!xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
+	CHECK(appWindow.configureGeometryPending);
+	CHECK(appWindow.width == 450 && appWindow.height == 400);
+	CHECK(xf_rail_sync_configure_geometry(&xfc, &appWindow));
+	CHECK(!appWindow.configureGeometryPending);
+	CHECK(appWindow.x == 620 && appWindow.y == 170);
+	CHECK(appWindow.width == 500 && appWindow.height == 420);
+	CHECK(moves == movesBeforeRealOnly);
+
+	/* A synthetic snapshot cancels the queued query and keeps its own tuple. */
+	CHECK(!xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
+	const unsigned queriesBeforeSynthetic = attributeQueries;
+	event.send_event = True;
+	event.x = 650;
+	event.y = 190;
+	event.width = 510;
+	CHECK(xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
+	CHECK(xf_rail_sync_configure_geometry(&xfc, &appWindow));
+	CHECK(attributeQueries == queriesBeforeSynthetic && appWindow.x == 650);
+	CHECK(appWindow.width == 510 && !appWindow.configureGeometryPending);
+
+	/* Failures and unstable reads preserve the previous complete snapshot;
+	 * a later flush can retry, without spinning or accepting mixed geometry. */
+	event.send_event = False;
+	CHECK(!xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
+	attributesSuccess = 0;
+	CHECK(!xf_rail_sync_configure_geometry(&xfc, &appWindow));
+	attributesSuccess = 1;
+	translateSuccess = False;
+	CHECK(!xf_rail_sync_configure_geometry(&xfc, &appWindow));
+	translateSuccess = True;
+	changingAttributes = TRUE;
+	const unsigned queriesBeforeUnstable = attributeQueries;
+	CHECK(!xf_rail_sync_configure_geometry(&xfc, &appWindow));
+	CHECK(attributeQueries == queriesBeforeUnstable + 4);
+	CHECK(appWindow.x == 650 && appWindow.width == 510 && appWindow.configureGeometryPending);
+	changingAttributes = FALSE;
+	xf_rail_flush_configure_geometry(&xfc);
+	CHECK(!appWindow.configureGeometryPending && appWindow.x == 620 && appWindow.width == 500);
+	CHECK(moves == movesBeforeRealOnly);
+
+	/* Native resize completion flushes pending geometry before WINDOWMOVE,
+	 * even if pointer release precedes the batch flush. */
+	appWindow.local_move.state = LMS_ACTIVE;
+	appWindow.local_move.direction = NET_WM_MOVERESIZE_SIZE_RIGHT;
+	appWindow.windowMovePending = FALSE;
+	currentWidth = 550;
+	CHECK(!xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
+	CHECK(xf_rail_end_local_move(&xfc, &appWindow));
+	CHECK(moves == movesBeforeRealOnly + 1 && appWindow.width == 550);
+	CHECK(!appWindow.configureGeometryPending && appWindow.local_move.state == LMS_TERMINATING);
+	CHECK(lastMove.right - lastMove.left == 550);
+	CHECK(rail.ServerLocalMoveSize(&rail, &end) == CHANNEL_RC_OK);
+	/* At a normal event-batch boundary, a focused idle window reports the
+	 * single checked current snapshot; another flush does not resend it. */
+	xfc.focused = TRUE;
+	rootX = 625;
+	currentWidth = 560;
+	CHECK(!xf_rail_update_configure_geometry(&xfc, &appWindow, &event));
+	xf_rail_flush_configure_geometry(&xfc);
+	CHECK(appWindow.x == 625 && appWindow.width == 560 && !appWindow.configureGeometryPending);
+	CHECK(moves == movesBeforeRealOnly + 2);
+	xf_rail_flush_configure_geometry(&xfc);
+	CHECK(moves == movesBeforeRealOnly + 2);
+	xfc.focused = FALSE;
+	/* Unmapping cancels a queued query rather than probing a vanished window. */
+	appWindow.configureGeometryPending = TRUE;
+	appWindow.is_mapped = FALSE;
+	const unsigned queriesBeforeUnmap = attributeQueries;
+	xf_rail_flush_configure_geometry(&xfc);
+	CHECK(!appWindow.configureGeometryPending && attributeQueries == queriesBeforeUnmap);
 	HashTable_ValueObject(xfc.railWindows)->fnObjectFree = nullptr;
 	xf_rail_uninit(&xfc, &rail);
 	freerdp_settings_free(xfc.common.context.settings);

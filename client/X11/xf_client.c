@@ -552,6 +552,13 @@ static BOOL xf_process_x_events(freerdp* instance)
 			XNextEvent(xfc->display, &xevent);
 			status = xf_event_process(instance, &xevent);
 		}
+		else if (xfc->remote_app)
+		{
+			/* A reparenting WM need not send a synthetic event after resizing.
+			 * Resolve real-only batches, then drain events read by the X queries. */
+			xf_rail_flush_configure_geometry(xfc);
+			pending_status = XPending(xfc->display);
+		}
 		xf_unlock_x11(xfc);
 		if (!status)
 			break;

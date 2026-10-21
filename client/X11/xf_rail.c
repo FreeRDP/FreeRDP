@@ -272,6 +272,17 @@ BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 
 	return rc == CHANNEL_RC_OK;
 }
 
+static BOOL xf_rail_apply_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
+                                            int x, int y, int width, int height)
+{
+	appWindow->configureGeometryPending = FALSE;
+	appWindow->x = x;
+	appWindow->y = y;
+	appWindow->width = width;
+	appWindow->height = height;
+	return xf_AppWindowResize(xfc, appWindow);
+}
+
 BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
                                        const XConfigureEvent* event)
 {
@@ -299,12 +310,13 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 
 		if (parent != root)
 		{
-			/* A real child notification is not a root-space snapshot, even
-			 * when it changes size. Do not report that new size at an old root
-			 * position before the WM's paired synthetic notification arrives. */
+			/* ICCCM permits real-only resize notifications. Coalesce the batch
+			 * so a following synthetic snapshot wins; otherwise query BOTH the
+			 * current root position and size, never a new position + old event size. */
+			appWindow->configureGeometryPending = TRUE;
 			WLog_Print(xfc->log, WLOG_DEBUG,
 			           "[rail-geometry] defer child configure windowId=0x%08" PRIx64
-			           " event=%d,%d %dx%d until synthetic root notification",
+			           " event=%d,%d %dx%d until end of X11 event batch",
 			           appWindow->windowId, event->x, event->y, event->width, event->height);
 			return FALSE;
 		}
@@ -320,11 +332,66 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 	           appWindow->windowId, event->send_event, event->x, event->y, event->width,
 	           event->height, x, y, appWindow->windowOffsetX, appWindow->windowOffsetY,
 	           appWindow->windowWidth, appWindow->windowHeight);
-	appWindow->x = x;
-	appWindow->y = y;
-	appWindow->width = event->width;
-	appWindow->height = event->height;
-	return xf_AppWindowResize(xfc, appWindow);
+	return xf_rail_apply_configure_geometry(xfc, appWindow, x, y, event->width, event->height);
+}
+
+BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	if (!appWindow->configureGeometryPending)
+		return TRUE;
+	/* Validate two current snapshots without grabbing the X server. A WM may
+	 * update its frame and child separately; retry a changing snapshot, with
+	 * later ConfigureNotify/DestroyNotify events handling a continuing change. */
+	for (size_t attempt = 0; attempt < 2; attempt++)
+	{
+		XWindowAttributes before = WINPR_C_ARRAY_INIT;
+		XWindowAttributes after = WINPR_C_ARRAY_INIT;
+		Window child = None;
+		int x = 0, y = 0, checkedX = 0, checkedY = 0;
+		if (!XGetWindowAttributes(xfc->display, appWindow->handle, &before) ||
+		    !XTranslateCoordinates(xfc->display, appWindow->handle, before.root, 0, 0,
+		                           &x, &y, &child) ||
+		    !XGetWindowAttributes(xfc->display, appWindow->handle, &after) ||
+		    !XTranslateCoordinates(xfc->display, appWindow->handle, after.root, 0, 0,
+		                           &checkedX, &checkedY, &child))
+			return FALSE;
+		if ((before.root != after.root) || (before.x != after.x) || (before.y != after.y) ||
+		    (before.width != after.width) || (before.height != after.height) ||
+		    (before.border_width != after.border_width) || (x != checkedX) || (y != checkedY))
+			continue;
+		if ((after.width <= 0) || (after.height <= 0))
+			return FALSE;
+		WLog_Print(xfc->log, WLOG_DEBUG,
+		           "[rail-geometry] queried configure windowId=0x%08" PRIx64 " root=%d,%d %dx%d",
+		           appWindow->windowId, x, y, after.width, after.height);
+		return xf_rail_apply_configure_geometry(xfc, appWindow, x, y, after.width, after.height);
+	}
+	return FALSE;
+}
+
+void xf_rail_flush_configure_geometry(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	if (!xfc->railWindows)
+		return;
+	ULONG_PTR* keys = nullptr;
+	xf_AppWindowsLock(xfc);
+	const size_t count = HashTable_GetKeys(xfc->railWindows, &keys);
+	for (size_t index = 0; index < count; index++)
+	{
+		xfAppWindow* window = xf_rail_get_window(xfc, *(UINT64*)keys[index], TRUE);
+		if (!window || !window->configureGeometryPending)
+			continue;
+		if (!window->is_mapped)
+			window->configureGeometryPending = FALSE;
+		else if (xf_rail_sync_configure_geometry(xfc, window) &&
+		         (window->decorations || (xfc->focused && !window->rail_ignore_configure)))
+			(void)xf_rail_adjust_position(xfc, window);
+	}
+	free(keys);
+	xf_AppWindowsUnlock(xfc);
 }
 
 BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow)
@@ -485,6 +552,11 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	if (appWindow->local_move.state == LMS_TERMINATING)
 		return TRUE;
 	if (appWindow->local_move.state == LMS_NOT_ACTIVE)
+		return FALSE;
+	/* A release/Enter may arrive before the event-batch flush. Complete a
+	 * resize using its current geometry, not the last synthetic notification. */
+	if (appWindow->configureGeometryPending && !xf_rail_sync_configure_geometry(xfc, appWindow) &&
+	    (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE))
 		return FALSE;
 
 	if (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE)

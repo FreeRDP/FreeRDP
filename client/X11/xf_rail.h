@@ -96,6 +96,8 @@ struct xf_app_window
 	BOOL unknownMarginWarning;
 	UINT64 lastUnknownMarginReconcile;
 	BOOL serverGeometryPending;
+	/* A real reparented ConfigureNotify needs a current root/size snapshot. */
+	BOOL configureGeometryPending;
 	/* Deduplicate only the last successfully queued, still-unanswered move.
 	 * A server geometry update ends this scope, including adjusted replies. */
 	BOOL windowMovePending;
@@ -151,6 +153,9 @@ void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
                                        const XConfigureEvent* event);
+
+BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow);
+void xf_rail_flush_configure_geometry(xfContext* xfc);
 
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
 
