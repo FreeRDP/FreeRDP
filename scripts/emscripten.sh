@@ -211,7 +211,7 @@ if [ $DEPS -ne 0 ]; then
   cmake --install "$BUILD_BASE/opus"
 fi
 
-if [ $BUILD_DEPS_ONLY -eq 0 ]; then
+if [ $BUILD_DEPS_ONLY -ne 0 ]; then
   exit 0
 fi
 
