@@ -79,7 +79,7 @@ endif()
 
 option(WINPR_UTILS_IMAGE_JPEG "Add Jpeg <--> BMP conversion support to clipboard" OFF)
 if(WINPR_UTILS_IMAGE_JPEG)
-  find_package(libjpeg-turbo)
+  find_package(libjpeg-turbo QUIET)
   if(libjpeg-turbo_FOUND)
     set_target_properties(libjpeg-turbo::jpeg PROPERTIES IMPORTED_GLOBAL TRUE)
     winpr_library_add_private(libjpeg-turbo::jpeg)
