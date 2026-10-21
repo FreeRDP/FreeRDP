@@ -154,12 +154,16 @@ static void main_close(void* arg)
 static void main_decode(em_proxying_ctx* ctx, void* arg)
 {
 	av1_wc_job* job = arg;
+	WINPR_ASSERT(job);
+
 	av1_wc_js_decode(ctx, job->handle, job->src, job->size, job->dst, job->format, job->stride,
 	                 job->width, job->height, job->key, job->profile, &job->rc);
 }
 
 static BOOL on_main(void (*fn)(void*), void* arg)
 {
+	WINPR_ASSERT(fn);
+
 	if (emscripten_is_main_browser_thread())
 	{
 		fn(arg);
