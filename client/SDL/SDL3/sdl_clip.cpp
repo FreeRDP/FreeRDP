@@ -1440,22 +1440,9 @@ static const char s_web_mime_text[] = "x-freerdp-web-text";
 static const char s_web_mime_dib[] = "x-freerdp-web-dib";
 static const char s_web_mime_png[] = "x-freerdp-web-png";
 
-// clang-format off
-EM_JS(void, freerdp_web_clipboard_write_js, (const char* utf8), {
-	const text = UTF8ToString(utf8);
-	if (Module.freerdpClipboardWrite)
-		Module.freerdpClipboardWrite(text);
-	else if (navigator.clipboard)
-		navigator.clipboard.writeText(text).catch(() => {}); /* needs the page focused */
-});
-EM_JS(void, freerdp_web_clipboard_write_image_js, (const BYTE* data, size_t size, int png), {
-	data >>>= 0;
-	size >>>= 0;
-	const bytes = HEAPU8.slice(data, data + size);
-	if (Module.freerdpClipboardWriteImage)
-		Module.freerdpClipboardWriteImage(bytes, !!png); /* CF_DIB, or PNG as it is */
-});
-// clang-format on
+/* in sdl_clip_emscripten.js */
+extern "C" void freerdp_web_clipboard_write_js(const char* utf8);
+extern "C" void freerdp_web_clipboard_write_image_js(const BYTE* data, size_t size, int png);
 
 typedef struct
 {
