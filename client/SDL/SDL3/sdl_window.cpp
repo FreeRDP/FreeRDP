@@ -235,6 +235,20 @@ void SdlWindow::fullscreen(bool enter, bool forceOriginalDisplay)
 	}
 	std::ignore = SDL_SetWindowFullscreen(_window, enter);
 	std::ignore = SDL_SyncWindow(_window);
+
+#if defined(__APPLE__)
+	/* macOS drops a fullscreen request while another fullscreen transition is still running,
+	 * e.g. the one of the probe window query() just destroyed. Retry until it is done. */
+	const Uint64 start = SDL_GetTicks();
+	while (enter && ((SDL_GetWindowFlags(_window) & SDL_WINDOW_FULLSCREEN) == 0) &&
+	       (SDL_GetTicks() - start < 3000))
+	{
+		SDL_Delay(250);
+		SDL_PumpEvents();
+		std::ignore = SDL_SetWindowFullscreen(_window, true);
+		std::ignore = SDL_SyncWindow(_window);
+	}
+#endif
 }
 
 void SdlWindow::minimize()
