@@ -61,6 +61,14 @@ if(WITH_GFX_AV1)
     if(WITH_AV1_WEBCODECS)
       add_compile_definitions(WITH_AV1_WEBCODECS)
       list(APPEND CODEC_SRCS av1_webcodecs.c av1_webcodecs.h)
+      # The JavaScript side, for the executable's link: a link item, so that it also reaches the
+      # executable through static libraries (link options of their private dependencies don't).
+      freerdp_library_add_public(
+        "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/av1_webcodecs.js"
+      )
+      if(NOT BUILD_SHARED_LIBS)
+        install(FILES av1_webcodecs.js DESTINATION ${FREERDP_PLUGIN_PATH})
+      endif()
     endif()
   endif()
 endif()
