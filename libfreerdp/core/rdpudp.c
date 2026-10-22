@@ -134,7 +134,7 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * them. Ten, a second apart, stay well inside the setup time of the tunnel
  * (RDPEMT_SETUP_TIMEOUT_MS). */
 #define RDPUDP_SYN_TIMEOUT_MS 1000
-#define RDPUDP_SYN_ATTEMPTS 10
+#define RDPUDP_SYN_ATTEMPTS 3
 
 /* [MS-RDPEUDP] 3.1.6.1: the retransmit timeout is twice the round trip, at least the version's
  * minimum, and doubles with every resend of the same datagram. Windows lets it grow to 120

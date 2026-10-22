@@ -182,10 +182,13 @@ struct rdp_settings
 	UINT64 padding0512[512 - 448]; /* 448 */
 
 	/* Client Multitransport Channel Data */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 MultitransportFlags); /* 512 */
-	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportMultitransport); /* 513 */
-	UINT64 padding0576[576 - 514];                           /* 514 */
-	UINT64 padding0640[640 - 576];                           /* 576 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 MultitransportFlags);    /* 512 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportMultitransport);    /* 513 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportMultitransportUdp); /** 514
+		                                                         * @since version 3.33.0
+		                                                         */
+	UINT64 padding0576[576 - 515];                              /* 515 */
+	UINT64 padding0640[640 - 576];                              /* 576 */
 
 	/*
 	 * Client Info

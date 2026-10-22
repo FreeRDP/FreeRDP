@@ -3,12 +3,14 @@
 #include <winpr/crypto.h>
 #include <winpr/pipe.h>
 
+#include <freerdp/version.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/client/cmdline.h>
 
 static HANDLE s_sync = nullptr;
 
+WINPR_ATTR_NODISCARD
 static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 {
 	int rc = -1;
@@ -69,6 +71,7 @@ finish:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int testTimeout(int port)
 {
 	const DWORD timeout = 200;
@@ -103,6 +106,7 @@ static int testTimeout(int port)
  * desktop settings. Its scale factors must be the desktop and the device scale factor, in that
  * order: /scale-desktop sets only the first. The connection itself fails (nothing listens on the
  * port); the monitor is made before. */
+WINPR_ATTR_NODISCARD
 static int testMonitorScaleFactors(void)
 {
 	int rc = -1;
@@ -155,6 +159,7 @@ struct testThreadArgs
 	freerdp** arg;
 };
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI testThread(LPVOID arg)
 {
 	char arg1[] = "/v:192.0.2.1:XXXXX";
@@ -172,6 +177,7 @@ static DWORD WINAPI testThread(LPVOID arg)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int testAbort(int port)
 {
 	DWORD status = 0;
@@ -233,6 +239,7 @@ static int testAbort(int port)
 	return 0;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* concatenate(size_t count, ...)
 {
 	char* rc = nullptr;
@@ -250,6 +257,7 @@ static char* concatenate(size_t count, ...)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL prepare_certificates(const char* path)
 {
 	BOOL rc = FALSE;
@@ -261,12 +269,18 @@ static BOOL prepare_certificates(const char* path)
 	if (!path)
 		return FALSE;
 
-	exe = concatenate(5, TESTING_OUTPUT_DIRECTORY, "winpr", "tools", "makecert-cli",
-	                  "winpr-makecert" CMAKE_EXECUTABLE_SUFFIX);
+	const char makecert[] = "winpr-makecert"
+#if defined(WITH_BINARY_VERSIONING)
+	    FREERDP_API_VERSION
+#endif
+	        CMAKE_EXECUTABLE_SUFFIX;
+
+	exe = concatenate(5, TESTING_OUTPUT_DIRECTORY, "winpr", "tools", "makecert-cli", makecert);
 	if (!exe)
 		return FALSE;
 
 	char commandLine[] = "-format crt -path . -n server";
+	printf("[%s]: %s %s\n", __func__, exe, commandLine);
 	rc = CreateProcessA(exe, commandLine, nullptr, nullptr, TRUE, 0, nullptr, path, &si, &process);
 	free(exe);
 	if (!rc)
@@ -281,6 +295,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int testSuccess(int port)
 {
 	int r = 0;
@@ -309,7 +324,12 @@ static int testSuccess(int port)
 	if (!path || !wpath)
 		goto fail;
 
-	exe = GetCombinedPath(path, "sfreerdp-server" CMAKE_EXECUTABLE_SUFFIX);
+	const char srvexe[] = "sfreerdp-server"
+#if defined(WITH_BINARY_VERSIONING)
+	    FREERDP_API_VERSION
+#endif
+	        CMAKE_EXECUTABLE_SUFFIX;
+	exe = GetCombinedPath(path, srvexe);
 
 	if (!exe)
 		goto fail;
@@ -318,10 +338,16 @@ static int testSuccess(int port)
 	printf("Workspace: %s\n", wpath);
 
 	if (!winpr_PathFileExists(exe))
+	{
+		(void)fprintf(stderr, "[%s]: winpr_PathFileExists(%s) failed\n", __func__, exe);
 		goto fail;
+	}
 
 	if (!prepare_certificates(wpath))
+	{
+		(void)fprintf(stderr, "[%s]: prepare_certificates(%s) failed\n", __func__, wpath);
 		goto fail;
+	}
 
 	// Start sample server locally.
 	commandLineLen = strlen(exe) + strlen("--port=XXXXX") + 1;
@@ -333,15 +359,22 @@ static int testSuccess(int port)
 	(void)_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	si.cb = sizeof(si);
 
+	printf("Createing process with '%s'\n", commandLine);
 	if (!CreateProcessA(nullptr, commandLine, nullptr, nullptr, FALSE, 0, nullptr, wpath, &si,
 	                    &process))
+	{
+		(void)fprintf(stderr, "[%s]: CreateProcess failed\n", __func__);
 		goto fail;
+	}
 
 	Sleep(5000); /* let the server start */
 	r = runInstance(argc, clientArgs, nullptr, 10000);
 
 	if (!TerminateProcess(process.hProcess, 0))
+	{
+		(void)fprintf(stderr, "[%s]: TerminateProcess failed\n", __func__);
 		goto fail;
+	}
 
 	(void)WaitForSingleObject(process.hProcess, INFINITE);
 	(void)CloseHandle(process.hProcess);
@@ -367,27 +400,43 @@ int TestConnect(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	if (winpr_RAND(&random, sizeof(random)) < 0)
+	{
+		(void)fprintf(stderr, "winpr_RAND failed\n");
 		return -1;
+	}
+
 	randomPort = 3389 + (random % 200);
 
 	/* The monitor made from the desktop settings keeps their scale factors apart. */
 	if (testMonitorScaleFactors())
+	{
+		(void)fprintf(stderr, "testMonitorScaleFactors failed\n");
 		return -1;
+	}
 
 	/* Test connect to not existing server,
 	 * check if timeout is honored. */
 	if (testTimeout(randomPort))
+	{
+		(void)fprintf(stderr, "testTimeout failed\n");
 		return -1;
+	}
 
 	/* Test connect to not existing server,
 	 * check if connection abort is working. */
 	if (testAbort(randomPort))
+	{
+		(void)fprintf(stderr, "testAbort failed\n");
 		return -1;
+	}
 
 	/* Test connect to existing server,
 	 * check if connection is working. */
 	if (testSuccess(randomPort))
+	{
+		(void)fprintf(stderr, "testSuccess failed\n");
 		return -1;
+	}
 
 	return 0;
 }

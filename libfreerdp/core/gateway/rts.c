@@ -551,13 +551,12 @@ static BOOL rts_write_uuid(wStream* s, const p_uuid_t* uuid)
 	return TRUE;
 }
 
-static void rts_syntax_id_free(p_syntax_id_t* ptr)
+void rts_syntax_id_free(p_syntax_id_t* ptr)
 {
 	free(ptr);
 }
 
-WINPR_ATTR_MALLOC(rts_syntax_id_free, 1)
-static p_syntax_id_t* rts_syntax_id_new(size_t count)
+p_syntax_id_t* rts_syntax_id_new(size_t count)
 {
 	return calloc(count, sizeof(p_syntax_id_t));
 }
@@ -628,6 +627,7 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 
 	if (element->n_transfer_syn > 0)
 	{
+		rts_syntax_id_free(element->transfer_syntaxes);
 		element->transfer_syntaxes = rts_syntax_id_new(element->n_transfer_syn);
 		if (!element->transfer_syntaxes)
 			return FALSE;

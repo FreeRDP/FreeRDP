@@ -120,6 +120,15 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL utils_is_valid_ip(const char* ipAddress);
 
 WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL utils_is_valid_ipV6(const char* ipAddress);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL utils_is_valid_ipN(const char* ipAddress, size_t len);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL utils_is_valid_ipV6N(const char* ipAddress, size_t len);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA,
                                             const char* ipAddressB, size_t lenB);
 

@@ -28,7 +28,8 @@ class SdlPref
 {
   public:
 	[[nodiscard]] static std::shared_ptr<SdlPref>
-	instance(const std::string& name = SdlPref::get_default_file(false));
+	instance(const std::string& name = SdlPref::get_default_file(false),
+	         const std::string& systemName = SdlPref::get_default_file(true));
 
 	[[nodiscard]] std::string get_pref_file(bool systemConfigOnly = false) const;
 
@@ -54,7 +55,7 @@ class SdlPref
 	WINPR_JSONPtr _config;
 	WINPR_JSONPtr _system_config;
 
-	explicit SdlPref(std::string file);
+	SdlPref(std::string file, std::string systemFile);
 
 	[[nodiscard]] WINPR_JSON* get_item(const std::string& key, bool systemConfigOnly) const;
 	[[nodiscard]] WINPR_JSON* get_item(const WINPR_JSONPtr& config, const std::string& key) const;

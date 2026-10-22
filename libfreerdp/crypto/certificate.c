@@ -1956,7 +1956,7 @@ BOOL freerdp_certificate_matches_hostname(const rdpCertificate* cert, const char
 
 	BOOL hostname_match = FALSE;
 	BOOL skip = FALSE;
-	if (utils_is_valid_ip(hostname))
+	if (utils_is_valid_ipN(hostname, hostlen))
 	{
 		if ((hostlen != 0) && ip_names && (ip_names_count > 0))
 		{

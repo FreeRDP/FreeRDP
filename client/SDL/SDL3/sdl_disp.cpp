@@ -444,10 +444,14 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	 * so settings_changed() would suppress it: forget it and send the current layout again. */
 	_last_sent_layout.clear();
 
+	/* Windows ignores a layout sent right after the caps. Count the caps as a send, so the timer
+	 * sends the layout once RESIZE_MIN_DELAY has passed instead of addTimer() sending it now. */
+	_lastSentDate = GetTickCount64();
+
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		/* Window events have long passed by the time the channel comes up, and a fullscreen
-		 * window produces no further ones, so send the layout now. */
+		 * window produces no further ones, so let the timer send the layout. */
 		std::ignore = addTimer();
 		return CHANNEL_RC_OK;
 	}

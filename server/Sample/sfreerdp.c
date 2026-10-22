@@ -1160,14 +1160,20 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	{
 		rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, nullptr);
 		if (!key)
+		{
+			WLog_ERR(TAG, "Failed to load private key '%s'", info->key);
 			goto fail;
+		}
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
 			goto fail;
 	}
 	{
 		rdpCertificate* cert = freerdp_certificate_new_from_file(info->cert);
 		if (!cert)
+		{
+			WLog_ERR(TAG, "Failed to load public cert '%s'", info->cert);
 			goto fail;
+		}
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 			goto fail;
 	}

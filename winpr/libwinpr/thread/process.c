@@ -96,28 +96,27 @@
  * search the per-application path specified by the App Paths registry key. To include this
  * per-application path in the search sequence, use the ShellExecute function.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static char* FindApplicationPath(char* application)
 {
-	LPCSTR pathName = "PATH";
-	char* path = nullptr;
-	char* save = nullptr;
-	DWORD nSize = 0;
-	LPSTR lpSystemPath = nullptr;
-	char* filename = nullptr;
+	const char pathName[] = "PATH";
 
 	if (!application)
 		return nullptr;
 
 	if (application[0] == '/')
+	{
+		if (!winpr_PathFileExists(application))
+			return nullptr;
 		return _strdup(application);
+	}
 
-	nSize = GetEnvironmentVariableA(pathName, nullptr, 0);
+	const DWORD nSize = GetEnvironmentVariableA(pathName, nullptr, 0);
 
 	if (!nSize)
 		return _strdup(application);
 
-	lpSystemPath = (LPSTR)malloc(nSize);
+	char* lpSystemPath = malloc(nSize);
 
 	if (!lpSystemPath)
 		return nullptr;
@@ -128,8 +127,9 @@ static char* FindApplicationPath(char* application)
 		return nullptr;
 	}
 
-	save = nullptr;
-	path = strtok_s(lpSystemPath, ":", &save);
+	char* filename = nullptr;
+	char* save = nullptr;
+	char* path = strtok_s(lpSystemPath, ":", &save);
 
 	while (path)
 	{

@@ -1097,23 +1097,15 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, 0))
 		goto out_fail;
 
-	{
-		UINT32 multitransportFlags = TRANSPORT_TYPE_UDP_FECR;
-#if defined(WITH_RDPEUDP)
-		/* A client with UDP multitransport implements Soft-Sync (drdynvc), a server does not. */
-		if (!server)
-			multitransportFlags |= SOFTSYNC_TCP_TO_UDP;
-		/* A server has no UDP side, so it offers no tunnel: it waits for the client's Initiate
-		 * Multitransport Response, which a client that tries the tunnel only sends once the tunnel
-		 * failed. */
-		else
-			multitransportFlags = 0;
-#endif
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
-		                                 multitransportFlags))
-			goto out_fail;
-	}
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
+	                                 TRANSPORT_TYPE_UDP_FECR))
+		goto out_fail;
+	/* REDIRECTION_VERSION6 needs multitransport advertised. A client uses UDP only when
+	 * SupportMultitransportUdp is set (/multitransport:udp) and otherwise declines the server's
+	 * Initiate Multitransport Requests, as a client built without UDP does. */
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, TRUE))
+		goto out_fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransportUdp, TRUE))
 		goto out_fail;
 
 	if (!settings_init_computer_name(settings))
