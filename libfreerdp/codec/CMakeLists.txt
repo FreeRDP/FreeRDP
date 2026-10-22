@@ -157,6 +157,14 @@ endif()
 
 if(WITH_H264_WEBCODECS)
   list(APPEND CODEC_SRCS h264_webcodecs.c)
+  # The JavaScript side, for the executable's link: a link item, so that it also reaches the
+  # executable through static libraries (link options of their private dependencies don't).
+  freerdp_library_add_public(
+    "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/h264_webcodecs.js"
+  )
+  if(NOT BUILD_SHARED_LIBS)
+    install(FILES h264_webcodecs.js DESTINATION ${FREERDP_PLUGIN_PATH})
+  endif()
 endif()
 
 if(WITH_OPENH264)
