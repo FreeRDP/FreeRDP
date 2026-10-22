@@ -1342,15 +1342,43 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, enable))
 			return fail_at(arg, COMMAND_LINE_ERROR);
 
+		BOOL udp = FALSE;
 		UINT32 flags = 0;
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
-		{
-			flags = TRANSPORT_TYPE_UDP_FECR;
-#if defined(WITH_RDPEUDP)
-			flags |= SOFTSYNC_TCP_TO_UDP;
-#endif
-		}
+			flags =
+			    (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
 
+#if defined(WITH_RDPEUDP)
+		/* /multitransport advertises multitransport and declines the server's UDP,
+		 * /multitransport:udp also takes it, and :udp-preferred tunnels the static channels too.
+		 * Other values are refused, as for the plain bool switch built without UDP. */
+		BOOL preferred = FALSE;
+		if ((arg->Value != BoolValueTrue) && (arg->Value != BoolValueFalse))
+		{
+			if (option_equals("tcp-only", arg->Value))
+				udp = FALSE;
+			else if (option_equals("udp", arg->Value))
+				udp = TRUE;
+			else if (option_equals("udp-preferred", arg->Value))
+				udp = preferred = TRUE;
+			else
+				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+		}
+		else if (arg->Value == BoolValueTrue)
+			udp = TRUE;
+
+		if (udp)
+		{
+			/* only what the client implements: the reliable transport and Soft-Sync (drdynvc),
+			 * UDP_PREFERRED, tunnelling the static channels ([MS-RDPEDYC] 3.1.5.4), only when
+			 * asked for */
+			flags = TRANSPORT_TYPE_UDP_FECR | SOFTSYNC_TCP_TO_UDP;
+			if (preferred)
+				flags |= TRANSPORT_TYPE_UDP_PREFERRED;
+		}
+#endif
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransportUdp, udp))
+			return fail_at(arg, COMMAND_LINE_ERROR);
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags, flags))
 			return fail_at(arg, COMMAND_LINE_ERROR);
 	}

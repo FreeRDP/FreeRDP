@@ -360,8 +360,16 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  BoolValueFalse, nullptr, -1, nullptr, "Use multiple monitors" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Redirect multitouch input" },
+#if defined(WITH_RDPEUDP)
+	{ "multitransport", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL,
+	  "[tcp-only|udp|udp-preferred]", BoolValueTrue, nullptr, -1, nullptr,
+	  "Support multitransport protocol. With tcp-only just enable the capability but deny an "
+	  "actual switch UDP transport. udp (the default) enables the switch to UDP transport, "
+	  "udp-preferred also tunnels the static channels over it" },
+#else
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "Support multitransport protocol" },
+#endif
 	{ "nego", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "protocol security negotiation" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED,

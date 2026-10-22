@@ -573,6 +573,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_SupportMultitransport:
 			return settings->SupportMultitransport;
 
+		case FreeRDP_SupportMultitransportUdp:
+			return settings->SupportMultitransportUdp;
+
 		case FreeRDP_SupportSSHAgentChannel:
 			return settings->SupportSSHAgentChannel;
 
@@ -1357,6 +1360,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_SupportMultitransport:
 			settings->SupportMultitransport = cnv.c;
+			break;
+
+		case FreeRDP_SupportMultitransportUdp:
+			settings->SupportMultitransportUdp = cnv.c;
 			break;
 
 		case FreeRDP_SupportSSHAgentChannel:
