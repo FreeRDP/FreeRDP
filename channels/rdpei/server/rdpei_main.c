@@ -213,7 +213,12 @@ static DWORD WINAPI rdpei_server_thread_func(LPVOID arg)
 		}
 	}
 
-	(void)WTSVirtualChannelClose(priv->channelHandle);
+	/* the client closing the channel is not an error */
+	if (error == CHANNEL_RC_NOT_CONNECTED)
+		error = CHANNEL_RC_OK;
+
+	if (priv->channelHandle != INVALID_HANDLE_VALUE)
+		(void)WTSVirtualChannelClose(priv->channelHandle);
 	priv->channelHandle = nullptr;
 
 	ExitThread(error);
@@ -712,7 +717,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 			return ERROR_READ_FAULT;
 
 		WLog_DBG(TAG, "channel connection closed");
-		return CHANNEL_RC_OK;
+		return CHANNEL_RC_NOT_CONNECTED;
 	}
 	priv->expectedBytes -= bytesReturned;
 	Stream_Seek(s, bytesReturned);
