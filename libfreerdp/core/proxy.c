@@ -388,6 +388,12 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	if (!settings || !uri_in)
 		return FALSE;
 
+	if ((_stricmp("no_proxy", uri_in) == 0) || (_stricmp("ignore", uri_in) == 0))
+	{
+		WLog_INFO(TAG, "Parsed proxy configuration: all proxies disabled");
+		return freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_IGNORE);
+	}
+
 	char* uri_copy = _strdup(uri_in);
 	char* uri = uri_copy;
 	if (!uri)
@@ -399,11 +405,6 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 		{
 			*p = '\0';
 
-			if (_stricmp("no_proxy", uri) == 0)
-			{
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_IGNORE))
-					goto fail;
-			}
 			if (_stricmp("http", uri) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
