@@ -53,7 +53,6 @@ typedef struct
 	int rc; /* 1: picture written, 0: no picture, <0: error */
 } av1_wc_job;
 
-/* clang-format off */
 EM_JS(int, av1_wc_js_available, (void), {
 	return (typeof VideoDecoder === "function" && typeof EncodedVideoChunk === "function") ? 1 : 0;
 });
@@ -128,8 +127,7 @@ EM_JS(void, av1_wc_js_decode, (void* ctx, int handle, const BYTE* src, UINT32 si
 		d.pending = null;
 		finish(-2);
 	}
-});
-/* clang-format on */
+    });
 
 EMSCRIPTEN_KEEPALIVE void freerdp_av1_wc_finish(em_proxying_ctx* ctx)
 {
