@@ -127,7 +127,8 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 #if defined(WITH_GFX_AZURE)
 	RDPGFX_CAPVERSION_111 = 0x000b0101u, /**< Undocumented versions used by Azure */
 	RDPGFX_CAPVERSION_112 = 0x000b0200u, /**< Undocumented versions used by Azure */
-	RDPGFX_CAPVERSION_113 = 0x000b0300u  /**< Undocumented versions used by Azure */
+	RDPGFX_CAPVERSION_113 = 0x000b0300u, /**< Undocumented versions used by Azure */
+	RDPGFX_CAPVERSION_115 = 0x000b0500u  /**< Undocumented versions used by Azure */
 #endif
 } RDPGFX_CAPVERSION;
 

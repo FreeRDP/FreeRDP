@@ -228,6 +228,10 @@ static DWORD rdp_version_common(wLog* log, DWORD serverVersion, DWORD clientVers
 		case RDP_VERSION_10_10:
 		case RDP_VERSION_10_11:
 		case RDP_VERSION_10_12:
+			WLog_Print(log, WLOG_DEBUG, "Using RDP version %s, Server %s, client %s",
+			           freerdp_rdp_version_string(version),
+			           freerdp_rdp_version_string(serverVersion),
+			           freerdp_rdp_version_string(clientVersion));
 			return version;
 
 		default:
