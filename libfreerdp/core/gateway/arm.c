@@ -708,7 +708,7 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 			return FALSE;
 		}
 
-		if (!winpr_str_is_valid_hostname(addr))
+		if (!utils_is_valid_ip(addr) && !winpr_str_is_valid_hostname(addr))
 		{
 			WLog_ERR(TAG, "TargetNetAddress[%" PRIuz "]: %s not an FQDN or IP", j, addr);
 			return FALSE;

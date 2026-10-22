@@ -718,7 +718,8 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddress), 80) ||
-		    !utils_is_valid_ip(redirection->TargetNetAddress))
+		    (!utils_is_valid_ip(redirection->TargetNetAddress) &&
+		     !winpr_str_is_valid_hostname(redirection->TargetNetAddress)))
 		{
 			WLog_ERR(TAG, "TargetNetAddress %s invalid", redirection->TargetNetAddress);
 			return STATE_RUN_FAILED;
@@ -913,7 +914,8 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]),
 			                                         80) ||
-			    !utils_is_valid_ip(redirection->TargetNetAddresses[i]))
+			    (!utils_is_valid_ip(redirection->TargetNetAddresses[i]) &&
+			     !winpr_str_is_valid_hostname(redirection->TargetNetAddresses[i])))
 			{
 				WLog_ERR(TAG, "TargetNetAddresses[%" PRIu32 "]: %s invalid", i,
 				         redirection->TargetNetAddresses[i]);
