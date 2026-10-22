@@ -689,6 +689,12 @@ int main(int argc, char* argv[])
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
 		return -1;
 
+#if defined(__APPLE__)
+	/* macOS has no num lock state, SDL_KMOD_NUM always starts off and we would turn num lock
+	 * off on the server with every sync. Start with it on, the server LEDs take over from there. */
+	SDL_SetModState(SDL_GetModState() | SDL_KMOD_NUM);
+#endif
+
 	/* Redirect SDL log messages to wLog */
 	SDL_SetLogOutputFunction(winpr_LogOutputFunction, sdl);
 	auto level = WLog_GetLogLevel(sdl->getWLog());
