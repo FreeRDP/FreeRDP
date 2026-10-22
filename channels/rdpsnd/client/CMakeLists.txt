@@ -59,4 +59,8 @@ if(WITH_SNDIO)
   add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "sndio" "")
 endif()
 
+if(EMSCRIPTEN)
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "emscripten" "")
+endif()
+
 add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "fake" "")
