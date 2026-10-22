@@ -31,6 +31,8 @@ target_link_libraries(
   INTERFACE
     "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_ADDIN_PATH}>/${_js}"
 )
+# so that editing the JavaScript recompiles this file, and so relinks the executables
+set_source_files_properties(rdpsnd_emscripten.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_js})
 if(NOT BUILD_SHARED_LIBS)
   install(FILES ${_js} DESTINATION ${FREERDP_ADDIN_PATH})
 endif()
