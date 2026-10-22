@@ -29,6 +29,7 @@
 #include <freerdp/utils/proxy_utils.h>
 #include <freerdp/crypto/crypto.h>
 #include "tcp.h"
+#include "utils.h"
 
 #include <winpr/assert.h>
 #include <winpr/sysinfo.h>
@@ -105,7 +106,8 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
 	{
 		*lpPeerHostname = freerdp_settings_get_string(settings, FreeRDP_ProxyHostname);
-		if (!*lpPeerHostname || !winpr_str_is_valid_hostname(*lpPeerHostname))
+		if (!*lpPeerHostname ||
+		    (!utils_is_valid_ip(*lpPeerHostname) && !winpr_str_is_valid_hostname(*lpPeerHostname)))
 			return FALSE;
 		*lpPeerPort = freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort);
 		*lpProxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
@@ -294,15 +296,6 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 	}
 
 	return FALSE;
-}
-
-WINPR_ATTR_NODISCARD
-static BOOL is_ipv6_addr(const char* hostname, size_t len)
-{
-	struct sockaddr_in6 sa6 = WINPR_C_ARRAY_INIT;
-	if (strnlen(hostname, len) > INET6_ADDRSTRLEN)
-		return FALSE;
-	return inet_pton(AF_INET6, hostname, &sa6.sin6_addr) == 1;
 }
 
 WINPR_ATTR_NODISCARD
@@ -598,7 +591,7 @@ static const char* get_response_header(char* response)
 
 static BOOL http_proxy_write_hostname(wStream* s, const char* hostname, size_t len)
 {
-	const BOOL isIPv6 = is_ipv6_addr(hostname, len);
+	const BOOL isIPv6 = utils_is_valid_ipV6N(hostname, len);
 
 	if (isIPv6)
 	{
@@ -643,7 +636,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	// Check for IPv6 (max 45) or DNS (max 255) name. Bounded length to 256 so too long hostnames do
 	// not silently pass
 	const size_t hostLen = strnlen(hostname, 255 + 1);
-	if (!is_ipv6_addr(hostname, hostLen) && !winpr_str_is_valid_hostnameN(hostname, hostLen))
+	if (!utils_is_valid_ipN(hostname, hostLen) && !winpr_str_is_valid_hostnameN(hostname, hostLen))
 		return FALSE;
 
 	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
@@ -958,7 +951,8 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 	// Check for IPv6 (max 45) or DNS (max 255) name. Bounded length to 256 so too long hostnames do
 	// not silently pass
 	const size_t hostnlen = strnlen(hostname, 255 + 1);
-	if (!is_ipv6_addr(hostname, hostnlen) && !winpr_str_is_valid_hostnameN(hostname, hostnlen))
+	if (!utils_is_valid_ipN(hostname, hostnlen) &&
+	    !winpr_str_is_valid_hostnameN(hostname, hostnlen))
 		return FALSE;
 
 	BYTE nauthMethods = 1;
