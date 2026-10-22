@@ -282,7 +282,8 @@ static BOOL rdpgfx_is_capability_filtered(RDPGFX_PLUGIN* gfx, UINT32 caps)
 		,
 		RDPGFX_CAPVERSION_111,
 		RDPGFX_CAPVERSION_112,
-		RDPGFX_CAPVERSION_113
+		RDPGFX_CAPVERSION_113,
+		RDPGFX_CAPVERSION_115
 #endif
 	};
 
@@ -495,43 +496,24 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		}
 
 #if defined(WITH_GFX_AZURE)
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_111))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_111;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
-#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-#endif
-		}
+		const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112, RDPGFX_CAPVERSION_113,
+			                    RDPGFX_CAPVERSION_115 };
 
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_112))
+		for (size_t x = 0; x < ARRAYSIZE(caps); x++)
 		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_112;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
+			const UINT32 cap = caps[x];
+			if (!rdpgfx_is_capability_filtered(gfx, cap))
+			{
+				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+				if (!capsSet)
+					return ERROR_BAD_CONFIGURATION;
+				capsSet->version = cap;
+				capsSet->length = 0x4;
+				capsSet->flags = caps10Flags;
 #if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
 			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 #endif
-		}
-
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_113))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_113;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
-#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-#endif
+			}
 		}
 #endif
 	}
@@ -1414,6 +1396,7 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 		case RDPGFX_CAPVERSION_111:
 		case RDPGFX_CAPVERSION_112:
 		case RDPGFX_CAPVERSION_113:
+		case RDPGFX_CAPVERSION_115:
 #endif
 			if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSendQoeAck))
 			{
