@@ -229,8 +229,8 @@ void SdlPref::print_config_file_help(int version)
 #endif
 }
 
-SdlPref::SdlPref(std::string file)
-    : _name(std::move(file)), _system_name(get_default_file(true)), _config(get(false)),
+SdlPref::SdlPref(std::string file, std::string systemFile)
+    : _name(std::move(file)), _system_name(std::move(systemFile)), _config(get(false)),
       _system_config(get(true))
 {
 }
@@ -242,11 +242,12 @@ std::string SdlPref::get_default_file(bool systemConfigOnly)
 	return config.string();
 }
 
-std::shared_ptr<SdlPref> SdlPref::instance(const std::string& name)
+std::shared_ptr<SdlPref> SdlPref::instance(const std::string& name, const std::string& systemName)
 {
 	static std::shared_ptr<SdlPref> _instance;
-	if (!_instance || (_instance->get_pref_file() != name))
-		_instance.reset(new SdlPref(name));
+	if (!_instance || (_instance->get_pref_file() != name) ||
+	    (_instance->get_pref_file(true) != systemName))
+		_instance.reset(new SdlPref(name, systemName));
 	return _instance;
 }
 

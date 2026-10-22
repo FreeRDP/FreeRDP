@@ -1,0 +1,6 @@
+{
+	"string_key": "user",
+	"int_key": 1,
+	"bool_key": false,
+	"allowCommandlineToOverride": false
+}

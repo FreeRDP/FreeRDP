@@ -24,6 +24,48 @@ static std::shared_ptr<SdlPref> instance()
 	return SdlPref::instance(src.string());
 }
 
+#if defined(WITH_WINPR_JSON)
+static std::string test_file(const char* name)
+{
+	fs::path src(TEST_SRC_AREA);
+	src /= name;
+	return src.string();
+}
+#endif
+
+/* user and system configuration together: the user file wins, the system file fills in, and
+ * the system file alone decides the locks. */
+static bool test_system_config()
+{
+#if defined(WITH_WINPR_JSON)
+	auto prefs =
+	    SdlPref::instance(test_file("sdl-freerdp-user.json"), test_file("sdl-freerdp-system.json"));
+	if (prefs->get_string("string_key", "x") != "user")
+		return false;
+	if (prefs->get_int("int_key", 0) != 1)
+		return false;
+	if (prefs->get_bool("bool_key", true))
+		return false;
+	if (!prefs->get_bool("system_bool_key", false))
+		return false;
+	if (prefs->get_string("string_key", "x", true) != "system")
+		return false;
+	/* only the system file may set this, the user file sets it to false */
+	if (!prefs->is_commandline_override_allowed())
+		return false;
+
+	prefs = SdlPref::instance(test_file("sdl-freerdp-user.json"),
+	                          test_file("sdl-freerdp-system-locked.json"));
+	if (prefs->get_string("string_key", "x") != "system")
+		return false;
+	if (prefs->get_int("int_key", 0) != 0)
+		return false;
+	if (prefs->is_commandline_override_allowed())
+		return false;
+#endif
+	return true;
+}
+
 int TestSDLPrefs(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -107,6 +149,9 @@ int TestSDLPrefs(int argc, char* argv[])
 	if (array_value_nonexistent.at(1) != "b")
 		return -1;
 	if (array_value_nonexistent.at(2) != "a")
+		return -1;
+
+	if (!test_system_config())
 		return -1;
 
 	return 0;
