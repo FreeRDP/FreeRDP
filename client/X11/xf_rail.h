@@ -90,6 +90,19 @@ struct xf_app_window
 	UINT32 resizeMarginTop;
 	UINT32 resizeMarginRight;
 	UINT32 resizeMarginBottom;
+	/* Omitted fields do not advertise zero margins (notably Server 2016 dialogs). */
+	BOOL resizeMarginXKnown;
+	BOOL resizeMarginYKnown;
+	BOOL unknownMarginWarning;
+	UINT64 lastUnknownMarginReconcile;
+	BOOL serverGeometryPending;
+	/* A real reparented ConfigureNotify needs a current root/size snapshot. */
+	BOOL configureGeometryPending;
+	/* Deduplicate only the last successfully queued, still-unanswered move.
+	 * A server geometry update ends this scope, including adjusted replies. */
+	BOOL windowMovePending;
+	UINT64 lastWindowMoveTime;
+	RAIL_WINDOW_MOVE_ORDER lastWindowMove;
 
 	GC gc;
 	int shmid;
@@ -109,9 +122,6 @@ struct xf_app_window
 	/* Surface updates were skipped while the X window was unmapped, the next
 	 * paint has to cover the whole window. */
 	BOOL surfaceStale;
-	/* Timestamp of the last accepted WINDOW_ORDER_FIELD_WND_SIZE update. */
-	UINT64 lastWndSizeUpdate;
-
 	Pixmap pixmap;
 	UINT32 pixmapWidth;
 	UINT32 pixmapHeight;
@@ -135,6 +145,17 @@ WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+
+BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow);
+
+void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
+
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
+                                       const XConfigureEvent* event);
+
+BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow);
+void xf_rail_flush_configure_geometry(xfContext* xfc);
 
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
 
