@@ -23,6 +23,7 @@
 		"FreeRDP_ListMonitors": false,
 		"FreeRDP_HasMonitorAttributes": false,
 		"FreeRDP_SupportMultitransport": true,
+		"FreeRDP_SupportMultitransportUdp": true,
 		"FreeRDP_AutoLogonEnabled": false,
 		"FreeRDP_CompressionEnabled": true,
 		"FreeRDP_DisableCtrlAltDel": false,
