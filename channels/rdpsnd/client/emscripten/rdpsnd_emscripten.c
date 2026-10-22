@@ -59,48 +59,9 @@ typedef struct
 	size_t size;
 } play_job;
 
-/* clang-format off */
-EM_JS(void, rdpsnd_web_play, (BYTE* data, int size, int channels, int rate, int volume, int* queued_ms), {
-	data >>>= 0;
-	queued_ms >>>= 0;
-	const ctx = (Module.freerdpAudioContext = Module.freerdpAudioContext || new AudioContext());
-	if (ctx.state === "suspended")
-		ctx.resume().catch(() => {});
-	if (ctx.state !== "running") {
-		/* currentTime does not advance: scheduling now would play everything at once later */
-		HEAP32[queued_ms >> 2] = 0;
-		return;
-	}
-	const a = (Module.freerdpAudio = Module.freerdpAudio || { next : 0, gain : null });
-	if (!a.gain) {
-		a.gain = ctx.createGain();
-		a.gain.connect(ctx.destination);
-	}
-	a.gain.gain.value = volume / 0xffff;
-
-	const frames = (size / 2 / channels) | 0;
-	if (frames <= 0)
-		return;
-	const pcm = new Int16Array(HEAPU8.slice(data, data + frames * channels * 2).buffer);
-	const buffer = ctx.createBuffer(channels, frames, rate);
-	for (let c = 0; c < channels; c++) {
-		const out = buffer.getChannelData(c);
-		for (let i = 0; i < frames; i++)
-			out[i] = pcm[i * channels + c] / 32768;
-	}
-	const now = ctx.currentTime;
-	/* Jitter buffer: after an underrun (or at start) begin 120 ms ahead, enough for internet
-	 * jitter; if more than 500 ms piled up, drop the backlog so audio never lags further. */
-	if (a.next < now || a.next > now + 0.5)
-		a.next = now + 0.12;
-	const src = ctx.createBufferSource();
-	src.buffer = buffer;
-	src.connect(a.gain);
-	src.start(a.next);
-	a.next += frames / rate;
-	HEAP32[queued_ms >> 2] = Math.round((a.next - now) * 1000);
-});
-/* clang-format on */
+/* in rdpsnd_emscripten.js */
+extern void rdpsnd_web_play(BYTE* data, int size, int channels, int rate, int volume,
+                            int* queued_ms);
 
 static void play_on_main(void* arg)
 {

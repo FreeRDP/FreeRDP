@@ -22,3 +22,15 @@ set(${MODULE_PREFIX}_LIBS winpr freerdp)
 include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
+
+# The JavaScript side, for the executable's link: a link item, so that it also reaches the
+# executable through the static libraries (link options of their private dependencies don't).
+set(_js rdpsnd_emscripten.js)
+target_link_libraries(
+  ${MODULE_NAME}
+  INTERFACE
+    "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_ADDIN_PATH}>/${_js}"
+)
+if(NOT BUILD_SHARED_LIBS)
+  install(FILES ${_js} DESTINATION ${FREERDP_ADDIN_PATH})
+endif()
