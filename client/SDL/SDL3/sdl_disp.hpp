@@ -42,6 +42,7 @@ class sdlDispContext
 
 	[[nodiscard]] bool init(DispClientContext* disp);
 	[[nodiscard]] bool uninit(DispClientContext* disp);
+	[[nodiscard]] bool refreshLayout();
 
 	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent& ev);
 	[[nodiscard]] bool handleEvent(const SDL_WindowEvent& ev);

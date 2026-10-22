@@ -436,7 +436,7 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	         "DisplayControlCapsPdu: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32
 	         " MaxMonitorAreaFactorB: %" PRIu32 "",
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
-	_activated = true;
+	_activated = false;
 
 	/* A new display channel means a new server instance, e.g. after a server redirection (GNOME
 	 * Remote Desktop hands the connection over from the login screen to the user session). It
@@ -448,19 +448,24 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	 * sends the layout once RESIZE_MIN_DELAY has passed instead of addTimer() sending it now. */
 	_lastSentDate = GetTickCount64();
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
-	{
-		/* Window events have long passed by the time the channel comes up, and a fullscreen
-		 * window produces no further ones, so let the timer send the layout. */
-		std::ignore = addTimer();
-		return CHANNEL_RC_OK;
-	}
+	return sdl_push_user_event(SDL_EVENT_USER_UPDATE_MONITORS) ? CHANNEL_RC_OK
+	                                                           : CHANNEL_RC_NO_MEMORY;
+}
 
-	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
-	if (!setWindowResizeable())
-		return CHANNEL_RC_NO_MEMORY;
-	std::ignore = addTimer();
-	return CHANNEL_RC_OK;
+bool sdlDispContext::refreshLayout()
+{
+	if (!_disp)
+		return true;
+
+	const auto settings = _sdl->context()->settings;
+	/* Redirection restores the initial settings, while the existing window keeps its size. */
+	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) && !_sdl->updateWindowList())
+		return false;
+
+	_activated = true;
+	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) && !setWindowResizeable())
+		return false;
+	return addTimer();
 }
 
 bool sdlDispContext::init(DispClientContext* disp)
@@ -474,6 +479,7 @@ bool sdlDispContext::init(DispClientContext* disp)
 		return false;
 
 	_disp = disp;
+	_activated = false;
 	disp->custom = this;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
@@ -490,6 +496,7 @@ bool sdlDispContext::uninit(DispClientContext* disp)
 		return false;
 
 	_disp = nullptr;
+	_activated = false;
 	return _sdl->setResizeable(false);
 }
 
