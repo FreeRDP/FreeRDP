@@ -78,14 +78,14 @@ BOOL freerdp_client_send_button_event(rdpClientContext* context, BOOL relative, 
 	return inputSuccess;
 }
 
-#define CHECK(condition)                                                    \
-	do                                                                      \
-	{                                                                       \
-		if (!(condition))                                                   \
-		{                                                                   \
-			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
-			return 1;                                                       \
-		}                                                                   \
+#define CHECK(condition)                                                          \
+	do                                                                            \
+	{                                                                             \
+		if (!(condition))                                                         \
+		{                                                                         \
+			(void)fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
+			goto out;                                                             \
+		}                                                                         \
 	} while (0)
 
 /* Exercise the actual configure/RAIL logic without an X server or RDP server. */
@@ -179,9 +179,11 @@ int main(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	xfContext xfc = { 0 };
-	Screen screen = { 0 };
-	rdpWindowUpdate windows = { 0 };
+	int result = 1;
+	BOOL railInitialized = FALSE;
+	xfContext xfc = WINPR_C_ARRAY_INIT;
+	Screen screen = WINPR_C_ARRAY_INIT;
+	rdpWindowUpdate windows = WINPR_C_ARRAY_INIT;
 	rdpUpdate update = { .window = &windows };
 	RailClientContext rail = { .ClientWindowMove = sendMove };
 	rdpGdi gdi = { .gfx = (RdpgfxClientContext*)1 };
@@ -194,6 +196,7 @@ int main(int argc, char* argv[])
 	xfc.common.context.settings = freerdp_settings_new(0);
 	CHECK(xfc.common.context.settings);
 	CHECK(xf_rail_init(&xfc, &rail));
+	railInitialized = TRUE;
 	appWindow.windowId = 0x300d0;
 	appWindow.xfc = &xfc;
 	appWindow.surfaceId = UINT32_MAX;
@@ -682,8 +685,16 @@ int main(int argc, char* argv[])
 	const unsigned queriesBeforeUnmap = attributeQueries;
 	xf_rail_flush_configure_geometry(&xfc);
 	CHECK(!appWindow.configureGeometryPending && attributeQueries == queriesBeforeUnmap);
-	HashTable_ValueObject(xfc.railWindows)->fnObjectFree = nullptr;
-	xf_rail_uninit(&xfc, &rail);
+	result = 0;
+out:
+	if (railInitialized)
+	{
+		/* The window is owned by the test, not by the RAIL window table. */
+		HashTable_ValueObject(xfc.railWindows)->fnObjectFree = nullptr;
+		xf_rail_uninit(&xfc, &rail);
+	}
+	appWindow.xfc = nullptr;
+	rail.custom = nullptr;
 	freerdp_settings_free(xfc.common.context.settings);
-	return 0;
+	return result;
 }

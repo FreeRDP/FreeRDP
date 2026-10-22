@@ -349,7 +349,10 @@ BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow)
 		XWindowAttributes before = WINPR_C_ARRAY_INIT;
 		XWindowAttributes after = WINPR_C_ARRAY_INIT;
 		Window child = None;
-		int x = 0, y = 0, checkedX = 0, checkedY = 0;
+		int x = 0;
+		int y = 0;
+		int checkedX = 0;
+		int checkedY = 0;
 		if (!XGetWindowAttributes(xfc->display, appWindow->handle, &before) ||
 		    !XTranslateCoordinates(xfc->display, appWindow->handle, before.root, 0, 0, &x, &y,
 		                           &child) ||

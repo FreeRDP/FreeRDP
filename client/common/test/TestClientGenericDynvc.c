@@ -82,14 +82,14 @@ static UINT close_channel(IWTSVirtualChannelCallback* callback)
 	return CHANNEL_RC_OK;
 }
 
-#define CHECK(condition)                                                    \
-	do                                                                      \
-	{                                                                       \
-		if (!(condition))                                                   \
-		{                                                                   \
-			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
-			goto out;                                                       \
-		}                                                                   \
+#define CHECK(condition)                                                          \
+	do                                                                            \
+	{                                                                             \
+		if (!(condition))                                                         \
+		{                                                                         \
+			(void)fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
+			goto out;                                                             \
+		}                                                                         \
 	} while (0)
 
 static int test_channel(UINT32 flags, BOOL poison)
