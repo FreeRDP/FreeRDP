@@ -83,6 +83,9 @@
 
 #include <freerdp/log.h>
 
+WINPR_ATTR_NODISCARD
+static BOOL freerdp_client_common_pre_connect(rdpContext* context);
+
 BOOL freerdp_client_enable_translation(const char* locale, const char* searchPath)
 {
 	return freerdp_enable_translation(locale, searchPath) &&
@@ -189,7 +192,10 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 			return FALSE;
 	}
 
-	return IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);
+	const BOOL rc = IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);
+	if (!rc)
+		return FALSE;
+	return freerdp_client_common_pre_connect(context);
 }
 
 static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
@@ -1595,6 +1601,82 @@ BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_even
 		CloseHandle(thread);
 	}
 	return rc;
+}
+
+static BOOL commonPreConnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(requireRdpClientContext(instance->context));
+
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+
+	if (!IFCALLRESULT(TRUE, cctx->PreConnect, instance))
+		return FALSE;
+
+	// TODO
+
+	return TRUE;
+}
+
+static BOOL commonPostConnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(requireRdpClientContext(instance->context));
+
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+
+	if (!IFCALLRESULT(TRUE, cctx->PostConnect, instance))
+		return FALSE;
+
+	// TODO
+
+	return TRUE;
+}
+
+static void commonPostDisconnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(requireRdpClientContext(instance->context));
+
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+
+	IFCALL(cctx->PostDisconnect, instance);
+
+	// TODO
+}
+
+static void commonPostFinalDisconnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(requireRdpClientContext(instance->context));
+
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+
+	IFCALL(cctx->PostFinalDisconnect, instance);
+
+	// TODO
+}
+
+BOOL freerdp_client_common_pre_connect(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+
+	if (requireRdpClientContext(context))
+	{
+		rdpClientContext* cctx = (rdpClientContext*)context;
+		freerdp* instance = context->instance;
+
+		cctx->PreConnect = instance->PreConnect;
+		cctx->PostConnect = instance->PostConnect;
+		cctx->PostDisconnect = instance->PostDisconnect;
+		cctx->PostFinalDisconnect = instance->PostFinalDisconnect;
+
+		instance->PreConnect = commonPreConnect;
+		instance->PostConnect = commonPostConnect;
+		instance->PostDisconnect = commonPostDisconnect;
+		instance->PostFinalDisconnect = commonPostFinalDisconnect;
+	}
+	return TRUE;
 }
 
 int freerdp_client_common_stop(rdpContext* context)
