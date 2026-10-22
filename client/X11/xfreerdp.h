@@ -326,7 +326,6 @@ struct xf_context
 #endif
 	BOOL xi_rawevent;
 	BOOL xi_event;
-	HANDLE pipethread;
 	wLog* log;
 	FREERDP_REMAP_TABLE* remap_table;
 	DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];

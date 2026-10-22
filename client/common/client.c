@@ -18,10 +18,18 @@
  * limitations under the License.
  */
 
+#if !defined(_WIN32)
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
 #include <winpr/cast.h>
 #include <winpr/i18n.h>
+#include <winpr/pipe.h>
 
 #include <freerdp/config.h>
+#include <freerdp/utils/signal.h>
 
 #include <string.h>
 #include <errno.h>
@@ -1603,6 +1611,121 @@ BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_even
 	return rc;
 }
 
+#if !defined(_WIN32)
+static BOOL common_inject_keypress(rdpContext* context, const char* buffer, size_t size)
+{
+	WCHAR wbuffer[64] = WINPR_C_ARRAY_INIT;
+	const SSIZE_T len = ConvertUtf8NToWChar(buffer, size, wbuffer, ARRAYSIZE(wbuffer));
+	if (len < 0)
+		return FALSE;
+
+	rdpInput* input = context->input;
+	WINPR_ASSERT(input);
+
+	for (SSIZE_T x = 0; x < len; x++)
+	{
+		const WCHAR code = wbuffer[x];
+		freerdp_input_send_unicode_keyboard_event(input, 0, code);
+		Sleep(5);
+		freerdp_input_send_unicode_keyboard_event(input, KBD_FLAGS_RELEASE, code);
+		Sleep(5);
+	}
+	return TRUE;
+}
+
+static BOOL common_process_pipe(rdpContext* context, const char* pipe)
+{
+	int fd = open(pipe, O_NONBLOCK | O_RDONLY);
+	if (fd < 0)
+	{
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "pipe '%s' open returned %s [%d]", pipe,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		return FALSE;
+	}
+	while (!freerdp_shall_disconnect_context(context))
+	{
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		errno = 0;
+		ssize_t rd = read(fd, buffer, sizeof(buffer) - 1);
+		if (rd == 0)
+		{
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
+			if ((errno == EAGAIN) || (errno == 0))
+			{
+				Sleep(100);
+				continue;
+			}
+
+			// EOF, abort reading.
+			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+			break;
+		}
+		else if (rd < 0)
+		{
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
+			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+			break;
+		}
+		else
+		{
+			if (!common_inject_keypress(context, buffer, WINPR_ASSERTING_INT_CAST(size_t, rd)))
+				break;
+		}
+	}
+	close(fd);
+	return TRUE;
+}
+
+static void common_cleanup_pipe(WINPR_ATTR_UNUSED int signum, WINPR_ATTR_UNUSED const char* signame,
+                                void* context)
+{
+	const char* pipe = context;
+	if (!pipe)
+		return;
+	unlink(pipe);
+}
+
+static DWORD WINAPI common_handle_pipe(void* arg)
+{
+	rdpClientContext* cctx = arg;
+	WINPR_ASSERT(cctx);
+
+	rdpContext* context = &cctx->context;
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	const char* pipe = freerdp_settings_get_string(settings, FreeRDP_KeyboardPipeName);
+	WINPR_ASSERT(pipe);
+
+	const int rc = mkfifo(pipe, S_IWUSR | S_IRUSR);
+	if (rc != 0)
+	{
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "Failed to create named pipe '%s': %s [%d]", pipe,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		return 0;
+	}
+
+	void* ctx = WINPR_CAST_CONST_PTR_AWAY(pipe, void*);
+	if (freerdp_add_signal_cleanup_handler(ctx, common_cleanup_pipe))
+	{
+
+		common_process_pipe(context, pipe);
+
+		freerdp_del_signal_cleanup_handler(ctx, common_cleanup_pipe);
+	}
+
+	unlink(pipe);
+
+	return 0;
+}
+#endif
+
 static BOOL commonPreConnect(freerdp* instance)
 {
 	WINPR_ASSERT(instance);
@@ -1628,7 +1751,18 @@ static BOOL commonPostConnect(freerdp* instance)
 	if (!IFCALLRESULT(TRUE, cctx->PostConnect, instance))
 		return FALSE;
 
-	// TODO
+	const char* pipe =
+	    freerdp_settings_get_string(cctx->context.settings, FreeRDP_KeyboardPipeName);
+	if (pipe)
+	{
+#if !defined(_WIN32)
+		cctx->pipethread = CreateThread(nullptr, 0, common_handle_pipe, cctx, 0, nullptr);
+		if (!cctx->pipethread)
+			return FALSE;
+#else
+		WLog_WARN(TAG, "/kbd:pipe:<filename> not supported on windows");
+#endif
+	}
 
 	return TRUE;
 }
@@ -1639,6 +1773,15 @@ static void commonPostDisconnect(freerdp* instance)
 	WINPR_ASSERT(requireRdpClientContext(instance->context));
 
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+
+#if !defined(_WIN32)
+	if (cctx->pipethread)
+	{
+		(void)WaitForSingleObject(cctx->pipethread, INFINITE);
+		(void)CloseHandle(cctx->pipethread);
+		cctx->pipethread = nullptr;
+	}
+#endif
 
 	IFCALL(cctx->PostDisconnect, instance);
 

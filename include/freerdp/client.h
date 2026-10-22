@@ -157,7 +157,8 @@ extern "C"
 		ALIGN64 pConnectCallback PostConnect;       /**< (offset 19) @since version 3.33.0 */
 		ALIGN64 pPostDisconnect PostDisconnect;     /**< (offset 20) @since version 3.33.0 */
 		ALIGN64 pPostDisconnect PostFinalDisconnect; /**< (offset 21) @since version 3.33.0 */
-		UINT64 reserved[129 - 22];                   /**< (offset 22) */
+		ALIGN64 HANDLE pipethread;                   /**< (offset 22) @since version 3.33.0 */
+		UINT64 reserved[129 - 23];                   /**< (offset 23) */
 	};
 
 	typedef BOOL (*window_events_fkt_t)(freerdp* instance);
