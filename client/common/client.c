@@ -1733,12 +1733,7 @@ static BOOL commonPreConnect(freerdp* instance)
 
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 
-	if (!IFCALLRESULT(TRUE, cctx->PreConnect, instance))
-		return FALSE;
-
-	// TODO
-
-	return TRUE;
+	return IFCALLRESULT(TRUE, cctx->PreConnect, instance);
 }
 
 static BOOL commonPostConnect(freerdp* instance)

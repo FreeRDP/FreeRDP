@@ -86,15 +86,80 @@ static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t
 	if (!rgb)
 		return nullptr;
 
-	for (size_t x = 0; x < height; x++)
+	const UINT32 color = FreeRDPGetColor(format, 0x12, 0xaa, 0x63, 0x80);
+	for (size_t y = 0; y < height; y++)
 	{
-		if (winpr_RAND(&rgb[x * stride], width * bpp) < 0)
+		uint8_t* line = &rgb[y * stride];
+		for (size_t x = 0; x < width; x++)
 		{
-			free(rgb);
-			return nullptr;
+			FreeRDPWriteColor(&line[bpp * x], format, color);
 		}
 	}
 	return rgb;
+}
+
+WINPR_ATTR_NODISCARD
+#define printIfFail(line, offset, what, a, b) \
+	printIfFail_(__func__, __LINE__, (line), (offset), (what), (a), (b))
+static BOOL printIfFail_(const char* fkt, size_t fline, size_t line, size_t offset,
+                         const char* what, BYTE a, BYTE b)
+{
+	const double maxDiff = 8.0;
+	const double diffR = fabs(1.0 * a - b);
+	if (diffR > maxDiff)
+	{
+		(void)fprintf(stderr,
+		              "[%s:%" PRIuz "]{%" PRIuz "x%" PRIuz "} %s diff %lf [0x%02" PRIx8
+		              " - 0x%02" PRIx8 "]\n",
+		              fkt, fline, offset, line, what, diffR, a, b);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL compareRGBColors(size_t line, size_t offset, uint32_t colora, uint32_t colorb,
+                             uint32_t format)
+{
+	BYTE cR = 0;
+	BYTE cG = 0;
+	BYTE cB = 0;
+	BYTE cA = 0;
+	BYTE dR = 0;
+	BYTE dG = 0;
+	BYTE dB = 0;
+	BYTE dA = 0;
+
+	FreeRDPSplitColor(colora, format, &cR, &cG, &cB, &cA, nullptr);
+	FreeRDPSplitColor(colorb, format, &dR, &dG, &dB, &dA, nullptr);
+
+	if (!printIfFail(line, offset, "red", cR, dR))
+		return FALSE;
+	if (!printIfFail(line, offset, "green", cG, dG))
+		return FALSE;
+	if (!printIfFail(line, offset, "blue", cB, dB))
+		return FALSE;
+	if (FreeRDPColorHasAlpha(format))
+	{
+		if (!printIfFail(line, offset, "alpha", cA, dA))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL compareRGBLine(size_t line, const uint8_t* src, const uint8_t* dst, uint32_t format,
+                           size_t width)
+{
+	const size_t bpp = FreeRDPGetBytesPerPixel(format);
+	for (size_t x = 0; x < width; x++)
+	{
+		const UINT32 srccolor = FreeRDPReadColor(&src[x * bpp], format);
+		const UINT32 dstcolor = FreeRDPReadColor(&dst[x * bpp], format);
+		if (!compareRGBColors(line, x, srccolor, dstcolor, format))
+			return FALSE;
+	}
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -105,17 +170,20 @@ static BOOL compareRGB(const uint8_t* src, const uint8_t* dst, uint32_t format, 
 	WINPR_ASSERT(dst);
 
 	const size_t bpp = FreeRDPGetBytesPerPixel(format);
+	const size_t bits = FreeRDPGetBitsPerPixel(format);
+	if (bits != 32)
+	{
+		printf("skipping color compare for format %s, only 32bpp colors are checked\n",
+		       FreeRDPGetColorFormatName(format));
+		return TRUE;
+	}
+
 	for (size_t y = 0; y < height; y++)
 	{
 		const uint8_t* csrc = &src[y * stride];
 		const uint8_t* cdst = &dst[y * stride];
-		const int rc = memcmp(csrc, cdst, width * bpp);
-		// TODO: Both, AVC420 encoding and decoding are lossy.
-		// TODO: Find a proper error margin to check for
-#if 0
-		if (rc != 0)
+		if (!compareRGBLine(y, csrc, cdst, format, width))
 			return FALSE;
-#endif
 	}
 	return TRUE;
 }
@@ -126,6 +194,7 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 	BOOL rc = FALSE;
 	void* src = nullptr;
 	void* out = nullptr;
+	void* copy = nullptr;
 	RDPGFX_H264_METABLOCK meta = WINPR_C_ARRAY_INIT;
 	H264_CONTEXT* h264 = h264_context_new(TRUE);
 	H264_CONTEXT* h264dec = h264_context_new(FALSE);
@@ -160,6 +229,11 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 		goto fail;
 	}
 
+	copy = calloc(height, stride);
+	if (!copy)
+		goto fail;
+	memcpy(copy, src, 1ull * height * stride);
+
 	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
 	uint32_t dstsize = 0;
 	uint8_t* dst = nullptr;
@@ -173,6 +247,11 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 	if ((dstsize == 0) || !dst)
 	{
 		(void)fprintf(stderr, "[%s] dstsize=%" PRIu32 ", dst=%p\n", __func__, dstsize, (void*)dst);
+		goto fail;
+	}
+	if (memcmp(copy, src, 1ull * height * stride) != 0)
+	{
+		(void)fprintf(stderr, "[%s] avc420_compress modified source data!\n", __func__);
 		goto fail;
 	}
 
@@ -192,6 +271,7 @@ fail:
 	h264_context_free(h264dec);
 	free_h264_metablock(&meta);
 	free(src);
+	free(copy);
 	free(out);
 	return rc;
 }
