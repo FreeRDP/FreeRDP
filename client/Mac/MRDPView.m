@@ -445,7 +445,7 @@ static DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE
 	 * provided by OS X and check for a character to key code mismatch: for instance,
 	 * when the output character is '0' for the key code corresponding to the 'i' key.
 	 */
-#if 0
+#if defined(WITH_APPLE_SCANCODE_SWITCH)
 	switch (keyChar)
 	{
 		case '0':
