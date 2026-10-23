@@ -201,7 +201,8 @@ endif()
 if(WITH_CLIENT_INTERFACE)
   installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 endif()
-if(BUILD_TESTING)
+# the tests use internals of the client, exported only with EXPORT_ALL_SYMBOLS
+if(BUILD_TESTING_INTERNAL)
   add_subdirectory(test)
 endif()
 
