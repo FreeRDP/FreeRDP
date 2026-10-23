@@ -1066,7 +1066,7 @@ static const char* vaapi_vendor(H264_CONTEXT_LIBAVCODEC* sys)
 	WINPR_ASSERT(sys);
 
 	const char* vendor = "UNKNOWN";
-#if 0
+#if defined(WITH_VAAPI)
 	if (!hwctx)
 		return vendor;
 

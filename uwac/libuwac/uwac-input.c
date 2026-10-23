@@ -548,7 +548,7 @@ static void touch_handle_down(void* data, struct wl_touch* wl_touch, uint32_t se
 	tdata->x = (wl_fixed_t)lround(sx);
 	tdata->y = (wl_fixed_t)lround(sy);
 
-#if 0
+#if BUILD_TOUCH_MOTION
 	struct widget *widget;
 	float sx = wl_fixed_to_double(x);
 	float sy = wl_fixed_to_double(y);
@@ -609,7 +609,7 @@ static void touch_handle_up(void* data, struct wl_touch* wl_touch, uint32_t seri
 	tdata->seat = seat;
 	tdata->id = id;
 
-#if 0
+#if BUILD_TOUCH_MOTION
 	struct touch_point *tp, *tmp;
 
 	if (!input->touch_focus) {
@@ -658,7 +658,7 @@ static void touch_handle_motion(void* data, struct wl_touch* wl_touch, uint32_t 
 	tdata->x = (wl_fixed_t)lround(sx);
 	tdata->y = (wl_fixed_t)lround(sy);
 
-#if 0
+#if BUILD_TOUCH_MOTION
 	struct touch_point *tp;
 	float sx = wl_fixed_to_double(x);
 	float sy = wl_fixed_to_double(y);
@@ -712,7 +712,7 @@ static void touch_handle_cancel(void* data, struct wl_touch* wl_touch)
 	ev->seat = seat;
 	seat->touch_frame_started = false;
 
-#if 0
+#if BUILD_TOUCH_MOTION
 	struct touch_point *tp, *tmp;
 
 	DBG("touch_handle_cancel\n");
