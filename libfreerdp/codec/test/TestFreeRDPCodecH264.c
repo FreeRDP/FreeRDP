@@ -232,7 +232,7 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 	copy = calloc(height, stride);
 	if (!copy)
 		goto fail;
-	memcpy(copy, src, height * stride);
+	memcpy(copy, src, 1ull * height * stride);
 
 	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
 	uint32_t dstsize = 0;
@@ -249,7 +249,7 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 		(void)fprintf(stderr, "[%s] dstsize=%" PRIu32 ", dst=%p\n", __func__, dstsize, (void*)dst);
 		goto fail;
 	}
-	if (memcmp(copy, src, height * stride) != 0)
+	if (memcmp(copy, src, 1ull * height * stride) != 0)
 	{
 		(void)fprintf(stderr, "[%s] avc420_compress modified source data!\n", __func__);
 		goto fail;

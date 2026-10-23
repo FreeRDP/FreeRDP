@@ -619,7 +619,7 @@ static char* cam_gst_read_file(const char* path)
 	if (_fseeki64(fp, 0, SEEK_END) != 0)
 		goto out;
 	const INT64 size = _ftelli64(fp);
-	if ((size <= 0) || (size > 1024 * 1024) || (_fseeki64(fp, 0, SEEK_SET) != 0))
+	if ((size <= 0) || (size > 1024ll * 1024ll) || (_fseeki64(fp, 0, SEEK_SET) != 0))
 		goto out;
 
 	content = calloc(1, (size_t)size + 1);
