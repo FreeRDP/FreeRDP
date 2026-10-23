@@ -701,7 +701,9 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 		return ERROR_INVALID_DATA;
 
 	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
-	const UINT32 ConfigurationHandle = Stream_Get_UINT32(s);
+	// Currently unused, so just skip the data
+	// const UINT32 ConfigurationHandle = Stream_Get_UINT32(s);
+	Stream_Seek_UINT32(s);
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = msusb_msinterface_read(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4) || !MsInterface)
