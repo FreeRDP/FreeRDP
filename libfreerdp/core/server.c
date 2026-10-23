@@ -610,21 +610,6 @@ void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* 
 		fds[*fds_count] = fd;
 		(*fds_count)++;
 	}
-
-#if 0
-
-	if (vcm->drdynvc_channel)
-	{
-		fd = GetEventWaitObject(vcm->drdynvc_channel->receiveEvent);
-
-		if (fd)
-		{
-			fds[*fds_count] = fd;
-			(*fds_count)++;
-		}
-	}
-
-#endif
 }
 #endif
 
