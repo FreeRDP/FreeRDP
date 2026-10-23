@@ -883,6 +883,16 @@ extern "C"
 	 * Functions
 	 */
 
+	/** @brief Checks whether the provided keyboard type is supported by WinPR
+	 *
+	 *  @param dwKeyboardType The keyboard type to check
+	 *
+	 *  @return TRUE, when the provided keyboard type is supported. Otherwise, FALSE.
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL WinPR_IsKeyboardTypeSupported(DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
+
 	WINPR_ATTR_NODISCARD
 	WINPR_API const char* GetVirtualKeyName(DWORD vkcode);
 
