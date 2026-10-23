@@ -533,12 +533,24 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 	return 0;
 #endif
 
+#if defined(WITH_H264_WEBCODECS)
+	/* WebCodecs is probed at runtime; node (ctest) has no VideoDecoder. */
+	H264_CONTEXT* probe = h264_context_new(FALSE);
+	if (!probe)
+	{
+		(void)fprintf(stderr, "[%s] skipping, the runtime cannot decode H.264 with WebCodecs\n",
+		              __func__);
+		return 0;
+	}
+	h264_context_free(probe);
+#endif
+
 	/* Decoder tests also run when no encoder backend is configured. */
 	if (!testContextOptions(FALSE, width, height))
 		return -1;
 	if (!testDecode(FALSE))
 		return -1;
-#ifdef WITH_APPLE_VIDEOTOOLBOX
+#if defined(WITH_APPLE_VIDEOTOOLBOX) || defined(WITH_H264_WEBCODECS)
 	if (!testDecode(TRUE))
 		return -1;
 #endif
