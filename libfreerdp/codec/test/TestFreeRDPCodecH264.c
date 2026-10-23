@@ -169,7 +169,6 @@ static BOOL compareRGB(const uint8_t* src, const uint8_t* dst, uint32_t format, 
 	WINPR_ASSERT(src);
 	WINPR_ASSERT(dst);
 
-	const size_t bpp = FreeRDPGetBytesPerPixel(format);
 	const size_t bits = FreeRDPGetBitsPerPixel(format);
 	if (bits != 32)
 	{
