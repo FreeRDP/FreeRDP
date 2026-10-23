@@ -14,6 +14,7 @@ interoperability can finally liberate your computing experience.
 [![[arm,ppc,ricsv] architecture builds](https://github.com/FreeRDP/FreeRDP/actions/workflows/alt-architectures.yml/badge.svg)](https://github.com/FreeRDP/FreeRDP/actions/workflows/alt-architectures.yml)
 [![[freebsd] architecture builds](https://github.com/FreeRDP/FreeRDP/actions/workflows/freebsd.yml/badge.svg)](https://github.com/FreeRDP/FreeRDP/actions/workflows/freebsd.yml)
 [![coverity](https://scan.coverity.com/projects/616/badge.svg)](https://scan.coverity.com/projects/freerdp)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/freerdp/freerdp/badge)](https://scorecard.dev/viewer/?uri=github.com/freerdp/freerdp)
 
 ## Resources
 
