@@ -287,7 +287,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 		zwp_fullscreen_shell_v1_add_listener(d->fullscreen_shell, &fullscreen_shell_listener, d);
 	}
 #endif
-#if 0
+#if BUILD_TEXT_CURSOR_POSITION
 	else if (strcmp(interface, "text_cursor_position") == 0)
 	{
 		d->text_cursor_position = wl_registry_bind(registry, id, &text_cursor_position_interface, 1);
@@ -312,7 +312,7 @@ static void registry_handle_global_remove(void* data, struct wl_registry* regist
 		if (global->name != name)
 			continue;
 
-#if 0
+#if BUILD_OUTPUT
 
 		if (strcmp(global->interface, "wl_output") == 0)
 			display_destroy_output(d, name);
