@@ -92,7 +92,7 @@ static BOOL sso_mib_get_rdsaad_access_token(rdpClientContext* client_context, co
 	scopes = g_slist_append(scopes, g_strdup(scope));
 
 	// Parse the "kid" element from req_cnf
-	crypto_base64_decode(req_cnf, strlen(req_cnf), &req_cnf_dec, &req_cnf_dec_len);
+	crypto_base64url_decode(req_cnf, strlen(req_cnf), &req_cnf_dec, &req_cnf_dec_len);
 	if (!req_cnf_dec)
 	{
 		goto cleanup;
