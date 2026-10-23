@@ -672,8 +672,8 @@ static void CALLBACK yuv444v1_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	prim_size_t roi;
 	YUV_ENCODE_WORK_PARAM* param = (YUV_ENCODE_WORK_PARAM*)context;
 	primitives_t* prims = primitives_get();
-	BYTE* pYUVLumaData[3];
-	BYTE* pYUVChromaData[3];
+	BYTE* pYUVLumaData[3] = WINPR_C_ARRAY_INIT;
+	BYTE* pYUVChromaData[3] = WINPR_C_ARRAY_INIT;
 	const BYTE* src = nullptr;
 
 	WINPR_UNUSED(instance);
@@ -682,20 +682,35 @@ static void CALLBACK yuv444v1_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 
 	roi.width = param->rect.right - param->rect.left;
 	roi.height = param->rect.bottom - param->rect.top;
-	src = param->pSrcData + 1ULL * param->nSrcStep * param->rect.top +
-	      1ULL * param->rect.left * FreeRDPGetBytesPerPixel(param->SrcFormat);
-	pYUVLumaData[0] =
-	    param->pYUVLumaData[0] + 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
-	pYUVLumaData[1] = param->pYUVLumaData[1] + 1ULL * param->rect.top / 2 * param->iStride[1] +
-	                  param->rect.left / 2;
-	pYUVLumaData[2] = param->pYUVLumaData[2] + 1ULL * param->rect.top / 2 * param->iStride[2] +
-	                  param->rect.left / 2;
-	pYUVChromaData[0] =
-	    param->pYUVChromaData[0] + 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
-	pYUVChromaData[1] = param->pYUVChromaData[1] + 1ULL * param->rect.top / 2 * param->iStride[1] +
-	                    param->rect.left / 2;
-	pYUVChromaData[2] = param->pYUVChromaData[2] + 1ULL * param->rect.top / 2 * param->iStride[2] +
-	                    param->rect.left / 2;
+	{
+		const size_t offset = 1ULL * param->nSrcStep * param->rect.top +
+		                      1ULL * param->rect.left * FreeRDPGetBytesPerPixel(param->SrcFormat);
+		src = &param->pSrcData[offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
+		pYUVLumaData[0] = &param->pYUVLumaData[0][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[1] + param->rect.left / 2;
+		pYUVLumaData[1] = &param->pYUVLumaData[1][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[2] + param->rect.left / 2;
+		pYUVLumaData[2] = &param->pYUVLumaData[2][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
+		pYUVChromaData[0] = &param->pYUVChromaData[0][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[1] + param->rect.left / 2;
+		pYUVChromaData[1] = &param->pYUVChromaData[1][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[2] + param->rect.left / 2;
+		pYUVChromaData[2] = &param->pYUVChromaData[2][offset];
+	}
 	if (prims->RGBToAVC444YUV(src, param->SrcFormat, param->nSrcStep, pYUVLumaData, param->iStride,
 	                          pYUVChromaData, param->iStride, &roi) != PRIMITIVES_SUCCESS)
 	{
@@ -719,20 +734,35 @@ static void CALLBACK yuv444v2_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 
 	roi.width = param->rect.right - param->rect.left;
 	roi.height = param->rect.bottom - param->rect.top;
-	src = param->pSrcData + 1ULL * param->nSrcStep * param->rect.top +
-	      1ULL * param->rect.left * FreeRDPGetBytesPerPixel(param->SrcFormat);
-	pYUVLumaData[0] =
-	    param->pYUVLumaData[0] + 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
-	pYUVLumaData[1] = param->pYUVLumaData[1] + 1ULL * param->rect.top / 2 * param->iStride[1] +
-	                  param->rect.left / 2;
-	pYUVLumaData[2] = param->pYUVLumaData[2] + 1ULL * param->rect.top / 2 * param->iStride[2] +
-	                  param->rect.left / 2;
-	pYUVChromaData[0] =
-	    param->pYUVChromaData[0] + 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
-	pYUVChromaData[1] = param->pYUVChromaData[1] + 1ULL * param->rect.top / 2 * param->iStride[1] +
-	                    param->rect.left / 2;
-	pYUVChromaData[2] = param->pYUVChromaData[2] + 1ULL * param->rect.top / 2 * param->iStride[2] +
-	                    param->rect.left / 2;
+	{
+		const size_t offset = 1ULL * param->nSrcStep * param->rect.top +
+		                      1ULL * param->rect.left * FreeRDPGetBytesPerPixel(param->SrcFormat);
+		src = &param->pSrcData[offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
+		pYUVLumaData[0] = &param->pYUVLumaData[0][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[1] + param->rect.left / 2;
+		pYUVLumaData[1] = &param->pYUVLumaData[1][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[2] + param->rect.left / 2;
+		pYUVLumaData[2] = &param->pYUVLumaData[2][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top * param->iStride[0] + param->rect.left;
+		pYUVChromaData[0] = &param->pYUVChromaData[0][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[1] + param->rect.left / 2;
+		pYUVChromaData[1] = &param->pYUVChromaData[1][offset];
+	}
+	{
+		const size_t offset = 1ULL * param->rect.top / 2 * param->iStride[2] + param->rect.left / 2;
+		pYUVChromaData[2] = &param->pYUVChromaData[2][offset];
+	}
 	if (prims->RGBToAVC444YUVv2(src, param->SrcFormat, param->nSrcStep, pYUVLumaData,
 	                            param->iStride, pYUVChromaData, param->iStride,
 	                            &roi) != PRIMITIVES_SUCCESS)
