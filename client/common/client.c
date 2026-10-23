@@ -3302,3 +3302,100 @@ BOOL client_helper_get_access_token(freerdp* instance, AccessTokenType tokenType
 	va_end(ap);
 	return rc;
 }
+
+WINPR_ATTR_NODISCARD
+static BOOL is_scancode_key(UINT32 scancode)
+{
+	switch (scancode)
+	{
+		case RDP_SCANCODE_SPACE:
+		case RDP_SCANCODE_CAPSLOCK:
+		case RDP_SCANCODE_LMENU:
+		case RDP_SCANCODE_RMENU:
+		case RDP_SCANCODE_LWIN:
+		case RDP_SCANCODE_RWIN:
+		case RDP_SCANCODE_RCONTROL:
+		case RDP_SCANCODE_LCONTROL:
+		case RDP_SCANCODE_F1:
+		case RDP_SCANCODE_F2:
+		case RDP_SCANCODE_F3:
+		case RDP_SCANCODE_F4:
+		case RDP_SCANCODE_F5:
+		case RDP_SCANCODE_F6:
+		case RDP_SCANCODE_F7:
+		case RDP_SCANCODE_F8:
+		case RDP_SCANCODE_F9:
+		case RDP_SCANCODE_F10:
+		case RDP_SCANCODE_F11:
+		case RDP_SCANCODE_F12:
+		case RDP_SCANCODE_F13:
+		case RDP_SCANCODE_F14:
+		case RDP_SCANCODE_F15:
+		case RDP_SCANCODE_F16:
+		case RDP_SCANCODE_F17:
+		case RDP_SCANCODE_F18:
+		case RDP_SCANCODE_F19:
+		case RDP_SCANCODE_F20:
+		case RDP_SCANCODE_F21:
+		case RDP_SCANCODE_F22:
+		case RDP_SCANCODE_F23:
+		case RDP_SCANCODE_F24:
+		case RDP_SCANCODE_HOME:
+		case RDP_SCANCODE_END:
+		case RDP_SCANCODE_UP:
+		case RDP_SCANCODE_DOWN:
+		case RDP_SCANCODE_LEFT:
+		case RDP_SCANCODE_RIGHT:
+		case RDP_SCANCODE_PRIOR:
+		case RDP_SCANCODE_NEXT:
+		case RDP_SCANCODE_INSERT:
+		case RDP_SCANCODE_DELETE:
+		case RDP_SCANCODE_NUMLOCK:
+		case RDP_SCANCODE_NUMPAD0:
+		case RDP_SCANCODE_NUMPAD1:
+		case RDP_SCANCODE_NUMPAD2:
+		case RDP_SCANCODE_NUMPAD3:
+		case RDP_SCANCODE_NUMPAD4:
+		case RDP_SCANCODE_NUMPAD5:
+		case RDP_SCANCODE_NUMPAD6:
+		case RDP_SCANCODE_NUMPAD7:
+		case RDP_SCANCODE_NUMPAD8:
+		case RDP_SCANCODE_NUMPAD9:
+		case RDP_SCANCODE_SYSREQ:
+		case RDP_SCANCODE_SLEEP:
+		case RDP_SCANCODE_CONVERT_JP:
+		case RDP_SCANCODE_NONCONVERT_JP:
+		case RDP_SCANCODE_RETURN_KP:
+		case RDP_SCANCODE_RETURN:
+		case RDP_SCANCODE_VOLUME_MUTE:
+		case RDP_SCANCODE_VOLUME_DOWN:
+		case RDP_SCANCODE_VOLUME_UP:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+BOOL freerdp_client_send_key_as_unicode(rdpClientContext* cctx, UINT16 flags, const char* str,
+                                        UINT32 scancode, FREERDP_CLIENT_KBD_MOD modmask)
+{
+	const BOOL asKey = is_scancode_key(scancode);
+	const BOOL modPressed =
+	    (modmask & (FREERDP_CLIENT_KBD_MOD_LCONTROL | FREERDP_CLIENT_KBD_MOD_RCONTROL |
+	                FREERDP_CLIENT_KBD_MOD_LMENU | FREERDP_CLIENT_KBD_MOD_RMENU |
+	                FREERDP_CLIENT_KBD_MOD_LWIN | FREERDP_CLIENT_KBD_MOD_RWIN)) != 0;
+	WCHAR wbuffer[32] = WINPR_C_ARRAY_INIT;
+	SSIZE_T rc = -1;
+	if (!asKey && !modPressed)
+		rc = ConvertUtf8ToWChar(str, wbuffer, ARRAYSIZE(wbuffer));
+	if (rc <= 0)
+	{
+		return freerdp_input_send_keyboard_event_ex(
+		    cctx->context.input, (flags & KBD_FLAGS_RELEASE) == 0, FALSE, scancode);
+	}
+	for (SSIZE_T x = 0; x < rc; x++)
+	{
+		if (!freerdp_input_send_unicode_keyboard_event(cctx->context.input, flags, wbuffer[x]))
+			return FALSE;
+	}
+	return TRUE;
+}

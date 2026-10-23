@@ -473,6 +473,38 @@ extern "C"
 	FREERDP_API char* freerdp_client_extract_aad_code(rdpClientContext* cctx, const char* data,
 	                                                  size_t length);
 
+	typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+	{
+		FREERDP_CLIENT_KBD_MOD_NONE = 0x00,
+		FREERDP_CLIENT_KBD_MOD_LSHIFT = 0x01,
+		FREERDP_CLIENT_KBD_MOD_RSHIFT = 0x02,
+		FREERDP_CLIENT_KBD_MOD_LMENU = 0x04,
+		FREERDP_CLIENT_KBD_MOD_RMENU = 0x08,
+		FREERDP_CLIENT_KBD_MOD_LCONTROL = 0x10,
+		FREERDP_CLIENT_KBD_MOD_RCONTROL = 0x20,
+		FREERDP_CLIENT_KBD_MOD_LWIN = 0x40,
+		FREERDP_CLIENT_KBD_MOD_RWIN = 0x80
+	} FREERDP_CLIENT_KBD_MOD;
+
+	/** @brief Helper to send unicode input.
+	 *
+	 *  Checks the input for certain conditions and sends the input as unicode if the conditions do
+	 * not match, otherwise fall back to scancodes to send.
+	 *
+	 *  @param cctx The client context to use for sending
+	 *  @param flags The flags (KEY_RELEASE, ..)
+	 *  @param str A UTF-8 string to send as unicode
+	 *  @param scancode The RDP scancode of the current key
+	 *  @param modmask The keyboard modifiers currently pressed
+	 *
+	 *  @return TRUE if sent successfully, FALSE otherwise
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_send_key_as_unicode(rdpClientContext* cctx, UINT16 flags,
+	                                                    const char* str, UINT32 scancode,
+	                                                    FREERDP_CLIENT_KBD_MOD modmask);
+
 #ifdef __cplusplus
 }
 #endif
