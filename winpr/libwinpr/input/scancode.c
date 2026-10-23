@@ -533,7 +533,7 @@ static DWORD GetVirtualKeyCodeFromVirtualScanCodeMap(DWORD scancode, const Scanc
 	return map->normal[codeIndex];
 }
 
-BOOL WinPR_IsKeyboardTypeSupported (DWORD /* WINPR_KBD_TYPE */ dwKeyboardType)
+BOOL WinPR_IsKeyboardTypeSupported(DWORD /* WINPR_KBD_TYPE */ dwKeyboardType)
 {
 	switch (dwKeyboardType)
 	{
@@ -546,9 +546,9 @@ BOOL WinPR_IsKeyboardTypeSupported (DWORD /* WINPR_KBD_TYPE */ dwKeyboardType)
 		case WINPR_KBD_TYPE_JAPANESE:
 		case WINPR_KBD_TYPE_KOREAN:
 			return TRUE;
+		default:
+			return FALSE;
 	}
-
-	return FALSE;
 }
 
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
