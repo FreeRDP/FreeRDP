@@ -1086,7 +1086,6 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
 	appWindow->rail_fullscreen_normalizing = FALSE;
-	appWindow->lastWndSizeUpdate = 0;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(
@@ -1181,6 +1180,10 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	appWindow->local_move.root_y = y;
 	appWindow->local_move.state = LMS_STARTING;
 	appWindow->local_move.direction = direction;
+	appWindow->serverGeometryPending = FALSE;
+	WLog_Print(xfc->log, WLOG_DEBUG,
+	           "[rail-geometry] local move start windowId=0x%08" PRIx64 " direction=%d",
+	           appWindow->windowId, direction);
 
 	xf_ungrab(xfc);
 
@@ -1220,6 +1223,8 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	}
 
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
+	if (appWindow->serverGeometryPending)
+		xf_rail_reconcile_window(xfc, appWindow);
 }
 
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
