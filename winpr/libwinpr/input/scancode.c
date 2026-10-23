@@ -533,27 +533,34 @@ static DWORD GetVirtualKeyCodeFromVirtualScanCodeMap(DWORD scancode, const Scanc
 	return map->normal[codeIndex];
 }
 
+BOOL WinPR_IsKeyboardTypeSupported (DWORD /* WINPR_KBD_TYPE */ dwKeyboardType)
+{
+	switch (dwKeyboardType)
+	{
+		case WINPR_KBD_TYPE_IBM_PC_XT:
+		case WINPR_KBD_TYPE_OLIVETTI_ICO:
+		case WINPR_KBD_TYPE_IBM_PC_AT:
+		case WINPR_KBD_TYPE_IBM_ENHANCED:
+		case WINPR_KBD_TYPE_NOKIA_1050:
+		case WINPR_KBD_TYPE_NOKIA_9140:
+		case WINPR_KBD_TYPE_JAPANESE:
+		case WINPR_KBD_TYPE_KOREAN:
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
 	if (!setup())
 		return VK_NONE;
 
-	switch (dwKeyboardType)
-	{
-		/* IBM and compatible */
-		case WINPR_KBD_TYPE_IBM_PC_XT:
-		case WINPR_KBD_TYPE_OLIVETTI_ICO:
-		case WINPR_KBD_TYPE_IBM_PC_AT:
-		case WINPR_KBD_TYPE_IBM_ENHANCED:
-		case WINPR_KBD_TYPE_JAPANESE:
-		case WINPR_KBD_TYPE_KOREAN:
-		case WINPR_KBD_TYPE_NOKIA_1050:
-		case WINPR_KBD_TYPE_NOKIA_9140:
-			return GetVirtualKeyCodeFromVirtualScanCodeMap(scancode, &VKmap[dwKeyboardType - 1]);
-		default:
-			WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
-			return VK_NONE;
-	}
+	if (WinPR_IsKeyboardTypeSupported(dwKeyboardType))
+		return GetVirtualKeyCodeFromVirtualScanCodeMap(scancode, &VKmap[dwKeyboardType - 1]);
+
+	WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
+	return VK_NONE;
 }
 
 WINPR_ATTR_NODISCARD
