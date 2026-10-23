@@ -93,6 +93,19 @@ class sdlClip
 	/* Answers the queued server CB_FORMAT_DATA_REQUESTs. Runs on the SDL main thread: the SDL
 	 * clipboard API is main-thread only, and ReceiveFormatDataRequest only queues them. */
 	void handleDataRequests();
+#if defined(__EMSCRIPTEN__)
+	/* SDL3 has no clipboard driver for the browser: the page exchanges text with the
+	 * browser clipboard and these functions connect it to the cliprdr channel. */
+	[[nodiscard]] static bool webOffer(const char* utf8, const BYTE* dib, size_t dibSize);
+
+  private:
+	[[nodiscard]] bool webRequestServerText();
+	[[nodiscard]] bool webAnswerDataRequest(const CLIPRDR_FORMAT_DATA_REQUEST* request);
+	[[nodiscard]] bool webTakeDataResponse(const CLIPRDR_FORMAT_DATA_RESPONSE* response);
+	std::string _web_local;           /* text from the browser clipboard, offered to the server */
+	std::vector<BYTE> _web_local_dib; /* image from the browser clipboard as CF_DIB */
+	std::deque<size_t> _web_recent;   /* hashes of recent offers, to recognise late echoes */
+#endif
 
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
