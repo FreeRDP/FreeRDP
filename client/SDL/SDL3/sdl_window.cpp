@@ -24,6 +24,10 @@
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
 
+#if defined(__APPLE__)
+#include "sdl_macos.hpp"
+#endif
+
 #include <freerdp/utils/string.h>
 
 SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect,
@@ -394,13 +398,11 @@ bool SdlWindow::fill(SDL_Window* window, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	return SDL_FillSurfaceRect(surface, &rect, color);
 }
 
-rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+/* r: position in SDL global coordinates, size in pixels. factor: display scale of a window on
+ * that display (see SDL_GetWindowDisplayScale). */
+static rdpMonitor makeMonitor(SDL_DisplayID id, const SDL_Rect& r, float factor,
+                              bool forceAsPrimary)
 {
-	if (!window)
-		return {};
-
-	const auto& r = rect(window, forceAsPrimary);
-	const float factor = SDL_GetWindowDisplayScale(window);
 	const float dpi = std::roundf(factor * 100.0f);
 
 	WINPR_ASSERT(r.w > 0);
@@ -441,6 +443,16 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	SDL_LogDebug(cat, "monitor.attributes.physicalHeight     %" PRIu32,
 	             monitor.attributes.physicalHeight);
 	return monitor;
+}
+
+rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+{
+	if (!window)
+		return {};
+
+	const auto& r = rect(window, forceAsPrimary);
+	const float factor = SDL_GetWindowDisplayScale(window);
+	return makeMonitor(id, r, factor, forceAsPrimary);
 }
 
 SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
@@ -753,6 +765,59 @@ SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect, bool 
 	return SdlWindow{ parent, rect, transparent, tooltip };
 }
 
+/* What a full-screen window on display `id` would report to query()/rect(), read from the
+ * display APIs so no window is shown.
+ *
+ * Only on SDL's cocoa backend, where the values are known without a window:
+ * - A full-screen window is framed to SDL_GetDisplayBounds() (points). In its own Space (the
+ *   default) AppKit keeps the menu bar strip free on a display with a camera housing.
+ * - Its pixel size is its point size times the backing scale, which is the desktop mode's
+ *   pixel_density.
+ * - Its SDL_GetWindowDisplayScale() is pixel density times the display content scale, as cocoa
+ *   has no per-window content scale.
+ * Other backends (Wayland: per-surface scale; wlroots: compositor-placed windows) keep the
+ * probe window. */
+[[nodiscard]] static bool queryWithoutWindow([[maybe_unused]] SDL_DisplayID id,
+                                             [[maybe_unused]] bool forceAsPrimary,
+                                             [[maybe_unused]] SDL_Rect& rect,
+                                             [[maybe_unused]] float& factor)
+{
+#if defined(__APPLE__)
+	const auto driver = SDL_GetCurrentVideoDriver();
+	if ((driver == nullptr) || (strcmp(driver, "cocoa") != 0))
+		return false;
+
+	SDL_Rect bounds = {};
+	if (!SDL_GetDisplayBounds(id, &bounds))
+		return false;
+
+	const auto mode = SDL_GetDesktopDisplayMode(id);
+	if (!mode || (mode->pixel_density <= 0.0f))
+		return false;
+
+	const auto contentScale = SDL_GetDisplayContentScale(id);
+	if (contentScale <= 0.0f)
+		return false;
+
+	/* Same default SDL uses to decide whether full screen gets its own Space. */
+	if (SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, true))
+	{
+		const int inset = sdl_macos_fullscreen_space_top_inset(bounds);
+		bounds.y += inset;
+		bounds.h -= inset;
+	}
+
+	rect.x = forceAsPrimary ? 0 : bounds.x;
+	rect.y = forceAsPrimary ? 0 : bounds.y;
+	rect.w = static_cast<int>(std::ceil(static_cast<float>(bounds.w) * mode->pixel_density));
+	rect.h = static_cast<int>(std::ceil(static_cast<float>(bounds.h) * mode->pixel_density));
+	factor = mode->pixel_density * contentScale;
+	return (rect.w > 0) && (rect.h > 0);
+#else
+	return false;
+#endif
+}
+
 static SDL_Window* createDummy(SDL_DisplayID id)
 {
 	const auto x = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
@@ -792,6 +857,11 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 
 rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 {
+	SDL_Rect r = {};
+	float factor = 0.0f;
+	if (queryWithoutWindow(id, forceAsPrimary, r, factor))
+		return makeMonitor(id, r, factor, forceAsPrimary);
+
 	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
 	if (!window)
 		return {};
@@ -811,6 +881,11 @@ rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 
 SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
 {
+	SDL_Rect r = {};
+	float factor = 0.0f;
+	if (queryWithoutWindow(id, forceAsPrimary, r, factor))
+		return r;
+
 	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
 	if (!window)
 		return {};
