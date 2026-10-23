@@ -37,7 +37,9 @@ set(${MODULE_PREFIX}_SCHANNEL_SRCS Schannel/schannel_openssl.c Schannel/schannel
                                    Schannel/schannel.h
 )
 
-set(${MODULE_PREFIX}_CREDSSP_SRCS CredSSP/credssp.c CredSSP/credssp.h)
+set(${MODULE_PREFIX}_CREDSSP_SRCS CredSSP/credssp.c CredSSP/credssp.h CredSSP/tsrequest.c)
+
+set(${MODULE_PREFIX}_TSSSP_SRCS TSSSP/tsssp.c TSSSP/tsssp.h)
 
 set(${MODULE_PREFIX}_SRCS
     sspi_winpr.c
@@ -100,8 +102,13 @@ if(WITH_KRB5)
 endif()
 
 winpr_module_add(
-  ${${MODULE_PREFIX}_CREDSSP_SRCS} ${${MODULE_PREFIX}_NTLM_SRCS} ${${MODULE_PREFIX}_KERBEROS_SRCS}
-  ${${MODULE_PREFIX}_NEGOTIATE_SRCS} ${${MODULE_PREFIX}_SCHANNEL_SRCS} ${${MODULE_PREFIX}_SRCS}
+  ${${MODULE_PREFIX}_CREDSSP_SRCS}
+  ${${MODULE_PREFIX}_NTLM_SRCS}
+  ${${MODULE_PREFIX}_KERBEROS_SRCS}
+  ${${MODULE_PREFIX}_NEGOTIATE_SRCS}
+  ${${MODULE_PREFIX}_SCHANNEL_SRCS}
+  ${${MODULE_PREFIX}_TSSSP_SRCS}
+  ${${MODULE_PREFIX}_SRCS}
 )
 
 if(OPENSSL_FOUND)
