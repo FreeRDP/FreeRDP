@@ -193,6 +193,11 @@ endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PUB_LIBS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PRIV_LIBS})
 
+option(WITH_X11_MULTITOUCH_EMULATION "[experimental] Emulate multitouch events with keypboard" OFF)
+if(WITH_X11_MULTITOUCH_EMULATION)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_X11_MULTITOUCH_EMULATION)
+endif()
+
 if(WITH_CLIENT_INTERFACE)
   installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 endif()
