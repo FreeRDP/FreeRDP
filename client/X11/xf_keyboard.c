@@ -1587,7 +1587,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		}
 	}
 
-#if 0 /* set to 1 to enable multi touch gesture simulation via keyboard */
+#if defined(WITH_X11_MULTITOUCH_EMULATION) /* set to 1 to enable multi touch gesture simulation \
+                                              via keyboard */
 #ifdef WITH_XRENDER
 
     if (!xfc->remote_app && freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MultiTouchGestures))
@@ -1644,6 +1645,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 				case XK_6:	/* Ctrl-Alt-6: Pan up */
 					pdy = 10;
+					break;
+				default:
 					break;
 			}
 
