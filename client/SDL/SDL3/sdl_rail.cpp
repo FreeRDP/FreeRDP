@@ -218,11 +218,14 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow || appWindow->isPopup() || !appWindow->window())
 		return;
-	/* Skip the echo of reconcile's own SDL_MaximizeWindow (railMaximized already set). */
+	/* Skip echo of programmatic maximize, but trigger reconcile to update insets. */
 	if (appWindow->railMaximized())
 	{
 		WLog_DBG(TAG, "local maximize skipped id=0x%08" PRIx32 " (already rail-maximized)",
 		         static_cast<UINT32>(appWindow->id()));
+		lock.unlock();
+		if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
 	}
 	appWindow->setRailMaximized(true);
@@ -276,13 +279,18 @@ void SdlRail::handleRestored(SDL_WindowID id)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow || appWindow->isPopup() || !appWindow->window())
 		return;
-	/* Resolve which state a RESTORED event ends; both clear = echo of our own restore, skip. */
+	/* Resolve restored state; trigger reconcile in case WM cleared flags asynchronously. */
 	if (appWindow->railMinimized())
 		appWindow->setRailMinimized(false);
 	else if (appWindow->railMaximized())
 		appWindow->setRailMaximized(false);
 	else
+	{
+		lock.unlock();
+		if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
+	}
 	WLog_DBG(TAG, "local restore id=0x%08" PRIx32 " -> SC_RESTORE",
 	         static_cast<UINT32>(appWindow->id()));
 	appWindow->invalidateAll();
@@ -391,6 +399,42 @@ SdlRailWindow* SdlRail::addWindow(uint64_t id, const SDL_Rect& rect)
 void SdlRail::enableRemoteAppMode(bool enable)
 {
 	_enabled = enable;
+	if (enable)
+		_desktopReleased = true;
+}
+
+/* Show the desktop anyway after this: not every logon prompt is announced. */
+static constexpr Uint32 kDesktopHoldMs = 10000;
+
+bool SdlRail::desktopMayShow()
+{
+	if (_desktopReleased)
+		return true;
+	const uint64_t now = SDL_GetTicks();
+	if (_desktopHoldUntil == 0)
+	{
+		_desktopHoldUntil = now + kDesktopHoldMs;
+		/* Frames may stop coming while the logon waits; wake up to re-check. */
+		if (!sdl_push_update_after(kDesktopHoldMs + 1))
+			WLog_WARN(TAG, "SDL_AddTimer failed: %s", SDL_GetError());
+		WLog_DBG(TAG, "RemoteApp starting: holding the logon desktop back");
+		return false;
+	}
+	if (now < _desktopHoldUntil)
+		return false;
+	WLog_DBG(TAG, "RemoteApp not started after %" PRIu32 " ms, showing the desktop",
+	         kDesktopHoldMs);
+	_desktopReleased = true;
+	return true;
+}
+
+void SdlRail::noteLogonPrompt()
+{
+	if (_desktopReleased.exchange(true))
+		return;
+	WLog_DBG(TAG, "logon dialog on the server, showing the desktop");
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(TAG, "sdl_push_user_event failed");
 }
 
 bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
@@ -711,10 +755,10 @@ bool SdlRail::init(RailClientContext* rail)
 bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 {
 	WINPR_ASSERT(rail);
-	/* Leave rail->custom set: the server callbacks only assert it, so clearing it would crash a
-	 * late order in a release build. _enabled gates them instead. */
+	/* The caller clears rail->custom next; server callbacks return early on nullptr. */
 	std::unique_lock lock(_windowsLock);
 	_refreshSent = false;
+	_appStarted = false;
 	/* Reset session and move state on reconnect. */
 	_localMove = {};
 	_sessionMargins = {};
@@ -733,6 +777,9 @@ bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 		kv.second.markDeleted();
 	_rail = nullptr;
 	_enabled = false;
+	/* The next connection logs on again: hold its logon desktop back too. */
+	_desktopReleased = false;
+	_desktopHoldUntil = 0;
 	lock.unlock();
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return true;
@@ -761,7 +808,8 @@ UINT SdlRail::server_execute_result(RailClientContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(execResult);
 	auto rail = static_cast<SdlRail*>(context->custom);
-	WINPR_ASSERT(rail);
+	if (!rail)
+		return CHANNEL_RC_OK; /* late order after disconnect */
 
 	if (execResult->execResult != RAIL_EXEC_S_OK)
 	{
@@ -801,13 +849,14 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 		if (rail)
 		{
 			std::unique_lock lock(rail->_windowsLock);
+			auto* appWindow = rail->getWindow(localMoveSize->windowId);
 			/* Ignore server END order during Wayland resize unless unstarted. */
 			const bool ownedByWaylandResize = rail->_localMove.wayland &&
 			                                  (rail->_localMove.id == localMoveSize->windowId) &&
 			                                  rail->_localMove.sawResize;
 			if (!ownedByWaylandResize)
 			{
-				if (auto* appWindow = rail->getWindow(localMoveSize->windowId))
+				if (appWindow)
 					appWindow->setLocalMoveActive(false);
 				if (rail->_localMove.id == localMoveSize->windowId)
 				{
@@ -815,7 +864,7 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 					{
 						/* Wayland drag completed. */
 						rail->_localMove = {};
-						if (auto* appWindow = rail->getWindow(localMoveSize->windowId))
+						if (appWindow)
 							appWindow->invalidateAll();
 						(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 					}
@@ -827,7 +876,6 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 				}
 			}
 			/* Execute deferred actions now that modal loop has closed. */
-			auto* appWindow = rail->getWindow(localMoveSize->windowId);
 			if (appWindow && appWindow->loopEndPending())
 			{
 				const auto actions = appWindow->takeLoopEnd();
@@ -860,8 +908,8 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-/* X11 only: suppress button-up during modal loop. */
-bool SdlRail::suppressServerInput(SDL_WindowID id)
+/* A local move/resize runs under the WM grab (not Wayland, the compositor owns that drag). */
+bool SdlRail::dragActive(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
 	if (_localMove.id == 0)
@@ -1122,7 +1170,7 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 	const auto wid = static_cast<uint32_t>(w->id());
 	/* Skip geometry sync while awaiting server restored rect. */
 	if (w->localMoveActive() || (_localMove.id == wid) || w->loopEndPending() ||
-	    w->stateTransitionPending() || w->awaitingRestoreRect())
+	    w->stateTransitionPending() || w->awaitingRestoreRect() || w->insetsStale())
 		return;
 
 	int lw = 0;
@@ -1176,42 +1224,10 @@ void SdlRail::noteResizeGrab(SDL_WindowID id)
 	if (_localMove.id == 0)
 		return;
 	auto* appWindow = getWindowBySdlId(id);
-	/* Confirm compositor pointer grab on mouse leave during active drag resize. */
+	/* Mouse leave or a configure during the drag: the compositor resize is under way. */
 	if (appWindow && (static_cast<uint32_t>(appWindow->id()) == _localMove.id) &&
 	    _localMove.wayland)
 		_localMove.sawResize = true;
-}
-
-void SdlRail::handleWaylandResize(SDL_WindowID id)
-{
-	if (!sdl::utils::isWaylandDriver())
-		return;
-	std::unique_lock lock(_windowsLock);
-	auto* appWindow = getWindowBySdlId(id);
-	if (!appWindow || appWindow->isPopup() || !appWindow->window())
-		return;
-	/* Track resize for active dragged window. */
-	if (static_cast<uint32_t>(appWindow->id()) == _localMove.id)
-	{
-		if (_localMove.wayland)
-			_localMove.sawResize = true;
-		return;
-	}
-
-	int w = 0;
-	int h = 0;
-	SDL_GetWindowSize(appWindow->window(), &w, &h);
-	if ((w <= 0) || (h <= 0))
-		return;
-
-	/* Local window size is the OUTER frame (rect + insets; identical off the inset paths). */
-	const SDL_Rect vis = appWindow->outerRect();
-	if ((w == vis.w) && (h == vis.h))
-		return; /* echo of a size we already reported/applied - nothing new */
-
-	/* Compositor snap/tile: report via the debounced sync (never from transitional state). */
-	lock.unlock();
-	syncGeometry(id);
 }
 
 void SdlRail::completeWaylandResize(bool definitive)
@@ -1365,7 +1381,8 @@ UINT SdlRail::server_min_max_info(RailClientContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(minMaxInfo);
 	auto rail = static_cast<SdlRail*>(context->custom);
-	WINPR_ASSERT(rail);
+	if (!rail)
+		return CHANNEL_RC_OK; /* late order after disconnect */
 
 	std::unique_lock lock(rail->_windowsLock);
 	auto appWindow = rail->getWindow(minMaxInfo->windowId);
@@ -1505,6 +1522,10 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	if (!appWindow)
 		return FALSE;
 
+	/* Show state first: a minimized window's rect is not a placement (updateWindowRect). */
+	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
+		updateShowState(appWindow, orderInfo, windowState);
+
 	if (fieldFlags & (WINDOW_ORDER_FIELD_WND_OFFSET | WINDOW_ORDER_FIELD_WND_SIZE))
 	{
 		SDL_Rect r = appWindow->windowRect();
@@ -1537,9 +1558,6 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 			free(title);
 		}
 	}
-
-	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
-		updateShowState(appWindow, orderInfo, windowState);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
@@ -1684,7 +1702,8 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 		rail->enableRemoteAppMode(true);
 		const char* app =
 		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
-		if (app && (strnlen(app, 1) > 0))
+		/* ARC_COMPLETED also follows every secure desktop (UAC): start the app only once. */
+		if (app && (strnlen(app, 1) > 0) && !rail->_appStarted)
 		{
 			WLog_DBG(TAG, "RAIL mode enabled (monitored desktop); launching '%s'", app);
 			if (client_rail_server_start_cmd(rail->_rail) != CHANNEL_RC_OK)
@@ -1692,6 +1711,7 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 				WLog_ERR(TAG, "client_rail_server_start_cmd failed for '%s'", app);
 				return FALSE;
 			}
+			rail->_appStarted = true;
 		}
 	}
 

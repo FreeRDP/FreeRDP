@@ -41,3 +41,6 @@ bool sdl_x11_set_bit_gravity(SDL_Window* window, int gravity);
 
 /* Send synthetic ButtonRelease if WM grab consumed physical release. */
 bool sdl_x11_send_left_button_release(SDL_Window* window);
+
+/* Raise without _NET_ACTIVE_WINDOW, so the focus stays where it is. */
+bool sdl_x11_raise_window(SDL_Window* window);

@@ -148,6 +148,16 @@ bool sdl_x11_send_left_button_release(SDL_Window* window)
 	return true;
 }
 
+bool sdl_x11_raise_window(SDL_Window* window)
+{
+	const auto [dpy, xwin] = sdl_x11_handles(window);
+	if (!dpy || (xwin == 0))
+		return false;
+	XRaiseWindow(dpy, xwin);
+	XFlush(dpy);
+	return true;
+}
+
 static Window sdl_x11_xwindow(SDL_Window* window)
 {
 	return sdl_x11_handles(window).second;
@@ -225,6 +235,11 @@ bool sdl_x11_restack_windows(WINPR_ATTR_UNUSED const std::vector<SDL_Window*>& t
 }
 
 bool sdl_x11_send_left_button_release(WINPR_ATTR_UNUSED SDL_Window* window)
+{
+	return false;
+}
+
+bool sdl_x11_raise_window(WINPR_ATTR_UNUSED SDL_Window* window)
 {
 	return false;
 }

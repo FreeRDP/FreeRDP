@@ -58,6 +58,20 @@ BOOL sdl_log_error_ex(Sint32 res, wLog* log, const char* what, const char* file,
 	return TRUE;
 }
 
+[[nodiscard]] static Uint32 SDLCALL sdl_push_update_cb(WINPR_ATTR_UNUSED void* userdata,
+                                                       WINPR_ATTR_UNUSED SDL_TimerID timerID,
+                                                       WINPR_ATTR_UNUSED Uint32 interval)
+{
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(CLIENT_TAG("sdl.utils"), "sdl_push_user_event failed");
+	return 0;
+}
+
+bool sdl_push_update_after(Uint32 ms)
+{
+	return SDL_AddTimer(ms, sdl_push_update_cb, nullptr) != 0;
+}
+
 bool sdl_push_user_event(Uint32 type, ...)
 {
 	SDL_Event ev = {};

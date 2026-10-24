@@ -194,6 +194,8 @@ class SdlRailWindow
 		std::unique_lock lock(_gfxLock);
 		return restoreRectPending();
 	}
+	/* Insets have not yet been updated for the current maximized state. */
+	[[nodiscard]] bool insetsStale() const;
 	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
 	[[nodiscard]] bool effectivelyMaximized() const;
 	/* Transition in flight (local intent vs server state). WM resizes only trusted outside. */
@@ -225,6 +227,7 @@ class SdlRailWindow
 	bool applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*));
 	/* Caller holds _gfxLock. */
 	[[nodiscard]] bool restoreRectPending() const;
+	void setAppliedInsets(const SDL_Rect& insets); /* caller holds _gfxLock */
 	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
 	/* Popups whose GFX surface may carry per-pixel alpha (paintGfx). */
 	[[nodiscard]] bool honorsAlpha() const
@@ -255,7 +258,7 @@ class SdlRailWindow
 	uint32_t _exStyle = 0;
 	/* The shadow-rule suppression report in reconcile is once per window. */
 	bool _shadowSuppressLogged = false;
-	bool _everResizable = false; /* latched: ever seen resizable (styleResizable) */
+	bool _everResizable = false; /* latched: ever had a resizable style */
 	uint64_t _ownerId = 0;
 	SDL_Rect _resizeMargins = { 0, 0, 0, 0 }; /* x=left y=top w=right h=bottom */
 	SDL_Rect _frameMargins = { 0, 0, 0, 0 };  /* raw server margins, for ClientWindowMove */
@@ -268,12 +271,11 @@ class SdlRailWindow
 	bool _isPopup = false;
 	bool _fullscreen = false;      /* full-display popup as fullscreen toplevel (Wayland) */
 	bool _layered = false;         /* caption-less WS_EX_LAYERED decoration (drop shadow) */
-	bool _clickThrough = false;    /* WS_EX_TRANSPARENT decoration */
 	bool _overlay = false;         /* layered tool window: drag image / drag feedback */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
 	bool _shadowAnchored = false;  /* a visible popup adjoins this shadow (see setShadowAnchored) */
 	bool _frame = false;           /* companion shadow frame */
-	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
+	bool _parentApplied = false;   /* transient-for owner applied (owned non-popup dialogs) */
 	StateSync _maxState;           /* maximize sync */
 	StateSync _minState;           /* minimize sync */
 	std::string _title = "RdpRailWindow";

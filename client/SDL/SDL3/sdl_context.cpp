@@ -440,6 +440,10 @@ bool SdlContext::createWindows()
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
+		/* RemoteApp: the desktop only shows when needed (drawToWindows). */
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+			flags |= SDL_WINDOW_HIDDEN;
+
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
 
@@ -1186,7 +1190,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_EXPOSED:
 					/* Force repaint for exposed windows; skip during local drag to avoid redundant
 					 * frames. */
-					if (!_rail.suppressServerInput(ev.windowID))
+					if (!_rail.dragActive(ev.windowID))
 						_rail.invalidateWindow(ev.windowID);
 					return true;
 				case SDL_EVENT_WINDOW_MAXIMIZED:
@@ -1211,7 +1215,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					_rail.handleFocus(ev.windowID, false);
 					return true;
 				case SDL_EVENT_WINDOW_MOVED:
-					if (!_rail.suppressServerInput(ev.windowID))
+					if (!_rail.dragActive(ev.windowID))
 						_rail.syncGeometry(ev.windowID);
 					return true;
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
@@ -1219,7 +1223,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					 * also report the new size to catch a compositor snap/tile. */
 					_rail.noteDragResize(ev.windowID, ev.data1, ev.data2);
 					_rail.syncGeometry(ev.windowID);
-					_rail.handleWaylandResize(ev.windowID);
+					_rail.noteResizeGrab(ev.windowID);
 					std::ignore = drawToWindows({});
 					return true;
 				default:
@@ -1328,7 +1332,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 	if (_rail.enabled())
 	{
 		/* Suppress X11 raw button during WM op. */
-		const bool suppress = _rail.suppressServerInput(ev.windowID);
+		const bool suppress = _rail.dragActive(ev.windowID);
 		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
 			_rail.completeLocalMoveIfPending();
 		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived; a fresh press
@@ -1693,7 +1697,10 @@ bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 	}
 
 	/* Non-RAIL mode (e.g. Non-Monitored Desktop during UAC / Consent UI): show the desktop window.
-	 */
+	 * Before the RemoteApp starts, only when the logon needs the user. */
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_RemoteApplicationMode) &&
+	    !_rail.desktopMayShow())
+		return true;
 	bool firstShow = false;
 	for (auto& window : _windows)
 	{
