@@ -558,7 +558,10 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 	if ((rdp_scancode == RDP_SCANCODE_UNKNOWN) && (ev.raw == 0xE036))
 		rdp_scancode = RDP_SCANCODE_RSHIFT;
 #endif
-	const SDL_Keymod mods = SDL_GetModState();
+	/* The modifiers held when this key was pressed: SDL_GetModState() is the state after every
+	 * event already queued, so a hotkey could be missed, or fire on a plain key typed just
+	 * before a modifier. */
+	const SDL_Keymod mods = ev.mod;
 
 	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{
