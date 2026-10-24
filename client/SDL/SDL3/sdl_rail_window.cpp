@@ -424,7 +424,10 @@ bool SdlRailWindow::isFullDisplaySize() const
  * holds _gfxLock. Used by reconcile/create to size the window. */
 SDL_Rect SdlRailWindow::targetOuterRect() const
 {
-	return addInsets(_windowRect, bandInsets());
+	SDL_Rect r = addInsets(_windowRect, bandInsets());
+	r.x += _localShift.x;
+	r.y += _localShift.y;
+	return r;
 }
 
 /* The insets baked into the window ON SCREEN (not the freshly recomputed target). */
@@ -438,12 +441,24 @@ SDL_Rect SdlRailWindow::insets() const
 SDL_Rect SdlRailWindow::outerRect() const
 {
 	std::unique_lock lock(_gfxLock);
-	return addInsets(_windowRect, _appliedInsets);
+	SDL_Rect r = addInsets(_windowRect, _appliedInsets);
+	r.x += _localShift.x;
+	r.y += _localShift.y;
+	return r;
 }
 
 SDL_Rect SdlRailWindow::serverRect(const SDL_Rect& outer) const
 {
-	return stripInsets(outer, insets());
+	SDL_Rect r = stripInsets(outer, insets());
+	r.x -= _localShift.x;
+	r.y -= _localShift.y;
+	return r;
+}
+
+void SdlRailWindow::setLocalShift(const SDL_Point& shift)
+{
+	std::unique_lock lock(_gfxLock);
+	_localShift = shift;
 }
 
 /* Surface blit offset within the local window (content anchor when maximized). */

@@ -84,6 +84,7 @@ class SdlRail
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
 	void handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display);
+	void updateCoordinates();
 	/* Activate window on server if not already active. */
 	void ensureActive(SDL_WindowID id);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
@@ -136,7 +137,7 @@ class SdlRail
 	void enableRemoteAppMode(bool enable);
 	/* Report a work area to the server (SPI_SET_WORK_AREA, server coords). Main thread. No-op if it
 	 * matches the last one sent. */
-	void sendWorkArea(const SDL_Rect& area);
+	void sendWorkArea(const SDL_Rect& local);
 	/* Report a maximized window's WM-given geometry as the work area. Caller holds _windowsLock. */
 	void reportMaximizedWorkArea(SdlRailWindow* appWindow);
 	/* Clamp a window origin (x,y) so a w x h window stays inside the server desktop. */
@@ -150,6 +151,11 @@ class SdlRail
 	SDL_Rect _sessionMargins = { 0, 0, 0, 0 };
 	SDL_Point _lastPressServer = { 0, 0 };   /* last forwarded left press; main thread */
 	SDL_Point _lastPointerServer = { 0, 0 }; /* last forwarded pointer position; main thread */
+	/* Server window coordinates are relative to the primary monitor, input coordinates to the
+	 * top left of the remote desktop. */
+	SDL_Point _displayShift = { 0, 0 }; /* local display minus server coordinates */
+	SDL_Point _localShift = { 0, 0 };   /* applied to local windows where positions work */
+	SDL_Point _inputOrigin = { 0, 0 };  /* top left of the remote desktop */
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,

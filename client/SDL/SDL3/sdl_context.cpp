@@ -1405,6 +1405,13 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 	 * 3. repeat until all displays updated.
 	 */
 	const auto primary = SDL_GetPrimaryDisplay();
+	/* Align display offsets to the primary display origin. */
+	auto it = _offsets.find(primary);
+	if (it != _offsets.end())
+	{
+		it->second.second.x = it->second.first.x;
+		it->second.second.y = it->second.first.y;
+	}
 	std::vector<SDL_DisplayID> handled;
 	handled.push_back(primary);
 
