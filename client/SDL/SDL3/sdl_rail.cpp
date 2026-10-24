@@ -790,6 +790,11 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 		WLog_DBG(TAG, "server move/size start id=0x%08" PRIx32 " type=%" PRIu16 " pos=%d,%d",
 		         localMoveSize->windowId, localMoveSize->moveSizeType, localMoveSize->posX,
 		         localMoveSize->posY);
+		if (auto rail = static_cast<SdlRail*>(context->custom))
+		{
+			std::unique_lock lock(rail->_windowsLock);
+			rail->_moveLoop = { localMoveSize->windowId, 0 };
+		}
 		(void)sdl_push_user_event(SDL_EVENT_USER_RAIL_MOVE, localMoveSize->windowId,
 		                          static_cast<int>(localMoveSize->moveSizeType));
 	}
@@ -825,6 +830,14 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 						rail->_localMove.serverEnded = true;
 					}
 				}
+			}
+			if (rail->_moveLoop.id == localMoveSize->windowId)
+			{
+				const SDL_DisplayID display = rail->_moveLoop.display;
+				rail->_moveLoop = {};
+				auto* moved = rail->getWindow(localMoveSize->windowId);
+				if (moved && (display != 0) && !moved->effectivelyMaximized())
+					rail->moveToDisplay(moved, display);
 			}
 			/* Execute deferred actions now that modal loop has closed. */
 			auto* appWindow = rail->getWindow(localMoveSize->windowId);
@@ -1010,6 +1023,49 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	else if (!started)
 	{
 		WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
+	}
+}
+
+/* Wayland: keep server window position in sync with the active monitor across displays. */
+void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
+{
+	if (railPlatformCaps().positionsReadable)
+		return;
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || appWindow->effectivelyMaximized())
+		return;
+	/* The end of the server move loop would undo it. */
+	if (_moveLoop.id == appWindow->id())
+	{
+		_moveLoop.display = display;
+		return;
+	}
+	moveToDisplay(appWindow, display);
+}
+
+void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
+{
+	const auto* settings = _context->common()->context.settings;
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const auto* mon = static_cast<const rdpMonitor*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
+		if (!mon || (mon->orig_screen != display))
+			continue;
+		const SDL_Rect area = { mon->x, mon->y, mon->width, mon->height };
+		SDL_Rect rect = appWindow->windowRect();
+		const SDL_Point center = { rect.x + rect.w / 2, rect.y + rect.h / 2 };
+		if (SDL_PointInRect(&center, &area))
+			return;
+		rect.x = area.x + std::max(0, (area.w - rect.w) / 2);
+		rect.y = area.y + std::max(0, (area.h - rect.h) / 2);
+		WLog_DBG(TAG, "window 0x%08" PRIx32 " now on display %" PRIu32 ", server move to %d,%d",
+		         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
+		sendClientWindowMove(appWindow, rect);
+		appWindow->adoptLocalGeometry(rect);
+		return;
 	}
 }
 

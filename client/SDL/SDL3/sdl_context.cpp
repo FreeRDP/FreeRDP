@@ -1210,6 +1210,9 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_FOCUS_LOST:
 					_rail.handleFocus(ev.windowID, false);
 					return true;
+				case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+					_rail.handleDisplayChanged(ev.windowID, static_cast<SDL_DisplayID>(ev.data1));
+					return true;
 				case SDL_EVENT_WINDOW_MOVED:
 					if (!_rail.suppressServerInput(ev.windowID))
 						_rail.syncGeometry(ev.windowID);

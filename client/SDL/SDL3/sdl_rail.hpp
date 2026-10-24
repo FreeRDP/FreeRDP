@@ -83,6 +83,7 @@ class SdlRail
 	void handleClose(SDL_WindowID id);
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
+	void handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display);
 	/* Activate window on server if not already active. */
 	void ensureActive(SDL_WindowID id);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
@@ -185,6 +186,8 @@ class SdlRail
 	void reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h);
 	/* Send ClientWindowMove to server. */
 	void sendClientWindowMove(SdlRailWindow* appWindow, const SDL_Rect& serverRect);
+	/* Caller holds _windowsLock. */
+	void moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display);
 
 	/* MS-RDPERP icon cache slot for cacheId:cacheEntry; nullptr if out of range. cacheId 0xFF =
 	 * "do not cache" scratch slot (the spec says 0xFFFF but the field is one byte). */
@@ -223,6 +226,12 @@ class SdlRail
 		SDL_Point wmSize = { 0, 0 };
 	};
 	LocalMove _localMove;
+	/* Server move/size loop in progress (_windowsLock). */
+	struct
+	{
+		uint64_t id = 0;
+		SDL_DisplayID display = 0;
+	} _moveLoop;
 	/* Last focused app window ID. */
 	uint64_t _focusedAppId = 0;
 	/* Server-driven z-order list. */
