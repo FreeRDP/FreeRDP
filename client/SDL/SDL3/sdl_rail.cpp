@@ -705,6 +705,9 @@ bool SdlRail::init(RailClientContext* rail)
 	if (sdl::utils::isX11Driver())
 		SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT, "1");
 #endif
+	/* Like Windows, the click that activates a window also reaches the app. */
+	if (!SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1"))
+		WLog_WARN(TAG, "SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH) failed: %s", SDL_GetError());
 	return true;
 }
 
