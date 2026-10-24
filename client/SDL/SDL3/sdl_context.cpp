@@ -1779,8 +1779,8 @@ bool SdlContext::redraw(bool suppress) const
 	if (!_connected)
 		return true;
 
-	/* In RAIL mode, hiding the desktop window must not suppress server output. */
-	if (suppress && _rail.enabled())
+	/* RemoteApp desktop windows are placeholders, hiding one must not stop server output. */
+	if (suppress && freerdp_settings_get_bool(context()->settings, FreeRDP_RemoteApplicationMode))
 		return true;
 
 	auto gdi = context()->gdi;
