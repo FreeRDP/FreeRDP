@@ -368,23 +368,24 @@ public class LibFreeRDP
 			args.add("/cert-name:" + certName);
 		}
 
+		args.add("/network:auto");
+
 		BookmarkBase.PerformanceFlags flags = bookmark.getActivePerformanceFlags();
 		if (flags.getRemoteFX())
 		{
 			args.add("/rfx");
-			args.add("/network:auto");
 		}
 
 		if (flags.getGfx())
 		{
-			args.add("/gfx");
-			args.add("/network:auto");
-		}
-
-		if (flags.getH264() && mHasH264)
-		{
-			args.add("/gfx:AVC444");
-			args.add("/network:auto");
+			if (flags.getH264() && mHasH264)
+			{
+				args.add("/gfx:AVC444,AVC420,RFX,progressive");
+			}
+			else
+			{
+				args.add("/gfx");
+			}
 		}
 
 		args.add(addFlag("wallpaper", flags.getWallpaper()));
