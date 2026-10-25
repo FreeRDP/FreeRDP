@@ -39,8 +39,16 @@ void SdlConnectionDialogWrapper::create(rdpContext* context)
 	const auto enabled =
 	    freerdp_settings_get_bool(context->settings, FreeRDP_UseCommonStdioCallbacks);
 	_connection_dialog.reset();
+#if defined(__EMSCRIPTEN__)
+	/* Every SDL window of an Emscripten build draws on the page's one canvas, so a dialog
+	 * window would take over the session's canvas. SDL 3.2 also throws from creating a
+	 * window while another one is open (FS.mkdir of its drop directory; SDL 3.4 catches
+	 * it), which unwinds the main thread while it holds _mux. The messages go to the log. */
+	WINPR_UNUSED(enabled);
+#else
 	if (!enabled)
 		_connection_dialog = std::make_unique<SDLConnectionDialog>(context);
+#endif
 }
 
 void SdlConnectionDialogWrapper::destroy()
