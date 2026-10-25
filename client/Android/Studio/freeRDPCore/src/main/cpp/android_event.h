@@ -13,6 +13,7 @@
 #define FREERDP_CLIENT_ANDROID_EVENT_H
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <winpr/synch.h>
 
 #define EVENT_TYPE_KEY 1
 #define EVENT_TYPE_CURSOR 2
@@ -50,9 +51,10 @@ typedef struct
 
 typedef struct
 {
-	int size;
-	int count;
+	size_t size;
+	size_t count;
 	HANDLE isSet;
+	CRITICAL_SECTION lock;
 	ANDROID_EVENT** events;
 } ANDROID_EVENT_QUEUE;
 

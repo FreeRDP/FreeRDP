@@ -24,46 +24,56 @@
 
 BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event)
 {
-	androidContext* aCtx = (androidContext*)inst->context;
+	if (!inst || !inst->context || !event)
+		return FALSE;
 
-	if (aCtx->event_queue->count >= aCtx->event_queue->size)
+	androidContext* aCtx = (androidContext*)inst->context;
+	ANDROID_EVENT_QUEUE* queue = aCtx->event_queue;
+	if (!queue)
+		return FALSE;
+
+	EnterCriticalSection(&queue->lock);
+
+	if (queue->count >= queue->size)
 	{
-		size_t new_size = aCtx->event_queue->size;
+		size_t new_size = queue->size;
 		do
 		{
 			if (new_size >= SIZE_MAX - 128ull)
+			{
+				LeaveCriticalSection(&queue->lock);
 				return FALSE;
+			}
 
 			new_size += 128ull;
-		} while (new_size <= aCtx->event_queue->count);
-		void* new_events =
-		    realloc((void*)aCtx->event_queue->events, sizeof(ANDROID_EVENT*) * new_size);
+		} while (new_size <= queue->count);
+		void* new_events = realloc((void*)queue->events, sizeof(ANDROID_EVENT*) * new_size);
 
 		if (!new_events)
+		{
+			LeaveCriticalSection(&queue->lock);
 			return FALSE;
+		}
 
-		aCtx->event_queue->events = new_events;
-		aCtx->event_queue->size = new_size;
+		queue->events = (ANDROID_EVENT**)new_events;
+		queue->size = new_size;
 	}
 
-	aCtx->event_queue->events[(aCtx->event_queue->count)++] = event;
-	return SetEvent(aCtx->event_queue->isSet);
+	queue->events[queue->count++] = event;
+	LeaveCriticalSection(&queue->lock);
+
+	/* the queue owns the event now, the caller must not free it */
+	if (!SetEvent(queue->isSet))
+		WLog_WARN(TAG, "SetEvent failed");
+	return TRUE;
 }
 
-static ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE* queue)
-{
-	ANDROID_EVENT* event;
-
-	if (queue->count < 1)
-		return nullptr;
-
-	event = queue->events[0];
-	return event;
-}
-
+WINPR_ATTR_NODISCARD
 static ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE* queue)
 {
-	ANDROID_EVENT* event;
+	ANDROID_EVENT* event = nullptr;
+
+	WINPR_ASSERT(queue);
 
 	if (queue->count < 1)
 		return nullptr;
@@ -79,6 +89,7 @@ static ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE* queue)
 	return event;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 {
 	rdpContext* context;
@@ -89,13 +100,17 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 	context = inst->context;
 	WINPR_ASSERT(context);
 
-	while (android_peek_event(queue))
+	for (;;)
 	{
 		BOOL rc = FALSE;
 		androidContext* afc = (androidContext*)context;
-		ANDROID_EVENT* event = android_pop_event(queue);
 
-		WINPR_ASSERT(event);
+		EnterCriticalSection(&queue->lock);
+		ANDROID_EVENT* event = android_pop_event(queue);
+		LeaveCriticalSection(&queue->lock);
+
+		if (!event)
+			break;
 
 		switch (event->type)
 		{
@@ -344,7 +359,18 @@ BOOL android_event_queue_init(freerdp* inst)
 	if (!queue->events)
 	{
 		WLog_ERR(TAG, "android_event_queue_init: memory allocation failed");
-		(void)CloseHandle(queue->isSet);
+		if (!CloseHandle(queue->isSet))
+			WLog_WARN(TAG, "CloseHandle failed");
+		free(queue);
+		return FALSE;
+	}
+
+	if (!InitializeCriticalSectionAndSpinCount(&queue->lock, 4000))
+	{
+		WLog_ERR(TAG, "android_event_queue_init: failed to initialize lock");
+		free((void*)queue->events);
+		if (!CloseHandle(queue->isSet))
+			WLog_WARN(TAG, "CloseHandle failed");
 		free(queue);
 		return FALSE;
 	}
@@ -366,20 +392,26 @@ void android_event_queue_uninit(freerdp* inst)
 
 	if (queue)
 	{
+		aCtx->event_queue = nullptr;
+
 		if (queue->isSet)
 		{
-			(void)CloseHandle(queue->isSet);
+			if (!CloseHandle(queue->isSet))
+				WLog_WARN(TAG, "CloseHandle failed");
 			queue->isSet = nullptr;
 		}
 
 		if (queue->events)
 		{
-			free(queue->events);
+			for (size_t i = 0; i < queue->count; i++)
+				android_event_free(queue->events[i]);
+			free((void*)queue->events);
 			queue->events = nullptr;
 			queue->size = 0;
 			queue->count = 0;
 		}
 
+		DeleteCriticalSection(&queue->lock);
 		free(queue);
 	}
 }
