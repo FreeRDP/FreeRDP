@@ -15,12 +15,40 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/input.h>
 #include <freerdp/log.h>
 
 #define TAG CLIENT_TAG("android")
 
 #include "android_freerdp.h"
 #include "android_cliprdr.h"
+
+/* Merges a pure move into a pure move still waiting at the tail of the queue */
+WINPR_ATTR_NODISCARD
+static BOOL android_coalesce_cursor_move(ANDROID_EVENT_QUEUE* queue, const ANDROID_EVENT* event)
+{
+	WINPR_ASSERT(queue);
+	WINPR_ASSERT(event);
+
+	if ((queue->count < 1) || (event->type != EVENT_TYPE_CURSOR))
+		return FALSE;
+
+	const ANDROID_EVENT_CURSOR* cursor = (const ANDROID_EVENT_CURSOR*)event;
+	if (cursor->flags != PTR_FLAGS_MOVE)
+		return FALSE;
+
+	ANDROID_EVENT* last = queue->events[queue->count - 1];
+	if (!last || (last->type != EVENT_TYPE_CURSOR))
+		return FALSE;
+
+	ANDROID_EVENT_CURSOR* lastCursor = (ANDROID_EVENT_CURSOR*)last;
+	if (lastCursor->flags != PTR_FLAGS_MOVE)
+		return FALSE;
+
+	lastCursor->x = cursor->x;
+	lastCursor->y = cursor->y;
+	return TRUE;
+}
 
 BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event)
 {
@@ -33,6 +61,14 @@ BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event)
 		return FALSE;
 
 	EnterCriticalSection(&queue->lock);
+
+	if (android_coalesce_cursor_move(queue, event))
+	{
+		/* the queued move is still pending, no need to signal */
+		LeaveCriticalSection(&queue->lock);
+		android_event_free(event);
+		return TRUE;
+	}
 
 	if (queue->count >= queue->size)
 	{
