@@ -1199,10 +1199,26 @@ bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
 	return true;
 }
 
+static bool onWindowEdge(SDL_WindowID id, float x, float y)
+{
+	int w = 0;
+	int h = 0;
+	auto* window = SDL_GetWindowFromID(id);
+	if (!window || !SDL_GetWindowSize(window, &w, &h))
+		return false;
+	return (x <= 0.0f) || (y <= 0.0f) || (x >= static_cast<float>(w - 1)) ||
+	       (y >= static_cast<float>(h - 1));
+}
+
 bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
 	SDL_Event copy{};
 	copy.motion = ev;
+	/* SDL follows a release outside the window with a motion clamped to its edge: drop it. */
+	if (_rail.enabled() && (ev.state == 0) && (ev.windowID == _lastRelease.window) &&
+	    (ev.timestamp - _lastRelease.time < SDL_MS_TO_NS(2)) &&
+	    onWindowEdge(ev.windowID, ev.x, ev.y))
+		return true;
 	/* WM owns the drag (#12447); backstop: button released but button-up swallowed by grab. */
 	if (_rail.enabled() && _rail.suppressServerMotion(ev.windowID))
 	{
@@ -1212,6 +1228,7 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 	}
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
 	{
+		_lastMotion = { ev.windowID, { ev.x, ev.y }, { copy.motion.x, copy.motion.y } };
 		_rail.noteServerPointer(copy.motion.x, copy.motion.y);
 		return SdlTouch::handleEvent(this, copy.motion);
 	}
@@ -1427,8 +1444,19 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 			_rail.ensureActive(ev.windowID);
 		if (suppress)
 			return true;
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
+		{
+			_lastRelease = { ev.windowID, ev.timestamp };
+		}
 		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
 		{
+			/* The window may have moved since the last motion: keep the server's position. */
+			if ((ev.windowID == _lastMotion.window) && (ev.x == _lastMotion.local.x) &&
+			    (ev.y == _lastMotion.local.y))
+			{
+				copy.button.x = _lastMotion.server.x;
+				copy.button.y = _lastMotion.server.y;
+			}
 			/* Record the forwarded left press: it is the anchor of any server modal move/size
 			 * loop this press starts (the loop moves the window by release - anchor). */
 			if ((ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) && (ev.button == SDL_BUTTON_LEFT))
