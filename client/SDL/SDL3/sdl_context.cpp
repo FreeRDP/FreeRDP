@@ -1315,6 +1315,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					_rail.handleDisplayChanged(ev.windowID, static_cast<SDL_DisplayID>(ev.data1));
 					return true;
 				case SDL_EVENT_WINDOW_MOVED:
+					_rail.notePopupMoved(ev.windowID);
 					if (!_rail.dragActive(ev.windowID))
 						_rail.syncGeometry(ev.windowID);
 					return true;

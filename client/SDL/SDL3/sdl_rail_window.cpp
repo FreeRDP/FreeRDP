@@ -48,6 +48,12 @@ static void armDeadline(uint64_t& until, uint64_t ms)
 		WLog_WARN(TAG, "SDL_AddTimer failed: %s", SDL_GetError());
 }
 
+/* A Wayland popup moved again within this time is still being dragged by its app. */
+static constexpr uint64_t kMoveActiveMs = 250;
+
+/* Longest a Wayland popup frame waits for the configure of its move. */
+static constexpr uint64_t kPlaceWaitMs = 50;
+
 /* Check for real per-pixel alpha in region. */
 static bool regionHasAlpha(const uint8_t* base, uint32_t stride, const SDL_Rect& r)
 {
@@ -512,6 +518,87 @@ SDL_Point SdlRailWindow::blitOffset() const
 		     -std::clamp(content.y, 0, static_cast<int>(_gfxH)) };
 }
 
+/* Shows a held popup frame whose configure never came. */
+static Uint32 placeWaitTimer([[maybe_unused]] void* userdata, [[maybe_unused]] SDL_TimerID timerID,
+                             [[maybe_unused]] Uint32 interval)
+{
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(TAG, "could not wake the paint loop for a held popup");
+	return 0;
+}
+
+/* Wayland input is relative to where a popup is shown. mutter shows a move at our first commit
+ * after its configure, KWin also before it: hold frames until the configure. */
+void SdlRailWindow::notePlaced()
+{
+	std::unique_lock lock(_gfxLock);
+	placeRequested();
+}
+
+/* Caller holds _gfxLock. */
+void SdlRailWindow::placeRequested()
+{
+	_pendingRel = _requestedRel;
+	_placeInFlight = false;
+}
+
+/* Caller holds _gfxLock. True while a move waits for its configure. */
+bool SdlRailWindow::holdForPlacement()
+{
+	if (!_placeInFlight)
+		return false;
+	if (SDL_GetTicks() - _requestedAt < kPlaceWaitMs)
+		return true;
+	placeRequested(); /* no configure came */
+	return false;
+}
+
+/* Caller holds _gfxLock. */
+void SdlRailWindow::placePopup(const SDL_Rect& vis, const SDL_Rect& parentRect)
+{
+	const SDL_Point rel = { vis.x - parentRect.x, vis.y - parentRect.y };
+	const bool wayland = !railPlatformCaps().supportsWindowPositions;
+	const bool moved = (rel.x != _requestedRel.x) || (rel.y != _requestedRel.y);
+	if (wayland)
+	{
+		_requestedRel = rel;
+		_requestedAt = SDL_GetTicks();
+	}
+	if (!SDL_SetWindowPosition(_win->window(), rel.x, rel.y))
+	{
+		WLog_VRB(TAG, "popup reposition unsupported id=0x%08" PRIx32 ": %s",
+		         static_cast<uint32_t>(_id), SDL_GetError());
+		return;
+	}
+	if (!wayland)
+		return;
+	_needsFullBlit = true; /* Wayland applies move on next surface commit */
+	if (!moved || !_mapped)
+		return;
+	_placeInFlight = true;
+	if (SDL_AddTimer(static_cast<Uint32>(kPlaceWaitMs + 1), placeWaitTimer, nullptr) == 0)
+		WLog_WARN(TAG, "popup placement timer failed: %s", SDL_GetError());
+}
+
+/* Caller holds _gfxLock. Called after a present. */
+void SdlRailWindow::commitPlacement()
+{
+	if (!_pendingRel)
+		return;
+	_placedRel = _pendingRel;
+	_pendingRel.reset();
+}
+
+bool SdlRailWindow::placedRel(SDL_Point& rel) const
+{
+	std::unique_lock lock(_gfxLock);
+	/* Only while moving: a resting popup may sit elsewhere (off screen), map it as on X11. */
+	if (!_placedRel || (SDL_GetTicks() - _requestedAt >= kMoveActiveMs))
+		return false;
+	rel = *_placedRel;
+	return true;
+}
+
 SDL_Point SdlRailWindow::serverOrigin() const
 {
 	std::unique_lock lock(_gfxLock);
@@ -581,6 +668,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	{
 		/* SDL popups position parent-relative (works on Wayland too, via xdg_popup). */
 		const SDL_Rect rel = { vis.x - parentRect.x, vis.y - parentRect.y, vis.w, vis.h };
+		_requestedRel = { rel.x, rel.y };
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::createPopup(parent, rel, caps.supportsTransparentWindows, _overlay));
 	}
@@ -779,11 +867,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		/* Apply position and size if changed. */
 		if (_isPopup && parent)
 		{
-			if (!SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y))
-				WLog_VRB(TAG, "popup reposition unsupported id=0x%08" PRIx32 ": %s",
-				         static_cast<uint32_t>(_id), SDL_GetError());
-			else if (!railPlatformCaps().supportsWindowPositions)
-				_needsFullBlit = true; /* Wayland applies move on next surface commit */
+			placePopup(vis, parentRect);
 			applied = true;
 		}
 		else if (railPlatformCaps().supportsWindowPositions &&
@@ -1095,9 +1179,7 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		{
 			std::unique_lock lock(_gfxLock);
 			const SDL_Rect vis = targetOuterRect();
-			SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y);
-			if (!railPlatformCaps().supportsWindowPositions)
-				_needsFullBlit = true; /* Wayland applies move on next surface commit */
+			placePopup(vis, parentRect);
 		}
 		if ((!_isPopup && !_layered) || _fullscreen)
 			_win->raise(); /* Bring app and fullscreen windows to front. */
@@ -1108,6 +1190,8 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 /* Caller holds _gfxLock. Blits the window-mapped GFX surface via the shared SdlWindow path. */
 bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 {
+	if (holdForPlacement())
+		return true;
 	/* Blit using applied insets to preserve resize borders. */
 	const SDL_Rect bi = _appliedInsets;
 	int ww = 0;
@@ -1159,7 +1243,8 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 	const bool winResized = (ww != _lastWinW) || (wh != _lastWinH);
 	const bool gfxResized = (gw != _lastGfxW) || (gh != _lastGfxH);
 	const bool serverResize =
-	    !_localMoveActive && !awaitingServerResize && (winResized || gfxResized || _needsFullBlit);
+	    !_localMoveActive && !awaitingServerResize &&
+	    (winResized || gfxResized || _needsFullBlit || _pendingRel.has_value());
 
 	/* Skip undamaged frames. */
 	if (!localResize && !serverResize && _gfxDamage.empty() && !(_layered && _visDirty))
@@ -1299,6 +1384,7 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 
 		_win->updateSurface();
 		_gfxPresented = true; /* First frame rendered; paint() may map the window. */
+		commitPlacement();
 	}
 	SDL_DestroySurface(s);
 	WLog_VRB(TAG, "paintGfx id=0x%08" PRIx32 " mode=%s win=%dx%d dmg=%zu",
@@ -1326,11 +1412,12 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 	{
 		std::unique_lock lock(_gfxLock);
 		/* Layered decorations have no meaningful content in the shared primary. */
-		if (!primary || _layered || (_windowRect.w <= 0) || (_windowRect.h <= 0))
+		if (!primary || _layered || (_windowRect.w <= 0) || (_windowRect.h <= 0) ||
+		    holdForPlacement())
 			return true;
 
 		/* Damage-driven: re-copy only server-updated regions, keep the last frame elsewhere. */
-		full = !_painted;
+		full = !_painted || _pendingRel.has_value();
 		if (!full && damage.empty())
 		{
 			WLog_VRB(TAG, "paintLegacy skip id=0x%08" PRIx32 " no-damage",
@@ -1381,6 +1468,10 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 			_painted = true;
 		}
 		_win->updateSurface();
+		{
+			std::unique_lock lock(_gfxLock);
+			commitPlacement();
+		}
 		WLog_VRB(TAG, "paintLegacy id=0x%08" PRIx32 " full=%d visRects=%zu",
 		         static_cast<uint32_t>(_id), full ? 1 : 0, vis.size());
 		/* Defer mapping until GFX frame arrives to avoid desktop flash. */

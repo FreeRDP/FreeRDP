@@ -95,6 +95,7 @@ class SdlRail
 	void ensureActive(SDL_WindowID id);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
 	bool translateToServer(SDL_WindowID id, float& x, float& y);
+	void notePopupMoved(SDL_WindowID id);
 	/* Record position of last left button-down. */
 	void noteLeftPress(float x, float y)
 	{

@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -137,6 +138,11 @@ class SdlRailWindow
 	[[nodiscard]] SDL_Rect outerRect() const;
 	/* Server coordinate for window-local (0,0), aligned with blit anchor. */
 	[[nodiscard]] SDL_Point serverOrigin() const;
+	/* Wayland popup placement, see notePlaced(). */
+	void notePlaced();
+	[[nodiscard]] bool placedRel(SDL_Point& rel) const;
+	void placePopup(const SDL_Rect& vis, const SDL_Rect& parentRect);
+	void commitPlacement();
 	/* Inverse of outerRect(): strip insets() off a local outer rect to recover the server rect. */
 	[[nodiscard]] SDL_Rect serverRect(const SDL_Rect& outer) const;
 	void setLocalShift(const SDL_Point& shift);
@@ -251,6 +257,8 @@ class SdlRailWindow
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
 	bool paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage);
+	void placeRequested();
+	[[nodiscard]] bool holdForPlacement();
 
 	uint64_t _id;
 	std::unique_ptr<SdlWindow> _win; /* local window+renderer (lazy, main thread) */
@@ -341,4 +349,9 @@ class SdlRailWindow
 	int _lastGfxW = 0;
 	int _lastGfxH = 0;
 	bool _needsFullBlit = true;
+	SDL_Point _requestedRel = { 0, 0 };
+	Uint64 _requestedAt = 0;
+	std::optional<SDL_Point> _pendingRel; /* configured, shown with our next commit */
+	std::optional<SDL_Point> _placedRel;  /* committed, input is mapped with it */
+	bool _placeInFlight = false;
 };
