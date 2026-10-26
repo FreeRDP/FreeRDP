@@ -134,7 +134,17 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 		if (!sdlDisp->setWindowResizeable())
 			return;
 
-		if (e->firstActivation)
+		/* The connect only carries a single monitor, so a canvas the page splits into several
+		 * (sdl_monitors_emscripten.js) needs a layout at once: its size may never change. Ask
+		 * the page again, a reconnect starts from the settings of the command line. */
+#if defined(__EMSCRIPTEN__)
+		if (!sdl->updateWindowList())
+			return;
+		const bool split = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 1;
+#else
+		const bool split = false;
+#endif
+		if (e->firstActivation && !split)
 			return;
 	}
 
