@@ -679,11 +679,31 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
+	/* Grow geometrically, up to the announced total. Growing by one chunk at a time (what
+	 * Stream_EnsureRemainingCapacity does) copies the whole message again for every chunk, which
+	 * is quadratic in the message size. The capacity never exceeds twice what has arrived, so a
+	 * peer cannot make it allocate the announced total before sending the data. */
+	if (dataLength > SIZE_MAX - Stream_GetPosition(data_in))
 	{
 		Stream_Free(internals->data_in, TRUE);
 		internals->data_in = nullptr;
-		return CHANNEL_RC_NO_MEMORY;
+		return ERROR_INVALID_DATA;
+	}
+	const size_t need = Stream_GetPosition(data_in) + dataLength;
+	if (need > Stream_Capacity(data_in))
+	{
+		size_t capacity = Stream_Capacity(data_in);
+		capacity = (capacity > SIZE_MAX / 2) ? need : capacity * 2;
+		if (capacity > totalLength)
+			capacity = totalLength;
+		if (capacity < need)
+			capacity = need;
+		if (!Stream_EnsureCapacity(data_in, capacity))
+		{
+			Stream_Free(internals->data_in, TRUE);
+			internals->data_in = nullptr;
+			return CHANNEL_RC_NO_MEMORY;
+		}
 	}
 
 	Stream_Write(data_in, pData, dataLength);
