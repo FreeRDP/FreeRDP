@@ -1077,18 +1077,27 @@ static void png_write_data(png_structp png_ptr, png_bytep data, png_size_t lengt
 	    (struct png_mem_encode*)png_get_io_ptr(png_ptr); /* was png_ptr->io_ptr */
 	size_t nsize = p->size + length;
 
+	/* A wrapped size or a failed (re)allocation must abort the write:
+	 * growing on would memcpy past the end of the undersized buffer
+	 * (CVE-2026-109256). png_error longjmps to save_png_to_buffer,
+	 * which frees the old buffer. */
+	if (nsize < p->size)
+		png_error(png_ptr, "Write Error");
+
 	/* allocate or grow buffer */
 	if (p->buffer)
 	{
 		char* tmp = realloc(p->buffer, nsize);
-		if (tmp)
-			p->buffer = tmp;
+		if (!tmp)
+			png_error(png_ptr, "Write Error");
+		p->buffer = tmp;
 	}
 	else
+	{
 		p->buffer = malloc(nsize);
-
-	if (!p->buffer)
-		png_error(png_ptr, "Write Error");
+		if (!p->buffer)
+			png_error(png_ptr, "Write Error");
+	}
 
 	/* copy new bytes to end of buffer */
 	memcpy(p->buffer + p->size, data, length);
