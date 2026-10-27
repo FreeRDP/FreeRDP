@@ -122,6 +122,7 @@ class SdlRail
 	void completeWaylandResize(bool definitive = false);
 	/* Wayland: the compositor runs the interactive resize (mouse leave or configure). */
 	void noteResizeGrab(SDL_WindowID id);
+	void settleWaylandResize();
 
   private:
 	/* _windows helpers: callers must hold _windowsLock. */
@@ -223,6 +224,7 @@ class SdlRail
 		/* Wayland: a WINDOW_RESIZED arrived since the grab started, so the op really resized
 		 * (guards against a bare pointer re-enter finalizing a no-op click). Main thread. */
 		bool sawResize = false;
+		Uint64 lastResize = 0; /* time of the last size step */
 		/* Server END order arrived while the drag was still pending (app closed its loop early):
 		 * the completion must not send the synthetic button-up. Guarded by _windowsLock. */
 		bool serverEnded = false;

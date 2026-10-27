@@ -1218,6 +1218,29 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 	reportAndAdopt(w, lx, ly, lw, lh);
 }
 
+/* A release outside our windows brings no enter: finish once the size settles. */
+static constexpr Uint32 kResizeSettleMs = 500;
+
+static Uint32 resizeSettleTimer(void* userdata, [[maybe_unused]] SDL_TimerID timerID,
+                                [[maybe_unused]] Uint32 interval)
+{
+	if (!SDL_RunOnMainThread([](void* rail) { static_cast<SdlRail*>(rail)->settleWaylandResize(); },
+	                         userdata, false))
+		WLog_WARN(TAG, "could not queue the resize settle check: %s", SDL_GetError());
+	return 0;
+}
+
+void SdlRail::settleWaylandResize()
+{
+	{
+		std::unique_lock lock(_windowsLock);
+		if ((_localMove.id == 0) || !_localMove.wayland || !_localMove.sawResize ||
+		    (SDL_GetTicks() - _localMove.lastResize < kResizeSettleMs))
+			return;
+	}
+	completeWaylandResize();
+}
+
 void SdlRail::noteResizeGrab(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
@@ -1225,9 +1248,13 @@ void SdlRail::noteResizeGrab(SDL_WindowID id)
 		return;
 	auto* appWindow = getWindowBySdlId(id);
 	/* Mouse leave or a configure during the drag: the compositor resize is under way. */
-	if (appWindow && (static_cast<uint32_t>(appWindow->id()) == _localMove.id) &&
-	    _localMove.wayland)
-		_localMove.sawResize = true;
+	if (!appWindow || (static_cast<uint32_t>(appWindow->id()) != _localMove.id) ||
+	    !_localMove.wayland)
+		return;
+	_localMove.sawResize = true;
+	_localMove.lastResize = SDL_GetTicks();
+	if (SDL_AddTimer(kResizeSettleMs, resizeSettleTimer, this) == 0)
+		WLog_WARN(TAG, "resize settle timer failed: %s", SDL_GetError());
 }
 
 void SdlRail::completeWaylandResize(bool definitive)
