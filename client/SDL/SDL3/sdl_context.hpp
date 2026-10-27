@@ -120,6 +120,7 @@ class SdlContext
 
 	[[nodiscard]] const SdlWindow* getWindowForId(SDL_WindowID id) const;
 	[[nodiscard]] SdlWindow* getWindowForId(SDL_WindowID id);
+	[[nodiscard]] bool allWindowsHidden() const;
 	[[nodiscard]] SdlWindow* getFirstWindow();
 
 	[[nodiscard]] bool addDisplayWindow(SDL_DisplayID id);

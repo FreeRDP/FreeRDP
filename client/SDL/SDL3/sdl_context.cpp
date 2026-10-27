@@ -1083,6 +1083,16 @@ SdlWindow* SdlContext::getWindowForId(SDL_WindowID id)
 	return &it->second;
 }
 
+bool SdlContext::allWindowsHidden() const
+{
+	return std::all_of(_windows.begin(), _windows.end(),
+	                   [](const auto& entry)
+	                   {
+		                   const auto flags = SDL_GetWindowFlags(entry.second.window());
+		                   return (flags & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) != 0;
+	                   });
+}
+
 SdlWindow* SdlContext::getFirstWindow()
 {
 	if (_windows.empty())
