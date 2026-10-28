@@ -224,6 +224,19 @@ class SdlContext
 	bool _resizeable = false;
 	bool _grabMouse = false;
 	bool _grabKeyboard = false;
+
+	/* RemoteApp pointer state */
+	struct
+	{
+		SDL_WindowID window = 0;
+		SDL_FPoint local = {};
+		SDL_FPoint server = {};
+	} _lastMotion; /* last motion forwarded to the server */
+	struct
+	{
+		SDL_WindowID window = 0;
+		Uint64 time = 0;
+	} _lastRelease;
 	int _exitCode = -1;
 	std::atomic<bool> _rdpThreadRunning = false;
 	SDL_PixelFormat _sdlPixelFormat = SDL_PIXELFORMAT_UNKNOWN;

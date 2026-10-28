@@ -389,11 +389,37 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
 	/* Window-local to server-absolute, aligned with surface blit anchor. */
-	const SDL_Point origin = appWindow->serverOrigin();
+	SDL_Point origin = appWindow->serverOrigin();
+	SDL_Point rel{};
+	if (appWindow->isPopup() && !railPlatformCaps().supportsWindowPositions &&
+	    appWindow->placedRel(rel))
+	{
+		auto* sdlParent = SDL_GetWindowParent(appWindow->window());
+		if (auto* parent = sdlParent ? getWindowBySdlId(SDL_GetWindowID(sdlParent)) : nullptr)
+		{
+			const SDL_Rect pr = parent->outerRect();
+			origin = { pr.x + rel.x, pr.y + rel.y };
+		}
+	}
 	/* Input is relative to the top left of the remote desktop, not to the primary monitor. */
 	x = rpos.x + static_cast<float>(origin.x - _inputOrigin.x);
 	y = rpos.y + static_cast<float>(origin.y - _inputOrigin.y);
 	return true;
+}
+
+void SdlRail::notePopupMoved(SDL_WindowID id)
+{
+	/* X11 input already matches the server rect; only Wayland lags behind it. */
+	if (railPlatformCaps().supportsWindowPositions)
+		return;
+	std::unique_lock lock(_windowsLock);
+	auto* w = getWindowBySdlId(id);
+	if (!w || !w->isPopup())
+		return;
+	w->notePlaced();
+	/* Show the held frame now: that commit applies the move. */
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(TAG, "could not wake the paint loop for a moved popup");
 }
 
 SdlRailWindow* SdlRail::addWindow(uint64_t id, const SDL_Rect& rect)

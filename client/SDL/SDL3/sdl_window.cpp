@@ -750,6 +750,10 @@ SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent,
 	                               : SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN,
 	                       true);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, false);
+#if defined(SDL_PROP_WINDOW_CREATE_CONSTRAIN_POPUP_BOOLEAN)
+	/* The server places RemoteApp popups; a moved one would map clicks to other points. */
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_CONSTRAIN_POPUP_BOOLEAN, false);
+#endif
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
 	/* Transparent so menus' genuine per-pixel alpha (corners/shadow) isn't rendered black. */
 	if (transparent)
