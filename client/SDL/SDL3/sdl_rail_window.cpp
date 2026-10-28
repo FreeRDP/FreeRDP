@@ -822,7 +822,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * Defer size hints and programmatic resize during active WM move/resize grab. */
 	if ((_minMaxDirty || _geometryDirty) && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = addInsets(_windowRect, band);
+		const SDL_Rect vis = targetOuterRect();
 		const int bandW = band.x + band.w;
 		const int bandH = band.y + band.h;
 		/* Convert server track size hints (which include server margins) to outer window bounds. */
@@ -856,7 +856,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Skip geometry apply when maximized, minimized or WM-dragged. */
 	if (_geometryDirty && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = addInsets(_windowRect, band);
+		const SDL_Rect vis = targetOuterRect();
 		/* Record applied insets so server coordinate mapping strips the exact offset. */
 		setAppliedInsets(band);
 		int cw = 0;
