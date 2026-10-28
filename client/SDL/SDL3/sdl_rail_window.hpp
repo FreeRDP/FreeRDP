@@ -118,6 +118,7 @@ class SdlRailWindow
 	/* Raw server frame margins. */
 	void setFrameMargins(const SDL_Rect& m);
 	[[nodiscard]] SDL_Rect frameMargins() const;
+	[[nodiscard]] bool takeUnconfirmedReport(SDL_Rect& rect);
 
 	/* Owning window id (WINDOW_ORDER_FIELD_OWNER); popups position relative to it. */
 	void setOwner(uint64_t ownerId);
@@ -314,6 +315,7 @@ class SdlRailWindow
 	} _loopEnd;
 	bool _geomApplyPending = false; /* a client-issued geometry/state apply is still settling */
 	std::vector<SDL_Rect> _reported; /* rects sent to the server and not echoed yet */
+	uint64_t _reportCheckAt = 0;     /* when to resend */
 	bool _wmRefused = false;        /* WM refused resize; adopt its geometry (takeWmOverride) */
 	SDL_Rect _wmRefusedOuter = { 0, 0, 0, 0 };
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */

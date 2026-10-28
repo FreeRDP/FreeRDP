@@ -41,6 +41,9 @@ static constexpr uint64_t kAwaitRestoreRectMs = 500;
 /* Reports kept to recognize late echoes. */
 static constexpr size_t kMaxReported = 16;
 
+/* Unanswered reports are sent again after this. */
+static constexpr uint64_t kReportConfirmMs = 1000;
+
 static void armDeadline(uint64_t& until, uint64_t ms)
 {
 	until = SDL_GetTicks() + ms;
@@ -209,6 +212,7 @@ void SdlRailWindow::adoptLocalGeometry(const SDL_Rect& rect)
 		if (_reported.size() >= kMaxReported)
 			_reported.erase(_reported.begin());
 		_reported.push_back(rect);
+		armDeadline(_reportCheckAt, kReportConfirmMs);
 	}
 	_windowRect = rect;
 	_geometryDirty = false;
@@ -359,6 +363,19 @@ SDL_Rect SdlRailWindow::frameMargins() const
 {
 	std::unique_lock lock(_gfxLock);
 	return _frameMargins;
+}
+
+bool SdlRailWindow::takeUnconfirmedReport(SDL_Rect& rect)
+{
+	std::unique_lock lock(_gfxLock);
+	if ((_reportCheckAt == 0) || (SDL_GetTicks() < _reportCheckAt))
+		return false;
+	_reportCheckAt = 0;
+	if (_reported.empty())
+		return false;
+	rect = _reported.back();
+	_reported.clear();
+	return true;
 }
 
 void SdlRailWindow::setOwner(uint64_t ownerId)

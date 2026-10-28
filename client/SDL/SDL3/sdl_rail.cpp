@@ -585,6 +585,15 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 				sendClientWindowMove(&win, rect);
 			win.adoptLocalGeometry(rect);
 		}
+		/* Resend a size the server left unanswered. */
+		SDL_Rect unconfirmed{};
+		if (win.takeUnconfirmedReport(unconfirmed) && !win.railMinimized() &&
+		    !win.effectivelyMaximized())
+		{
+			WLog_DBG(TAG, "size resent id=0x%08" PRIx32 " %dx%d (not confirmed)",
+			         static_cast<uint32_t>(win.id()), unconfirmed.w, unconfirmed.h);
+			sendClientWindowMove(&win, unconfirmed);
+		}
 	}
 
 	/* Request full repaint after first window is realized (fixes reconnect blank windows). */
