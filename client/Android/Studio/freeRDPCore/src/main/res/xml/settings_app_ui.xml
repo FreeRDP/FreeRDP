@@ -17,6 +17,7 @@
         android:key="@string/preference_key_ui_swap_mouse_buttons"
         android:title="@string/settings_ui_swap_mouse_buttons" />
     <CheckBoxPreference
+        android:defaultValue="true"
         android:key="@string/preference_key_ui_invert_scrolling"
         android:title="@string/settings_ui_invert_scrolling" />
     <CheckBoxPreference
