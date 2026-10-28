@@ -762,6 +762,9 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 				if (*pad == 8)
 					*pad = 0;
 
+				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, length + *pad))
+					return FALSE;
+
 				if (*pad)
 					memset(data + length, 0, *pad);
 
