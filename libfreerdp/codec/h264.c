@@ -810,6 +810,22 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 	if (!h264)
 		return FALSE;
 
+	if (width > UINT16_MAX)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "h264::width %" PRIu32 " > %d, aborting", width,
+		           UINT16_MAX);
+		return FALSE;
+	}
+	if (height > UINT16_MAX)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "h264::height %" PRIu32 " > %d, aborting", height,
+		           UINT16_MAX);
+		return FALSE;
+	}
+
+	if (!yuv_ensure_buffer(h264, 0, width, height))
+		return FALSE;
+
 	h264->width = width;
 	h264->height = height;
 
