@@ -393,7 +393,7 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 	StopEvent = subsystem->base.server->StopEvent;
 	nCount = 0;
 	events[nCount++] = StopEvent;
-	fps = 16;
+	fps = 120;
 	dwInterval = 1000 / fps;
 	frameTime = GetTickCount64() + dwInterval;
 

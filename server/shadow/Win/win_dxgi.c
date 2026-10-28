@@ -614,7 +614,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	UINT i = 0;
 	int status;
 	HRESULT hr = 0;
-	UINT timeout = 15;
+	UINT timeout = 1;
 	UINT DataBufferSize = 0;
 	BYTE* DataBuffer = nullptr;
 
