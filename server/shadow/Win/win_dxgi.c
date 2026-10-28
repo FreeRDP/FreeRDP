@@ -507,6 +507,19 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 	if ((width * height) < 1)
 		return 0;
 
+	{
+		/* The shadow surface may be a pixel larger than the desktop image
+		 * (exclusive vs inclusive rect edges); clamp the requested region to
+		 * the source texture, otherwise the out-of-bounds copy trips
+		 * DXGI_ERROR_DEVICE_REMOVED and capture silently dies. */
+		D3D11_TEXTURE2D_DESC srcDesc;
+		subsystem->dxgiDesktopImage->lpVtbl->GetDesc(subsystem->dxgiDesktopImage, &srcDesc);
+		if (x + width > (int)srcDesc.Width)
+			width = (int)srcDesc.Width - x;
+		if (y + height > (int)srcDesc.Height)
+			height = (int)srcDesc.Height - y;
+	}
+
 	Box.top = y;
 	Box.left = x;
 	Box.right = x + width;
