@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "sdl_context.hpp"
@@ -472,12 +473,68 @@ bool SdlContext::createWindows()
 	return true;
 }
 
+#if defined(__EMSCRIPTEN__)
+/* in sdl_monitors_emscripten.js */
+extern "C" int freerdp_web_monitors_js(int32_t* edges, int max);
+
+/* A browser has one canvas, so one window. The page may show it across several screens and
+ * split it into monitors (sdl_monitors_emscripten.js): the server then places its windows,
+ * panels and maximized windows on each, as on separate physical screens. canvas is the
+ * window's monitor; returns the monitors it is split into, or none. */
+static std::vector<rdpMonitor> sdl_web_monitors(const rdpMonitor& canvas)
+{
+	constexpr int max = 16;
+	std::array<int32_t, 5 * max> edges{};
+	const auto n = freerdp_web_monitors_js(edges.data(), max);
+	if ((n < 2) || (n > max))
+		return {};
+
+	const auto at = [](int32_t edge, int32_t size)
+	{ return static_cast<INT32>(static_cast<int64_t>(edge) * size / 10000); };
+	std::vector<rdpMonitor> list;
+	for (int i = 0; i < n; i++)
+	{
+		const int32_t* e = &edges.at(5 * static_cast<size_t>(i));
+		const auto left = at(e[0], canvas.width);
+		const auto top = at(e[1], canvas.height);
+		const auto right = at(e[2], canvas.width);
+		const auto bottom = at(e[3], canvas.height);
+		if ((right <= left) || (bottom <= top))
+			return {};
+
+		rdpMonitor m = canvas;
+		m.x = left;
+		m.y = top;
+		m.width = right - left;
+		m.height = bottom - top;
+		m.is_primary = (e[4] != 0);
+		m.attributes.physicalWidth =
+		    static_cast<UINT32>(static_cast<uint64_t>(canvas.attributes.physicalWidth) *
+		                        static_cast<UINT32>(m.width) / static_cast<UINT32>(canvas.width));
+		m.attributes.physicalHeight =
+		    static_cast<UINT32>(static_cast<uint64_t>(canvas.attributes.physicalHeight) *
+		                        static_cast<UINT32>(m.height) / static_cast<UINT32>(canvas.height));
+		list.push_back(m);
+	}
+	return list;
+}
+#endif
+
 bool SdlContext::updateWindowList()
 {
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
 		list.push_back(win.second.monitor(_windows.size() == 1));
+
+#if defined(__EMSCRIPTEN__)
+	if ((list.size() == 1) && (list.at(0).width > 0) && (list.at(0).height > 0))
+	{
+		auto split = sdl_web_monitors(list.at(0));
+		if (!split.empty())
+			list = std::move(split);
+	}
+#endif
 
 	// /monitors: subset may exclude the SDL primary. The library requires
 	// the array to mark one monitor as primary, so promote the first when

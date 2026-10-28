@@ -157,10 +157,12 @@ endif()
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 if(EMSCRIPTEN)
-  # JavaScript side of the browser clipboard in sdl_clip.cpp
-  set(_js ${CMAKE_CURRENT_SOURCE_DIR}/sdl_clip_emscripten.js)
-  target_link_options(${MODULE_NAME} PRIVATE "--js-library=${_js}")
-  set_property(TARGET ${MODULE_NAME} APPEND PROPERTY LINK_DEPENDS ${_js})
+  # JavaScript side of the browser clipboard in sdl_clip.cpp and of the page's monitors in
+  # sdl_context.cpp
+  foreach(_js sdl_clip_emscripten.js sdl_monitors_emscripten.js)
+    target_link_options(${MODULE_NAME} PRIVATE "--js-library=${CMAKE_CURRENT_SOURCE_DIR}/${_js}")
+    set_property(TARGET ${MODULE_NAME} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_js})
+  endforeach()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")
