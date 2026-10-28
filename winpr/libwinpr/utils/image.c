@@ -1093,11 +1093,10 @@ static void png_write_data(png_structp png_ptr, png_bytep data, png_size_t lengt
 		p->buffer = tmp;
 	}
 	else
-	{
 		p->buffer = malloc(nsize);
-		if (!p->buffer)
-			png_error(png_ptr, "Write Error");
-	}
+
+	if (!p->buffer)
+		png_error(png_ptr, "Write Error");
 
 	/* copy new bytes to end of buffer */
 	memcpy(p->buffer + p->size, data, length);
