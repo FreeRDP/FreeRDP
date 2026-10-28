@@ -2362,6 +2362,14 @@ LONG smartcard_unpack_list_readers_call(wStream* s, ListReaders_Call* call, BOOL
 		           cBytes);
 		return SCARD_E_INVALID_PARAMETER;
 	}
+	if (unicode && ((cBytes % 2) != 0))
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "2.2.3.4 ListReaderGroupsW_Return and ListReadersW_Return cBytes (%" PRIu32
+		           ") not even",
+		           cBytes);
+		return SCARD_E_INVALID_PARAMETER;
+	}
 	if (!smartcard_ndr_pointer_read(log, s, &index, &mszGroupsNdrPtr))
 		return ERROR_INVALID_DATA;
 
