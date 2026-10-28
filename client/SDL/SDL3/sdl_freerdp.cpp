@@ -684,6 +684,10 @@ int main(int argc, char* argv[])
 	if (!SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1"))
 		return -1;
 #endif
+	/* /f enters fullscreen with SDL_SetWindowFullscreen, and SDL's "auto" then hides the macOS menu
+	 * bar for good: no menu, no title bar, no way out. Fails if the environment variable is set,
+	 * which then wins, so the result is ignored. */
+	std::ignore = SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, "1");
 
 	/* Basic SDL initialization */
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
