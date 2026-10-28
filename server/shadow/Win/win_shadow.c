@@ -314,9 +314,23 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	if (status <= 0)
 		return status;
 
+#if defined(WITH_WDS_API)
+	/* WDS: the GDI primary buffer spans the whole desktop */
+	const int srcX = x;
+	const int srcY = y;
+#elif defined(WITH_DXGI_1_2)
+	/* DXGI: fetch_frame_data() copies the region to the staging texture
+	 * origin, so the source offset is always the origin */
+	const int srcX = 0;
+	const int srcY = 0;
+#else
+	/* no capture backend compiled in: keep the previous behavior */
+	const int srcX = x;
+	const int srcY = y;
+#endif
 	if (!freerdp_image_copy_no_overlap(surface->data, surface->format, surface->scanline, x, y,
-	                                   width, height, pDstData, DstFormat, nDstStep, x, y, nullptr,
-	                                   FREERDP_FLIP_NONE))
+	                                   width, height, pDstData, DstFormat, nDstStep, srcX, srcY,
+	                                   nullptr, FREERDP_FLIP_NONE))
 		return ERROR_INTERNAL_ERROR;
 
 	ArrayList_Lock(server->clients);
