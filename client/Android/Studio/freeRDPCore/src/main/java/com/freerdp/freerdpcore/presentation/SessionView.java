@@ -314,6 +314,9 @@ public class SessionView extends View
 		if (event.isFromSource(InputDevice.SOURCE_MOUSE))
 		{
 			int action = event.getActionMasked();
+			// Some ROMs (e.g. HarmonyOS) deliver the wheel as a touch event.
+			if (action == MotionEvent.ACTION_SCROLL)
+				return onGenericMotionEvent(event);
 			if (event.getClassification() == MotionEvent.CLASSIFICATION_TWO_FINGER_SWIPE)
 			{
 				handleTouchpadScroll(event);
