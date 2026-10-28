@@ -723,6 +723,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	if (!ok)
 		return FALSE;
 
+	rdp->redirectionCount++;
 	status = rdp_client_connect(rdp);
 
 	if (status)
@@ -803,13 +804,14 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	if (!rdp_client_reconnect_via_broker(rdp, &viaBroker))
 		return FALSE;
 
+	const UINT32 redirectionCount = rdp->redirectionCount;
 	BOOL status = rdp_client_connect(rdp);
 
 	/* When the broker redirected us, rdp_client_redirect() already reloaded and reconnected the
 	 * channels (rdp_check_fds() runs it from inside rdp_client_connect()); doing it a second time
-	 * fails with CHANNEL_RC_ALREADY_OPEN and makes the whole attempt fail. */
-	const BOOL redirected =
-	    viaBroker && (freerdp_settings_get_uint32(rdp->settings, FreeRDP_RedirectionFlags) != 0);
+	 * fails with CHANNEL_RC_ALREADY_OPEN and makes the whole attempt fail. RedirectionFlags can't
+	 * tell: ARM sets them during the connect without any redirection. */
+	const BOOL redirected = rdp->redirectionCount != redirectionCount;
 	if (status && !redirected)
 		status = rdp_client_reconnect_channels(rdp, viaBroker);
 
