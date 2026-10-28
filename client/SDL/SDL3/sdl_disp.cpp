@@ -390,6 +390,9 @@ bool sdlDispContext::handleEvent(const SDL_WindowEvent& ev)
 	{
 		case SDL_EVENT_WINDOW_HIDDEN:
 		case SDL_EVENT_WINDOW_MINIMIZED:
+			/* Other monitors may still show the session. */
+			if (!_sdl->allWindowsHidden())
+				return true;
 			return _sdl->redraw(true);
 		case SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
 			return updateMonitor(ev.windowID);
