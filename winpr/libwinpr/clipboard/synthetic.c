@@ -187,6 +187,7 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
 		return nullptr;
 
 	*pDstData = 0x0409; /* English - United States */
+	*pSize = sizeof(UINT32);
 	return (void*)pDstData;
 }
 
