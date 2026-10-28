@@ -218,6 +218,34 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 		         bitmapData->height);
 		return FALSE;
 	}
+	if (bitmapData->destLeft > bitmapData->destRight)
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: left=%" PRIu16 " > right=%" PRIu16,
+		         bitmapData->destLeft, bitmapData->destRight);
+		return FALSE;
+	}
+	if (bitmapData->destTop > bitmapData->destBottom)
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: top=%" PRIu16 " > bottom=%" PRIu16, bitmapData->destTop,
+		         bitmapData->destBottom);
+		return FALSE;
+	}
+
+	const UINT32 w = bitmapData->destRight - bitmapData->destLeft;
+	if (w != bitmapData->width - 1)
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: width=%" PRIu32 " != right - left=%" PRIu32,
+		         bitmapData->width, w);
+		return FALSE;
+	}
+
+	const UINT32 h = bitmapData->destBottom - bitmapData->destTop;
+	if (h != bitmapData->height - 1)
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: height=%" PRIu32 " != bottom - top=%" PRIu32,
+		         bitmapData->height, h);
+		return FALSE;
+	}
 
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{

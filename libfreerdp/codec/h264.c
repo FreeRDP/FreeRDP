@@ -805,6 +805,28 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 	return FALSE;
 }
 
+static void h264_buffers_free(H264_CONTEXT* h264)
+{
+	WINPR_ASSERT(h264);
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (h264->Compressor)
+		{
+			winpr_aligned_free(h264->pYUVData[x]);
+			winpr_aligned_free(h264->pOldYUVData[x]);
+		}
+		winpr_aligned_free(h264->pYUV444Data[x]);
+		winpr_aligned_free(h264->pOldYUV444Data[x]);
+
+		h264->pYUVData[x] = nullptr;
+		h264->pOldYUVData[x] = nullptr;
+		h264->pYUV444Data[x] = nullptr;
+		h264->pOldYUV444Data[x] = nullptr;
+	}
+	winpr_aligned_free(h264->lumaData);
+	h264->lumaData = nullptr;
+}
+
 BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 {
 	if (!h264)
@@ -823,14 +845,13 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 		return FALSE;
 	}
 
-	if (!yuv_ensure_buffer(h264, 0, width, height))
-		return FALSE;
+	if (h264->subsystem && h264->subsystem->Uninit)
+		h264->subsystem->Uninit(h264);
 
+	h264_buffers_free(h264);
 	h264->width = width;
 	h264->height = height;
 
-	if (h264->subsystem && h264->subsystem->Uninit)
-		h264->subsystem->Uninit(h264);
 	if (!h264_context_init(h264))
 		return FALSE;
 
@@ -875,29 +896,19 @@ fail:
 
 void h264_context_free(H264_CONTEXT* h264)
 {
-	if (h264)
+	if (!h264)
+		return;
+
+	if (h264->subsystem)
 	{
-		if (h264->subsystem)
-		{
-			WINPR_ASSERT(h264->subsystem->Uninit);
-			h264->subsystem->Uninit(h264);
-		}
-
-		for (size_t x = 0; x < 3; x++)
-		{
-			if (h264->Compressor)
-			{
-				winpr_aligned_free(h264->pYUVData[x]);
-				winpr_aligned_free(h264->pOldYUVData[x]);
-			}
-			winpr_aligned_free(h264->pYUV444Data[x]);
-			winpr_aligned_free(h264->pOldYUV444Data[x]);
-		}
-		winpr_aligned_free(h264->lumaData);
-
-		yuv_context_free(h264->yuv);
-		free(h264);
+		WINPR_ASSERT(h264->subsystem->Uninit);
+		h264->subsystem->Uninit(h264);
 	}
+
+	h264_buffers_free(h264);
+
+	yuv_context_free(h264->yuv);
+	free(h264);
 }
 
 void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
