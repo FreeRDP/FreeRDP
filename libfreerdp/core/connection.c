@@ -517,6 +517,12 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 	context = rdp->context;
 
+	/* Leave the active state before the transport goes away: input functions are called from
+	 * other threads and only check the state, so they must stop before rdp_reset() frees the
+	 * transport and fastpath they use. */
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
+		return FALSE;
+
 	if (rdp->nego)
 	{
 		if (!nego_disconnect(rdp->nego))
@@ -527,9 +533,6 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 		return FALSE;
 
 	if (!rdp_reset(rdp))
-		return FALSE;
-
-	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
 	if (context->channels)
