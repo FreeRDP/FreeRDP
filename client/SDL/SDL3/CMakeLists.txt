@@ -47,6 +47,8 @@ set(SRCS
     sdl_clip.cpp
     sdl_context.hpp
     sdl_context.cpp
+    sdl_floatbar.hpp
+    sdl_floatbar.cpp
     sdl_rail.hpp
     sdl_rail.cpp
     sdl_rail_platform.hpp
