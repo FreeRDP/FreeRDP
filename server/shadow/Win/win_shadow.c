@@ -376,7 +376,7 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 	UINT64 frameTime;
 	HANDLE events[32];
 	HANDLE StopEvent;
-	StopEvent = subsystem->server->StopEvent;
+	StopEvent = subsystem->base.server->StopEvent;
 	nCount = 0;
 	events[nCount++] = StopEvent;
 	fps = 16;
@@ -455,6 +455,17 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	int status;
 	MONITOR_DEF* virtualScreen;
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
+	if (subsystem->base.numMonitors > 0)
+	{
+		subsystem->width = subsystem->base.monitors[0].right;
+		subsystem->height = subsystem->base.monitors[0].bottom;
+	}
+
+	if ((subsystem->width <= 0) || (subsystem->height <= 0))
+	{
+		subsystem->width = GetSystemMetrics(SM_CXSCREEN);
+		subsystem->height = GetSystemMetrics(SM_CYSCREEN);
+	}
 #if defined(WITH_WDS_API)
 	status = win_shadow_wds_init(subsystem);
 #elif defined(WITH_DXGI_1_2)
