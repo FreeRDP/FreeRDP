@@ -326,7 +326,6 @@ struct xf_context
 #endif
 	BOOL xi_rawevent;
 	BOOL xi_event;
-	HANDLE pipethread;
 	wLog* log;
 	FREERDP_REMAP_TABLE* remap_table;
 	DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
@@ -430,6 +429,6 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 BOOL xf_keyboard_update_modifier_map(xfContext* xfc);
 
-int xf_exit_code_from_disconnect_reason(DWORD reason);
+FREERDP_API int xf_exit_code_from_disconnect_reason(DWORD reason);
 
 #endif /* FREERDP_CLIENT_X11_FREERDP_H */

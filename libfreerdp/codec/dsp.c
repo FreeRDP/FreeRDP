@@ -1665,39 +1665,31 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL
 
 BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,
-                               UINT32 FramesPerPacket)
+                               WINPR_ATTR_UNUSED UINT32 FramesPerPacket)
 {
-#if defined(WITH_MEDIACODEC)
 	if (!context || !targetFormat)
 		return FALSE;
 
 	if (targetFormat->wFormatTag == WAVE_FORMAT_AAC_MS)
 	{
+#if defined(WITH_MEDIACODEC)
 		FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
 		mediacodec_aac_dsp_uninit(ctx);
 		ctx->format = *targetFormat;
 		return mediacodec_aac_dsp_init(ctx, FramesPerPacket);
-	}
 #endif
 
 #if defined(WITH_FDK_AAC)
-	WINPR_ASSERT(targetFormat);
-	if (targetFormat->wFormatTag == WAVE_FORMAT_AAC_MS)
-	{
 		FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
 		fdk_aac_dsp_uninit(ctx);
 		ctx->format = *targetFormat;
 		return fdk_aac_dsp_init(ctx, FramesPerPacket);
-	}
 #endif
+	}
 
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_context_reset(context, targetFormat);
 #else
-
-	if (!context || !targetFormat)
-		return FALSE;
-
 	context->common.format = *targetFormat;
 
 	switch (context->common.format.wFormatTag)

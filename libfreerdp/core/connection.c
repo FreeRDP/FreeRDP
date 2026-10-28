@@ -220,10 +220,11 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 		                                   settings->DesktopWidth, settings->DesktopHeight))
 			return FALSE;
 
-/* Runtime H264 detection. (only available if dynamic backend loading is defined)
+/* Runtime H264 detection. (only available if dynamic backend loading is defined, or
+ * in the browser, which might not decode H.264)
  * If no backend is available disable it before the channel is loaded.
  */
-#if defined(WITH_GFX_H264) && defined(WITH_OPENH264_LOADING)
+#if defined(WITH_GFX_H264) && (defined(WITH_OPENH264_LOADING) || defined(WITH_H264_WEBCODECS))
 		if (!context->codecs->h264)
 		{
 			settings->GfxH264 = FALSE;

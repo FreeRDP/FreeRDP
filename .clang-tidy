@@ -84,6 +84,7 @@ Checks: >
     -readability-redundant-parentheses,
     -readability-suspicious-call-argument,
     -readability-string-compare,
+    -readability-inconsistent-ifelse-braces,
     -readability-uppercase-literal-suffix,
     -readability-use-concise-preprocessor-directives,
     -performance-no-int-to-ptr,
@@ -93,7 +94,6 @@ Checks: >
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     file
-User:            nin
 CheckOptions:
   - key:             readability-implicit-bool-conversion.AllowIntegerConditions
     value:           'true'

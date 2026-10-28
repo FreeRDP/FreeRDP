@@ -769,6 +769,12 @@ static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
 		i++;
 	}
 #endif
+#ifdef WITH_H264_WEBCODECS
+	{
+		subSystems[i] = &g_Subsystem_WebCodecs;
+		i++;
+	}
+#endif
 	return i > 0;
 }
 

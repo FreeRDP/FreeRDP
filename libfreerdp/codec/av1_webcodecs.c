@@ -53,81 +53,13 @@ typedef struct
 	int rc; /* 1: picture written, 0: no picture, <0: error */
 } av1_wc_job;
 
-EM_JS(int, av1_wc_js_available, (void), {
-	return (typeof VideoDecoder === "function" && typeof EncodedVideoChunk === "function") ? 1 : 0;
-});
-
-EM_JS(int, av1_wc_js_open, (void), {
-	const reg = (Module.freerdpAv1 = Module.freerdpAv1 || { next : 1, decoders : new Map() });
-	const handle = reg.next++;
-	reg.decoders.set(handle, { decoder : null, profile : -1, pending : null });
-	return handle;
-});
-
-EM_JS(void, av1_wc_js_close, (int handle), {
-	const reg = Module.freerdpAv1;
-	const d = reg?.decoders.get(handle);
-	if (!d)
-		return;
-	try { d.decoder?.close(); } catch (e) {}
-	reg.decoders.delete(handle);
-});
-
-/* Runs on the main browser thread; stores the result in *rc and completes asynchronously
- * through _freerdp_av1_wc_finish. */
-EM_JS(void, av1_wc_js_decode, (void* ctx, int handle, const BYTE* src, UINT32 size, BYTE* dst,
-                               const char* formatName, UINT32 stride, UINT32 width, UINT32 height,
-                               int key, int profile, int* rc), {
-	src >>>= 0; size >>>= 0; dst >>>= 0; stride >>>= 0; width >>>= 0; height >>>= 0;
-	const format = UTF8ToString(formatName);
-	const finish = (r) => { HEAP32[rc >> 2] = r; _freerdp_av1_wc_finish(ctx); };
-	const d = Module.freerdpAv1?.decoders.get(handle);
-	if (!d)
-		return finish(-1);
-
-	/* (re)configure on key frames that carry a different profile (4:2:0 = 0, 4:4:4 = 1) */
-	if (!d.decoder || d.decoder.state === "closed" || (key && profile >= 0 && profile !== d.profile)) {
-		if (!key)
-			return finish(0); /* WebCodecs must start with a key frame: drop until one arrives */
-		try { d.decoder?.close(); } catch (e) {}
-		d.profile = profile;
-		d.decoder = new VideoDecoder({
-			output : (frame) => {
-				const p = d.pending;
-				d.pending = null;
-				if (!p) { frame.close(); return; }
-				clearTimeout(p.timer);
-				const w = Math.min(frame.displayWidth, p.width), h = Math.min(frame.displayHeight, p.height);
-				const view = HEAPU8.subarray(p.dst, p.dst + p.stride * h);
-				frame.copyTo(view, { rect : { x : 0, y : 0, width : w, height : h },
-				                     layout : [ { offset : 0, stride : p.stride } ], format : p.format })
-				    .then(() => { frame.close(); p.finish(1); },
-				          (e) => { frame.close(); console.error("[av1-webcodecs] copyTo", e); p.finish(-3); });
-			},
-			error : (e) => {
-				console.error("[av1-webcodecs] decoder error", e);
-				const p = d.pending;
-				d.pending = null;
-				if (p) { clearTimeout(p.timer); p.finish(-2); }
-			}
-		});
-		d.decoder.configure({ codec : profile === 1 ? "av01.1.13M.08" : "av01.0.13M.08",
-		                      optimizeForLatency : true, hardwareAcceleration : "no-preference" });
-	}
-
-	d.pending = { dst, format, stride, width, height, finish,
-		/* low-latency streams release each frame at once; never hang the worker if not */
-		timer : setTimeout(() => { if (d.pending) { d.pending = null; finish(0); } }, 1000) };
-	try {
-		const data = HEAPU8.slice(src, src + size); /* EncodedVideoChunk copies; avoid SAB views */
-		d.decoder.decode(new EncodedVideoChunk({ type : key ? "key" : "delta", timestamp : 0, data }));
-	} catch (e) {
-		console.error("[av1-webcodecs] decode", e);
-		clearTimeout(d.pending.timer);
-		d.pending = null;
-		finish(-2);
-	}
-    });
+/* in av1_webcodecs.js */
+extern int av1_wc_js_available(void);
+extern int av1_wc_js_open(void);
+extern void av1_wc_js_close(int handle);
+extern void av1_wc_js_decode(void* ctx, int handle, const BYTE* src, UINT32 size, BYTE* dst,
+                             const char* formatName, UINT32 stride, UINT32 width, UINT32 height,
+                             int key, int profile, int* rc);
 
 EMSCRIPTEN_KEEPALIVE void freerdp_av1_wc_finish(em_proxying_ctx* ctx)
 {

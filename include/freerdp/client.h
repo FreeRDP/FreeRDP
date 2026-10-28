@@ -153,7 +153,12 @@ extern "C"
 		ALIGN64 BOOL pressed_buttons[5];            /**< (offset 11) @since version 3.17.0 */
 		ALIGN64 rdpClientOAuth2* oauth2;            /**< (offset 16) @since version 3.32.0 */
 		ALIGN64 AadAuthHelper* aadHelper;           /**< (offset 17) @since version 3.32.0 */
-		UINT64 reserved[129 - 18];                  /**< (offset 18) */
+		ALIGN64 pConnectCallback PreConnect;        /**< (offset 18) @since version 3.33.0 */
+		ALIGN64 pConnectCallback PostConnect;       /**< (offset 19) @since version 3.33.0 */
+		ALIGN64 pPostDisconnect PostDisconnect;     /**< (offset 20) @since version 3.33.0 */
+		ALIGN64 pPostDisconnect PostFinalDisconnect; /**< (offset 21) @since version 3.33.0 */
+		ALIGN64 HANDLE pipethread;                   /**< (offset 22) @since version 3.33.0 */
+		UINT64 reserved[129 - 23];                   /**< (offset 23) */
 	};
 
 	typedef BOOL (*window_events_fkt_t)(freerdp* instance);
