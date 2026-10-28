@@ -507,8 +507,8 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 	if ((width * height) < 1)
 		return 0;
 
-	Box.top = x;
-	Box.left = y;
+	Box.top = y;
+	Box.left = x;
 	Box.right = x + width;
 	Box.bottom = y + height;
 	Box.front = 0;
