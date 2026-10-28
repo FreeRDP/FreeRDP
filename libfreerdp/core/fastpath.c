@@ -892,6 +892,12 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(s);
 
+	if (!freerdp_is_active_state(fastpath->rdp->context))
+	{
+		WLog_ERR(TAG, "Input event before activation, aborting");
+		return FALSE;
+	}
+
 	if (!fastpath_read_input_event_header(s, &eventFlags, &eventCode))
 		return FALSE;
 
