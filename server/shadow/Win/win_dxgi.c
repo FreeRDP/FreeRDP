@@ -334,6 +334,9 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	while (dxgiAdapter->lpVtbl->EnumOutputs(dxgiAdapter, i, &pOutput) != DXGI_ERROR_NOT_FOUND)
 	{
+		if (!pOutput)
+			break;
+
 		pOutputDesc = &outputDesc;
 
 		hr = pOutput->lpVtbl->GetDesc(pOutput, pOutputDesc);
@@ -348,6 +351,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 			dTop = i;
 
 		pOutput->lpVtbl->Release(pOutput);
+		pOutput = nullptr;
 		i++;
 	}
 
