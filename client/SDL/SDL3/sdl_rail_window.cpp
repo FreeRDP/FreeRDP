@@ -28,9 +28,7 @@
 #include "sdl_rail_window.hpp"
 #include "sdl_rail_window_style.hpp"
 #include "sdl_utils.hpp"
-#include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
-#include "sdl_x11.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail.window")
 
@@ -426,9 +424,9 @@ SDL_Rect SdlRailWindow::bandMargins() const
 
 SDL_Rect SdlRailWindow::bandInsets() const
 {
-	/* X11-only transparent resize ring. */
-	const auto& caps = railPlatformCaps();
-	if (!caps.positionsReadable || !caps.supportsTransparentWindows)
+	/* NativeFrame: the OS adds the band outside the client area, not part of our geometry. */
+	const auto band = railPlatformCaps().band;
+	if ((band == RailBandMechanism::None) || (band == RailBandMechanism::NativeFrame))
 		return { 0, 0, 0, 0 };
 	return bandMargins();
 }
@@ -578,7 +576,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	const SDL_Rect vis = targetOuterRect();
 	_appliedInsets = bandInsets(); /* the insets baked into the window we are about to create */
 	/* Realize full-display popups as fullscreen toplevels on Wayland. */
-	const bool fullscreen = _isPopup && !caps.positionsReadable && isFullDisplaySize();
+	const bool fullscreen = _isPopup && !caps.supportsWindowPositions && isFullDisplaySize();
 	if (_isPopup && parent && !fullscreen)
 	{
 		/* SDL popups position parent-relative (works on Wayland too, via xdg_popup). */
@@ -586,7 +584,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::createPopup(parent, rel, caps.supportsTransparentWindows, _overlay));
 	}
-	else if (_isPopup && !caps.positionsReadable && !fullscreen)
+	else if (_isPopup && !caps.supportsWindowPositions && !fullscreen)
 	{
 		/* No owner yet: a Wayland popup needs a parent; retry once an app window exists. */
 		WLog_VRB(TAG, "popup create deferred id=0x%08" PRIx32 ": no parent yet",
@@ -595,8 +593,10 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 	else
 	{
-		/* Transparent so the band ring outside the content stays invisible. */
-		Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN;
+		/* Transparent hides the band ring; a native frame needs a framed window. */
+		Uint32 flags = SDL_WINDOW_HIDDEN;
+		if (_isPopup || (caps.band != RailBandMechanism::NativeFrame))
+			flags |= SDL_WINDOW_BORDERLESS;
 		if (caps.supportsTransparentWindows)
 			flags |= SDL_WINDOW_TRANSPARENT;
 		_win = std::make_unique<SdlWindow>(
@@ -618,9 +618,13 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		         static_cast<uint32_t>(_id), _windowRect.w, _windowRect.h);
 	}
 
-	/* Bind seat/pointer on Wayland. */
-	if (!_isPopup && !caps.positionsReadable)
-		sdl_wayland_move_prepare(_win->window());
+	/* Backend setup (Wayland seat, Win32 frame), then the server geometry again: dropping the
+	 * Win32 caption grew the client area. */
+	if (!_isPopup)
+	{
+		railPlatformPrepareWindow(_win->window());
+		std::ignore = railPlatformSetWindowRect(_win->window(), vis);
+	}
 
 	WLog_DBG(TAG,
 	         "create id=0x%08" PRIx32 " sdl=%" PRIu32 " %s vis=%dx%d+%d+%d margins=L%d,T%d,R%d,B%d "
@@ -640,7 +644,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	const bool popupReady = !_isPopup || _hasGfx;
 	/* Suppress server shadow frames and unparented full-display overlays. */
 	const bool unplaceable =
-	    _frame || (_overlay && !railPlatformCaps().positionsReadable && isFullDisplaySize());
+	    _frame || (_overlay && !railPlatformCaps().supportsWindowPositions && isFullDisplaySize());
 	/* Layered window is shown only when anchored to an adjoining visible popup or overlay. */
 	const bool drawable =
 	    _visible && (_windowRect.w > 0) && (_windowRect.h > 0) && popupReady && !unplaceable &&
@@ -709,21 +713,20 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 
 	/* Update insets across maximize transitions outside active drag grab. */
 	const bool maxed = effectivelyMaximized();
+	const SDL_Rect band = bandInsets();
 	if ((maxed != _wasMaximized) && !_localMoveActive && !restorePending)
 	{
-		setAppliedInsets(bandInsets());
+		setAppliedInsets(band);
 		if (!maxed)
 			_geometryDirty = true;
 		_wasMaximized = maxed;
 	}
 
-	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
-	/* Not while a restore is pending: the margins may still be the maximized ones. */
-	const SDL_Rect ext = bandInsets();
-	if (!restorePending && !SDL_RectsEqual(&ext, &_extentsApplied) &&
-	    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+	/* X11: set frame extents before the resize (KWin needs that), not while restoring. */
+	if ((railPlatformCaps().band == RailBandMechanism::FrameExtents) && !restorePending &&
+	    !SDL_RectsEqual(&band, &_extentsApplied) && railPlatformSetBand(_win->window(), band))
 	{
-		_extentsApplied = ext;
+		_extentsApplied = band;
 	}
 	const bool wmOwnsGeometry =
 	    _localMoveActive || geometryFrozen() || _fullscreen || restorePending;
@@ -731,20 +734,28 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * Defer size hints and programmatic resize during active WM move/resize grab. */
 	if ((_minMaxDirty || _geometryDirty) && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = targetOuterRect();
-		SDL_SetWindowMinimumSize(_win->window(), std::clamp(_minSize.x, 0, vis.w),
-		                         std::clamp(_minSize.y, 0, vis.h));
-		int maxW = (_maxSize.x > 0) ? std::max(1, _maxSize.x) : 0;
-		int maxH = (_maxSize.y > 0) ? std::max(1, _maxSize.y) : 0;
+		const SDL_Rect vis = addInsets(_windowRect, band);
+		const int bandW = band.x + band.w;
+		const int bandH = band.y + band.h;
+		/* Convert server track size hints (which include server margins) to outer window bounds. */
+		const SDL_Rect& m = _resizeMargins;
+		const int padW = bandW - m.x - m.w;
+		const int padH = bandH - m.y - m.h;
+		const auto toOuter = [](int track, int pad)
+		{ return (track > 0) ? std::max(1, track + pad) : 0; };
+		const int minW = toOuter(_minSize.x, padW);
+		const int minH = toOuter(_minSize.y, padH);
+		SDL_SetWindowMinimumSize(_win->window(), std::clamp(minW, 0, vis.w),
+		                         std::clamp(minH, 0, vis.h));
+		int maxW = toOuter(_maxSize.x, padW);
+		int maxH = toOuter(_maxSize.y, padH);
 		/* Wayland: cap to the usable area - an oversized window cannot be dragged into reach. */
 		SDL_Rect usable{};
-		if (!railPlatformCaps().positionsReadable &&
+		if (!railPlatformCaps().supportsWindowPositions &&
 		    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
 		{
-			/* The local window is the outer frame: cap to the usable area plus the insets. */
-			const SDL_Rect bi = bandInsets();
-			const int capW = usable.w + bi.x + bi.w;
-			const int capH = usable.h + bi.y + bi.h;
+			const int capW = usable.w + bandW;
+			const int capH = usable.h + bandH;
 			if ((maxW == 0) || (maxW > capW))
 				maxW = capW;
 			if ((maxH == 0) || (maxH > capH))
@@ -757,25 +768,25 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Skip geometry apply when maximized, minimized or WM-dragged. */
 	if (_geometryDirty && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = targetOuterRect();
-		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
-		 * now baked in, so the round-trip back to server coords strips exactly this. */
-		setAppliedInsets(bandInsets());
+		const SDL_Rect vis = addInsets(_windowRect, band);
+		/* Record applied insets so server coordinate mapping strips the exact offset. */
+		setAppliedInsets(band);
 		int cw = 0;
 		int ch = 0;
 		SDL_GetWindowSize(_win->window(), &cw, &ch);
 		bool applied = false;
+		bool placed = false; /* railPlatformSetWindowRect set position and size at once */
 		/* Apply position and size if changed. */
 		if (_isPopup && parent)
 		{
 			if (!SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y))
 				WLog_VRB(TAG, "popup reposition unsupported id=0x%08" PRIx32 ": %s",
 				         static_cast<uint32_t>(_id), SDL_GetError());
-			else if (!railPlatformCaps().positionsReadable)
+			else if (!railPlatformCaps().supportsWindowPositions)
 				_needsFullBlit = true; /* Wayland applies move on next surface commit */
 			applied = true;
 		}
-		else if (railPlatformCaps().positionsReadable &&
+		else if (railPlatformCaps().supportsWindowPositions &&
 		         !(_isPopup && SDL_GetWindowParent(_win->window())))
 		{
 			int cx = 0;
@@ -783,17 +794,20 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			SDL_GetWindowPosition(_win->window(), &cx, &cy);
 			if ((cx != vis.x) || (cy != vis.y))
 			{
-				SDL_SetWindowPosition(_win->window(), vis.x, vis.y);
+				placed = railPlatformSetWindowRect(_win->window(), vis);
+				if (!placed)
+					SDL_SetWindowPosition(_win->window(), vis.x, vis.y);
 				applied = true;
 			}
 		}
 		if ((cw != vis.w) || (ch != vis.h))
 		{
-			std::ignore = _win->resize({ vis.w, vis.h });
+			if (!placed && !railPlatformSetWindowRect(_win->window(), vis))
+				std::ignore = _win->resize({ vis.w, vis.h });
 			applied = true;
 			/* Settle window resize via SDL_SyncWindow before reading back geometry to avoid
 			 * adopting transient dimensions while configure events are in flight. */
-			if (railPlatformCaps().positionsReadable && !_isPopup && !_localMoveActive &&
+			if (railPlatformCaps().supportsWindowPositions && !_isPopup && !_localMoveActive &&
 			    !_loopEnd.pending)
 			{
 				const bool settled = SDL_SyncWindow(_win->window());
@@ -822,9 +836,8 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		{
 			_parentApplied = true;
 			/* Reattached after the owner was shown again: the owner was mapped on top. */
-			if (sdl::utils::isX11Driver() &&
-			    ((SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_HIDDEN) == 0) &&
-			    !sdl_x11_raise_window(_win->window()))
+			if (((SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_HIDDEN) == 0) &&
+			    !railPlatformRaiseOwned(_win->window()))
 				WLog_WARN(TAG, "raising dialog id=0x%08" PRIx32 " failed",
 				          static_cast<uint32_t>(_id));
 		}
@@ -1083,7 +1096,7 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			std::unique_lock lock(_gfxLock);
 			const SDL_Rect vis = targetOuterRect();
 			SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y);
-			if (!railPlatformCaps().positionsReadable)
+			if (!railPlatformCaps().supportsWindowPositions)
 				_needsFullBlit = true; /* Wayland applies move on next surface commit */
 		}
 		if ((!_isPopup && !_layered) || _fullscreen)
@@ -1326,7 +1339,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 		}
 
 		rect = _windowRect;
-		bi = bandInsets();
+		bi = _appliedInsets;
 		vis = _visRects;
 	}
 

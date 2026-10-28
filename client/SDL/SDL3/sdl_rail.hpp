@@ -145,8 +145,8 @@ class SdlRail
 	void sendWorkArea(const SDL_Rect& local);
 	/* Report a maximized window's WM-given geometry as the work area. Caller holds _windowsLock. */
 	void reportMaximizedWorkArea(SdlRailWindow* appWindow);
-	/* Clamp a window origin (x,y) so a w x h window stays inside the server desktop. */
-	void clampIntoDesktop(int& x, int& y, int w, int h) const;
+	/* Clamp an outer origin so its server rect stays on the desktop. */
+	void clampIntoDesktop(const SdlRailWindow& appWindow, int& x, int& y, int w, int h) const;
 	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
 	void sendSystemCommand(SdlRailWindow* appWindow, uint16_t command);
 	/* Realize the server's top-level z-order (X11 only, focus-neutral). Caller holds _windowsLock.
@@ -205,6 +205,10 @@ class SdlRail
 	[[nodiscard]] SdlRailIcon* iconCacheLookup(uint32_t cacheId, uint32_t cacheEntry);
 
   private:
+	/* Win32: redraw while a native size/move loop blocks our loop. */
+	static void redrawDuringSizeMove(void* userdata);
+	/* Win32: a resize on the native frame drives the local resize frame like a server one. */
+	static void nativeResize(void* userdata, SDL_WindowID id, int moveType, bool end);
 	SdlContext* _context;
 	RailClientContext* _rail = nullptr;
 	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
@@ -214,6 +218,8 @@ class SdlRail
 	/* The desktop window may show: RAIL started, a logon prompt, or the hold ran out. */
 	std::atomic<bool> _desktopReleased = false;
 	std::atomic<uint64_t> _desktopHoldUntil = 0; /* end of the logon desktop hold (ticks) */
+	uint32_t _sizeMoveRedraws = 0;
+	SDL_WindowID _nativeResizeId = 0; /* window resized on its native frame, 0 = none */
 	/* Last work area reported to the server (server coordinates). */
 	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
 	/* Guards _windows (RDP thread mutates, main thread paints/iterates, GFX thread looks up).
@@ -226,7 +232,6 @@ class SdlRail
 	struct LocalMove
 	{
 		uint32_t id = 0;      /* windowId of the active move, 0 = none (RAIL ids are non-zero) */
-		bool wayland = false; /* Wayland tracks size only */
 		uint16_t type = 0;    /* RAIL_WMSZ_* of the active local move */
 		SDL_Point anchor = { 0, 0 };  /* modal-loop anchor (forwarded press) of this drag */
 		SDL_Point pointer = { 0, 0 }; /* server's frozen cursor (last forward) of this drag */
