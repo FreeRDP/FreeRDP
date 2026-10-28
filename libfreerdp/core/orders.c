@@ -3689,6 +3689,16 @@ static BOOL update_read_bounds(wStream* s, rdpBounds* bounds)
 			return FALSE;
 	}
 
+	if (bounds->left > bounds->right)
+		return FALSE;
+	if (bounds->top > bounds->bottom)
+		return FALSE;
+	const INT64 w = 1ll * bounds->right - bounds->left;
+	if ((w <= INT32_MIN) || (w >= INT32_MAX))
+		return FALSE;
+	const INT64 h = 1ll * bounds->bottom - bounds->top;
+	if ((h <= INT32_MIN) || (h >= INT32_MAX))
+		return FALSE;
 	return TRUE;
 }
 BOOL update_write_bounds(wStream* s, const ORDER_INFO* orderInfo)
