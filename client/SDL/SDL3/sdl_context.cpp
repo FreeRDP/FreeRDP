@@ -384,6 +384,21 @@ bool SdlContext::createWindows()
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
+	/* The monitor definitions are sorted (primary first), so they need not be in the same
+	 * order as the monitor IDs. Match them by display, fall back to the index. */
+	auto monitorFor = [&](UINT32 index, int64_t id)
+	{
+		for (UINT32 y = 0; y < windowCount; y++)
+		{
+			auto cur = static_cast<rdpMonitor*>(
+			    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, y));
+			if (cur && (static_cast<int64_t>(cur->orig_screen) == id))
+				return cur;
+		}
+		return static_cast<rdpMonitor*>(
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, index));
+	};
+
 	Sint32 originX = 0;
 	Sint32 originY = 0;
 	for (UINT32 x = 0; x < windowCount; x++)
@@ -392,8 +407,7 @@ bool SdlContext::createWindows()
 		if (id < 0)
 			return false;
 
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = monitorFor(x, id);
 
 		originX = std::min<Sint32>(monitor->x, originX);
 		originY = std::min<Sint32>(monitor->y, originY);
@@ -405,8 +419,7 @@ bool SdlContext::createWindows()
 		if (id < 0)
 			return false;
 
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = monitorFor(x, id);
 
 		Uint32 w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
 		Uint32 h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
