@@ -16,6 +16,7 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -36,8 +37,7 @@ public class SessionInputManager
 	private static final int SCROLLING_TIMEOUT = 16;
 	private static final int SCROLLING_DISTANCE = 12;
 	private static final int SCROLLING_EDGE_MARGIN = 16;
-	private static final int MAX_DISCARDED_MOVE_EVENTS = 3;
-	private static final int SEND_MOVE_EVENT_TIMEOUT = 150;
+	private static final int MOVE_EVENT_THROTTLE_MS = 16;
 
 	private static final int MSG_SEND_MOVE_EVENT = 1;
 	private static final int MSG_SCROLLING_REQUESTED = 2;
@@ -55,7 +55,7 @@ public class SessionInputManager
 	private Bitmap bitmap;
 	private int screenWidth;
 	private int screenHeight;
-	private int discardedMoveEvents = 0;
+	private long lastMoveSentTime = 0;
 	// we asked the IME to show; the window has not necessarily animated it in yet
 	private boolean softInputRequested = false;
 	// the IME reported a non-zero inset, i.e. it really is on screen
@@ -84,6 +84,7 @@ public class SessionInputManager
 	{
 		this.instance = instance;
 		this.bitmap = surface;
+		this.lastMoveSentTime = 0;
 		keyboardMapper.reset(this);
 	}
 
@@ -272,19 +273,20 @@ public class SessionInputManager
 
 	private void sendDelayedMoveEvent(int x, int y)
 	{
-		if (handler.hasMessages(MSG_SEND_MOVE_EVENT))
+		final long now = SystemClock.uptimeMillis();
+		final long elapsed = now - lastMoveSentTime;
+
+		cancelDelayedMoveEvent();
+		if (elapsed >= MOVE_EVENT_THROTTLE_MS)
 		{
-			handler.removeMessages(MSG_SEND_MOVE_EVENT);
-			discardedMoveEvents++;
+			lastMoveSentTime = now;
+			LibFreeRDP.sendCursorEvent(instance, x, y, Mouse.getMoveEvent());
 		}
 		else
-			discardedMoveEvents = 0;
-
-		if (discardedMoveEvents > MAX_DISCARDED_MOVE_EVENTS)
-			LibFreeRDP.sendCursorEvent(instance, x, y, Mouse.getMoveEvent());
-		else
-			handler.sendMessageDelayed(Message.obtain(null, MSG_SEND_MOVE_EVENT, x, y),
-			                           SEND_MOVE_EVENT_TIMEOUT);
+		{
+			final long delay = MOVE_EVENT_THROTTLE_MS - elapsed;
+			handler.sendMessageDelayed(Message.obtain(null, MSG_SEND_MOVE_EVENT, x, y), delay);
+		}
 	}
 
 	private void cancelDelayedMoveEvent()
@@ -330,8 +332,7 @@ public class SessionInputManager
 	{
 		if (instance == 0)
 			return;
-		if (!down)
-			cancelDelayedMoveEvent();
+		cancelDelayedMoveEvent();
 		LibFreeRDP.sendCursorEvent(instance, x, y, Mouse.getLeftButtonEvent(context, down));
 	}
 
@@ -339,6 +340,7 @@ public class SessionInputManager
 	{
 		if (instance == 0)
 			return;
+		cancelDelayedMoveEvent();
 		LibFreeRDP.sendCursorEvent(instance, x, y, Mouse.getMiddleButtonEvent(down));
 	}
 
@@ -346,6 +348,7 @@ public class SessionInputManager
 	{
 		if (instance == 0)
 			return;
+		cancelDelayedMoveEvent();
 		LibFreeRDP.sendCursorEvent(instance, x, y, Mouse.getRightButtonEvent(context, down));
 	}
 
@@ -540,6 +543,7 @@ public class SessionInputManager
 				case MSG_SEND_MOVE_EVENT:
 					if (instance == 0)
 						break;
+					lastMoveSentTime = SystemClock.uptimeMillis();
 					LibFreeRDP.sendCursorEvent(instance, msg.arg1, msg.arg2, Mouse.getMoveEvent());
 					break;
 
