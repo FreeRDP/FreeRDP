@@ -27,6 +27,7 @@
 #include "sdl_rail_platform.hpp"
 #include "sdl_rail_window.hpp"
 #include "sdl_rail_window_style.hpp"
+#include "sdl_utils.hpp"
 #include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
 #include "sdl_x11.hpp"
@@ -38,6 +39,16 @@ static constexpr uint64_t kAwaitServerFrameMs = 1000;
 
 /* Maximum timeout waiting for server restore geometry order. */
 static constexpr uint64_t kAwaitRestoreRectMs = 500;
+
+/* Reports kept to recognize late echoes. */
+static constexpr size_t kMaxReported = 16;
+
+static void armDeadline(uint64_t& until, uint64_t ms)
+{
+	until = SDL_GetTicks() + ms;
+	if (!sdl_push_update_after(WINPR_ASSERTING_INT_CAST(Uint32, ms + 1)))
+		WLog_WARN(TAG, "SDL_AddTimer failed: %s", SDL_GetError());
+}
 
 /* Check for real per-pixel alpha in region. */
 static bool regionHasAlpha(const uint8_t* base, uint32_t stride, const SDL_Rect& r)
@@ -94,6 +105,9 @@ SDL_Renderer* SdlRailWindow::renderer() const
 void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 {
 	std::unique_lock lock(_gfxLock);
+	/* Minimized, Windows parks the window off screen; keep the rect to restore to. */
+	if (_minState.server)
+		return;
 	_awaitRestoreUntil = 0; /* Server geometry received. */
 	if (_localMoveActive)
 	{
@@ -114,7 +128,21 @@ void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 	}
 	/* Accept post-move geometry echoes. */
 	if (SDL_RectsEqual(&rect, &_windowRect))
+	{
+		_reported.clear();
 		return;
+	}
+	/* The echo of an older report can arrive after a newer one was sent. */
+	const auto echo = std::find_if(_reported.begin(), _reported.end(),
+	                               [&](const SDL_Rect& r) { return SDL_RectsEqual(&r, &rect); });
+	if (echo != _reported.end())
+	{
+		WLog_DBG(TAG, "late echo id=0x%08" PRIx32 " %dx%d ignored", static_cast<uint32_t>(_id),
+		         rect.w, rect.h);
+		_reported.erase(_reported.begin(), echo + 1);
+		return;
+	}
+	_reported.clear();
 	/* A resize recreates the render target, so the content needs a full re-copy. */
 	if ((rect.w != _windowRect.w) || (rect.h != _windowRect.h))
 		_painted = false;
@@ -171,6 +199,12 @@ void SdlRailWindow::adoptLocalGeometry(const SDL_Rect& rect)
 	{
 		_visOffset.x += rect.x - _windowRect.x;
 		_visOffset.y += rect.y - _windowRect.y;
+	}
+	if (!SDL_RectsEqual(&rect, &_windowRect))
+	{
+		if (_reported.size() >= kMaxReported)
+			_reported.erase(_reported.begin());
+		_reported.push_back(rect);
 	}
 	_windowRect = rect;
 	_geometryDirty = false;
@@ -374,7 +408,7 @@ bool SdlRailWindow::isFrame() const
 bool SdlRailWindow::styleResizable() const
 {
 	/* Once resizable, keep band eligibility to avoid oscillation. */
-	return _everResizable || ((_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0);
+	return _everResizable;
 }
 
 /* Minimum grabbable width for each outside-band resize edge. */
@@ -491,25 +525,23 @@ SDL_Point SdlRailWindow::serverOrigin() const
 void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
 {
 	std::unique_lock lock(_gfxLock);
-	const bool wasResizable = styleResizable();
 	const bool wasTopmost = _topmost;
 	_style = style;
 	_exStyle = exStyle;
 	_topmost = (exStyle & WS_EX_TOPMOST) != 0;
 	if (_topmost != wasTopmost)
 		_topmostDirty = true;
-	if ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0)
+	if (!_everResizable && ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0))
+	{
 		_everResizable = true;
-	/* Update resizability on style change. */
-	if (styleResizable() != wasResizable)
 		_styleDirty = true;
+	}
 	/* Classify popup and layered window types once on creation. */
 	if (!_popupClassified)
 	{
 		const auto classification = classifySdlRailWindowStyle(style, exStyle, _ownerId != 0);
 		_isPopup = classification.popup;
 		_layered = classification.layered;
-		_clickThrough = classification.clickThrough;
 		_overlay = classification.overlay;
 		_popupClassified = true;
 	}
@@ -671,7 +703,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* State first: maximized/minimized gates the geometry apply below. */
 	/* Hold geometry sync until server sends restored rect to prevent re-maximizing. */
 	if (applyServerState(_maxState, "maximize", SDL_MaximizeWindow))
-		_awaitRestoreUntil = SDL_GetTicks() + kAwaitRestoreRectMs;
+		armDeadline(_awaitRestoreUntil, kAwaitRestoreRectMs);
 	std::ignore = applyServerState(_minState, "minimize", SDL_MinimizeWindow);
 	const bool restorePending = restoreRectPending();
 
@@ -679,22 +711,24 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	const bool maxed = effectivelyMaximized();
 	if ((maxed != _wasMaximized) && !_localMoveActive && !restorePending)
 	{
-		_appliedInsets = bandInsets();
+		setAppliedInsets(bandInsets());
 		if (!maxed)
 			_geometryDirty = true;
 		_wasMaximized = maxed;
 	}
 
 	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
+	/* Not while a restore is pending: the margins may still be the maximized ones. */
 	const SDL_Rect ext = bandInsets();
-	if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
+	if (!restorePending && !SDL_RectsEqual(&ext, &_extentsApplied) &&
 	    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+	{
 		_extentsApplied = ext;
-
-	/* Clamp min size hints to target bounds so stale hints do not block programmatic resize.
-	 * Defer size hints and programmatic resize during active WM move/resize grab. */
+	}
 	const bool wmOwnsGeometry =
 	    _localMoveActive || geometryFrozen() || _fullscreen || restorePending;
+	/* Clamp min size hints to target bounds so stale hints do not block programmatic resize.
+	 * Defer size hints and programmatic resize during active WM move/resize grab. */
 	if ((_minMaxDirty || _geometryDirty) && !wmOwnsGeometry)
 	{
 		const SDL_Rect vis = targetOuterRect();
@@ -726,7 +760,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		const SDL_Rect vis = targetOuterRect();
 		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
 		 * now baked in, so the round-trip back to server coords strips exactly this. */
-		_appliedInsets = bandInsets();
+		setAppliedInsets(bandInsets());
 		int cw = 0;
 		int ch = 0;
 		SDL_GetWindowSize(_win->window(), &cw, &ch);
@@ -780,10 +814,20 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		_geomApplyPending = applied && !_isPopup;
 	}
 	/* Make dialog transient for owner. */
-	if (!_isPopup && parent && !_parentApplied)
+	/* Attach only to a shown owner: SDL hides child windows with their parent. */
+	if (!_isPopup && parent && !_parentApplied &&
+	    ((SDL_GetWindowFlags(parent) & SDL_WINDOW_HIDDEN) == 0))
 	{
 		if (SDL_SetWindowParent(_win->window(), parent))
+		{
 			_parentApplied = true;
+			/* Reattached after the owner was shown again: the owner was mapped on top. */
+			if (sdl::utils::isX11Driver() &&
+			    ((SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_HIDDEN) == 0) &&
+			    !sdl_x11_raise_window(_win->window()))
+				WLog_WARN(TAG, "raising dialog id=0x%08" PRIx32 " failed",
+				          static_cast<uint32_t>(_id));
+		}
 	}
 	if (_titleDirty)
 	{
@@ -816,7 +860,13 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		/* If transient-for owner was closed or hidden, show dialog standalone. */
 		SDL_Window* owner = _isPopup ? nullptr : SDL_GetWindowParent(_win->window());
 		if (owner && ((SDL_GetWindowFlags(owner) & SDL_WINDOW_HIDDEN) != 0))
-			std::ignore = SDL_SetWindowParent(_win->window(), nullptr);
+		{
+			if (SDL_SetWindowParent(_win->window(), nullptr))
+				_parentApplied = false; /* reattach once the owner is shown again */
+			else
+				WLog_WARN(TAG, "detaching dialog id=0x%08" PRIx32 " failed: %s",
+				          static_cast<uint32_t>(_id), SDL_GetError());
+		}
 		SDL_ShowWindow(_win->window());
 	}
 	return true;
@@ -971,6 +1021,21 @@ bool SdlRailWindow::applyServerState(StateSync& s, const char* what, bool (*ente
 	(void)SDL_SyncWindow(_win->window());
 	s.dirty = false;
 	return restored;
+}
+
+/* Caller holds _gfxLock. */
+void SdlRailWindow::setAppliedInsets(const SDL_Rect& insets)
+{
+	if (SDL_RectsEqual(&insets, &_appliedInsets))
+		return;
+	_appliedInsets = insets;
+	_needsFullBlit = true;
+}
+
+bool SdlRailWindow::insetsStale() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _wasMaximized != effectivelyMaximized();
 }
 
 /* Caller holds _gfxLock. */
