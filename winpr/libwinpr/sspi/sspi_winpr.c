@@ -23,6 +23,7 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
 #include <winpr/print.h>
@@ -97,9 +98,16 @@ typedef struct
 
 static CONTEXT_BUFFER_ALLOC_TABLE ContextBufferAllocTable = WINPR_C_ARRAY_INIT;
 
+/* The table is shared by all threads of the process, every access must hold this lock */
+static CRITICAL_SECTION ContextBufferAllocTableLock = WINPR_C_ARRAY_INIT;
+
 static int sspi_ContextBufferAllocTableNew(void)
 {
 	size_t size = 0;
+
+	if (!InitializeCriticalSectionEx(&ContextBufferAllocTableLock, 0, 0))
+		return -1;
+
 	ContextBufferAllocTable.entries = nullptr;
 	ContextBufferAllocTable.cEntries = 0;
 	ContextBufferAllocTable.cMaxEntries = 4;
@@ -107,30 +115,32 @@ static int sspi_ContextBufferAllocTableNew(void)
 	ContextBufferAllocTable.entries = (CONTEXT_BUFFER_ALLOC_ENTRY*)calloc(1, size);
 
 	if (!ContextBufferAllocTable.entries)
+	{
+		DeleteCriticalSection(&ContextBufferAllocTableLock);
 		return -1;
+	}
 
 	return 1;
 }
 
+/* NB: ContextBufferAllocTableLock must be held by the caller */
 static int sspi_ContextBufferAllocTableGrow(void)
 {
 	size_t size = 0;
 	CONTEXT_BUFFER_ALLOC_ENTRY* entries = nullptr;
-	ContextBufferAllocTable.cEntries = 0;
-	ContextBufferAllocTable.cMaxEntries *= 2;
-	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
+	const UINT32 cMaxEntries = ContextBufferAllocTable.cMaxEntries + 128ull;
+	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * cMaxEntries;
 
 	if (!size)
 		return -1;
 
 	entries = (CONTEXT_BUFFER_ALLOC_ENTRY*)realloc(ContextBufferAllocTable.entries, size);
 
+	/* on failure the old table (and the buffers it tracks) stays valid */
 	if (!entries)
-	{
-		free(ContextBufferAllocTable.entries);
 		return -1;
-	}
 
+	ContextBufferAllocTable.cMaxEntries = cMaxEntries;
 	ContextBufferAllocTable.entries = entries;
 	ZeroMemory((void*)&ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2],
 	           size / 2);
@@ -146,9 +156,11 @@ static void sspi_ContextBufferAllocTableFree(void)
 	ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
 	free(ContextBufferAllocTable.entries);
 	ContextBufferAllocTable.entries = nullptr;
+	DeleteCriticalSection(&ContextBufferAllocTableLock);
 }
 
-void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
+/* NB: ContextBufferAllocTableLock must be held by the caller */
+static void* sspi_ContextBufferAllocLocked(UINT32 allocatorIndex, size_t size)
 {
 	void* contextBuffer = nullptr;
 
@@ -173,8 +185,16 @@ void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 	if (sspi_ContextBufferAllocTableGrow() < 0)
 		return nullptr;
 
-	/* the next call to sspi_ContextBufferAlloc() should now succeed */
-	return sspi_ContextBufferAlloc(allocatorIndex, size);
+	/* the next call to sspi_ContextBufferAllocLocked() should now succeed */
+	return sspi_ContextBufferAllocLocked(allocatorIndex, size);
+}
+
+void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
+{
+	EnterCriticalSection(&ContextBufferAllocTableLock);
+	void* contextBuffer = sspi_ContextBufferAllocLocked(allocatorIndex, size);
+	LeaveCriticalSection(&ContextBufferAllocTableLock);
+	return contextBuffer;
 }
 
 SSPI_CREDENTIALS* sspi_CredentialsNew(void)
@@ -982,7 +1002,8 @@ static BOOL CALLBACK sspi_init(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 {
 	if (!winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT))
 		return FALSE;
-	sspi_ContextBufferAllocTableNew();
+	if (sspi_ContextBufferAllocTableNew() < 0)
+		return FALSE;
 	if (!SCHANNEL_init())
 		return FALSE;
 	if (!KERBEROS_init())
@@ -1082,6 +1103,8 @@ void sspi_ContextBufferFree(void* contextBuffer)
 {
 	UINT32 allocatorIndex = 0;
 
+	EnterCriticalSection(&ContextBufferAllocTableLock);
+
 	for (size_t index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
 	{
 		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
@@ -1106,6 +1129,8 @@ void sspi_ContextBufferFree(void* contextBuffer)
 			}
 		}
 	}
+
+	LeaveCriticalSection(&ContextBufferAllocTableLock);
 }
 
 /**

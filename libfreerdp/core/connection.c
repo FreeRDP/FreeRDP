@@ -1009,6 +1009,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 		return FALSE;
 
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return TRUE;
+
 	if (!rdp_read_security_header(rdp, s, &sec_flags, nullptr))
 	{
 		WLog_Print(rdp->log, WLOG_ERROR, "invalid security header");
@@ -1307,6 +1310,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s, DWORD logLevel)
 		res = FALSE;
 	else
 	{
+		if (freerdp_shall_disconnect_context(rdp->context))
+			return TRUE;
+
 		const UINT16 messageChannelId = rdp->mcs->messageChannelId;
 		/* If the MCS message channel has been joined... */
 
@@ -1342,6 +1348,9 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return STATE_RUN_FAILED;
+
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return STATE_RUN_QUIT_SESSION;
 
 	/* there might be autodetect messages mixed in between licensing messages.
 	 * that has been observed with 2k12 R2 and 2k19

@@ -939,12 +939,32 @@ out:
 	return result;
 }
 
+/* The 3DES CBC contexts live as long as the connection and have padding disabled. An incomplete
+ * block would be kept in the context and prepended to the data of the next call, which then
+ * writes more output than it got input. The sender pads the data to whole blocks (padlen). */
+static BOOL security_fips_check_length(size_t length)
+{
+	if ((length % 8) != 0)
+	{
+		WLog_ERR(TAG, "FIPS data length %" PRIuz " is not a multiple of the 3DES block size",
+		         length);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	BOOL rc = FALSE;
 	size_t olen = 0;
 
+	if (!security_fips_check_length(length))
+		goto fail;
+
 	if (!winpr_Cipher_Update(rdp->fips_encrypt, data, length, data, &olen))
+		goto fail;
+
+	if (olen != length)
 		goto fail;
 
 	rdp->encrypt_use_count++;
@@ -964,10 +984,13 @@ BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 		return FALSE;
 	}
 
+	if (!security_fips_check_length(length))
+		return FALSE;
+
 	if (!winpr_Cipher_Update(rdp->fips_decrypt, data, length, data, &olen))
 		return FALSE;
 
-	return TRUE;
+	return olen == length;
 }
 
 BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig, size_t sig_len,

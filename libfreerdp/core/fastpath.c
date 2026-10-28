@@ -1151,11 +1151,15 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 				if ((pad = 8 - (fpInputEvents_length % 8)) == 8)
 					pad = 0;
 
+				if (!Stream_CheckAndLogRequiredCapacityWLog(fastpath->log, s, 4))
+					goto fail;
+
 				Stream_Write_UINT16(s, 0x10); /* length */
 				Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
 				Stream_Write_UINT8(s, pad);   /* padding */
 
-				if (!Stream_CheckAndLogRequiredCapacityWLog(fastpath->log, s, 8))
+				if (!Stream_CheckAndLogRequiredCapacityWLog(
+				        fastpath->log, s, 1ull * fpInputEvents_length + sec_bytes + pad + 8ull))
 					goto fail;
 
 				if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s),
