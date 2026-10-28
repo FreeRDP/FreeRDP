@@ -340,12 +340,12 @@ BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, GDI_RECT* rect)
 	if ((w <= 0) || (h <= 0))
 		invalid = TRUE;
 
-	if (r > 0)
+	if (r >= 0)
 		rect->right = (INT32)r;
 	else
 		invalid = TRUE;
 
-	if (b > 0)
+	if (b >= 0)
 		rect->bottom = (INT32)b;
 	else
 		invalid = TRUE;
