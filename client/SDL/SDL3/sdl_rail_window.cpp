@@ -40,6 +40,9 @@ static constexpr uint64_t kAwaitServerFrameMs = 1000;
 /* Maximum timeout waiting for server restore geometry order. */
 static constexpr uint64_t kAwaitRestoreRectMs = 500;
 
+/* Reports kept to recognize late echoes. */
+static constexpr size_t kMaxReported = 16;
+
 static void armDeadline(uint64_t& until, uint64_t ms)
 {
 	until = SDL_GetTicks() + ms;
@@ -125,7 +128,21 @@ void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 	}
 	/* Accept post-move geometry echoes. */
 	if (SDL_RectsEqual(&rect, &_windowRect))
+	{
+		_reported.clear();
 		return;
+	}
+	/* The echo of an older report can arrive after a newer one was sent. */
+	const auto echo = std::find_if(_reported.begin(), _reported.end(),
+	                               [&](const SDL_Rect& r) { return SDL_RectsEqual(&r, &rect); });
+	if (echo != _reported.end())
+	{
+		WLog_DBG(TAG, "late echo id=0x%08" PRIx32 " %dx%d ignored", static_cast<uint32_t>(_id),
+		         rect.w, rect.h);
+		_reported.erase(_reported.begin(), echo + 1);
+		return;
+	}
+	_reported.clear();
 	/* A resize recreates the render target, so the content needs a full re-copy. */
 	if ((rect.w != _windowRect.w) || (rect.h != _windowRect.h))
 		_painted = false;
@@ -182,6 +199,12 @@ void SdlRailWindow::adoptLocalGeometry(const SDL_Rect& rect)
 	{
 		_visOffset.x += rect.x - _windowRect.x;
 		_visOffset.y += rect.y - _windowRect.y;
+	}
+	if (!SDL_RectsEqual(&rect, &_windowRect))
+	{
+		if (_reported.size() >= kMaxReported)
+			_reported.erase(_reported.begin());
+		_reported.push_back(rect);
 	}
 	_windowRect = rect;
 	_geometryDirty = false;

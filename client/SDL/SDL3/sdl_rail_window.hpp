@@ -303,6 +303,7 @@ class SdlRailWindow
 		SDL_Rect snapRect = { 0, 0, 0, 0 };
 	} _loopEnd;
 	bool _geomApplyPending = false; /* a client-issued geometry/state apply is still settling */
+	std::vector<SDL_Rect> _reported; /* rects sent to the server and not echoed yet */
 	bool _wmRefused = false;        /* WM refused resize; adopt its geometry (takeWmOverride) */
 	SDL_Rect _wmRefusedOuter = { 0, 0, 0, 0 };
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
