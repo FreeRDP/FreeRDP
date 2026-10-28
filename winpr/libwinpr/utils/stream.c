@@ -81,7 +81,7 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 	if (s->capacity >= size)
 		return TRUE;
 
-	const size_t increment = 128ull;
+	const size_t increment = 1024ull * 1024ull;
 	if (size > SIZE_MAX - increment)
 		return FALSE;
 
