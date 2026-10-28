@@ -69,6 +69,7 @@ static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	rdpBrush* brush = &patblt->brush;
 	WINPR_ASSERT(brush->style <= UINT8_MAX);
 	const BYTE style = (BYTE)brush->style;
+	BYTE* data = brush->data;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -79,6 +80,7 @@ static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	WINPR_ASSERT(cache->brush);
 	IFCALLRET(cache->brush->PatBlt, ret, context, patblt);
 	brush->style = style;
+	brush->data = data;
 	return ret;
 }
 
@@ -105,6 +107,7 @@ static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon
 	rdpBrush* brush = &polygon_cb->brush;
 	WINPR_ASSERT(brush->style <= UINT8_MAX);
 	const BYTE style = (UINT8)brush->style;
+	BYTE* data = brush->data;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -115,6 +118,7 @@ static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon
 	WINPR_ASSERT(cache->brush);
 	IFCALLRET(cache->brush->PolygonCB, ret, context, polygon_cb);
 	brush->style = style;
+	brush->data = data;
 	return ret;
 }
 

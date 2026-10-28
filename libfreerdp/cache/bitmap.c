@@ -81,6 +81,7 @@ static BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		return TRUE;
 
 	const BYTE style = WINPR_ASSERTING_INT_CAST(UINT8, brush->style);
+	BYTE* data = brush->data;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -95,6 +96,7 @@ static BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	mem3blt->bitmap = bitmap;
 	IFCALLRET(cache->bitmap->Mem3Blt, ret, context, mem3blt);
 	brush->style = style;
+	brush->data = data;
 	return ret;
 }
 
