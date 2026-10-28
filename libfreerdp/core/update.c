@@ -219,6 +219,20 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 		return FALSE;
 	}
 
+	/* The destination rectangle is inclusive, so destRight < destLeft describes
+	 * an empty (inverted) rectangle. Painting it computes a wrapping width in
+	 * gdi_Bitmap_Paint and trips the int cast assertion there. */
+	if ((bitmapData->destRight < bitmapData->destLeft) ||
+	    (bitmapData->destBottom < bitmapData->destTop))
+	{
+		WLog_ERR(TAG,
+		         "Invalid BITMAP_DATA rectangle: destLeft=%" PRIu32 ", destTop=%" PRIu32
+		         ", destRight=%" PRIu32 ", destBottom=%" PRIu32,
+		         bitmapData->destLeft, bitmapData->destTop, bitmapData->destRight,
+		         bitmapData->destBottom);
+		return FALSE;
+	}
+
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
 		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
