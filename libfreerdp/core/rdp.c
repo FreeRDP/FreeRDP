@@ -1603,6 +1603,17 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 			goto unlock;
 		}
 
+		/* The 3DES CBC context has padding disabled and lives for the whole connection: an
+		 * incomplete block would be kept in it and prepended to the data of the next PDU, which
+		 * then decrypts to more bytes than it has. The sender pads to whole blocks (padlen). */
+		if ((length % 8) != 0)
+		{
+			WLog_Print(rdp->log, WLOG_ERROR,
+			           "FATAL: FIPS data length %" PRId32 " is not a multiple of 3DES block size",
+			           length);
+			goto unlock;
+		}
+
 		if (!security_fips_decrypt(Stream_Pointer(s), (size_t)length, rdp))
 			goto unlock;
 
