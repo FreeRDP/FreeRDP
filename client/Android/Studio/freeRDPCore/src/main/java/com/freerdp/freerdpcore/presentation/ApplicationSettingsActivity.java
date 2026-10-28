@@ -304,7 +304,7 @@ public class ApplicationSettingsActivity
 	{
 		SharedPreferences preferences = get(context);
 		return preferences.getBoolean(
-		    context.getString(R.string.preference_key_ui_invert_scrolling), false);
+		    context.getString(R.string.preference_key_ui_invert_scrolling), true);
 	}
 
 	public static boolean getAskOnExit(Context context)
