@@ -535,6 +535,12 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 	    subsystem->dxgiDeviceContext, (ID3D11Resource*)subsystem->dxgiStage, 0, 0, 0, 0,
 	    (ID3D11Resource*)subsystem->dxgiDesktopImage, 0, &Box);
 
+	if (subsystem->dxgiSurface)
+	{
+		subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
+		subsystem->dxgiSurface = nullptr;
+	}
+
 	hr = subsystem->dxgiStage->lpVtbl->QueryInterface(subsystem->dxgiStage, &IID_IDXGISurface,
 	                                                  (void**)&(subsystem->dxgiSurface));
 
