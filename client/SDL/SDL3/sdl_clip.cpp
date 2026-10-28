@@ -478,7 +478,8 @@ UINT sdlClip::MonitorReady(CliprdrClientContext* context, const CLIPRDR_MONITOR_
 		return ret;
 
 	clipboard->_sync = true;
-	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
+	SDL_Event ev = {};
+	ev.clipboard.type = SDL_EVENT_CLIPBOARD_UPDATE;
 	ev.clipboard.owner = true;
 	ev.clipboard.timestamp = SDL_GetTicksNS();
 	ev.clipboard.num_mime_types = ARRAYSIZE(first_announcement);
@@ -762,10 +763,14 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		WLog_Print(clipboard->_log, WLOG_TRACE, "server announces %s]", m.c_str());
 	}
 
-	/* handleEvent picks the mime types up from _current_mimetypes */
-	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
+	/* handleEvent picks the mime types up from _current_mimetypes. Set every field: an
+	 * initializer list only initializes the union's first member (type). */
+	SDL_Event ev = {};
+	ev.clipboard.type = SDL_EVENT_CLIPBOARD_UPDATE;
 	ev.clipboard.owner = true;
 	ev.clipboard.timestamp = SDL_GetTicksNS();
+	ev.clipboard.num_mime_types = 0;
+	ev.clipboard.mime_types = nullptr;
 
 	auto rc = (SDL_PushEvent(&ev) == 1);
 	return clipboard->SendFormatListResponse(rc);
