@@ -2568,6 +2568,13 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	RECTANGLE_16 areas[256] = WINPR_C_ARRAY_INIT;
 	rdp_update_internal* up = update_cast(update);
 
+	if (!freerdp_is_active_state(update->context))
+	{
+		WLog_Print(up->log, WLOG_ERROR,
+		           "refresh rect request from client before activation, aborting");
+		return FALSE;
+	}
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
@@ -2607,6 +2614,11 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 	WINPR_ASSERT(up);
 	WINPR_ASSERT(s);
 
+	if (!freerdp_is_active_state(update->context))
+	{
+		WLog_Print(up->log, WLOG_ERROR, "suppress output from client before activation, aborting");
+		return FALSE;
+	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
