@@ -139,6 +139,7 @@ class SdlRailWindow
 	[[nodiscard]] SDL_Point serverOrigin() const;
 	/* Inverse of outerRect(): strip insets() off a local outer rect to recover the server rect. */
 	[[nodiscard]] SDL_Rect serverRect(const SDL_Rect& outer) const;
+	void setLocalShift(const SDL_Point& shift);
 
 	void setStyle(uint32_t style, uint32_t exStyle);
 	void setTitle(const std::string& title);
@@ -251,6 +252,7 @@ class SdlRailWindow
 	uint64_t _id;
 	std::unique_ptr<SdlWindow> _win; /* local window+renderer (lazy, main thread) */
 	SDL_Rect _windowRect;            /* server offset/size */
+	SDL_Point _localShift = { 0, 0 }; /* Offset applied to local window coordinates */
 	uint32_t _style = 0;
 	uint32_t _exStyle = 0;
 	/* The shadow-rule suppression report in reconcile is once per window. */

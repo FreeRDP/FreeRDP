@@ -194,10 +194,18 @@ void SdlRail::sendSystemCommand(SdlRailWindow* appWindow, uint16_t command)
 	std::ignore = _rail->ClientSystemCommand(_rail, &syscommand);
 }
 
-void SdlRail::sendWorkArea(const SDL_Rect& area)
+void SdlRail::sendWorkArea(const SDL_Rect& local)
 {
+	/* Convert local display coordinates to server coordinates (relative to primary monitor). */
+	const SDL_Rect area = { local.x - _displayShift.x, local.y - _displayShift.y, local.w,
+		                    local.h };
 	if (!_rail || !_rail->ClientSystemParam || (area.w <= 0) || (area.h <= 0))
 		return;
+	if ((area.x < 0) || (area.y < 0))
+	{
+		WLog_WARN(TAG, "work area %d,%d is outside the primary monitor, not sent", area.x, area.y);
+		return;
+	}
 	if (SDL_RectsEqual(&area, &_sentWorkArea))
 		return;
 
@@ -367,8 +375,9 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
 	/* Window-local to server-absolute, aligned with surface blit anchor. */
 	const SDL_Point origin = appWindow->serverOrigin();
-	x = rpos.x + static_cast<float>(origin.x);
-	y = rpos.y + static_cast<float>(origin.y);
+	/* Input is relative to the top left of the remote desktop, not to the primary monitor. */
+	x = rpos.x + static_cast<float>(origin.x - _inputOrigin.x);
+	y = rpos.y + static_cast<float>(origin.y - _inputOrigin.y);
 	return true;
 }
 
@@ -385,7 +394,31 @@ SdlRailWindow* SdlRail::addWindow(uint64_t id, const SDL_Rect& rect)
 	/* emplace is a no-op if the id already exists; either way first->second is the window. */
 	auto res = _windows.emplace(std::piecewise_construct, std::forward_as_tuple(id),
 	                            std::forward_as_tuple(id, rect));
+	res.first->second.setLocalShift(_localShift);
 	return &res.first->second;
+}
+
+/* Caller holds _windowsLock or runs before any window exists. */
+void SdlRail::updateCoordinates()
+{
+	const auto* settings = _context->common()->context.settings;
+	_displayShift = { freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX),
+		              freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY) };
+	_localShift = railPlatformCaps().positionsReadable ? _displayShift : SDL_Point{ 0, 0 };
+	_inputOrigin = { 0, 0 };
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const auto* mon = static_cast<const rdpMonitor*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
+		if (!mon)
+			continue;
+		_inputOrigin.x = std::min(_inputOrigin.x, mon->x);
+		_inputOrigin.y = std::min(_inputOrigin.y, mon->y);
+	}
+	WLog_DBG(TAG, "coordinates: display shift %d,%d window shift %d,%d input origin %d,%d",
+	         _displayShift.x, _displayShift.y, _localShift.x, _localShift.y, _inputOrigin.x,
+	         _inputOrigin.y);
 }
 
 void SdlRail::enableRemoteAppMode(bool enable)
@@ -695,6 +728,10 @@ bool SdlRail::init(RailClientContext* rail)
 	/* Keep default ServerHandshake. */
 
 	WLog_WARN(TAG, "RemoteApp/RAIL support in the SDL client is experimental");
+	{
+		std::unique_lock lock(_windowsLock);
+		updateCoordinates();
+	}
 	const RailPlatformCaps& caps = railPlatformCaps();
 	WLog_DBG(TAG, "RAIL channel initialized: driver=%s positionsReadable=%d transparentWindows=%d",
 	         sdl::utils::isWaylandDriver() ? "wayland"
@@ -793,6 +830,11 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 		WLog_DBG(TAG, "server move/size start id=0x%08" PRIx32 " type=%" PRIu16 " pos=%d,%d",
 		         localMoveSize->windowId, localMoveSize->moveSizeType, localMoveSize->posX,
 		         localMoveSize->posY);
+		if (auto rail = static_cast<SdlRail*>(context->custom))
+		{
+			std::unique_lock lock(rail->_windowsLock);
+			rail->_moveLoop = { localMoveSize->windowId, 0 };
+		}
 		(void)sdl_push_user_event(SDL_EVENT_USER_RAIL_MOVE, localMoveSize->windowId,
 		                          static_cast<int>(localMoveSize->moveSizeType));
 	}
@@ -828,6 +870,14 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 						rail->_localMove.serverEnded = true;
 					}
 				}
+			}
+			if (rail->_moveLoop.id == localMoveSize->windowId)
+			{
+				const SDL_DisplayID display = rail->_moveLoop.display;
+				rail->_moveLoop = {};
+				auto* moved = rail->getWindow(localMoveSize->windowId);
+				if (moved && (display != 0) && !moved->effectivelyMaximized())
+					rail->moveToDisplay(moved, display);
 			}
 			/* Execute deferred actions now that modal loop has closed. */
 			auto* appWindow = rail->getWindow(localMoveSize->windowId);
@@ -1016,6 +1066,49 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	}
 }
 
+/* Wayland: keep server window position in sync with the active monitor across displays. */
+void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
+{
+	if (railPlatformCaps().positionsReadable)
+		return;
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || appWindow->effectivelyMaximized())
+		return;
+	/* The end of the server move loop would undo it. */
+	if (_moveLoop.id == appWindow->id())
+	{
+		_moveLoop.display = display;
+		return;
+	}
+	moveToDisplay(appWindow, display);
+}
+
+void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
+{
+	const auto* settings = _context->common()->context.settings;
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const auto* mon = static_cast<const rdpMonitor*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
+		if (!mon || (mon->orig_screen != display))
+			continue;
+		const SDL_Rect area = { mon->x, mon->y, mon->width, mon->height };
+		SDL_Rect rect = appWindow->windowRect();
+		const SDL_Point center = { rect.x + rect.w / 2, rect.y + rect.h / 2 };
+		if (SDL_PointInRect(&center, &area))
+			return;
+		rect.x = area.x + std::max(0, (area.w - rect.w) / 2);
+		rect.y = area.y + std::max(0, (area.h - rect.h) / 2);
+		WLog_DBG(TAG, "window 0x%08" PRIx32 " now on display %" PRIu32 ", server move to %d,%d",
+		         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
+		sendClientWindowMove(appWindow, rect);
+		appWindow->adoptLocalGeometry(rect);
+		return;
+	}
+}
+
 /* Send ClientWindowMove with full frame geometry including server margins (caller holds
  * _windowsLock). */
 void SdlRail::sendClientWindowMove(SdlRailWindow* appWindow, const SDL_Rect& serverRect)
@@ -1059,8 +1152,11 @@ void SdlRail::clampIntoDesktop(int& x, int& y, int w, int h) const
 	auto* settings = _context->context()->settings;
 	const int dw = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	x = std::clamp(x, 0, std::max(0, dw - w));
-	y = std::clamp(y, 0, std::max(0, dh - h));
+	/* The remote desktop in local window coordinates. */
+	const int ox = _inputOrigin.x + _localShift.x;
+	const int oy = _inputOrigin.y + _localShift.y;
+	x = std::clamp(x, ox, ox + std::max(0, dw - w));
+	y = std::clamp(y, oy, oy + std::max(0, dh - h));
 }
 
 void SdlRail::noteDragResize(SDL_WindowID id, int w, int h)
@@ -1090,15 +1186,15 @@ void SdlRail::reportMaximizedWorkArea(SdlRailWindow* appWindow)
 	SDL_GetWindowSize(appWindow->window(), &w, &h);
 	if ((w <= 0) || (h <= 0))
 		return;
-	int x = 0;
-	int y = 0;
-	if (railPlatformCaps().positionsReadable)
-		SDL_GetWindowPosition(appWindow->window(), &x, &y);
-
 	/* Clip work area within primary display bounds. */
 	SDL_Rect primary{};
 	if (!SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &primary))
 		return;
+	/* Without readable positions a maximized window is taken to be on the primary monitor. */
+	int x = primary.x;
+	int y = primary.y;
+	if (railPlatformCaps().positionsReadable)
+		SDL_GetWindowPosition(appWindow->window(), &x, &y);
 	const SDL_Rect area = { x, y, w, h };
 	SDL_Rect overlap{};
 	if (!SDL_GetRectIntersection(&area, &primary, &overlap) || !SDL_RectsEqual(&overlap, &area))
@@ -1322,9 +1418,9 @@ void SdlRail::completeLocalMoveIfPending()
 		{
 			/* Measure delta from server anchor on drag-restore. */
 			const SDL_Point sp = appWindow->localMoveServerPos();
-			const SDL_Rect ii = appWindow->insets();
-			px = drag.pointer.x + (x + ii.x) - sp.x;
-			py = drag.pointer.y + (y + ii.y) - sp.y;
+			const SDL_Rect now = appWindow->serverRect({ x, y, w, h });
+			px = drag.pointer.x + now.x - sp.x;
+			py = drag.pointer.y + now.y - sp.y;
 		}
 		else if (!appWindow->effectivelyMaximized())
 		{

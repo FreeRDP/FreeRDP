@@ -278,6 +278,13 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	const auto& ids = sdl->getDisplayIds();
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	/* Announce all monitors in RemoteApp mode so windows can maximize on secondary displays. */
+	if ((nr == 0) && freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+			return FALSE;
+	}
 	if (nr == 0)
 	{
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))

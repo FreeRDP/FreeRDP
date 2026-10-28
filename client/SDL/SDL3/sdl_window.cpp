@@ -394,13 +394,9 @@ bool SdlWindow::fill(SDL_Window* window, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	return SDL_FillSurfaceRect(surface, &rect, color);
 }
 
-rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+static rdpMonitor makeMonitor(SDL_DisplayID id, const SDL_Rect& r, float factor,
+                              bool forceAsPrimary)
 {
-	if (!window)
-		return {};
-
-	const auto& r = rect(window, forceAsPrimary);
-	const float factor = SDL_GetWindowDisplayScale(window);
 	const float dpi = std::roundf(factor * 100.0f);
 
 	WINPR_ASSERT(r.w > 0);
@@ -441,6 +437,34 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	SDL_LogDebug(cat, "monitor.attributes.physicalHeight     %" PRIu32,
 	             monitor.attributes.physicalHeight);
 	return monitor;
+}
+
+rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+{
+	if (!window)
+		return {};
+	return makeMonitor(id, rect(window, forceAsPrimary), SDL_GetWindowDisplayScale(window),
+	                   forceAsPrimary);
+}
+
+/* Dummy windows report wrong sizes on Wayland and X11, use the display. */
+static rdpMonitor queryDisplay(SDL_DisplayID id, bool forceAsPrimary)
+{
+	SDL_Rect r = {};
+	const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(id);
+	if (!mode || !SDL_GetDisplayBounds(id, &r))
+	{
+		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "display %" PRIu32 ": %s", id, SDL_GetError());
+		return {};
+	}
+	if (forceAsPrimary)
+	{
+		r.x = 0;
+		r.y = 0;
+	}
+	r.w = static_cast<int>(std::roundf(static_cast<float>(r.w) * mode->pixel_density));
+	r.h = static_cast<int>(std::roundf(static_cast<float>(r.h) * mode->pixel_density));
+	return makeMonitor(id, r, mode->pixel_density * SDL_GetDisplayContentScale(id), forceAsPrimary);
 }
 
 SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
@@ -792,6 +816,9 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 
 rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 {
+	if (sdl::utils::isWaylandDriver() || sdl::utils::isX11Driver())
+		return queryDisplay(id, forceAsPrimary);
+
 	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
 	if (!window)
 		return {};

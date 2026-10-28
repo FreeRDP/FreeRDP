@@ -1223,6 +1223,9 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_FOCUS_LOST:
 					_rail.handleFocus(ev.windowID, false);
 					return true;
+				case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+					_rail.handleDisplayChanged(ev.windowID, static_cast<SDL_DisplayID>(ev.data1));
+					return true;
 				case SDL_EVENT_WINDOW_MOVED:
 					if (!_rail.suppressServerInput(ev.windowID))
 						_rail.syncGeometry(ev.windowID);
@@ -1415,6 +1418,13 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 	 * 3. repeat until all displays updated.
 	 */
 	const auto primary = SDL_GetPrimaryDisplay();
+	/* Align display offsets to the primary display origin. */
+	auto it = _offsets.find(primary);
+	if (it != _offsets.end())
+	{
+		it->second.second.x = it->second.first.x;
+		it->second.second.y = it->second.first.y;
+	}
 	std::vector<SDL_DisplayID> handled;
 	handled.push_back(primary);
 
@@ -1792,8 +1802,8 @@ bool SdlContext::redraw(bool suppress) const
 	if (!_connected)
 		return true;
 
-	/* In RAIL mode, hiding the desktop window must not suppress server output. */
-	if (suppress && _rail.enabled())
+	/* RemoteApp desktop windows are placeholders, hiding one must not stop server output. */
+	if (suppress && freerdp_settings_get_bool(context()->settings, FreeRDP_RemoteApplicationMode))
 		return true;
 
 	auto gdi = context()->gdi;
