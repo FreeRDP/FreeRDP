@@ -1469,6 +1469,25 @@ BOOL client_auto_reconnect(freerdp* instance)
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL client_auto_reconnect_credentials_rejected(UINT32 error)
+{
+	switch (error)
+	{
+		case FREERDP_ERROR_CONNECT_LOGON_FAILURE:
+		case FREERDP_ERROR_CONNECT_CLIENT_REVOKED:
+		case FREERDP_ERROR_CONNECT_WRONG_PASSWORD:
+		case FREERDP_ERROR_CONNECT_ACCESS_DENIED:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED:
+		case FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRetries,
                                      UINT32 maxRetries)
 {
@@ -1496,13 +1515,19 @@ static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRe
 		if (freerdp_reconnect(instance))
 			return TRUE;
 
-		switch (freerdp_get_last_error(instance->context))
+		/* The server can also reject the credentials on a reconnect attempt, e.g. after a
+		 * password change. Retrying them only locks the account sooner. */
+		const UINT err = freerdp_get_last_error(instance->context);
+		if (client_auto_reconnect_credentials_rejected(err))
 		{
-			case FREERDP_ERROR_CONNECT_CANCELLED:
-				WLog_WARN(TAG, "Autoreconnect aborted by user");
-				return FALSE;
-			default:
-				break;
+			WLog_WARN(TAG, "Autoreconnect aborted: credentials do not work [%s]",
+			          freerdp_get_last_error_name(err));
+			return FALSE;
+		}
+		if (err == FREERDP_ERROR_CONNECT_CANCELLED)
+		{
+			WLog_WARN(TAG, "Autoreconnect aborted by user");
+			return FALSE;
 		}
 
 		for (SSIZE_T x = 0; x < delay / 10; x++)
@@ -1575,24 +1600,16 @@ BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_even
 	}
 
 	const UINT err = freerdp_get_last_error(instance->context);
-	switch (err)
+	if (client_auto_reconnect_credentials_rejected(err))
 	{
-		case FREERDP_ERROR_CONNECT_LOGON_FAILURE:
-		case FREERDP_ERROR_CONNECT_CLIENT_REVOKED:
-		case FREERDP_ERROR_CONNECT_WRONG_PASSWORD:
-		case FREERDP_ERROR_CONNECT_ACCESS_DENIED:
-		case FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION:
-		case FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT:
-		case FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED:
-		case FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS:
-			WLog_WARN(TAG, "Connection aborted: credentials do not work [%s]",
-			          freerdp_get_last_error_name(err));
-			return FALSE;
-		case FREERDP_ERROR_CONNECT_CANCELLED:
-			WLog_WARN(TAG, "Connection aborted by user");
-			return FALSE;
-		default:
-			break;
+		WLog_WARN(TAG, "Connection aborted: credentials do not work [%s]",
+		          freerdp_get_last_error_name(err));
+		return FALSE;
+	}
+	if (err == FREERDP_ERROR_CONNECT_CANCELLED)
+	{
+		WLog_WARN(TAG, "Connection aborted by user");
+		return FALSE;
 	}
 
 	handle_window_events_t arg = { .instance = instance,
