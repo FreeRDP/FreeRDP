@@ -161,6 +161,7 @@ struct rdp_rdp
 	rdpSettings* settings;
 	rdpSettings* originalSettings;
 	rdpSettings* remoteSettings;
+	UINT32 redirectionCount;
 	rdpTransport* transport;
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;
