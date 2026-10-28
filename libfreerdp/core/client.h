@@ -66,6 +66,10 @@ typedef struct
 	/* The dynamic channel the data is sent on instead, see freerdp_channels_set_static_bridge.
 	 * Set under channels->channelsLock. */
 	struct rdp_channel_bridge* bridge;
+	/* Once a static channel is tunnelled its original transport must not be used again.
+	 * dataLock serializes delivery with the transition to the tunnel. */
+	BOOL tunneled;
+	CRITICAL_SECTION dataLock;
 #endif
 } CHANNEL_OPEN_DATA;
 
@@ -113,6 +117,9 @@ struct rdp_channels
 
 	DrdynvcClientContext* drdynvc;
 	CRITICAL_SECTION channelsLock;
+#if defined(WITH_RDPEUDP)
+	size_t dataLockCount;
+#endif
 
 	wHashTable* channelEvents;
 };
