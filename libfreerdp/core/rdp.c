@@ -1573,6 +1573,9 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		goto unlock;
 	}
 
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, length))
+		goto unlock;
+
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 12))
