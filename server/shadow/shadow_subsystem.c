@@ -202,8 +202,8 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
 #endif
 
 int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
-    const BYTE* pixels, UINT32 format, BOOL premultiplied, UINT32 width, UINT32 height,
-    SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor)
+    const BYTE* WINPR_RESTRICT pixels, UINT32 format, BOOL premultiplied, UINT32 width,
+    UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor)
 {
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;
@@ -217,6 +217,8 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 
 	andStep = ((width + 7) / 8);
 	andStep += (andStep % 2);
+
+	WINPR_ASSERT(pointerColor);
 
 	pointerColor->lengthXorMask = height * xorStep;
 	pointerColor->xorMaskData = (BYTE*)calloc(1, pointerColor->lengthXorMask);
@@ -236,6 +238,7 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 
 	for (size_t y = 0; y < height; y++)
 	{
+		WINPR_ASSERT(pixels);
 		const BYTE* pSrc8 = &pixels[(width * bpp) * (height - 1 - y)];
 		BYTE* pDst8 = &(pointerColor->xorMaskData[y * xorStep]);
 
