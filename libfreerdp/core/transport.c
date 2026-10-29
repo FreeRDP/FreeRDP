@@ -2197,8 +2197,20 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			status = 1;
 			break;
 
-		default:
+		case BIO_CTRL_PUSH:
+		case BIO_CTRL_POP:
 			status = 0;
+			break;
+
+		case BIO_C_GET_FD:
+		case BIO_C_SET_FD:
+			status = -1;
+			break;
+
+		default:
+			WLog_ERR(TAG, "Unsupported BIO_CTRL %d", cmd);
+			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+			status = -1;
 			break;
 	}
 
