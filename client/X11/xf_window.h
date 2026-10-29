@@ -109,6 +109,7 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX,
                                  UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects);
 void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow);
+void xf_UpdateWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow);
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
@@ -121,6 +122,7 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
                             int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight);
+void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow);
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 

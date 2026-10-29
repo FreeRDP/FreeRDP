@@ -41,6 +41,10 @@ struct xf_localmove
 	int root_y;
 	int window_x;
 	int window_y;
+	/* Retain a received release while the WM geometry is still changing. */
+	BOOL completionPending;
+	int release_x;
+	int release_y;
 	enum xf_localmove_state state;
 	int direction;
 };
@@ -63,6 +67,9 @@ struct xf_app_window
 	UINT32 dwStyle;
 	UINT32 dwExStyle;
 	UINT32 showState;
+	BOOL windowStyleKnown;
+	BOOL minMaxInfoKnown;
+	RAIL_MINMAXINFO_ORDER minMaxInfo;
 
 	INT32 clientOffsetX;
 	INT32 clientOffsetY;
@@ -96,6 +103,9 @@ struct xf_app_window
 	BOOL unknownMarginWarning;
 	UINT64 lastUnknownMarginReconcile;
 	BOOL serverGeometryPending;
+	BOOL visibilityShapeDeferred;
+	/* Suppress post-release echoes until the drawing channel catches up. */
+	UINT64 localMoveGeometryTime;
 	/* A real reparented ConfigureNotify needs a current root/size snapshot. */
 	BOOL configureGeometryPending;
 	/* Deduplicate only the last successfully queued, still-unanswered move.
@@ -117,6 +127,7 @@ struct xf_app_window
 	BOOL maxVert;
 	BOOL maxHorz;
 	BOOL minimized;
+	BOOL restoreGeometryPending;
 	BOOL rail_ignore_configure;
 	BOOL rail_fullscreen_normalizing;
 	/* Surface updates were skipped while the X window was unmapped, the next
@@ -147,6 +158,8 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
 
 BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow);
+
+BOOL xf_rail_window_can_resize(const xfAppWindow* appWindow);
 
 void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
 

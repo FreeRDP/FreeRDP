@@ -555,6 +555,11 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 				if (!appWindow)
 					return TRUE;
 
+				/* Focus crossings also occur for menus and grabs. Activate only
+				 * on deliberate button input, before Windows hit-tests the click. */
+				if (down && !xf_rail_send_activate(xfc, window, TRUE))
+					return FALSE;
+
 				/* Translate to desktop coordinates */
 				XTranslateCoordinates(xfc->display, window, RootWindowOfScreen(xfc->screen), x, y,
 				                      &x, &y, &childWindow);
@@ -1159,6 +1164,10 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 		if (app)
 		{
 			WINPR_ASSERT(appWindow);
+			/* Local focus/normal-state notifications can precede the server's
+			 * restored bounds. Do not report the minimized placeholder back. */
+			if ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) && !appWindow->minimized)
+				appWindow->restoreGeometryPending = TRUE;
 			if (appWindow->maxVert && appWindow->maxHorz && !appWindow->minimized)
 			{
 				if (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
@@ -1198,6 +1207,20 @@ BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEve
 {
 	if (!xfc->remote_app)
 		return FALSE;
+
+	if (((event->type == UnmapNotify) && (event->xunmap.window == appWindow->handle)) ||
+	    ((event->type == DestroyNotify) && (event->xdestroywindow.window == appWindow->handle)))
+	{
+		/* Discard completion work when its drawable disappears. */
+		appWindow->local_move.state = LMS_NOT_ACTIVE;
+		appWindow->local_move.completionPending = FALSE;
+		appWindow->configureGeometryPending = FALSE;
+		appWindow->localMoveGeometryTime = 0;
+		appWindow->visibilityShapeDeferred = FALSE;
+		if (event->type == UnmapNotify)
+			xf_UpdateWindowVisibilityRects(xfc, appWindow);
+		return FALSE;
+	}
 
 	switch (appWindow->local_move.state)
 	{
@@ -1262,7 +1285,10 @@ BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEve
 						if ((key == XK_Return) || (key == XK_KP_Enter))
 							(void)xf_rail_end_local_move(xfc, appWindow);
 						else if (key == XK_Escape)
+						{
+							appWindow->local_move.completionPending = FALSE;
 							appWindow->local_move.state = LMS_TERMINATING;
+						}
 						/* Arrow keys and Escape/Enter must reach the server. */
 						return FALSE;
 					}
@@ -1271,12 +1297,6 @@ BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEve
 				case KeyRelease:
 					return (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
 					       (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD);
-
-				case UnmapNotify:
-				case DestroyNotify:
-					/* A disappearing window is not a completed local geometry. */
-					appWindow->local_move.state = LMS_NOT_ACTIVE;
-					return FALSE;
 
 				case ConfigureNotify:
 				case VisibilityNotify:

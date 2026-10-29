@@ -30,6 +30,7 @@
 #include <winpr/sysinfo.h>
 
 #include <freerdp/client/rail.h>
+#include <freerdp/channels/channels.h>
 
 #include "xf_window.h"
 #include "xf_rail.h"
@@ -224,14 +225,6 @@ static UINT xf_rail_send_workarea(xfContext* xfc)
 BOOL xf_rail_schedule_workarea(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
-
-	xfWorkArea current = WINPR_C_ARRAY_INIT;
-	if (!xf_rail_get_workarea(xfc, &current))
-	{
-		WLog_Print(xfc->log, WLOG_DEBUG, "Suppressing work area update: current value unavailable");
-		return TRUE;
-	}
-
 	return xf_rail_send_workarea(xfc) == CHANNEL_RC_OK;
 }
 
@@ -247,16 +240,32 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 		return TRUE;
 	}
 
-	if (enabled)
-		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	/* A deliberate application click may raise its X11 window without
+	 * changing the Windows stacking order. Do not activate menus, tooltips,
+	 * disabled owners or windows that explicitly reject activation. */
+	if (enabled && (!appWindow->is_mapped || appWindow->is_transient ||
+	                (appWindow->rail_state == WINDOW_SHOW_MINIMIZED) ||
+	                (appWindow->dwExStyle & WS_EX_NOACTIVATE) ||
+	                (appWindow->dwStyle & (WS_DISABLED | WS_MINIMIZE)) ||
+	                (xfc->railActiveWindowId == appWindow->windowId)))
+	{
+		xf_rail_return_window(appWindow, FALSE);
+		return TRUE;
+	}
 
 	WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 	activate.windowId = (UINT32)appWindow->windowId;
 	xf_rail_return_window(appWindow, FALSE);
 
 	activate.enabled = enabled;
+	if (!xfc->rail || !xfc->rail->ClientActivate)
+		return FALSE;
 	const UINT rc = xfc->rail->ClientActivate(xfc->rail, &activate);
-	return rc == CHANNEL_RC_OK;
+	if (rc != CHANNEL_RC_OK)
+		return FALSE;
+	/* The X11 input path runs on the RDP main thread. Drain the channel
+	 * write queue before fast-path input can overtake this activation. */
+	return freerdp_channels_process_pending_messages(xfc->common.context.instance) == 1;
 }
 
 BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command)
@@ -385,11 +394,20 @@ void xf_rail_flush_configure_geometry(xfContext* xfc)
 	for (size_t index = 0; index < count; index++)
 	{
 		xfAppWindow* window = xf_rail_get_window(xfc, *(UINT64*)keys[index], TRUE);
-		if (!window || !window->configureGeometryPending)
+		if (!window)
 			continue;
 		if (!window->is_mapped)
+		{
 			window->configureGeometryPending = FALSE;
-		else if (xf_rail_sync_configure_geometry(xfc, window) &&
+			window->local_move.completionPending = FALSE;
+		}
+		else if (window->local_move.completionPending)
+		{
+			/* Retry a received release once at this batch boundary. A changing
+			 * WM snapshot must not require another click to finish the gesture. */
+			(void)xf_rail_end_local_move(xfc, window);
+		}
+		else if (window->configureGeometryPending && xf_rail_sync_configure_geometry(xfc, window) &&
 		         (window->decorations || (xfc->focused && !window->rail_ignore_configure)))
 			(void)xf_rail_adjust_position(xfc, window);
 	}
@@ -401,6 +419,13 @@ BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow)
 {
 	WINPR_ASSERT(appWindow);
 	return appWindow->resizeMarginXKnown && appWindow->resizeMarginYKnown;
+}
+
+BOOL xf_rail_window_can_resize(const xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(appWindow);
+	/* Missing style information is not an explicit fixed-size contract. */
+	return !appWindow->windowStyleKnown || ((appWindow->dwStyle & WS_SIZEBOX) != 0);
 }
 
 void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow)
@@ -504,11 +529,33 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
-	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
+	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE ||
+	    appWindow->restoreGeometryPending || (appWindow->dwStyle & WS_MINIMIZE))
 		return FALSE;
+	if (appWindow->localMoveGeometryTime != 0)
+	{
+		/* Move-end can precede final Window Information on another channel.
+		 * A no-op need not produce geometry, so do not suppress future WM
+		 * operations indefinitely if only the end notification was received. */
+		if (winpr_GetTickCount64NS() - appWindow->localMoveGeometryTime < 1000ULL * 1000000ULL)
+			return FALSE;
+		appWindow->localMoveGeometryTime = 0;
+		xf_UpdateWindowVisibilityRects(xfc, appWindow);
+	}
 
 	/* Keep legitimate local moves: the server needs the WM's final geometry
 	 * to route mouse input correctly. Matching server echoes need no report. */
+	if (!xf_rail_window_can_resize(appWindow) && appWindow->windowWidth &&
+	    appWindow->windowHeight &&
+	    ((appWindow->width != (INT64)appWindow->windowWidth) ||
+	     (appWindow->height != (INT64)appWindow->windowHeight)))
+	{
+		/* A WM may ignore the size hints. Keep a valid move, but never turn
+		 * it into a programmatic resize of a fixed-size Windows application. */
+		xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y,
+		              WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
+		              WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
+	}
 	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
 	    appWindow->width != (INT64)appWindow->windowWidth ||
 	    appWindow->height != (INT64)appWindow->windowHeight)
@@ -553,11 +600,22 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 		return TRUE;
 	if (appWindow->local_move.state == LMS_NOT_ACTIVE)
 		return FALSE;
+	const BOOL pointer = (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
+	                     (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD);
+	if (!appWindow->local_move.completionPending)
+	{
+		if (pointer && !XQueryPointer(xfc->display, appWindow->handle, &root_window, &child_window,
+		                              &x, &y, &child_x, &child_y, &mask))
+			return FALSE;
+		appWindow->local_move.release_x = x;
+		appWindow->local_move.release_y = y;
+		appWindow->local_move.completionPending = TRUE;
+	}
 	/* A release/Enter may arrive before the event-batch flush. Complete a
 	 * resize using its current geometry, not the last synthetic notification. */
 	if (appWindow->configureGeometryPending && !xf_rail_sync_configure_geometry(xfc, appWindow) &&
 	    (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE))
-		return FALSE;
+		return TRUE;
 
 	if (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE)
 	{
@@ -572,20 +630,19 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
 	/* only send the mouse coordinates if not a keyboard move or size */
-	if ((appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
-	    (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	if (pointer)
 	{
-		if (!XQueryPointer(xfc->display, appWindow->handle, &root_window, &child_window, &x, &y,
-		                   &child_x, &child_y, &mask))
-			return FALSE;
-
-		if (!freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1, x, y))
+		if (!freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1,
+		                                      appWindow->local_move.release_x,
+		                                      appWindow->local_move.release_y))
 			return FALSE;
 	}
 
 	/* Keep server bounds authoritative. A local completion is not a server
 	 * acknowledgement, and the returned visible rectangle may be adjusted. */
 	appWindow->local_move.state = LMS_TERMINATING;
+	appWindow->local_move.completionPending = FALSE;
+	appWindow->localMoveGeometryTime = winpr_GetTickCount64NS();
 	WLog_Print(xfc->log, WLOG_DEBUG,
 	           "[rail-geometry] local move completion windowId=0x%08" PRIx64 " direction=%d",
 	           appWindow->windowId, appWindow->local_move.direction);
@@ -707,6 +764,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		appWindow->dwStyle = windowState->style;
 		appWindow->dwExStyle = windowState->extendedStyle;
+		appWindow->windowStyleKnown = TRUE;
 		window_state_log_style(xfc->log, windowState);
 
 		/* Ensure window always gets a window title */
@@ -758,6 +816,10 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		 * do not wait for an exact echo or permanently suppress retries. */
 		appWindow->windowMovePending = FALSE;
 	}
+	if ((fieldFlags & (WINDOW_ORDER_FIELD_WND_OFFSET | WINDOW_ORDER_FIELD_WND_SIZE)) &&
+	    ((appWindow->local_move.state == LMS_TERMINATING) ||
+	     (appWindow->local_move.state == LMS_NOT_ACTIVE)))
+		appWindow->localMoveGeometryTime = 0;
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
@@ -802,6 +864,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	{
 		appWindow->dwStyle = windowState->style;
 		appWindow->dwExStyle = windowState->extendedStyle;
+		appWindow->windowStyleKnown = TRUE;
 		window_state_log_style(xfc->log, windowState);
 	}
 
@@ -895,10 +958,6 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	/* Update Window */
 
-	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
-	{
-	}
-
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
 		xf_ShowWindow(xfc, appWindow, WINPR_ASSERTING_INT_CAST(UINT8, appWindow->showState));
@@ -912,15 +971,11 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (position_or_size_updated)
 	{
+		if ((fieldFlags & (WINDOW_ORDER_FIELD_WND_OFFSET | WINDOW_ORDER_FIELD_WND_SIZE)) &&
+		    !(appWindow->dwStyle & WS_MINIMIZE) && (appWindow->rail_state != WINDOW_SHOW_MINIMIZED))
+			appWindow->restoreGeometryPending = FALSE;
 		if (appWindow->local_move.state != LMS_NOT_ACTIVE)
 			appWindow->serverGeometryPending = TRUE;
-		const INT32 visibilityRectsOffsetX =
-		    (appWindow->visibleOffsetX -
-		     (appWindow->clientOffsetX - appWindow->windowClientDeltaX));
-		const INT32 visibilityRectsOffsetY =
-		    (appWindow->visibleOffsetY -
-		     (appWindow->clientOffsetY - appWindow->windowClientDeltaY));
-
 		/*
 		 * The rail server like to set the window to a small size when it is minimized even though
 		 * it is hidden in some cases this can cause the window not to restore back to its original
@@ -946,15 +1001,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				              WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
 			}
 
-			/* Show a maximized window fully; its frame-inset visibility rects would clip it. */
-			if (maximized)
-				xf_ClearWindowVisibilityRects(xfc, appWindow);
-			else
-				xf_SetWindowVisibilityRects(
-				    xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetX),
-				    WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetY),
-				    appWindow->visibilityRects,
-				    WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
+			xf_UpdateWindowVisibilityRects(xfc, appWindow);
 		}
 
 		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
@@ -967,6 +1014,9 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & (WINDOW_ORDER_STATE_NEW | WINDOW_ORDER_FIELD_STYLE))
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	if (fieldFlags & (WINDOW_ORDER_STATE_NEW | WINDOW_ORDER_FIELD_STYLE |
+	                  WINDOW_ORDER_FIELD_WND_SIZE | WINDOW_ORDER_FIELD_SHOW))
+		xf_UpdateWindowSizeHints(xfc, appWindow);
 
 	/* We should only be using the visibility rects for shaping the window */
 	/*if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
@@ -1314,7 +1364,8 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
-		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND");
+		/* Cache only server-confirmed activation, not an optimistic client echo. */
+		xfc->railActiveWindowId = monitoredDesktop->activeWindowId;
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
@@ -1444,8 +1495,13 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 
 	if (!localMoveSize->isMoveSizeStart)
 	{
-		/* End coordinates are a desktop position, not a mouse offset to
-		 * translate through the local window. Reconcile cached server bounds. */
+		/* The end position is signed desktop geometry, not a pointer offset.
+		 * Keep visible bounds and sizes sourced from Window Information orders. */
+		WLog_Print(xfc->log, WLOG_DEBUG,
+		           "[rail-geometry] server move end windowId=0x%08" PRIx64 " position=%" PRId16
+		           ",%" PRId16 " state=%d",
+		           appWindow->windowId, localMoveSize->posX, localMoveSize->posY,
+		           appWindow->local_move.state);
 		xf_EndLocalMoveSize(xfc, appWindow);
 		xf_rail_return_window(appWindow, FALSE);
 		return CHANNEL_RC_OK;
@@ -1646,6 +1702,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 		return 0;
 
 	xfc->rail = rail;
+	xfc->railActiveWindowId = 0;
 	xf_rail_register_update_callbacks(context->update);
 	rail->custom = (void*)xfc;
 	rail->ServerExecuteResult = xf_rail_server_execute_result;
@@ -1724,6 +1781,10 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
 	appWindow->y = y;
 	appWindow->width = WINPR_ASSERTING_INT_CAST(int, width);
 	appWindow->height = WINPR_ASSERTING_INT_CAST(int, height);
+	appWindow->windowOffsetX = x;
+	appWindow->windowOffsetY = y;
+	appWindow->windowWidth = width;
+	appWindow->windowHeight = height;
 
 	xf_AppWindowsLock(xfc);
 	if (!xf_AppWindowCreate(xfc, appWindow))
@@ -1748,6 +1809,8 @@ BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)
 
 	xf_lock_x11(xfc);
 	const BOOL res = HashTable_Remove(xfc->railWindows, &id);
+	if (res && xfc->railActiveWindowId == id)
+		xfc->railActiveWindowId = 0;
 	xf_unlock_x11(xfc);
 	return res;
 }

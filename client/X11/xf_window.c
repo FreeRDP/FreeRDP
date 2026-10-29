@@ -1048,6 +1048,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
 	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	xf_UpdateWindowSizeHints(xfc, appWindow);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
 	xf_ShowWindow(xfc, appWindow, WINDOW_SHOW);
 	LogDynAndXClearWindow(xfc->log, xfc->display, appWindow->handle);
@@ -1150,21 +1151,42 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_U
                             WINPR_ATTR_UNUSED int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight)
 {
-	XSizeHints* size_hints = nullptr;
-	size_hints = XAllocSizeHints();
+	appWindow->minMaxInfo.minTrackWidth = WINPR_ASSERTING_INT_CAST(INT16, minTrackWidth);
+	appWindow->minMaxInfo.minTrackHeight = WINPR_ASSERTING_INT_CAST(INT16, minTrackHeight);
+	appWindow->minMaxInfo.maxTrackWidth = WINPR_ASSERTING_INT_CAST(INT16, maxTrackWidth);
+	appWindow->minMaxInfo.maxTrackHeight = WINPR_ASSERTING_INT_CAST(INT16, maxTrackHeight);
+	appWindow->minMaxInfoKnown = TRUE;
+	xf_UpdateWindowSizeHints(xfc, appWindow);
+}
 
-	if (size_hints)
+void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	if ((!appWindow->windowStyleKnown && !appWindow->minMaxInfoKnown) ||
+	    (appWindow->dwStyle & WS_MINIMIZE) || (appWindow->rail_state == WINDOW_SHOW_MINIMIZED))
+		return;
+	XSizeHints hints = { .flags = PResizeInc, .width_inc = 1, .height_inc = 1 };
+	if (!xf_rail_window_can_resize(appWindow))
 	{
-		size_hints->flags = PMinSize | PMaxSize | PResizeInc;
-		size_hints->min_width = minTrackWidth;
-		size_hints->min_height = minTrackHeight;
-		size_hints->max_width = maxTrackWidth;
-		size_hints->max_height = maxTrackHeight;
-		/* to speedup window drawing we need to select optimal value for sizing step. */
-		size_hints->width_inc = size_hints->height_inc = 1;
-		XSetWMNormalHints(xfc->display, appWindow->handle, size_hints);
-		XFree(size_hints);
+		if (!appWindow->windowWidth || !appWindow->windowHeight)
+			return;
+		/* RAIL min/max ranges alone do not grant resize permission. Publish
+		 * the current server size, including later programmatic size changes. */
+		hints.flags |= PMinSize | PMaxSize;
+		hints.min_width = hints.max_width = WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth);
+		hints.min_height = hints.max_height =
+		    WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight);
 	}
+	else if (appWindow->minMaxInfoKnown)
+	{
+		hints.flags |= PMinSize | PMaxSize;
+		hints.min_width = appWindow->minMaxInfo.minTrackWidth;
+		hints.min_height = appWindow->minMaxInfo.minTrackHeight;
+		hints.max_width = appWindow->minMaxInfo.maxTrackWidth;
+		hints.max_height = appWindow->minMaxInfo.maxTrackHeight;
+	}
+	XSetWMNormalHints(xfc->display, appWindow->handle, &hints);
 }
 
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y)
@@ -1179,8 +1201,11 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	appWindow->local_move.root_x = x;
 	appWindow->local_move.root_y = y;
 	appWindow->local_move.state = LMS_STARTING;
+	appWindow->local_move.completionPending = FALSE;
+	appWindow->localMoveGeometryTime = 0;
 	appWindow->local_move.direction = direction;
 	appWindow->serverGeometryPending = FALSE;
+	xf_UpdateWindowVisibilityRects(xfc, appWindow);
 	WLog_Print(xfc->log, WLOG_DEBUG,
 	           "[rail-geometry] local move start windowId=0x%08" PRIx64 " direction=%d",
 	           appWindow->windowId, direction);
@@ -1202,6 +1227,7 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 {
 	if (appWindow->local_move.state == LMS_NOT_ACTIVE)
 		return;
+	const BOOL completedLocally = appWindow->local_move.state == LMS_TERMINATING;
 
 	if (appWindow->local_move.state == LMS_STARTING)
 	{
@@ -1223,8 +1249,17 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	}
 
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
-	if (appWindow->serverGeometryPending)
+	appWindow->local_move.completionPending = FALSE;
+	/* Window Information and move-end arrive on different channels. After
+	 * local completion, pending bounds may still describe the start of the
+	 * gesture. Updates received while terminating are already applied; later
+	 * updates will apply normally. Replaying the cache here produces an X11
+	 * configure that can undo the completed move through ClientWindowMove.
+	 * Only a server cancellation needs geometry deferred by an active WM move. */
+	if (!completedLocally && appWindow->serverGeometryPending)
 		xf_rail_reconcile_window(xfc, appWindow);
+	appWindow->serverGeometryPending = FALSE;
+	xf_UpdateWindowVisibilityRects(xfc, appWindow);
 }
 
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
@@ -1264,6 +1299,9 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
+	if ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) &&
+	    ((state == WINDOW_SHOW) || (state == WINDOW_SHOW_MAXIMIZED)))
+		appWindow->restoreGeometryPending = TRUE;
 
 	switch (state)
 	{
@@ -1272,6 +1310,7 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			break;
 
 		case WINDOW_SHOW_MINIMIZED:
+			appWindow->restoreGeometryPending = FALSE;
 			appWindow->minimized = TRUE;
 			XIconifyWindow(xfc->display, appWindow->handle, xfc->screen_number);
 			break;
@@ -1390,6 +1429,39 @@ void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
 	/* Drop the bounding shape so the whole window is visible. */
 	XShapeCombineMask(xfc->display, appWindow->handle, ShapeBounding, 0, 0, None, ShapeSet);
 #endif
+}
+
+void xf_UpdateWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	/* A server visibility shape can lag behind a WM resize. It also clips
+	 * input, so a release in the enlarged area would miss the client window.
+	 * Keep it rectangular through the gesture and until server bounds agree. */
+	if ((appWindow->local_move.state != LMS_NOT_ACTIVE) ||
+	    (appWindow->visibilityShapeDeferred &&
+	     ((appWindow->localMoveGeometryTime != 0) ||
+	      (appWindow->width != (INT64)appWindow->windowWidth) ||
+	      (appWindow->height != (INT64)appWindow->windowHeight))))
+	{
+		appWindow->visibilityShapeDeferred = TRUE;
+		xf_ClearWindowVisibilityRects(xfc, appWindow);
+		return;
+	}
+	appWindow->visibilityShapeDeferred = FALSE;
+	if (appWindow->dwStyle & WS_MAXIMIZE)
+	{
+		/* Maximized frame insets must not clip the work area. */
+		xf_ClearWindowVisibilityRects(xfc, appWindow);
+		return;
+	}
+	const INT32 x =
+	    appWindow->visibleOffsetX - (appWindow->clientOffsetX - appWindow->windowClientDeltaX);
+	const INT32 y =
+	    appWindow->visibleOffsetY - (appWindow->clientOffsetY - appWindow->windowClientDeltaY);
+	xf_SetWindowVisibilityRects(xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, x),
+	                            WINPR_ASSERTING_INT_CAST(uint32_t, y), appWindow->visibilityRects,
+	                            WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
 }
 
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
