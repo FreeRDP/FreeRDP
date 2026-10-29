@@ -1024,6 +1024,22 @@ UINT sdlClip::ReceiveFormatDataRequest(CliprdrClientContext* context,
 #endif
 	{
 		std::scoped_lock lock(clipboard->_lock);
+		const UINT32 mask = freerdp_settings_get_uint32(context->rdpcontext->settings,
+		                                                FreeRDP_ClipboardFeatureMask);
+
+		const UINT32 fileId =
+		    ClipboardRegisterFormat(clipboard->_system, s_type_FileGroupDescriptorW);
+		if (fileId == formatDataRequest->requestedFormatId)
+		{
+			if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES) == 0)
+				return clipboard->SendDataResponse(nullptr, 0);
+		}
+		else
+		{
+			if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE) == 0)
+				return clipboard->SendDataResponse(nullptr, 0);
+		}
+
 		/* ClipDataCb is waiting on the main thread for the server: a local application is
 		 * reading our offer of server data, so the local clipboard holds no client data to
 		 * give. Answer now. Queued for the main thread, the request would wait for the end of
