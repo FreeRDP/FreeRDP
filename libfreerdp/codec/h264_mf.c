@@ -552,6 +552,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 	if (h264->Compressor)
 	{
+		WLog_Print(h264->log, WLOG_ERROR, "MediaFoundation H264 encoder is not implemented");
+		goto error;
 	}
 	else
 	{

@@ -307,11 +307,11 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, FALSE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_OffscreenSupportLevel, FALSE))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel, 0))
 		return FALSE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel, GLYPH_SUPPORT_NONE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_BrushSupportLevel, FALSE))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_BrushSupportLevel, 0))
 		return FALSE;
 	ZeroMemory(freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport), 32);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, TRUE))
@@ -330,7 +330,7 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FastPathOutput, TRUE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_LargePointerFlag, TRUE))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag, 1))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled, FALSE))
 		return FALSE;
