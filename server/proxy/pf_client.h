@@ -31,4 +31,21 @@
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 WINPR_ATTR_NODISCARD DWORD WINAPI pf_client_start(LPVOID arg);
 
+/** @brief Queue an input event or update request received by the proxy server thread.
+ *
+ *  The connection to the server is owned by the proxy client thread, which resets it on
+ *  redirection, reconnect and disconnect. No other thread must send on it, so the proxy server
+ *  thread queues here and the proxy client thread sends.
+ *
+ *  @param pc The proxy client context
+ *  @param id The message id, of \b Input_Class or \b Update_Class
+ *  @param wParam message specific argument, flags or count
+ *  @param lParam message specific argument. For \b Update_Class an allocated buffer or
+ *  \b nullptr, ownership is taken even on failure.
+ *
+ *  @return \b TRUE for success, \b FALSE otherwise
+ */
+WINPR_ATTR_NODISCARD BOOL pf_client_post_message(pClientContext* pc, UINT32 id, size_t wParam,
+                                                 void* lParam);
+
 #endif /* FREERDP_SERVER_PROXY_PFCLIENT_H */

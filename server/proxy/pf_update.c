@@ -22,6 +22,7 @@
  */
 
 #include <freerdp/display.h>
+#include <freerdp/message.h>
 #include <freerdp/session.h>
 #include <winpr/assert.h>
 #include <winpr/image.h>
@@ -47,12 +48,18 @@ static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTAN
 	pClientContext* pc = proxy_data_get_client_context(ps->pdata);
 	WINPR_ASSERT(pc);
 
-	if (!freerdp_is_active_state(&pc->cctx.context))
-		return TRUE;
+	/* The proxy client thread owns the connection to the server, only it may send on it */
+	RECTANGLE_16* copy = nullptr;
+	if (count > 0)
+	{
+		copy = calloc(count, sizeof(RECTANGLE_16));
+		if (!copy)
+			return FALSE;
 
-	WINPR_ASSERT(pc->cctx.context.update);
-	WINPR_ASSERT(pc->cctx.context.update->RefreshRect);
-	return pc->cctx.context.update->RefreshRect(&pc->cctx.context, count, areas);
+		CopyMemory(copy, areas, sizeof(RECTANGLE_16) * count);
+	}
+
+	return pf_client_post_message(pc, MakeMessageId(Update, RefreshRect), count, copy);
 }
 
 WINPR_ATTR_NODISCARD
@@ -65,12 +72,43 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const REC
 	pClientContext* pc = proxy_data_get_client_context(ps->pdata);
 	WINPR_ASSERT(pc);
 
-	if (!freerdp_is_active_state(&pc->cctx.context))
+	/* The proxy client thread owns the connection to the server, only it may send on it */
+	RECTANGLE_16* copy = nullptr;
+	if (area)
+	{
+		copy = calloc(1, sizeof(RECTANGLE_16));
+		if (!copy)
+			return FALSE;
+
+		CopyMemory(copy, area, sizeof(RECTANGLE_16));
+	}
+
+	return pf_client_post_message(pc, MakeMessageId(Update, SuppressOutput), allow, copy);
+}
+
+BOOL pf_client_process_update_message(pClientContext* pc, const wMessage* msg)
+{
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(msg);
+
+	rdpContext* context = &pc->cctx.context;
+	if (!freerdp_is_active_state(context))
 		return TRUE;
 
-	WINPR_ASSERT(pc->cctx.context.update);
-	WINPR_ASSERT(pc->cctx.context.update->SuppressOutput);
-	return pc->cctx.context.update->SuppressOutput(&pc->cctx.context, allow, area);
+	WINPR_ASSERT(context->update);
+	switch (GetMessageType(msg->id))
+	{
+		case Update_RefreshRect:
+			WINPR_ASSERT(context->update->RefreshRect);
+			return context->update->RefreshRect(context, (BYTE)(size_t)msg->wParam,
+			                                    (const RECTANGLE_16*)msg->lParam);
+		case Update_SuppressOutput:
+			WINPR_ASSERT(context->update->SuppressOutput);
+			return context->update->SuppressOutput(context, (BYTE)(size_t)msg->wParam,
+			                                       (const RECTANGLE_16*)msg->lParam);
+		default:
+			return FALSE;
+	}
 }
 
 /* Proxy from PC to PS */
