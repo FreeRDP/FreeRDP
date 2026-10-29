@@ -306,6 +306,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_PreconnectionId,
 	FreeRDP_ProxyType,
 	FreeRDP_RdpVersion,
+	FreeRDP_RdstlsEnabledModes,
 	FreeRDP_ReceivedCapabilitiesSize,
 	FreeRDP_RedirectedSessionId,
 	FreeRDP_RedirectionAcceptedCertLength,
