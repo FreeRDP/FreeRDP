@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cfloat>
 
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
@@ -1452,8 +1453,9 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
 		{
 			/* The window may have moved since the last motion: keep the server's position. */
-			if ((ev.windowID == _lastMotion.window) && (ev.x == _lastMotion.local.x) &&
-			    (ev.y == _lastMotion.local.y))
+			if ((ev.windowID == _lastMotion.window) &&
+			    (fabsf(ev.x - _lastMotion.local.x) < FLT_EPSILON) &&
+			    (fabsf(ev.y - _lastMotion.local.y) < FLT_EPSILON))
 			{
 				copy.button.x = _lastMotion.server.x;
 				copy.button.y = _lastMotion.server.y;

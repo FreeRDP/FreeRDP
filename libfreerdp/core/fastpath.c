@@ -224,21 +224,16 @@ static UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fp
 
 BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length)
 {
-	BYTE header = 0;
-
-	if (!s || !length)
-		return FALSE;
+	WINPR_ASSERT(fastpath);
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(length);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(fastpath->log, s, 1))
 		return FALSE;
 
-	Stream_Read_UINT8(s, header);
-
-	if (fastpath)
-	{
-		fastpath->encryptionFlags = (header & 0xC0) >> 6;
-		fastpath->numberEvents = (header & 0x3C) >> 2;
-	}
+	const BYTE header = Stream_Get_UINT8(s);
+	fastpath->encryptionFlags = (header & 0xC0) >> 6;
+	fastpath->numberEvents = (header & 0x3C) >> 2;
 
 	if (!per_read_length(s, length))
 		return FALSE;
