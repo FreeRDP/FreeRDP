@@ -41,6 +41,9 @@ static constexpr uint64_t kAwaitRestoreRectMs = 500;
 /* Reports kept to recognize late echoes. */
 static constexpr size_t kMaxReported = 16;
 
+/* Unanswered reports are sent again after this. */
+static constexpr uint64_t kReportConfirmMs = 1000;
+
 static void armDeadline(uint64_t& until, uint64_t ms)
 {
 	until = SDL_GetTicks() + ms;
@@ -209,6 +212,7 @@ void SdlRailWindow::adoptLocalGeometry(const SDL_Rect& rect)
 		if (_reported.size() >= kMaxReported)
 			_reported.erase(_reported.begin());
 		_reported.push_back(rect);
+		armDeadline(_reportCheckAt, kReportConfirmMs);
 	}
 	_windowRect = rect;
 	_geometryDirty = false;
@@ -359,6 +363,19 @@ SDL_Rect SdlRailWindow::frameMargins() const
 {
 	std::unique_lock lock(_gfxLock);
 	return _frameMargins;
+}
+
+bool SdlRailWindow::takeUnconfirmedReport(SDL_Rect& rect)
+{
+	std::unique_lock lock(_gfxLock);
+	if ((_reportCheckAt == 0) || (SDL_GetTicks() < _reportCheckAt))
+		return false;
+	_reportCheckAt = 0;
+	if (_reported.empty())
+		return false;
+	rect = _reported.back();
+	_reported.clear();
+	return true;
 }
 
 void SdlRailWindow::setOwner(uint64_t ownerId)
@@ -796,6 +813,19 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Hold geometry sync until server sends restored rect to prevent re-maximizing. */
 	if (applyServerState(_maxState, "maximize", SDL_MaximizeWindow))
 		armDeadline(_awaitRestoreUntil, kAwaitRestoreRectMs);
+	/* Still minimized after our SC_RESTORE: ask once more, then follow the server. */
+	if ((_localRestoreUntil != 0) && (SDL_GetTicks() >= _localRestoreUntil))
+	{
+		_localRestoreUntil = 0;
+		if (_minState.server && !_minState.rail && !_restoreRetried)
+		{
+			_restoreRetried = true;
+			_restoreRetry = true;
+			armDeadline(_localRestoreUntil, kAwaitRestoreRectMs);
+		}
+		else if (_minState.server != _minState.rail)
+			_minState.dirty = true;
+	}
 	std::ignore = applyServerState(_minState, "minimize", SDL_MinimizeWindow);
 	const bool restorePending = restoreRectPending();
 
@@ -822,7 +852,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * Defer size hints and programmatic resize during active WM move/resize grab. */
 	if ((_minMaxDirty || _geometryDirty) && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = addInsets(_windowRect, band);
+		const SDL_Rect vis = targetOuterRect();
 		const int bandW = band.x + band.w;
 		const int bandH = band.y + band.h;
 		/* Convert server track size hints (which include server margins) to outer window bounds. */
@@ -856,7 +886,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Skip geometry apply when maximized, minimized or WM-dragged. */
 	if (_geometryDirty && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = addInsets(_windowRect, band);
+		const SDL_Rect vis = targetOuterRect();
 		/* Record applied insets so server coordinate mapping strips the exact offset. */
 		setAppliedInsets(band);
 		int cw = 0;
@@ -1087,7 +1117,31 @@ void SdlRailWindow::setServerMaximized(bool m)
 
 void SdlRailWindow::setServerMinimized(bool m)
 {
+	{
+		std::unique_lock lock(_gfxLock);
+		/* Late minimize of a window the user already restored. */
+		if (m && (_localRestoreUntil != 0) && (SDL_GetTicks() < _localRestoreUntil))
+		{
+			_minState.server = true;
+			return;
+		}
+		if (!m)
+			_localRestoreUntil = 0;
+	}
 	setServerState(_minState, m);
+}
+
+void SdlRailWindow::noteLocalRestore()
+{
+	std::unique_lock lock(_gfxLock);
+	_restoreRetried = false;
+	armDeadline(_localRestoreUntil, kAwaitRestoreRectMs);
+}
+
+bool SdlRailWindow::takeRestoreRetry()
+{
+	std::unique_lock lock(_gfxLock);
+	return std::exchange(_restoreRetry, false);
 }
 
 bool SdlRailWindow::applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*))
