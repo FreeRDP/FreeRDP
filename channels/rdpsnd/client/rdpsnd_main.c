@@ -1156,6 +1156,9 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #if defined(__EMSCRIPTEN__)
 		{ "emscripten", "" },
 #endif
+#if defined(WITH_SDL_AUDIO)
+		{ "sdl", "" },
+#endif
 		{ "fake", "" }
 	};
 	const ADDIN_ARGV* args = nullptr;
