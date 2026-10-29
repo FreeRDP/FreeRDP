@@ -2353,10 +2353,9 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			WINPR_ASSERT(nWidth <= UINT16_MAX);
 			WINPR_ASSERT(nHeight >= 0);
 			WINPR_ASSERT(nHeight <= UINT16_MAX);
-			ret = shadow_client_send_surface_gfx(client, pSrcData, nSrcStep, SrcFormat,
-			                                     fullframegfx ? 0 : (UINT16)nXSrc,
-			                                     fullframegfx ? 0 : (UINT16)nYSrc,
-			                                     (UINT16)nWidth, (UINT16)nHeight);
+			ret = shadow_client_send_surface_gfx(
+			    client, pSrcData, nSrcStep, SrcFormat, fullframegfx ? 0 : (UINT16)nXSrc,
+			    fullframegfx ? 0 : (UINT16)nYSrc, (UINT16)nWidth, (UINT16)nHeight);
 		}
 		else
 		{
