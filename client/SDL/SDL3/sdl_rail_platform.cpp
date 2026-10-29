@@ -116,13 +116,16 @@ static constexpr struct
 	return 0;
 }
 
-RailEdges railEdges(uint16_t t)
+RailEdges railEdges(uint16_t moveType)
 {
-	return { (t == RAIL_WMSZ_TOPLEFT) || (t == RAIL_WMSZ_LEFT) || (t == RAIL_WMSZ_BOTTOMLEFT),
-		     (t == RAIL_WMSZ_TOPRIGHT) || (t == RAIL_WMSZ_RIGHT) || (t == RAIL_WMSZ_BOTTOMRIGHT),
-		     (t == RAIL_WMSZ_TOPLEFT) || (t == RAIL_WMSZ_TOP) || (t == RAIL_WMSZ_TOPRIGHT),
-		     (t == RAIL_WMSZ_BOTTOMLEFT) || (t == RAIL_WMSZ_BOTTOM) ||
-		         (t == RAIL_WMSZ_BOTTOMRIGHT) };
+	return { (moveType == RAIL_WMSZ_TOPLEFT) || (moveType == RAIL_WMSZ_LEFT) ||
+		         (moveType == RAIL_WMSZ_BOTTOMLEFT),
+		     (moveType == RAIL_WMSZ_TOPRIGHT) || (moveType == RAIL_WMSZ_RIGHT) ||
+		         (moveType == RAIL_WMSZ_BOTTOMRIGHT),
+		     (moveType == RAIL_WMSZ_TOPLEFT) || (moveType == RAIL_WMSZ_TOP) ||
+		         (moveType == RAIL_WMSZ_TOPRIGHT),
+		     (moveType == RAIL_WMSZ_BOTTOMLEFT) || (moveType == RAIL_WMSZ_BOTTOM) ||
+		         (moveType == RAIL_WMSZ_BOTTOMRIGHT) };
 }
 
 void railPlatformPrepareWindow(SDL_Window* window)
