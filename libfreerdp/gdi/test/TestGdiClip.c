@@ -237,6 +237,7 @@ static int test_gdi_InvalidateRegion(void)
 	HGDI_RGN rgn2 = nullptr;
 	HGDI_RGN invalid = nullptr;
 	HGDI_BITMAP bmp = nullptr;
+	HGDI_PEN pen = nullptr;
 	const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdc = gdi_GetDC()))
@@ -447,11 +448,32 @@ static int test_gdi_InvalidateRegion(void)
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
+	/* a rejected region is not added to the list */
+	hdc->hwnd->ninvalid = 0;
+	if (!gdi_InvalidateRegion(hdc, 2024, 10, -1000, 11))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, 10, 2024, 11, -1000))
+		goto fail;
+	if (hdc->hwnd->ninvalid != 0)
+		goto fail;
+
+	pen = gdi_CreatePen(GDI_PS_SOLID, 1, 0, format, nullptr);
+	if (!pen)
+		goto fail;
+	gdi_SelectObject(hdc, (HGDIOBJECT)pen);
+	if (!gdi_MoveToEx(hdc, 2024, 10, nullptr))
+		goto fail;
+	if (!gdi_LineTo(hdc, 2124, 20))
+		goto fail;
+	if (hdc->hwnd->ninvalid != 0)
+		goto fail;
+
 	rc = 0;
 fail:
 	gdi_DeleteObject((HGDIOBJECT)rgn1);
 	gdi_DeleteObject((HGDIOBJECT)rgn2);
 	gdi_DeleteObject((HGDIOBJECT)bmp);
+	gdi_DeleteObject((HGDIOBJECT)pen);
 	gdi_DeleteDC(hdc);
 	return rc;
 }
