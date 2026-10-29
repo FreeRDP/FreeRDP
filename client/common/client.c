@@ -2587,6 +2587,7 @@ static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, IN
 			contact->pressure = pressure;
 			contact->x = x;
 			contact->y = y;
+			contact->count = WINPR_ASSERTING_INT_CAST(UINT32, i + 1);
 
 			*pcontact = *contact;
 

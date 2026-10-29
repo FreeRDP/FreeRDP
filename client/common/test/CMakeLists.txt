@@ -8,6 +8,9 @@ disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCmdLine.c TestClientCmdLineStatus.c
                            TestClientAutoReconnect.c
 )
+if(BUILD_TESTING_INTERNAL)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c)
+endif()
 
 set(FUZZERS TestFuzzClientRdpFile.c)
 
