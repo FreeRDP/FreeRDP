@@ -27,9 +27,9 @@
 #include <winpr/platform.h>
 #include <freerdp/log.h>
 
-#define TAG CLIENT_TAG("sdl.win32")
-
 #if defined(_WIN32)
+
+#define TAG CLIENT_TAG("sdl.win32")
 
 #include <windows.h>
 #include <windowsx.h>
