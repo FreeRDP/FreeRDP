@@ -296,7 +296,10 @@ void SdlRail::handleRestored(SDL_WindowID id)
 		return;
 	/* Resolve restored state; trigger reconcile in case WM cleared flags asynchronously. */
 	if (appWindow->railMinimized())
+	{
 		appWindow->setRailMinimized(false);
+		appWindow->noteLocalRestore();
+	}
 	else if (appWindow->railMaximized())
 		appWindow->setRailMaximized(false);
 	else
@@ -593,6 +596,11 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			WLog_DBG(TAG, "size resent id=0x%08" PRIx32 " %dx%d (not confirmed)",
 			         static_cast<uint32_t>(win.id()), unconfirmed.w, unconfirmed.h);
 			sendClientWindowMove(&win, unconfirmed);
+		}
+		if (win.takeRestoreRetry())
+		{
+			WLog_DBG(TAG, "restore resent id=0x%08" PRIx32, static_cast<uint32_t>(win.id()));
+			sendSystemCommand(&win, SC_RESTORE);
 		}
 	}
 

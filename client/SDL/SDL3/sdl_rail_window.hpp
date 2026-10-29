@@ -184,6 +184,8 @@ class SdlRailWindow
 		_minState.rail = m;
 	}
 	void setServerMinimized(bool m);
+	void noteLocalRestore();
+	[[nodiscard]] bool takeRestoreRetry();
 	/* Max or min pins the geometry (server/WM owns it): the client geometry apply is skipped. */
 	/* Re-arm geometry apply after server drag-restore. */
 	void markGeometryDirty()
@@ -324,6 +326,10 @@ class SdlRailWindow
 	uint64_t _awaitingFrameUntil = 0;
 	/* Deadline for the server's post-restore rect; 0 when none is awaited. */
 	uint64_t _awaitRestoreUntil = 0;
+	/* A server minimize before this is stale. */
+	uint64_t _localRestoreUntil = 0;
+	bool _restoreRetried = false;
+	bool _restoreRetry = false;
 	/* Content origin offset inside current GFX surface. */
 	SDL_Point _gfxVisOrigin = { 0, 0 };
 	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* X11 extents sent to the WM */
