@@ -628,7 +628,17 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrConte
 	*pstatus = 0;
 
 out:
-	resp->Authenticator.Pdu = 7;
+	/* HACK: Older windows systems expect the Pdu field to contain version 6, newer ones 7.
+	 * We do not know exactly what the switch it depends on is (maybe LSASS?) but we know the RDP
+	 * version the older windows systems have. So send the old value for older protocol levels, the
+	 * new version for newer...
+	 */
+	const UINT32 version =
+	    freerdp_settings_get_uint32(rdpear->rdp_context->settings, FreeRDP_RdpVersion);
+	if (version <= RDP_VERSION_10_6)
+		resp->Authenticator.Pdu = 6;
+	else
+		resp->Authenticator.Pdu = 7;
 	resp->KerbProtocolError = rv;
 	krb5_free_principal_contents(rdpear->krbContext, &client);
 	krb5_free_data(rdpear->krbContext, der);
