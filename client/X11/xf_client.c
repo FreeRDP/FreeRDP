@@ -1289,118 +1289,6 @@ static BOOL xf_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-static BOOL xf_inject_keypress(rdpContext* context, const char* buffer, size_t size)
-{
-	WCHAR wbuffer[64] = WINPR_C_ARRAY_INIT;
-	const SSIZE_T len = ConvertUtf8NToWChar(buffer, size, wbuffer, ARRAYSIZE(wbuffer));
-	if (len < 0)
-		return FALSE;
-
-	rdpInput* input = context->input;
-	WINPR_ASSERT(input);
-
-	for (SSIZE_T x = 0; x < len; x++)
-	{
-		const WCHAR code = wbuffer[x];
-		freerdp_input_send_unicode_keyboard_event(input, 0, code);
-		Sleep(5);
-		freerdp_input_send_unicode_keyboard_event(input, KBD_FLAGS_RELEASE, code);
-		Sleep(5);
-	}
-	return TRUE;
-}
-
-static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
-{
-	int fd = open(pipe, O_NONBLOCK | O_RDONLY);
-	if (fd < 0)
-	{
-		char ebuffer[256] = WINPR_C_ARRAY_INIT;
-		WLog_ERR(TAG, "pipe '%s' open returned %s [%d]", pipe,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		return FALSE;
-	}
-	while (!freerdp_shall_disconnect_context(context))
-	{
-		char buffer[64] = WINPR_C_ARRAY_INIT;
-		errno = 0;
-		ssize_t rd = read(fd, buffer, sizeof(buffer) - 1);
-		if (rd == 0)
-		{
-			char ebuffer[256] = WINPR_C_ARRAY_INIT;
-			if ((errno == EAGAIN) || (errno == 0))
-			{
-				Sleep(100);
-				continue;
-			}
-
-			// EOF, abort reading.
-			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-			break;
-		}
-		else if (rd < 0)
-		{
-			char ebuffer[256] = WINPR_C_ARRAY_INIT;
-			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-			break;
-		}
-		else
-		{
-			if (!xf_inject_keypress(context, buffer, WINPR_ASSERTING_INT_CAST(size_t, rd)))
-				break;
-		}
-	}
-	close(fd);
-	return TRUE;
-}
-
-static void cleanup_pipe(WINPR_ATTR_UNUSED int signum, WINPR_ATTR_UNUSED const char* signame,
-                         void* context)
-{
-	const char* pipe = context;
-	if (!pipe)
-		return;
-	unlink(pipe);
-}
-
-static DWORD WINAPI xf_handle_pipe(void* arg)
-{
-	xfContext* xfc = arg;
-	WINPR_ASSERT(xfc);
-
-	rdpContext* context = &xfc->common.context;
-	WINPR_ASSERT(context);
-
-	rdpSettings* settings = context->settings;
-	WINPR_ASSERT(settings);
-
-	const char* pipe = freerdp_settings_get_string(settings, FreeRDP_KeyboardPipeName);
-	WINPR_ASSERT(pipe);
-
-	const int rc = mkfifo(pipe, S_IWUSR | S_IRUSR);
-	if (rc != 0)
-	{
-		char ebuffer[256] = WINPR_C_ARRAY_INIT;
-		WLog_ERR(TAG, "Failed to create named pipe '%s': %s [%d]", pipe,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		return 0;
-	}
-
-	void* ctx = WINPR_CAST_CONST_PTR_AWAY(pipe, void*);
-	if (freerdp_add_signal_cleanup_handler(ctx, cleanup_pipe))
-	{
-
-		xf_process_pipe(context, pipe);
-
-		freerdp_del_signal_cleanup_handler(ctx, cleanup_pipe);
-	}
-
-	unlink(pipe);
-	return 0;
-}
-
 /**
  * Callback given to freerdp_connect() to perform post-connection operations.
  * It will be called only if the connection was initialized properly, and will continue the
@@ -1480,14 +1368,6 @@ static BOOL xf_post_connect(freerdp* instance)
 	if (!(xfc->xfDisp = xf_disp_new(xfc)))
 		return FALSE;
 
-	const char* pipe = freerdp_settings_get_string(settings, FreeRDP_KeyboardPipeName);
-	if (pipe)
-	{
-		xfc->pipethread = CreateThread(nullptr, 0, xf_handle_pipe, xfc, 0, nullptr);
-		if (!xfc->pipethread)
-			return FALSE;
-	}
-
 	EventArgsInit(&e, "xfreerdp");
 	e.width =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
@@ -1512,12 +1392,6 @@ static void xf_post_disconnect(freerdp* instance)
 	                                      xf_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 
-	if (xfc->pipethread)
-	{
-		(void)WaitForSingleObject(xfc->pipethread, INFINITE);
-		(void)CloseHandle(xfc->pipethread);
-		xfc->pipethread = nullptr;
-	}
 	if (xfc->clipboard)
 	{
 		xf_clipboard_free(xfc->clipboard);

@@ -451,7 +451,7 @@ static inline UINT16 out_from_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcData, UINT32 width,
                                                  WINPR_ATTR_UNUSED UINT32 height,
                                                  wStream* WINPR_RESTRICT s, UINT32 byte_limit,
-                                                 UINT32 start_line, wStream* WINPR_RESTRICT temp_s,
+                                                 UINT32 sline, wStream* WINPR_RESTRICT temp_s,
                                                  UINT32 e)
 {
 	uint8_t fom_mask[8192] = WINPR_C_ARRAY_INIT; /* good for up to 64K bitmap */
@@ -466,11 +466,14 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 	UINT32 out_count = end * 3;
 	const UINT32 mix = 0xFFFFFF;
 	const char* start = (const char*)srcData;
-	const char* line = start + 4ULL * width * start_line;
+	if (!start)
+		return -1;
 	const char* last_line = nullptr;
 
-	while ((line >= start) && (out_count < 32768))
+	INT64 start_line = sline;
+	while ((start_line >= 0) && (out_count < 32768))
 	{
+		const char* line = &start[4ULL * width * WINPR_ASSERTING_INT_CAST(size_t, start_line)];
 		size_t i = Stream_GetPosition(s) + 3ULL * count;
 
 		if ((i - (3ULL * counts.color_count) >= byte_limit) &&
@@ -691,7 +694,7 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 		}
 
 		last_line = line;
-		line = line - 4ULL * width;
+
 		start_line--;
 		lines_sent++;
 	}
@@ -774,7 +777,7 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcData, UINT32 width,
                                                  WINPR_ATTR_UNUSED UINT32 height,
                                                  wStream* WINPR_RESTRICT s, UINT32 bpp,
-                                                 UINT32 byte_limit, UINT32 start_line,
+                                                 UINT32 byte_limit, UINT32 sline,
                                                  wStream* WINPR_RESTRICT temp_s, UINT32 e)
 {
 	uint8_t fom_mask[8192] = WINPR_C_ARRAY_INIT; /* good for up to 64K bitmap */
@@ -789,11 +792,15 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 	UINT32 out_count = end * 2;
 	const UINT32 mix = (bpp == 15) ? 0xBA1F : 0xFFFF;
 	const char* start = (const char*)srcData;
-	const char* line = start + 2ULL * width * start_line;
+	if (!start)
+		return -1;
+
 	const char* last_line = nullptr;
 
-	while ((line >= start) && (out_count < 32768))
+	INT64 start_line = sline;
+	while ((start_line >= 0) && (out_count < 32768))
 	{
+		const char* line = &start[2ULL * width * WINPR_ASSERTING_INT_CAST(size_t, start_line)];
 		size_t i = Stream_GetPosition(s) + 2ULL * count;
 
 		if ((i - (2ULL * counts.color_count) >= byte_limit) &&
@@ -1012,7 +1019,7 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 		}
 
 		last_line = line;
-		line = line - 2ULL * width;
+
 		start_line--;
 		lines_sent++;
 	}
