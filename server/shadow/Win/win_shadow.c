@@ -396,7 +396,6 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 {
 	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
-	int fps;
 	DWORD status;
 	DWORD nCount;
 	UINT64 cTime;
@@ -408,8 +407,8 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 	StopEvent = subsystem->base.server->StopEvent;
 	nCount = 0;
 	events[nCount++] = StopEvent;
-	fps = 120;
-	dwInterval = 1000 / fps;
+	subsystem->base.captureFrameRate = 120;
+	dwInterval = 1000 / subsystem->base.captureFrameRate;
 	frameTime = GetTickCount64() + dwInterval;
 
 	while (1)
@@ -435,7 +434,36 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 			if (dxgi_status > 0)
 				win_shadow_surface_copy(subsystem);
 
-			dwInterval = 1000 / fps;
+			/* Follow the encoder capture rate suggestion, like the X11 and Mac
+			 * subsystems do: shadow_encoder_create_frame_id() lowers the
+			 * preferred fps while frames are still in flight (not yet
+			 * acknowledged by the client). This subsystem hardcoded the
+			 * capture rate and never read the suggestion, so a slow client
+			 * could not throttle the capture and in-flight frames (latency)
+			 * accumulated without bound. Use the lowest suggestion of all
+			 * connected clients. */
+			UINT32 captureFrameRate = UINT32_MAX;
+			ArrayList_Lock(subsystem->base.server->clients);
+			const UINT32 clientCount = ArrayList_Count(subsystem->base.server->clients);
+			for (UINT32 index = 0; index < clientCount; index++)
+			{
+				const rdpShadowClient* client =
+				    (rdpShadowClient*)ArrayList_GetItem(subsystem->base.server->clients, index);
+
+				if (client && client->encoder)
+				{
+					const UINT32 suggestion = shadow_encoder_preferred_fps(client->encoder);
+					if (suggestion < captureFrameRate)
+						captureFrameRate = suggestion;
+				}
+			}
+			ArrayList_Unlock(subsystem->base.server->clients);
+
+			if ((captureFrameRate == UINT32_MAX) || (captureFrameRate < 1))
+				captureFrameRate = subsystem->base.captureFrameRate;
+			subsystem->base.captureFrameRate = captureFrameRate;
+
+			dwInterval = 1000 / subsystem->base.captureFrameRate;
 			frameTime += dwInterval;
 		}
 	}
