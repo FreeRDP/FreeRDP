@@ -108,7 +108,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId);
 
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize);
 
 	WINPR_ATTR_NODISCARD
