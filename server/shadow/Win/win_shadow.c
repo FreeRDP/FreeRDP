@@ -459,6 +459,33 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 
 	displayDevice.cb = sizeof(DISPLAY_DEVICE);
 
+	/* Skip adapters which are not attached to the desktop: on machines with
+	 * a BMC/management GPU (e.g. ASPEED) listed as device 0 while the real GPU
+	 * is attached later in the list, CreateDC for the unattached device fails
+	 * and the monitor rectangle stays zeroed, which results in a 1x1 surface. */
+	{
+		DWORD devNum = 0;
+		BOOL attached = FALSE;
+		DISPLAY_DEVICE probe = WINPR_C_ARRAY_INIT;
+		probe.cb = sizeof(DISPLAY_DEVICE);
+		while (EnumDisplayDevices(nullptr, devNum, &probe, 0))
+		{
+			if (probe.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+			{
+				attached = TRUE;
+				break;
+			}
+			devNum++;
+			probe.cb = sizeof(DISPLAY_DEVICE);
+		}
+		if (attached && (devNum != 0))
+		{
+			displayDevice.cb = sizeof(DISPLAY_DEVICE);
+			if (EnumDisplayDevices(nullptr, devNum, &displayDevice, 0))
+				iDevNum = devNum;
+		}
+	}
+
 	if (EnumDisplayDevices(nullptr, iDevNum, &displayDevice, 0))
 	{
 		hdc = CreateDC(displayDevice.DeviceName, nullptr, nullptr, nullptr);
@@ -473,6 +500,20 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 		monitor->bottom = desktopHeight;
 		monitor->flags = 1;
 		DeleteDC(hdc);
+	}
+
+	/* Fallback to the primary screen metrics if enumeration did not
+	 * yield a usable rectangle, otherwise shadow_screen_new computes a
+	 * 1x1 surface and clients are resized to 1x1. */
+	if ((numMonitors == 0) || (monitors[0].right <= 0) || (monitors[0].bottom <= 0))
+	{
+		monitor = &monitors[0];
+		monitor->left = 0;
+		monitor->top = 0;
+		monitor->right = GetSystemMetrics(SM_CXSCREEN);
+		monitor->bottom = GetSystemMetrics(SM_CYSCREEN);
+		monitor->flags = 1;
+		numMonitors = 1;
 	}
 
 	return numMonitors;
