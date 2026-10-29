@@ -65,6 +65,9 @@ static const BYTE enc_base64url[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 WINPR_ATTR_NODISCARD
+static BOOL format_is_utf8(wClipboard* clipboard, UINT32 formatId);
+
+WINPR_ATTR_NODISCARD
 static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length, size_t* plen)
 {
 	WINPR_ASSERT(plen);
@@ -166,8 +169,8 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
 		default:
 		{
 			const UINT32 formatIdText = ClipboardRegisterFormat(clipboard, mime_text_plain);
-			const UINT32 formatIdUtf = ClipboardRegisterFormat(clipboard, mime_text_plain);
-			if ((clipboard->formatId != formatIdText) && (clipboard->formatId != formatIdUtf))
+			if ((clipboard->formatId != formatIdText) &&
+			    !format_is_utf8(clipboard, clipboard->formatId))
 			{
 				WLog_ERR(TAG,
 				         "Unuspported source format %s [0x%04" PRIx32
@@ -193,8 +196,7 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
 
 /* text/plain is platform dependent: UTF-8 on Windows, where e.g. SDL treats it as such, and
  * ASCII with \u escapes for all other characters elsewhere. */
-WINPR_ATTR_NODISCARD
-static BOOL format_is_utf8(wClipboard* clipboard, UINT32 formatId)
+BOOL format_is_utf8(wClipboard* clipboard, UINT32 formatId)
 {
 #if defined(_WIN32)
 	if (formatId == ClipboardGetFormatId(clipboard, mime_text_plain))
