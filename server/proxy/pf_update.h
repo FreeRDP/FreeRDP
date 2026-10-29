@@ -31,4 +31,6 @@
 void pf_server_register_update_callbacks(rdpUpdate* update);
 void pf_client_register_update_callbacks(rdpUpdate* update);
 
+WINPR_ATTR_NODISCARD BOOL pf_client_process_update_message(pClientContext* pc, const wMessage* msg);
+
 #endif /* FREERDP_SERVER_PROXY_PFUPDATE_H */
