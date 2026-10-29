@@ -776,7 +776,7 @@ char* winpr_utf8ToUtfEscapedString(char* str, size_t len, size_t* pDstLen)
 	for (size_t x = 0; x < wlen; x++)
 	{
 		const WCHAR wc = winpr_Data_Get_UINT16(&wstr[x]);
-		if (wc < 0x80)
+		if ((wc < 0x80) && (wc != '\\'))
 			escaped[offset++] = (char)wc;
 		else
 		{

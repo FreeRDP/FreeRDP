@@ -2267,6 +2267,19 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 
 	const uint32_t formatId = formatDataRequest->requestedFormatId;
 
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	const UINT32 fileId = ClipboardRegisterFormat(clipboard->system, type_FileGroupDescriptorW);
+	if (fileId == formatDataRequest->requestedFormatId)
+	{
+		if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES) == 0)
+			return xf_cliprdr_send_data_response(clipboard, format, nullptr, 0);
+	}
+	else
+	{
+		if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE) == 0)
+			return xf_cliprdr_send_data_response(clipboard, format, nullptr, 0);
+	}
 	const BOOL rawTransfer = xf_cliprdr_is_raw_transfer_available(clipboard);
 
 	if (rawTransfer)

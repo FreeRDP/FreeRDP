@@ -128,7 +128,12 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	if (update)
 	{
 		WINPR_ASSERT(update->DesktopResize);
-		if (!update->DesktopResize(gdi->context))
+
+		/* Keep the lock order of BeginPaint/EndPaint: update lock first, client locks second */
+		rdp_update_lock(update);
+		const BOOL resized = update->DesktopResize(gdi->context);
+		rdp_update_unlock(update);
+		if (!resized)
 			goto fail;
 	}
 

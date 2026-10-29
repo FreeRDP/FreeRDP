@@ -2579,7 +2579,7 @@ static WINPR_JSON* json_from_addin_item(const ADDIN_ARGV* val)
 
 	if (val)
 	{
-		if (!WINPR_JSON_AddNumberToObject(obj, "argc", val->argc))
+		if (!WINPR_JSON_AddIntegerToObject(obj, "argc", val->argc))
 			goto fail;
 
 		WINPR_JSON* array = WINPR_JSON_AddArrayToObject(obj, "argv");
@@ -2654,9 +2654,9 @@ static WINPR_JSON* json_from_device_item(const RDPDR_DEVICE* val)
 
 		device.base = val;
 
-		if (!WINPR_JSON_AddNumberToObject(obj, "Id", val->Id))
+		if (!WINPR_JSON_AddIntegerToObject(obj, "Id", val->Id))
 			goto fail;
-		if (!WINPR_JSON_AddNumberToObject(obj, "Type", val->Type))
+		if (!WINPR_JSON_AddIntegerToObject(obj, "Type", val->Type))
 			goto fail;
 		if (!add_string_or_null(obj, "Name", val->Name))
 			goto fail;
@@ -2848,21 +2848,21 @@ static WINPR_JSON* systemtime_to_json(WINPR_JSON* parent, const char* key, const
 	if (!obj)
 		return nullptr;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "wYear", st->wYear))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wYear", st->wYear))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wMonth", st->wMonth))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wMonth", st->wMonth))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wDayOfWeek", st->wDayOfWeek))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wDayOfWeek", st->wDayOfWeek))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wDay", st->wDay))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wDay", st->wDay))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wHour", st->wHour))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wHour", st->wHour))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wMinute", st->wMinute))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wMinute", st->wMinute))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wSecond", st->wSecond))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wSecond", st->wSecond))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wMilliseconds", st->wMilliseconds))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wMilliseconds", st->wMilliseconds))
 		goto fail;
 
 	return obj;
@@ -2953,7 +2953,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (ptz)
 		tz = *ptz;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "Bias", tz.Bias))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "Bias", tz.Bias))
 		return FALSE;
 
 	if (!wchar_to_json(obj, "StandardName", tz.StandardName, ARRAYSIZE(tz.StandardName)))
@@ -2962,7 +2962,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (!systemtime_to_json(obj, "StandardDate", &tz.StandardDate))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "StandardBias", tz.Bias))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "StandardBias", tz.Bias))
 		return FALSE;
 
 	if (!wchar_to_json(obj, "DaylightName", tz.DaylightName, ARRAYSIZE(tz.DaylightName)))
@@ -2971,7 +2971,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (!systemtime_to_json(obj, "DaylightDate", &tz.DaylightDate))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "DaylightBias", tz.Bias))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "DaylightBias", tz.Bias))
 		return FALSE;
 	return TRUE;
 }
@@ -2988,9 +2988,9 @@ static BOOL glyph_cache_def_to_json(WINPR_JSON* json, const GLYPH_CACHE_DEFINITI
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "cacheEntries", def->cacheEntries))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cacheEntries", def->cacheEntries))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "cacheMaximumCellSize", def->cacheMaximumCellSize))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cacheMaximumCellSize", def->cacheMaximumCellSize))
 		return FALSE;
 	return TRUE;
 }
@@ -3310,11 +3310,11 @@ static BOOL client_cookie_to_json(WINPR_JSON* json, const ARC_CS_PRIVATE_PACKET*
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "cbLen", cs->cbLen))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cbLen", cs->cbLen))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "version", cs->version))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "version", cs->version))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "logonId", cs->logonId))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "logonId", cs->logonId))
 		return FALSE;
 	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(obj, "securityVerifier");
 	if (!array)
@@ -3350,11 +3350,11 @@ static BOOL server_cookie_to_json(WINPR_JSON* json, const ARC_SC_PRIVATE_PACKET*
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "cbLen", cs->cbLen))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cbLen", cs->cbLen))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "version", cs->version))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "version", cs->version))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "logonId", cs->logonId))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "logonId", cs->logonId))
 		return FALSE;
 	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(obj, "arcRandomBits");
 	if (!array)
@@ -3390,7 +3390,7 @@ static BOOL bitmap_cache_v2_to_json(WINPR_JSON* json, const BITMAP_CACHE_V2_CELL
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "numEntries", info->numEntries))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "numEntries", info->numEntries))
 		return FALSE;
 	if (!WINPR_JSON_AddBoolToObject(obj, "persistent", info->persistent))
 		return FALSE;
@@ -3414,15 +3414,15 @@ static BOOL monitor_attributes_to_json(WINPR_JSON* pobj, const MONITOR_ATTRIBUTE
 	WINPR_JSON* obj = WINPR_JSON_AddObjectToObject(pobj, "attributes");
 	if (!obj)
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "physicalWidth", attributes->physicalWidth))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "physicalWidth", attributes->physicalWidth))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "physicalHeight", attributes->physicalHeight))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "physicalHeight", attributes->physicalHeight))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "orientation", attributes->orientation))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "orientation", attributes->orientation))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "desktopScaleFactor", attributes->desktopScaleFactor))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "desktopScaleFactor", attributes->desktopScaleFactor))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "deviceScaleFactor", attributes->deviceScaleFactor))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "deviceScaleFactor", attributes->deviceScaleFactor))
 		return FALSE;
 	return TRUE;
 }
@@ -3436,17 +3436,17 @@ static BOOL monitor_def_to_json(WINPR_JSON* json, const rdpMonitor* monitor)
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "x", monitor->x))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "x", monitor->x))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "y", monitor->y))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "y", monitor->y))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "width", monitor->width))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "width", monitor->width))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "height", monitor->height))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "height", monitor->height))
 		return FALSE;
 	if (!WINPR_JSON_AddBoolToObject(obj, "is_primary", monitor->is_primary != 0))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "orig_screen", monitor->orig_screen))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "orig_screen", monitor->orig_screen))
 		return FALSE;
 	return monitor_attributes_to_json(obj, &monitor->attributes);
 }
@@ -3472,7 +3472,7 @@ static BOOL channel_def_to_json(WINPR_JSON* json, const CHANNEL_DEF* channel)
 
 	if (!WINPR_JSON_AddStringToObject(obj, "name", channel->name))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "options", channel->options))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "options", channel->options))
 		return FALSE;
 	return TRUE;
 }
@@ -3781,42 +3781,42 @@ char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty, size_
 			case RDP_SETTINGS_TYPE_UINT16:
 			{
 				const uint16_t val = freerdp_settings_get_uint16(settings, iter.u16);
-				if (!WINPR_JSON_AddNumberToObject(juint16, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(juint16, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_INT16:
 			{
 				const int16_t val = freerdp_settings_get_int16(settings, iter.i16);
-				if (!WINPR_JSON_AddNumberToObject(jint16, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(jint16, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_UINT32:
 			{
 				const uint32_t val = freerdp_settings_get_uint32(settings, iter.u32);
-				if (!WINPR_JSON_AddNumberToObject(juint32, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(juint32, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_INT32:
 			{
 				const int32_t val = freerdp_settings_get_int32(settings, iter.i32);
-				if (!WINPR_JSON_AddNumberToObject(jint32, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(jint32, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_UINT64:
 			{
 				const uint64_t val = freerdp_settings_get_uint64(settings, iter.u64);
-				if (!WINPR_JSON_AddNumberToObject(juint64, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(juint64, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_INT64:
 			{
 				const int64_t val = freerdp_settings_get_int64(settings, iter.i64);
-				if (!WINPR_JSON_AddNumberToObject(jint64, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(jint64, name, val))
 					goto fail;
 			}
 			break;

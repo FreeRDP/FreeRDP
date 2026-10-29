@@ -306,7 +306,11 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteCredentialGuard);        /* 1114 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RestrictedAdminModeSupported); /** 1115
 		                                                             * @since version 3.16.0 */
-	UINT64 padding1152[1152 - 1116];                                /* 1116 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 RdstlsEnabledModes);         /** 1116
+		                                                             * Allowed server side modes for RDSTLS
+		                                                             * auth. By default all are allowed.
+		                                                             * @since version 3.33.0 */
+	UINT64 padding1152[1152 - 1117];                                /* 1117 */
 
 	/* Connection Cookie */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL MstscCookieMode);      /* 1152 */

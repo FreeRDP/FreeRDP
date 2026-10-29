@@ -844,7 +844,7 @@ static BOOL append_layout(WINPR_JSON* json)
 		WINPR_JSON* obj = WINPR_JSON_CreateObject();
 		if (!obj)
 			return FALSE;
-		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddIntegerToObject(obj, "code", ime->code);
 		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
 
 		if (!WINPR_JSON_AddItemToArray(array, obj))
@@ -866,8 +866,8 @@ static BOOL append_variant(WINPR_JSON* json)
 		WINPR_JSON* obj = WINPR_JSON_CreateObject();
 		if (!obj)
 			return FALSE;
-		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
-		WINPR_JSON_AddNumberToObject(obj, "id", ime->id);
+		WINPR_JSON_AddIntegerToObject(obj, "code", ime->code);
+		WINPR_JSON_AddIntegerToObject(obj, "id", ime->id);
 		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
 
 		if (!WINPR_JSON_AddItemToArray(array, obj))
@@ -889,7 +889,7 @@ static BOOL append_ime(WINPR_JSON* json)
 		WINPR_JSON* obj = WINPR_JSON_CreateObject();
 		if (!obj)
 			return FALSE;
-		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddIntegerToObject(obj, "code", ime->code);
 		WINPR_JSON_AddStringToObject(obj, "file", ime->file);
 		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
 
