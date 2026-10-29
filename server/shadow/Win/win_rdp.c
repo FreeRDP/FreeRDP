@@ -161,21 +161,15 @@ static BOOL shw_post_connect(freerdp* instance)
 
 static DWORD WINAPI shw_client_thread(LPVOID arg)
 {
-	int index;
-	BOOL bSuccess;
-	shwContext* shw;
-	rdpContext* context;
-	rdpChannels* channels;
-
 	freerdp* instance = (freerdp*)arg;
 	WINPR_ASSERT(instance);
 
-	context = (rdpContext*)instance->context;
+	rdpContext* context = (rdpContext*)instance->context;
 	WINPR_ASSERT(context);
 
-	shw = (shwContext*)context;
+	shwContext* shw = (shwContext*)context;
 
-	bSuccess = freerdp_connect(instance);
+	const BOOL bSuccess = freerdp_connect(instance);
 	WLog_INFO(TAG, "freerdp_connect: %d", bSuccess);
 
 	if (!bSuccess)
@@ -184,12 +178,11 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 		return 0;
 	}
 
-	channels = context->channels;
+	rdpChannels* channels = context->channels;
 	WINPR_ASSERT(channels);
 
 	while (1)
 	{
-		DWORD status;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD count = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 

@@ -260,7 +260,6 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	int x, y;
 	int width;
 	int height;
-	int count;
 	int status = 1;
 	int nDstStep = 0;
 	DWORD DstFormat;
@@ -351,7 +350,6 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 		return ERROR_INTERNAL_ERROR;
 
 	ArrayList_Lock(server->clients);
-	count = ArrayList_Count(server->clients);
 	shadow_subsystem_frame_update(&subsystem->base);
 	ArrayList_Unlock(server->clients);
 	region16_clear(&(surface->invalidRegion));
@@ -589,8 +587,8 @@ FREERDP_API const char* ShadowSubsystemName(void)
 
 FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	const char name[] = "windows shadow subsystem";
-	const char* arg[] = { name };
+	char name[] = "windows shadow subsystem";
+	char* arg[] = { name };
 
 	freerdp_server_warn_unmaintained(ARRAYSIZE(arg), arg);
 	pEntryPoints->New = win_shadow_subsystem_new;
