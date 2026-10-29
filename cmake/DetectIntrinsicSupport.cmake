@@ -10,6 +10,13 @@ if(WITH_NEON)
   set(WITH_SIMD ON CACHE BOOL "WITH_NEON")
 endif()
 
+# WebAssembly has no runtime CPU detection: a module using SIMD only loads where SIMD is
+# supported, so build everything with it. This also lets winpr report the SSE levels
+# emscripten lowers onto it, see IsProcessorFeaturePresent.
+if(WITH_SIMD AND EMSCRIPTEN)
+  add_compile_options(-msimd128)
+endif()
+
 macro(set_simd_source_file_properties INTRINSIC_TYPE)
   if(ARGC LESS_EQUAL 1)
     message(FATAL_ERROR "set_simd_source_file_properties called with invalid arguments: [${ARGC}] {${ARGN}")
