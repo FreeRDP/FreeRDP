@@ -1,3 +1,256 @@
+# 2026-11-02 Version 3.33.0
+
+Major feature release, accompanied by the usual bugfix and CVE fixes.
+So, what is new:
+
+* webassembly support, now can run from within your browser
+* improved SDL client RAILS
+* experimental UDP support for direct (without gateway) RDP connections
+* unicode keyboard input pipe now supported by all clients (on systems that
+  support mkfifo unix style pipes)
+* experimental windows shadow server support. It is back from the dead!
+* mac OS file clipboard support without FUSE (all clients) 
+* Initial support for translation of messages
+
+The influx of pull requests and feedback for bugs/regressions/... was huge, so
+we will do a patch release with all the papercuts and bug still in the backlog
+soon.
+
+## CVE
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hhfh-fvm7-7w65
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pq35-c472-69w2
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v7hr-xh82-79p7
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-9r9q-9r7p-4mr6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-76c4-7552-ffhv
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-j5pq-cm28-qm6v
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-2hm9-2h5q-x525
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hj6g-r86h-wrcg
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-fw6x-h8gw-778w
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-q8p6-8mmj-j4ph
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-r664-f94r-rgg6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4g67-jhpc-q5xp
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8m87-jj8p-2fqc
+
+## What's Changed
+* Proxy cert (#13648)
+* [core,nla] report NTLM rejected (#13634)
+* [client, ios] Improve keyboard for ios clients. (#13676)
+* [codec,av1] fix colours of decoded YUV444 frames (#13561)
+* Config json (#13578)
+* [core,peer] skip disconnect sequence when MCS not established (#13687)
+* [client,sdl] send one wheel axis per event (#13689)
+* [ci,mac] disable deprecated symbols (#13690)
+* Gcc warning fixes (#13693)
+* winpr: avoid self-triggered SSPI deprecation warnings (#13692)
+* Channels rdpdr irp (#13694)
+* rail: initialize client status before deferred RemoteApp execution (#13696)
+* fix stale signature pointer in v1 cert writer (#13697)
+* [crypto,test] do not name variables small and large (#13701)
+* [cmake] restrict clang-format globbing to the source folders (#13708)
+* [client,sdl] strip the terminating \0 from text for local applications (#13705)
+* [codec,dsp] only create an Opus coder for Opus formats (#13711)
+* [uwac] detect linux-dmabuf availability (#13473)
+* Misc fixes and improvements of aad helper  (#13709)
+* [client,x11] Send Backspace and Delete as scancodes in Unicode mode (#13715)
+* [winpr,clipboard] fix FileGroupDescriptorW to file list conversions (#13714)
+* [codec,channels] guard new Android MediaCodec/AAudio APIs behind their introduced-in level (#13706)
+* Must have feature: pretend that a movie or gstreamer pipeline is your camera (#13703)
+* [winpr] add optional translation helpers (#13367)
+* [channels,rdpdr] add 64-bit, file information and volume drive APIs to the server (#13593)
+* [winpr,client,sdl] Windows clipboard: image conversion, BMP layout, UTF-8 text (#13633)
+* fix various warnings and missing function fallback (#13718)
+* [codec,h264] add Apple VideoToolbox decoder (#13716)
+* [core,autodetect] count the header of bandwidth measure payloads (#13720)
+* [client,sdl] resend the window layout to a new display channel (#13726)
+* [channels,rdpsnd] allow some slack before dropping samples as overrun (#13723)
+* [winpr,thread] fix GetCurrentThreadId on 32-bit platforms (#13725)
+* [channels,rdpsnd,winmm] keep a little audio queued ahead (#13722)
+* Kerberos realm prompter fixes (#13721)
+* [client,sdl] log a failed display layout as such (#13700)
+* [channels,rdpsnd,pulse] default target latency, and silence in front when playback restarts (#13727)
+* [winpr,clipboard] fix HTML synthesizer destination format checks (#13734)
+* Http gw improve (#13736)
+* [client,x11] add deferred alt forwarding option to prevent alt keys from being prematurely sent to remote (#13707)
+* [client,aad-helper] add /azure:user-agent to override the embedded browser User-Agent - #13647#13647 (#13738)
+* X11 args (#13740)
+* [client,x11] give TestX11DeferredAlt a PubSub (#13739)
+* [client,sdl] bring back the connection dialog (#13729)
+* [client] fix aad helper crashes and -defer-alt option (#13742)
+* [client,sdl] allow turning the connection dialog off (#13745)
+* [winpr,core,codec] fix the Emscripten build (#13724)
+* Cleanups oct (#13759)
+* map dosAttrib hidden to  UF_HIDDEN on BSD/MacOS (#13756)
+* [client,x11] keep keyboard mappings across MappingNotify reloads (#13755)
+* [channels,audin] keep capturing when only the bit rate changes (#13751)
+* [channels,urbdrc] ignore device detach failure (#13746)
+* [channels,urbdrc] retry interface claim without auto detach (#13749)
+* [core,gateway] remember partly read header (#13761)
+* [channels,rdpsnd] accept format names in /sound:format: (#13753)
+* [cmake] re-run CMake when settings_types_private.h changes (#13762)
+* [channels,rdpecam] add AVFoundation camera backend (#13735)
+* [channels,rdpecam] fix AVFoundation camera rotation (#13763)
+* [client,sdl] file copy and paste between the macOS Finder and the server (#13591)
+* [client,x11] fix deadlock in RAIL repaint from GFX surface (#13769)
+* Rdg and xfreerdp bugfixes (#13767)
+* [locale,keyboard] pass UINT32 to freerdp_extract_key_value (#13770)
+* [codec,openh264] load libopenh264.so.8 (OpenH264 2.6) (#13771)
+* [winpr,ssl] warn about the legacy provider only when it is needed (#13772)
+* Ci fixes s390x (#13776)
+* Hostname tld check (#13780)
+* winpr: set the caller-provided IV on the mbedTLS cipher backend (#13779)
+* [client,sdl] only cancel input dialog on its own window events (#13752)
+* Multi instance channel (#13781)
+* [sdl] keep non-activating RAIL popups as popups (#13758)
+* [channels,remdesk] harden server side packet reading (#13783)
+* [core,connection] Send client messages stateless (#13782)
+* [server,proxy] unlock hash table before return (#13784)
+* Scard logon partial match (#13789)
+* [core,connection] go on after the server Monitor Layout PDU (#13785)
+* [ci] add an Emscripten build and unit test job (#13728)
+* [core,scard] fix inverted domain match (#13790)
+* [client,x11] fix stubbed X11 event test (#13791)
+* [cmake] declare WITH_OPAQUE_SETTINGS before the build config is collected (#13796)
+* s390x fixes (#13792)
+* [client,x11] fix missing cast in test (#13799)
+* [cmake] recreate imported targets in static package configs (#13766)
+* [ci,cmake] update preset (#13798)
+* [common,settings] add canary for freerdp_device_free (#13801)
+* [core,gateway] clear completed RDG header state (#13802)
+* Hostname punycode (#13800)
+* [core,multitransport] client side UDP multitransport (#13608)
+* new: add files for oss-scanner (#13797)
+* [ci,qa] enable BUILD_TESTING (#13803)
+* [core,settings] keep desktop and device scale factors apart (#13806)
+* [core,proxy] fix length of HTTP basic auth string (#13807)
+* [c] replace { 0  }  with WINPR_C_ARRAY_INIT (#13808)
+* [ci,tests] silence compilation warnings (#13809)
+* [codec,av1] decode with WebCodecs in Emscripten builds (#13731)
+* [client,windows] fix fullscreen toggle (#13814)
+* [channels,client] fix endless loop in getFromGeneric (#13815)
+* Sdl logon error info (#13816)
+* [codec,dsp] fix Opus microphone encoding (#13810)
+* Minor build and doc improvements (#13818)
+* [doc]: add some minimum guidelines for git commit messages (#13819)
+* github ci utilize cache for workflows (#13817)
+* Abi diff build dir (#13821)
+* Abi suppr update (#13822)
+* [client,sdl3] fix duplicate presentation in input dialogs (#13820)
+* [core] explicitly check for utils_is_valid_ip (#13829)
+* [client,x11|sdl] wait the resize delay after DisplayControlCaps (#13827)
+* [libfreerdp, locale] Fix incorrect XKB key name for the Korean Hanja key (#13825)
+* [core,proxy] allow ignoring proxy servers (#13830)
+* [core,multitransport] UDP multitransport is opt-out with /multitransport:tcp-only (#13823)
+* [core,gateway] unify rts_syntax_id_new/free (#13831)
+* Papercuts (#13832)
+* [channels,rdpsnd] add a Web Audio backend for Emscripten builds (#13732)
+* [client,sdl] start with num lock on, on macOS (#13836)
+* [client,sdl] test the system configuration in TestSDLPrefs (#13840)
+* [channels,rdpsnd] relink when the JavaScript library changes (#13839)
+* [client,common] sso-mib: decode req_cnf as base64url (#13843)
+* winpr/input: Add API to check whether keyboard type is supported (#13846)
+* Common unicode from pipe (#13842)
+* [codec,av1] move the WebCodecs JavaScript into a .js library (#13838)
+* silenced warnings (#13847)
+* [codec,test] fix unused variable (#13849)
+* If 0 delete (#13850)
+* [client,x11] fix link of the X11 tests with a shared client library (#13824)
+* [codec,h264] decode with WebCodecs in Emscripten builds (#13812)
+* [client,sdl] free the image widget's text engine with its own deleter (#13866)
+* [client,sdl3] fix monitor order with /monitors: (#13868)
+* [client,android] auto-reconnect (#13863)
+* [client,sdl] use the key event's modifiers for hotkeys (#13852)
+* [client,sdl] set every field of the pushed clipboard events (#13872)
+* [client,android] reduce input latency and lock the event queue (#13862)
+* [client,sdl] show the menu bar in fullscreen on macOS (#13856)
+* [client,android] clean up codec arguments and network:auto (#13861)
+* [core,connection] detect a broker redirect (#13879)
+* [core,connection] leave the active state before disconnecting (#13881)
+* Bug fixes (#13880)
+* [codec,h264] reset after init of H264 context (#13884)
+* [client,sdl] pass the activating click to RemoteApp windows (#13853)
+* [client,sdl] fix RemoteApp with multiple monitors (#13857)
+* [channels,audin] add a Web Audio microphone backend for Emscripten builds (#13811)
+* [client,sdl] no connection dialog window in Emscripten builds (#13860)
+* [winpr,sync] yield to the browser through a MessageChannel (#13864)
+* [client,sdl] browser clipboard for Emscripten builds (#13733)
+* [core,mcs] fix DisconnectProviderUltimatum reason encoding (#13873)
+* Unified unicode kbd (#13851)
+* [winpr,utils] abort PNG write on size wrap or realloc failure (#13867)
+* [warnings] fix ci compiler warnings (#13886)
+* [client,sdl] RemoteApp fixes and cleanups (#13854)
+* [client,sdl] Emscripten: a page may split the canvas into monitors (#13865)
+* [client,android] mouse wheel fixes (#13887)
+* [client,sdl] stop server output only when every monitor window is hidden (#13888)
+* [client,sdl] add Windows support for RemoteApp (#13855)
+* [client,common] stop auto-reconnect when a reconnect attempt is rejected (#13882)
+* [client,sdl] fix RemoteApp popups dragged (#13878)
+* [core,fastpath] discard input events before activation (#13889)
+* [client,common] fill in the touch contact count (#13870)
+* [primitives] use the SSE primitives with WebAssembly SIMD (#13893)
+* [server,shadow] Win backend: crash fixes found in production, capture cadence and GFX dirty-region encoding (#13892)
+* Ci bug fix (#13895)
+* Server proxy sync (#13896)
+* [ci,win] enable shadow on ci (#13899)
+* [server,shadow] win_shadow_enum_monitors: use the first attached display adapter (#13894)
+* Cf locale clip (#13902)
+* [client,sdl] RemoteApp window position, size and minimize fixes (#13897)
+* [codec,h264] fix buffer allocation failure behavior (#13903)
+* Ci fixes  (#13905)
+* [core,test] abort connect before fuzz destroy (#13906)
+* [shadow,win] follow encoder preferred fps in capture loop (#13907)
+* [codec,video] add android mediacodec support (#13915)
+* [client,sdl] rail: keep popups whose SDL parent goes away; do not disconnect on orders for unknown windows (#13914)
+* [client,x11] do not send cliprdr data on a torn down channel (#13912)
+* Ci fixes (#13916)
+* More ci fixes (#13910)
+* [client,x11] fix redrawing requests (#13917)
+* [winpr,stream] use InterlockedDecrement (#13918)
+* [client,sdl] send keys as unicode with /kbd:unicode (#13920)
+* fix memory leak about s in rdpdr_send() in channels/rdpdr/client/rdpd… (#13923)
+* [client,common] fix /gfx:AV1 without :on (#13924)
+* [server,shadow,win] use AuthenticateEx in the WDS client (#13932)
+* [channels,cliprdr] handle CB_RESPONSE_FAIL messages (#13936)
+* [server,shadow] make SHADOW_MSG_OUT refCount a LONG (#13931)
+* [codec,h264] harden emscripten NAL parser (#13941)
+* [client,sdl3] register the signal cleanup handler again (#13922)
+* [client,sdl] send the physical monitor size in millimetres (#13805)
+* [client,sdl] rail: never activate WS_EX_NOACTIVATE windows (#13977)
+* [core,rdstls] add more failure logging (#13986)
+* [core,listener] listen on a Unix socket on Windows too (#13935)
+* [shadow,win] DXGI capture: a build option, and follow the secure desktop (#13933)
+* winpr: move ndr routines from rdpear to winpr (#11588)
+* [channels,rdpear] add workaround for older windows versions (#13898)
+* fix the reference-count imbalance in printer_android_new_printer() in… (#13960)
+* [channels,rdpsnd] client: drop a wave that does not decode, keep playing (#13957)
+* [channels,cliprdr] tolerate a malformed FAIL response (#13930)
+* [codec,h264] VideoToolbox H.264 encoder (#13975)
+* [client,sdl] move queued items out before pop() (#13961)
+
+## New Contributors
+* @huangzheng2016 made their first contribution in #13687
+* @consolomets made their first contribution in #13715
+* @espentveit made their first contribution in #13720
+* @wpyoga made their first contribution in #13707
+* @jlabrous made their first contribution in #13756
+* @himamaheswarreddy made their first contribution in #13755
+* @veZuk made their first contribution in #13769
+* @ruimya made their first contribution in #13779
+* @jgrulich-rh made their first contribution in #13802
+* @jb-alvarado made their first contribution in #13820
+* @diogochaves made their first contribution in #13827
+* @golinku made their first contribution in #13843
+* @justussc made their first contribution in #13868
+* @giladchen-dev made their first contribution in #13879
+* @murrant made their first contribution in #13873
+* @w4ffl35 made their first contribution in #13867
+* @caomengxuan666 made their first contribution in #13892
+* @skynit made their first contribution in #13912
+* @Syh-Xiong made their first contribution in #13923
+* @nootone made their first contribution in #13930
+
+For a complete and detailed change log since the last release run:
+git log 3.33.0...3.32.2
+
 # 2026-10-12 Version 3.32.2
 
 Regression, bugfix and security release.
