@@ -1451,6 +1451,23 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif // __GNUC__
 #endif
 
+#if defined(__EMSCRIPTEN__) && defined(__wasm_simd128__)
+	/* No CPUID in WebAssembly. With -msimd128 emscripten maps SSE up to SSE4.1
+	 * onto WebAssembly SIMD; SSE4.2 and AVX are mostly emulated, so leave them out. */
+	switch (ProcessorFeature)
+	{
+		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
+		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE4_1_INSTRUCTIONS_AVAILABLE:
+			ret = TRUE;
+			break;
+
+		default:
+			break;
+	}
+#endif
+
 #if defined(_M_E2K)
 	/* compiler flags on e2k arch determine CPU features */
 	switch (ProcessorFeature)
@@ -1657,6 +1674,25 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 		}
 		break;
 #endif // __GNUC__ || _MSC_VER
+
+		default:
+			break;
+	}
+#elif defined(__EMSCRIPTEN__)
+	switch (ProcessorFeature)
+	{
+		/* __lzcnt() is __builtin_clz(), a native WebAssembly instruction */
+		case PF_EX_LZCNT:
+			ret = TRUE;
+			break;
+
+#if defined(__wasm_simd128__)
+		/* see IsProcessorFeaturePresent */
+		case PF_EX_SSSE3:
+		case PF_EX_SSE41:
+			ret = TRUE;
+			break;
+#endif
 
 		default:
 			break;
