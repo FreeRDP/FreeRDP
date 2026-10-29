@@ -48,6 +48,7 @@ static BOOL test04(void)
 	size_t nSections = 0;
 
 	/* First Sample */
+	char** sectionNames = nullptr;
 	wIniFile* ini = IniFile_New();
 	if (!ini)
 		goto fail;
@@ -55,7 +56,7 @@ static BOOL test04(void)
 	if (IniFile_ReadBuffer(ini, TEST_INI_04) < 0)
 		goto fail;
 
-	char** sectionNames = IniFile_GetSectionNames(ini, &nSections);
+	sectionNames = IniFile_GetSectionNames(ini, &nSections);
 	if (!sectionNames && (nSections > 0))
 		goto fail;
 
@@ -69,7 +70,7 @@ static BOOL test04(void)
 		printf("[%s]\n", sectionNames[i]);
 		if ((!keyNames && (nKeys > 0)) || (nKeys != 1))
 		{
-			free(keyNames);
+			free((void*)keyNames);
 			goto fail;
 		}
 		for (size_t j = 0; j < nKeys; j++)
@@ -77,7 +78,7 @@ static BOOL test04(void)
 			const char* sValue = IniFile_GetKeyValueString(ini, sectionNames[i], keyNames[j]);
 			printf("%s = %s\n", keyNames[j], sValue);
 		}
-		free(keyNames);
+		free((void*)keyNames);
 	}
 
 	const char* sValue = IniFile_GetKeyValueString(ini, "foobar", "prefix");
@@ -90,6 +91,7 @@ static BOOL test04(void)
 
 	rc = TRUE;
 fail:
+	free((void*)sectionNames);
 	IniFile_Free(ini);
 	return rc;
 }

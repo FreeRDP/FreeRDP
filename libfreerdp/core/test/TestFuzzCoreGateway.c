@@ -181,6 +181,8 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 				else
 					fuzz_http(context, s);
 			}
+			freerdp_abort_connect_context(context);
+			Sleep(50);
 			freerdp_client_context_free(context);
 		}
 		break;
