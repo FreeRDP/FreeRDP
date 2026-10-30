@@ -258,10 +258,10 @@ void shadow_rfx_commit_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UI
 
 	if ((sFrames % 120) == 0)
 	{
-		WLog_INFO(TAG,
-		          "stats: frames=%" PRIu64 " tiles_seen=%" PRIu64 " tiles_sent=%" PRIu64
-		          " tiles_skipped=%" PRIu64 " empty_frames=%" PRIu64 " wire_bytes=%" PRIu64,
-		          sFrames, sTilesSeen, sTilesSent, sTilesSeen - sTilesSent, sEmptyFrames,
-		          sWireBytes);
+		WLog_DBG(TAG,
+		         "stats: frames=%" PRIu64 " tiles_seen=%" PRIu64 " tiles_sent=%" PRIu64
+		         " tiles_skipped=%" PRIu64 " empty_frames=%" PRIu64 " wire_bytes=%" PRIu64,
+		         sFrames, sTilesSeen, sTilesSent, sTilesSeen - sTilesSent, sEmptyFrames,
+		         sWireBytes);
 	}
 }
