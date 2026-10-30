@@ -46,6 +46,8 @@ typedef struct
 	wMessageQueue* IrpQueue;
 	wListDictionary* rgOutstandingMessages;
 	rdpContext* rdpcontext;
+	/* serializes the contexts of callctx between thread and DEVICE::Init/DEVICE::Free */
+	CRITICAL_SECTION lock;
 } SMARTCARD_DEVICE;
 
 typedef struct
