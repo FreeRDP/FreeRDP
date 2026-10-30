@@ -475,13 +475,35 @@ uint32_t sdlInput::prefToMask()
 {
 	const auto& m = getSdlMap();
 	uint32_t mod = SDL_KMOD_NONE;
+	_hotkeyModGroups.clear();
 	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
 	{
 		auto it = m.find(val);
 		if (it != m.end())
+		{
+			/* Keep every entry as a group of its own instead of folding all of them into one
+			 * mask: SDL_KMOD_CTRL is defined as SDL_KMOD_LCTRL|SDL_KMOD_RCTRL, so a mask that
+			 * required every bit of it would ask for both control keys at once and the hotkey
+			 * could never fire. */
+			if (it->second != SDL_KMOD_NONE)
+				_hotkeyModGroups.push_back(it->second);
 			mod |= it->second;
+		}
 	}
 	return mod;
+}
+
+bool sdlInput::hotkeyModsMatch(SDL_Keymod mods) const
+{
+	if (_hotkeyModGroups.empty())
+		return false;
+
+	for (const auto group : _hotkeyModGroups)
+	{
+		if ((mods & group) == 0)
+			return false;
+	}
+	return true;
 }
 
 [[nodiscard]] static const char* sdl_scancode_name(Uint32 scancode)
@@ -587,7 +609,7 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 	 * before a modifier. */
 	const SDL_Keymod mods = ev.mod;
 
-	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
+	if (_hotkeysEnabled && hotkeyModsMatch(mods))
 	{
 		if (ev.type == SDL_EVENT_KEY_DOWN)
 		{
