@@ -48,6 +48,7 @@ set(SRCS
     xf_gfx.h
     xf_rail.c
     xf_rail.h
+    xf_rail_workarea.h
     xf_input.c
     xf_input.h
     xf_debug.h

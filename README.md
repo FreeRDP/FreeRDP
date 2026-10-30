@@ -51,3 +51,6 @@ https://github.com/FreeRDP/FreeRDP/wiki/Reference-Documentation
 
 Instructions on how to get started compiling FreeRDP can be found on the wiki:
 https://github.com/FreeRDP/FreeRDP/wiki/Compilation
+
+For X11 RemoteApp geometry ownership and focused regression checks, see
+[X11 RemoteApp notes](docs/README.remoteapp-x11.md).
