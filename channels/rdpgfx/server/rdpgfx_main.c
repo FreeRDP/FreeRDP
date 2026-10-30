@@ -783,6 +783,9 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream
 #if defined(WITH_GFX_AV1)
 			case RDPGFX_CODECID_AV1:
 #endif
+#if defined(WITH_GFX_AV2)
+			case RDPGFX_CODECID_AV2:
+#endif
 			case RDPGFX_CODECID_AVC420:
 			{
 				havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
