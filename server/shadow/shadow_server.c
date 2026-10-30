@@ -567,6 +567,59 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 #endif
+#if defined(WITH_GFX_AV2)
+		CommandLineSwitchCase(arg, "gfx-av2")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			UINT32 profile = freerdp_settings_get_uint32(settings, FreeRDP_GfxCodecAV2Profile);
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (strncmp("profile:", cur, 8) == 0)
+					{
+						const char* val = &cur[8];
+						if (strcmp("high", val) == 0)
+							profile = 1;
+						else if (strcmp("low", val) == 0)
+							profile = 0;
+						else
+						{
+							const unsigned long v = strtoul(val, nullptr, 0);
+							if ((errno != 0) || (v >= UINT32_MAX))
+							{
+								parseFailed = TRUE;
+								break;
+							}
+							else
+								profile = WINPR_ASSERTING_INT_CAST(UINT32, v);
+						}
+					}
+					else if (strcmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile, profile))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "gfx-rfx")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, arg->Value != nullptr))
@@ -1177,7 +1230,20 @@ rdpShadowServer* shadow_server_new(void)
 	server->AV1BitRate = 500;
 	server->AV1RateControlMode = FREERDP_AV1_VBR;
 #endif
+#if defined(WITH_GFX_AV2)
+	server->AV2BitRate = 500;
+	server->AV2RateControlMode = FREERDP_AV2_VBR;
+#endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
+#if defined(WITH_GFX_AV2)
+	/* AV2 only on request (/gfx-av2): the reference encoder is far from realtime */
+	if (server->settings &&
+	    !freerdp_settings_set_bool(server->settings, FreeRDP_GfxCodecAV2, FALSE))
+	{
+		shadow_server_free(server);
+		return nullptr;
+	}
+#endif
 	return server;
 }
 
