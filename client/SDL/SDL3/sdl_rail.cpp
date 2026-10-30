@@ -933,7 +933,8 @@ UINT SdlRail::server_execute_result(RailClientContext* context,
 	{
 		WLog_ERR(TAG, "RAIL exec error: execResult=0x%04" PRIx16 " rawResult=0x%08" PRIx32,
 		         execResult->execResult, execResult->rawResult);
-		freerdp_abort_connect_context(rail->_context->context());
+		if (!rail->_context->railMultiExec())
+			freerdp_abort_connect_context(rail->_context->context());
 	}
 	else
 	{
@@ -1876,6 +1877,11 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 	if (!rail)
 		return FALSE;
 
+	if ((orderInfo->fieldFlags &
+	     (WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN | WINDOW_ORDER_FIELD_DESKTOP_HOOKED)) &&
+	    !freerdp_client_rail_multi_exec_set_ready(rail->_context->common(), FALSE))
+		WLog_ERR(TAG, "Failed to revoke RAIL launch readiness");
+
 	/* Launch the RemoteApp on DESKTOP_ARC_COMPLETED, like xf_rail_monitored_desktop. */
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED)
 	{
@@ -1883,16 +1889,18 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 		const char* app =
 		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
 		/* ARC_COMPLETED also follows every secure desktop (UAC): start the app only once. */
-		if (app && (strnlen(app, 1) > 0) && !rail->_appStarted)
+		if (!rail->_appStarted)
 		{
-			WLog_DBG(TAG, "RAIL mode enabled (monitored desktop); launching '%s'", app);
+			WLog_DBG(TAG, "RAIL mode enabled (monitored desktop); launching '%s'", app ? app : "");
 			if (client_rail_server_start_cmd(rail->_rail) != CHANNEL_RC_OK)
 			{
-				WLog_ERR(TAG, "client_rail_server_start_cmd failed for '%s'", app);
+				WLog_ERR(TAG, "client_rail_server_start_cmd failed for '%s'", app ? app : "");
 				return FALSE;
 			}
 			rail->_appStarted = true;
 		}
+		if (!freerdp_client_rail_multi_exec_set_ready(rail->_context->common(), TRUE))
+			WLog_ERR(TAG, "Failed to grant RAIL launch readiness");
 	}
 
 	/* Authoritative top-level z-order (windowIds[0] topmost); capture it, paint() realizes it. */
@@ -1927,6 +1935,8 @@ BOOL SdlRail::non_monitored_desktop(rdpContext* context,
 	auto rail = SdlRail::get(context);
 	if (rail)
 	{
+		if (!freerdp_client_rail_multi_exec_set_ready(rail->_context->common(), FALSE))
+			WLog_ERR(TAG, "Failed to revoke RAIL launch readiness");
 		WLog_DBG(TAG, "RAIL mode disabled (non-monitored desktop)");
 		rail->enableRemoteAppMode(false);
 	}
