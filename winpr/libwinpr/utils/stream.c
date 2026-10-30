@@ -126,9 +126,9 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	s->length = size;
 
 	s->pool = nullptr;
-	s->count = 1;
 	s->isAllocatedStream = TRUE;
 	s->isOwner = TRUE;
+	Stream_AddRef(s);
 	return s;
 }
 
@@ -155,9 +155,9 @@ wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;
 	s->pool = nullptr;
-	s->count = 1;
 	s->isAllocatedStream = FALSE;
 	s->isOwner = FALSE;
+	Stream_AddRef(s);
 	return s;
 }
 

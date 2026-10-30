@@ -45,7 +45,7 @@ extern "C"
 		size_t length;
 		size_t capacity;
 
-		DWORD count;
+		volatile LONG count;
 		wStreamPool* pool;
 		BOOL isAllocatedStream;
 		BOOL isOwner;
