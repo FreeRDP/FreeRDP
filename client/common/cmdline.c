@@ -2645,7 +2645,7 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 					else
-						enabled = bval == PARSE_ON;
+						enabled = bval != PARSE_OFF;
 
 					if (enabled || (bval != PARSE_FAIL))
 					{
