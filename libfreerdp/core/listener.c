@@ -29,7 +29,9 @@
 #include <winpr/windows.h>
 #include <freerdp/log.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <afunix.h>
+#else
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/un.h>
@@ -310,6 +312,67 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	WLog_INFO(TAG, "Listening on socket %s.", addr.sun_path);
 	return TRUE;
 #else
+	/* Windows 10 1803 and later: AF_UNIX stream sockets through Winsock. Who
+	 * may connect is the socket file's ACL, inherited from its folder. */
+	rdpListener* listener = (rdpListener*)instance->listener;
+	SOCKADDR_UN addr = WINPR_C_ARRAY_INIT;
+	u_long nonblocking = 1;
+
+	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+	{
+		WLog_ERR(TAG, "too many listening sockets");
+		return FALSE;
+	}
+
+	if (strnlen(path, sizeof(addr.sun_path)) >= sizeof(addr.sun_path))
+	{
+		WLog_ERR(TAG, "socket path too long: %s", path);
+		return FALSE;
+	}
+
+	SOCKET sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+	if (sockfd == INVALID_SOCKET)
+	{
+		WLog_ERR(TAG, "socket(AF_UNIX) failed: %d (Windows 10 1803 or later is needed)",
+		         WSAGetLastError());
+		return FALSE;
+	}
+
+	(void)ioctlsocket(sockfd, FIONBIO, &nonblocking);
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
+	/* a socket file left by an earlier run would make bind fail */
+	(void)DeleteFileA(path);
+
+	if (_bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) != 0)
+	{
+		WLog_ERR(TAG, "bind(%s) failed: %d", path, WSAGetLastError());
+		closesocket(sockfd);
+		return FALSE;
+	}
+
+	if (_listen(sockfd, 10) != 0)
+	{
+		WLog_ERR(TAG, "listen(%s) failed: %d", path, WSAGetLastError());
+		closesocket(sockfd);
+		return FALSE;
+	}
+
+	HANDLE hevent = WSACreateEvent();
+
+	if (!hevent)
+	{
+		WLog_ERR(TAG, "failed to create the socket's event");
+		closesocket(sockfd);
+		return FALSE;
+	}
+
+	WSAEventSelect(sockfd, hevent, FD_READ | FD_ACCEPT | FD_CLOSE);
+	listener->sockfds[listener->num_sockfds] = (int)sockfd;
+	listener->events[listener->num_sockfds] = hevent;
+	listener->num_sockfds++;
+	WLog_INFO(TAG, "Listening on socket %s.", addr.sun_path);
 	return TRUE;
 #endif
 }
@@ -420,14 +483,12 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 			client->local = TRUE;
 	}
 
-#ifndef _WIN32
 #if defined(HAVE_AF_VSOCK_H)
 	else if (peer_addr->ss_family == AF_UNIX || peer_addr->ss_family == AF_VSOCK)
 #else
 	else if (peer_addr->ss_family == AF_UNIX)
 #endif
 		client->local = TRUE;
-#endif
 
 	if (client->local)
 		WLog_INFO(TAG, "Accepting client from localhost");
