@@ -43,6 +43,7 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD int win_shadow_dxgi_init(winShadowSubsystem* subsystem);
 	WINPR_ATTR_NODISCARD int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_dxgi_restart_duplication(winShadowSubsystem* subsystem);
 
 	WINPR_ATTR_NODISCARD int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	                                                          BYTE** ppDstData, int* pnDstStep,

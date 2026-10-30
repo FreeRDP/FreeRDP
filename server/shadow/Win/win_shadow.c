@@ -38,6 +38,50 @@
 #define MOUSEEVENTF_HWHEEL 0x1000
 #endif
 
+/* The desktop this thread opened to follow the input desktop, if any */
+static WINPR_TLS HDESK win_shadow_thread_desktop = nullptr;
+
+/* Moves the calling thread to the input desktop when that changed: SendInput
+ * and DXGI desktop duplication only work there. The input desktop is the
+ * user's (Default) or, as SYSTEM on the console session (the service mode),
+ * the secure one (Winlogon: the logon and lock screens, UAC prompts). A user
+ * process cannot open the secure desktop and stays where it is. Returns TRUE
+ * when the thread moved. */
+static BOOL win_shadow_follow_input_desktop(void)
+{
+	WCHAR inputName[64] = WINPR_C_ARRAY_INIT;
+	WCHAR threadName[64] = WINPR_C_ARRAY_INIT;
+	HDESK input = OpenInputDesktop(0, FALSE, GENERIC_ALL);
+
+	if (!input)
+		return FALSE;
+
+	(void)GetUserObjectInformationW(input, UOI_NAME, inputName, sizeof(inputName), nullptr);
+	(void)GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()), UOI_NAME, threadName,
+	                                sizeof(threadName), nullptr);
+
+	if (_wcsicmp(inputName, threadName) == 0)
+	{
+		(void)CloseDesktop(input);
+		return FALSE;
+	}
+
+	if (!SetThreadDesktop(input))
+	{
+		WLog_WARN(TAG, "SetThreadDesktop(%ls) failed: 0x%08lX", inputName, GetLastError());
+		(void)CloseDesktop(input);
+		return FALSE;
+	}
+
+	/* the desktop GetThreadDesktop() gave first is not ours to close */
+	if (win_shadow_thread_desktop)
+		(void)CloseDesktop(win_shadow_thread_desktop);
+	win_shadow_thread_desktop = input;
+	WLog_INFO(TAG, "thread %lu follows the input desktop from %ls to %ls", GetCurrentThreadId(),
+	          threadName, inputName);
+	return TRUE;
+}
+
 static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
                                                rdpShadowClient* client, UINT32 flags)
 {
@@ -48,6 +92,7 @@ static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                             UINT16 flags, UINT8 code)
 {
+	(void)win_shadow_follow_input_desktop();
 	INPUT event = WINPR_C_ARRAY_INIT;
 	event.type = INPUT_KEYBOARD;
 	KEYBDINPUT* ki =
@@ -79,6 +124,7 @@ static BOOL win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsyste
                                                     rdpShadowClient* client, UINT16 flags,
                                                     UINT16 code)
 {
+	(void)win_shadow_follow_input_desktop();
 	INPUT event = WINPR_C_ARRAY_INIT;
 	event.type = INPUT_KEYBOARD;
 	KEYBDINPUT* ki =
@@ -105,6 +151,7 @@ static BOOL win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsyste
 static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                          UINT16 flags, UINT16 x, UINT16 y)
 {
+	(void)win_shadow_follow_input_desktop();
 	UINT rc = 1;
 	INPUT event = WINPR_C_ARRAY_INIT;
 	float width;
@@ -196,6 +243,7 @@ static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
                                                   rdpShadowClient* client, UINT16 flags, UINT16 x,
                                                   UINT16 y)
 {
+	(void)win_shadow_follow_input_desktop();
 	UINT rc = 1;
 	INPUT event = WINPR_C_ARRAY_INIT;
 	float width;
@@ -425,8 +473,20 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
-			int dxgi_status;
-			dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
+			int dxgi_status = 0;
+
+			/* a desktop switch (logon, lock screen, UAC), or no duplication
+			 * yet: duplicate the output again on the input desktop, and send
+			 * all of it */
+			if (win_shadow_follow_input_desktop() || !subsystem->dxgiOutputDuplication)
+			{
+				if (win_shadow_dxgi_restart_duplication(subsystem) > 0)
+					(void)win_shadow_invalidate_region(subsystem, 0, 0, subsystem->width,
+					                                   subsystem->height);
+			}
+
+			if (subsystem->dxgiOutputDuplication)
+				dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
 
 			if (dxgi_status > 0)
 				dxgi_status = win_shadow_dxgi_get_invalid_region(subsystem);
