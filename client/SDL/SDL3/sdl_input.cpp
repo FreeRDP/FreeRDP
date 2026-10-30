@@ -598,7 +598,7 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
 				if (!keyboard_sync_state())
 					return false;
-				freerdp_abort_connect_context(_sdl->context());
+				std::ignore = _sdl->abortConnect();
 				return true;
 			}
 			if (ev.scancode == _hotkeyMinimize)
