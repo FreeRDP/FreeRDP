@@ -75,17 +75,15 @@ static BOOL shadow_rfx_snapshot_ensure(rdpShadowEncoder* encoder, UINT16 width, 
 	}
 	if (step > SIZE_MAX / height)
 	{
-		WLog_WARN(TAG, "snapshot size overflows SIZE_MAX (%" PRIu32 "x%" PRIu16 ")",
-		          step, height);
+		WLog_WARN(TAG, "snapshot size overflows SIZE_MAX (%" PRIu32 "x%" PRIu16 ")", step, height);
 		return FALSE;
 	}
 
 	const UINT32 gridW = (width + RFX_TILE_SIZE - 1) / RFX_TILE_SIZE;
 	const UINT32 gridH = (height + RFX_TILE_SIZE - 1) / RFX_TILE_SIZE;
 
-	encoder->gfxSnapshot = (BYTE*)malloc((size_t)step * height);
-	encoder->gfxTileEncoded =
-	    (BOOL*)calloc(WINPR_ASSERTING_INT_CAST(size_t, gridW * gridH), sizeof(BOOL));
+	encoder->gfxSnapshot = calloc(height, step);
+	encoder->gfxTileEncoded = calloc(gridW, gridH * sizeof(BOOL));
 
 	if (!encoder->gfxSnapshot || !encoder->gfxTileEncoded)
 	{
@@ -133,8 +131,7 @@ int shadow_rfx_plan_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UINT3
 	const UINT32 startTy = cmd->top / RFX_TILE_SIZE;
 	const UINT32 endTy = (y1 - 1) / RFX_TILE_SIZE;
 
-	RFX_RECT* rects =
-	    (RFX_RECT*)calloc(WINPR_ASSERTING_INT_CAST(size_t, gridW * gridH), sizeof(RFX_RECT));
+	RFX_RECT* rects = calloc(gridW * gridH, sizeof(RFX_RECT));
 	if (!rects)
 		return -1;
 
