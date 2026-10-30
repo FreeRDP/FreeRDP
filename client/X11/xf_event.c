@@ -1533,11 +1533,20 @@ BOOL xf_event_update_screen(freerdp* instance)
 	}
 	else
 	{
+		BOOL redraw = FALSE;
+		UINT32 surfaceId = 0;
+		UINT64 windowId = 0;
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xfc->exposedWindow);
 		if (appWindow)
-			xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
-			                    xfc->exposedArea.w, xfc->exposedArea.h);
+		{
+			redraw = xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
+			                             xfc->exposedArea.w, xfc->exposedArea.h);
+			surfaceId = appWindow->surfaceId;
+			windowId = appWindow->windowId;
+		}
 		xf_rail_return_window(appWindow, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
 	}
 	return TRUE;
 }

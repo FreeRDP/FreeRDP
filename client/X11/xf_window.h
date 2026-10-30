@@ -97,13 +97,23 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
 BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
-int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
+
+/* return: redraw required  */
+WINPR_ATTR_NODISCARD
+BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
 
 BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow);
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name);
-void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
-void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
+
+/* return: redraw required  */
+WINPR_ATTR_NODISCARD
+BOOL xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
+
+/* return: redraw required  */
+WINPR_ATTR_NODISCARD
+BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
+
 // void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX,
@@ -111,7 +121,10 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow);
-void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
+
+/* return: redraw required  */
+WINPR_ATTR_NODISCARD
+BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height);
 UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
 BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId);
