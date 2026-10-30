@@ -1427,7 +1427,23 @@ static void cleanup_internals(rdpsndPlugin* rdpsnd)
 		return;
 
 	if (rdpsnd->async)
+	{
 		EnterCriticalSection(&rdpsnd->asyncLock);
+		if (rdpsnd->queue && (MessageQueue_Clear(rdpsnd->queue) < 0))
+			WLog_WARN(TAG, "%s failed to clear the message queue",
+			          rdpsnd_is_dyn_str(rdpsnd->dynamic));
+	}
+
+	if (rdpsnd->device)
+	{
+		IFCALL(rdpsnd->device->Close, rdpsnd->device);
+		IFCALL(rdpsnd->device->Free, rdpsnd->device);
+		rdpsnd->device = nullptr;
+	}
+	rdpsnd->isOpen = FALSE;
+	rdpsnd->expectingWave = FALSE;
+	rdpsnd->firstFlagReceived = FALSE;
+	rdpsnd->totalLength = 0;
 
 	if (rdpsnd->pool)
 		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
@@ -1462,28 +1478,17 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	{
 		DWORD opened = rdpsnd->OpenHandle;
 		rdpsnd->OpenHandle = 0;
-		if (rdpsnd->device)
-			IFCALL(rdpsnd->device->Close, rdpsnd->device);
-
 		error = rdpsnd->channelEntryPoints.pVirtualChannelCloseEx(rdpsnd->InitHandle, opened);
 
 		if (CHANNEL_RC_OK != error)
 		{
 			WLog_ERR(TAG, "%s pVirtualChannelCloseEx failed with %s [%08" PRIX32 "]",
 			         rdpsnd_is_dyn_str(rdpsnd->dynamic), WTSErrorToString(error), error);
-			return error;
 		}
 	}
 
 	cleanup_internals(rdpsnd);
-
-	if (rdpsnd->device)
-	{
-		IFCALL(rdpsnd->device->Free, rdpsnd->device);
-		rdpsnd->device = nullptr;
-	}
-
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 static void queue_free(void* obj)
@@ -1579,7 +1584,6 @@ static DWORD WINAPI play_thread(LPVOID arg)
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
 		handles[nCount++] = MessageQueue_Event(rdpsnd->queue);
-		handles[nCount++] = freerdp_abort_event(rdpsnd->rdpcontext);
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 		switch (status)
 		{
@@ -1589,24 +1593,30 @@ static DWORD WINAPI play_thread(LPVOID arg)
 				return ERROR_TIMEOUT;
 		}
 
+		/* cleanup_internals clears the queue under this lock. */
+		if (rdpsnd->async)
+			EnterCriticalSection(&rdpsnd->asyncLock);
+
 		rc = MessageQueue_Peek(rdpsnd->queue, &message, TRUE);
+		if ((rc > 0) && (message.id != WMQ_QUIT))
+		{
+			s = message.wParam;
+			error = rdpsnd_recv_pdu(rdpsnd, s);
+		}
+
+		if (rdpsnd->async)
+			LeaveCriticalSection(&rdpsnd->asyncLock);
+
 		if (rc < 1)
 			continue;
 
 		if (message.id == WMQ_QUIT)
 			break;
 
-		if (rdpsnd->async)
-			EnterCriticalSection(&rdpsnd->asyncLock);
-
-		s = message.wParam;
-		error = rdpsnd_recv_pdu(rdpsnd, s);
-
-		if (rdpsnd->async)
-			LeaveCriticalSection(&rdpsnd->asyncLock);
-
 		if (error)
-			return error;
+			WLog_Print(rdpsnd->log, WLOG_WARN, "%s PDU dropped [%08" PRIX32 "]",
+			           rdpsnd_is_dyn_str(rdpsnd->dynamic), error);
+		error = CHANNEL_RC_OK;
 	}
 
 	return CHANNEL_RC_OK;
@@ -1846,17 +1856,8 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	WINPR_ASSERT(rdpsnd);
 
 	rdpsnd->OnOpenCalled = FALSE;
-	if (rdpsnd->device)
-		IFCALL(rdpsnd->device->Close, rdpsnd->device);
-
 	cleanup_internals(rdpsnd);
-
 	free_internals(rdpsnd);
-	if (rdpsnd->device)
-	{
-		IFCALL(rdpsnd->device->Free, rdpsnd->device);
-		rdpsnd->device = nullptr;
-	}
 
 	free(pChannelCallback);
 	rdpsnd->connected = FALSE;
