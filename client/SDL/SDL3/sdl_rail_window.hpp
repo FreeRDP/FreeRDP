@@ -81,6 +81,9 @@ class SdlRailWindow
 
 	/* Deferred destroy: mark here (RDP thread), erased on the main thread in SdlRail::paint. */
 	void markDeleted();
+	/* Drop the local SDL window only (its SDL parent is going away); the server state is kept
+	 * and the next reconcile re-creates the window under a new parent. Main thread. */
+	void releaseWindow();
 	[[nodiscard]] bool isDeleted() const;
 
 	/* In-flight local state application flag. */

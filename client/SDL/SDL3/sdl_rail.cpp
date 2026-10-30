@@ -522,38 +522,59 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			sendWorkArea(usable);
 	}
 
-	/* Cascade deletion to child popups whose SDL parent was deleted. */
+	/* Windows whose SDL parent is going away (deleted by the server, or displaced by a same-id
+	 * recreate, see addWindow). Popups owned by that window die with it (the server deletes
+	 * them too), and so do non-popup windows, as before. Any other popup keeps its entry: the
+	 * server still owns it. A popup without an owner (e.g. a tray notification) is parented to
+	 * the focused app window as a fallback; deleting it locally when that window closes
+	 * desynchronizes us from the server, which keeps sending orders for it. It only drops its
+	 * local SDL window here and the next pass re-creates it under a new parent.
+	 * SDL destroys child windows together with their parent, so every window that is about to
+	 * lose its SDL window (deleted, displaced, or under one of those) releases it here, deepest
+	 * child first, before any entry is destroyed below. */
+	std::vector<std::pair<size_t, SdlRailWindow*>> release;
 	for (auto& [wid, win] : _windows)
 	{
-		if (win.isDeleted() || !win.window())
-			continue;
-		for (SDL_Window* p = SDL_GetWindowParent(win.window()); p; p = SDL_GetWindowParent(p))
-		{
-			auto* owner = getWindowBySdlId(SDL_GetWindowID(p));
-			if (!owner || owner->isDeleted())
-			{
-				win.markDeleted();
-				break;
-			}
-		}
-	}
-
-	/* Erase deleted windows deepest child first to avoid SDL child double-free. */
-	std::vector<std::pair<size_t, uint64_t>> dead;
-	for (auto& [wid, win] : _windows)
-	{
-		if (!win.isDeleted())
+		if (!win.window())
 			continue;
 		size_t depth = 0;
-		for (SDL_Window* p = win.window() ? SDL_GetWindowParent(win.window()) : nullptr; p;
-		     p = SDL_GetWindowParent(p))
+		bool orphan = false;
+		bool ownerDeleted = false;
+		for (SDL_Window* p = SDL_GetWindowParent(win.window()); p; p = SDL_GetWindowParent(p))
+		{
 			depth++;
-		dead.emplace_back(depth, wid);
+			auto* owner = getWindowBySdlId(SDL_GetWindowID(p));
+			if (!owner)
+				orphan = true;
+			else if (owner->isDeleted())
+			{
+				orphan = true;
+				if (owner->id() == win.owner())
+					ownerDeleted = true;
+			}
+		}
+		if (orphan && !win.isDeleted() && (ownerDeleted || !win.isPopup()))
+			win.markDeleted();
+		if (orphan || win.isDeleted())
+			release.emplace_back(depth, &win);
 	}
-	std::sort(dead.begin(), dead.end(),
+	for (auto& [wid, win] : _deadWindows)
+	{
+		if (!win.window())
+			continue;
+		size_t depth = 0;
+		for (SDL_Window* p = SDL_GetWindowParent(win.window()); p; p = SDL_GetWindowParent(p))
+			depth++;
+		release.emplace_back(depth, &win);
+	}
+	std::sort(release.begin(), release.end(),
 	          [](const auto& a, const auto& b) { return a.first > b.first; });
-	for (const auto& [depth, wid] : dead)
-		_windows.erase(wid);
+	for (auto& [depth, win] : release)
+		win->releaseWindow();
+
+	/* Erase deleted windows; their SDL windows are gone already. */
+	for (auto it = _windows.begin(); it != _windows.end();)
+		it = it->second.isDeleted() ? _windows.erase(it) : std::next(it);
 	/* Windows displaced by a same-id recreate (addWindow) also die here, on the main thread. */
 	_deadWindows.clear();
 
@@ -1671,7 +1692,16 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	}
 
 	if (!appWindow)
-		return FALSE;
+	{
+		/* An order for a window this client does not track, e.g. one it dropped
+		 * locally because its SDL parent went away (reconcile cascade) while the
+		 * server still has it. Failing the order tears down the whole connection
+		 * (fastpath update failure -> disconnect); ignore it instead and wait for
+		 * the next WINDOW_ORDER_STATE_NEW for this id. */
+		WLog_WARN(TAG, "ignoring order flags=0x%08" PRIx32 " for unknown window id=0x%08" PRIx32,
+		          fieldFlags, orderInfo->windowId);
+		return TRUE;
+	}
 
 	/* Show state first: a minimized window's rect is not a placement (updateWindowRect). */
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
