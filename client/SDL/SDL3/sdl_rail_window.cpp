@@ -1229,19 +1229,17 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 	if (!reconcile(parent, parentRect))
 		return false;
 
-	bool ok = false;
+	auto ok = false;
+	auto legacy = false;
 	{
 		std::unique_lock lock(_gfxLock);
 		if (_hasGfx)
-		{
 			ok = paintGfx(fallbackFormat);
-		}
 		else
-		{
-			lock.unlock();
-			ok = paintLegacy(primary, damage);
-		}
+			legacy = true;
 	}
+	if (legacy)
+		ok = paintLegacy(primary, damage);
 
 	/* Map in the same pass as the first frame, else the window defers a frame (menu lag). */
 	if (_gfxPresented && !_mapped && !_minState.rail)

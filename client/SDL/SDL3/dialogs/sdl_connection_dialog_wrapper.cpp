@@ -174,7 +174,7 @@ void SdlConnectionDialogWrapper::handleShow()
 	std::unique_lock lock(_mux);
 	while (!_queue.empty())
 	{
-		auto arg = _queue.front();
+		auto& arg = _queue.front();
 		_queue.pop();
 
 		if (arg.hasTitle() && _connection_dialog)

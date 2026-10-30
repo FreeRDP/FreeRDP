@@ -1492,7 +1492,11 @@ int transport_drain_output_buffer(rdpTransport* transport)
 	WINPR_ASSERT(transport->frontBio);
 	if (BIO_write_blocked(transport->frontBio))
 	{
-		if (BIO_flush(transport->frontBio) < 1)
+		/* flushing writes to the output BIO, serialize it with transport_write */
+		EnterCriticalSection(&(transport->WriteLock));
+		const int flushed = BIO_flush(transport->frontBio);
+		LeaveCriticalSection(&(transport->WriteLock));
+		if (flushed < 1)
 			return -1;
 
 		const long rc = BIO_write_blocked(transport->frontBio);

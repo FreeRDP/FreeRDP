@@ -121,13 +121,19 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	Stream_SealLength(s);
 
 	/* ainput back what we have received. AINPUT does not have any message IDs. */
+	UINT rc = CHANNEL_RC_NOT_OPEN;
 	EnterCriticalSection(&ainput->lock);
 	GENERIC_CHANNEL_CALLBACK* callback = ainput->base.listener_callback->channel_callback;
-	WINPR_ASSERT(callback);
-	WINPR_ASSERT(callback->channel);
-	WINPR_ASSERT(callback->channel->Write);
-	const UINT rc = callback->channel->Write(callback->channel, (ULONG)Stream_Length(s),
-	                                         Stream_Buffer(s), nullptr);
+	/* The channel might have been closed by the server in the meantime, ainput_on_close
+	 * resets the callback pointer in that case. Let the caller fall back to the default
+	 * input channel. */
+	if (callback)
+	{
+		WINPR_ASSERT(callback->channel);
+		WINPR_ASSERT(callback->channel->Write);
+		rc = callback->channel->Write(callback->channel, (ULONG)Stream_Length(s), Stream_Buffer(s),
+		                              nullptr);
+	}
 	LeaveCriticalSection(&ainput->lock);
 	return rc;
 }
@@ -146,8 +152,11 @@ static UINT ainput_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)callback->plugin;
 		WINPR_ASSERT(ainput);
 
-		/* Lock here to ensure that no ainput_send_input_event is in progress. */
+		/* Lock here to ensure that no ainput_send_input_event is in progress and
+		 * reset the listener callback pointer so that no later one uses the freed callback. */
 		EnterCriticalSection(&ainput->lock);
+		if (ainput->base.listener_callback->channel_callback == callback)
+			ainput->base.listener_callback->channel_callback = nullptr;
 		free(callback);
 		LeaveCriticalSection(&ainput->lock);
 	}

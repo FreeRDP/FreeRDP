@@ -254,6 +254,8 @@ sdlClip::~sdlClip()
 bool sdlClip::init(CliprdrClientContext* clip)
 {
 	WINPR_ASSERT(clip);
+	ClipboardLockGuard systemlock(_system);
+	std::scoped_lock lock(_lock);
 	_ctx = clip;
 	clip->custom = this;
 	_ctx->MonitorReady = sdlClip::MonitorReady;
@@ -282,12 +284,13 @@ bool sdlClip::uninit(CliprdrClientContext* clip)
 			s_web_clip = nullptr;
 	}
 #endif
-	if (!cliprdr_file_context_uninit(_file, _ctx))
-		return false;
 	ClipboardLockGuard systemlock(_system);
 	std::scoped_lock lock(_lock);
+	if (!cliprdr_file_context_uninit(_file, _ctx))
+		return false;
 	_ctx = nullptr;
 	clip->custom = nullptr;
+	_server_requests.clear();
 	return true;
 }
 
@@ -312,7 +315,12 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	std::unique_ptr<char*, decltype(&SDL_free)> current(nullptr, SDL_free);
 	const char** mime_types = ev.mime_types;
 	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
-	if (_ctx && _sync && ev.owner && (ev.num_mime_types == 1))
+	bool connected = false;
+	{
+		std::scoped_lock lock(_lock);
+		connected = (_ctx != nullptr);
+	}
+	if (connected && _ctx && _sync && ev.owner && (ev.num_mime_types == 1))
 	{
 		if (strcmp(first_announcement[0], ev.mime_types[0]) == 0)
 		{
@@ -322,7 +330,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 				nformats = 0;
 		}
 	}
-	else if (!_ctx || !_sync || ev.owner)
+	else if (!connected || !_ctx || !_sync || ev.owner)
 	{
 		_last_timestamp = ev.timestamp;
 
@@ -435,20 +443,20 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 				if (winpr_image_format_is_supported(WINPR_IMAGE_BITMAP))
 				{
 					for (auto& bmp : mime_bitmap)
-						clientFormatNames.push_back(bmp);
+						clientFormatNames.emplace_back(bmp);
 				}
 
 				if (winpr_image_format_is_supported(WINPR_IMAGE_JPEG))
-					clientFormatNames.push_back(mime_jpeg);
+					clientFormatNames.emplace_back(mime_jpeg);
 				if (winpr_image_format_is_supported(WINPR_IMAGE_WEBP))
-					clientFormatNames.push_back(mime_webp);
+					clientFormatNames.emplace_back(mime_webp);
 				if (winpr_image_format_is_supported(WINPR_IMAGE_PNG))
-					clientFormatNames.push_back(mime_png);
+					clientFormatNames.emplace_back(mime_png);
 
 				clientFormatNames.emplace_back(s_type_HtmlFormat);
 				imgPushed = true;
 			}
-			clientFormatNames.push_back(local_mime);
+			clientFormatNames.emplace_back(local_mime);
 		}
 		else if (mime_is_file(local_mime) || (local_mime == s_type_file_url))
 		{
@@ -489,6 +497,12 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 		WLog_Print(_log, WLOG_TRACE, "client announces %" PRIu32 " [%s][%s]", format->formatId,
 		           ClipboardGetFormatIdString(format->formatId), format->formatName);
 	}
+
+	/* The RDP thread may have closed the channel since the check above (see uninit) */
+	ClipboardLockGuard systemlock(_system);
+	std::scoped_lock lock(_lock);
+	if (!_ctx)
+		return true;
 
 	if (cliprdr_file_context_notify_new_client_format_list(_file) != CHANNEL_RC_OK)
 		return false;
@@ -1079,12 +1093,15 @@ void sdlClip::handleDataRequests()
 				return;
 			formatId = _server_requests.front();
 			_server_requests.pop_front();
+			if (!_ctx)
+				continue;
 		}
-		if (!_ctx)
-			continue;
 
 		uint32_t len = 0;
 		auto data = getLocalData(formatId, len);
+		std::scoped_lock lock(_lock);
+		if (!_ctx)
+			continue;
 		if (SendDataResponse(data.get(), len) != CHANNEL_RC_OK)
 			WLog_Print(_log, WLOG_WARN, "failed to send clipboard data response");
 	}
@@ -1306,7 +1323,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		clip->_reading_server = false;
 		if (clip->_request_queue.empty())
 			return nullptr;
-		auto request = clip->_request_queue.front();
+		auto& request = clip->_request_queue.front();
 		clip->_request_queue.pop();
 
 		if (clip->_request_queue.empty())
@@ -1325,7 +1342,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 			auto ptr = std::shared_ptr<void>(data, free);
 			if (mime_is_text(mime_type))
 				len = textLength(data, len);
-			clip->_cache_data.insert({ mime_type, { len, ptr } });
+			clip->_cache_data.emplace(mime_type, cache_entry{ len, ptr });
 			*size = len;
 			return ptr.get();
 		}

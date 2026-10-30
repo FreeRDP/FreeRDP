@@ -280,7 +280,7 @@ bool sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	                              static_cast<UINT32>(len), layouts.data());
 	if (ret != CHANNEL_RC_OK)
 		return false;
-	_last_sent_layout = layouts;
+	_last_sent_layout = std::move(layouts);
 	return true;
 }
 

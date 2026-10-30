@@ -6314,6 +6314,8 @@ int freerdp_client_settings_parse_command_line_arguments_with_flags(
 		{
 			ULONGLONG result = 0;
 			const char* val = strchr(file, ':') + 1;
+			if (!val)
+				return -1;
 			if (!value_to_uint(val, &result, 0, INT_MAX))
 				return -1;
 			fp = fdopen((int)result, "r");
@@ -6322,11 +6324,15 @@ int freerdp_client_settings_parse_command_line_arguments_with_flags(
 		else if (strncmp(file, "env:", 4) == 0)
 		{
 			const char* name = strchr(file, ':') + 1;
+			if (!name)
+				return -1;
 			success = args_from_env(name, &aargc, &aargv, oargv[1], oargv[0]);
 		}
 		else if (strncmp(file, "file:", 5) == 0)
 		{
 			file = strchr(file, ':') + 1;
+			if (!file)
+				return -1;
 			fp = winpr_fopen(file, "r");
 			success = args_from_fp(fp, &aargc, &aargv, file, oargv[0]);
 		}
