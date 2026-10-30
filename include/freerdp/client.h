@@ -119,6 +119,7 @@ extern "C"
 	 * @since version 3.32.0
 	 */
 	typedef struct rdp_client_oauth2 rdpClientOAuth2;
+	typedef struct rdp_client_rail_ipc rdpClientRailIpc;
 
 	struct rdp_client_context
 	{
@@ -158,7 +159,8 @@ extern "C"
 		ALIGN64 pPostDisconnect PostDisconnect;     /**< (offset 20) @since version 3.33.0 */
 		ALIGN64 pPostDisconnect PostFinalDisconnect; /**< (offset 21) @since version 3.33.0 */
 		ALIGN64 HANDLE pipethread;                   /**< (offset 22) @since version 3.33.0 */
-		UINT64 reserved[129 - 23];                   /**< (offset 23) */
+		ALIGN64 rdpClientRailIpc* railIpc;           /**< (offset 23) @since version 3.33.0 */
+		UINT64 reserved[129 - 24];                   /**< (offset 24) */
 	};
 
 	typedef BOOL (*window_events_fkt_t)(freerdp* instance);
@@ -174,6 +176,16 @@ extern "C"
 	FREERDP_API int freerdp_client_start(rdpContext* context);
 
 	FREERDP_API int freerdp_client_stop(rdpContext* context);
+
+	/** Select RAIL launch FIFO support before connecting. Returns FALSE on an invalid context,
+	 * allocation failure, or when enabling on an unsupported build. @since version 3.33.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_rail_multi_exec_enable(rdpClientContext* cctx, BOOL enable);
+
+	/** Set RAIL launch readiness. A FALSE result disables launches, never the session.
+	 * A no-op when unavailable or not enabled. @since version 3.33.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_rail_multi_exec_set_ready(rdpClientContext* cctx, BOOL ready);
 
 	/**
 	 * Initialize the client-common and dependent FreeRDP translation domains.
