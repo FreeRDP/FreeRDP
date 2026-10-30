@@ -16,3 +16,12 @@ else()
 endif()
 add_library(freerdp-shadow-subsystem-impl STATIC ${SRCS})
 target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-client freerdp winpr)
+
+# freerdp-shadow-service: runs freerdp-shadow-cli as SYSTEM on the console
+# session (logon and lock screens, UAC prompts; DXGI capture needed)
+option(WITH_SHADOW_WIN_SERVICE "Build freerdp-shadow-service, which runs the shadow server on the console session" OFF)
+if(WITH_SHADOW_WIN_SERVICE)
+  add_executable(freerdp-shadow-service shadow_service.c win_sas.h)
+  target_link_libraries(freerdp-shadow-service PRIVATE wtsapi32 advapi32 shell32)
+  install(TARGETS freerdp-shadow-service DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+endif()
