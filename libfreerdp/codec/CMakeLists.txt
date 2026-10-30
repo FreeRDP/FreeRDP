@@ -170,6 +170,12 @@ if(WITH_GFX_AV2)
     list(APPEND CODEC_LIBS avm)
     include_directories(SYSTEM ${AVM_INCLUDE_DIRS})
     freerdp_pc_add_requires_private("avm")
+    # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a browser): it has
+    # neither the encoder's headers nor its functions, and AV2 encoding is then unavailable
+    option(WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON)
+    if(WITH_AVM_ENCODER)
+      add_compile_definitions(WITH_LIBAVM_ENCODER)
+    endif()
   endif()
 
   # libavm, the reference, decodes when present: dav2d is the decoder without it
