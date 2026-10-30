@@ -443,20 +443,20 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 				if (winpr_image_format_is_supported(WINPR_IMAGE_BITMAP))
 				{
 					for (auto& bmp : mime_bitmap)
-						clientFormatNames.push_back(bmp);
+						clientFormatNames.emplace_back(bmp);
 				}
 
 				if (winpr_image_format_is_supported(WINPR_IMAGE_JPEG))
-					clientFormatNames.push_back(mime_jpeg);
+					clientFormatNames.emplace_back(mime_jpeg);
 				if (winpr_image_format_is_supported(WINPR_IMAGE_WEBP))
-					clientFormatNames.push_back(mime_webp);
+					clientFormatNames.emplace_back(mime_webp);
 				if (winpr_image_format_is_supported(WINPR_IMAGE_PNG))
-					clientFormatNames.push_back(mime_png);
+					clientFormatNames.emplace_back(mime_png);
 
 				clientFormatNames.emplace_back(s_type_HtmlFormat);
 				imgPushed = true;
 			}
-			clientFormatNames.push_back(local_mime);
+			clientFormatNames.emplace_back(local_mime);
 		}
 		else if (mime_is_file(local_mime) || (local_mime == s_type_file_url))
 		{
@@ -1323,7 +1323,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		clip->_reading_server = false;
 		if (clip->_request_queue.empty())
 			return nullptr;
-		auto request = clip->_request_queue.front();
+		auto& request = clip->_request_queue.front();
 		clip->_request_queue.pop();
 
 		if (clip->_request_queue.empty())
@@ -1342,7 +1342,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 			auto ptr = std::shared_ptr<void>(data, free);
 			if (mime_is_text(mime_type))
 				len = textLength(data, len);
-			clip->_cache_data.insert({ mime_type, { len, ptr } });
+			clip->_cache_data.emplace(mime_type, cache_entry{ len, ptr });
 			*size = len;
 			return ptr.get();
 		}
