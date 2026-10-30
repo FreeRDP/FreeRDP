@@ -1982,6 +1982,7 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (rdpdr->clearing)
 	{
 		WLog_ERR(TAG, "trying to send message while reinitializing channel, aborting");
+		Stream_Release(s);
 		return ERROR_INTERNAL_ERROR;
 	}
 	if (!s)
