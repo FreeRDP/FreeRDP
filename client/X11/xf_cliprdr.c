@@ -487,7 +487,8 @@ static UINT xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId
 	              ClipboardGetFormatIdString(formatId), cformat->localFormat, cformat->formatName);
 
 	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
+	if (!clipboard->context)
+		return CHANNEL_RC_NOT_INITIALIZED;
 	WINPR_ASSERT(clipboard->context->ClientFormatDataRequest);
 	return clipboard->context->ClientFormatDataRequest(clipboard->context, &request);
 }
@@ -503,6 +504,8 @@ static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, const xfCliprd
 	CLIPRDR_FORMAT_DATA_RESPONSE response = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(clipboard);
+	if (!clipboard->context)
+		return CHANNEL_RC_NOT_INITIALIZED;
 
 	/* No request currently pending, do not send a response. */
 	if (clipboard->requestedFormatId == UINT32_MAX)
@@ -537,7 +540,6 @@ static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, const xfCliprd
 	response.common.dataLen = (UINT32)size;
 	response.requestedFormatData = data;
 
-	WINPR_ASSERT(clipboard->context);
 	WINPR_ASSERT(clipboard->context->ClientFormatDataResponse);
 	return clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
 }
@@ -950,6 +952,11 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	WINPR_ASSERT(formats || (numFormats == 0));
 	WINPR_ASSERT(atoms || (atomsCount == 0));
 
+	/* xf_cliprdr_uninit() clears the context when the channel is torn down, but the X11
+	 * event thread keeps processing clipboard events, e.g. while reconnecting. */
+	if (!clipboard->context)
+		return CHANNEL_RC_NOT_INITIALIZED;
+
 #if defined(WITH_DEBUG_CLIPRDR)
 	for (UINT32 x = 0; x < numFormats; x++)
 	{
@@ -978,7 +985,6 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	if (ret)
 		return ret;
 
-	WINPR_ASSERT(clipboard->context);
 	WINPR_ASSERT(clipboard->context->ClientFormatList);
 	return clipboard->context->ClientFormatList(clipboard->context, &formatList);
 }
@@ -1947,7 +1953,8 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 	WINPR_ASSERT(clipboard);
 	generalCapabilitySet.generalFlags |= cliprdr_file_context_current_flags(clipboard->file);
 
-	WINPR_ASSERT(clipboard->context);
+	if (!clipboard->context)
+		return CHANNEL_RC_NOT_INITIALIZED;
 	WINPR_ASSERT(clipboard->context->ClientCapabilities);
 	return clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
 }
@@ -1999,7 +2006,8 @@ static UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, 
 	formatListResponse.common.dataLen = 0;
 
 	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
+	if (!clipboard->context)
+		return CHANNEL_RC_NOT_INITIALIZED;
 	WINPR_ASSERT(clipboard->context->ClientFormatListResponse);
 	return clipboard->context->ClientFormatListResponse(clipboard->context, &formatListResponse);
 }
