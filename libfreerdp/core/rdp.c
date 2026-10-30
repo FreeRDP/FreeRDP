@@ -2958,11 +2958,12 @@ static BOOL option_is_experimental(WINPR_ATTR_UNUSED wLog* log, WINPR_ATTR_UNUSE
                                    const char* tok)
 {
 	const char* experimental[] = { STR(WITH_DSP_EXPERIMENTAL), STR(WITH_FFMPEG_HWACCEL),
-		                           STR(WITH_GFX_AV1),          STR(WITH_GFX_AZURE),
-		                           STR(WITH_MEDIACODEC),       STR(WITH_CLIENT_SDL2),
-		                           STR(WITH_OPENCL),           STR(WITH_LIBRESSL),
-		                           STR(WITH_MBEDTLS),          STR(WITH_MEDIA_FOUNDATION),
-		                           STR(WITH_KRB5_HEIMDAL),     STR(WITH_RDPEUDP) };
+		                           STR(WITH_GFX_AV1),          STR(WITH_GFX_AV2),
+		                           STR(WITH_GFX_AZURE),        STR(WITH_MEDIACODEC),
+		                           STR(WITH_CLIENT_SDL2),      STR(WITH_OPENCL),
+		                           STR(WITH_LIBRESSL),         STR(WITH_MBEDTLS),
+		                           STR(WITH_MEDIA_FOUNDATION), STR(WITH_KRB5_HEIMDAL),
+		                           STR(WITH_RDPEUDP) };
 	for (size_t x = 0; x < ARRAYSIZE(experimental); x++)
 	{
 		const char* opt = experimental[x];

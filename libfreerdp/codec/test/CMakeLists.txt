@@ -29,6 +29,10 @@ if(WITH_GFX_AV1)
   list(APPEND TESTS TestFreeRDPCodecAV1.c)
 endif()
 
+if(WITH_GFX_AV2)
+  list(APPEND TESTS TestFreeRDPCodecAV2.c)
+endif()
+
 if(WITH_OPUS AND NOT WITH_DSP_FFMPEG)
   list(APPEND TESTS TestFreeRDPCodecDsp.c)
 endif()

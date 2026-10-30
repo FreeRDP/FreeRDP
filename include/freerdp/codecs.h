@@ -29,6 +29,9 @@
 #if defined(WITH_GFX_AV1)
 #include <freerdp/codec/av1.h>
 #endif
+#if defined(WITH_GFX_AV2)
+#include <freerdp/codec/av2.h>
+#endif
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/h264.h>
@@ -51,6 +54,10 @@ typedef enum
 #if defined(WITH_GFX_AV1)
 	FREERDP_CODEC_AV1_I420 = 0x00000200u,
 	FREERDP_CODEC_AV1_I444 = 0x00000400u,
+#endif
+#if defined(WITH_GFX_AV2)
+	FREERDP_CODEC_AV2_I420 = 0x00000800u,
+	FREERDP_CODEC_AV2_I444 = 0x00001000u,
 #endif
 	FREERDP_CODEC_ALL = 0x7FFFFFFFu /* C enum types are restricted to int */
 } FreeRDP_CodecFlags;

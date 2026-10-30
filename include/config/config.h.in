@@ -62,6 +62,8 @@
 #cmakedefine WITH_MEDIA_FOUNDATION
 #cmakedefine WITH_MEDIACODEC
 #cmakedefine WITH_GFX_AV1
+#cmakedefine WITH_GFX_AV2
+#cmakedefine WITH_GFX_AV2_I444
 #cmakedefine WITH_GFX_AZURE
 #cmakedefine WITH_RDPEUDP
 

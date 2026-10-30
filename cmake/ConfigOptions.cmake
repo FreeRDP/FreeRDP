@@ -138,6 +138,7 @@ option(WITH_CLANG_FORMAT "Detect clang-format. run 'cmake --build . --target cla
 option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
 
 option(WITH_GFX_AV1 "[experimental,unstable ABI/API] Enable AV1 support for GFX channel encoding/decoding" OFF)
+option(WITH_GFX_AV2 "[experimental,unstable ABI/API] Enable AV2 support for GFX channel encoding/decoding" OFF)
 option(WITH_GFX_AZURE "[experimental,unstable ABI/API] Enable Azure extension support for GFX channel" OFF)
 include(ConfigOptionsVideoToolbox)
 include(DetectIntrinsicSupport)
