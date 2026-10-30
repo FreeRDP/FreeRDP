@@ -270,7 +270,7 @@ extern "C"
 
 	struct S_SHADOW_MSG_OUT
 	{
-		int refCount;
+		LONG refCount; /* InterlockedIncrement() and InterlockedDecrement() take a LONG* */
 		MSG_OUT_FREE_FN Free;
 	};
 
