@@ -33,6 +33,8 @@ set(SRCS
     aad_helper.c
     oauth2.h
     oauth2.c
+    rail_decoder.h
+    rail_decoder.c
 )
 
 add_compile_definitions(CMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")

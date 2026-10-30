@@ -9,7 +9,7 @@ set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCm
                            TestClientAutoReconnect.c
 )
 if(BUILD_TESTING_INTERNAL)
-  list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c TestClientRailDecoder.c)
 endif()
 
 set(FUZZERS TestFuzzClientRdpFile.c)
