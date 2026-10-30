@@ -272,6 +272,21 @@ static BOOL check_settings_smart_sizing_size(rdpSettings* settings)
 	return result;
 }
 
+#if defined(WITH_GFX_AV1)
+static BOOL check_settings_gfx_av1(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = TRUE, but GfxCodecAV1 = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+#endif
+
 static BOOL check_settings_gfx_without_h264(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -530,6 +545,16 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_network_auto_h264,
 	  { "testfreerdp", "/network:auto", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#if defined(WITH_GFX_AV1)
+	{ 0,
+	  check_settings_gfx_av1,
+	  { "testfreerdp", "/gfx:AV1", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av1,
+	  { "testfreerdp", "/gfx:AV1:on", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 #endif
 	{ 0,
