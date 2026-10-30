@@ -739,6 +739,24 @@ static state_run_t multitransport_server_handle_response(rdpMultitransport* mult
 	WINPR_ASSERT(multi);
 	rdpRdp* rdp = multi->rdp;
 
+	/* Only the answer to the request sent in MULTITRANSPORT_BOOTSTRAPPING_REQUEST continues the
+	 * connection sequence. The message channel stays open for the whole session, a response in
+	 * any other state must not restart the capability exchange. */
+	if (rdp_get_state(rdp) != CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE)
+	{
+		WLog_WARN(TAG, "ignoring multi-transport response in state %s, expected %s",
+		          rdp_get_state_string(rdp),
+		          rdp_state_string(CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE));
+		return STATE_RUN_FAILED;
+	}
+
+	if (reqId != multi->reliableReqId)
+	{
+		WLog_ERR(TAG, "multi-transport response for request %" PRIu32 ", expected %" PRIu32, reqId,
+		         multi->reliableReqId);
+		return STATE_RUN_FAILED;
+	}
+
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
 		return STATE_RUN_FAILED;
 

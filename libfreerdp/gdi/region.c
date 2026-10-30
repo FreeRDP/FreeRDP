@@ -621,23 +621,24 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	if (!hdc->hwnd->invalid)
 		return TRUE;
 
-	if (w == 0 || h == 0)
+	if ((w <= 0) || (h <= 0))
 		return TRUE;
 
 	GDI_RGN* cinvalid = hdc->hwnd->cinvalid;
 
 	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
-		GDI_RGN* new_rgn = nullptr;
-		size_t new_cnt = 2ULL * hdc->hwnd->count;
+		const size_t new_cnt = (size_t)hdc->hwnd->ninvalid + 128ull;
 		if (new_cnt > UINT32_MAX)
 			return FALSE;
 
-		new_rgn = (GDI_RGN*)realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
+		const size_t diff = new_cnt - hdc->hwnd->count;
+		GDI_RGN* new_rgn = (GDI_RGN*)realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
 
 		if (!new_rgn)
 			return FALSE;
 
+		memset(&new_rgn[hdc->hwnd->count], 0, sizeof(GDI_RGN) * diff);
 		hdc->hwnd->count = (UINT32)new_cnt;
 		cinvalid = new_rgn;
 	}
@@ -645,8 +646,10 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	hdc->hwnd->cinvalid = cinvalid;
 	GDI_RGN* invalid = hdc->hwnd->invalid;
 
-	if (!gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h))
+	if (!gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid], x, y, w, h))
 		return FALSE;
+
+	hdc->hwnd->ninvalid++;
 
 	if (!gdi_CRgnToRect(x, y, w, h, &rgn))
 	{
