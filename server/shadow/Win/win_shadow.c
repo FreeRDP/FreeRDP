@@ -475,11 +475,14 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 	HANDLE events[32];
 	HANDLE StopEvent;
 	StopEvent = subsystem->base.server->StopEvent;
+	wMessagePipe* MsgPipe = subsystem->base.MsgPipe;
 	nCount = 0;
 	events[nCount++] = StopEvent;
+	events[nCount++] = MessageQueue_Event(MsgPipe->In);
 	subsystem->base.captureFrameRate = 120;
 	dwInterval = 1000 / subsystem->base.captureFrameRate;
 	frameTime = GetTickCount64() + dwInterval;
+	BOOL refresh = FALSE;
 
 	while (1)
 	{
@@ -493,15 +496,34 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 			break;
 		}
 
+		/* a client asks for the whole screen (its graphics channel is
+		 * ready, or it asked to refresh), as the X11 subsystem answers */
+		wMessage message = WINPR_C_ARRAY_INIT;
+		BOOL quit = FALSE;
+		while (!quit && MessageQueue_Peek(MsgPipe->In, &message, TRUE))
+		{
+			quit = (message.id == WMQ_QUIT);
+			if (message.id == SHADOW_MSG_IN_REFRESH_REQUEST_ID)
+				refresh = TRUE;
+			if (message.Free)
+				message.Free(&message);
+		}
+		if (quit)
+			break;
+
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
 			int dxgi_status = 0;
 
-			/* a desktop switch (logon, lock screen, UAC), or no duplication
-			 * yet: duplicate the output again on the input desktop, and send
-			 * all of it */
-			if (win_shadow_follow_input_desktop() || !subsystem->dxgiOutputDuplication)
+			/* a desktop switch (logon, lock screen, UAC), a refresh request,
+			 * or no duplication yet: duplicate the output again on the input
+			 * desktop, and send all of it. DXGI reports changes only: on a
+			 * desktop that does not change, a new client would otherwise wait
+			 * for its first picture until something moves; a new duplication
+			 * starts with the whole desktop image */
+			if (win_shadow_follow_input_desktop() || refresh || !subsystem->dxgiOutputDuplication)
 			{
+				refresh = FALSE;
 				if (win_shadow_dxgi_restart_duplication(subsystem) > 0)
 					(void)win_shadow_invalidate_region(subsystem, 0, 0, subsystem->width,
 					                                   subsystem->height);
@@ -510,8 +532,18 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 			if (subsystem->dxgiOutputDuplication)
 				dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
 
+			/* a frame without dirty rectangles of its own (the first of a
+			 * new duplication) still holds the whole desktop image: copy
+			 * what is marked invalid already */
 			if (dxgi_status > 0)
-				dxgi_status = win_shadow_dxgi_get_invalid_region(subsystem);
+			{
+				const int changed = win_shadow_dxgi_get_invalid_region(subsystem);
+				rdpShadowSurface* surface = subsystem->base.server->surface;
+				EnterCriticalSection(&(surface->lock));
+				const BOOL pending = !region16_is_empty(&(surface->invalidRegion));
+				LeaveCriticalSection(&(surface->lock));
+				dxgi_status = ((changed > 0) || ((changed == 0) && pending)) ? 1 : changed;
+			}
 
 			if (dxgi_status > 0)
 				win_shadow_surface_copy(subsystem);
