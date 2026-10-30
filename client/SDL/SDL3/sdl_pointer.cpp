@@ -210,6 +210,25 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_BlitSurfaceScaled failed");
 		return false;
 	}
+
+	/* The alternate image is the full resolution cursor. SDL backends that honour
+	 * SDL_HINT_MOUSE_DPI_SCALE_CURSORS pick it for high DPI displays and look up the hotspot of
+	 * the image they picked, so it needs one of its own: the hotspot of the scaled down copy
+	 * does not apply to an image that is `display scale` times larger. Without this the Windows
+	 * backend builds a cursor bitmap that is displayed shifted right and down by
+	 * (hotspot * (1 - 1 / scale)), which is invisible for cursors anchored in the top left
+	 * corner (e.g. the arrow) but clearly wrong for the ones anchored in the middle (e.g. the
+	 * Excel cell cursor). */
+	{
+		const auto props = SDL_GetSurfaceProperties(ptr->image);
+		const auto hx = static_cast<int>(ix);
+		const auto hy = static_cast<int>(iy);
+		if (!SDL_SetNumberProperty(props, SDL_PROP_SURFACE_HOTSPOT_X_NUMBER, hx) ||
+		    !SDL_SetNumberProperty(props, SDL_PROP_SURFACE_HOTSPOT_Y_NUMBER, hy))
+			WLog_Print(sdl->getWLog(), WLOG_WARN,
+			           "SDL_SetNumberProperty(hotspot %d,%d) failed", hx, hy);
+	}
+
 	if (!SDL_AddSurfaceAlternateImage(normal.get(), ptr->image))
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_AddSurfaceAlternateImage failed");
