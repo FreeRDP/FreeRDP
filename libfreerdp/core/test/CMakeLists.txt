@@ -18,6 +18,7 @@ if(BUILD_TESTING_INTERNAL)
     TestServerChannels.c
     TestDisconnect.c
     TestMcs.c
+    TestTransportLayerBIO.c
   )
   if(WITH_RDPEUDP)
     list(APPEND TESTS TestRdpUdp.c)
@@ -58,7 +59,7 @@ add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
 # TestCore does not call winpr-tools APIs. The link was added with
 # TestFuzzServer's on-the-fly cert generation and broke -DWITH_WINPR_TOOLS=OFF.
-target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client ${OPENSSL_LIBRARIES})
 set(CORE_FUZZER_LIBS freerdp-client ${OPENSSL_LIBRARIES})
 if(WITH_WINPR_TOOLS)
   list(APPEND CORE_FUZZER_LIBS winpr-tools)
