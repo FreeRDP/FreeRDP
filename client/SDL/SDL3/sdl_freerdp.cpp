@@ -197,7 +197,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				switch (windowEvent.type)
 				{
 					case SDL_EVENT_QUIT:
-						std::ignore = freerdp_abort_connect_context(sdl->context());
+						std::ignore = sdl->abortConnect();
 						break;
 					case SDL_EVENT_USER_CERT_DIALOG:
 					{
