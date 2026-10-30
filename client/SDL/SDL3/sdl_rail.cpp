@@ -1675,7 +1675,16 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	}
 
 	if (!appWindow)
-		return FALSE;
+	{
+		/* An order for a window this client does not track, e.g. one it dropped
+		 * locally because its SDL parent went away (reconcile cascade) while the
+		 * server still has it. Failing the order tears down the whole connection
+		 * (fastpath update failure -> disconnect); ignore it instead and wait for
+		 * the next WINDOW_ORDER_STATE_NEW for this id. */
+		WLog_WARN(TAG, "ignoring order flags=0x%08" PRIx32 " for unknown window id=0x%08" PRIx32,
+		          fieldFlags, orderInfo->windowId);
+		return TRUE;
+	}
 
 	/* Show state first: a minimized window's rect is not a placement (updateWindowRect). */
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
