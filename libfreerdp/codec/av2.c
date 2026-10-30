@@ -26,11 +26,16 @@
 #include <avm/avm.h>
 
 #include <avm/avm_decoder.h>
-#include <avm/avm_encoder.h>
-
 #include <avm/avm_image.h>
-#include <avm/avmcx.h>
 #include <avm/avmdx.h>
+#endif
+
+/* The encoder: libavm's, unless it was built without one (CONFIG_AV2_ENCODER=0,
+ * WITH_AVM_ENCODER=OFF), which leaves out its headers and functions; decoding is the same */
+#if defined(WITH_LIBAVM) && defined(WITH_LIBAVM_ENCODER)
+#define AV2_ENCODER_LIBAVM
+#include <avm/avm_encoder.h>
+#include <avm/avmcx.h>
 #endif
 
 /* The decoder: libavm, the reference, when there is one. dav2d 0.1.0 decodes the intra frames
@@ -74,9 +79,11 @@ struct S_FREERDP_AV2_CONTEXT
 	bool initialized;
 #if defined(WITH_LIBAVM)
 	avm_codec_ctx_t ctx;
+#if defined(AV2_ENCODER_LIBAVM)
 	avm_codec_enc_cfg_t ecfg;
 	avm_codec_pts_t framecount;
 	avm_enc_frame_flags_t eflags;
+#endif
 	avm_codec_flags_t flags;
 	avm_codec_iface_t* iface;
 	UINT32 profile; /* FREERDP_AV2_CONTEXT_OPTION_PROFILE: 0 4:2:0, 1 4:4:4 */
@@ -100,6 +107,9 @@ static void av2_avm_destroy(FREERDP_AV2_CONTEXT* av2)
 	if (rc != AVM_CODEC_OK)
 		WLog_Print(av2->log, WLOG_WARN, "avm_codec_destroy: %s", avm_codec_err_to_string(rc));
 }
+#endif
+
+#if defined(AV2_ENCODER_LIBAVM)
 
 WINPR_ATTR_NODISCARD
 static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
@@ -153,7 +163,7 @@ static BOOL av2_avm_control(FREERDP_AV2_CONTEXT* av2, int id, const char* name, 
 BOOL freerdp_av2_context_set_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONTEXT_OPTION option,
                                     UINT32 value)
 {
-#if defined(WITH_LIBAVM)
+#if defined(AV2_ENCODER_LIBAVM)
 	switch (option)
 	{
 		case FREERDP_AV2_CONTEXT_OPTION_PROFILE:
@@ -213,7 +223,8 @@ BOOL freerdp_av2_context_set_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONTEX
 	}
 	return freerdp_av2_context_reset(av2, av2->ecfg.g_w, av2->ecfg.g_h);
 #else
-	WLog_Print(av2->log, WLOG_WARN, "AV2 encoder requires libavm, recompile with '-DWITH_AVM=ON'");
+	WLog_Print(av2->log, WLOG_WARN,
+	           "AV2 encoder requires libavm with its encoder, recompile with '-DWITH_AVM=ON'");
 	WINPR_UNUSED(option);
 	WINPR_UNUSED(value);
 	return FALSE;
@@ -222,7 +233,7 @@ BOOL freerdp_av2_context_set_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONTEX
 
 UINT32 freerdp_av2_context_get_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONTEXT_OPTION option)
 {
-#if defined(WITH_LIBAVM)
+#if defined(AV2_ENCODER_LIBAVM)
 	switch (option)
 	{
 		case FREERDP_AV2_CONTEXT_OPTION_PROFILE:
@@ -277,7 +288,7 @@ INT32 freerdp_av2_compress(FREERDP_AV2_CONTEXT* av2, const BYTE* pSrcData, DWORD
 		return -1;
 	}
 
-#if defined(WITH_LIBAVM)
+#if defined(AV2_ENCODER_LIBAVM)
 	primitives_t* primitives = primitives_get();
 	if (!primitives)
 	{
@@ -403,7 +414,8 @@ INT32 freerdp_av2_compress(FREERDP_AV2_CONTEXT* av2, const BYTE* pSrcData, DWORD
 	}
 	return allocate_h264_metablock(10, rect, meta, 1);
 #else
-	WLog_Print(av2->log, WLOG_ERROR, "AV2 encoder requires libavm, recompile with '-DWITH_AVM=ON'");
+	WLog_Print(av2->log, WLOG_ERROR,
+	           "AV2 encoder requires libavm with its encoder, recompile with '-DWITH_AVM=ON'");
 	WINPR_UNUSED(pSrcData);
 	WINPR_UNUSED(SrcFormat);
 	WINPR_UNUSED(nSrcStep);
@@ -716,7 +728,7 @@ BOOL freerdp_av2_context_reset(FREERDP_AV2_CONTEXT* av2, UINT32 width, UINT32 he
 {
 	if (av2->encoder)
 	{
-#if defined(WITH_LIBAVM)
+#if defined(AV2_ENCODER_LIBAVM)
 		av2->ecfg.g_w = width;
 		av2->ecfg.g_h = height;
 
@@ -753,7 +765,7 @@ BOOL freerdp_av2_context_reset(FREERDP_AV2_CONTEXT* av2, UINT32 width, UINT32 he
 		av2->eflags = AVM_EFLAG_FORCE_KF;
 #else
 		WLog_Print(av2->log, WLOG_ERROR,
-		           "AV2 encoder requires libavm, recompile with '-DWITH_AVM=ON'");
+		           "AV2 encoder requires libavm with its encoder, recompile with '-DWITH_AVM=ON'");
 		return FALSE;
 #endif
 	}
@@ -865,7 +877,7 @@ FREERDP_AV2_CONTEXT* freerdp_av2_context_new(BOOL Compressor)
 
 	if (Compressor)
 	{
-#if defined(WITH_LIBAVM)
+#if defined(AV2_ENCODER_LIBAVM)
 		ctx->iface = avm_codec_av2_cx();
 		if (!ctx->iface)
 		{
@@ -889,7 +901,7 @@ FREERDP_AV2_CONTEXT* freerdp_av2_context_new(BOOL Compressor)
 		ctx->ecfg.g_input_bit_depth = 8;
 #else
 		WLog_Print(ctx->log, WLOG_ERROR,
-		           "AV2 encoder requires libavm, recompile with '-DWITH_AVM=ON'");
+		           "AV2 encoder requires libavm with its encoder, recompile with '-DWITH_AVM=ON'");
 		goto fail;
 #endif
 	}
