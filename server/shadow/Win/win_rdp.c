@@ -98,8 +98,10 @@ static BOOL shw_surface_frame_marker(rdpContext* context,
 	return TRUE;
 }
 
-static BOOL shw_authenticate(freerdp* instance, char** username, char** password, char** domain)
+static BOOL shw_authenticate(freerdp* instance, char** username, char** password, char** domain,
+                             rdp_auth_reason reason)
 {
+	WINPR_UNUSED(reason);
 	WLog_WARN(TAG, "Authentication not implemented, access granted to everyone!");
 	return TRUE;
 }
@@ -275,7 +277,7 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->LoadChannels = freerdp_client_load_channels;
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
-	instance->Authenticate = shw_authenticate;
+	instance->AuthenticateEx = shw_authenticate;
 	instance->VerifyX509Certificate = shw_verify_x509_certificate;
 
 	settings = context->settings;
