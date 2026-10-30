@@ -205,6 +205,7 @@ struct xf_context
 	BOOL fullscreen_toggle;
 	BOOL KeyboardState[256];
 	BOOL deferAlt;
+	BOOL railMultiExec;
 	struct
 	{
 		UINT32 pending;
