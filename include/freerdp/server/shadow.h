@@ -199,8 +199,14 @@ extern "C"
 #endif
 		BOOL h264HwAccel; /** @since version 3.32.0 */
 		/** how many clients hold each key of rdpShadowClient::keysDown, guarded by lock
-		 *  @since version 3.33.0 */
+		 *  @since version 3.34.0 */
 		UINT16 keysHeld[0x400];
+#if defined(WITH_GFX_AV2)
+		FREERDP_AV2_RATECONTROL AV2RateControlMode; /** @since version 3.34.0 */
+		UINT32 AV2BitRate;                          /** @since version 3.34.0 */
+#else
+	    UINT32 reservedAV2[2];
+#endif
 	};
 
 	struct rdp_shadow_surface
@@ -283,7 +289,7 @@ extern "C"
 
 	struct S_SHADOW_MSG_OUT
 	{
-		LONG refCount; /* InterlockedIncrement() and InterlockedDecrement() take a LONG* */
+		int refCount;
 		MSG_OUT_FREE_FN Free;
 	};
 
