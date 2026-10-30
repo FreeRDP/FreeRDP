@@ -299,6 +299,9 @@ static void DestroySurface(xfGfxSurface* surface)
 #if defined(WITH_GFX_AV1)
 	freerdp_av1_context_free(surface->gdi.av1);
 #endif
+#if defined(WITH_GFX_AV2)
+	freerdp_av2_context_free(surface->gdi.av2);
+#endif
 	if (surface->image)
 	{
 		surface->image->data = nullptr;

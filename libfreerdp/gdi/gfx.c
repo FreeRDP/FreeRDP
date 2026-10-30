@@ -512,6 +512,86 @@ fail:
 }
 #endif
 
+#if defined(WITH_GFX_AV2)
+WINPR_ATTR_NODISCARD
+static UINT gdi_SurfaceCommand_AV2(rdpGdi* gdi, RdpgfxClientContext* context,
+                                   const RDPGFX_SURFACE_COMMAND* cmd)
+{
+	INT32 rc = 0;
+	UINT status = CHANNEL_RC_OK;
+	gdiGfxSurface* surface = nullptr;
+	RDPGFX_H264_METABLOCK* meta = nullptr;
+	RDPGFX_AVC420_BITMAP_STREAM* bs = nullptr;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(cmd);
+
+	WINPR_ASSERT(context->GetSurfaceData);
+	surface =
+	    (gdiGfxSurface*)context->GetSurfaceData(context, (UINT16)MIN(UINT16_MAX, cmd->surfaceId));
+
+	if (!surface)
+	{
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
+		return ERROR_NOT_FOUND;
+	}
+
+	if (!surface->av2)
+	{
+		surface->av2 = freerdp_av2_context_new(FALSE);
+
+		if (!surface->av2)
+		{
+			WLog_ERR(TAG, "unable to create av2 context");
+			return ERROR_NOT_ENOUGH_MEMORY;
+		}
+
+		if (!freerdp_av2_context_reset(surface->av2, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
+	}
+
+	if (!surface->av2)
+		return ERROR_NOT_SUPPORTED;
+
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
+
+	bs = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
+
+	if (!bs)
+		return ERROR_INTERNAL_ERROR;
+
+	meta = &(bs->meta);
+	rc = freerdp_av2_decompress(surface->av2, bs->data, bs->length, surface->data, surface->format,
+	                            surface->scanline, surface->width, surface->height,
+	                            meta->regionRects, meta->numRegionRects);
+
+	if (rc < 0)
+	{
+		WLog_WARN(TAG, "freerdp_av2_decompress failure: %" PRId32 ", ignoring update.", rc);
+		return CHANNEL_RC_OK;
+	}
+
+	for (UINT32 i = 0; i < meta->numRegionRects; i++)
+	{
+		if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
+		                         &(meta->regionRects[i])))
+			goto fail;
+	}
+
+	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId,
+	                      meta->numRegionRects, meta->regionRects);
+
+	if (status != CHANNEL_RC_OK)
+		goto fail;
+
+	status = gdi_interFrameUpdate(gdi, context);
+
+fail:
+	return status;
+}
+#endif
+
 /**
  * Function description
  *
@@ -1220,6 +1300,12 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
 			break;
 #endif
 
+#if defined(WITH_GFX_AV2)
+		case RDPGFX_CODECID_AV2:
+			status = gdi_SurfaceCommand_AV2(gdi, context, cmd);
+			break;
+#endif
+
 		case RDPGFX_CODECID_CAVIDEO:
 			status = gdi_SurfaceCommand_RemoteFX(gdi, context, cmd);
 			break;
@@ -1398,6 +1484,9 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 #endif
 #if defined(WITH_GFX_AV1)
 		freerdp_av1_context_free(surface->av1);
+#endif
+#if defined(WITH_GFX_AV2)
+		freerdp_av2_context_free(surface->av2);
 #endif
 		region16_uninit(&surface->invalidRegion);
 		codecs = surface->codecs;

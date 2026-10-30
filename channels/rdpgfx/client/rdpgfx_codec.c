@@ -270,6 +270,9 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 #if defined(WITH_GFX_AV1)
 		case RDPGFX_CODECID_AV1:
 #endif
+#if defined(WITH_GFX_AV2)
+		case RDPGFX_CODECID_AV2:
+#endif
 		case RDPGFX_CODECID_AVC420:
 			if ((error = rdpgfx_decode_AVC420(gfx, cmd)))
 				WLog_Print(gfx->base.log, WLOG_ERROR,
