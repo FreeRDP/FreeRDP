@@ -186,7 +186,7 @@ void SdlRail::invalidateWindow(SDL_WindowID id)
 	if (!appWindow)
 		return;
 	appWindow->invalidateAll();
-	lock.unlock();
+
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
@@ -238,7 +238,7 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 	{
 		WLog_DBG(TAG, "local maximize skipped id=0x%08" PRIx32 " (already rail-maximized)",
 		         static_cast<UINT32>(appWindow->id()));
-		lock.unlock();
+
 		if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
 			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
@@ -259,7 +259,7 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 		         static_cast<UINT32>(appWindow->id()));
 		sendSystemCommand(appWindow, SC_MAXIMIZE);
 	}
-	lock.unlock();
+
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
@@ -304,7 +304,6 @@ void SdlRail::handleRestored(SDL_WindowID id)
 		appWindow->setRailMaximized(false);
 	else
 	{
-		lock.unlock();
 		if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
 			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
@@ -313,7 +312,7 @@ void SdlRail::handleRestored(SDL_WindowID id)
 	         static_cast<UINT32>(appWindow->id()));
 	appWindow->invalidateAll();
 	sendSystemCommand(appWindow, SC_RESTORE);
-	lock.unlock();
+
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
@@ -899,7 +898,7 @@ bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 	/* The next connection logs on again: hold its logon desktop back too. */
 	_desktopReleased = false;
 	_desktopHoldUntil = 0;
-	lock.unlock();
+
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return true;
 }
@@ -968,6 +967,8 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 	else if (!localMoveSize->isMoveSizeStart)
 	{
 		WLog_DBG(TAG, "server move/size end id=0x%08" PRIx32, localMoveSize->windowId);
+
+		SDL_WindowID sdlId = 0;
 		/* Server ended the move/size: resume applying geometry + input (covers Wayland move). */
 		auto rail = static_cast<SdlRail*>(context->custom);
 		if (rail)
@@ -1030,11 +1031,11 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 				if (appWindow->window() && !appWindow->effectivelyMaximized() &&
 				    !appWindow->localMoveSizeChanged())
 				{
-					const SDL_WindowID sdlId = appWindow->sdlId();
-					lock.unlock();
-					rail->syncGeometry(sdlId);
+					sdlId = appWindow->sdlId();
 				}
 			}
+			if (sdlId != 0)
+				rail->syncGeometry(sdlId);
 		}
 	}
 	return CHANNEL_RC_OK;
@@ -1148,7 +1149,6 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	if (started && (model == RailDragModel::ModalLoop))
 	{
 		SDL_Window* sdlWindow = appWindow->window();
-		lock.unlock();
 		_sizeMoveRedraws = 0;
 		railPlatformRunModalDrag(sdlWindow, moveType);
 		WLog_DBG(TAG, "modal drag end id=0x%08" PRIx32 " redraws=%" PRIu32, windowId,
@@ -1565,7 +1565,7 @@ UINT SdlRail::server_min_max_info(RailClientContext* context,
 		         minMaxInfo->maxTrackHeight);
 		appWindow->setMinMaxSize({ minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight },
 		                         { minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight });
-		lock.unlock();
+
 		(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	}
 	return CHANNEL_RC_OK;
@@ -1805,7 +1805,7 @@ BOOL SdlRail::window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInf
 		return TRUE;
 	}
 	appWindow->setIcon(*icon);
-	lock.unlock();
+
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return TRUE;
 }
@@ -1834,7 +1834,7 @@ BOOL SdlRail::window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* o
 		return TRUE;
 	}
 	appWindow->setIcon(*icon);
-	lock.unlock();
+
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return TRUE;
 }
@@ -1862,7 +1862,6 @@ BOOL SdlRail::window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		rail->_clientActiveId = 0;
 	if (rail->_focusedAppId == orderInfo->windowId)
 		rail->_focusedAppId = 0;
-	lock.unlock();
 
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return TRUE;
@@ -1915,7 +1914,6 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 			else
 				rail->_zOrder.clear();
 			rail->_zOrderDirty = true;
-			lock.unlock();
 			(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE); /* wake the main thread to restack */
 		}
 	}
