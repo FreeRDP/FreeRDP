@@ -18,6 +18,14 @@
 
 #include <freerdp/config.h>
 
+/* Upstream globally defines NONAMELESSUNION, but this file accesses the
+ * Windows API unions directly (VARIANT.vt, event.ki, ...). clang-cl enforces
+ * the named-union layout and fails; undefine it for this file (matching what
+ * MSVC tolerated when these files were written). */
+#ifdef NONAMELESSUNION
+#undef NONAMELESSUNION
+#endif
+
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <freerdp/log.h>
@@ -265,23 +273,21 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
                                                                  /* [annotation][out] */
                                                                  _Out_opt_ UINT* puArgErr)
 {
+	HRESULT hr;
+	VARIANT vr;
+	UINT uArgErr;
 	WLog_INFO(TAG, "%s (%ld)", GetRDPSessionEventString(dispIdMember), dispIdMember);
 
 	switch (dispIdMember)
 	{
 		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_CONNECTED:
 		{
-			UINT uArgErr = 0;
-			int level = 0;
-			IRDPSRAPIAttendee* pAttendee = nullptr;
-			VARIANT vr = WINPR_C_ARRAY_INIT;
-
-#if defined(NONAMELESSUNION)
-			vr.n1.n2.vt = VT_DISPATCH;
-#else
+			int level;
+			IDispatch* pDispatch;
+			IRDPSRAPIAttendee* pAttendee;
 			vr.vt = VT_DISPATCH;
-#endif
-			HRESULT hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
+			vr.pdispVal = nullptr;
+			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
 
 			if (FAILED(hr))
 			{
@@ -290,12 +296,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 				return hr;
 			}
 
-			IDispatch* pDispatch =
-#if defined(NONAMELESSUNION)
-			    pDispatch = vr.n1.n2.n3.pdispVal;
-#else
-			    pDispatch = vr.pdispVal;
-#endif
+			pDispatch = vr.pdispVal;
 			hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee,
 			                                       (void**)&pAttendee);
 
@@ -344,17 +345,12 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 
 		case DISPID_RDPSRAPI_EVENT_ON_CTRLLEVEL_CHANGE_REQUEST:
 		{
-			UINT uArgErr = 0;
-			int level = 0;
-			IRDPSRAPIAttendee* pAttendee = nullptr;
-			VARIANT vr = WINPR_C_ARRAY_INIT;
-#if defined(NONAMELESSUNION)
-			vr.n1.n2.vt = VT_INT;
-#else
+			int level;
+			IDispatch* pDispatch;
+			IRDPSRAPIAttendee* pAttendee;
 			vr.vt = VT_INT;
-#endif
-
-			HRESULT hr = DispGetParam(pDispParams, 1, VT_INT, &vr, &uArgErr);
+			vr.pdispVal = nullptr;
+			hr = DispGetParam(pDispParams, 1, VT_INT, &vr, &uArgErr);
 
 			if (FAILED(hr))
 			{
@@ -363,19 +359,10 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 				return hr;
 			}
 
-#if defined(NONAMELESSUNION)
-			level = vr.n1.n2.n3.intVal;
-#else
 			level = vr.intVal;
-#endif
-
-			VARIANT vr2 = WINPR_C_ARRAY_INIT;
-#if defined(NONAMELESSUNION)
-			vr2.n1.n2.vt = VT_DISPATCH;
-#else
-			vr2.vt = VT_DISPATCH;
-#endif
-			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr2, &uArgErr);
+			vr.vt = VT_DISPATCH;
+			vr.pdispVal = nullptr;
+			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
 
 			if (FAILED(hr))
 			{
@@ -384,12 +371,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 				return hr;
 			}
 
-			IDispatch* pDispatch =
-#if defined(NONAMELESSUNION)
-			    vr2.n1.n2.n3.pdispVal;
-#else
-			    vr2.pdispVal;
-#endif
+			pDispatch = vr.pdispVal;
 			hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee,
 			                                       (void**)&pAttendee);
 
@@ -673,13 +655,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	bstrPropertyName = SysAllocString(L"PortId");
-#if defined(NONAMELESSUNION)
-	varPropertyValue.n1.n2.vt = VT_I4;
-	varPropertyValue.n1.n2.n3.intVal = 40000;
-#else
 	varPropertyValue.vt = VT_I4;
 	varPropertyValue.intVal = 40000;
-#endif
 	hr = subsystem->pSessionProperties->lpVtbl->put_Property(subsystem->pSessionProperties,
 	                                                         bstrPropertyName, varPropertyValue);
 	SysFreeString(bstrPropertyName);
@@ -691,13 +668,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	bstrPropertyName = SysAllocString(L"DrvConAttach");
-#if defined(NONAMELESSUNION)
-	varPropertyValue.n1.n2.vt = VT_BOOL;
-	varPropertyValue.n1.n2.n3.boolVal = VARIANT_TRUE;
-#else
 	varPropertyValue.vt = VT_BOOL;
 	varPropertyValue.boolVal = VARIANT_TRUE;
-#endif
 	hr = subsystem->pSessionProperties->lpVtbl->put_Property(subsystem->pSessionProperties,
 	                                                         bstrPropertyName, varPropertyValue);
 	SysFreeString(bstrPropertyName);
@@ -710,15 +682,10 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	}
 
 	bstrPropertyName = SysAllocString(L"PortProtocol");
-#if defined(NONAMELESSUNION)
-	varPropertyValue.n1.n2.vt = VT_I4;
-	varPropertyValue.n1.n2.n3.intVal = 2; // AF_INET
-#else
 	varPropertyValue.vt = VT_I4;
 	// varPropertyValue.intVal = 0; // AF_UNSPEC
 	varPropertyValue.intVal = 2; // AF_INET
 	// varPropertyValue.intVal = 23; // AF_INET6
-#endif
 	hr = subsystem->pSessionProperties->lpVtbl->put_Property(subsystem->pSessionProperties,
 	                                                         bstrPropertyName, varPropertyValue);
 	SysFreeString(bstrPropertyName);
@@ -773,7 +740,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	{
 		int status2 = -1;
-		BSTR bstrConnectionString = nullptr;
+		char* ConnectionString2;
+		BSTR bstrConnectionString;
 		hr = subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation,
 		                                                          &bstrConnectionString);
 
@@ -783,7 +751,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 			return -1;
 		}
 
-		char* ConnectionString2 = ConvertWCharToUtf8Alloc(bstrConnectionString, nullptr);
+		ConnectionString2 = ConvertWCharToUtf8Alloc(bstrConnectionString, nullptr);
 		SysFreeString(bstrConnectionString);
 		status2 = freerdp_assistance_set_connection_string2(file, ConnectionString2, "Shadow123!");
 		free(ConnectionString2);
