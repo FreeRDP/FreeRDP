@@ -2094,7 +2094,9 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 		return TRUE;
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-	if (cctx->ainput)
+	/* The channel thread resets this when the server closes the channel, only read it once */
+	AInputClientContext* ainput = cctx->ainput;
+	if (ainput)
 	{
 		UINT rc = 0;
 		UINT64 flags = 0;
@@ -2121,8 +2123,8 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 			x = value;
 		}
 
-		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
-		rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+		WINPR_ASSERT(ainput->AInputSendInputEvent);
+		rc = ainput->AInputSendInputEvent(ainput, flags, x, y);
 		if (rc == CHANNEL_RC_OK)
 			handled = TRUE;
 	}
@@ -2136,17 +2138,13 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 WINPR_ATTR_NODISCARD
-static inline BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, INT32 x, INT32 y)
+static inline BOOL ainput_send_diff_event(AInputClientContext* ainput, UINT64 flags, INT32 x,
+                                          INT32 y)
 {
-	WINPR_ASSERT(cctx);
-	WINPR_ASSERT(cctx->ainput);
-	WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
-	WINPR_ASSERT(requireRdpClientContext(&cctx->context));
+	WINPR_ASSERT(ainput);
+	WINPR_ASSERT(ainput->AInputSendInputEvent);
 
-	if (!cctx || !requireRdpClientContext(&cctx->context))
-		return ERROR_INVALID_PARAMETER;
-
-	const UINT rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+	const UINT rc = ainput->AInputSendInputEvent(ainput, flags, x, y);
 
 	return rc == CHANNEL_RC_OK;
 }
@@ -2207,7 +2205,9 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-	if (cctx->ainput)
+	/* The channel thread resets this when the server closes the channel, only read it once */
+	AInputClientContext* ainput = cctx->ainput;
+	if (ainput)
 	{
 		UINT64 flags = 0;
 
@@ -2227,7 +2227,7 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 			flags |= AINPUT_FLAGS_BUTTON3;
 		if (mflags & PTR_FLAGS_MOVE)
 			flags |= AINPUT_FLAGS_MOVE;
-		handled = ainput_send_diff_event(cctx, flags, x, y);
+		handled = ainput_send_diff_event(ainput, flags, x, y);
 	}
 #endif
 
@@ -2279,7 +2279,9 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-	if (cctx->ainput)
+	/* The channel thread resets this when the server closes the channel, only read it once */
+	AInputClientContext* ainput = cctx->ainput;
+	if (ainput)
 	{
 		UINT64 flags = 0;
 
@@ -2292,7 +2294,7 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 		if (mflags & PTR_XFLAGS_BUTTON2)
 			flags |= AINPUT_XFLAGS_BUTTON2;
 
-		handled = ainput_send_diff_event(cctx, flags, x, y);
+		handled = ainput_send_diff_event(ainput, flags, x, y);
 	}
 #endif
 
