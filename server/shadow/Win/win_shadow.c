@@ -28,6 +28,7 @@
 #include <freerdp/server/server-common.h>
 
 #include "win_shadow.h"
+#include "win_sas.h"
 
 #define TAG SERVER_TAG("shadow.win")
 
@@ -92,6 +93,24 @@ static void win_shadow_send_input(INPUT* event)
 		WLog_WARN(TAG, "SendInput refused the event (0x%08lX), it is dropped", GetLastError());
 }
 
+/* Ctrl+Alt+Del: asks freerdp-shadow-service for the secure attention
+ * sequence (win_sas.h) */
+static void win_shadow_send_sas(void)
+{
+	HANDLE event = OpenEventW(EVENT_MODIFY_STATE, FALSE, WIN_SHADOW_SAS_EVENT);
+
+	if (!event)
+	{
+		WLog_WARN(TAG, "Ctrl+Alt+Del: no freerdp-shadow-service to send it (0x%08lX)",
+		          GetLastError());
+		return;
+	}
+
+	(void)SetEvent(event);
+	(void)CloseHandle(event);
+	WLog_INFO(TAG, "Ctrl+Alt+Del: asked freerdp-shadow-service for the secure attention sequence");
+}
+
 static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
                                                rdpShadowClient* client, UINT32 flags)
 {
@@ -102,7 +121,23 @@ static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                             UINT16 flags, UINT8 code)
 {
+	winShadowSubsystem* win = (winShadowSubsystem*)subsystem;
+	const BOOL down = (flags & KBD_FLAGS_RELEASE) == 0;
+
 	(void)win_shadow_follow_input_desktop();
+
+	/* scan codes: Ctrl 0x1D, Alt 0x38 (the right ones extended), Delete
+	 * 0x53 (the keypad's not extended); Windows takes either Delete */
+	if (code == 0x1D)
+		win->ctrlDown = down;
+	else if (code == 0x38)
+		win->altDown = down;
+	else if ((code == 0x53) && win->ctrlDown && win->altDown)
+	{
+		if (down)
+			win_shadow_send_sas();
+		return TRUE; /* never typed into the desktop */
+	}
 	INPUT event = WINPR_C_ARRAY_INIT;
 	event.type = INPUT_KEYBOARD;
 	KEYBDINPUT* ki =

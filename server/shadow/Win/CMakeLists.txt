@@ -7,7 +7,7 @@ add_compile_definitions(WITH_SHADOW_WIN)
 # desktop duplication, which also captures the secure desktop (logon, lock
 # screen, UAC) when the server runs as SYSTEM on the console session
 option(WITH_SHADOW_WIN_DXGI "Capture with DXGI desktop duplication instead of the Windows Desktop Sharing API" OFF)
-set(SRCS win_dxgi.h win_rdp.h win_shadow.c win_shadow.h win_wds.h)
+set(SRCS win_dxgi.h win_rdp.h win_sas.h win_shadow.c win_shadow.h win_wds.h)
 if(WITH_SHADOW_WIN_DXGI)
   add_compile_definitions(WITH_DXGI_1_2)
   list(APPEND SRCS win_dxgi.c)
