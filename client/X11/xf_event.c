@@ -23,6 +23,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/keysym.h>
 
 #include <string.h>
 #include <math.h>
@@ -421,8 +422,10 @@ BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL 
 	{
 		/* make sure window exists */
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
+		const BOOL localMove = appWindow && ((appWindow->local_move.state == LMS_STARTING) ||
+		                                     (appWindow->local_move.state == LMS_ACTIVE));
 		xf_rail_return_window(appWindow, FALSE);
-		if (!appWindow)
+		if (!appWindow || localMove)
 			return TRUE;
 
 		/* Translate to desktop coordinates */
@@ -490,6 +493,21 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 	if (button < 0)
 		return FALSE;
 
+	/* XI2 events reach this common path without a core XButtonEvent, so
+	 * apply the same lifecycle rule here as in xf_event_suppress_events. */
+	if (app)
+	{
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
+		if (appWindow && ((appWindow->local_move.state == LMS_STARTING) ||
+		                  (appWindow->local_move.state == LMS_ACTIVE)))
+		{
+			const BOOL rc = (down || (button != Button1)) || xf_rail_end_local_move(xfc, appWindow);
+			xf_rail_return_window(appWindow, FALSE);
+			return rc;
+		}
+		xf_rail_return_window(appWindow, FALSE);
+	}
+
 	for (size_t i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
@@ -536,6 +554,11 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 				xf_rail_return_window(appWindow, FALSE);
 				if (!appWindow)
 					return TRUE;
+
+				/* Focus crossings also occur for menus and grabs. Activate only
+				 * on deliberate button input, before Windows hit-tests the click. */
+				if (down && !xf_rail_send_activate(xfc, window, TRUE))
+					return FALSE;
 
 				/* Translate to desktop coordinates */
 				XTranslateCoordinates(xfc->display, window, RootWindowOfScreen(xfc->screen), x, y,
@@ -701,13 +724,22 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 
 	if (app)
 	{
+		BOOL redraw = FALSE;
+		UINT64 windowId = 0;
+		UINT32 surfaceId = 0;
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		/* Update the server with any window changes that occurred while the window was not focused.
 		 */
 		if (appWindow)
-			xf_rail_adjust_position(xfc, appWindow);
+		{
+			xf_rail_adjust_position(xfc, appWindow, &redraw);
+			windowId = appWindow->windowId;
+			surfaceId = appWindow->surfaceId;
+		}
 		xf_rail_return_window(appWindow, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
 	}
 
 	xf_keyboard_focus_in(xfc);
@@ -838,7 +870,6 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* event, BOOL app)
 {
-	Window childWindow = None;
 	xfAppWindow* appWindow = nullptr;
 
 	WINPR_ASSERT(xfc);
@@ -902,20 +933,18 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 	}
 	else
 	{
+		BOOL redraw = FALSE;
+		UINT64 windowId = 0;
+		UINT32 surfaceId = 0;
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		if (appWindow)
 		{
-			/*
-			 * ConfigureNotify coordinates are expressed relative to the window parent.
-			 * Translate these to root window coordinates.
-			 */
-			XTranslateCoordinates(xfc->display, appWindow->handle, RootWindowOfScreen(xfc->screen),
-			                      0, 0, &appWindow->x, &appWindow->y, &childWindow);
-			appWindow->width = event->width;
-			appWindow->height = event->height;
-
-			xf_AppWindowResize(xfc, appWindow);
+			if (!xf_rail_update_configure_geometry(xfc, appWindow, event))
+			{
+				xf_rail_return_window(appWindow, FALSE);
+				return TRUE;
+			}
 
 			/*
 			 * Additional checks for not in a local move and not ignoring configure to send
@@ -926,16 +955,20 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			if (appWindow->decorations)
 			{
 				/* moving resizing using window decoration */
-				xf_rail_adjust_position(xfc, appWindow);
+				xf_rail_adjust_position(xfc, appWindow, &redraw);
 			}
 			else
 			{
 				if ((!event->send_event || appWindow->local_move.state == LMS_NOT_ACTIVE) &&
 				    !appWindow->rail_ignore_configure && xfc->focused)
-					xf_rail_adjust_position(xfc, appWindow);
+					xf_rail_adjust_position(xfc, appWindow, &redraw);
 			}
+			windowId = appWindow->windowId;
+			surfaceId = appWindow->surfaceId;
 		}
 		xf_rail_return_window(appWindow, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
 	}
 	return xf_pointer_update_scale(xfc);
 }
@@ -1147,6 +1180,10 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 		if (app)
 		{
 			WINPR_ASSERT(appWindow);
+			/* Local focus/normal-state notifications can precede the server's
+			 * restored bounds. Do not report the minimized placeholder back. */
+			if ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) && !appWindow->minimized)
+				appWindow->restoreGeometryPending = TRUE;
 			if (appWindow->maxVert && appWindow->maxHorz && !appWindow->minimized)
 			{
 				if (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
@@ -1182,10 +1219,24 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	return rc;
 }
 
-static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEvent* event)
+BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEvent* event)
 {
 	if (!xfc->remote_app)
 		return FALSE;
+
+	if (((event->type == UnmapNotify) && (event->xunmap.window == appWindow->handle)) ||
+	    ((event->type == DestroyNotify) && (event->xdestroywindow.window == appWindow->handle)))
+	{
+		/* Discard completion work when its drawable disappears. */
+		appWindow->local_move.state = LMS_NOT_ACTIVE;
+		appWindow->local_move.completionPending = FALSE;
+		appWindow->configureGeometryPending = FALSE;
+		appWindow->localMoveGeometryTime = 0;
+		appWindow->visibilityShapeDeferred = FALSE;
+		if (event->type == UnmapNotify)
+			xf_UpdateWindowVisibilityRects(xfc, appWindow);
+		return FALSE;
+	}
 
 	switch (appWindow->local_move.state)
 	{
@@ -1217,36 +1268,52 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, con
 					 */
 					break;
 
-				case ButtonPress:
-				case ButtonRelease:
-				case KeyPress:
-				case KeyRelease:
-				case UnmapNotify:
-					/*
-					 * A button release event means the X window server did not grab the
-					 * mouse before the user released it. In this case we must cancel the
-					 * local move. The event will be processed below as normal, below.
-					 */
-					break;
-
-				case VisibilityNotify:
-				case PropertyNotify:
-				case Expose:
-					/* Allow these events to pass */
-					break;
-
 				default:
-					/* Eat any other events */
-					return TRUE;
+					break;
 			}
-
-			break;
+			/* A window manager may send no configure until pointer release.
+			 * Starting and active gestures therefore share completion rules. */
+			WINPR_FALLTHROUGH
 
 		case LMS_ACTIVE:
 
 			/* Local move is in progress */
 			switch (event->type)
 			{
+				case ButtonRelease:
+					/* Core and XI2 can describe the same physical release. The
+					 * selected XI2 path completes it in the generic handler. */
+					if (xfc->xi_event || xfc->xi_rawevent)
+						return TRUE;
+					if (event->xbutton.button == Button1)
+					{
+						/* end_local_move sends the single RDP release itself. */
+						return xf_rail_end_local_move(xfc, appWindow);
+					}
+					return TRUE;
+
+				case KeyPress:
+					if ((appWindow->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
+					    (appWindow->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+					{
+						XKeyEvent keyEvent = event->xkey;
+						const KeySym key = XLookupKeysym(&keyEvent, 0);
+						if ((key == XK_Return) || (key == XK_KP_Enter))
+							(void)xf_rail_end_local_move(xfc, appWindow);
+						else if (key == XK_Escape)
+						{
+							appWindow->local_move.completionPending = FALSE;
+							appWindow->local_move.state = LMS_TERMINATING;
+						}
+						/* Arrow keys and Escape/Enter must reach the server. */
+						return FALSE;
+					}
+					return TRUE;
+
+				case KeyRelease:
+					return (appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
+					       (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD);
+
 				case ConfigureNotify:
 				case VisibilityNotify:
 				case PropertyNotify:
@@ -1256,9 +1323,10 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, con
 					break;
 
 				default:
-					/* Any other event terminates move */
-					xf_rail_end_local_move(xfc, appWindow);
-					break;
+					/* Motion, crossings, grab/focus changes and unrelated buttons
+					 * are normal during local moves. They must neither synthesize
+					 * an early RDP button-up nor escape to the remote application. */
+					return TRUE;
 			}
 
 			break;
