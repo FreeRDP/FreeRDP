@@ -2318,23 +2318,9 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	{
 		if (pStatus->gfxOpened && client->areGfxCapsReady)
 		{
-			/* Only codecs that need constant full-frame dimensions (SPS/PPS
-			 * bind the resolution) must encode the whole desktop. rfx and
-			 * progressive interpret nWidth/nHeight as source image dims with
-			 * the cmd rect as the dirty region, and planar/uncompressed encode
-			 * the cmd rect directly, so those may keep the dirty extents. */
-			const BOOL fullframegfx =
-			    freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
-			    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) ||
-			    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444v2) ||
-			    (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) &&
-			     (freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId) != 0)) ||
-			    freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive);
-			if (fullframegfx)
-			{
-				nWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-				nHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-			}
+			/* GFX/h264 always full screen encoded */
+			nWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			nHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 			/* Create primary surface if have not */
 			if (!pStatus->gfxSurfaceCreated)
@@ -2353,9 +2339,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			WINPR_ASSERT(nWidth <= UINT16_MAX);
 			WINPR_ASSERT(nHeight >= 0);
 			WINPR_ASSERT(nHeight <= UINT16_MAX);
-			ret = shadow_client_send_surface_gfx(
-			    client, pSrcData, nSrcStep, SrcFormat, fullframegfx ? 0 : (UINT16)nXSrc,
-			    fullframegfx ? 0 : (UINT16)nYSrc, (UINT16)nWidth, (UINT16)nHeight);
+			ret = shadow_client_send_surface_gfx(client, pSrcData, nSrcStep, SrcFormat, 0, 0,
+			                                     (UINT16)nWidth, (UINT16)nHeight);
 		}
 		else
 		{
@@ -2681,14 +2666,6 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	if ((!client->vcm) || (!subsystem->updateEvent))
 		goto out;
 
-	UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
-
-	if (!UpdateSubscriber)
-		goto out;
-
-	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
-	WINPR_ASSERT(UpdateEvent);
-
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 	WINPR_ASSERT(ChannelEvent);
 
@@ -2704,7 +2681,28 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	{
 		HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
-		events[nCount++] = UpdateEvent;
+
+		/* Only subscribe to the frame update event once the connection
+		 * sequence completed: a client stuck before or during the TLS
+		 * handshake must not become a frame update subscriber, otherwise
+		 * every published frame would wait (bounded by the frame update
+		 * event timeout) for a subscriber that cannot consume yet.
+		 * Frames published before this point are not missed: a client that
+		 * completes the connection but does not activate gets a full screen
+		 * refresh on activation (see shadow_client_activate). */
+		if (!UpdateSubscriber && peer->connected)
+		{
+			UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
+
+			if (!UpdateSubscriber)
+				goto fail;
+
+			UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
+			WINPR_ASSERT(UpdateEvent);
+		}
+
+		if (UpdateEvent)
+			events[nCount++] = UpdateEvent;
 		{
 			DWORD tmp = peer->GetEventHandles(peer, &events[nCount], 64 - nCount);
 
@@ -2731,7 +2729,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 			goto fail;
 
-		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
+		if (UpdateEvent && WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
 		{
 			/* The UpdateEvent means to start sending current frame. It is
 			 * triggered from subsystem implementation and it should ensure
