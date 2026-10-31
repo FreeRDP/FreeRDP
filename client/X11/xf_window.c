@@ -1092,6 +1092,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->rail_fullscreen_normalizing = FALSE;
 	appWindow->haveMinMaxInfo = FALSE;
 	appWindow->sizeReported = FALSE;
+	appWindow->moveSent = FALSE;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(
@@ -1234,6 +1235,7 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	appWindow->local_move.state = LMS_STARTING;
 	/* A new move or resize by the user: whatever it ends with is reported. */
 	appWindow->sizeReported = FALSE;
+	appWindow->moveSent = FALSE;
 	appWindow->local_move.direction = direction;
 
 	xf_ungrab(xfc);

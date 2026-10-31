@@ -113,6 +113,9 @@ struct xf_app_window
 	BOOL sizeReported;
 	INT64 reportedWidth;
 	INT64 reportedHeight;
+	/* The last Window Move PDU, see xf_rail_adjust_position(). */
+	BOOL moveSent;
+	RAIL_WINDOW_MOVE_ORDER lastMove;
 	/* Track sizes from the last Min Max Info PDU, see xf_UpdateWindowSizeHints(). */
 	BOOL haveMinMaxInfo;
 	INT32 minTrackWidth;

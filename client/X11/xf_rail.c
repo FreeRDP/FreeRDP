@@ -329,10 +329,20 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
 		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + width + right);
 		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + height + bottom);
+
+		/* Every ConfigureNotify of a placement lands here; one report is enough. */
+		if (appWindow->moveSent && (windowMove.left == appWindow->lastMove.left) &&
+		    (windowMove.top == appWindow->lastMove.top) &&
+		    (windowMove.right == appWindow->lastMove.right) &&
+		    (windowMove.bottom == appWindow->lastMove.bottom))
+			return TRUE;
+
 		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 		if (rc != CHANNEL_RC_OK)
 			return FALSE;
 
+		appWindow->moveSent = TRUE;
+		appWindow->lastMove = windowMove;
 		if (!refused)
 		{
 			appWindow->sizeReported = TRUE;
