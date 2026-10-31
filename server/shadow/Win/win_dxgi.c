@@ -720,7 +720,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 	RECT* pDirtyRectsBuffer;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRect;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRectBuffer;
-	rdpShadowSurface* surface = subsystem->server->surface;
+	rdpShadowSurface* surface = subsystem->base.server->surface;
 
 	if (subsystem->dxgiFrameInfo.AccumulatedFrames == 0)
 		return 0;
