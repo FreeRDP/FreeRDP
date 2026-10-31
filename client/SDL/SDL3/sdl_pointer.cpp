@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 
 #include <freerdp/config.h>
 
@@ -194,8 +195,34 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		return false;
 	}
 
-	const auto w = static_cast<int>(pos.w);
-	const auto h = static_cast<int>(pos.h);
+	/* SDL cursor backends do not all interpret the surface size the same way: the Windows
+	 * backend multiplies it by SDL_GetDisplayContentScale() when
+	 * SDL_HINT_MOUSE_DPI_SCALE_CURSORS is enabled (we enable it in sdl_freerdp.cpp), while the
+	 * Wayland, X11 and Cocoa backends use it as is. The code above assumes the window pixel
+	 * density and the display content scale are equal, which does not hold on Windows: window
+	 * sizes are tracked in physical pixels there, so SDL reports a pixel density of 1 on a 200%
+	 * display while the display content scale is 2, and the Windows backend scales the cursor
+	 * bitmap up a second time, displaying it twice as large as the rest of the session.
+	 * Compensate for that backends own scaling so the final cursor still covers
+	 * orig * (pos / orig) points, in line with the remote desktop. */
+	float surfaceRatio = 1.0f;
+	float displayScale = 1.0f;
+	const char* const videoDriver = SDL_GetCurrentVideoDriver();
+	if (videoDriver && (SDL_strcmp(videoDriver, "windows") == 0))
+	{
+		displayScale = SDL_GetDisplayContentScale(SDL_GetDisplayForWindow(window));
+		const float pixelDensity = SDL_GetWindowPixelDensity(window);
+		if ((displayScale > 0.0f) && (pixelDensity > 0.0f))
+			surfaceRatio = pixelDensity / displayScale;
+	}
+	if (std::fabs(surfaceRatio - 1.0f) > 0.01f)
+		WLog_Print(sdl->getWLog(), WLOG_DEBUG,
+		           "cursor surface scaled by %.2f (driver %s, display scale %.2f)",
+		           static_cast<double>(surfaceRatio), videoDriver,
+		           static_cast<double>(displayScale));
+
+	const auto w = static_cast<int>(std::lround(pos.w * surfaceRatio));
+	const auto h = static_cast<int>(std::lround(pos.h * surfaceRatio));
 	if ((w <= 0) || (h <= 0))
 		return true;
 
@@ -210,14 +237,33 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_BlitSurfaceScaled failed");
 		return false;
 	}
+
+	/* The alternate image is the full resolution cursor. SDL backends that honour
+	 * SDL_HINT_MOUSE_DPI_SCALE_CURSORS pick it for high DPI displays and look up the hotspot of
+	 * the image they picked, so it needs one of its own: the hotspot of the scaled down copy
+	 * does not apply to an image that is `display scale` times larger. Without this the Windows
+	 * backend builds a cursor bitmap that is displayed shifted right and down by
+	 * (hotspot * (1 - 1 / scale)), which is invisible for cursors anchored in the top left
+	 * corner (e.g. the arrow) but clearly wrong for the ones anchored in the middle (e.g. the
+	 * Excel cell cursor). */
+	{
+		const auto props = SDL_GetSurfaceProperties(ptr->image);
+		const auto hx = static_cast<int>(ix);
+		const auto hy = static_cast<int>(iy);
+		if (!SDL_SetNumberProperty(props, SDL_PROP_SURFACE_HOTSPOT_X_NUMBER, hx) ||
+		    !SDL_SetNumberProperty(props, SDL_PROP_SURFACE_HOTSPOT_Y_NUMBER, hy))
+			WLog_Print(sdl->getWLog(), WLOG_WARN,
+			           "SDL_SetNumberProperty(hotspot %d,%d) failed", hx, hy);
+	}
+
 	if (!SDL_AddSurfaceAlternateImage(normal.get(), ptr->image))
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_AddSurfaceAlternateImage failed");
 		return false;
 	}
 
-	auto x = static_cast<int>(pos.x);
-	auto y = static_cast<int>(pos.y);
+	auto x = static_cast<int>(std::lround(pos.x * surfaceRatio));
+	auto y = static_cast<int>(std::lround(pos.y * surfaceRatio));
 	if (x >= w)
 		x = w - 1;
 	if (y >= h)
