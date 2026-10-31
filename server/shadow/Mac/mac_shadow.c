@@ -212,8 +212,12 @@ static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (flags & KBD_FLAGS_EXTENDED)
 		scancode |= KBDEXT;
 
-	const DWORD vkcode =
-	    GetVirtualKeyCodeFromVirtualScanCode(scancode, WINPR_KBD_TYPE_IBM_ENHANCED);
+	/* WinPR's Apple table lists the extended keys (both Command keys, right
+	 * Option, the arrows, Home, End, Page Up/Down, Forward Delete, keypad
+	 * Enter, ...) with KBDEXT set, so the flag has to come along */
+	DWORD vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, WINPR_KBD_TYPE_IBM_ENHANCED);
+	if (flags & KBD_FLAGS_EXTENDED)
+		vkcode |= KBDEXT;
 	const DWORD keycode = GetKeycodeFromVirtualKeyCode(vkcode, WINPR_KEYCODE_TYPE_APPLE);
 
 	/* Apple's key code 0 is A: any other key that maps to 0 has no Mac key */
