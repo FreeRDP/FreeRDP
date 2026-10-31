@@ -537,6 +537,13 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (!appWindow->title)
 			goto fail;
 
+		/* The size hints have to be in place before the window is mapped. */
+		appWindow->windowOffsetX = windowState->windowOffsetX;
+		appWindow->windowOffsetY = windowState->windowOffsetY;
+		appWindow->windowWidth = windowState->windowWidth;
+		appWindow->windowHeight = windowState->windowHeight;
+		xf_UpdateWindowSizeHints(xfc, appWindow);
+
 		if (xf_AppWindowInit(xfc, appWindow))
 			redraw = TRUE;
 	}
@@ -717,6 +724,11 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	}
 
 	/* Update Window */
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE) || (fieldFlags & WINDOW_ORDER_FIELD_STYLE) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y))
+		xf_UpdateWindowSizeHints(xfc, appWindow);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
