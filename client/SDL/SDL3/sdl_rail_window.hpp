@@ -130,6 +130,8 @@ class SdlRailWindow
 	[[nodiscard]] bool isPopup() const;
 	/* Full-screen popup treated as a top-level window. */
 	[[nodiscard]] bool isFullscreen() const;
+	/* App window or fullscreen popup without WS_EX_NOACTIVATE (e.g. on-screen keyboards). */
+	[[nodiscard]] bool activatable() const;
 	/* Layered decoration (drop shadow); realized only while anchored to a visible popup. */
 	[[nodiscard]] bool isLayered() const;
 	/* Mark shadow anchored to an active popup. */

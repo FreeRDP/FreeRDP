@@ -423,6 +423,12 @@ bool SdlRailWindow::isFullscreen() const
 	return _fullscreen;
 }
 
+bool SdlRailWindow::activatable() const
+{
+	std::unique_lock lock(_gfxLock);
+	return (!_isPopup || _fullscreen) && ((_exStyle & WS_EX_NOACTIVATE) == 0);
+}
+
 bool SdlRailWindow::isLayered() const
 {
 	std::unique_lock lock(_gfxLock);
@@ -725,6 +731,8 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 			flags |= SDL_WINDOW_BORDERLESS;
 		if (caps.supportsTransparentWindows)
 			flags |= SDL_WINDOW_TRANSPARENT;
+		if ((_exStyle & WS_EX_NOACTIVATE) != 0)
+			flags |= SDL_WINDOW_NOT_FOCUSABLE;
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::create(SDL_GetPrimaryDisplay(), _title, flags, vis));
 	}
@@ -1254,7 +1262,7 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			const SDL_Rect vis = targetOuterRect();
 			placePopup(vis, parentRect);
 		}
-		if ((!_isPopup && !_layered) || _fullscreen)
+		if (((!_isPopup && !_layered) || _fullscreen) && ((_exStyle & WS_EX_NOACTIVATE) == 0))
 			_win->raise(); /* Bring app and fullscreen windows to front. */
 	}
 	return ok;
