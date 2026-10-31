@@ -37,7 +37,8 @@
  * --log, this service writes service.log there and each start of the shadow
  * server its own shadow-<session>-<time>.log (WLog's file appender).
  * --allow-sas sets the policy that lets services send Ctrl+Alt+Del
- * (SoftwareSASGeneration = 1); without it Windows ignores the request. */
+ * (SoftwareSASGeneration = 1); without it Windows ignores the request.
+ * Uninstall puts the policy back as it was before. */
 
 #include <windows.h>
 #include <wtsapi32.h>
@@ -404,19 +405,86 @@ static VOID WINAPI service_main(DWORD argc, LPWSTR* argv)
 
 /* ---- install, uninstall */
 
+#define SAS_POLICY_KEY L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+#define SAS_POLICY L"SoftwareSASGeneration"
+/* what the policy was before install changed it, kept in the service's own key (removed with
+ * the service): its old value, or SAS_WAS_UNSET */
+#define SERVICE_KEY L"SYSTEM\\CurrentControlSet\\Services\\" SERVICE_NAME
+#define SAS_BEFORE L"SoftwareSASGenerationBefore"
+#define SAS_WAS_UNSET 0xFFFFFFFFu
+
+/* Lets services send Ctrl+Alt+Del: SoftwareSASGeneration 1 (services) or 3 (services and Ease of
+ * Access applications) allows it. When it is set already, nothing changes and nothing is kept;
+ * otherwise the old state is kept for uninstall, unless an earlier install kept it already. */
 static BOOL allow_sas(void)
 {
-	const DWORD services = 1;
-	const LSTATUS rc = RegSetKeyValueW(
-	    HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
-	    L"SoftwareSASGeneration", REG_DWORD, &services, sizeof(services));
+	DWORD before = SAS_WAS_UNSET;
+	DWORD size = sizeof(before);
+	const LSTATUS read = RegGetValueW(HKEY_LOCAL_MACHINE, SAS_POLICY_KEY, SAS_POLICY,
+	                                  RRF_RT_REG_DWORD, NULL, &before, &size);
+	if (read != ERROR_SUCCESS)
+		before = SAS_WAS_UNSET;
+	if ((before != SAS_WAS_UNSET) && ((before & 1) != 0))
+	{
+		wprintf(L"SoftwareSASGeneration = %lu already lets services send Ctrl+Alt+Del\n",
+		        (unsigned long)before);
+		return TRUE;
+	}
+
+	DWORD kept = 0;
+	size = sizeof(kept);
+	if (RegGetValueW(HKEY_LOCAL_MACHINE, SERVICE_KEY, SAS_BEFORE, RRF_RT_REG_DWORD, NULL, &kept,
+	                 &size) != ERROR_SUCCESS)
+	{
+		const LSTATUS rc = RegSetKeyValueW(HKEY_LOCAL_MACHINE, SERVICE_KEY, SAS_BEFORE, REG_DWORD,
+		                                   &before, sizeof(before));
+		if (rc != ERROR_SUCCESS)
+		{
+			fwprintf(stderr, L"%ls: 0x%08lX\n", SAS_BEFORE, (unsigned long)rc);
+			return FALSE;
+		}
+	}
+
+	/* services, and Ease of Access applications too where they were allowed (2) */
+	const DWORD services = (before == SAS_WAS_UNSET) ? 1 : (before | 1);
+	const LSTATUS rc = RegSetKeyValueW(HKEY_LOCAL_MACHINE, SAS_POLICY_KEY, SAS_POLICY, REG_DWORD,
+	                                   &services, sizeof(services));
 	if (rc != ERROR_SUCCESS)
 	{
 		fwprintf(stderr, L"SoftwareSASGeneration: 0x%08lX\n", (unsigned long)rc);
 		return FALSE;
 	}
-	wprintf(L"SoftwareSASGeneration = 1: services may send Ctrl+Alt+Del\n");
+	wprintf(
+	    L"SoftwareSASGeneration = %lu: services may send Ctrl+Alt+Del (uninstall restores it)\n",
+	    (unsigned long)services);
 	return TRUE;
+}
+
+/* Puts SoftwareSASGeneration back as it was before install changed it */
+static void restore_sas(void)
+{
+	DWORD before = 0;
+	DWORD size = sizeof(before);
+	if (RegGetValueW(HKEY_LOCAL_MACHINE, SERVICE_KEY, SAS_BEFORE, RRF_RT_REG_DWORD, NULL, &before,
+	                 &size) != ERROR_SUCCESS)
+		return; /* install did not change it */
+
+	LSTATUS rc = ERROR_SUCCESS;
+	if (before == SAS_WAS_UNSET)
+	{
+		rc = RegDeleteKeyValueW(HKEY_LOCAL_MACHINE, SAS_POLICY_KEY, SAS_POLICY);
+		if (rc == ERROR_FILE_NOT_FOUND)
+			rc = ERROR_SUCCESS;
+	}
+	else
+		rc = RegSetKeyValueW(HKEY_LOCAL_MACHINE, SAS_POLICY_KEY, SAS_POLICY, REG_DWORD, &before,
+		                     sizeof(before));
+	if (rc != ERROR_SUCCESS)
+		fwprintf(stderr, L"SoftwareSASGeneration: 0x%08lX, not restored\n", (unsigned long)rc);
+	else if (before == SAS_WAS_UNSET)
+		wprintf(L"SoftwareSASGeneration removed again (it was not set before install)\n");
+	else
+		wprintf(L"SoftwareSASGeneration = %lu again\n", (unsigned long)before);
 }
 
 static int install(BOOL sas)
@@ -447,9 +515,6 @@ static int install(BOOL sas)
 		wcscat_s(image, ARRAYSIZE(image), g_options);
 	}
 
-	if (sas && !allow_sas())
-		return 1;
-
 	scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CREATE_SERVICE | SC_MANAGER_CONNECT);
 	if (!scm)
 	{
@@ -476,6 +541,9 @@ static int install(BOOL sas)
 		fwprintf(stderr, L"CreateService: 0x%08lX\n", GetLastError());
 		goto out;
 	}
+	/* after the service exists: its key keeps what the policy was */
+	if (sas && !allow_sas())
+		goto out;
 
 	SERVICE_DESCRIPTIONW about = { (LPWSTR)SERVICE_ABOUT };
 	(void)ChangeServiceConfig2W(service, SERVICE_CONFIG_DESCRIPTION, &about);
@@ -523,6 +591,8 @@ static int uninstall(void)
 	     i < 50 && QueryServiceStatus(service, &status) && status.dwCurrentState != SERVICE_STOPPED;
 	     i++)
 		Sleep(200);
+	/* before the service's key goes, with what it kept */
+	restore_sas();
 	const BOOL deleted = DeleteService(service);
 	if (!deleted)
 		fwprintf(stderr, L"DeleteService: 0x%08lX\n", GetLastError());
