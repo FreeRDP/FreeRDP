@@ -327,6 +327,7 @@ static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 	return (status >= 0);
 }
 
+WINPR_ATTR_NODISCARD
 static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s,
                                       WINPR_ATTR_UNUSED UINT16 totalLength)
 {

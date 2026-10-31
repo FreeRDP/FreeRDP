@@ -81,7 +81,7 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 	if (s->capacity >= size)
 		return TRUE;
 
-	const size_t increment = 128ull;
+	const size_t increment = 1024ull * 1024ull;
 	if (size > SIZE_MAX - increment)
 		return FALSE;
 
@@ -126,9 +126,9 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	s->length = size;
 
 	s->pool = nullptr;
-	s->count = 1;
 	s->isAllocatedStream = TRUE;
 	s->isOwner = TRUE;
+	Stream_AddRef(s);
 	return s;
 }
 
@@ -155,9 +155,9 @@ wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;
 	s->pool = nullptr;
-	s->count = 1;
 	s->isAllocatedStream = FALSE;
 	s->isOwner = FALSE;
+	Stream_AddRef(s);
 	return s;
 }
 

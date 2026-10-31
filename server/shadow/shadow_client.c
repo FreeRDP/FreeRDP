@@ -2318,9 +2318,23 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	{
 		if (pStatus->gfxOpened && client->areGfxCapsReady)
 		{
-			/* GFX/h264 always full screen encoded */
-			nWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-			nHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			/* Only codecs that need constant full-frame dimensions (SPS/PPS
+			 * bind the resolution) must encode the whole desktop. rfx and
+			 * progressive interpret nWidth/nHeight as source image dims with
+			 * the cmd rect as the dirty region, and planar/uncompressed encode
+			 * the cmd rect directly, so those may keep the dirty extents. */
+			const BOOL fullframegfx =
+			    freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
+			    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) ||
+			    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444v2) ||
+			    (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) &&
+			     (freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId) != 0)) ||
+			    freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive);
+			if (fullframegfx)
+			{
+				nWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+				nHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			}
 
 			/* Create primary surface if have not */
 			if (!pStatus->gfxSurfaceCreated)
@@ -2339,8 +2353,9 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			WINPR_ASSERT(nWidth <= UINT16_MAX);
 			WINPR_ASSERT(nHeight >= 0);
 			WINPR_ASSERT(nHeight <= UINT16_MAX);
-			ret = shadow_client_send_surface_gfx(client, pSrcData, nSrcStep, SrcFormat, 0, 0,
-			                                     (UINT16)nWidth, (UINT16)nHeight);
+			ret = shadow_client_send_surface_gfx(
+			    client, pSrcData, nSrcStep, SrcFormat, fullframegfx ? 0 : (UINT16)nXSrc,
+			    fullframegfx ? 0 : (UINT16)nYSrc, (UINT16)nWidth, (UINT16)nHeight);
 		}
 		else
 		{

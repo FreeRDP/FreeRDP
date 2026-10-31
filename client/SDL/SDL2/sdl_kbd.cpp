@@ -518,7 +518,10 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 {
 	WINPR_ASSERT(ev);
 	const UINT32 rdp_scancode = sdl_scancode_to_rdp(ev->keysym.scancode);
-	const SDL_Keymod mods = SDL_GetModState();
+	/* The modifiers held when this key was pressed: SDL_GetModState() is the state after every
+	 * event already queued, so a hotkey could be missed, or fire on a plain key typed just
+	 * before a modifier. */
+	const auto mods = static_cast<SDL_Keymod>(ev->keysym.mod);
 
 	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{

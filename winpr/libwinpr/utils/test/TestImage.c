@@ -525,6 +525,84 @@ fail:
 	return rc;
 }
 
+/* PNG writes go through the png_write_data callback, which grows its buffer
+ * with realloc. A failed realloc must abort the write instead of copying past
+ * the end of the old buffer (CVE-2026-109256). The failure itself needs an
+ * exhausted allocator and is not triggered here; this exercises the callback
+ * growth path end to end so the fix cannot silently break PNG output. */
+static BOOL test_png_write_roundtrip(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 5;
+	const UINT32 height = 4;
+	const UINT32 stride = width * 4;
+	BYTE* out = nullptr;
+	size_t outSize = 0;
+	wImage* image = winpr_image_new();
+	wImage* back = winpr_image_new();
+	if (!image || !back)
+		goto fail;
+
+	if (!winpr_image_format_is_supported(WINPR_IMAGE_PNG))
+	{
+		rc = TRUE;
+		goto fail;
+	}
+
+	image->data = (BYTE*)malloc(1ull * stride * height);
+	if (!image->data)
+		goto fail;
+	for (UINT32 y = 0; y < height; y++)
+	{
+		for (UINT32 x = 0; x < width; x++)
+		{
+			BYTE* px = &image->data[1ull * y * stride + 4ull * x];
+			px[0] = (BYTE)(x * 17);
+			px[1] = (BYTE)(y * 31);
+			px[2] = (BYTE)(x + y);
+			px[3] = 0xFF;
+		}
+	}
+	image->width = width;
+	image->height = height;
+	image->bitsPerPixel = 32;
+	image->bytesPerPixel = 4;
+	image->scanline = stride;
+
+	out = winpr_image_write_buffer(image, WINPR_IMAGE_PNG, &outSize);
+	if (!out || (outSize < 8))
+	{
+		(void)fprintf(stderr, "[%s] winpr_image_write_buffer(PNG) failed\n", __func__);
+		goto fail;
+	}
+
+	/* PNG signature */
+	if ((out[0] != 137) || (out[1] != 'P') || (out[2] != 'N') || (out[3] != 'G'))
+	{
+		(void)fprintf(stderr, "[%s] missing PNG signature\n", __func__);
+		goto fail;
+	}
+
+	if (winpr_image_read_buffer(back, out, outSize) <= 0)
+	{
+		(void)fprintf(stderr, "[%s] winpr_image_read_buffer(PNG) failed\n", __func__);
+		goto fail;
+	}
+
+	if ((back->width != width) || (back->height != height))
+	{
+		(void)fprintf(stderr, "[%s] PNG roundtrip dimensions mismatch\n", __func__);
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	free(out);
+	winpr_image_free(image, TRUE);
+	winpr_image_free(back, TRUE);
+	return rc;
+}
+
 int TestImage(int argc, char* argv[])
 {
 	int rc = 0;
@@ -553,6 +631,9 @@ int TestImage(int argc, char* argv[])
 
 	if (!test_write_unpadded_rows())
 		rc -= 64;
+
+	if (!test_png_write_roundtrip())
+		rc -= 128;
 
 	return rc;
 }

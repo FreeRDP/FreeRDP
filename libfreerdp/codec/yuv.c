@@ -159,6 +159,18 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 	BOOL rc = FALSE;
 	WINPR_ASSERT(context);
 
+	if (width > UINT16_MAX)
+	{
+		WLog_ERR(TAG, "YUV::width %" PRIu32 " > %d", width, UINT16_MAX);
+		return FALSE;
+	}
+
+	if (height > UINT16_MAX)
+	{
+		WLog_ERR(TAG, "YUV::height %" PRIu32 " > %d", height, UINT16_MAX);
+		return FALSE;
+	}
+
 	context->width = width;
 	context->height = height;
 
@@ -172,8 +184,8 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 		 *
 		 * ~2MB total for a 4k resolution, so negligible.
 		 */
-		const size_t pw = (width + YUV_TILE_SIZE - width % YUV_TILE_SIZE) / 16;
-		const size_t ph = (height + YUV_TILE_SIZE - height % YUV_TILE_SIZE) / 16;
+		const size_t pw = (1ull * width + YUV_TILE_SIZE - width % YUV_TILE_SIZE) / 16;
+		const size_t ph = (1ull * height + YUV_TILE_SIZE - height % YUV_TILE_SIZE) / 16;
 
 		const size_t count = pw * ph;
 

@@ -155,6 +155,8 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_disconnect(long inst);
 
+	private static native void freerdp_set_foreground(long inst, boolean foreground);
+
 	private static native boolean freerdp_update_graphics(long inst, Bitmap bitmap, int x, int y,
 	                                                      int width, int height);
 
@@ -236,6 +238,11 @@ public class LibFreeRDP
 	public static boolean cancelConnection(long inst)
 	{
 		return freerdp_disconnect(inst);
+	}
+
+	public static void setForeground(long inst, boolean foreground)
+	{
+		freerdp_set_foreground(inst, foreground);
 	}
 
 	private static String addFlag(String name, boolean enabled)
@@ -368,23 +375,24 @@ public class LibFreeRDP
 			args.add("/cert-name:" + certName);
 		}
 
+		args.add("/network:auto");
+
 		BookmarkBase.PerformanceFlags flags = bookmark.getActivePerformanceFlags();
 		if (flags.getRemoteFX())
 		{
 			args.add("/rfx");
-			args.add("/network:auto");
 		}
 
 		if (flags.getGfx())
 		{
-			args.add("/gfx");
-			args.add("/network:auto");
-		}
-
-		if (flags.getH264() && mHasH264)
-		{
-			args.add("/gfx:AVC444");
-			args.add("/network:auto");
+			if (flags.getH264() && mHasH264)
+			{
+				args.add("/gfx:AVC444,AVC420,RFX,progressive");
+			}
+			else
+			{
+				args.add("/gfx");
+			}
 		}
 
 		args.add(addFlag("wallpaper", flags.getWallpaper()));
@@ -472,6 +480,11 @@ public class LibFreeRDP
 		if (advanced.getRedirectCamera() && mHasCameraRedirection)
 		{
 			args.add("/dvc:rdpecam");
+		}
+
+		if (ApplicationSettingsActivity.getAutoReconnect(context))
+		{
+			args.add("/auto-reconnect");
 		}
 
 		args.add("/kbd:unicode:on");
@@ -771,6 +784,16 @@ public class LibFreeRDP
 			uiEventListener.OnPointerSetNull();
 	}
 
+	private static void OnReconnecting(long inst)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnReconnecting();
+	}
+
 	private static void OnPointerSetDefault(long inst)
 	{
 		SessionState s = GlobalApp.getSession(inst);
@@ -863,6 +886,8 @@ public class LibFreeRDP
 	public interface UIEventListener
 	{
 		void OnSettingsChanged(int width, int height, int bpp);
+
+		void OnReconnecting();
 
 		boolean OnAuthenticate(StringBuilder username, StringBuilder domain,
 		                       StringBuilder password);

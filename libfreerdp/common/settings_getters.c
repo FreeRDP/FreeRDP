@@ -1906,6 +1906,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_RdpVersion:
 			return settings->RdpVersion;
 
+		case FreeRDP_RdstlsEnabledModes:
+			return settings->RdstlsEnabledModes;
+
 		case FreeRDP_ReceivedCapabilitiesSize:
 			return settings->ReceivedCapabilitiesSize;
 
@@ -2409,6 +2412,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RdpVersion:
 			settings->RdpVersion = cnv.c;
+			break;
+
+		case FreeRDP_RdstlsEnabledModes:
+			settings->RdstlsEnabledModes = cnv.c;
 			break;
 
 		case FreeRDP_ReceivedCapabilitiesSize:

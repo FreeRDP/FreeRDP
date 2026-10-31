@@ -724,13 +724,22 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 
 	if (app)
 	{
+		BOOL redraw = FALSE;
+		UINT64 windowId = 0;
+		UINT32 surfaceId = 0;
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		/* Update the server with any window changes that occurred while the window was not focused.
 		 */
 		if (appWindow)
-			xf_rail_adjust_position(xfc, appWindow);
+		{
+			xf_rail_adjust_position(xfc, appWindow, &redraw);
+			windowId = appWindow->windowId;
+			surfaceId = appWindow->surfaceId;
+		}
 		xf_rail_return_window(appWindow, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
 	}
 
 	xf_keyboard_focus_in(xfc);
@@ -924,6 +933,9 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 	}
 	else
 	{
+		BOOL redraw = FALSE;
+		UINT64 windowId = 0;
+		UINT32 surfaceId = 0;
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		if (appWindow)
@@ -943,16 +955,20 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			if (appWindow->decorations)
 			{
 				/* moving resizing using window decoration */
-				xf_rail_adjust_position(xfc, appWindow);
+				xf_rail_adjust_position(xfc, appWindow, &redraw);
 			}
 			else
 			{
 				if ((!event->send_event || appWindow->local_move.state == LMS_NOT_ACTIVE) &&
 				    !appWindow->rail_ignore_configure && xfc->focused)
-					xf_rail_adjust_position(xfc, appWindow);
+					xf_rail_adjust_position(xfc, appWindow, &redraw);
 			}
+			windowId = appWindow->windowId;
+			surfaceId = appWindow->surfaceId;
 		}
 		xf_rail_return_window(appWindow, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
 	}
 	return xf_pointer_update_scale(xfc);
 }
@@ -1585,11 +1601,20 @@ BOOL xf_event_update_screen(freerdp* instance)
 	}
 	else
 	{
+		BOOL redraw = FALSE;
+		UINT32 surfaceId = 0;
+		UINT64 windowId = 0;
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xfc->exposedWindow);
 		if (appWindow)
-			xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
-			                    xfc->exposedArea.w, xfc->exposedArea.h);
+		{
+			redraw = xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
+			                             xfc->exposedArea.w, xfc->exposedArea.h);
+			surfaceId = appWindow->surfaceId;
+			windowId = appWindow->windowId;
+		}
 		xf_rail_return_window(appWindow, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
 	}
 	return TRUE;
 }

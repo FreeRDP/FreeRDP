@@ -44,6 +44,8 @@ typedef struct
 	DispClientContext* disp;
 	RailClientContext* rail;
 	BOOL railExecSent;
+
+	HANDLE foregroundEvent;
 } androidContext;
 
 #endif /* FREERDP_CLIENT_ANDROID_FREERDP_H */

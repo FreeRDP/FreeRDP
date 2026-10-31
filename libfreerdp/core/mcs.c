@@ -1414,7 +1414,7 @@ BOOL mcs_recv_disconnect_provider_ultimatum(WINPR_ATTR_UNUSED rdpMcs* mcs, wStre
 	Stream_Rewind_UINT8(s);
 	Stream_Read_UINT8(s, b1);
 	Stream_Read_UINT8(s, b2);
-	*reason = ((b1 & 0x01) << 1) | (b2 >> 7);
+	*reason = ((b1 & 0x03) << 1) | (b2 >> 7);
 	return TRUE;
 }
 
@@ -1435,10 +1435,15 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs, enum Disconnect_Ultimat
 	if (!s)
 		goto fail;
 
-	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1))
+	if ((UINT32)reason > Disconnect_Ultimatum_channel_purged)
 		goto fail;
 
-	if (!per_write_enumerated(s, 0x80, WINPR_ASSERTING_INT_CAST(BYTE, reason)))
+	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length,
+	                                    (BYTE)((reason >> 1) & 0x03)))
+		goto fail;
+
+	if (!per_write_enumerated(s, (BYTE)((reason & 0x01) << 7),
+	                          Disconnect_Ultimatum_channel_purged + 1))
 		goto fail;
 
 	{

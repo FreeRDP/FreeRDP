@@ -1391,10 +1391,15 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	WINPR_ASSERT(gdi->context);
 	WINPR_ASSERT(gdi->context->update);
 
-	/* EndPaint might not have been called, ensure the update lock is released */
-	if (!update_end_paint(gdi->context->update))
-		return FALSE;
+	/* Take the (recursive) update lock first, this waits for a paint in progress on another
+	 * thread. A paint still open afterwards belongs to this thread: EndPaint might not have
+	 * been called, ensure its update lock is released */
 	rdp_update_lock(gdi->context->update);
+	if (!update_end_paint(gdi->context->update))
+	{
+		rdp_update_unlock(gdi->context->update);
+		return FALSE;
+	}
 
 	if (gdi->drawing == gdi->primary)
 		gdi->drawing = nullptr;

@@ -48,22 +48,28 @@ static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                             UINT16 flags, UINT8 code)
 {
-	UINT rc;
-	INPUT event;
+	INPUT event = WINPR_C_ARRAY_INIT;
 	event.type = INPUT_KEYBOARD;
-	event.ki.wVk = 0;
-	event.ki.wScan = code;
-	event.ki.dwFlags = KEYEVENTF_SCANCODE;
-	event.ki.dwExtraInfo = 0;
-	event.ki.time = 0;
+	KEYBDINPUT* ki =
+#if defined(NONAMELESSUNION)
+	    &event.u.ki;
+#else
+	    &event.ki;
+#endif
+
+	ki->wVk = 0;
+	ki->wScan = code;
+	ki->dwFlags = KEYEVENTF_SCANCODE;
+	ki->dwExtraInfo = 0;
+	ki->time = 0;
 
 	if (flags & KBD_FLAGS_RELEASE)
-		event.ki.dwFlags |= KEYEVENTF_KEYUP;
+		ki->dwFlags |= KEYEVENTF_KEYUP;
 
 	if (flags & KBD_FLAGS_EXTENDED)
-		event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+		ki->dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
-	rc = SendInput(1, &event, sizeof(INPUT));
+	const UINT rc = SendInput(1, &event, sizeof(INPUT));
 	if (rc == 0)
 		return FALSE;
 	return TRUE;
@@ -73,19 +79,24 @@ static BOOL win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsyste
                                                     rdpShadowClient* client, UINT16 flags,
                                                     UINT16 code)
 {
-	UINT rc;
-	INPUT event;
+	INPUT event = WINPR_C_ARRAY_INIT;
 	event.type = INPUT_KEYBOARD;
-	event.ki.wVk = 0;
-	event.ki.wScan = code;
-	event.ki.dwFlags = KEYEVENTF_UNICODE;
-	event.ki.dwExtraInfo = 0;
-	event.ki.time = 0;
+	KEYBDINPUT* ki =
+#if defined(NONAMELESSUNION)
+	    &event.u.ki;
+#else
+	    &event.ki;
+#endif
+	ki->wVk = 0;
+	ki->wScan = code;
+	ki->dwFlags = KEYEVENTF_UNICODE;
+	ki->dwExtraInfo = 0;
+	ki->time = 0;
 
 	if (flags & KBD_FLAGS_RELEASE)
-		event.ki.dwFlags |= KEYEVENTF_KEYUP;
+		ki->dwFlags |= KEYEVENTF_KEYUP;
 
-	rc = SendInput(1, &event, sizeof(INPUT));
+	const UINT rc = SendInput(1, &event, sizeof(INPUT));
 	if (rc == 0)
 		return FALSE;
 	return TRUE;
@@ -98,19 +109,25 @@ static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	INPUT event = WINPR_C_ARRAY_INIT;
 	float width;
 	float height;
+	MOUSEINPUT* mi =
+#if defined(NONAMELESSUNION)
+	    &event.u.mi;
+#else
+	    &event.mi;
+#endif
 
 	event.type = INPUT_MOUSE;
 
 	if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 	{
 		if (flags & PTR_FLAGS_WHEEL)
-			event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+			mi->dwFlags = MOUSEEVENTF_WHEEL;
 		else
-			event.mi.dwFlags = MOUSEEVENTF_HWHEEL;
-		event.mi.mouseData = flags & WheelRotationMask;
+			mi->dwFlags = MOUSEEVENTF_HWHEEL;
+		mi->mouseData = flags & WheelRotationMask;
 
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-			event.mi.mouseData *= -1;
+			mi->mouseData *= -1;
 
 		rc = SendInput(1, &event, sizeof(INPUT));
 
@@ -127,44 +144,44 @@ static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	{
 		width = (float)GetSystemMetrics(SM_CXSCREEN);
 		height = (float)GetSystemMetrics(SM_CYSCREEN);
-		event.mi.dx = (LONG)((float)x * (65535.0f / width));
-		event.mi.dy = (LONG)((float)y * (65535.0f / height));
-		event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
+		mi->dx = (LONG)((float)x * (65535.0f / width));
+		mi->dy = (LONG)((float)y * (65535.0f / height));
+		mi->dwFlags = MOUSEEVENTF_ABSOLUTE;
 
 		if (flags & PTR_FLAGS_MOVE)
 		{
-			event.mi.dwFlags |= MOUSEEVENTF_MOVE;
+			mi->dwFlags |= MOUSEEVENTF_MOVE;
 			rc = SendInput(1, &event, sizeof(INPUT));
 			if (rc == 0)
 				return FALSE;
 		}
 
-		event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
+		mi->dwFlags = MOUSEEVENTF_ABSOLUTE;
 
 		if (flags & PTR_FLAGS_BUTTON1)
 		{
 			if (flags & PTR_FLAGS_DOWN)
-				event.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+				mi->dwFlags |= MOUSEEVENTF_LEFTDOWN;
 			else
-				event.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
+				mi->dwFlags |= MOUSEEVENTF_LEFTUP;
 
 			rc = SendInput(1, &event, sizeof(INPUT));
 		}
 		else if (flags & PTR_FLAGS_BUTTON2)
 		{
 			if (flags & PTR_FLAGS_DOWN)
-				event.mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
+				mi->dwFlags |= MOUSEEVENTF_RIGHTDOWN;
 			else
-				event.mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
+				mi->dwFlags |= MOUSEEVENTF_RIGHTUP;
 
 			rc = SendInput(1, &event, sizeof(INPUT));
 		}
 		else if (flags & PTR_FLAGS_BUTTON3)
 		{
 			if (flags & PTR_FLAGS_DOWN)
-				event.mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
+				mi->dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
 			else
-				event.mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
+				mi->dwFlags |= MOUSEEVENTF_MIDDLEUP;
 
 			rc = SendInput(1, &event, sizeof(INPUT));
 		}
@@ -183,6 +200,12 @@ static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	INPUT event = WINPR_C_ARRAY_INIT;
 	float width;
 	float height;
+	MOUSEINPUT* mi =
+#if defined(NONAMELESSUNION)
+	    &event.u.mi;
+#else
+	    &event.mi;
+#endif
 
 	if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	{
@@ -192,25 +215,25 @@ static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 		{
 			width = (float)GetSystemMetrics(SM_CXSCREEN);
 			height = (float)GetSystemMetrics(SM_CYSCREEN);
-			event.mi.dx = (LONG)((float)x * (65535.0f / width));
-			event.mi.dy = (LONG)((float)y * (65535.0f / height));
-			event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+			mi->dx = (LONG)((float)x * (65535.0f / width));
+			mi->dy = (LONG)((float)y * (65535.0f / height));
+			mi->dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 			rc = SendInput(1, &event, sizeof(INPUT));
 			if (rc == 0)
 				return FALSE;
 		}
 
-		event.mi.dx = event.mi.dy = event.mi.dwFlags = 0;
+		mi->dx = mi->dy = mi->dwFlags = 0;
 
 		if (flags & PTR_XFLAGS_DOWN)
-			event.mi.dwFlags |= MOUSEEVENTF_XDOWN;
+			mi->dwFlags |= MOUSEEVENTF_XDOWN;
 		else
-			event.mi.dwFlags |= MOUSEEVENTF_XUP;
+			mi->dwFlags |= MOUSEEVENTF_XUP;
 
 		if (flags & PTR_XFLAGS_BUTTON1)
-			event.mi.mouseData = XBUTTON1;
+			mi->mouseData = XBUTTON1;
 		else if (flags & PTR_XFLAGS_BUTTON2)
-			event.mi.mouseData = XBUTTON2;
+			mi->mouseData = XBUTTON2;
 
 		rc = SendInput(1, &event, sizeof(INPUT));
 	}
@@ -223,15 +246,9 @@ static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 static int win_shadow_invalidate_region(winShadowSubsystem* subsystem, int x, int y, int width,
                                         int height)
 {
-	rdpShadowServer* server;
-	rdpShadowSurface* surface;
-	RECTANGLE_16 invalidRect;
-	server = subsystem->base.server;
-	surface = server->surface;
-	invalidRect.left = x;
-	invalidRect.top = y;
-	invalidRect.right = x + width;
-	invalidRect.bottom = y + height;
+	rdpShadowServer* server = subsystem->base.server;
+	rdpShadowSurface* surface = server->surface;
+	RECTANGLE_16 invalidRect = { .left = x, .top = y, .right = x + width, .bottom = y + height };
 	EnterCriticalSection(&(surface->lock));
 	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	LeaveCriticalSection(&(surface->lock));
@@ -243,7 +260,6 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	int x, y;
 	int width;
 	int height;
-	int count;
 	int status = 1;
 	int nDstStep = 0;
 	DWORD DstFormat;
@@ -314,13 +330,26 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	if (status <= 0)
 		return status;
 
+#if defined(WITH_WDS_API)
+	/* WDS: the GDI primary buffer spans the whole desktop */
+	const int srcX = x;
+	const int srcY = y;
+#elif defined(WITH_DXGI_1_2)
+	/* DXGI: fetch_frame_data() copies the region to the staging texture
+	 * origin, so the source offset is always the origin */
+	const int srcX = 0;
+	const int srcY = 0;
+#else
+	/* no capture backend compiled in: keep the previous behavior */
+	const int srcX = x;
+	const int srcY = y;
+#endif
 	if (!freerdp_image_copy_no_overlap(surface->data, surface->format, surface->scanline, x, y,
-	                                   width, height, pDstData, DstFormat, nDstStep, x, y, nullptr,
-	                                   FREERDP_FLIP_NONE))
+	                                   width, height, pDstData, DstFormat, nDstStep, srcX, srcY,
+	                                   nullptr, FREERDP_FLIP_NONE))
 		return ERROR_INTERNAL_ERROR;
 
 	ArrayList_Lock(server->clients);
-	count = ArrayList_Count(server->clients);
 	shadow_subsystem_frame_update(&subsystem->base);
 	ArrayList_Unlock(server->clients);
 	region16_clear(&(surface->invalidRegion));
@@ -367,7 +396,6 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 {
 	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
-	int fps;
 	DWORD status;
 	DWORD nCount;
 	UINT64 cTime;
@@ -376,11 +404,11 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 	UINT64 frameTime;
 	HANDLE events[32];
 	HANDLE StopEvent;
-	StopEvent = subsystem->server->StopEvent;
+	StopEvent = subsystem->base.server->StopEvent;
 	nCount = 0;
 	events[nCount++] = StopEvent;
-	fps = 16;
-	dwInterval = 1000 / fps;
+	subsystem->base.captureFrameRate = 120;
+	dwInterval = 1000 / subsystem->base.captureFrameRate;
 	frameTime = GetTickCount64() + dwInterval;
 
 	while (1)
@@ -406,7 +434,36 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 			if (dxgi_status > 0)
 				win_shadow_surface_copy(subsystem);
 
-			dwInterval = 1000 / fps;
+			/* Follow the encoder capture rate suggestion, like the X11 and Mac
+			 * subsystems do: shadow_encoder_create_frame_id() lowers the
+			 * preferred fps while frames are still in flight (not yet
+			 * acknowledged by the client). This subsystem hardcoded the
+			 * capture rate and never read the suggestion, so a slow client
+			 * could not throttle the capture and in-flight frames (latency)
+			 * accumulated without bound. Use the lowest suggestion of all
+			 * connected clients. */
+			UINT32 captureFrameRate = UINT32_MAX;
+			ArrayList_Lock(subsystem->base.server->clients);
+			const UINT32 clientCount = ArrayList_Count(subsystem->base.server->clients);
+			for (UINT32 index = 0; index < clientCount; index++)
+			{
+				const rdpShadowClient* client =
+				    (rdpShadowClient*)ArrayList_GetItem(subsystem->base.server->clients, index);
+
+				if (client && client->encoder)
+				{
+					const UINT32 suggestion = shadow_encoder_preferred_fps(client->encoder);
+					if (suggestion < captureFrameRate)
+						captureFrameRate = suggestion;
+				}
+			}
+			ArrayList_Unlock(subsystem->base.server->clients);
+
+			if ((captureFrameRate == UINT32_MAX) || (captureFrameRate < 1))
+				captureFrameRate = subsystem->base.captureFrameRate;
+			subsystem->base.captureFrameRate = captureFrameRate;
+
+			dwInterval = 1000 / subsystem->base.captureFrameRate;
 			frameTime += dwInterval;
 		}
 	}
@@ -430,6 +487,33 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 
 	displayDevice.cb = sizeof(DISPLAY_DEVICE);
 
+	/* Skip adapters which are not attached to the desktop: on machines with
+	 * a BMC/management GPU (e.g. ASPEED) listed as device 0 while the real GPU
+	 * is attached later in the list, CreateDC for the unattached device fails
+	 * and the monitor rectangle stays zeroed, which results in a 1x1 surface. */
+	{
+		DWORD devNum = 0;
+		BOOL attached = FALSE;
+		DISPLAY_DEVICE probe = WINPR_C_ARRAY_INIT;
+		probe.cb = sizeof(DISPLAY_DEVICE);
+		while (EnumDisplayDevices(nullptr, devNum, &probe, 0))
+		{
+			if (probe.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+			{
+				attached = TRUE;
+				break;
+			}
+			devNum++;
+			probe.cb = sizeof(DISPLAY_DEVICE);
+		}
+		if (attached && (devNum != 0))
+		{
+			displayDevice.cb = sizeof(DISPLAY_DEVICE);
+			if (EnumDisplayDevices(nullptr, devNum, &displayDevice, 0))
+				iDevNum = devNum;
+		}
+	}
+
 	if (EnumDisplayDevices(nullptr, iDevNum, &displayDevice, 0))
 	{
 		hdc = CreateDC(displayDevice.DeviceName, nullptr, nullptr, nullptr);
@@ -446,6 +530,20 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 		DeleteDC(hdc);
 	}
 
+	/* Fallback to the primary screen metrics if enumeration did not
+	 * yield a usable rectangle, otherwise shadow_screen_new computes a
+	 * 1x1 surface and clients are resized to 1x1. */
+	if ((numMonitors == 0) || (monitors[0].right <= 0) || (monitors[0].bottom <= 0))
+	{
+		monitor = &monitors[0];
+		monitor->left = 0;
+		monitor->top = 0;
+		monitor->right = GetSystemMetrics(SM_CXSCREEN);
+		monitor->bottom = GetSystemMetrics(SM_CYSCREEN);
+		monitor->flags = 1;
+		numMonitors = 1;
+	}
+
 	return numMonitors;
 }
 
@@ -455,6 +553,17 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	int status;
 	MONITOR_DEF* virtualScreen;
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
+	if (subsystem->base.numMonitors > 0)
+	{
+		subsystem->width = subsystem->base.monitors[0].right;
+		subsystem->height = subsystem->base.monitors[0].bottom;
+	}
+
+	if ((subsystem->width <= 0) || (subsystem->height <= 0))
+	{
+		subsystem->width = GetSystemMetrics(SM_CXSCREEN);
+		subsystem->height = GetSystemMetrics(SM_CYSCREEN);
+	}
 #if defined(WITH_WDS_API)
 	status = win_shadow_wds_init(subsystem);
 #elif defined(WITH_DXGI_1_2)
@@ -547,8 +656,8 @@ FREERDP_API const char* ShadowSubsystemName(void)
 
 FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	const char name[] = "windows shadow subsystem";
-	const char* arg[] = { name };
+	char name[] = "windows shadow subsystem";
+	char* arg[] = { name };
 
 	freerdp_server_warn_unmaintained(ARRAYSIZE(arg), arg);
 	pEntryPoints->New = win_shadow_subsystem_new;

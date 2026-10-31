@@ -1469,6 +1469,25 @@ BOOL client_auto_reconnect(freerdp* instance)
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL client_auto_reconnect_credentials_rejected(UINT32 error)
+{
+	switch (error)
+	{
+		case FREERDP_ERROR_CONNECT_LOGON_FAILURE:
+		case FREERDP_ERROR_CONNECT_CLIENT_REVOKED:
+		case FREERDP_ERROR_CONNECT_WRONG_PASSWORD:
+		case FREERDP_ERROR_CONNECT_ACCESS_DENIED:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED:
+		case FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRetries,
                                      UINT32 maxRetries)
 {
@@ -1496,13 +1515,19 @@ static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRe
 		if (freerdp_reconnect(instance))
 			return TRUE;
 
-		switch (freerdp_get_last_error(instance->context))
+		/* The server can also reject the credentials on a reconnect attempt, e.g. after a
+		 * password change. Retrying them only locks the account sooner. */
+		const UINT err = freerdp_get_last_error(instance->context);
+		if (client_auto_reconnect_credentials_rejected(err))
 		{
-			case FREERDP_ERROR_CONNECT_CANCELLED:
-				WLog_WARN(TAG, "Autoreconnect aborted by user");
-				return FALSE;
-			default:
-				break;
+			WLog_WARN(TAG, "Autoreconnect aborted: credentials do not work [%s]",
+			          freerdp_get_last_error_name(err));
+			return FALSE;
+		}
+		if (err == FREERDP_ERROR_CONNECT_CANCELLED)
+		{
+			WLog_WARN(TAG, "Autoreconnect aborted by user");
+			return FALSE;
 		}
 
 		for (SSIZE_T x = 0; x < delay / 10; x++)
@@ -1575,24 +1600,16 @@ BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_even
 	}
 
 	const UINT err = freerdp_get_last_error(instance->context);
-	switch (err)
+	if (client_auto_reconnect_credentials_rejected(err))
 	{
-		case FREERDP_ERROR_CONNECT_LOGON_FAILURE:
-		case FREERDP_ERROR_CONNECT_CLIENT_REVOKED:
-		case FREERDP_ERROR_CONNECT_WRONG_PASSWORD:
-		case FREERDP_ERROR_CONNECT_ACCESS_DENIED:
-		case FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION:
-		case FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT:
-		case FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED:
-		case FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS:
-			WLog_WARN(TAG, "Connection aborted: credentials do not work [%s]",
-			          freerdp_get_last_error_name(err));
-			return FALSE;
-		case FREERDP_ERROR_CONNECT_CANCELLED:
-			WLog_WARN(TAG, "Connection aborted by user");
-			return FALSE;
-		default:
-			break;
+		WLog_WARN(TAG, "Connection aborted: credentials do not work [%s]",
+		          freerdp_get_last_error_name(err));
+		return FALSE;
+	}
+	if (err == FREERDP_ERROR_CONNECT_CANCELLED)
+	{
+		WLog_WARN(TAG, "Connection aborted by user");
+		return FALSE;
 	}
 
 	handle_window_events_t arg = { .instance = instance,
@@ -2077,7 +2094,9 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 		return TRUE;
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-	if (cctx->ainput)
+	/* The channel thread resets this when the server closes the channel, only read it once */
+	AInputClientContext* ainput = cctx->ainput;
+	if (ainput)
 	{
 		UINT rc = 0;
 		UINT64 flags = 0;
@@ -2104,8 +2123,8 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 			x = value;
 		}
 
-		WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
-		rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+		WINPR_ASSERT(ainput->AInputSendInputEvent);
+		rc = ainput->AInputSendInputEvent(ainput, flags, x, y);
 		if (rc == CHANNEL_RC_OK)
 			handled = TRUE;
 	}
@@ -2119,17 +2138,13 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 WINPR_ATTR_NODISCARD
-static inline BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, INT32 x, INT32 y)
+static inline BOOL ainput_send_diff_event(AInputClientContext* ainput, UINT64 flags, INT32 x,
+                                          INT32 y)
 {
-	WINPR_ASSERT(cctx);
-	WINPR_ASSERT(cctx->ainput);
-	WINPR_ASSERT(cctx->ainput->AInputSendInputEvent);
-	WINPR_ASSERT(requireRdpClientContext(&cctx->context));
+	WINPR_ASSERT(ainput);
+	WINPR_ASSERT(ainput->AInputSendInputEvent);
 
-	if (!cctx || !requireRdpClientContext(&cctx->context))
-		return ERROR_INVALID_PARAMETER;
-
-	const UINT rc = cctx->ainput->AInputSendInputEvent(cctx->ainput, flags, x, y);
+	const UINT rc = ainput->AInputSendInputEvent(ainput, flags, x, y);
 
 	return rc == CHANNEL_RC_OK;
 }
@@ -2190,7 +2205,9 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-	if (cctx->ainput)
+	/* The channel thread resets this when the server closes the channel, only read it once */
+	AInputClientContext* ainput = cctx->ainput;
+	if (ainput)
 	{
 		UINT64 flags = 0;
 
@@ -2210,7 +2227,7 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 			flags |= AINPUT_FLAGS_BUTTON3;
 		if (mflags & PTR_FLAGS_MOVE)
 			flags |= AINPUT_FLAGS_MOVE;
-		handled = ainput_send_diff_event(cctx, flags, x, y);
+		handled = ainput_send_diff_event(ainput, flags, x, y);
 	}
 #endif
 
@@ -2262,7 +2279,9 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-	if (cctx->ainput)
+	/* The channel thread resets this when the server closes the channel, only read it once */
+	AInputClientContext* ainput = cctx->ainput;
+	if (ainput)
 	{
 		UINT64 flags = 0;
 
@@ -2275,7 +2294,7 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 		if (mflags & PTR_XFLAGS_BUTTON2)
 			flags |= AINPUT_XFLAGS_BUTTON2;
 
-		handled = ainput_send_diff_event(cctx, flags, x, y);
+		handled = ainput_send_diff_event(ainput, flags, x, y);
 	}
 #endif
 
@@ -2570,6 +2589,7 @@ static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, IN
 			contact->pressure = pressure;
 			contact->x = x;
 			contact->y = y;
+			contact->count = WINPR_ASSERTING_INT_CAST(UINT32, i + 1);
 
 			*pcontact = *contact;
 
@@ -3301,4 +3321,101 @@ BOOL client_helper_get_access_token(freerdp* instance, AccessTokenType tokenType
 	const BOOL rc = client_helper_get_access_token_va(instance, tokenType, token, count, ap);
 	va_end(ap);
 	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL is_scancode_key(UINT32 scancode)
+{
+	switch (scancode)
+	{
+		case RDP_SCANCODE_SPACE:
+		case RDP_SCANCODE_CAPSLOCK:
+		case RDP_SCANCODE_LMENU:
+		case RDP_SCANCODE_RMENU:
+		case RDP_SCANCODE_LWIN:
+		case RDP_SCANCODE_RWIN:
+		case RDP_SCANCODE_RCONTROL:
+		case RDP_SCANCODE_LCONTROL:
+		case RDP_SCANCODE_F1:
+		case RDP_SCANCODE_F2:
+		case RDP_SCANCODE_F3:
+		case RDP_SCANCODE_F4:
+		case RDP_SCANCODE_F5:
+		case RDP_SCANCODE_F6:
+		case RDP_SCANCODE_F7:
+		case RDP_SCANCODE_F8:
+		case RDP_SCANCODE_F9:
+		case RDP_SCANCODE_F10:
+		case RDP_SCANCODE_F11:
+		case RDP_SCANCODE_F12:
+		case RDP_SCANCODE_F13:
+		case RDP_SCANCODE_F14:
+		case RDP_SCANCODE_F15:
+		case RDP_SCANCODE_F16:
+		case RDP_SCANCODE_F17:
+		case RDP_SCANCODE_F18:
+		case RDP_SCANCODE_F19:
+		case RDP_SCANCODE_F20:
+		case RDP_SCANCODE_F21:
+		case RDP_SCANCODE_F22:
+		case RDP_SCANCODE_F23:
+		case RDP_SCANCODE_F24:
+		case RDP_SCANCODE_HOME:
+		case RDP_SCANCODE_END:
+		case RDP_SCANCODE_UP:
+		case RDP_SCANCODE_DOWN:
+		case RDP_SCANCODE_LEFT:
+		case RDP_SCANCODE_RIGHT:
+		case RDP_SCANCODE_PRIOR:
+		case RDP_SCANCODE_NEXT:
+		case RDP_SCANCODE_INSERT:
+		case RDP_SCANCODE_DELETE:
+		case RDP_SCANCODE_NUMLOCK:
+		case RDP_SCANCODE_NUMPAD0:
+		case RDP_SCANCODE_NUMPAD1:
+		case RDP_SCANCODE_NUMPAD2:
+		case RDP_SCANCODE_NUMPAD3:
+		case RDP_SCANCODE_NUMPAD4:
+		case RDP_SCANCODE_NUMPAD5:
+		case RDP_SCANCODE_NUMPAD6:
+		case RDP_SCANCODE_NUMPAD7:
+		case RDP_SCANCODE_NUMPAD8:
+		case RDP_SCANCODE_NUMPAD9:
+		case RDP_SCANCODE_SYSREQ:
+		case RDP_SCANCODE_SLEEP:
+		case RDP_SCANCODE_CONVERT_JP:
+		case RDP_SCANCODE_NONCONVERT_JP:
+		case RDP_SCANCODE_RETURN_KP:
+		case RDP_SCANCODE_RETURN:
+		case RDP_SCANCODE_VOLUME_MUTE:
+		case RDP_SCANCODE_VOLUME_DOWN:
+		case RDP_SCANCODE_VOLUME_UP:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+BOOL freerdp_client_send_key_as_unicode(rdpClientContext* cctx, UINT16 flags, const char* str,
+                                        UINT32 scancode, FREERDP_CLIENT_KBD_MOD modmask)
+{
+	const BOOL asKey = is_scancode_key(scancode);
+	const BOOL modPressed =
+	    (modmask & (FREERDP_CLIENT_KBD_MOD_LCONTROL | FREERDP_CLIENT_KBD_MOD_RCONTROL |
+	                FREERDP_CLIENT_KBD_MOD_LMENU | FREERDP_CLIENT_KBD_MOD_RMENU |
+	                FREERDP_CLIENT_KBD_MOD_LWIN | FREERDP_CLIENT_KBD_MOD_RWIN)) != 0;
+	WCHAR wbuffer[32] = WINPR_C_ARRAY_INIT;
+	SSIZE_T rc = -1;
+	if (!asKey && !modPressed)
+		rc = ConvertUtf8ToWChar(str, wbuffer, ARRAYSIZE(wbuffer));
+	if (rc <= 0)
+	{
+		return freerdp_input_send_keyboard_event_ex(
+		    cctx->context.input, (flags & KBD_FLAGS_RELEASE) == 0, FALSE, scancode);
+	}
+	for (SSIZE_T x = 0; x < rc; x++)
+	{
+		if (!freerdp_input_send_unicode_keyboard_event(cctx->context.input, flags, wbuffer[x]))
+			return FALSE;
+	}
+	return TRUE;
 }

@@ -293,6 +293,20 @@ void smartcard_context_free(void* pCtx)
 	free(pContext);
 }
 
+/**
+ * Destroys all smartcard contexts. Called from the rdpdr channel thread while
+ * smartcard_thread_func may still be looking up and removing contexts for
+ * queued IRPs, so it must be serialized with smartcard_process_irp.
+ */
+static void smartcard_cancel_all_context(SMARTCARD_DEVICE* smartcard)
+{
+	WINPR_ASSERT(smartcard);
+
+	EnterCriticalSection(&smartcard->lock);
+	smartcard_call_cancel_all_context(smartcard->callctx);
+	LeaveCriticalSection(&smartcard->lock);
+}
+
 static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 {
 	if (!smartcard)
@@ -308,6 +322,7 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
 
 	smartcard_call_context_free(smartcard->callctx);
+	DeleteCriticalSection(&smartcard->lock);
 
 	free(smartcard);
 	return CHANNEL_RC_OK;
@@ -329,7 +344,7 @@ static UINT smartcard_free(DEVICE* device)
 	 * Calling smartcard_release_all_contexts to unblock all operations waiting for transactions
 	 * to unlock.
 	 */
-	smartcard_call_cancel_all_context(smartcard->callctx);
+	smartcard_cancel_all_context(smartcard);
 
 	/* Stopping all threads and cancelling all IRPs */
 
@@ -365,7 +380,7 @@ static UINT smartcard_init(DEVICE* device)
 	if (!smartcard)
 		return ERROR_INVALID_PARAMETER;
 
-	smartcard_call_cancel_all_context(smartcard->callctx);
+	smartcard_cancel_all_context(smartcard);
 	return CHANNEL_RC_OK;
 }
 
@@ -622,7 +637,13 @@ static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 			if (irp)
 			{
 				BOOL handled = FALSE;
-				if ((error = smartcard_process_irp(smartcard, irp, &handled)))
+
+				/* the contexts may be cleared by DEVICE::Init on the channel thread */
+				EnterCriticalSection(&smartcard->lock);
+				error = smartcard_process_irp(smartcard, irp, &handled);
+				LeaveCriticalSection(&smartcard->lock);
+
+				if (error)
 				{
 					WLog_ERR(TAG, "smartcard_process_irp failed with error %" PRIu32 "!", error);
 					goto out;
@@ -712,6 +733,13 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POIN
 	smartcard->device.Init = smartcard_init;
 	smartcard->device.Free = smartcard_free;
 	smartcard->rdpcontext = pEntryPoints->rdpcontext;
+
+	if (!InitializeCriticalSectionEx(&smartcard->lock, 0, 0))
+	{
+		WLog_ERR(TAG, "InitializeCriticalSectionEx failed!");
+		goto fail;
+	}
+
 	smartcard->IrpQueue = MessageQueue_New(nullptr);
 
 	if (!smartcard->IrpQueue)

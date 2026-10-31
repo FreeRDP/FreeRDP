@@ -725,23 +725,29 @@ static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData
                             const UINT32 serverDataLength, const BYTE* clientData,
                             const UINT16 clientDataLength)
 {
-	if (serverDataLength > 0)
-	{
-		if (clientDataLength == 0)
-		{
-			WLog_Print(log, WLOG_ERROR, "expected %s", field);
-			return FALSE;
-		}
+	if (serverDataLength == 0)
+		return FALSE;
 
-		if (serverDataLength > UINT16_MAX || serverDataLength != clientDataLength ||
-		    memcmp(serverData, clientData, serverDataLength) != 0)
-		{
-			WLog_Print(log, WLOG_ERROR, "%s verification failed", field);
-			return FALSE;
-		}
+	if (clientDataLength == 0)
+	{
+		WLog_Print(log, WLOG_ERROR, "expected %s", field);
+		return FALSE;
 	}
 
-	return TRUE;
+	if ((serverDataLength > UINT16_MAX) || (serverDataLength != clientDataLength) ||
+	    (memcmp(serverData, clientData, serverDataLength) != 0))
+	{
+		WLog_Print(log, WLOG_ERROR, "%s verification failed", field);
+		return FALSE;
+	}
+
+	/* Discard a server field that was not initialized */
+	for (size_t x = 0; x < serverDataLength; x++)
+	{
+		if (serverData[x] != 0)
+			return TRUE;
+	}
+	return FALSE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -822,6 +828,8 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 		else if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
 			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+		else if (utils_str_is_empty(serverPassword))
+			rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
 		else if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
 			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 		else
@@ -863,9 +871,10 @@ static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls,
 	if (!rdstls_read_cookie(rdstls->log, s, &cookie))
 		return FALSE;
 
+	const ARC_SC_PRIVATE_PACKET empty = WINPR_C_ARRAY_INIT;
 	const ARC_SC_PRIVATE_PACKET* expect =
 	    freerdp_settings_get_pointer(settings, FreeRDP_ServerAutoReconnectCookie);
-	if (!expect)
+	if (!expect || (memcmp(expect, &empty, sizeof(ARC_SC_PRIVATE_PACKET)) == 0))
 	{
 		WLog_Print(rdstls->log, WLOG_ERROR, "No RDSTLS Cookie provided by server. Deny access.");
 		return FALSE;
@@ -964,6 +973,14 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s,
 		return FALSE;
 
 	const UINT16 dataType = Stream_Get_UINT16(s);
+	const UINT32 allowedDataTypes =
+	    freerdp_settings_get_uint32(rdstls->context->settings, FreeRDP_RdstlsEnabledModes);
+	if ((dataType > 31) || ((allowedDataTypes & (1 << dataType)) == 0))
+	{
+		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+		return TRUE;
+	}
+
 	switch (dataType)
 	{
 		case RDSTLS_DATA_PASSWORD_CREDS:

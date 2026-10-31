@@ -214,6 +214,14 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 		const auto monitor = sdl->getDisplay(id);
 		monitors.emplace_back(monitor);
 	}
+	// With an explicit /monitors: list the first entry is the primary (like xfreerdp),
+	// not whatever the local desktop considers primary.
+	if (!monitors.empty() && (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds) > 0))
+	{
+		for (auto& monitor : monitors)
+			monitor.is_primary = FALSE;
+		monitors.at(0).is_primary = TRUE;
+	}
 	// /monitors: may select a subset that excludes the SDL primary. The
 	// library rejects arrays without a primary, so promote the first entry
 	// when none is marked.
@@ -270,6 +278,13 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	const auto& ids = sdl->getDisplayIds();
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	/* Announce all monitors in RemoteApp mode so windows can maximize on secondary displays. */
+	if ((nr == 0) && freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+			return FALSE;
+	}
 	if (nr == 0)
 	{
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))

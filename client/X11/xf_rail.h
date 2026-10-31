@@ -155,13 +155,17 @@ BOOL xf_rail_schedule_workarea(xfContext* xfc);
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 
-BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+/* Store a deferred repaint request in redraw, if supplied. Repaint only after
+ * releasing the window lock; the return value reports geometry handling. */
+BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow, BOOL* redraw);
 
 BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow);
 
 BOOL xf_rail_window_can_resize(const xfAppWindow* appWindow);
 
-void xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
+/* Return whether a surface repaint is required after releasing the window lock. */
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
 
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,

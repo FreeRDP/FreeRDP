@@ -234,7 +234,7 @@ static BOOL test_configure_snapshots(xfContext* xfc, XConfigureEvent* event)
 	CHECK(xf_rail_update_configure_geometry(xfc, &appWindow, event));
 	CHECK(translations == 0);
 	CHECK(appWindow.x == 48 && appWindow.y == 0);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 0);
 
 	/* A parent-relative server echo must not query a transient root position
@@ -258,7 +258,7 @@ static BOOL test_configure_snapshots(xfContext* xfc, XConfigureEvent* event)
 	CHECK(xf_rail_update_configure_geometry(xfc, &appWindow, event));
 	CHECK(translations == 0 && appWindow.x == 1295 && appWindow.y == 186);
 	CHECK(appWindow.windowOffsetX == 48 && appWindow.windowOffsetY == 0);
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 0);
 	/* A real child resize cannot be combined with the older root position. */
 	event->send_event = False;
@@ -304,12 +304,12 @@ static BOOL test_configure_snapshots(xfContext* xfc, XConfigureEvent* event)
 	event->y = 245;
 	CHECK(xf_rail_update_configure_geometry(xfc, &appWindow, event));
 	CHECK(translations == 0 && appWindow.x == 700 && appWindow.y == 245);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 1);
 	CHECK(lastMove.left == 693 && lastMove.top == 245);
 	CHECK(lastMove.right == 1157 && lastMove.bottom == 652);
 	CHECK(appWindow.windowMovePending);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 1);
 
 	/* The synthetic partner of a real resize must not enqueue the same move. */
@@ -317,7 +317,7 @@ static BOOL test_configure_snapshots(xfContext* xfc, XConfigureEvent* event)
 	event->x = 700;
 	event->y = 245;
 	CHECK(xf_rail_update_configure_geometry(xfc, &appWindow, event));
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 1);
 
 	/* A failed parent query must not overwrite the last known local geometry. */
@@ -344,10 +344,10 @@ static BOOL test_configure_snapshots(xfContext* xfc, XConfigureEvent* event)
 
 	/* Prevent the signed-16-bit wrap observed during the runaway position loop. */
 	appWindow.x = 32760;
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 1);
 	appWindow.x = -32000;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == 2 && lastMove.left == -32007);
 	return TRUE;
 out:
@@ -398,13 +398,13 @@ static BOOL test_server_reconciliation(xfContext* xfc, XConfigureEvent* event)
 	appWindow.y = 245;
 	appWindow.width = 450;
 	appWindow.height = 400;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 1);
 	const WINDOW_ORDER_INFO unchanged = { .windowId = appWindow.windowId };
 	const WINDOW_STATE_ORDER empty = { 0 };
 	CHECK(windows->WindowUpdate(&xfc->common.context, &unchanged, &empty));
 	CHECK(appWindow.windowMovePending);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 1);
 
 	const WINDOW_ORDER_INFO adjusted = { .windowId = appWindow.windowId,
@@ -416,7 +416,7 @@ static BOOL test_server_reconciliation(xfContext* xfc, XConfigureEvent* event)
 	CHECK(windows->WindowUpdate(&xfc->common.context, &adjusted, &normalized));
 	CHECK(!appWindow.windowMovePending);
 	CHECK(appWindow.x == 707 && appWindow.width == 436 && appWindow.height == 393);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 1);
 
 	/* A later gesture may request the same rectangle again. A -> B -> A must
@@ -424,28 +424,28 @@ static BOOL test_server_reconciliation(xfContext* xfc, XConfigureEvent* event)
 	appWindow.x = 700;
 	appWindow.width = 450;
 	appWindow.height = 400;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 2);
 	appWindow.x = 701;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	appWindow.x = 700;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 4);
 
 	/* Failed sends are never cached as successful or suppressed on retry. */
 	appWindow.windowMovePending = FALSE;
 	moveResult = ERROR_INTERNAL_ERROR;
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(!appWindow.windowMovePending && moves == before + 6);
 	moveResult = CHANNEL_RC_OK;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(appWindow.windowMovePending && moves == before + 7);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 7);
 	appWindow.lastWindowMoveTime = winpr_GetTickCount64NS() - 501ULL * 1000000ULL;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == before + 8);
 	return TRUE;
 out:
@@ -479,15 +479,15 @@ static BOOL test_native_moves(xfContext* xfc, XConfigureEvent* event)
 	appWindow.windowHeight = appWindow.height = 229;
 	appWindow.x = 228;
 	appWindow.y = 239;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == checkpoint);
 	CHECK(appWindow.x == 481 && appWindow.y == 114 && appWindow.width == 413);
 	const unsigned restored = xMoves;
 	appWindow.y = 0;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(xMoves == restored && moves == checkpoint);
 	appWindow.lastUnknownMarginReconcile = winpr_GetTickCount64NS() - 501ULL * 1000000ULL;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(appWindow.x == 481 && appWindow.y == 114 && xMoves == restored + 1);
 
 	/* Server-initiated native mouse moves need no outer rectangle, even on
@@ -526,7 +526,7 @@ static BOOL test_native_moves(xfContext* xfc, XConfigureEvent* event)
 	CHECK(appWindow.windowOffsetX == 481 && appWindow.windowOffsetY == 114);
 	CHECK(xf_rail_end_local_move(xfc, &appWindow));
 	CHECK(releases == 1);
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 
 	const RAIL_LOCALMOVESIZE_ORDER end = { .windowId = (UINT32)appWindow.windowId,
 		                                   .moveSizeType = RAIL_WMSZ_MOVE };
@@ -537,7 +537,7 @@ static BOOL test_native_moves(xfContext* xfc, XConfigureEvent* event)
 	CHECK(appWindow.serverGeometryPending);
 	CHECK(rail->ServerLocalMoveSize(rail, &end) == CHANNEL_RC_OK);
 	CHECK(appWindow.local_move.state == LMS_NOT_ACTIVE && !appWindow.serverGeometryPending);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == checkpoint && appWindow.width == 413 && appWindow.height == 229);
 
 	/* Regression: twenty completed native moves do not progressively shrink. */
@@ -554,7 +554,7 @@ static BOOL test_native_moves(xfContext* xfc, XConfigureEvent* event)
 			                               .windowHeight = 229 };
 		CHECK(windows->WindowUpdate(&xfc->common.context, &adjusted, &reply));
 		CHECK(rail->ServerLocalMoveSize(rail, &end) == CHANNEL_RC_OK);
-		CHECK(xf_rail_adjust_position(xfc, &appWindow));
+		CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 		CHECK(appWindow.width == 413 && appWindow.height == 229 && moves == checkpoint);
 	}
 
@@ -840,13 +840,13 @@ static BOOL test_move_end_ordering(xfContext* xfc)
 			CHECK(appWindow.x == (beforeEnd ? -35 : -40));
 			if (!beforeEnd)
 			{
-				CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+				CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 				CHECK(xMoves == appliedBeforeEnd && moves == completedMoves);
 				CHECK(windows->WindowUpdate(&xfc->common.context, &info, &final));
 			}
 			CHECK(appWindow.x == -35 && appWindow.y == 118);
 			CHECK(appWindow.width == 423 && appWindow.height == 233);
-			CHECK(xf_rail_adjust_position(xfc, &appWindow));
+			CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 			CHECK(moves == completedMoves && !appWindow.serverGeometryPending);
 		}
 	}
@@ -856,18 +856,18 @@ static BOOL test_move_end_ordering(xfContext* xfc)
 	appWindow.dwStyle = WS_MINIMIZE;
 	appWindow.windowOffsetX = -32000;
 	appWindow.windowOffsetY = -32000;
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == beforeRestore);
 	appWindow.dwStyle = 0;
 	/* The show/style order may arrive before the restored geometry order. */
 	appWindow.restoreGeometryPending = TRUE;
-	CHECK(!xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	const WINDOW_STATE_ORDER restored = {
 		.windowOffsetX = -35, .windowOffsetY = 118, .windowWidth = 423, .windowHeight = 233
 	};
 	CHECK(windows->WindowUpdate(&xfc->common.context, &info, &restored));
 	CHECK(!appWindow.restoreGeometryPending);
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(moves == beforeRestore);
 	return TRUE;
 out:
@@ -934,7 +934,7 @@ static BOOL test_fixed_size_hints(xfContext* xfc)
 	appWindow.resizeMarginXKnown = appWindow.resizeMarginYKnown = TRUE;
 	appWindow.resizeMarginLeft = appWindow.resizeMarginRight = 0;
 	appWindow.resizeMarginTop = appWindow.resizeMarginBottom = 0;
-	CHECK(xf_rail_adjust_position(xfc, &appWindow));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
 	CHECK(appWindow.x == 80 && appWindow.y == 90);
 	CHECK(appWindow.width == 450 && appWindow.height == 250);
 	CHECK(lastMove.left == 80 && lastMove.top == 90);
@@ -1001,6 +1001,85 @@ out:
 	return FALSE;
 }
 
+static xfContext* repaintContext;
+static unsigned repaintRequests;
+static BOOL repaintWhileLocked;
+
+static void* inspect_repaint_lock(RdpgfxClientContext* gfx, UINT16 surfaceId)
+{
+	WINPR_UNUSED(gfx);
+	WINPR_UNUSED(surfaceId);
+	repaintRequests++;
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
+	repaintWhileLocked |= repaintContext->isRailWindowsLocked;
+#endif
+	return nullptr;
+}
+
+static BOOL test_deferred_repaint(xfContext* xfc)
+{
+	BOOL redraw = FALSE;
+	appWindow.local_move.state = LMS_NOT_ACTIVE;
+	appWindow.localMoveGeometryTime = 0;
+	appWindow.restoreGeometryPending = FALSE;
+	appWindow.dwStyle = WS_CAPTION | WS_SYSMENU;
+	appWindow.windowStyleKnown = TRUE;
+	appWindow.is_mapped = TRUE;
+	appWindow.surfaceId = 1;
+	appWindow.x = appWindow.windowOffsetX = 20;
+	appWindow.y = appWindow.windowOffsetY = 30;
+	appWindow.windowWidth = 450;
+	appWindow.windowHeight = 250;
+	appWindow.width = 600;
+	appWindow.height = 500;
+	appWindow.pixmapWidth = 600;
+	appWindow.pixmapHeight = 500;
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, &redraw));
+	CHECK(redraw && appWindow.surfaceStale);
+	CHECK(appWindow.width == 450 && appWindow.height == 250);
+
+	appWindow.local_move.state = LMS_ACTIVE;
+	appWindow.serverGeometryPending = TRUE;
+	appWindow.windowWidth = 470;
+	CHECK(xf_EndLocalMoveSize(xfc, &appWindow));
+	CHECK(appWindow.local_move.state == LMS_NOT_ACTIVE && appWindow.width == 470);
+
+	/* Expose must release the window before looking up the GFX surface. */
+	RdpgfxClientContext gfx = { .GetSurfaceData = inspect_repaint_lock };
+	InitializeCriticalSection(&gfx.mux);
+	rdpGdi* gdi = xfc->common.context.gdi;
+	RdpgfxClientContext* previous = gdi->gfx;
+	gdi->gfx = &gfx;
+	repaintContext = xfc;
+	xfc->exposeRequested = TRUE;
+	xfc->exposedWindow = appWindow.handle;
+	xfc->exposedArea.w = appWindow.width;
+	xfc->exposedArea.h = appWindow.height;
+	freerdp instance = { .context = &xfc->common.context };
+	const BOOL repainted = xf_event_update_screen(&instance);
+	/* A fixed-size correction at the batch boundary uses the same contract. */
+	appWindow.configureGeometryPending = TRUE;
+	appWindow.decorations = TRUE;
+	currentWidth = 600;
+	currentHeight = 500;
+	rootX = appWindow.windowOffsetX;
+	rootY = appWindow.windowOffsetY;
+	xf_rail_flush_configure_geometry(xfc);
+	const unsigned afterBatch = repaintRequests;
+	appWindow.local_move.state = LMS_ACTIVE;
+	appWindow.serverGeometryPending = TRUE;
+	appWindow.windowWidth = 490;
+	const RAIL_LOCALMOVESIZE_ORDER end = { .windowId = (UINT32)appWindow.windowId };
+	const UINT ended = xfc->rail->ServerLocalMoveSize(xfc->rail, &end);
+	gdi->gfx = previous;
+	DeleteCriticalSection(&gfx.mux);
+	CHECK(repainted && afterBatch == 2 && ended == CHANNEL_RC_OK);
+	CHECK(repaintRequests == 3 && !repaintWhileLocked);
+	return TRUE;
+out:
+	return FALSE;
+}
+
 int main(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -1044,6 +1123,7 @@ int main(int argc, char* argv[])
 	CHECK(test_cancel_pending_completion(&xfc));
 	CHECK(test_fixed_size_hints(&xfc));
 	CHECK(test_pointer_activation(&xfc));
+	CHECK(test_deferred_repaint(&xfc));
 	result = 0;
 out:
 	if (railInitialized)

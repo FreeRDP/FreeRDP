@@ -15,6 +15,10 @@
 # (SharedArrayBuffer for pthreads) and a WebSocket to TCP bridge such as
 # websockify in front of the RDP server.
 #
+# --with-simd builds the client with WebAssembly SIMD so that the SSE
+# primitives are used. The module then no longer loads in browsers without
+# SIMD support (e.g. Safari before 16.4). The unit tests always use it.
+#
 # TODO: Replace with CMake FetchContent
 #       https://cmake.org/cmake/help/latest/module/FetchContent.html
 #
@@ -31,6 +35,7 @@ DEPS=1
 BUILD=1
 BUILD_DEPS_ONLY=0
 TESTS=0
+SIMD=OFF
 
 for i in "$@"; do
   case $i in
@@ -49,13 +54,16 @@ for i in "$@"; do
   -t | --with-tests)
     TESTS=1
     ;;
+  --with-simd)
+    SIMD=ON
+    ;;
   --build-deps-only)
     BUILD_DEPS_ONLY=1
     ;;
   *)
     # unknown option
     echo "unknown option '$i', quit"
-    echo "usage:\n\t$0 [-b|--no-build] [-c|--no-clone] [-d|--no-deps] [-t|--with-tests] [--clean-first]"
+    echo "usage:\n\t$0 [-b|--no-build] [-c|--no-clone] [-d|--no-deps] [-t|--with-tests] [--with-simd] [--clean-first]"
     exit 1
     ;;
   esac
@@ -241,7 +249,6 @@ FREERDP_ARGS=(
   -DWITH_OPENH264=OFF
   -DWITH_WEBVIEW=OFF
   -DCHANNEL_URBDRC=OFF
-  -DWITH_SIMD=OFF
   -DWITH_MANPAGES=OFF
   -DWITH_TIMEZONE_ICU=OFF
   -DWITH_UNICODE_BUILTIN=ON
@@ -256,6 +263,7 @@ FREERDP_ARGS=(
 do_cmake_build \
   "$BUILD_BASE/freerdp" \
   "${FREERDP_ARGS[@]}" \
+  -DWITH_SIMD=$SIMD \
   -DWITH_CLIENT_SDL=ON \
   -DWITH_CLIENT_SDL3=ON \
   -DWITH_CLIENT_SDL2=OFF \
@@ -269,6 +277,7 @@ if [ $TESTS -ne 0 ]; then
   do_cmake_build \
     "$BUILD_BASE/freerdp-tests" \
     "${FREERDP_ARGS[@]}" \
+    -DWITH_SIMD=ON \
     -DWITH_CLIENT=OFF \
     -DBUILD_TESTING=ON \
     -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS -sPROXY_TO_PTHREAD -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=4194304 -sPTHREAD_POOL_SIZE=8 -sEXIT_RUNTIME=1 -sENVIRONMENT=node -sNODERAWFS=1"

@@ -205,7 +205,7 @@ static BOOL fixed_size_window(xfContext* xfc, xfAppWindow* window)
 	const unsigned before = moves;
 	window->width = 600;
 	window->height = 500;
-	CHECK(xf_rail_adjust_position(xfc, window));
+	CHECK(xf_rail_adjust_position(xfc, window, nullptr));
 	CHECK(window->width == 380 && window->height == 260 && moves == before);
 	XWindowAttributes attributes = WINPR_C_ARRAY_INIT;
 	CHECK(XGetWindowAttributes(xfc->display, window->handle, &attributes));

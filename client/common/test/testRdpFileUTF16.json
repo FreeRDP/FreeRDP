@@ -216,6 +216,7 @@
 	},
 	"FREERDP_SETTINGS_TYPE_INT16": {},
 	"FREERDP_SETTINGS_TYPE_UINT32": {
+		"FreeRDP_RdstlsEnabledModes": 4294967295,
 		"FreeRDP_ShareId": 0.0,
 		"FreeRDP_GfxCodecAV1Profile": 1.0,
 		"FreeRDP_PduSource": 0.0,

@@ -181,6 +181,23 @@ static UINT audin_send_incoming_data_pdu(AUDIN_CHANNEL_CALLBACK* callback)
 	return callback->channel->Write(callback->channel, 1, out_data, nullptr);
 }
 
+static UINT audin_close_device(AUDIN_PLUGIN* audin)
+{
+	WINPR_ASSERT(audin);
+	if (audin->device)
+	{
+		UINT error = CHANNEL_RC_OK;
+		IFCALLRET(audin->device->Close, error, audin->device);
+
+		if (error != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "Close failed with errorcode %" PRIu32 "", error);
+			return error;
+		}
+	}
+	return CHANNEL_RC_OK;
+}
+
 /**
  * Function description
  *
@@ -208,6 +225,10 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	}
 
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
+
+	const UINT error2 = audin_close_device(audin);
+	if (error2 != CHANNEL_RC_OK)
+		return error2;
 
 	audin->format = nullptr;
 	audio_formats_free(callback->formats, callback->formats_count);
@@ -537,6 +558,10 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
 	audin->FramesPerPacket = FramesPerPacket;
 	audin->format = &callback->formats[initialFormat];
 
+	error = audin_close_device(audin);
+	if (error != CHANNEL_RC_OK)
+		return error;
+
 	if (!audin_open_device(audin, callback))
 	{
 		audin->format = nullptr;
@@ -614,16 +639,9 @@ static UINT audin_process_format_change(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLB
 	}
 	else
 	{
-		if (audin->device)
-		{
-			IFCALLRET(audin->device->Close, error, audin->device);
-
-			if (error != CHANNEL_RC_OK)
-			{
-				WLog_ERR(TAG, "Close failed with errorcode %" PRIu32 "", error);
-				return error;
-			}
-		}
+		error = audin_close_device(audin);
+		if (error != CHANNEL_RC_OK)
+			return error;
 
 		if (!audin_open_device(audin, callback))
 		{
@@ -706,13 +724,7 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	UINT error = CHANNEL_RC_OK;
 	WLog_Print(audin->log, WLOG_TRACE, "...");
 
-	if (audin->device)
-	{
-		IFCALLRET(audin->device->Close, error, audin->device);
-
-		if (error != CHANNEL_RC_OK)
-			WLog_Print(audin->log, WLOG_ERROR, "Close failed with errorcode %" PRIu32 "", error);
-	}
+	(void)audin_close_device(audin);
 
 	audin->format = nullptr;
 	audio_formats_free(callback->formats, callback->formats_count);
@@ -1106,6 +1118,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 #endif
 #if defined(WITH_SNDIO)
 		{ "sndio", "default" },
+#endif
+#if defined(__EMSCRIPTEN__)
+		{ "emscripten", "" },
 #endif
 		{ nullptr, nullptr }
 	};

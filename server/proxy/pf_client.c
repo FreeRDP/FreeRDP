@@ -28,6 +28,7 @@
 #include <freerdp/config.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/message.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/client/cmdline.h>
 
@@ -52,6 +53,10 @@
 #include "channels/pf_channel_smartcard.h"
 
 #define TAG PROXY_TAG("client")
+
+/* Upper bound for pClientContext::server_messages, the proxy server thread queues whatever the
+ * client sends while the proxy client thread might be busy (re)connecting */
+#define PF_CLIENT_MAX_SERVER_MESSAGES 4096
 
 static void channel_data_free(void* obj);
 
@@ -510,6 +515,68 @@ static BOOL sendQueuedChannelData(pClientContext* pc)
 	return rc;
 }
 
+static void server_message_free(void* obj)
+{
+	wMessage* msg = obj;
+
+	if (msg && (GetMessageClass(msg->id) == Update_Class))
+		free(msg->lParam);
+}
+
+BOOL pf_client_post_message(pClientContext* pc, UINT32 id, size_t wParam, void* lParam)
+{
+	wMessage msg = { .id = id, .context = pc, .wParam = (void*)wParam, .lParam = lParam };
+
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(pc->server_messages);
+
+	/* The proxy client thread does not keep up, drop the message like for a connection that is
+	 * not active */
+	if (MessageQueue_Size(pc->server_messages) >= PF_CLIENT_MAX_SERVER_MESSAGES)
+	{
+		server_message_free(&msg);
+		return TRUE;
+	}
+
+	if (!MessageQueue_Dispatch(pc->server_messages, &msg))
+	{
+		server_message_free(&msg);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL sendQueuedServerMessages(pClientContext* pc)
+{
+	BOOL rc = TRUE;
+	wMessage msg = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(pc);
+
+	/* Only what is queued right now, new messages must not keep this thread from receiving */
+	size_t count = MessageQueue_Size(pc->server_messages);
+	while (rc && (count-- > 0) && (MessageQueue_Peek(pc->server_messages, &msg, TRUE) > 0))
+	{
+		switch (GetMessageClass(msg.id))
+		{
+			case Update_Class:
+				rc = pf_client_process_update_message(pc, &msg);
+				break;
+			case Input_Class:
+				rc = pf_client_process_input_message(pc, &msg);
+				break;
+			default:
+				rc = FALSE;
+				break;
+		}
+		server_message_free(&msg);
+	}
+
+	return rc;
+}
+
 /**
  * Called after a RDP connection was successfully established.
  * Settings might have changed during negotiation of client / server feature
@@ -807,6 +874,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 		goto end;
 	}
 	handles[nCount++] = Queue_Event(pc->cached_server_channel_data);
+	handles[nCount++] = MessageQueue_Event(pc->server_messages);
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
@@ -846,6 +914,8 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 		}
 		if (!sendQueuedChannelData(pc))
 			break;
+		if (!sendQueuedServerMessages(pc))
+			break;
 	}
 
 	freerdp_disconnect(instance);
@@ -879,6 +949,7 @@ static void pf_client_context_free(freerdp* instance, rdpContext* context)
 
 	pc->sendChannelData = nullptr;
 	Queue_Free(pc->cached_server_channel_data);
+	MessageQueue_Free(pc->server_messages);
 	Stream_Free(pc->remote_pem, TRUE);
 	free(pc->remote_hostname);
 	free(pc->computerName.v);
@@ -1292,6 +1363,13 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(obj);
 	obj->fnObjectNew = channel_data_copy;
 	obj->fnObjectFree = channel_data_free;
+
+	pc->server_messages = MessageQueue_New(nullptr);
+	if (!pc->server_messages)
+		return FALSE;
+	obj = MessageQueue_Object(pc->server_messages);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = server_message_free;
 
 	pc->interceptContextMap = HashTable_New(FALSE);
 	if (!pc->interceptContextMap)

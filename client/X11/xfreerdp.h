@@ -302,6 +302,9 @@ struct xf_context
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	BOOL isRailWindowsLocked;
+	const char* whereFkt;
+	const char* whereFile;
+	size_t whereLine;
 #endif
 
 	BOOL xkbAvailable;

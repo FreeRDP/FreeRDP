@@ -1041,22 +1041,26 @@ static void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width, 
 	}
 }
 
-int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 {
+	BOOL redraw = FALSE;
 	if (!xfc || !appWindow)
-		return -1;
+		return FALSE;
 
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
 	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
 	xf_UpdateWindowSizeHints(xfc, appWindow);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
-	xf_ShowWindow(xfc, appWindow, WINDOW_SHOW);
+	if (xf_ShowWindow(xfc, appWindow, WINDOW_SHOW))
+		redraw = TRUE;
 	LogDynAndXClearWindow(xfc->log, xfc->display, appWindow->handle);
 	LogDynAndXMapWindow(xfc->log, xfc->display, appWindow->handle);
 	/* Move doesn't seem to work until window is mapped. */
-	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width, appWindow->height);
+	if (xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width,
+	                  appWindow->height))
+		redraw = TRUE;
 	xf_SetWindowText(xfc, appWindow, appWindow->title);
-	return 1;
+	return redraw;
 }
 
 BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
@@ -1223,10 +1227,11 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	    1);                     /* 1 == application request per extended ICCM */
 }
 
-void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 {
+	BOOL redraw = FALSE;
 	if (appWindow->local_move.state == LMS_NOT_ACTIVE)
-		return;
+		return FALSE;
 	const BOOL completedLocally = appWindow->local_move.state == LMS_TERMINATING;
 
 	if (appWindow->local_move.state == LMS_STARTING)
@@ -1257,23 +1262,24 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	 * configure that can undo the completed move through ClientWindowMove.
 	 * Only a server cancellation needs geometry deferred by an active WM move. */
 	if (!completedLocally && appWindow->serverGeometryPending)
-		xf_rail_reconcile_window(xfc, appWindow);
+		redraw = xf_rail_reconcile_window(xfc, appWindow);
 	appWindow->serverGeometryPending = FALSE;
 	xf_UpdateWindowVisibilityRects(xfc, appWindow);
+	return redraw;
 }
 
-void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
+BOOL xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
 	BOOL resize = FALSE;
 
 	if ((width * height) < 1)
-		return;
+		return FALSE;
 
 	if ((appWindow->width != width) || (appWindow->height != height))
 		resize = TRUE;
 
 	if (appWindow->local_move.state == LMS_STARTING || appWindow->local_move.state == LMS_ACTIVE)
-		return;
+		return FALSE;
 
 	appWindow->x = x;
 	appWindow->y = y;
@@ -1283,7 +1289,7 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	if (resize)
 	{
 		if (!xf_AppWindowResize(xfc, appWindow))
-			return;
+			return FALSE;
 
 		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle, x, y,
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, width),
@@ -1292,11 +1298,12 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	else
 		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, x, y);
 
-	xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
+	return xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
 }
 
-void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
+BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 {
+	BOOL redraw = FALSE;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 	if ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) &&
@@ -1333,9 +1340,10 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			 */
 			if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
 			{
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
-				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
-				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
+				if (xf_UpdateWindowArea(xfc, appWindow, 0, 0,
+				                        WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
+				                        WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight)))
+					redraw = TRUE;
 			}
 
 			break;
@@ -1367,6 +1375,7 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 	/* Save the current rail state of this window */
 	appWindow->rail_state = state;
 	LogDynAndXFlush(xfc->log, xfc->display);
+	return redraw;
 }
 
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
@@ -1464,7 +1473,7 @@ void xf_UpdateWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
 	                            WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
 }
 
-void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
+BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height)
 {
 	int ax = 0;
@@ -1477,14 +1486,13 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	WINPR_ASSERT(settings);
 
 	if (appWindow == nullptr)
-		return;
+		return FALSE;
 
 	if (appWindow->surfaceId < UINT16_MAX)
 	{
 		/* need a full window update */
 		if (appWindow->is_mapped && appWindow->surfaceStale)
-			xf_AppWindowRepaintFromSurface(xfc, appWindow->windowId, appWindow->surfaceId);
-
+			return TRUE;
 		/* The pixmap holds what xf_AppUpdateWindowFromSurface() painted last. */
 		else if (!appWindow->surfaceStale && (appWindow->pixmap != 0) && (x >= 0) && (y >= 0) &&
 		         (width > 0) && (height > 0))
@@ -1494,7 +1502,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 			                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
 			LogDynAndXFlush(xfc->log, xfc->display);
 		}
-		return;
+		return FALSE;
 	}
 
 	/*
@@ -1506,7 +1514,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	 */
 	const rdpGdi* gdi = xfc->common.context.gdi;
 	if (gdi && gdi->gfx)
-		return;
+		return FALSE;
 
 	ax = x + appWindow->windowOffsetX;
 	ay = y + appWindow->windowOffsetY;
@@ -1528,6 +1536,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	                   x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
 	                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
 	LogDynAndXFlush(xfc->log, xfc->display);
+	return FALSE;
 }
 
 void xf_AppWindowDestroyImage(xfAppWindow* appWindow)
@@ -1884,6 +1893,9 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	WINPR_ASSERT(!xfc->isRailWindowsLocked);
 	xfc->isRailWindowsLocked = TRUE;
+	xfc->whereFile = file;
+	xfc->whereFkt = fkt;
+	xfc->whereLine = line;
 #endif
 }
 

@@ -56,6 +56,8 @@ set(SRCS
     sdl_rail_window_style.hpp
     sdl_wayland.hpp
     sdl_wayland.cpp
+    sdl_win32.hpp
+    sdl_win32.cpp
     sdl_x11.hpp
     sdl_x11.cpp
 )
@@ -155,6 +157,15 @@ if(SDL_X11_NATIVE)
 endif()
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
+
+if(EMSCRIPTEN)
+  # JavaScript side of the browser clipboard in sdl_clip.cpp and of the page's monitors in
+  # sdl_context.cpp
+  foreach(_js sdl_clip_emscripten.js sdl_monitors_emscripten.js)
+    target_link_options(${MODULE_NAME} PRIVATE "--js-library=${CMAKE_CURRENT_SOURCE_DIR}/${_js}")
+    set_property(TARGET ${MODULE_NAME} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_js})
+  endforeach()
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")
 get_target_property(SDL_CLIENT_BINARY_NAME ${MODULE_NAME} OUTPUT_NAME)

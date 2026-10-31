@@ -18,7 +18,9 @@
  */
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cfloat>
 
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
@@ -384,6 +386,21 @@ bool SdlContext::createWindows()
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
+	/* The monitor definitions are sorted (primary first), so they need not be in the same
+	 * order as the monitor IDs. Match them by display, fall back to the index. */
+	auto monitorFor = [&](UINT32 index, int64_t id)
+	{
+		for (UINT32 y = 0; y < windowCount; y++)
+		{
+			auto cur = static_cast<rdpMonitor*>(
+			    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, y));
+			if (cur && (static_cast<int64_t>(cur->orig_screen) == id))
+				return cur;
+		}
+		return static_cast<rdpMonitor*>(
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, index));
+	};
+
 	Sint32 originX = 0;
 	Sint32 originY = 0;
 	for (UINT32 x = 0; x < windowCount; x++)
@@ -392,8 +409,7 @@ bool SdlContext::createWindows()
 		if (id < 0)
 			return false;
 
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = monitorFor(x, id);
 
 		originX = std::min<Sint32>(monitor->x, originX);
 		originY = std::min<Sint32>(monitor->y, originY);
@@ -405,8 +421,7 @@ bool SdlContext::createWindows()
 		if (id < 0)
 			return false;
 
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = monitorFor(x, id);
 
 		Uint32 w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
 		Uint32 h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
@@ -440,6 +455,10 @@ bool SdlContext::createWindows()
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
+		/* RemoteApp: the desktop only shows when needed (drawToWindows). */
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+			flags |= SDL_WINDOW_HIDDEN;
+
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
 
@@ -455,12 +474,68 @@ bool SdlContext::createWindows()
 	return true;
 }
 
+#if defined(__EMSCRIPTEN__)
+/* in sdl_monitors_emscripten.js */
+extern "C" int freerdp_web_monitors_js(int32_t* edges, int max);
+
+/* A browser has one canvas, so one window. The page may show it across several screens and
+ * split it into monitors (sdl_monitors_emscripten.js): the server then places its windows,
+ * panels and maximized windows on each, as on separate physical screens. canvas is the
+ * window's monitor; returns the monitors it is split into, or none. */
+static std::vector<rdpMonitor> sdl_web_monitors(const rdpMonitor& canvas)
+{
+	constexpr int max = 16;
+	std::array<int32_t, 5 * max> edges{};
+	const auto n = freerdp_web_monitors_js(edges.data(), max);
+	if ((n < 2) || (n > max))
+		return {};
+
+	const auto at = [](int32_t edge, int32_t size)
+	{ return static_cast<INT32>(static_cast<int64_t>(edge) * size / 10000); };
+	std::vector<rdpMonitor> list;
+	for (int i = 0; i < n; i++)
+	{
+		const int32_t* e = &edges.at(5 * static_cast<size_t>(i));
+		const auto left = at(e[0], canvas.width);
+		const auto top = at(e[1], canvas.height);
+		const auto right = at(e[2], canvas.width);
+		const auto bottom = at(e[3], canvas.height);
+		if ((right <= left) || (bottom <= top))
+			return {};
+
+		rdpMonitor m = canvas;
+		m.x = left;
+		m.y = top;
+		m.width = right - left;
+		m.height = bottom - top;
+		m.is_primary = (e[4] != 0);
+		m.attributes.physicalWidth =
+		    static_cast<UINT32>(static_cast<uint64_t>(canvas.attributes.physicalWidth) *
+		                        static_cast<UINT32>(m.width) / static_cast<UINT32>(canvas.width));
+		m.attributes.physicalHeight =
+		    static_cast<UINT32>(static_cast<uint64_t>(canvas.attributes.physicalHeight) *
+		                        static_cast<UINT32>(m.height) / static_cast<UINT32>(canvas.height));
+		list.push_back(m);
+	}
+	return list;
+}
+#endif
+
 bool SdlContext::updateWindowList()
 {
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
 		list.push_back(win.second.monitor(_windows.size() == 1));
+
+#if defined(__EMSCRIPTEN__)
+	if ((list.size() == 1) && (list.at(0).width > 0) && (list.at(0).height > 0))
+	{
+		auto split = sdl_web_monitors(list.at(0));
+		if (!split.empty())
+			list = std::move(split);
+	}
+#endif
 
 	// /monitors: subset may exclude the SDL primary. The library requires
 	// the array to mark one monitor as primary, so promote the first when
@@ -1066,6 +1141,16 @@ SdlWindow* SdlContext::getWindowForId(SDL_WindowID id)
 	return &it->second;
 }
 
+bool SdlContext::allWindowsHidden() const
+{
+	return std::all_of(_windows.begin(), _windows.end(),
+	                   [](const auto& entry)
+	                   {
+		                   const auto flags = SDL_GetWindowFlags(entry.second.window());
+		                   return (flags & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) != 0;
+	                   });
+}
+
 SdlWindow* SdlContext::getFirstWindow()
 {
 	if (_windows.empty())
@@ -1115,10 +1200,26 @@ bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
 	return true;
 }
 
+static bool onWindowEdge(SDL_WindowID id, float x, float y)
+{
+	int w = 0;
+	int h = 0;
+	auto* window = SDL_GetWindowFromID(id);
+	if (!window || !SDL_GetWindowSize(window, &w, &h))
+		return false;
+	return (x <= 0.0f) || (y <= 0.0f) || (x >= static_cast<float>(w - 1)) ||
+	       (y >= static_cast<float>(h - 1));
+}
+
 bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
 	SDL_Event copy{};
 	copy.motion = ev;
+	/* SDL follows a release outside the window with a motion clamped to its edge: drop it. */
+	if (_rail.enabled() && (ev.state == 0) && (ev.windowID == _lastRelease.window) &&
+	    (ev.timestamp - _lastRelease.time < SDL_MS_TO_NS(2)) &&
+	    onWindowEdge(ev.windowID, ev.x, ev.y))
+		return true;
 	/* WM owns the drag (#12447); backstop: button released but button-up swallowed by grab. */
 	if (_rail.enabled() && _rail.suppressServerMotion(ev.windowID))
 	{
@@ -1128,6 +1229,7 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 	}
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
 	{
+		_lastMotion = { ev.windowID, { ev.x, ev.y }, { copy.motion.x, copy.motion.y } };
 		_rail.noteServerPointer(copy.motion.x, copy.motion.y);
 		return SdlTouch::handleEvent(this, copy.motion);
 	}
@@ -1186,7 +1288,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_EXPOSED:
 					/* Force repaint for exposed windows; skip during local drag to avoid redundant
 					 * frames. */
-					if (!_rail.suppressServerInput(ev.windowID))
+					if (!_rail.dragActive(ev.windowID))
 						_rail.invalidateWindow(ev.windowID);
 					return true;
 				case SDL_EVENT_WINDOW_MAXIMIZED:
@@ -1210,8 +1312,12 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_FOCUS_LOST:
 					_rail.handleFocus(ev.windowID, false);
 					return true;
+				case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+					_rail.handleDisplayChanged(ev.windowID, static_cast<SDL_DisplayID>(ev.data1));
+					return true;
 				case SDL_EVENT_WINDOW_MOVED:
-					if (!_rail.suppressServerInput(ev.windowID))
+					_rail.notePopupMoved(ev.windowID);
+					if (!_rail.dragActive(ev.windowID))
 						_rail.syncGeometry(ev.windowID);
 					return true;
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
@@ -1219,7 +1325,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					 * also report the new size to catch a compositor snap/tile. */
 					_rail.noteDragResize(ev.windowID, ev.data1, ev.data2);
 					_rail.syncGeometry(ev.windowID);
-					_rail.handleWaylandResize(ev.windowID);
+					_rail.noteResizeGrab(ev.windowID);
 					std::ignore = drawToWindows({});
 					return true;
 				default:
@@ -1328,7 +1434,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 	if (_rail.enabled())
 	{
 		/* Suppress X11 raw button during WM op. */
-		const bool suppress = _rail.suppressServerInput(ev.windowID);
+		const bool suppress = _rail.dragActive(ev.windowID);
 		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
 			_rail.completeLocalMoveIfPending();
 		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived; a fresh press
@@ -1340,8 +1446,20 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 			_rail.ensureActive(ev.windowID);
 		if (suppress)
 			return true;
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
+		{
+			_lastRelease = { ev.windowID, ev.timestamp };
+		}
 		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
 		{
+			/* The window may have moved since the last motion: keep the server's position. */
+			if ((ev.windowID == _lastMotion.window) &&
+			    (fabsf(ev.x - _lastMotion.local.x) < FLT_EPSILON) &&
+			    (fabsf(ev.y - _lastMotion.local.y) < FLT_EPSILON))
+			{
+				copy.button.x = _lastMotion.server.x;
+				copy.button.y = _lastMotion.server.y;
+			}
 			/* Record the forwarded left press: it is the anchor of any server modal move/size
 			 * loop this press starts (the loop moves the window by release - anchor). */
 			if ((ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) && (ev.button == SDL_BUTTON_LEFT))
@@ -1402,6 +1520,13 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 	 * 3. repeat until all displays updated.
 	 */
 	const auto primary = SDL_GetPrimaryDisplay();
+	/* Align display offsets to the primary display origin. */
+	auto it = _offsets.find(primary);
+	if (it != _offsets.end())
+	{
+		it->second.second.x = it->second.first.x;
+		it->second.second.y = it->second.first.y;
+	}
 	std::vector<SDL_DisplayID> handled;
 	handled.push_back(primary);
 
@@ -1693,7 +1818,10 @@ bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 	}
 
 	/* Non-RAIL mode (e.g. Non-Monitored Desktop during UAC / Consent UI): show the desktop window.
-	 */
+	 * Before the RemoteApp starts, only when the logon needs the user. */
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_RemoteApplicationMode) &&
+	    !_rail.desktopMayShow())
+		return true;
 	bool firstShow = false;
 	for (auto& window : _windows)
 	{
@@ -1779,8 +1907,8 @@ bool SdlContext::redraw(bool suppress) const
 	if (!_connected)
 		return true;
 
-	/* In RAIL mode, hiding the desktop window must not suppress server output. */
-	if (suppress && _rail.enabled())
+	/* RemoteApp desktop windows are placeholders, hiding one must not stop server output. */
+	if (suppress && freerdp_settings_get_bool(context()->settings, FreeRDP_RemoteApplicationMode))
 		return true;
 
 	auto gdi = context()->gdi;
