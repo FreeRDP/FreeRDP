@@ -1090,7 +1090,11 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
 	appWindow->rail_fullscreen_normalizing = FALSE;
-	appWindow->lastWndSizeUpdate = 0;
+	appWindow->haveMinMaxInfo = FALSE;
+	appWindow->sizeReported = FALSE;
+	appWindow->moveSent = FALSE;
+	appWindow->moveAnswered = FALSE;
+	appWindow->frameKnown = FALSE;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(
@@ -1150,26 +1154,73 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	return TRUE;
 }
 
+void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+
+	/* The local window mirrors the server's window, so the size limits given to the window
+	 * manager must never exclude the size the server reports for it. A window manager
+	 * enforcing such a limit makes the local window differ from the server's, the client
+	 * reports that and the server answers with yet another geometry.
+	 *
+	 * The server window can be smaller than its own minimum track size (an application can
+	 * size its window directly), and the track sizes include the resize margins while the
+	 * window size does not. A window without a sizing frame has a fixed size: say so, so
+	 * that tiling window managers float it instead of tiling it. */
+	const INT64 width = (INT64)appWindow->windowWidth;
+	const INT64 height = (INT64)appWindow->windowHeight;
+	if ((width < 1) || (height < 1))
+		return;
+
+	XSizeHints* size_hints = XAllocSizeHints();
+	if (!size_hints)
+		return;
+
+	size_hints->flags = PMinSize | PMaxSize | PResizeInc;
+	/* to speedup window drawing we need to select optimal value for sizing step. */
+	size_hints->width_inc = size_hints->height_inc = 1;
+
+	if ((appWindow->dwStyle & WS_THICKFRAME) == 0)
+	{
+		size_hints->min_width = size_hints->max_width = (int)width;
+		size_hints->min_height = size_hints->max_height = (int)height;
+	}
+	else if (appWindow->haveMinMaxInfo)
+	{
+		const INT64 marginsX =
+		    (INT64)appWindow->resizeMarginLeft + (INT64)appWindow->resizeMarginRight;
+		const INT64 marginsY =
+		    (INT64)appWindow->resizeMarginTop + (INT64)appWindow->resizeMarginBottom;
+		const INT64 minW = MAX(1, appWindow->minTrackWidth - marginsX);
+		const INT64 minH = MAX(1, appWindow->minTrackHeight - marginsY);
+		const INT64 maxW = MAX(minW, appWindow->maxTrackWidth - marginsX);
+		const INT64 maxH = MAX(minH, appWindow->maxTrackHeight - marginsY);
+		size_hints->min_width = (int)MIN(minW, width);
+		size_hints->min_height = (int)MIN(minH, height);
+		size_hints->max_width = (int)MAX(maxW, width);
+		size_hints->max_height = (int)MAX(maxH, height);
+	}
+	else
+		size_hints->flags = PResizeInc;
+
+	XSetWMNormalHints(xfc->display, appWindow->handle, size_hints);
+	XFree(size_hints);
+}
+
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_UNUSED int maxWidth,
                             WINPR_ATTR_UNUSED int maxHeight, WINPR_ATTR_UNUSED int maxPosX,
                             WINPR_ATTR_UNUSED int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight)
 {
-	XSizeHints* size_hints = nullptr;
-	size_hints = XAllocSizeHints();
+	WINPR_ASSERT(appWindow);
 
-	if (size_hints)
-	{
-		size_hints->flags = PMinSize | PMaxSize | PResizeInc;
-		size_hints->min_width = minTrackWidth;
-		size_hints->min_height = minTrackHeight;
-		size_hints->max_width = maxTrackWidth;
-		size_hints->max_height = maxTrackHeight;
-		/* to speedup window drawing we need to select optimal value for sizing step. */
-		size_hints->width_inc = size_hints->height_inc = 1;
-		XSetWMNormalHints(xfc->display, appWindow->handle, size_hints);
-		XFree(size_hints);
-	}
+	appWindow->haveMinMaxInfo = TRUE;
+	appWindow->minTrackWidth = minTrackWidth;
+	appWindow->minTrackHeight = minTrackHeight;
+	appWindow->maxTrackWidth = maxTrackWidth;
+	appWindow->maxTrackHeight = maxTrackHeight;
+	xf_UpdateWindowSizeHints(xfc, appWindow);
 }
 
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y)
@@ -1184,6 +1235,9 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	appWindow->local_move.root_x = x;
 	appWindow->local_move.root_y = y;
 	appWindow->local_move.state = LMS_STARTING;
+	/* A new move or resize by the user: whatever it ends with is reported. */
+	appWindow->sizeReported = FALSE;
+	appWindow->moveSent = FALSE;
 	appWindow->local_move.direction = direction;
 
 	xf_ungrab(xfc);

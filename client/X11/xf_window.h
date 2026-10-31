@@ -131,6 +131,7 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 
 void xf_AppWindowDestroyImage(xfAppWindow* appWindow);
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);
+void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
                             int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight);

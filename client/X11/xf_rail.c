@@ -291,10 +291,52 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	/* NOTE: this geometry report is required - if it is dropped the server no
 	 * longer knows where the window manager placed the window and all mouse
 	 * events are routed to the wrong coordinates (buttons stop responding).
-	 * The window size feedback loop is handled in xf_rail_window_common(). */
+	 *
+	 * The server does not necessarily accept a reported size, for example for a window
+	 * that cannot be resized, and [MS-RDPERP] 3.2.5.1.6 says not to expect the window
+	 * boundaries it sends to match a Window Move PDU. If the window manager keeps the local
+	 * window at a size the server already answered differently, reporting it again only
+	 * makes the server answer again, often with a moved window, and the two sides chase
+	 * each other: the window drifts or collapses. So a size is reported once; while the
+	 * local window keeps it, only the position is reported, with the server's size. A new
+	 * move or resize by the user starts over, see xf_StartLocalMoveSize(). */
+	INT64 width = appWindow->width;
+	INT64 height = appWindow->height;
+	BOOL refused = FALSE;
+	INT32 left = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginLeft);
+	INT32 top = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginTop);
+	INT32 right = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginRight);
+	INT32 bottom = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginBottom);
+
+	if ((appWindow->dwStyle & WS_THICKFRAME) == 0)
+	{
+		/* The client cannot resize a window without a sizing frame: only its position is
+		 * reported, with the server's size, see xf_rail_learn_frame(). */
+		width = appWindow->windowWidth;
+		height = appWindow->windowHeight;
+		if (appWindow->frameKnown)
+		{
+			left = appWindow->frameLeft;
+			top = appWindow->frameTop;
+			right = appWindow->frameRight;
+			bottom = appWindow->frameBottom;
+		}
+	}
+	else
+	{
+		refused = appWindow->sizeReported && (width == appWindow->reportedWidth) &&
+		          (height == appWindow->reportedHeight) &&
+		          ((width != (INT64)appWindow->windowWidth) ||
+		           (height != (INT64)appWindow->windowHeight));
+		if (refused)
+		{
+			width = (INT64)appWindow->windowWidth;
+			height = (INT64)appWindow->windowHeight;
+		}
+	}
+
 	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
-	    appWindow->width != (INT64)appWindow->windowWidth ||
-	    appWindow->height != (INT64)appWindow->windowHeight)
+	    width != (INT64)appWindow->windowWidth || height != (INT64)appWindow->windowHeight)
 	{
 		WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 		windowMove.windowId = (UINT32)appWindow->windowId;
@@ -302,19 +344,76 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		 * Calculate new size/position for the rail window(new values for
 		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
 		 */
-		const INT16 left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginLeft);
-		const INT16 right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginRight);
-		const INT16 top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginTop);
-		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
 		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
 		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
-		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + appWindow->width + right);
-		windowMove.bottom =
-		    WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + appWindow->height + bottom);
+		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + width + right);
+		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + height + bottom);
+
+		/* Every ConfigureNotify of a placement lands here; one report is enough. */
+		if (appWindow->moveSent && (windowMove.left == appWindow->lastMove.left) &&
+		    (windowMove.top == appWindow->lastMove.top) &&
+		    (windowMove.right == appWindow->lastMove.right) &&
+		    (windowMove.bottom == appWindow->lastMove.bottom))
+			return TRUE;
+
 		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
-		return rc == CHANNEL_RC_OK;
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
+
+		appWindow->moveSent = TRUE;
+		appWindow->moveAnswered = FALSE;
+		appWindow->lastMove = windowMove;
+		if (!refused)
+		{
+			appWindow->sizeReported = TRUE;
+			appWindow->reportedWidth = width;
+			appWindow->reportedHeight = height;
+		}
 	}
 	return TRUE;
+}
+
+/* The server places a Window Move PDU's rectangle as the window's full window rectangle,
+ * which includes an invisible frame. It sends the size of that frame as resize margins only
+ * for windows that can be resized ([MS-RDPERP] 3.2.5.1.6). For any other window a report
+ * of the visible rectangle makes the server shrink the window by its frame, and every
+ * further report shrinks it again until it collapses.
+ *
+ * The server answers a report with the window's visible rectangle, so the difference
+ * between the first answer and the report is that frame. Learn it and use it for later
+ * reports of the window. */
+static void xf_rail_learn_frame(xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(appWindow);
+
+	if (!appWindow->moveSent || appWindow->moveAnswered)
+		return;
+	appWindow->moveAnswered = TRUE;
+
+	if (((appWindow->dwStyle & WS_THICKFRAME) != 0) || appWindow->frameKnown)
+		return;
+
+	const RAIL_WINDOW_MOVE_ORDER* sent = &appWindow->lastMove;
+	const INT64 frameLeft = appWindow->windowOffsetX - sent->left;
+	const INT64 frameTop = appWindow->windowOffsetY - sent->top;
+	const INT64 frameRight =
+	    sent->right - (appWindow->windowOffsetX + (INT64)appWindow->windowWidth);
+	const INT64 frameBottom =
+	    sent->bottom - (appWindow->windowOffsetY + (INT64)appWindow->windowHeight);
+
+	const INT64 limit = 64;
+	if ((frameLeft < 0) || (frameTop < 0) || (frameRight < 0) || (frameBottom < 0) ||
+	    (frameLeft > limit) || (frameTop > limit) || (frameRight > limit) || (frameBottom > limit))
+		return;
+	if ((frameLeft + frameTop + frameRight + frameBottom) == 0)
+		return;
+
+	appWindow->frameKnown = TRUE;
+	appWindow->frameLeft = (INT32)frameLeft;
+	appWindow->frameTop = (INT32)frameTop;
+	appWindow->frameRight = (INT32)frameRight;
+	appWindow->frameBottom = (INT32)frameBottom;
+	appWindow->moveSent = FALSE;
 }
 
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
@@ -537,6 +636,13 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (!appWindow->title)
 			goto fail;
 
+		/* The size hints have to be in place before the window is mapped. */
+		appWindow->windowOffsetX = windowState->windowOffsetX;
+		appWindow->windowOffsetY = windowState->windowOffsetY;
+		appWindow->windowWidth = windowState->windowWidth;
+		appWindow->windowHeight = windowState->windowHeight;
+		xf_UpdateWindowSizeHints(xfc, appWindow);
+
 		if (xf_AppWindowInit(xfc, appWindow))
 			redraw = TRUE;
 	}
@@ -569,39 +675,8 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
-		/* Coalesce bursts of server side window size updates.
-		 *
-		 * When a RemoteApp dialog opens, the server sends a sequence of window
-		 * sizes (~45 frames, ~15ms apart) - a window open animation performed
-		 * by rdpshell. The client applies every frame and reports the resulting
-		 * geometry back, which makes the server shrink the window again by its
-		 * frame size. That feedback loop runs away and collapses the dialog to
-		 * a 1px wide strip: it "flashes and disappears".
-		 *
-		 * Keep only the first update of such a burst (which is close to the
-		 * real size) and ignore the rest for a second. Positions are still
-		 * reported, so mouse input keeps working. */
-		const UINT64 now = winpr_GetTickCount64NS() / 1000000ULL;
-		const BOOL burst =
-		    (appWindow->lastWndSizeUpdate != 0) && ((now - appWindow->lastWndSizeUpdate) < 1000);
-		const UINT32 newW = windowState->windowWidth;
-		const UINT32 newH = windowState->windowHeight;
-		const BOOL degenerate = (newW < 32) || (newH < 32);
-		const BOOL hadSane = (appWindow->windowWidth >= 32) && (appWindow->windowHeight >= 32);
-
-		if ((degenerate && hadSane) || burst)
-		{
-			WLog_Print(xfc->log, WLOG_DEBUG,
-			           "coalescing RAIL window size %" PRIu32 "x%" PRIu32
-			           " (burst=%d degenerate=%d)",
-			           newW, newH, burst, degenerate);
-		}
-		else
-		{
-			appWindow->windowWidth = newW;
-			appWindow->windowHeight = newH;
-			appWindow->lastWndSizeUpdate = now;
-		}
+		appWindow->windowWidth = windowState->windowWidth;
+		appWindow->windowHeight = windowState->windowHeight;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
@@ -716,7 +791,15 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		}
 	}
 
+	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
+		xf_rail_learn_frame(appWindow);
+
 	/* Update Window */
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE) || (fieldFlags & WINDOW_ORDER_FIELD_STYLE) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) ||
+	    (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y))
+		xf_UpdateWindowSizeHints(xfc, appWindow);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
