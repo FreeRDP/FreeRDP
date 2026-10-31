@@ -115,7 +115,15 @@ struct xf_app_window
 	INT64 reportedHeight;
 	/* The last Window Move PDU, see xf_rail_adjust_position(). */
 	BOOL moveSent;
+	BOOL moveAnswered;
 	RAIL_WINDOW_MOVE_ORDER lastMove;
+	/* Frame the server adds around a window that cannot be resized, learnt from its answer
+	 * to a Window Move PDU, see xf_rail_learn_frame(). */
+	BOOL frameKnown;
+	INT32 frameLeft;
+	INT32 frameTop;
+	INT32 frameRight;
+	INT32 frameBottom;
 	/* Track sizes from the last Min Max Info PDU, see xf_UpdateWindowSizeHints(). */
 	BOOL haveMinMaxInfo;
 	INT32 minTrackWidth;

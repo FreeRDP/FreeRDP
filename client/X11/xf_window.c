@@ -1093,6 +1093,8 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->haveMinMaxInfo = FALSE;
 	appWindow->sizeReported = FALSE;
 	appWindow->moveSent = FALSE;
+	appWindow->moveAnswered = FALSE;
+	appWindow->frameKnown = FALSE;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(

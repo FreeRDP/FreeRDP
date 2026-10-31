@@ -302,14 +302,37 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	 * move or resize by the user starts over, see xf_StartLocalMoveSize(). */
 	INT64 width = appWindow->width;
 	INT64 height = appWindow->height;
-	const BOOL refused = appWindow->sizeReported && (width == appWindow->reportedWidth) &&
-	                     (height == appWindow->reportedHeight) &&
-	                     ((width != (INT64)appWindow->windowWidth) ||
-	                      (height != (INT64)appWindow->windowHeight));
-	if (refused)
+	BOOL refused = FALSE;
+	INT32 left = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginLeft);
+	INT32 top = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginTop);
+	INT32 right = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginRight);
+	INT32 bottom = WINPR_ASSERTING_INT_CAST(INT32, appWindow->resizeMarginBottom);
+
+	if ((appWindow->dwStyle & WS_THICKFRAME) == 0)
 	{
-		width = (INT64)appWindow->windowWidth;
-		height = (INT64)appWindow->windowHeight;
+		/* The client cannot resize a window without a sizing frame: only its position is
+		 * reported, with the server's size, see xf_rail_learn_frame(). */
+		width = appWindow->windowWidth;
+		height = appWindow->windowHeight;
+		if (appWindow->frameKnown)
+		{
+			left = appWindow->frameLeft;
+			top = appWindow->frameTop;
+			right = appWindow->frameRight;
+			bottom = appWindow->frameBottom;
+		}
+	}
+	else
+	{
+		refused = appWindow->sizeReported && (width == appWindow->reportedWidth) &&
+		          (height == appWindow->reportedHeight) &&
+		          ((width != (INT64)appWindow->windowWidth) ||
+		           (height != (INT64)appWindow->windowHeight));
+		if (refused)
+		{
+			width = (INT64)appWindow->windowWidth;
+			height = (INT64)appWindow->windowHeight;
+		}
 	}
 
 	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
@@ -321,10 +344,6 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		 * Calculate new size/position for the rail window(new values for
 		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
 		 */
-		const INT16 left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginLeft);
-		const INT16 right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginRight);
-		const INT16 top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginTop);
-		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
 		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
 		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
 		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + width + right);
@@ -342,6 +361,7 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 			return FALSE;
 
 		appWindow->moveSent = TRUE;
+		appWindow->moveAnswered = FALSE;
 		appWindow->lastMove = windowMove;
 		if (!refused)
 		{
@@ -351,6 +371,49 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		}
 	}
 	return TRUE;
+}
+
+/* The server places a Window Move PDU's rectangle as the window's full window rectangle,
+ * which includes an invisible frame. It sends the size of that frame as resize margins only
+ * for windows that can be resized ([MS-RDPERP] 3.2.5.1.6). For any other window a report
+ * of the visible rectangle makes the server shrink the window by its frame, and every
+ * further report shrinks it again until it collapses.
+ *
+ * The server answers a report with the window's visible rectangle, so the difference
+ * between the first answer and the report is that frame. Learn it and use it for later
+ * reports of the window. */
+static void xf_rail_learn_frame(xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(appWindow);
+
+	if (!appWindow->moveSent || appWindow->moveAnswered)
+		return;
+	appWindow->moveAnswered = TRUE;
+
+	if (((appWindow->dwStyle & WS_THICKFRAME) != 0) || appWindow->frameKnown)
+		return;
+
+	const RAIL_WINDOW_MOVE_ORDER* sent = &appWindow->lastMove;
+	const INT64 frameLeft = appWindow->windowOffsetX - sent->left;
+	const INT64 frameTop = appWindow->windowOffsetY - sent->top;
+	const INT64 frameRight =
+	    sent->right - (appWindow->windowOffsetX + (INT64)appWindow->windowWidth);
+	const INT64 frameBottom =
+	    sent->bottom - (appWindow->windowOffsetY + (INT64)appWindow->windowHeight);
+
+	const INT64 limit = 64;
+	if ((frameLeft < 0) || (frameTop < 0) || (frameRight < 0) || (frameBottom < 0) ||
+	    (frameLeft > limit) || (frameTop > limit) || (frameRight > limit) || (frameBottom > limit))
+		return;
+	if ((frameLeft + frameTop + frameRight + frameBottom) == 0)
+		return;
+
+	appWindow->frameKnown = TRUE;
+	appWindow->frameLeft = (INT32)frameLeft;
+	appWindow->frameTop = (INT32)frameTop;
+	appWindow->frameRight = (INT32)frameRight;
+	appWindow->frameBottom = (INT32)frameBottom;
+	appWindow->moveSent = FALSE;
 }
 
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
@@ -727,6 +790,9 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			           appWindow->numVisibilityRects * sizeof(RECTANGLE_16));
 		}
 	}
+
+	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
+		xf_rail_learn_frame(appWindow);
 
 	/* Update Window */
 
