@@ -5,7 +5,7 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.cpp)
 
 set(${MODULE_PREFIX}_TESTS TestSDLPrefs.cpp TestSDLAadHelper.cpp)
 if(WITH_CLIENT_SDL3)
-  list(APPEND ${MODULE_PREFIX}_TESTS TestSDLRailWindowStyle.cpp)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestSDLRailWindowStyle.cpp TestSDLScancodeMap.cpp)
 endif()
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
@@ -20,6 +20,9 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set(${MODULE_PREFIX}_LIBS freerdp-client sdl-common-prefs freerdp-cxx-filesystem)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
+if(WITH_CLIENT_SDL3)
+  target_link_libraries(${MODULE_NAME} PRIVATE SDL3::Headers)
+endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
