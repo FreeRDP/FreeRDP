@@ -185,6 +185,10 @@ FREERDP_LOCAL BOOL transport_set_nla(rdpTransport* transport, rdpNla* nla);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpNla* transport_get_nla(rdpTransport* transport);
 
+/** @brief The server ended NLA over TLS 1.3 at its first message (see transport.c) */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL transport_tls13_nla_refused(const rdpTransport* transport);
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_set_tls(rdpTransport* transport, rdpTls* tls);
 

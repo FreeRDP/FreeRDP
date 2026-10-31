@@ -97,6 +97,7 @@ struct rdp_transport
 	HANDLE ioEvent;
 	BOOL useIoEvent;
 	BOOL earlyUserAuth;
+	BOOL tls13NlaRefused;
 };
 
 typedef struct
@@ -138,6 +139,37 @@ static const char* where2str(int where, char* ibuffer, size_t ilen)
 	return buffer;
 }
 
+/* Windows Server 2025 accepts TLS 1.3 for RDP, then answers the client's first CredSSP message
+ * with a fatal internal_error alert; over TLS 1.2 it goes on. The alert comes after the
+ * handshake, protected by the TLS 1.3 keys, so only the server can have sent it.
+ * freerdp_connect_begin() then tries once more with TLS 1.2, unless a version was asked for. */
+static BOOL transport_is_tls13_nla_refused(rdpTransport* transport, const SSL* ssl)
+{
+	WINPR_ASSERT(transport);
+
+	if (!transport->NlaMode || !ssl)
+		return FALSE;
+
+#if defined(TLS1_3_VERSION)
+	if (SSL_version(ssl) != TLS1_3_VERSION)
+		return FALSE;
+
+	rdpContext* context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_ServerMode) ||
+	    (freerdp_settings_get_uint16(context->settings, FreeRDP_TLSMaxVersion) != 0))
+		return FALSE;
+
+	/* No reply from the server yet: an expired password is refused with the same alert, but
+	 * only after the client has authenticated. */
+	return context->rdp && context->rdp->nla &&
+	       (nla_get_state(context->rdp->nla) == NLA_STATE_NEGO_TOKEN);
+#else
+	return FALSE;
+#endif
+}
+
 static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
@@ -166,7 +198,13 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 				           where2str(where, buffer, sizeof(buffer)), ret,
 				           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
 
-				if (transport->NlaMode)
+				if ((where & SSL_CB_READ) && transport_is_tls13_nla_refused(transport, ssl))
+				{
+					transport->tls13NlaRefused = TRUE;
+					freerdp_set_last_error_if_not(transport_get_context(transport),
+					                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+				}
+				else if (transport->NlaMode)
 				{
 					if (!freerdp_get_last_error(transport_get_context(transport)))
 					{
@@ -424,6 +462,7 @@ BOOL transport_connect_nla(rdpTransport* transport, BOOL earlyUserAuth)
 
 	nla_set_early_user_auth(rdp->nla, earlyUserAuth);
 
+	transport->tls13NlaRefused = FALSE;
 	transport_set_nla_mode(transport, TRUE);
 
 	if (settings->AuthenticationServiceClass)
@@ -874,6 +913,14 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 					WLog_Print(transport->log, WLOG_ERROR, "BIO_read: transport->frontBio null");
 					return -1;
 				}
+
+				/* LibreSSL's TLS 1.3 code does not report received alerts to transport_ssl_cb */
+				const unsigned long sslerr = ERR_peek_last_error();
+				if ((ERR_GET_LIB(sslerr) == ERR_LIB_SSL) &&
+				    (ERR_GET_REASON(sslerr) == SSL_R_TLSV1_ALERT_INTERNAL_ERROR) &&
+				    transport->tls &&
+				    transport_is_tls13_nla_refused(transport, transport->tls->ssl))
+					transport->tls13NlaRefused = TRUE;
 
 				WLog_ERR_BIO(transport, "BIO_read", transport->frontBio);
 				transport->layer = TRANSPORT_LAYER_CLOSED;
@@ -1900,6 +1947,12 @@ rdpNla* transport_get_nla(rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	return transport->nla;
+}
+
+BOOL transport_tls13_nla_refused(const rdpTransport* transport)
+{
+	WINPR_ASSERT(transport);
+	return transport->tls13NlaRefused;
 }
 
 BOOL transport_set_tls(rdpTransport* transport, rdpTls* tls)

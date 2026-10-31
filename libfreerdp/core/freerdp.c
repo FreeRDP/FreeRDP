@@ -177,6 +177,20 @@ static int freerdp_connect_begin(freerdp* instance)
 
 	rc = rdp_client_connect(rdp);
 
+	/* Windows Server 2025 accepts TLS 1.3 and then refuses NLA over it, see transport.c */
+	if (!rc && transport_tls13_nla_refused(rdp->transport))
+	{
+		WLog_Print(instance->context->log, WLOG_WARN,
+		           "the server refused NLA over TLS 1.3, connecting again with TLS 1.2 "
+		           "(/tls:enforce:1.2 goes there directly)");
+
+		if (!freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, TLS1_2_VERSION) ||
+		    !rdp_client_disconnect_and_clear(rdp))
+			return 0;
+
+		rc = rdp_client_connect(rdp);
+	}
+
 	/* --authonly tests the connection without a UI */
 	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_AuthenticationOnly))
 	{
