@@ -1384,7 +1384,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 		{
 			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Window closed, terminating RDP session...");
-			freerdp_abort_connect_context(context());
+			std::ignore = abortConnect();
 		}
 		break;
 		default:
@@ -1924,6 +1924,14 @@ void SdlContext::setConnected(bool val)
 bool SdlContext::isConnected() const
 {
 	return _connected;
+}
+
+/* Stop requested by the user. Overwrite any earlier error with CONNECT_CANCELLED,
+ * otherwise an auto reconnect ignores the stop. */
+bool SdlContext::abortConnect()
+{
+	freerdp_set_last_error(context(), FREERDP_ERROR_CONNECT_CANCELLED);
+	return freerdp_abort_connect_context(context());
 }
 
 rdpContext* SdlContext::context() const

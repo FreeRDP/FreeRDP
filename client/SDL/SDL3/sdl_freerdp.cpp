@@ -183,6 +183,9 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 
 				WLog_Print(sdl->getWLog(), WLOG_TRACE, "got event %s [0x%08" PRIx32 "]",
 				           sdl::utils::toString(windowEvent.type).c_str(), windowEvent.type);
+				/* Handle quit first, the dialog or the abort check below may drop it */
+				if (windowEvent.type == SDL_EVENT_QUIT)
+					std::ignore = sdl->abortConnect();
 				/* The connection dialog paints on window events, so let it see them even
 				 * after the session is gone: it may still show an error message. */
 				if (sdl->getDialog().handleEvent(windowEvent))
@@ -196,9 +199,6 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 
 				switch (windowEvent.type)
 				{
-					case SDL_EVENT_QUIT:
-						std::ignore = freerdp_abort_connect_context(sdl->context());
-						break;
 					case SDL_EVENT_USER_CERT_DIALOG:
 					{
 						SDLConnectionDialogHider hider(sdl);
