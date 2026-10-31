@@ -141,6 +141,10 @@ extern "C"
 		UINT32 resizeHeight;
 		BOOL areGfxCapsReady; /** @since version 3.3.0 */
 		RDPGFX_CAPSET confirmedCaps; /** @since version 3.25.0 */
+		/** the keys this client pressed and has not released, one bit per scan code with its
+		 *  KBD_FLAGS_EXTENDED (0x100) and KBD_FLAGS_EXTENDED1 (0x200) flags
+		 *  @since version 3.33.0 */
+		BYTE keysDown[128];
 	};
 
 	struct rdp_shadow_server

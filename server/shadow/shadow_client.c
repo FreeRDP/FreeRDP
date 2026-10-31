@@ -2983,6 +2983,8 @@ fail:
 	}
 
 out:
+	/* however the client went, no key it held stays down on the shared desktop */
+	shadow_input_release_keys(client);
 	WINPR_ASSERT(peer->Disconnect);
 	peer->Disconnect(peer);
 	freerdp_peer_context_free(peer);
