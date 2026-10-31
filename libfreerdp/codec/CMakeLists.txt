@@ -77,6 +77,12 @@ if(WITH_GFX_AV1)
   endif()
 endif()
 
+if(WITH_GFX_AV2)
+  include(WarnExperimental)
+  warn_experimental("AV2 codec support for GFX channel" "-DWITH_GFX_AV2=OFF")
+  list(APPEND CODEC_SRCS av2.c)
+endif()
+
 set(CODEC_SSE3_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
 
 set(CODEC_NEON_SRCS neon/rfx_neon.c neon/rfx_neon.h neon/nsc_neon.c neon/nsc_neon.h)
@@ -155,6 +161,34 @@ if(WITH_GFX_AV1)
     message(STATUS "AV1 decoder: libaom")
   else()
     message(STATUS "AV1 decoder: none (need -DWITH_DAV1D=ON or -DWITH_AOM=ON)")
+  endif()
+endif()
+
+if(WITH_GFX_AV2)
+  if(WITH_AVM AND AVM_FOUND)
+    add_compile_definitions(WITH_LIBAVM)
+    list(APPEND CODEC_LIBS avm)
+    include_directories(SYSTEM ${AVM_INCLUDE_DIRS})
+    freerdp_pc_add_requires_private("avm")
+    # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a browser): it has
+    # neither the encoder's headers nor its functions, and AV2 encoding is then unavailable
+    option(WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON)
+    if(WITH_AVM_ENCODER)
+      add_compile_definitions(WITH_LIBAVM_ENCODER)
+    endif()
+  endif()
+
+  # libavm, the reference, decodes when present: dav2d is the decoder without it
+  if(WITH_AVM AND AVM_FOUND)
+    message(STATUS "AV2 decoder: libavm")
+  elseif(WITH_DAV2D AND DAV2D_FOUND)
+    add_compile_definitions(WITH_DAV2D)
+    list(APPEND CODEC_LIBS dav2d)
+    include_directories(SYSTEM ${DAV2D_INCLUDE_DIRS})
+    freerdp_pc_add_requires_private("dav2d")
+    message(STATUS "AV2 decoder: dav2d")
+  else()
+    message(STATUS "AV2 decoder: none (need -DWITH_DAV2D=ON or -DWITH_AVM=ON)")
   endif()
 endif()
 

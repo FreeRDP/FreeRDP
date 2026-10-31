@@ -188,6 +188,12 @@ extern "C"
 	    UINT32 reservedAV1[2];
 #endif
 		BOOL h264HwAccel; /** @since version 3.32.0 */
+#if defined(WITH_GFX_AV2)
+		FREERDP_AV2_RATECONTROL AV2RateControlMode; /** @since version 3.33.0 */
+		UINT32 AV2BitRate;                          /** @since version 3.33.0 */
+#else
+	    UINT32 reservedAV2[2];
+#endif
 	};
 
 	struct rdp_shadow_surface

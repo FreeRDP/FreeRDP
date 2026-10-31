@@ -267,6 +267,9 @@ static BOOL rdpgfx_is_capability_filtered(RDPGFX_PLUGIN* gfx, UINT32 caps)
 #if defined(WITH_GFX_AV1)
 		RDPGFX_CAPVERSION_FRDP_1,
 #endif
+#if defined(WITH_GFX_AV2)
+		RDPGFX_CAPVERSION_FRDP_2,
+#endif
 		RDPGFX_CAPVERSION_8,
 		RDPGFX_CAPVERSION_81,
 		RDPGFX_CAPVERSION_10,
@@ -534,6 +537,40 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			    freerdp_settings_get_uint32(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV1Profile);
 			if (profile == 0)
 				capsSet->flags |= RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
+
+#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
+#endif
+		}
+	}
+#endif
+
+#if defined(WITH_GFX_AV2)
+	/* A capability set of its own: a server that confirms it may send AV2, and one that does
+	 * not know it never confirms it. */
+	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV2))
+	{
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_2))
+		{
+			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+			if (!capsSet)
+				return ERROR_BAD_CONFIGURATION;
+			capsSet->version = RDPGFX_CAPVERSION_FRDP_2;
+			capsSet->length = 0x4;
+
+			const UINT32 profile =
+			    freerdp_settings_get_uint32(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV2Profile);
+#if defined(WITH_GFX_AV2_I444)
+			capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV2_I444_SUPPORTED;
+			if (profile == 0)
+				capsSet->flags |= RDPGFX_CAPS_FLAG_AV2_I444_DISABLED;
+#else
+			/* the decoder (dav2d) has no AV2 4:4:4: always ask for 4:2:0 */
+			capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV2_I444_DISABLED;
+			if (profile != 0)
+				WLog_Print(gfx->base.log, WLOG_DEBUG,
+				           "AV2 4:4:4 needs libavm to decode, asking for 4:2:0");
+#endif
 
 #if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
 			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
@@ -1384,6 +1421,9 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 #if defined(WITH_GFX_AV1)
 		case RDPGFX_CAPVERSION_FRDP_1:
 #endif
+#if defined(WITH_GFX_AV2)
+		case RDPGFX_CAPVERSION_FRDP_2:
+#endif
 		case RDPGFX_CAPVERSION_10:
 		case RDPGFX_CAPVERSION_102:
 		case RDPGFX_CAPVERSION_103:
@@ -1543,6 +1583,20 @@ static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_C
 				           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
 				           " only supported with %s but connection uses %s [0x%08" PRIx32 "]",
 				           cmd->codecId, rdpgfx_caps_version_str(RDPGFX_CAPVERSION_FRDP_1),
+				           rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
+				           gfx->ConnectionCaps.version);
+				return FALSE;
+			}
+			return TRUE;
+#endif
+#if defined(WITH_GFX_AV2)
+		case RDPGFX_CODECID_AV2:
+			if (gfx->ConnectionCaps.version != RDPGFX_CAPVERSION_FRDP_2)
+			{
+				WLog_Print(gfx->base.log, WLOG_ERROR,
+				           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
+				           " only supported with %s but connection uses %s [0x%08" PRIx32 "]",
+				           cmd->codecId, rdpgfx_caps_version_str(RDPGFX_CAPVERSION_FRDP_2),
 				           rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
 				           gfx->ConnectionCaps.version);
 				return FALSE;
