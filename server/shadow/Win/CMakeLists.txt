@@ -10,7 +10,12 @@ add_library(
   win_rdp.h
   win_shadow.c
   win_shadow.h
+  win_shadow_cliprdr.c
+  win_shadow_cliprdr.h
   win_wds.c
   win_wds.h
 )
 target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-client freerdp winpr)
+if(CHANNEL_CLIPRDR_SERVER)
+  target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-server shell32)
+endif()

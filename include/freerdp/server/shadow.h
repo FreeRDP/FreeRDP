@@ -36,6 +36,9 @@
 #if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
 #endif
+#if defined(CHANNEL_CLIPRDR_SERVER)
+#include <freerdp/server/cliprdr.h>
+#endif
 #include <freerdp/server/rdpgfx.h>
 
 #include <freerdp/codec/color.h>
@@ -135,6 +138,9 @@ extern "C"
 		audin_server_context* audin;
 #endif
 		RdpgfxServerContext* rdpgfx;
+#if defined(CHANNEL_CLIPRDR_SERVER)
+		CliprdrServerContext* cliprdr; /** @since version 3.33.0 */
+#endif
 
 		BOOL resizeRequested;
 		UINT32 resizeWidth;
