@@ -2021,10 +2021,16 @@ static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
 	if (rv)
 		goto out;
 
-	/* try from the cache first, and then do a new request */
+	/* Try from the cache first, then do a new request. A cache miss on the first pass is
+	 * expected (the service ticket may not be cached yet), so bypass the logging wrapper there
+	 * to avoid reporting it as an error; the KDC-fetch retry below is still logged on failure. */
 again:
-	rv = krb_log_exec(krb5_get_credentials, credentials->ctx, getCredsFlags, credentials->ccache,
-	                  &matchCred, &hostCred);
+	if (firstRun)
+		rv = krb5_get_credentials(credentials->ctx, getCredsFlags, credentials->ccache, &matchCred,
+		                          &hostCred);
+	else
+		rv = krb_log_exec(krb5_get_credentials, credentials->ctx, getCredsFlags,
+		                  credentials->ccache, &matchCred, &hostCred);
 	switch (rv)
 	{
 		case 0:

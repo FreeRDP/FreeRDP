@@ -11,6 +11,9 @@ set(${MODULE_PREFIX}_TESTS
     TestInitializeSecurityContext.c
     TestAcquireCredentialsHandle.c
     TestCredSSP.c
+    TestSspiTSSSP.c
+    TestCredSSPTSRequest.c
+    TestSspiCredSSP.c
     #TestSchannel.c
     TestSspiNTLM.c
     TestSspiPasswordHash.c

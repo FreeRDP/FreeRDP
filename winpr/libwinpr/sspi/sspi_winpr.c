@@ -44,14 +44,15 @@
 #include "Kerberos/kerberos.h"
 #include "Negotiate/negotiate.h"
 #include "Schannel/schannel.h"
+#include "TSSSP/tsssp.h"
 
-static const SecPkgInfoA* SecPkgInfoA_LIST[] = { &NTLM_SecPkgInfoA, &KERBEROS_SecPkgInfoA,
+static const SecPkgInfoA* SecPkgInfoA_LIST[] = { &NTLM_SecPkgInfoA,      &KERBEROS_SecPkgInfoA,
 	                                             &NEGOTIATE_SecPkgInfoA, &CREDSSP_SecPkgInfoA,
-	                                             &SCHANNEL_SecPkgInfoA };
+	                                             &SCHANNEL_SecPkgInfoA,  &TSSSP_SecPkgInfoA };
 
-static const SecPkgInfoW* SecPkgInfoW_LIST[] = { &NTLM_SecPkgInfoW, &KERBEROS_SecPkgInfoW,
+static const SecPkgInfoW* SecPkgInfoW_LIST[] = { &NTLM_SecPkgInfoW,      &KERBEROS_SecPkgInfoW,
 	                                             &NEGOTIATE_SecPkgInfoW, &CREDSSP_SecPkgInfoW,
-	                                             &SCHANNEL_SecPkgInfoW };
+	                                             &SCHANNEL_SecPkgInfoW,  &TSSSP_SecPkgInfoW };
 
 typedef struct
 {
@@ -70,17 +71,19 @@ static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] = {
 	{ "Kerberos", &KERBEROS_SecurityFunctionTableA },
 	{ "Negotiate", &NEGOTIATE_SecurityFunctionTableA },
 	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA },
-	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
+	{ "Schannel", &SCHANNEL_SecurityFunctionTableA },
+	{ "TSSSP", &TSSSP_SecurityFunctionTableA }
 };
 
-static WCHAR BUFFER_NAME_LIST_W[5][32] = WINPR_C_ARRAY_INIT;
+static WCHAR BUFFER_NAME_LIST_W[6][32] = WINPR_C_ARRAY_INIT;
 
 static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
 	{ BUFFER_NAME_LIST_W[0], &NTLM_SecurityFunctionTableW },
 	{ BUFFER_NAME_LIST_W[1], &KERBEROS_SecurityFunctionTableW },
 	{ BUFFER_NAME_LIST_W[2], &NEGOTIATE_SecurityFunctionTableW },
 	{ BUFFER_NAME_LIST_W[3], &CREDSSP_SecurityFunctionTableW },
-	{ BUFFER_NAME_LIST_W[4], &SCHANNEL_SecurityFunctionTableW }
+	{ BUFFER_NAME_LIST_W[4], &SCHANNEL_SecurityFunctionTableW },
+	{ BUFFER_NAME_LIST_W[5], &TSSSP_SecurityFunctionTableW }
 };
 
 typedef struct
@@ -1013,6 +1016,8 @@ static BOOL CALLBACK sspi_init(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 	if (!CREDSSP_init())
 		return FALSE;
 	if (!NEGOTIATE_init())
+		return FALSE;
+	if (!TSSSP_init())
 		return FALSE;
 	return WINPR_init();
 }
