@@ -1323,7 +1323,8 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		clip->_reading_server = false;
 		if (clip->_request_queue.empty())
 			return nullptr;
-		auto& request = clip->_request_queue.front();
+		/* take the request out of the queue: pop() destroys the queued one */
+		auto request = std::move(clip->_request_queue.front());
 		clip->_request_queue.pop();
 
 		if (clip->_request_queue.empty())
