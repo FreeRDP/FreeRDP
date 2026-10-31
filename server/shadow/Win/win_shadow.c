@@ -29,6 +29,10 @@
 
 #include "win_shadow.h"
 
+#if defined(CHANNEL_CLIPRDR_SERVER)
+#include "win_shadow_cliprdr.h"
+#endif
+
 #define TAG SERVER_TAG("shadow.win")
 
 /* https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-mouse_event
@@ -547,6 +551,33 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 	return numMonitors;
 }
 
+static BOOL win_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(client);
+
+#if defined(CHANNEL_CLIPRDR_SERVER)
+	/* cliprdr is a static channel: the join decision is final by the time
+	 * ClientConnect runs (shadow_client_channels_post_connect precedes it). */
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, CLIPRDR_SVC_CHANNEL_NAME))
+	{
+		if (win_shadow_cliprdr_init(client) < 0)
+			return FALSE;
+	}
+#endif
+	return TRUE;
+}
+
+static void win_shadow_client_disconnect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(client);
+
+#if defined(CHANNEL_CLIPRDR_SERVER)
+	win_shadow_cliprdr_uninit(client);
+#endif
+}
+
 static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 {
 	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
@@ -646,6 +677,8 @@ static rdpShadowSubsystem* win_shadow_subsystem_new(void)
 	subsystem->base.UnicodeKeyboardEvent = win_shadow_input_unicode_keyboard_event;
 	subsystem->base.MouseEvent = win_shadow_input_mouse_event;
 	subsystem->base.ExtendedMouseEvent = win_shadow_input_extended_mouse_event;
+	subsystem->base.ClientConnect = win_shadow_client_connect;
+	subsystem->base.ClientDisconnect = win_shadow_client_disconnect;
 	return &subsystem->base;
 }
 
