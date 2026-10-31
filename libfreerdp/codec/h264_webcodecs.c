@@ -123,21 +123,26 @@ static BOOL next_nal(const BYTE* data, size_t size, size_t* offset, const BYTE**
                      size_t* length)
 {
 	size_t pos = *offset;
-	while ((pos + 3 <= size) && !((data[pos] == 0) && (data[pos + 1] == 0) && (data[pos + 2] == 1)))
-		pos++;
-	if (pos + 3 >= size)
+	if ((size < 3) || (pos == SIZE_MAX - size))
 		return FALSE;
+	while ((pos <= size - 3ull) &&
+	       !((data[pos] == 0) && (data[pos + 1] == 0) && (data[pos + 2] == 1)))
+		pos++;
+	if (pos >= size - 3ull)
+		return FALSE;
+
 	const size_t start = pos + 3;
 	pos = start;
-	while ((pos + 3 <= size) && !((data[pos] == 0) && (data[pos + 1] == 0) && (data[pos + 2] == 1)))
+	while ((pos <= size - 3ull) &&
+	       !((data[pos] == 0) && (data[pos + 1] == 0) && (data[pos + 2] == 1)))
 		pos++;
-	size_t end = (pos + 3 <= size) ? pos : size;
+	size_t end = (pos <= size - 3ull) ? pos : size;
 	while ((end > start) && (data[end - 1] == 0))
 		end--;
 	*offset = end;
 	*nal = &data[start];
 	*length = end - start;
-	return end > start;
+	return TRUE;
 }
 
 /* Remembers the parameter sets: they may arrive separately from the picture (MS-RDPEVOR),
@@ -151,7 +156,11 @@ static BOOL save_parameters(H264_CONTEXT_WEBCODECS* sys, const BYTE* data, size_
 	size_t length = 0;
 	while (next_nal(data, size, &offset, &nal, &length))
 	{
+		if (length == 0)
+			continue;
 		const BYTE type = nal[0] & 0x1F;
+		if ((type == 7) && (length < 4))
+			continue;
 		if ((type == 7) || (type == 8))
 			total += 4 + length;
 	}
@@ -168,7 +177,11 @@ static BOOL save_parameters(H264_CONTEXT_WEBCODECS* sys, const BYTE* data, size_
 	offset = 0;
 	while (next_nal(data, size, &offset, &nal, &length))
 	{
+		if (length == 0)
+			continue;
 		const BYTE type = nal[0] & 0x1F;
+		if ((type == 7) && (length < 4))
+			continue;
 		if ((type != 7) && (type != 8))
 			continue;
 		const BYTE startCode[] = { 0, 0, 0, 1 };
@@ -238,6 +251,8 @@ static int webcodecs_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	size_t length = 0;
 	while (next_nal(pSrcData, SrcSize, &offset, &nal, &length))
 	{
+		if (length == 0)
+			continue;
 		const BYTE type = nal[0] & 0x1F;
 		hasSlice |= (type == 1) || (type == 5);
 		hasIdr |= (type == 5);
