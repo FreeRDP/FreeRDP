@@ -54,6 +54,7 @@ set(SRCS
     sdl_rail_window.hpp
     sdl_rail_window.cpp
     sdl_rail_window_style.hpp
+    sdl_scancode_map.hpp
     sdl_wayland.hpp
     sdl_wayland.cpp
     sdl_win32.hpp
