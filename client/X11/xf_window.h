@@ -100,7 +100,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
 
 /* return: redraw required  */
 WINPR_ATTR_NODISCARD
-BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
+BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow, BOOL hidden);
 
 BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow);
 
