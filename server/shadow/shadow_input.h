@@ -28,6 +28,10 @@ extern "C"
 
 	void shadow_input_register_callbacks(rdpInput* input);
 
+	/** @brief Releases the keys the client holds down and no other client does, so that none
+	 *  stays down on the shared desktop when the client is gone */
+	FREERDP_LOCAL void shadow_input_release_keys(rdpShadowClient* client);
+
 #ifdef __cplusplus
 }
 #endif

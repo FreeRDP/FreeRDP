@@ -24,6 +24,88 @@
 
 #define TAG SERVER_TAG("shadow.input")
 
+/* A key in rdpShadowClient::keysDown: the scan code with its extended flags */
+#define KEY_INDEX_EXTENDED 0x100
+#define KEY_INDEX_EXTENDED1 0x200
+#define KEY_INDEX_COUNT 0x400
+
+static size_t shadow_input_key_index(UINT16 flags, UINT8 code)
+{
+	size_t index = code;
+	if (flags & KBD_FLAGS_EXTENDED)
+		index |= KEY_INDEX_EXTENDED;
+	if (flags & KBD_FLAGS_EXTENDED1)
+		index |= KEY_INDEX_EXTENDED1;
+	return index;
+}
+
+static BOOL shadow_input_key_is_down(const rdpShadowClient* client, size_t index)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(index < KEY_INDEX_COUNT);
+	return (client->keysDown[index / 8] & (1u << (index % 8))) != 0;
+}
+
+static void shadow_input_key_set(rdpShadowClient* client, size_t index, BOOL down)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(index < KEY_INDEX_COUNT);
+	const BYTE bit = (BYTE)(1u << (index % 8));
+	if (down)
+		client->keysDown[index / 8] |= bit;
+	else
+		client->keysDown[index / 8] &= (BYTE)~bit;
+}
+
+/* Another client sharing the desktop still holds the key: it must stay down for that one.
+ * Called with server->clients locked. */
+static BOOL shadow_input_key_held_by_other(const rdpShadowClient* client, size_t index)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
+
+	for (size_t x = 0; x < ArrayList_Count(client->server->clients); x++)
+	{
+		const rdpShadowClient* other =
+		    (const rdpShadowClient*)ArrayList_GetItem(client->server->clients, x);
+		if (other && (other != client) && shadow_input_key_is_down(other, index))
+			return TRUE;
+	}
+	return FALSE;
+}
+
+void shadow_input_release_keys(rdpShadowClient* client)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
+	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
+
+	ArrayList_Lock(client->server->clients);
+	for (size_t index = 0; index < KEY_INDEX_COUNT; index++)
+	{
+		if (!shadow_input_key_is_down(client, index))
+			continue;
+		shadow_input_key_set(client, index, FALSE);
+		if (shadow_input_key_held_by_other(client, index))
+			continue;
+
+		UINT16 flags = KBD_FLAGS_RELEASE;
+		if (index & KEY_INDEX_EXTENDED)
+			flags |= KBD_FLAGS_EXTENDED;
+		if (index & KEY_INDEX_EXTENDED1)
+			flags |= KBD_FLAGS_EXTENDED1;
+		const UINT8 code = (UINT8)(index & 0xFF);
+
+		WLog_DBG(TAG, "releasing key 0x%02" PRIx8 " flags=0x%04" PRIx16 " the client left down",
+		         code, flags);
+		if (!IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code))
+			WLog_WARN(TAG, "releasing key 0x%02" PRIx8 " flags=0x%04" PRIx16 " failed", code,
+			          flags);
+	}
+	ArrayList_Unlock(client->server->clients);
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
@@ -38,6 +120,9 @@ static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 	if (!client->mayInteract)
 		return TRUE;
 
+	/* the client starts its keyboard state over (it sends this when it gets the focus back):
+	 * what it held before is up now */
+	shadow_input_release_keys(client);
 	return IFCALLRESULT(TRUE, subsystem->SynchronizeEvent, subsystem, client, flags);
 }
 
@@ -55,7 +140,11 @@ static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 cod
 	if (!client->mayInteract)
 		return TRUE;
 
-	return IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code);
+	const BOOL rc = IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code);
+	if (rc)
+		shadow_input_key_set(client, shadow_input_key_index(flags, code),
+		                     (flags & KBD_FLAGS_RELEASE) == 0);
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
