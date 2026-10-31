@@ -292,6 +292,18 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	width = invalidRect.right - invalidRect.left;
 	height = invalidRect.bottom - invalidRect.top;
 
+	/* The alignment to 16 pixels may reach past the captured screen when its
+	 * size is not a multiple of 16 (1600x900): copy what was captured only */
+	if (x + width > subsystem->width)
+		width = subsystem->width - x;
+	if (y + height > subsystem->height)
+		height = subsystem->height - y;
+	if ((width <= 0) || (height <= 0))
+	{
+		region16_clear(&(surface->invalidRegion));
+		return 1;
+	}
+
 	if (0)
 	{
 		x = 0;
@@ -524,8 +536,9 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 		monitor = &monitors[index];
 		monitor->left = 0;
 		monitor->top = 0;
-		monitor->right = desktopWidth;
-		monitor->bottom = desktopHeight;
+		/* right and bottom are inclusive, as the shadow server reads them */
+		monitor->right = desktopWidth - 1;
+		monitor->bottom = desktopHeight - 1;
 		monitor->flags = 1;
 		DeleteDC(hdc);
 	}
@@ -538,8 +551,8 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 		monitor = &monitors[0];
 		monitor->left = 0;
 		monitor->top = 0;
-		monitor->right = GetSystemMetrics(SM_CXSCREEN);
-		monitor->bottom = GetSystemMetrics(SM_CYSCREEN);
+		monitor->right = GetSystemMetrics(SM_CXSCREEN) - 1;
+		monitor->bottom = GetSystemMetrics(SM_CYSCREEN) - 1;
 		monitor->flags = 1;
 		numMonitors = 1;
 	}
@@ -555,8 +568,9 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
 	if (subsystem->base.numMonitors > 0)
 	{
-		subsystem->width = subsystem->base.monitors[0].right;
-		subsystem->height = subsystem->base.monitors[0].bottom;
+		const MONITOR_DEF* primary = &subsystem->base.monitors[0];
+		subsystem->width = primary->right - primary->left + 1;
+		subsystem->height = primary->bottom - primary->top + 1;
 	}
 
 	if ((subsystem->width <= 0) || (subsystem->height <= 0))
@@ -572,8 +586,8 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	virtualScreen = &(subsystem->base.virtualScreen);
 	virtualScreen->left = 0;
 	virtualScreen->top = 0;
-	virtualScreen->right = subsystem->width;
-	virtualScreen->bottom = subsystem->height;
+	virtualScreen->right = subsystem->width - 1;
+	virtualScreen->bottom = subsystem->height - 1;
 	virtualScreen->flags = 1;
 	WLog_INFO(TAG, "width: %d height: %d", subsystem->width, subsystem->height);
 	return 1;
