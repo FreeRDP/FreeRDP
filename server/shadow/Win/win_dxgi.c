@@ -583,6 +583,43 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 
 			return 0;
 		}
+		else if (hr == DXGI_ERROR_ACCESS_DENIED)
+		{
+			/* The console desktop switched to the secure desktop (lock
+			 * screen, UAC prompt, ...). Re-create the duplication with a
+			 * bounded retry loop instead of killing the capture thread. */
+			if (subsystem->dxgiSurface)
+			{
+				subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
+				subsystem->dxgiSurface = nullptr;
+				subsystem->dxgiSurfaceMapped = FALSE;
+			}
+
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+				subsystem->dxgiStage = nullptr;
+			}
+
+			if (subsystem->dxgiOutputDuplication)
+			{
+				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
+				subsystem->dxgiOutputDuplication = nullptr;
+			}
+
+			for (int attempt = 0; attempt < 240; ++attempt)
+			{
+				if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
+					return -1;
+
+				Sleep(500);
+				status = win_shadow_dxgi_init_duplication(subsystem);
+				if (status >= 0)
+					return 0;
+			}
+
+			return -1;
+		}
 
 		return -1;
 	}
@@ -690,6 +727,45 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 				return -1;
 
 			return 0;
+		}
+		else if (hr == DXGI_ERROR_ACCESS_DENIED)
+		{
+			/* The console desktop switched to the secure desktop (lock
+			 * screen, UAC prompt, ...); the duplication stays denied while
+			 * that desktop is active. Release it and re-create with a
+			 * bounded retry loop instead of killing the capture thread. */
+			win_shadow_dxgi_release_frame_data(subsystem);
+
+			if (subsystem->dxgiDesktopImage)
+			{
+				subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
+				subsystem->dxgiDesktopImage = nullptr;
+			}
+
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+				subsystem->dxgiStage = nullptr;
+			}
+
+			if (subsystem->dxgiOutputDuplication)
+			{
+				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
+				subsystem->dxgiOutputDuplication = nullptr;
+			}
+
+			for (int attempt = 0; attempt < 240; ++attempt)
+			{
+				if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
+					return -1;
+
+				Sleep(500);
+				status = win_shadow_dxgi_init_duplication(subsystem);
+				if (status >= 0)
+					return 0;
+			}
+
+			return -1;
 		}
 		else if (hr == DXGI_ERROR_INVALID_CALL)
 		{
