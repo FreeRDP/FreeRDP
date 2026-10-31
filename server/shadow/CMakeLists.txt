@@ -32,6 +32,8 @@ set(SRCS
     shadow_surface.h
     shadow_encoder.c
     shadow_encoder.h
+    shadow_rfx_dirty.c
+    shadow_rfx_dirty.h
     shadow_capture.c
     shadow_capture.h
     shadow_channels.c

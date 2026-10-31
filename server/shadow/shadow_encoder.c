@@ -470,6 +470,18 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 
 	shadow_encoder_uninit_progressive(encoder);
 
+	/* Release the RFX dirty tile skip snapshot. shadow_encoder_reset also
+	 * routes through here, so after a reset/free the next frame is always
+	 * encoded in full. */
+	free(encoder->gfxSnapshot);
+	encoder->gfxSnapshot = nullptr;
+	free(encoder->gfxTileEncoded);
+	encoder->gfxTileEncoded = nullptr;
+	encoder->gfxSnapshotValid = FALSE;
+	encoder->gfxSnapshotWidth = 0;
+	encoder->gfxSnapshotHeight = 0;
+	encoder->gfxSnapshotStep = 0;
+
 	return 1;
 }
 

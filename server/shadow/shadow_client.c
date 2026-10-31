@@ -35,6 +35,7 @@
 #include <freerdp/channels/drdynvc.h>
 
 #include "shadow.h"
+#include "shadow_rfx_dirty.h"
 
 #define TAG CLIENT_TAG("shadow")
 
@@ -1439,7 +1440,6 @@ static BOOL shadow_client_send_rfx(rdpShadowClient* client, const BYTE* pSrcData
 
 	UINT error = CHANNEL_RC_OK;
 	BOOL rc = 0;
-	RFX_RECT rect = WINPR_C_ARRAY_INIT;
 
 	if (shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX) < 0)
 	{
@@ -1462,12 +1462,51 @@ static BOOL shadow_client_send_rfx(rdpShadowClient* client, const BYTE* pSrcData
 	WINPR_ASSERT(cmd->top <= UINT16_MAX);
 	WINPR_ASSERT(cmd->right <= UINT16_MAX);
 	WINPR_ASSERT(cmd->bottom <= UINT16_MAX);
-	rect.x = (UINT16)cmd->left;
-	rect.y = (UINT16)cmd->top;
-	rect.width = WINPR_ASSERTING_INT_CAST(UINT16, cmd->right - cmd->left);
-	rect.height = WINPR_ASSERTING_INT_CAST(UINT16, cmd->bottom - cmd->top);
 
-	rc = rfx_compose_message(encoder->rfx, s, &rect, 1, pSrcData, nWidth, nHeight, nSrcStep);
+	/* GFX RFX dirty tile skipping: split the dirty rect onto the 64x64
+	 * surface tile grid and compare each tile against the encoder snapshot
+	 * of the last encoded content (shadow_rfx_dirty.c). Only tiles whose
+	 * content changed are passed to the RFX encoder. A missing or
+	 * mismatching snapshot (first frame, ResetGraphics, resize, new client)
+	 * treats every tile as changed and degrades to full encoding. */
+	{
+		UINT16 numRects = 0;
+		RFX_RECT* rects = nullptr;
+
+		if (shadow_rfx_plan_tiles(encoder, pSrcData, nSrcStep, cmd, nWidth, nHeight, &rects,
+		                          &numRects) < 0)
+		{
+			WLog_ERR(TAG, "shadow_rfx_plan_tiles failed");
+			Stream_Free(s, TRUE);
+			return FALSE;
+		}
+
+		if (numRects == 0)
+		{
+			/* Every tile of this frame is byte-identical to the last encoded
+			 * content: skip the whole frame (no surface command: StartFrame/
+			 * EndFrame are sent paired with SurfaceFrameCommand, so no
+			 * dangling frame semantics). Give the frame id back to the
+			 * encoder: skipped frames are never acknowledged by the client,
+			 * not returning it would permanently inflate the in-flight depth
+			 * and stall the preferred_fps backpressure. */
+			encoder->frameId--;
+			Stream_Free(s, TRUE);
+			return TRUE;
+		}
+
+		rc = rfx_compose_message(encoder->rfx, s, rects, numRects, pSrcData, nWidth, nHeight,
+		                         nSrcStep);
+
+		if (rc)
+		{
+			const size_t pos = Stream_GetPosition(s);
+			shadow_rfx_commit_tiles(encoder, pSrcData, nSrcStep, rects, numRects,
+			                        WINPR_ASSERTING_INT_CAST(UINT32, pos));
+		}
+
+		free(rects);
+	}
 
 	if (!rc)
 	{
@@ -1697,7 +1736,8 @@ static BOOL shadow_avc420_enabled(const rdpShadowClient* client)
 WINPR_ATTR_NODISCARD
 static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* pSrcData,
                                            UINT32 nSrcStep, UINT32 SrcFormat, UINT16 nXSrc,
-                                           UINT16 nYSrc, UINT16 nWidth, UINT16 nHeight)
+                                           UINT16 nYSrc, UINT16 nWidth, UINT16 nHeight,
+                                           UINT16 srcWidth, UINT16 srcHeight)
 {
 	const rdpContext* context = (const rdpContext*)client;
 	RDPGFX_SURFACE_COMMAND cmd = WINPR_C_ARRAY_INIT;
@@ -1721,6 +1761,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			if (!rfx_context_reset(encoder->rfx, nWidth, nHeight))
 				return FALSE;
 		}
+		/* After ResetGraphics the client surface has no dependable state:
+		 * invalidate the RFX dirty skip snapshot so the next frame is
+		 * encoded in full. */
+		shadow_rfx_invalidate_snapshot(encoder);
 		client->first_frame = FALSE;
 	}
 
@@ -1771,10 +1815,13 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 
 #endif
-	    if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (id != 0))
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (id != 0))
 	{
-		return shadow_client_send_rfx(client, pSrcData, nSrcStep, SrcFormat, nWidth, nHeight, &cmd,
-		                              &cmdstart, &cmdend);
+		/* The RFX source image dims must be the whole surface: the tile grid
+		 * is aligned to absolute surface coordinates and edge tiles are
+		 * truncated at the surface bounds. */
+		return shadow_client_send_rfx(client, pSrcData, nSrcStep, SrcFormat, srcWidth, srcHeight,
+		                              &cmd, &cmdstart, &cmdend);
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive))
@@ -2355,7 +2402,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			WINPR_ASSERT(nHeight <= UINT16_MAX);
 			ret = shadow_client_send_surface_gfx(
 			    client, pSrcData, nSrcStep, SrcFormat, fullframegfx ? 0 : (UINT16)nXSrc,
-			    fullframegfx ? 0 : (UINT16)nYSrc, (UINT16)nWidth, (UINT16)nHeight);
+			    fullframegfx ? 0 : (UINT16)nYSrc, (UINT16)nWidth, (UINT16)nHeight,
+			    (UINT16)surface->width, (UINT16)surface->height);
 		}
 		else
 		{

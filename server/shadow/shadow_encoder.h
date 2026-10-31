@@ -60,6 +60,17 @@ struct rdp_shadow_encoder
 	UINT32 frameId;
 	UINT32 lastAckframeId;
 	UINT32 queueDepth;
+
+	/* GFX RFX dirty tile skipping (shadow_rfx_dirty.c): snapshot of the last
+	 * encoded content (BGRX copy sharing the surface geometry) plus per tile
+	 * encoded flags. Only used by the GFX RFX path; a missing or mismatching
+	 * snapshot encodes the frame in full. */
+	BYTE* gfxSnapshot;
+	BOOL* gfxTileEncoded;
+	UINT32 gfxSnapshotWidth;
+	UINT32 gfxSnapshotHeight;
+	UINT32 gfxSnapshotStep;
+	BOOL gfxSnapshotValid;
 };
 
 #ifdef __cplusplus
