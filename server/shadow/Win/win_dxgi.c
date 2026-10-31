@@ -672,6 +672,12 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 				subsystem->dxgiDesktopImage = nullptr;
 			}
 
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+				subsystem->dxgiStage = nullptr;
+			}
+
 			if (subsystem->dxgiOutputDuplication)
 			{
 				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
