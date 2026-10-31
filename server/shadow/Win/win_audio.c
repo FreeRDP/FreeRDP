@@ -37,11 +37,14 @@
 
 /* What the clients get: 48 kHz, 2 channels, 16 bits. The build has no
  * resampler (SOXR or FFmpeg) unless asked for one, so every format offered
- * has the rate and channels of the captured samples, and the same frame
- * size: rdpsnd sizes its buffers from the first one. Opus first, so that a
- * client that has it takes it (96 kbit/s instead of 1.5 Mbit/s for PCM). */
+ * has the rate and channels of the captured samples, and 16 bits a sample:
+ * rdpsnd sizes its buffers from the bits and channels of the first one. Opus
+ * first, so that a client that has it takes it (96 kbit/s instead of
+ * 1.5 Mbit/s for PCM). Its block alignment is 1: rdpsnd pads every wave to a
+ * multiple of it with zeros, and an Opus packet with zeros after it no longer
+ * decodes. */
 static const AUDIO_FORMAT win_audio_offered_formats[] = {
-	{ WAVE_FORMAT_OPUS, WIN_WASAPI_CHANNELS, WIN_WASAPI_RATE, 12000, 4, 16, 0, nullptr },
+	{ WAVE_FORMAT_OPUS, WIN_WASAPI_CHANNELS, WIN_WASAPI_RATE, 12000, 1, 16, 0, nullptr },
 	{ WAVE_FORMAT_PCM, WIN_WASAPI_CHANNELS, WIN_WASAPI_RATE, WIN_WASAPI_RATE * 4, 4, 16, 0,
 	  nullptr },
 };
