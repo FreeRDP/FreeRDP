@@ -150,6 +150,8 @@ class SdlContext
 
 	[[nodiscard]] COMMAND_LINE_ARGUMENT_A* args();
 	[[nodiscard]] size_t argsCount() const;
+	[[nodiscard]] bool railMultiExec() const;
+	void setRailMultiExec(bool enabled);
 
 	[[nodiscard]] static int argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom);
 
@@ -265,6 +267,7 @@ class SdlContext
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::optional<bool> _connectionDialog;
+	bool _railMultiExec = false;
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
 };

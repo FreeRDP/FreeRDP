@@ -46,6 +46,7 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 
 		if (!sdl->getRailChannelContext().init(rail))
 			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to initialize RAIL channel");
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -89,6 +90,7 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	{
 		auto rail = reinterpret_cast<RailClientContext*>(e->pInterface);
 		WINPR_ASSERT(rail);
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 		sdl->getRailChannelContext().uninit(rail);
 		rail->custom = nullptr;
 	}

@@ -38,6 +38,9 @@
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 static constexpr auto sdl_connection_dialog = "sdl-connection-dialog";
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
+static constexpr auto rail_multi_exec = "rail-multi-exec";
+#endif
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
@@ -70,6 +73,12 @@ SdlContext::SdlContext(rdpContext* context)
 	/* BoolValueTrue does not compile in C++, any non null default means on */
 	_args.push_back({ sdl_connection_dialog, COMMAND_LINE_VALUE_BOOL, nullptr, "on", nullptr, -1,
 	                  nullptr, "the connection dialog with progress and errors" });
+
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
+	_args.push_back(
+	    { rail_multi_exec, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+	      "Launch additional RemoteApps through a FIFO on this connection (default: off)" });
+#endif
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
@@ -1721,6 +1730,16 @@ size_t SdlContext::argsCount() const
 	return _args.size() - 1;
 }
 
+bool SdlContext::railMultiExec() const
+{
+	return _railMultiExec;
+}
+
+void SdlContext::setRailMultiExec(bool enabled)
+{
+	_railMultiExec = enabled;
+}
+
 int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom)
 {
 	auto sdl = static_cast<SdlContext*>(custom);
@@ -1744,6 +1763,15 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 		}
 		else if (strcmp(arg->Name, sdl_connection_dialog) == 0)
 			sdl->_connectionDialog = (arg->Value != nullptr);
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
+		else if (strcmp(arg->Name, rail_multi_exec) == 0)
+		{
+			const bool enabled = arg->Value != nullptr;
+			if (!freerdp_client_rail_multi_exec_enable(sdl->common(), enabled))
+				return COMMAND_LINE_ERROR;
+			sdl->_railMultiExec = enabled;
+		}
+#endif
 	}
 	return 0;
 }

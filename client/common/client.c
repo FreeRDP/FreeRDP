@@ -89,6 +89,10 @@
 
 #include "oauth2.h"
 
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+#include "rail_ipc.h"
+#endif
+
 #include <freerdp/log.h>
 
 WINPR_ATTR_NODISCARD
@@ -218,12 +222,40 @@ static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 	if (requireRdpClientContext(context))
 	{
 		rdpClientContext* cctx = (rdpClientContext*)context;
+
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+		rail_ipc_free(cctx);
+#endif
 		freerdp_oauth2_free(cctx->oauth2);
 		cctx->oauth2 = nullptr;
 	}
 }
 
 /* Common API */
+
+BOOL freerdp_client_rail_multi_exec_enable(rdpClientContext* cctx, BOOL enable)
+{
+	if (!cctx || !requireRdpClientContext(&cctx->context))
+		return FALSE;
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	return rail_ipc_enable(cctx, enable);
+#else
+	return !enable;
+#endif
+}
+
+BOOL freerdp_client_rail_multi_exec_set_ready(rdpClientContext* cctx, BOOL ready)
+{
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	if (!cctx || !requireRdpClientContext(&cctx->context))
+		return FALSE;
+	return rail_ipc_set_ready(cctx, ready);
+#else
+	WINPR_UNUSED(cctx);
+	WINPR_UNUSED(ready);
+	return TRUE;
+#endif
+}
 
 rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
@@ -1750,6 +1782,10 @@ static BOOL commonPreConnect(freerdp* instance)
 
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	if (!rail_ipc_start(cctx))
+		return FALSE;
+#endif
 	return IFCALLRESULT(TRUE, cctx->PreConnect, instance);
 }
 
@@ -1795,6 +1831,11 @@ static void commonPostDisconnect(freerdp* instance)
 	}
 #endif
 
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	if (!rail_ipc_set_ready(cctx, FALSE))
+		WLog_WARN(TAG, "RAIL IPC could not clear launch readiness");
+	rail_ipc_detach(cctx);
+#endif
 	IFCALL(cctx->PostDisconnect, instance);
 
 	// TODO
@@ -1809,7 +1850,9 @@ static void commonPostFinalDisconnect(freerdp* instance)
 
 	IFCALL(cctx->PostFinalDisconnect, instance);
 
-	// TODO
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	rail_ipc_stop(cctx);
+#endif
 }
 
 BOOL freerdp_client_common_pre_connect(rdpContext* context)
@@ -1972,6 +2015,14 @@ void freerdp_client_OnChannelConnectedEventHandler(void* context,
 	if (0)
 	{
 	}
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		if (!requireRdpClientContext(context))
+			return;
+		rail_ipc_attach(cctx, (RailClientContext*)e->pInterface);
+	}
+#endif
 #if defined(CHANNEL_AINPUT_CLIENT)
 	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
 	{
@@ -2032,6 +2083,14 @@ void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 	if (0)
 	{
 	}
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		if (!requireRdpClientContext(context))
+			return;
+		rail_ipc_detach(cctx);
+	}
+#endif
 #if defined(CHANNEL_AINPUT_CLIENT)
 	else if (strcmp(e->name, AINPUT_DVC_CHANNEL_NAME) == 0)
 	{

@@ -635,6 +635,9 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	sdl->setRailMultiExec(false);
+	if (!freerdp_client_rail_multi_exec_enable(sdl->common(), FALSE))
+		return COMMAND_LINE_ERROR;
 	auto status = freerdp_client_settings_parse_command_line_ex(
 	    settings, WINPR_ASSERTING_INT_CAST(int, args.size()), args.data(), FALSE, sdl->args(),
 	    sdl->argsCount(), &SdlContext::argumentHandler, sdl);

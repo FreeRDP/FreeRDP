@@ -33,9 +33,15 @@ set(SRCS
     aad_helper.c
     oauth2.h
     oauth2.c
+    rail_decoder.h
+    rail_decoder.c
 )
 
 add_compile_definitions(CMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
+
+if(UNIX AND NOT EMSCRIPTEN AND CHANNEL_RAIL_CLIENT)
+  list(APPEND SRCS rail_ipc.h rail_ipc.c)
+endif()
 
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
   get_filename_component(NINC ${FREERDP_CHANNELS_CLIENT_SRC} PATH)

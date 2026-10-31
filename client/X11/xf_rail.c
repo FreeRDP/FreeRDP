@@ -1107,6 +1107,11 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		return FALSE;
 	}
 
+	if ((orderInfo->fieldFlags &
+	     (WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN | WINDOW_ORDER_FIELD_DESKTOP_HOOKED)) &&
+	    !freerdp_client_rail_multi_exec_set_ready(&xfc->common, FALSE))
+		WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to revoke launch readiness");
+
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN) &&
 	    (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_HOOKED))
 	{
@@ -1129,15 +1134,12 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		if (!xf_rail_select_workarea_events(xfc))
 			return FALSE;
 
-		const char* app =
-		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
-		if ((app != nullptr) && (strnlen(app, 1) > 0))
-		{
-			if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
-				return FALSE;
-			if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
-				return FALSE;
-		}
+		if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
+			return FALSE;
+		if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
+			return FALSE;
+		if (!freerdp_client_rail_multi_exec_set_ready(&xfc->common, TRUE))
+			WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to grant launch readiness");
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
@@ -1169,6 +1171,8 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
 		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_TYPE_DESKTOP");
 		return FALSE;
 	}
+	if (!freerdp_client_rail_multi_exec_set_ready(&xfc->common, FALSE))
+		WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to revoke launch readiness");
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_NONE");
@@ -1222,7 +1226,8 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 		WLog_Print(
 		    xfc->log, WLOG_ERROR, "RAIL exec error: execResult=%s [0x%08" PRIx32 "] NtError=0x%X\n",
 		    error_code2str(execResult->execResult), execResult->execResult, execResult->rawResult);
-		freerdp_abort_connect_context(&xfc->common.context);
+		if (!xfc->railMultiExec)
+			freerdp_abort_connect_context(&xfc->common.context);
 	}
 
 	return CHANNEL_RC_OK;

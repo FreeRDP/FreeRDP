@@ -9,7 +9,10 @@ set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCm
                            TestClientAutoReconnect.c
 )
 if(BUILD_TESTING_INTERNAL)
-  list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c TestClientRailDecoder.c)
+  if(UNIX AND NOT EMSCRIPTEN AND CHANNEL_RAIL_CLIENT)
+    list(APPEND ${MODULE_PREFIX}_TESTS TestClientRailIpc.c)
+  endif()
 endif()
 
 set(FUZZERS TestFuzzClientRdpFile.c)

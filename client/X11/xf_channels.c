@@ -63,6 +63,7 @@ void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
 		xf_rail_init(xfc, (RailClientContext*)e->pInterface);
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -114,6 +115,7 @@ void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 		xf_rail_uninit(xfc, (RailClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)

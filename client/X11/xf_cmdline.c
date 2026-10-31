@@ -27,6 +27,8 @@ static const COMMAND_LINE_ARGUMENT_A xf_args[] = {
 	{ "defer-alt", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Defer Alt key down until another key is pressed. When enabled, Alt-Tab will not activate "
 	  "the remote application menu. Useful when used together with -grab-keyboard (default: off)" },
+	{ "rail-multi-exec", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+	  "Launch additional RemoteApps through a FIFO on this connection (default: off)" },
 	{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
 };
 
@@ -41,6 +43,14 @@ static int xf_client_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* cus
 		xfc->deferAlt = arg->Value != nullptr;
 		return 0;
 	}
+	if (arg->Name && (strcmp(arg->Name, "rail-multi-exec") == 0))
+	{
+		const BOOL enabled = arg->Value != nullptr;
+		if (!freerdp_client_rail_multi_exec_enable(&xfc->common, enabled))
+			return COMMAND_LINE_ERROR;
+		xfc->railMultiExec = enabled;
+		return 0;
+	}
 	return 0;
 }
 
@@ -52,6 +62,9 @@ int xf_client_settings_parse_command_line(xfContext* xfc, int argc, char** argv)
 	memcpy(args, xf_args, sizeof(args));
 
 	xfc->deferAlt = FALSE;
+	xfc->railMultiExec = FALSE;
+	if (!freerdp_client_rail_multi_exec_enable(&xfc->common, FALSE))
+		return COMMAND_LINE_ERROR;
 	return freerdp_client_settings_parse_command_line_ex(xfc->common.context.settings, argc, argv,
 	                                                     FALSE, args, ARRAYSIZE(args) - 1,
 	                                                     xf_client_handle_option, xfc);
