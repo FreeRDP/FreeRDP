@@ -54,9 +54,9 @@ Disable RDP security (default:on)
 .IP -sec-tls
 Disable TLS protocol security (default:on)
 .IP -sec-nla
-Disable NLA protocol security (default:on)
-.IP +sec-ext
-Use NLA extended protocol security (default:off)
+Disable NLA protocol security, extended NLA included (default:on)
+.IP -sec-ext
+Disable NLA extended protocol security (default:on)
 .IP /sam-file:<file>
 NTLM SAM file for NLA authentication
 .IP /version
@@ -70,7 +70,7 @@ Print the help and exit.
 .br
 @MANPAGE_NAME@ /sam-file:SAM.db - same as above, but a custom SAM database provided as argument
 .br
-@MANPAGE_NAME@ -sec-nla - start the shadow server on port 3380 with TLS/NLA security. This allows authenticating against PAM with unix users. Be aware that the password is transmitted plain text like with basic HTTP auth
+@MANPAGE_NAME@ -sec-nla - start the shadow server on port 3389 with TLS security, NLA and extended NLA off. This allows authenticating against PAM with unix users. Be aware that the password is transmitted plain text like with basic HTTP auth
 
 .SH EXAMPLES
 @MANPAGE_NAME@ /port:12345

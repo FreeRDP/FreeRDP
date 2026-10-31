@@ -91,9 +91,8 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 		printf("\tProvide one with /sam-file:<file with path>\n");
 		printf("\telse the default path %s is used.\n", path);
 		printf("\tIf there is no existing SAM file authentication for all users will fail.\n");
-		printf("\n\tIf authentication against PAM is desired, start with -sec-nla (requires "
-		       "compiled in "
-		       "support for PAM)\n\n");
+		printf("\n\tIf authentication against PAM is desired, start with -sec-nla, which turns\n"
+		       "\textended NLA off too (requires compiled in support for PAM)\n\n");
 		printf("Syntax:\n");
 		printf("    /flag (enables flag)\n");
 		printf("    /option:<value> (specifies option with value)\n");
@@ -468,7 +467,13 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, arg->Value != nullptr))
+			/* extended NLA (HYBRID_EX) is NLA too: left on, a client asking for
+			 * it still authenticates with NLA against the SAM file, and never
+			 * with the subsystem (PAM) */
+			const BOOL nla = arg->Value != nullptr;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, nla))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!nla && !freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
