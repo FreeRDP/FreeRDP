@@ -48,6 +48,10 @@ struct win_shadow_subsystem
 	BOOL ctrlDown;
 	BOOL altDown;
 
+	/* the sound capture (win_audio.c) */
+	HANDLE audioThread;
+	HANDLE audioStopEvent;
+
 #ifdef WITH_WDS_API
 	HWND hWnd;
 	shwContext* shw;
