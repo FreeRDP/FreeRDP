@@ -291,10 +291,29 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	/* NOTE: this geometry report is required - if it is dropped the server no
 	 * longer knows where the window manager placed the window and all mouse
 	 * events are routed to the wrong coordinates (buttons stop responding).
-	 * The window size feedback loop is handled in xf_rail_window_common(). */
+	 *
+	 * The server does not necessarily accept a reported size, for example for a window
+	 * that cannot be resized, and [MS-RDPERP] 3.2.5.1.6 says not to expect the window
+	 * boundaries it sends to match a Window Move PDU. If the window manager keeps the local
+	 * window at a size the server already answered differently, reporting it again only
+	 * makes the server answer again, often with a moved window, and the two sides chase
+	 * each other: the window drifts or collapses. So a size is reported once; while the
+	 * local window keeps it, only the position is reported, with the server's size. A new
+	 * move or resize by the user starts over, see xf_StartLocalMoveSize(). */
+	INT64 width = appWindow->width;
+	INT64 height = appWindow->height;
+	const BOOL refused = appWindow->sizeReported && (width == appWindow->reportedWidth) &&
+	                     (height == appWindow->reportedHeight) &&
+	                     ((width != (INT64)appWindow->windowWidth) ||
+	                      (height != (INT64)appWindow->windowHeight));
+	if (refused)
+	{
+		width = (INT64)appWindow->windowWidth;
+		height = (INT64)appWindow->windowHeight;
+	}
+
 	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
-	    appWindow->width != (INT64)appWindow->windowWidth ||
-	    appWindow->height != (INT64)appWindow->windowHeight)
+	    width != (INT64)appWindow->windowWidth || height != (INT64)appWindow->windowHeight)
 	{
 		WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 		windowMove.windowId = (UINT32)appWindow->windowId;
@@ -308,11 +327,18 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
 		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
 		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
-		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + appWindow->width + right);
-		windowMove.bottom =
-		    WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + appWindow->height + bottom);
+		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + width + right);
+		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + height + bottom);
 		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
-		return rc == CHANNEL_RC_OK;
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
+
+		if (!refused)
+		{
+			appWindow->sizeReported = TRUE;
+			appWindow->reportedWidth = width;
+			appWindow->reportedHeight = height;
+		}
 	}
 	return TRUE;
 }

@@ -111,6 +111,10 @@ struct xf_app_window
 	BOOL surfaceStale;
 	/* Timestamp of the last accepted WINDOW_ORDER_FIELD_WND_SIZE update. */
 	UINT64 lastWndSizeUpdate;
+	/* Local size sent in the last Window Move PDU, see xf_rail_adjust_position(). */
+	BOOL sizeReported;
+	INT64 reportedWidth;
+	INT64 reportedHeight;
 	/* Track sizes from the last Min Max Info PDU, see xf_UpdateWindowSizeHints(). */
 	BOOL haveMinMaxInfo;
 	INT32 minTrackWidth;
