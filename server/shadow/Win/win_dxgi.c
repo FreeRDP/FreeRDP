@@ -387,8 +387,23 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = dxgiOutput1->lpVtbl->DuplicateOutput(dxgiOutput1, (IUnknown*)subsystem->dxgiDevice,
-	                                          &(subsystem->dxgiOutputDuplication));
+	for (int attempt = 0;; ++attempt)
+	{
+		hr = dxgiOutput1->lpVtbl->DuplicateOutput(dxgiOutput1, (IUnknown*)subsystem->dxgiDevice,
+		                                          &(subsystem->dxgiOutputDuplication));
+
+		/* DXGI_ERROR_ACCESS_DENIED is transient while the display mode
+		 * changes (e.g. a display settings switch driven by a remote
+		 * display control channel): retry on the same output for a
+		 * bounded window instead of failing the capture outright. */
+		if (hr != DXGI_ERROR_ACCESS_DENIED || attempt >= 60)
+			break;
+
+		if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
+			break;
+
+		Sleep(250);
+	}
 
 	if (dxgiOutput1)
 	{
