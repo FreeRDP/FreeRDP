@@ -448,7 +448,9 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_CTRL_WPENDING:
+			EnterCriticalSection(&tls->lock);
 			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			LeaveCriticalSection(&tls->lock);
 			break;
 
 		case BIO_CTRL_PENDING:
@@ -461,7 +463,11 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 
 		case BIO_CTRL_FLUSH:
 			BIO_clear_retry_flags(bio);
+			/* A flush writes out the BIO below, just like SSL_write and SSL_read do,
+			 * so it must be serialized with them by the same lock. */
+			EnterCriticalSection(&tls->lock);
 			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			LeaveCriticalSection(&tls->lock);
 			if (status != 1)
 				WLog_DBG(TAG, "BIO_ctrl returned %ld", status);
 			BIO_copy_next_retry(bio);

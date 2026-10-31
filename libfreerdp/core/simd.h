@@ -36,6 +36,11 @@
 #define SSE_AVX_INTRINSICS_ENABLED
 #endif
 
+// Emscripten lowers the SSE intrinsics onto WebAssembly SIMD (-msimd128)
+#if defined(__EMSCRIPTEN__) && defined(__wasm_simd128__)
+#define SSE_AVX_INTRINSICS_ENABLED
+#endif
+
 // Inspired by llvm arm_neon.h header checks
 #if defined(__ARM_NEON) && defined(__ARM_FP)
 #define NEON_INTRINSICS_ENABLED

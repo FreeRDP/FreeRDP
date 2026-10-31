@@ -1725,6 +1725,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 
 BASIC_STATE_FUNC_DEFINED(channelManager, IWTSVirtualChannelManager*)
 BASIC_STATE_FUNC_DEFINED(channelID, UINT32)
+BASIC_STATE_FUNC_DEFINED(channelCallback, GENERIC_CHANNEL_CALLBACK*)
 BASIC_STATE_FUNC_DEFINED(ReqCompletion, UINT32)
 BASIC_STATE_FUNC_DEFINED(bus_number, BYTE)
 BASIC_STATE_FUNC_DEFINED(dev_number, BYTE)
@@ -1805,6 +1806,7 @@ static void udev_load_interface(UDEVICE* pdev)
 	/* Basic */
 	BASIC_STATE_FUNC_REGISTER(channelManager, pdev);
 	BASIC_STATE_FUNC_REGISTER(channelID, pdev);
+	BASIC_STATE_FUNC_REGISTER(channelCallback, pdev);
 	BASIC_STATE_FUNC_REGISTER(UsbDevice, pdev);
 	BASIC_STATE_FUNC_REGISTER(ReqCompletion, pdev);
 	BASIC_STATE_FUNC_REGISTER(bus_number, pdev);

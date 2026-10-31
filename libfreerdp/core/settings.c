@@ -894,6 +894,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!res)
 			goto out_fail;
 	}
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RdstlsEnabledModes, UINT32_MAX))
+		goto out_fail;
 	if (!server && !remote)
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpUserAgent,

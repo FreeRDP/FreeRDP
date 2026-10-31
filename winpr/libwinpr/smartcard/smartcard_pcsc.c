@@ -675,6 +675,33 @@ static PCSC_SCARDHANDLE* PCSC_GetCardHandleData(SCARDHANDLE hCard)
 	return pCard;
 }
 
+/* SCardReleaseContext or SCardDisconnect on another thread may free the handle data while
+ * a pcsc-lite call on the handle blocks: look the handle up again afterwards, with the
+ * list locked, instead of touching the pointer fetched before the call */
+static void PCSC_SetTransactionLocked(SCARDHANDLE hCard, BOOL locked)
+{
+	if (!init())
+		return;
+
+	ListDictionary_Lock(g_CardHandles);
+	PCSC_SCARDHANDLE* pCard = ListDictionary_GetItemValue(g_CardHandles, (void*)hCard);
+	if (pCard)
+		pCard->isTransactionLocked = locked;
+	ListDictionary_Unlock(g_CardHandles);
+}
+
+static void PCSC_AddTransmitCountOfHandle(SCARDHANDLE hCard)
+{
+	if (!init())
+		return;
+
+	ListDictionary_Lock(g_CardHandles);
+	const PCSC_SCARDHANDLE* pCard = ListDictionary_GetItemValue(g_CardHandles, (void*)hCard);
+	if (pCard)
+		PCSC_AddTransmitCount(pCard->szReader);
+	ListDictionary_Unlock(g_CardHandles);
+}
+
 WINPR_ATTR_NODISCARD
 static SCARDCONTEXT PCSC_GetCardContextFromHandle(SCARDHANDLE hCard)
 {
@@ -2131,7 +2158,7 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardBeginTransaction(SCARDHANDLE h
 	status = g_PCSC.pfnSCardBeginTransaction(hCard);
 
 	if (status == SCARD_S_SUCCESS)
-		pCard->isTransactionLocked = TRUE;
+		PCSC_SetTransactionLocked(hCard, TRUE);
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
@@ -2163,7 +2190,7 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardEndTransaction(SCARDHANDLE hCa
 
 	status = g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
 
-	pCard->isTransactionLocked = FALSE;
+	PCSC_SetTransactionLocked(hCard, FALSE);
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
@@ -2508,7 +2535,7 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardTransmit(
 	*pcbRecvLength = (DWORD)pcsc_cbRecvLength;
 
 	if (status == SCARD_S_SUCCESS)
-		PCSC_AddTransmitCount(pCard->szReader);
+		PCSC_AddTransmitCountOfHandle(hCard);
 
 	if (inSendPci.lpcs)
 		free(sendPci.ps); /* pcsc_pioSendPci is dynamically allocated only when pioSendPci is

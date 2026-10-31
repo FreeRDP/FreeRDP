@@ -37,6 +37,7 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client.h>
 #include <freerdp/constants.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/primitives.h>
@@ -61,6 +62,8 @@
 
 /* Defines the JNI version supported by this library. */
 #define FREERDP_JNI_VERSION FREERDP_VERSION_FULL
+
+#define ANDROID_RECONNECT_MAX_DELAY_MS 3000
 
 static jclass gJavaActivityClass;
 static jmethodID gOnPointerSetMethod;
@@ -603,6 +606,31 @@ static DWORD android_verify_changed_certificate_ex(freerdp* instance, const char
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
+static SSIZE_T android_retry_dialog(freerdp* instance, const char* what, size_t current,
+                                    void* userarg)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(what);
+	androidContext* afc = (androidContext*)instance->context;
+	WINPR_ASSERT(afc);
+
+	SSIZE_T delay = client_common_retry_dialog(instance, what, current, userarg);
+	if ((delay < 0) || (strcmp(what, "connection") != 0))
+		return delay;
+
+	if (delay > ANDROID_RECONNECT_MAX_DELAY_MS)
+		delay = ANDROID_RECONNECT_MAX_DELAY_MS;
+
+	if (WaitForSingleObject(afc->foregroundEvent, INFINITE) != WAIT_OBJECT_0)
+		return -1;
+	if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_CANCELLED)
+		return -1;
+
+	freerdp_callback("OnReconnecting", "(J)V", (jlong)instance);
+	return delay;
+}
+
 static int android_freerdp_run(freerdp* instance)
 {
 	WINPR_ASSERT(instance);
@@ -719,8 +747,14 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	if (!android_event_queue_init(instance))
 		return FALSE;
 
+	androidContext* afc = (androidContext*)context;
+	afc->foregroundEvent = CreateEvent(nullptr, TRUE, TRUE, nullptr);
+	if (!afc->foregroundEvent)
+		return FALSE;
+
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
+	instance->RetryDialog = android_retry_dialog;
 	instance->PostDisconnect = android_post_disconnect;
 	instance->PostFinalDisconnect = android_post_final_disconnect;
 	instance->AuthenticateEx = android_authenticate_ex;
@@ -734,6 +768,10 @@ static void android_client_free(freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;
+
+	androidContext* afc = (androidContext*)context;
+	if (afc->foregroundEvent && !CloseHandle(afc->foregroundEvent))
+		WLog_WARN(TAG, "CloseHandle failed");
 
 	android_event_queue_uninit(instance);
 }
@@ -864,6 +902,20 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 #endif
 }
 
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1foreground(
+    JNIEnv* env, jclass cls, jlong instance, jboolean foreground)
+{
+	freerdp* inst = (freerdp*)instance;
+
+	if (inst && inst->context)
+	{
+		androidContext* afc = (androidContext*)inst->context;
+		if (afc->foregroundEvent &&
+		    !(foreground ? SetEvent(afc->foregroundEvent) : ResetEvent(afc->foregroundEvent)))
+			WLog_WARN(TAG, "failed to update the foreground event");
+	}
+}
+
 JNIEXPORT jstring JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1get_1last_1error_1string(JNIEnv* env,
                                                                                    jclass cls,
@@ -961,8 +1013,14 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 		return JNI_FALSE;
 	}
 
+	/* The abort keeps an existing error, so force the cancel. */
+	freerdp_set_last_error_log(inst->context, FREERDP_ERROR_CONNECT_CANCELLED);
 	if (!freerdp_abort_connect_context(inst->context))
 		return JNI_FALSE;
+
+	/* Wake a held reconnect. */
+	if (ctx->foregroundEvent && !SetEvent(ctx->foregroundEvent))
+		WLog_WARN(TAG, "SetEvent failed");
 
 	return JNI_TRUE;
 }

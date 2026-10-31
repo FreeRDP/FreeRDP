@@ -227,6 +227,7 @@
     <string name="settings_cat_client">Client</string>
     <string name="settings_power_disconnect_timeout">Close idle Connections</string>
     <string name="settings_power_keep_screen_on_when_connected">Keep screen on when connected</string>
+    <string name="settings_power_auto_reconnect">Reconnect automatically</string>
     <string name="settings_cat_security">Security</string>
     <string name="settings_security_accept_certificates">Accept all Certificates</string>
     <string name="settings_security_clear_certificate_cache">Clear Certificate Cache</string>
@@ -244,6 +245,7 @@
     <string name="error_connection_failure">Could not establish a connection to the server!</string>
     <!-- Info message strings -->
     <string name="info_capabilities_changed">Screen settings changed to ones supported by the server instead.</string>
+    <string name="info_reconnecting">Reconnecting &#8230;</string>
     <string name="info_reset_success">Certificate cache deleted.</string>
     <string name="info_reset_failed">Could not delete the certificate cache!</string>
     <!-- Dialog strings -->
@@ -279,6 +281,7 @@
     <string name="preference_key_security_clear_certificate_cache" translatable="false">security.clear_certificate_cache</string>
     <string name="preference_key_power_disconnect_timeout" translatable="false">power.disconnect_timeout</string>
     <string name="preference_key_power_keep_screen_on_when_connected" translatable="false">power.keep_screen_on_when_connected</string>
+    <string name="preference_key_power_auto_reconnect" translatable="false">power.auto_reconnect</string>
     <string name="preference_key_ui_hide_status_bar" translatable="false">ui.hide_status_bar</string>
     <string name="preference_key_ui_hide_navigation_bar" translatable="false">ui.hide_navigation_bar</string>
     <string name="preference_key_ui_ask_on_exit" translatable="false">ui.ask_on_exit</string>

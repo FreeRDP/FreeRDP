@@ -251,6 +251,13 @@ public class ApplicationSettingsActivity
 		    context.getString(R.string.preference_key_power_keep_screen_on_when_connected), false);
 	}
 
+	public static boolean getAutoReconnect(Context context)
+	{
+		SharedPreferences preferences = get(context);
+		return preferences.getBoolean(
+		    context.getString(R.string.preference_key_power_auto_reconnect), true);
+	}
+
 	public static boolean getHideStatusBar(Context context)
 	{
 		SharedPreferences preferences = get(context);
@@ -297,7 +304,7 @@ public class ApplicationSettingsActivity
 	{
 		SharedPreferences preferences = get(context);
 		return preferences.getBoolean(
-		    context.getString(R.string.preference_key_ui_invert_scrolling), false);
+		    context.getString(R.string.preference_key_ui_invert_scrolling), true);
 	}
 
 	public static boolean getAskOnExit(Context context)

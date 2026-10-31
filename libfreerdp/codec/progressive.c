@@ -2341,6 +2341,7 @@ static inline SSIZE_T progressive_parse_block(PROGRESSIVE_CONTEXT* WINPR_RESTRIC
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
                                 PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
                                 BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep,
@@ -2391,45 +2392,46 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 
 		REGION16 updateRegion = WINPR_C_ARRAY_INIT;
 		region16_init(&updateRegion);
+		BOOL success = FALSE;
 		if (!region16_intersect_rect(&updateRegion, &clippingRects, &updateRect))
-		{
-			region16_uninit(&updateRegion);
-			goto fail;
-		}
+			goto loop_end;
+
 		updateRects = region16_rects(&updateRegion, &nbUpdateRects);
 
 		for (UINT32 j = 0; j < nbUpdateRects; j++)
 		{
 			const RECTANGLE_16* rect = &updateRects[j];
 			if (rect->left < updateRect.left)
-				goto fail;
+				goto loop_end;
 			const UINT32 nXSrc = rect->left - updateRect.left;
 			const UINT32 nYSrc = rect->top - updateRect.top;
 			const UINT32 width = rect->right - rect->left;
 			const UINT32 height = rect->bottom - rect->top;
 
 			if (rect->left + width > surface->width)
-				goto fail;
+				goto loop_end;
 			if (rect->top + height > surface->height)
-				goto fail;
+				goto loop_end;
 			const BOOL res = freerdp_image_copy_no_overlap(
 			    pDstData, DstFormat, nDstStep, rect->left, rect->top, width, height, tile->data,
 			    progressive->format, tile->stride, nXSrc, nYSrc, nullptr, FREERDP_KEEP_DST_ALPHA);
 			if (!res)
-				goto fail;
+				goto loop_end;
 
 			if (invalidRegion)
 			{
 				if (!region16_union_rect(invalidRegion, invalidRegion, rect))
-				{
-					region16_uninit(&updateRegion);
-					goto fail;
-				}
+					goto loop_end;
 			}
 		}
 
-		region16_uninit(&updateRegion);
 		tile->dirty = FALSE;
+		success = TRUE;
+
+	loop_end:
+		region16_uninit(&updateRegion);
+		if (!success)
+			goto fail;
 	}
 
 	rc = TRUE;

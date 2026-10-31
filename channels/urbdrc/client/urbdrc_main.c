@@ -564,6 +564,7 @@ static UINT urbdrc_device_control_channel(GENERIC_CHANNEL_CALLBACK* callback,
 					pdev->setAlreadySend(pdev);
 					pdev->set_channelManager(pdev, callback->channel_mgr);
 					pdev->set_channelID(pdev, channelID);
+					pdev->set_channelCallback(pdev, callback);
 					break;
 				}
 			}
@@ -689,6 +690,28 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	return error;
 }
 
+/* Must be called with loading_lock held.
+ *
+ * Pending transfers of a device keep the GENERIC_CHANNEL_CALLBACK of the channel the device is
+ * bound to. Before that callback is freed every such device has to go: markChannelClosed cancels
+ * the transfers and waits for them to complete. Do that for every device bound to the channel,
+ * not just the first one, and no matter what was closed before (the control channel may already
+ * be gone). */
+static void urbdrc_close_devices(IUDEVMAN* udevman, UINT32 channelId)
+{
+	udevman->rewind(udevman);
+
+	while (udevman->has_next(udevman))
+	{
+		IUDEVICE* pdev = udevman->get_next(udevman);
+
+		/* Need to notify the local backend the device is gone.
+		 * This unregisters the device and leaves the iterator at its successor. */
+		if (pdev->isAlreadySend(pdev) && (pdev->get_channelID(pdev) == channelId))
+			pdev->markChannelClosed(pdev);
+	}
+}
+
 /**
  * Function description
  *
@@ -712,22 +735,8 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 					udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
 					udevman->controlChannelId = 0;
 				}
-				UINT32 control = callback->channel_mgr->GetChannelId(callback->channel);
-				IUDEVICE* pdev = udevman->get_udevice_by_ChannelID(udevman, control);
-				if (pdev && !pdev->isChannelClosed(pdev))
-				{
-					if (udevman->controlChannelId == control)
-					{
-						udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
-						udevman->controlChannelId = 0;
-					}
-					else
-					{ /* Need to notify the local backend the device is gone */
-
-						if (pdev)
-							pdev->markChannelClosed(pdev);
-					}
-				}
+				urbdrc_close_devices(udevman,
+				                     callback->channel_mgr->GetChannelId(callback->channel));
 				udevman->loading_unlock(udevman);
 			}
 		}

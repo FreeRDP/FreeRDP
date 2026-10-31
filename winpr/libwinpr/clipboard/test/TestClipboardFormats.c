@@ -589,6 +589,42 @@ fail:
 	return rc;
 }
 
+static BOOL test_cf_locale(void)
+{
+	BOOL rc = FALSE;
+	wClipboard* cb = ClipboardCreate();
+	if (!cb)
+		return FALSE;
+
+	const UINT32 formats[] = { CF_OEMTEXT, CF_TEXT, CF_UNICODETEXT,
+		                       ClipboardRegisterFormat(cb, "text/plain"),
+		                       ClipboardRegisterFormat(cb, "text/plain;charset=utf-8") };
+
+	for (size_t x = 0; x < ARRAYSIZE(formats); x++)
+	{
+		const UINT32 format = formats[x];
+
+		const char text[] = "some test string";
+		if (!test_ClipboardSetData(cb, format, text, sizeof(text)))
+			goto fail;
+		UINT32 size = 0;
+		void* locale = test_ClipboardGetData(cb, CF_LOCALE, &size);
+		if (!locale || (size != 4))
+		{
+			free(locale);
+			goto fail;
+		}
+		const UINT32 loc = *(UINT32*)locale;
+		free(locale);
+		if (loc != 0x409)
+			goto fail;
+	}
+	rc = TRUE;
+fail:
+	ClipboardDestroy(cb);
+	return rc;
+}
+
 int TestClipboardFormats(int argc, char* argv[])
 {
 	int rc = -1;
@@ -600,6 +636,8 @@ int TestClipboardFormats(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
+	if (!test_cf_locale())
+		return -1;
 	if (!test_text_leading_newline())
 		return -1;
 

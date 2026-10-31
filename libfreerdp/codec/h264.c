@@ -76,24 +76,24 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 	if (isNull || (width != h264->width) || (height != h264->height) ||
 	    (stride != h264->iStride[0]))
 	{
+		UINT32 iStride[3] = WINPR_C_ARRAY_INIT;
 		if (h264->hwAccel) /* NV12 */
 		{
-			h264->iStride[0] = stride;
-			h264->iStride[1] = stride;
-			h264->iStride[2] = 0;
+			iStride[0] = stride;
+			iStride[1] = stride;
+			iStride[2] = 0;
 		}
 		else /* I420 */
 		{
-			h264->iStride[0] = stride;
-			h264->iStride[1] = (stride + 1) / 2;
-			h264->iStride[2] = (stride + 1) / 2;
+			iStride[0] = stride;
+			iStride[1] = (stride + 1) / 2;
+			iStride[2] = (stride + 1) / 2;
 		}
 
 		for (size_t x = 0; x < nPlanes; x++)
 		{
-			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
-			BYTE* tmp2 =
-			    winpr_aligned_recalloc(h264->pOldYUVData[x], h264->iStride[x], pheight, 16);
+			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], iStride[x], pheight, 16);
+			BYTE* tmp2 = winpr_aligned_recalloc(h264->pOldYUVData[x], iStride[x], pheight, 16);
 			if (tmp1)
 				h264->pYUVData[x] = tmp1;
 			if (tmp2)
@@ -101,6 +101,8 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 			if (!tmp1 || !tmp2)
 				return FALSE;
 		}
+		/* Only update the strides after the buffers were successfully allocated */
+		memcpy(h264->iStride, iStride, sizeof(h264->iStride));
 		h264->width = width;
 		h264->height = height;
 	}
@@ -546,33 +548,33 @@ BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 
 	if ((piMainStride[0] != piDstStride[0]) || (piDstSize[0] != dstsize))
 	{
+		const UINT32 size = WINPR_ASSERTING_INT_CAST(UINT32, dstsize);
+
 		for (UINT32 x = 0; x < 3; x++)
 		{
-			piDstStride[x] = piMainStride[0];
-
-			const uint64_t dstride = 1ull * piDstStride[x] * padDstHeight;
-			if (dstride > UINT32_MAX)
-				return FALSE;
-
-			piDstSize[x] = WINPR_ASSERTING_INT_CAST(UINT32, dstride);
-			if (piDstSize[x] == 0)
-				return FALSE;
-
-			BYTE* tmp1 = winpr_aligned_recalloc(ppYUVDstData[x], piDstSize[x], 1, 16);
+			BYTE* tmp1 = winpr_aligned_recalloc(ppYUVDstData[x], size, 1, 16);
 			if (!tmp1)
 				return FALSE;
 			ppYUVDstData[x] = tmp1;
-			BYTE* tmp2 = winpr_aligned_recalloc(ppOldYUVDstData[x], piDstSize[x], 1, 16);
+			BYTE* tmp2 = winpr_aligned_recalloc(ppOldYUVDstData[x], size, 1, 16);
 			if (!tmp2)
 				return FALSE;
 			ppOldYUVDstData[x] = tmp2;
 		}
 
 		{
-			BYTE* tmp = winpr_aligned_recalloc(h264->lumaData, piDstSize[0], 4, 16);
+			BYTE* tmp = winpr_aligned_recalloc(h264->lumaData, size, 4, 16);
 			if (!tmp)
 				goto fail;
 			h264->lumaData = tmp;
+		}
+
+		/* Only update stride and size after all buffers were successfully allocated,
+		 * otherwise the next call would skip the reallocation and use too small planes */
+		for (UINT32 x = 0; x < 3; x++)
+		{
+			piDstStride[x] = piMainStride[0];
+			piDstSize[x] = size;
 		}
 	}
 
@@ -805,16 +807,53 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 	return FALSE;
 }
 
+static void h264_buffers_free(H264_CONTEXT* h264)
+{
+	WINPR_ASSERT(h264);
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (h264->Compressor)
+		{
+			winpr_aligned_free(h264->pYUVData[x]);
+			winpr_aligned_free(h264->pOldYUVData[x]);
+		}
+		winpr_aligned_free(h264->pYUV444Data[x]);
+		winpr_aligned_free(h264->pOldYUV444Data[x]);
+
+		h264->pYUVData[x] = nullptr;
+		h264->pOldYUVData[x] = nullptr;
+		h264->pYUV444Data[x] = nullptr;
+		h264->pOldYUV444Data[x] = nullptr;
+	}
+	winpr_aligned_free(h264->lumaData);
+	h264->lumaData = nullptr;
+}
+
 BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 {
 	if (!h264)
 		return FALSE;
 
-	h264->width = width;
-	h264->height = height;
+	if (width > UINT16_MAX)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "h264::width %" PRIu32 " > %d, aborting", width,
+		           UINT16_MAX);
+		return FALSE;
+	}
+	if (height > UINT16_MAX)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "h264::height %" PRIu32 " > %d, aborting", height,
+		           UINT16_MAX);
+		return FALSE;
+	}
 
 	if (h264->subsystem && h264->subsystem->Uninit)
 		h264->subsystem->Uninit(h264);
+
+	h264_buffers_free(h264);
+	h264->width = width;
+	h264->height = height;
+
 	if (!h264_context_init(h264))
 		return FALSE;
 
@@ -859,29 +898,19 @@ fail:
 
 void h264_context_free(H264_CONTEXT* h264)
 {
-	if (h264)
+	if (!h264)
+		return;
+
+	if (h264->subsystem)
 	{
-		if (h264->subsystem)
-		{
-			WINPR_ASSERT(h264->subsystem->Uninit);
-			h264->subsystem->Uninit(h264);
-		}
-
-		for (size_t x = 0; x < 3; x++)
-		{
-			if (h264->Compressor)
-			{
-				winpr_aligned_free(h264->pYUVData[x]);
-				winpr_aligned_free(h264->pOldYUVData[x]);
-			}
-			winpr_aligned_free(h264->pYUV444Data[x]);
-			winpr_aligned_free(h264->pOldYUV444Data[x]);
-		}
-		winpr_aligned_free(h264->lumaData);
-
-		yuv_context_free(h264->yuv);
-		free(h264);
+		WINPR_ASSERT(h264->subsystem->Uninit);
+		h264->subsystem->Uninit(h264);
 	}
+
+	h264_buffers_free(h264);
+
+	yuv_context_free(h264->yuv);
+	free(h264);
 }
 
 void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)

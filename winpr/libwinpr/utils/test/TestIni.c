@@ -36,6 +36,66 @@ static const char TEST_INI_03[] = "[FreeRDS]\n"
                                   "sysconfdir=\"etc\"\n"
                                   "\n";
 
+static const char TEST_INI_04[] = "[foobar]\r\n"
+                                  "\r\n"
+                                  "\r\n"
+                                  "prefix=\"someprefix\"\r\n";
+
+WINPR_ATTR_NODISCARD
+static BOOL test04(void)
+{
+	BOOL rc = FALSE;
+	size_t nSections = 0;
+
+	/* First Sample */
+	char** sectionNames = nullptr;
+	wIniFile* ini = IniFile_New();
+	if (!ini)
+		goto fail;
+
+	if (IniFile_ReadBuffer(ini, TEST_INI_04) < 0)
+		goto fail;
+
+	sectionNames = IniFile_GetSectionNames(ini, &nSections);
+	if (!sectionNames && (nSections > 0))
+		goto fail;
+
+	if (nSections != 1)
+		goto fail;
+
+	for (size_t i = 0; i < nSections; i++)
+	{
+		size_t nKeys = 0;
+		char** keyNames = IniFile_GetSectionKeyNames(ini, sectionNames[i], &nKeys);
+		printf("[%s]\n", sectionNames[i]);
+		if ((!keyNames && (nKeys > 0)) || (nKeys != 1))
+		{
+			free((void*)keyNames);
+			goto fail;
+		}
+		for (size_t j = 0; j < nKeys; j++)
+		{
+			const char* sValue = IniFile_GetKeyValueString(ini, sectionNames[i], keyNames[j]);
+			printf("%s = %s\n", keyNames[j], sValue);
+		}
+		free((void*)keyNames);
+	}
+
+	const char* sValue = IniFile_GetKeyValueString(ini, "foobar", "prefix");
+
+	if (strcmp(sValue, "someprefix") != 0)
+	{
+		printf("IniFile_GetKeyValueString failure\n");
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	free((void*)sectionNames);
+	IniFile_Free(ini);
+	return rc;
+}
+
 int TestIni(int argc, char* argv[])
 {
 	int rc = -1;
@@ -49,6 +109,9 @@ int TestIni(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!test04())
+		return -1;
 
 	/* First Sample */
 	ini = IniFile_New();

@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/interlocked.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -323,7 +324,7 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 void Stream_AddRef(wStream* s)
 {
 	WINPR_ASSERT(s);
-	s->count++;
+	InterlockedIncrement(&s->count);
 }
 
 /**
@@ -334,9 +335,8 @@ void Stream_Release(wStream* s)
 {
 	WINPR_ASSERT(s);
 
-	if (s->count > 0)
-		s->count--;
-	if (s->count == 0)
+	const LONG val = InterlockedDecrement(&s->count);
+	if (val <= 0)
 	{
 		if (s->pool)
 			StreamPool_ReleaseOrReturn(s->pool, s);

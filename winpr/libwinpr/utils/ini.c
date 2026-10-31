@@ -62,28 +62,30 @@ struct s_wIniFile
 
 static BOOL IniFile_Load_NextLine(wIniFile* ini, char* str)
 {
-	size_t length = 0;
-
-	WINPR_ASSERT(ini);
-
-	ini->nextLine = strtok_s(str, "\n", &ini->tokctx);
-
-	if (ini->nextLine)
-		length = strlen(ini->nextLine);
-
-	if (length > 0)
+	while (TRUE)
 	{
+		WINPR_ASSERT(ini);
+
+		ini->nextLine = strtok_s(str, "\n", &ini->tokctx);
+
+		if (!ini->nextLine)
+			return FALSE;
+
+		size_t length = strlen(ini->nextLine);
+		if (length == 0)
+			continue;
+
 		if (ini->nextLine[length - 1] == '\r')
 		{
 			ini->nextLine[length - 1] = '\0';
 			length--;
 		}
 
-		if (length < 1)
-			ini->nextLine = nullptr;
-	}
+		if (length > 1)
+			return TRUE;
 
-	return (ini->nextLine != nullptr);
+		ini->nextLine = nullptr;
+	}
 }
 
 static BOOL IniFile_BufferResize(wIniFile* ini, size_t size)

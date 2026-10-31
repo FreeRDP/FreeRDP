@@ -517,6 +517,12 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 	context = rdp->context;
 
+	/* Leave the active state before the transport goes away: input functions are called from
+	 * other threads and only check the state, so they must stop before rdp_reset() frees the
+	 * transport and fastpath they use. */
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
+		return FALSE;
+
 	if (rdp->nego)
 	{
 		if (!nego_disconnect(rdp->nego))
@@ -527,9 +533,6 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 		return FALSE;
 
 	if (!rdp_reset(rdp))
-		return FALSE;
-
-	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
 	if (context->channels)
@@ -723,6 +726,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	if (!ok)
 		return FALSE;
 
+	rdp->redirectionCount++;
 	status = rdp_client_connect(rdp);
 
 	if (status)
@@ -803,13 +807,14 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	if (!rdp_client_reconnect_via_broker(rdp, &viaBroker))
 		return FALSE;
 
+	const UINT32 redirectionCount = rdp->redirectionCount;
 	BOOL status = rdp_client_connect(rdp);
 
 	/* When the broker redirected us, rdp_client_redirect() already reloaded and reconnected the
 	 * channels (rdp_check_fds() runs it from inside rdp_client_connect()); doing it a second time
-	 * fails with CHANNEL_RC_ALREADY_OPEN and makes the whole attempt fail. */
-	const BOOL redirected =
-	    viaBroker && (freerdp_settings_get_uint32(rdp->settings, FreeRDP_RedirectionFlags) != 0);
+	 * fails with CHANNEL_RC_ALREADY_OPEN and makes the whole attempt fail. RedirectionFlags can't
+	 * tell: ARM sets them during the connect without any redirection. */
+	const BOOL redirected = rdp->redirectionCount != redirectionCount;
 	if (status && !redirected)
 		status = rdp_client_reconnect_channels(rdp, viaBroker);
 
@@ -1003,6 +1008,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 		return FALSE;
+
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return TRUE;
 
 	if (!rdp_read_security_header(rdp, s, &sec_flags, nullptr))
 	{
@@ -1302,6 +1310,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s, DWORD logLevel)
 		res = FALSE;
 	else
 	{
+		if (freerdp_shall_disconnect_context(rdp->context))
+			return TRUE;
+
 		const UINT16 messageChannelId = rdp->mcs->messageChannelId;
 		/* If the MCS message channel has been joined... */
 
@@ -1337,6 +1348,9 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return STATE_RUN_FAILED;
+
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return STATE_RUN_QUIT_SESSION;
 
 	/* there might be autodetect messages mixed in between licensing messages.
 	 * that has been observed with 2k12 R2 and 2k19
@@ -2348,7 +2362,11 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 
 		rdp_update_internal* up = update_cast(rdp->update);
 		up->stats.base[RDP_STATS_RESIZE]++;
+
+		/* Keep the lock order of BeginPaint/EndPaint: update lock first, client locks second */
+		rdp_update_lock(rdp->update);
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
+		rdp_update_unlock(rdp->update);
 
 		if (!status)
 		{

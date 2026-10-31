@@ -126,7 +126,10 @@ static int test_gdi_ClipCoords(void)
 		const GDI_RGN* expect;
 	};
 
+	const GDI_RGN rgn0x0_1x768 = { 0, 0, 0, 1, 768, FALSE };
+	const GDI_RGN rgn0x0_1024x1 = { 0, 0, 0, 1024, 1, FALSE };
 	const GDI_RGN rgn0x0_1024x768 = { 0, 0, 0, 1024, 768, FALSE };
+	const GDI_RGN rgn20x20_0x0 = { 0, 20, 20, 0, 0, FALSE };
 	const GDI_RGN rgn20x20_100x100 = { 0, 20, 20, 100, 100, FALSE };
 	const GDI_RGN rgn100x300_250x100 = { 0, 100, 300, 250, 100, FALSE };
 	const GDI_RGN rgn100x300_300x100 = { 0, 100, 300, 300, 100, FALSE };
@@ -144,6 +147,12 @@ static int test_gdi_ClipCoords(void)
 	const struct testcase_t testcases[] = {
 		/* null clipping region */
 		{ nullptr, &rgn20x20_100x100, &rgn20x20_100x100 },
+		/* empty region, nothing to draw */
+		{ nullptr, &rgn20x20_0x0, nullptr },
+		/* region only covers first column */
+		{ nullptr, &rgn0x0_1x768, &rgn0x0_1x768 },
+		/* region only covers first row */
+		{ nullptr, &rgn0x0_1024x1, &rgn0x0_1024x1 },
 		/* region all inside clipping region */
 		{ &rgn0x0_1024x768, &rgn20x20_100x100, &rgn20x20_100x100 },
 		/* region all outside clipping region, on the left */
@@ -184,6 +193,42 @@ fail:
 	return rc;
 }
 
+/* A bitmap that is only one pixel wide or high must still clip */
+static int test_gdi_ClipCoordsSmallBitmap(void)
+{
+	const GDI_RGN rgn0x0_64x64 = { 0, 0, 0, 64, 64, FALSE };
+	const GDI_RGN rgn0x0_1x64 = { 0, 0, 0, 1, 64, FALSE };
+	const GDI_RGN rgn0x0_64x1 = { 0, 0, 0, 64, 1, FALSE };
+	const GDI_RGN* sizes[] = { &rgn0x0_1x64, &rgn0x0_64x1 };
+
+	for (size_t x = 0; x < ARRAYSIZE(sizes); x++)
+	{
+		const GDI_RGN* cur = sizes[x];
+		const UINT32 w = WINPR_ASSERTING_INT_CAST(UINT32, cur->w);
+		const UINT32 h = WINPR_ASSERTING_INT_CAST(UINT32, cur->h);
+		bool rc = false;
+		HGDI_DC hdc = gdi_GetDC();
+		if (!hdc)
+			return -1;
+
+		hdc->format = PIXEL_FORMAT_XRGB32;
+		HGDI_BITMAP bmp = gdi_CreateBitmapEx(w, h, hdc->format, 0, nullptr, nullptr);
+		if (bmp)
+		{
+			gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
+			rc = test_gdi_coords(x, hdc, nullptr, &rgn0x0_64x64, cur) &&
+			     test_gdi_coords(x, hdc, &rgn0x0_64x64, &rgn0x0_64x64, cur);
+		}
+
+		gdi_DeleteObject((HGDIOBJECT)bmp);
+		gdi_DeleteDC(hdc);
+		if (!rc)
+			return -1;
+	}
+
+	return 0;
+}
+
 static int test_gdi_InvalidateRegion(void)
 {
 	int rc = -1;
@@ -192,6 +237,7 @@ static int test_gdi_InvalidateRegion(void)
 	HGDI_RGN rgn2 = nullptr;
 	HGDI_RGN invalid = nullptr;
 	HGDI_BITMAP bmp = nullptr;
+	HGDI_PEN pen = nullptr;
 	const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdc = gdi_GetDC()))
@@ -402,11 +448,32 @@ static int test_gdi_InvalidateRegion(void)
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
+	/* a rejected region is not added to the list */
+	hdc->hwnd->ninvalid = 0;
+	if (!gdi_InvalidateRegion(hdc, 2024, 10, -1000, 11))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, 10, 2024, 11, -1000))
+		goto fail;
+	if (hdc->hwnd->ninvalid != 0)
+		goto fail;
+
+	pen = gdi_CreatePen(GDI_PS_SOLID, 1, 0, format, nullptr);
+	if (!pen)
+		goto fail;
+	gdi_SelectObject(hdc, (HGDIOBJECT)pen);
+	if (!gdi_MoveToEx(hdc, 2024, 10, nullptr))
+		goto fail;
+	if (!gdi_LineTo(hdc, 2124, 20))
+		goto fail;
+	if (hdc->hwnd->ninvalid != 0)
+		goto fail;
+
 	rc = 0;
 fail:
 	gdi_DeleteObject((HGDIOBJECT)rgn1);
 	gdi_DeleteObject((HGDIOBJECT)rgn2);
 	gdi_DeleteObject((HGDIOBJECT)bmp);
+	gdi_DeleteObject((HGDIOBJECT)pen);
 	gdi_DeleteDC(hdc);
 	return rc;
 }
@@ -418,6 +485,11 @@ int TestGdiClip(int argc, char* argv[])
 	(void)fprintf(stderr, "test_gdi_ClipCoords()\n");
 
 	if (test_gdi_ClipCoords() < 0)
+		return -1;
+
+	(void)fprintf(stderr, "test_gdi_ClipCoordsSmallBitmap()\n");
+
+	if (test_gdi_ClipCoordsSmallBitmap() < 0)
 		return -1;
 
 	(void)fprintf(stderr, "test_gdi_InvalidateRegion()\n");

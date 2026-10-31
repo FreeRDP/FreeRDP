@@ -19,6 +19,8 @@
 
 #include <freerdp/config.h>
 
+#include <string.h>
+
 #include <winpr/assert.h>
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
@@ -28,6 +30,34 @@
 #include <freerdp/codec/h264.h>
 
 #define VTAG FREERDP_TAG("codec.video")
+
+#if defined(WITH_SWSCALE) || defined(WITH_MEDIACODEC)
+static UINT32 video_get_h264_bitrate(wLog* log, UINT32 height)
+{
+	static struct
+	{
+		UINT32 height;
+		UINT32 bitrate;
+	} bitrates[] = {
+		{ 1080, 2700 }, { 720, 1250 }, { 480, 700 }, { 360, 400 },
+		{ 240, 170 },   { 180, 140 },  { 0, 100 },
+	};
+	const size_t nBitrates = ARRAYSIZE(bitrates);
+
+	for (size_t i = 0; i < nBitrates; i++)
+	{
+		if (height >= bitrates[i].height)
+		{
+			UINT32 bitrate = bitrates[i].bitrate;
+			WLog_Print(log, WLOG_DEBUG, "Auto-calculated H.264 bitrate: %u kbps", bitrate);
+			return bitrate * 1000;
+		}
+	}
+
+	WINPR_ASSERT(FALSE);
+	return 0;
+}
+#endif
 
 #if defined(WITH_SWSCALE)
 
@@ -208,32 +238,6 @@ void freerdp_video_context_free(FREERDP_VIDEO_CONTEXT* context)
 	}
 
 	free(context);
-}
-
-static UINT32 video_get_h264_bitrate(wLog* log, UINT32 height)
-{
-	static struct
-	{
-		UINT32 height;
-		UINT32 bitrate;
-	} bitrates[] = {
-		{ 1080, 2700 }, { 720, 1250 }, { 480, 700 }, { 360, 400 },
-		{ 240, 170 },   { 180, 140 },  { 0, 100 },
-	};
-	const size_t nBitrates = ARRAYSIZE(bitrates);
-
-	for (size_t i = 0; i < nBitrates; i++)
-	{
-		if (height >= bitrates[i].height)
-		{
-			UINT32 bitrate = bitrates[i].bitrate;
-			WLog_Print(log, WLOG_DEBUG, "Auto-calculated H.264 bitrate: %u kbps", bitrate);
-			return bitrate * 1000;
-		}
-	}
-
-	WINPR_ASSERT(FALSE);
-	return 0;
 }
 
 BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 width, UINT32 height,
@@ -668,7 +672,236 @@ BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
 	return TRUE;
 }
 
-#else /* !WITH_SWSCALE */
+#elif defined(WITH_MEDIACODEC) /* !WITH_SWSCALE */
+
+/*
+ * Without swscale, the H.264 encoder of MediaCodec (h264_mediacodec.c) still encodes the frames of
+ * the camera of Android (channels/rdpecam/client/android), which come as NV12: their planes are
+ * split here into the three of I420, in the buffer of h264_get_yuv_buffer, and h264_compress hands
+ * them to the encoder. Nothing else is converted.
+ */
+
+/* The longest side that the encoder of MediaCodec takes (MEDIACODEC_MAXIMUM_DIMENSION of
+ * h264_mediacodec.c). */
+#define VIDEO_NV12_MAX_DIMENSION 16384
+
+struct s_FREERDP_VIDEO_CONTEXT
+{
+	UINT32 width;
+	UINT32 height;
+	H264_CONTEXT* h264;
+	BOOL h264Configured;
+	wLog* log;
+};
+
+BOOL freerdp_video_available(void)
+{
+	/* FFmpeg is not loaded: NV12 to H.264 is all there is (freerdp_video_conversion_supported) */
+	return FALSE;
+}
+
+FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
+{
+	FREERDP_VIDEO_CONTEXT* context =
+	    (FREERDP_VIDEO_CONTEXT*)calloc(1, sizeof(FREERDP_VIDEO_CONTEXT));
+	if (!context)
+		return nullptr;
+
+	context->log = WLog_Get(VTAG);
+	context->width = width;
+	context->height = height;
+	return context;
+}
+
+void freerdp_video_context_free(FREERDP_VIDEO_CONTEXT* context)
+{
+	if (!context)
+		return;
+
+	h264_context_free(context->h264);
+	free(context);
+}
+
+BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
+                                        FREERDP_VIDEO_FORMAT dstFormat)
+{
+	if (srcFormat == dstFormat)
+		return TRUE;
+
+	return (srcFormat == FREERDP_VIDEO_FORMAT_NV12) && (dstFormat == FREERDP_VIDEO_FORMAT_H264);
+}
+
+BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 width, UINT32 height,
+                                       UINT32 framerate, UINT32 bitrate, UINT32 usageType)
+{
+	if (!context)
+		return FALSE;
+
+	/* NV12 shares one pair of chroma samples between two lines and two columns */
+	if ((width == 0) || (height == 0) || ((width % 2) != 0) || ((height % 2) != 0) ||
+	    (width > VIDEO_NV12_MAX_DIMENSION) || (height > VIDEO_NV12_MAX_DIMENSION))
+	{
+		WLog_Print(context->log, WLOG_ERROR, "Invalid dimensions: %" PRIu32 "x%" PRIu32, width,
+		           height);
+		return FALSE;
+	}
+
+	if (bitrate == 0)
+		bitrate = video_get_h264_bitrate(context->log, height);
+
+	/*
+	 * Each sample reconfigures (ecam_encoder_compress): the encoder starts again on a new size
+	 * only, and then as a new codec. h264_context_reset alone sets the new size and keeps the
+	 * planes of h264_get_yuv_buffer, which yuv_ensure_buffer then makes again for a new stride
+	 * only: a frame of the same width and more lines would be written past their end.
+	 */
+	const BOOL newSize =
+	    !context->h264Configured || (context->width != width) || (context->height != height);
+	if (newSize)
+	{
+		h264_context_free(context->h264);
+		context->h264 = nullptr;
+		context->h264Configured = FALSE;
+	}
+
+	if (!context->h264)
+	{
+		context->h264 = h264_context_new(TRUE);
+		if (!context->h264)
+		{
+			WLog_Print(context->log, WLOG_ERROR, "h264_context_new failed");
+			return FALSE;
+		}
+	}
+
+	/* HW_ACCEL off: the three planes of I420, which mediacodec_compress takes */
+	if (!h264_context_set_option(context->h264, H264_CONTEXT_OPTION_USAGETYPE, usageType) ||
+	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_FRAMERATE, framerate) ||
+	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_BITRATE, bitrate) ||
+	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_RATECONTROL,
+	                             H264_RATECONTROL_CQP) ||
+	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_QP, 26) ||
+	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_HW_ACCEL, FALSE))
+		goto fail;
+
+	if (newSize)
+	{
+		if (!h264_context_reset(context->h264, width, height))
+		{
+			WLog_Print(context->log, WLOG_ERROR, "h264_context_reset failed");
+			goto fail;
+		}
+
+		WLog_Print(context->log, WLOG_INFO,
+		           "camera frames encoded to H.264 by MediaCodec: %" PRIu32 "x%" PRIu32 ", %" PRIu32
+		           " fps, %" PRIu32 " bps",
+		           width, height, framerate, bitrate);
+	}
+
+	context->h264Configured = TRUE;
+	context->width = width;
+	context->height = height;
+	return TRUE;
+
+fail:
+	h264_context_free(context->h264);
+	context->h264 = nullptr;
+	context->h264Configured = FALSE;
+	return FALSE;
+}
+
+/* The Y plane, then the interleaved UV plane of NV12, into the three planes of I420 */
+static void freerdp_video_nv12_to_i420(const BYTE* nv12, UINT32 width, UINT32 height, BYTE* yuv[3],
+                                       const UINT32 strides[3])
+{
+	for (UINT32 y = 0; y < height; y++)
+		memcpy(&yuv[0][(size_t)y * strides[0]], &nv12[(size_t)y * width], width);
+
+	const BYTE* uv = &nv12[(size_t)width * height];
+	for (UINT32 y = 0; y < height / 2; y++)
+	{
+		const BYTE* src = &uv[(size_t)y * width];
+		BYTE* u = &yuv[1][(size_t)y * strides[1]];
+		BYTE* v = &yuv[2][(size_t)y * strides[2]];
+		for (UINT32 x = 0; x < width / 2; x++)
+		{
+			u[x] = src[2 * (size_t)x];
+			v[x] = src[2 * (size_t)x + 1];
+		}
+	}
+}
+
+BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_FORMAT srcFormat,
+                                  const void* srcSampleData, size_t srcSampleLength,
+                                  FREERDP_VIDEO_FORMAT dstFormat, wStream* output)
+{
+	if (!context || !srcSampleData || !output)
+		return FALSE;
+
+	if (srcFormat == dstFormat)
+	{
+		if (!Stream_EnsureRemainingCapacity(output, srcSampleLength))
+			return FALSE;
+
+		Stream_Write(output, srcSampleData, srcSampleLength);
+		return TRUE;
+	}
+
+	if (!freerdp_video_conversion_supported(srcFormat, dstFormat))
+	{
+		WLog_Print(context->log, WLOG_ERROR, "Conversion from %s to %s not supported",
+		           freerdp_video_format_string(srcFormat), freerdp_video_format_string(dstFormat));
+		return FALSE;
+	}
+
+	if (!context->h264Configured || !context->h264)
+	{
+		WLog_Print(context->log, WLOG_ERROR, "H264 encoder not configured");
+		return FALSE;
+	}
+
+	/* The sides are even and bounded (freerdp_video_context_reconfigure): no overflow */
+	const size_t frameSize = (size_t)context->width * context->height * 3 / 2;
+	if (srcSampleLength < frameSize)
+	{
+		WLog_Print(context->log, WLOG_ERROR,
+		           "NV12 sample of %" PRIuz " bytes, %" PRIuz " expected for %" PRIu32 "x%" PRIu32,
+		           srcSampleLength, frameSize, context->width, context->height);
+		return FALSE;
+	}
+
+	/* A stride keeps the width as it is: with 0, yuv_ensure_buffer (h264.c) rounds it up to 16 */
+	BYTE* yuvData[3] = WINPR_C_ARRAY_INIT;
+	UINT32 yuvStrides[3] = WINPR_C_ARRAY_INIT;
+	if ((h264_get_yuv_buffer(context->h264, context->width, context->width, context->height,
+	                         yuvData, yuvStrides) < 0) ||
+	    !yuvData[0] || !yuvData[1] || !yuvData[2] || (yuvStrides[0] < context->width) ||
+	    (yuvStrides[1] < context->width / 2) || (yuvStrides[2] < context->width / 2))
+	{
+		WLog_Print(context->log, WLOG_ERROR, "h264_get_yuv_buffer failed");
+		return FALSE;
+	}
+
+	freerdp_video_nv12_to_i420((const BYTE*)srcSampleData, context->width, context->height, yuvData,
+	                           yuvStrides);
+
+	BYTE* h264Data = nullptr;
+	UINT32 h264Size = 0;
+	if ((h264_compress(context->h264, &h264Data, &h264Size) < 0) || !h264Data || (h264Size == 0))
+	{
+		/* MediaCodec gives no frame while its pipeline fills, nor for a frame it drops */
+		WLog_Print(context->log, WLOG_DEBUG, "No H.264 frame out of this NV12 sample");
+		return FALSE;
+	}
+
+	if (!Stream_EnsureRemainingCapacity(output, h264Size))
+		return FALSE;
+
+	Stream_Write(output, h264Data, h264Size);
+	return TRUE;
+}
+
+#else /* !WITH_SWSCALE && !WITH_MEDIACODEC */
 
 /* Stubs when swscale is not available */
 
@@ -725,7 +958,7 @@ BOOL freerdp_video_sample_convert(WINPR_ATTR_UNUSED FREERDP_VIDEO_CONTEXT* conte
 	return FALSE;
 }
 
-#endif /* WITH_SWSCALE */
+#endif /* WITH_SWSCALE, WITH_MEDIACODEC */
 
 const char* freerdp_video_format_string(UINT32 format)
 {

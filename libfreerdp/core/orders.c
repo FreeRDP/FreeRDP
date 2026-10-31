@@ -604,7 +604,19 @@ static inline BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 			return FALSE;
 
 		Stream_Read_INT8(s, lsi8);
-		*coord += lsi8;
+
+		/* [MS-RDPEGDI] 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD) is a signed 16 bit value,
+		 * do not let deltas accumulate beyond that range. */
+		const INT32 value = *coord + lsi8;
+		if ((value > INT16_MAX) || (value < INT16_MIN))
+		{
+			WLog_WARN(TAG,
+			          "[MS-RDPEGDI] 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD): out of range delta "
+			          "update: %d <= %d <= %d. Clamping to limits.",
+			          INT16_MIN, value, INT16_MAX);
+		}
+
+		*coord = MIN(MAX(value, INT16_MIN), INT16_MAX);
 	}
 	else
 	{
@@ -3689,7 +3701,15 @@ static BOOL update_read_bounds(wStream* s, rdpBounds* bounds)
 			return FALSE;
 	}
 
-	return TRUE;
+	if (bounds->left > bounds->right)
+		return FALSE;
+	if (bounds->top > bounds->bottom)
+		return FALSE;
+	const INT64 w = 1ll * bounds->right - bounds->left;
+	if ((w <= INT32_MIN) || (w >= INT32_MAX))
+		return FALSE;
+	const INT64 h = 1ll * bounds->bottom - bounds->top;
+	return !((h <= INT32_MIN) || (h >= INT32_MAX));
 }
 BOOL update_write_bounds(wStream* s, const ORDER_INFO* orderInfo)
 {

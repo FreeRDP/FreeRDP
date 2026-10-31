@@ -26,7 +26,9 @@
 
 #include <SDL3/SDL_oldnames.h>
 
+#include <array>
 #include <map>
+#include <tuple>
 
 #include <freerdp/utils/string.h>
 #include <freerdp/scancode.h>
@@ -299,6 +301,28 @@ static const scancode_entry_t map[] = {
 	return flags;
 }
 
+[[nodiscard]] static FREERDP_CLIENT_KBD_MOD sdl_get_kbd_modmask(SDL_Keymod mod)
+{
+	static const std::array<std::pair<SDL_Keymod, uint32_t>, 8> masks = {
+		{ { SDL_KMOD_LSHIFT, FREERDP_CLIENT_KBD_MOD_LSHIFT },
+		  { SDL_KMOD_RSHIFT, FREERDP_CLIENT_KBD_MOD_RSHIFT },
+		  { SDL_KMOD_LALT, FREERDP_CLIENT_KBD_MOD_LMENU },
+		  { SDL_KMOD_RALT, FREERDP_CLIENT_KBD_MOD_RMENU },
+		  { SDL_KMOD_LCTRL, FREERDP_CLIENT_KBD_MOD_LCONTROL },
+		  { SDL_KMOD_RCTRL, FREERDP_CLIENT_KBD_MOD_RCONTROL },
+		  { SDL_KMOD_LGUI, FREERDP_CLIENT_KBD_MOD_LWIN },
+		  { SDL_KMOD_RGUI, FREERDP_CLIENT_KBD_MOD_RWIN } }
+	};
+
+	uint32_t modmask = FREERDP_CLIENT_KBD_MOD_NONE;
+	for (const auto& [sdl, rdp] : masks)
+	{
+		if ((mod & sdl) != 0)
+			modmask |= rdp;
+	}
+	return static_cast<FREERDP_CLIENT_KBD_MOD>(modmask);
+}
+
 bool sdlInput::keyboard_sync_state()
 {
 	const UINT32 syncFlags = sdl_get_kbd_flags();
@@ -558,7 +582,10 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 	if ((rdp_scancode == RDP_SCANCODE_UNKNOWN) && (ev.raw == 0xE036))
 		rdp_scancode = RDP_SCANCODE_RSHIFT;
 #endif
-	const SDL_Keymod mods = SDL_GetModState();
+	/* The modifiers held when this key was pressed: SDL_GetModState() is the state after every
+	 * event already queued, so a hotkey could be missed, or fire on a plain key typed just
+	 * before a modifier. */
+	const SDL_Keymod mods = ev.mod;
 
 	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{
@@ -630,6 +657,18 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 		           ev.scancode, scancode, sc, ex ? " extended" : "");
 	}
 #endif
+	if (freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_UnicodeInput))
+	{
+		/* With key_event false the keycode follows the layout, also for non-Latin ones, where key
+		 * events carry the QWERTY letter (SDL_HINT_KEYCODE_OPTIONS). */
+		const auto key = SDL_GetKeyFromScancode(ev.scancode, mods, false);
+		std::array<char, 5> str = {};
+		if ((key >= 0x20) && (key != SDLK_DELETE) && (key <= 0x10FFFF))
+			std::ignore = SDL_UCS4ToUTF8(key, str.data());
+		return freerdp_client_send_key_as_unicode(
+		    _sdl->common(), (ev.type == SDL_EVENT_KEY_DOWN) ? 0 : KBD_FLAGS_RELEASE, str.data(),
+		    scancode, sdl_get_kbd_modmask(mods));
+	}
 	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input,
 	                                            ev.type == SDL_EVENT_KEY_DOWN, ev.repeat, scancode);
 }

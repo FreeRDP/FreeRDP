@@ -395,6 +395,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_PreconnectionId, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_PreconnectionId" },
 	{ FreeRDP_ProxyType, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ProxyType" },
 	{ FreeRDP_RdpVersion, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RdpVersion" },
+	{ FreeRDP_RdstlsEnabledModes, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RdstlsEnabledModes" },
 	{ FreeRDP_ReceivedCapabilitiesSize, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_ReceivedCapabilitiesSize" },
 	{ FreeRDP_RedirectedSessionId, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RedirectedSessionId" },

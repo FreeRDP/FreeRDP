@@ -297,10 +297,14 @@ struct xf_context
 
 	RailClientContext* rail;
 	wHashTable* railWindows;
+	UINT32 railActiveWindowId;
 	xfRailIconCache* railIconCache;
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	BOOL isRailWindowsLocked;
+	const char* whereFkt;
+	const char* whereFile;
+	size_t whereLine;
 #endif
 
 	BOOL xkbAvailable;
