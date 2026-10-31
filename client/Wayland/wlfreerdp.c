@@ -769,7 +769,14 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 
 	rdpGdi* gdi = context->gdi;
 
-	if (UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, nullptr) != UWAC_SUCCESS)
+	/* Serialize with buffer submission in wl_update_buffer: selecting the next
+	 * drawing buffer temporarily invalidates its index. This critical section
+	 * is recursive, as wl_update_buffer also calls this function while holding it. */
+	EnterCriticalSection(&wlf->critical);
+	const UwacReturnCode rc =
+	    UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, nullptr);
+	LeaveCriticalSection(&wlf->critical);
+	if (rc != UWAC_SUCCESS)
 		return FALSE;
 
 	const double sx = 1.0 * geometry.width / (double)gdi->width;
