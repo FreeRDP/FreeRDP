@@ -43,6 +43,10 @@ struct win_shadow_subsystem
 	int width;
 	int height;
 
+	/* the sound capture (win_audio.c) */
+	HANDLE audioThread;
+	HANDLE audioStopEvent;
+
 #ifdef WITH_WDS_API
 	HWND hWnd;
 	shwContext* shw;
