@@ -71,7 +71,11 @@ static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 
 	const UINT rc = SendInput(1, &event, sizeof(INPUT));
 	if (rc == 0)
+	{
+		WLog_ERR(TAG, "keyboard SendInput blocked err=%lu sc=0x%02x flags=0x%04x", GetLastError(),
+		         code, flags);
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -98,7 +102,10 @@ static BOOL win_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsyste
 
 	const UINT rc = SendInput(1, &event, sizeof(INPUT));
 	if (rc == 0)
+	{
+		WLog_ERR(TAG, "unicode keyboard SendInput blocked err=%lu ch=U+%04x", GetLastError(), code);
 		return FALSE;
+	}
 	return TRUE;
 }
 
