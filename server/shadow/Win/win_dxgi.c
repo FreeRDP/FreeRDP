@@ -387,8 +387,23 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = dxgiOutput1->lpVtbl->DuplicateOutput(dxgiOutput1, (IUnknown*)subsystem->dxgiDevice,
-	                                          &(subsystem->dxgiOutputDuplication));
+	for (int attempt = 0;; ++attempt)
+	{
+		hr = dxgiOutput1->lpVtbl->DuplicateOutput(dxgiOutput1, (IUnknown*)subsystem->dxgiDevice,
+		                                          &(subsystem->dxgiOutputDuplication));
+
+		/* DXGI_ERROR_ACCESS_DENIED is transient while the display mode
+		 * changes (e.g. a display settings switch driven by a remote
+		 * display control channel): retry on the same output for a
+		 * bounded window instead of failing the capture outright. */
+		if (hr != DXGI_ERROR_ACCESS_DENIED || attempt >= 60)
+			break;
+
+		if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
+			break;
+
+		Sleep(250);
+	}
 
 	if (dxgiOutput1)
 	{
@@ -568,6 +583,43 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 
 			return 0;
 		}
+		else if (hr == DXGI_ERROR_ACCESS_DENIED)
+		{
+			/* The console desktop switched to the secure desktop (lock
+			 * screen, UAC prompt, ...). Re-create the duplication with a
+			 * bounded retry loop instead of killing the capture thread. */
+			if (subsystem->dxgiSurface)
+			{
+				subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
+				subsystem->dxgiSurface = nullptr;
+				subsystem->dxgiSurfaceMapped = FALSE;
+			}
+
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+				subsystem->dxgiStage = nullptr;
+			}
+
+			if (subsystem->dxgiOutputDuplication)
+			{
+				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
+				subsystem->dxgiOutputDuplication = nullptr;
+			}
+
+			for (int attempt = 0; attempt < 240; ++attempt)
+			{
+				if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
+					return -1;
+
+				Sleep(500);
+				status = win_shadow_dxgi_init_duplication(subsystem);
+				if (status >= 0)
+					return 0;
+			}
+
+			return -1;
+		}
 
 		return -1;
 	}
@@ -657,6 +709,12 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 				subsystem->dxgiDesktopImage = nullptr;
 			}
 
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+				subsystem->dxgiStage = nullptr;
+			}
+
 			if (subsystem->dxgiOutputDuplication)
 			{
 				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
@@ -669,6 +727,45 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 				return -1;
 
 			return 0;
+		}
+		else if (hr == DXGI_ERROR_ACCESS_DENIED)
+		{
+			/* The console desktop switched to the secure desktop (lock
+			 * screen, UAC prompt, ...); the duplication stays denied while
+			 * that desktop is active. Release it and re-create with a
+			 * bounded retry loop instead of killing the capture thread. */
+			win_shadow_dxgi_release_frame_data(subsystem);
+
+			if (subsystem->dxgiDesktopImage)
+			{
+				subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
+				subsystem->dxgiDesktopImage = nullptr;
+			}
+
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+				subsystem->dxgiStage = nullptr;
+			}
+
+			if (subsystem->dxgiOutputDuplication)
+			{
+				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
+				subsystem->dxgiOutputDuplication = nullptr;
+			}
+
+			for (int attempt = 0; attempt < 240; ++attempt)
+			{
+				if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
+					return -1;
+
+				Sleep(500);
+				status = win_shadow_dxgi_init_duplication(subsystem);
+				if (status >= 0)
+					return 0;
+			}
+
+			return -1;
 		}
 		else if (hr == DXGI_ERROR_INVALID_CALL)
 		{
