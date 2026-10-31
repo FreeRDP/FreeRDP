@@ -724,6 +724,8 @@ int main(int argc, char* argv[])
 		    sdl_dialogs_uninit();
 		    SDL_Quit();
 	    });
+	if (!freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler))
+		return -1;
 	if (!sdl->detectDisplays())
 		return -1;
 
