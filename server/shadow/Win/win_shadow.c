@@ -426,6 +426,13 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
+			/* Reflow the surface/geometry first when the desktop display
+			 * mode changed: the acquire below (and the staging texture
+			 * rebuild inside its recovery paths) must see the new size.
+			 * init_duplication checks again as a fallback for the race
+			 * between the resize and the next frame. */
+			(void)win_shadow_check_resize(subsystem);
+
 			int dxgi_status;
 			dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
 
@@ -517,6 +524,60 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 	}
 
 	return numMonitors;
+}
+
+/* The desktop display mode can change while the server is running (the
+ * user changing the resolution locally, or a remote display control
+ * request). The X11 subsystem has x11_shadow_check_resize for this; the
+ * Win subsystem did not track it at all, so the shadow surface, the DXGI
+ * staging texture and the virtual screen geometry drifted out of sync
+ * with the real desktop.
+ *
+ * The cheap check uses EnumDisplaySettingsW (no DC is created); only on
+ * a mismatch the monitors are re-enumerated, the shadow screen resized
+ * and the subsystem geometry updated. Returns 1 when the geometry
+ * changed, 0 when it did not and <0 on fatal error. */
+int win_shadow_check_resize(winShadowSubsystem* subsystem)
+{
+	DEVMODEW dm = WINPR_C_ARRAY_INIT;
+	dm.dmSize = (WORD)sizeof(dm);
+
+	if (!EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &dm))
+		return 0;
+
+	if (((int)dm.dmPelsWidth == subsystem->width) && ((int)dm.dmPelsHeight == subsystem->height))
+		return 0;
+
+	MONITOR_DEF* virtualScreen = &(subsystem->base.virtualScreen);
+
+	/* The display mode changed -- refresh the monitor definition. If the
+	 * attached device geometry did not actually change (a false alarm
+	 * from a non-primary device), bail out to avoid per-tick flapping. */
+	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
+	const int newWidth =
+	    (subsystem->base.numMonitors > 0) ? subsystem->base.monitors[0].right : subsystem->width;
+	const int newHeight =
+	    (subsystem->base.numMonitors > 0) ? subsystem->base.monitors[0].bottom : subsystem->height;
+	if ((newWidth == subsystem->width) && (newHeight == subsystem->height))
+		return 0;
+
+	/* The screen does not exist yet while the subsystem is initialized;
+	 * in that case updating the geometry below is all that is needed. */
+	if (subsystem->base.server && subsystem->base.server->screen &&
+	    !shadow_screen_resize(subsystem->base.server->screen))
+		return -1;
+
+	subsystem->width = newWidth;
+	subsystem->height = newHeight;
+
+	virtualScreen->left = 0;
+	virtualScreen->top = 0;
+	virtualScreen->right = subsystem->width;
+	virtualScreen->bottom = subsystem->height;
+	virtualScreen->flags = 1;
+
+	WLog_INFO(TAG, "desktop resized to %dx%d", subsystem->width, subsystem->height);
+	return 1;
 }
 
 static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)

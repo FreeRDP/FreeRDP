@@ -403,6 +403,12 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
+	/* Reflow the desktop geometry before creating the staging texture:
+	 * every duplication recovery (ACCESS_LOST / ACCESS_DENIED /
+	 * INVALID_CALL) comes through here, and the staging texture must be
+	 * created at the new desktop size after a display mode change. */
+	(void)win_shadow_check_resize(subsystem);
+
 	textureDesc.Width = subsystem->width;
 	textureDesc.Height = subsystem->height;
 	textureDesc.MipLevels = 1;
