@@ -602,39 +602,8 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
-		/* Coalesce bursts of server side window size updates.
-		 *
-		 * When a RemoteApp dialog opens, the server sends a sequence of window
-		 * sizes (~45 frames, ~15ms apart) - a window open animation performed
-		 * by rdpshell. The client applies every frame and reports the resulting
-		 * geometry back, which makes the server shrink the window again by its
-		 * frame size. That feedback loop runs away and collapses the dialog to
-		 * a 1px wide strip: it "flashes and disappears".
-		 *
-		 * Keep only the first update of such a burst (which is close to the
-		 * real size) and ignore the rest for a second. Positions are still
-		 * reported, so mouse input keeps working. */
-		const UINT64 now = winpr_GetTickCount64NS() / 1000000ULL;
-		const BOOL burst =
-		    (appWindow->lastWndSizeUpdate != 0) && ((now - appWindow->lastWndSizeUpdate) < 1000);
-		const UINT32 newW = windowState->windowWidth;
-		const UINT32 newH = windowState->windowHeight;
-		const BOOL degenerate = (newW < 32) || (newH < 32);
-		const BOOL hadSane = (appWindow->windowWidth >= 32) && (appWindow->windowHeight >= 32);
-
-		if ((degenerate && hadSane) || burst)
-		{
-			WLog_Print(xfc->log, WLOG_DEBUG,
-			           "coalescing RAIL window size %" PRIu32 "x%" PRIu32
-			           " (burst=%d degenerate=%d)",
-			           newW, newH, burst, degenerate);
-		}
-		else
-		{
-			appWindow->windowWidth = newW;
-			appWindow->windowHeight = newH;
-			appWindow->lastWndSizeUpdate = now;
-		}
+		appWindow->windowWidth = windowState->windowWidth;
+		appWindow->windowHeight = windowState->windowHeight;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)

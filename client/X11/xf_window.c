@@ -1090,7 +1090,6 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
 	appWindow->rail_fullscreen_normalizing = FALSE;
-	appWindow->lastWndSizeUpdate = 0;
 	appWindow->haveMinMaxInfo = FALSE;
 	appWindow->sizeReported = FALSE;
 
