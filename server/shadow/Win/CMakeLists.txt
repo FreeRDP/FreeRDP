@@ -15,6 +15,8 @@ set(SRCS
     win_sas.h
     win_shadow.c
     win_shadow.h
+    win_shadow_cliprdr.c
+    win_shadow_cliprdr.h
     win_wasapi.c
     win_wasapi.h
     win_wds.h
@@ -27,6 +29,9 @@ else()
 endif()
 add_library(freerdp-shadow-subsystem-impl STATIC ${SRCS})
 target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-client freerdp winpr ole32)
+if(CHANNEL_CLIPRDR_SERVER)
+  target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-server shell32)
+endif()
 
 # freerdp-shadow-service: runs freerdp-shadow-cli as SYSTEM on the console
 # session (logon and lock screens, UAC prompts; DXGI capture needed)
