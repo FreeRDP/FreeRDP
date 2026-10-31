@@ -1,0 +1,17 @@
+[
+	{
+		"name": "usgov",
+		"active_directory": "login.microsoftonline.us",
+		"gateway_suffix": ".wvd.azure.us",
+		"avd_scope": "https://www.wvd.azure.us/.default openid profile offline_access",
+		"avd_redirect_format": "https://login.microsoftonline.com/common/oauth2/nativeclient",
+		"resource_manager": "https://management.usgovcloudapi.net/"
+	},
+	{
+		"name": "example",
+		"active_directory": "login.example.test",
+		"gateway_suffix": ".wvd.example.test",
+		"avd_scope": "https://www.wvd.example.test/.default openid profile offline_access",
+		"avd_redirect_format": "https://%s/%s/oauth2/nativeclient"
+	}
+]
