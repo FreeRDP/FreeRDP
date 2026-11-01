@@ -2456,5 +2456,8 @@ void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	primitives_init_YUV(prims);
 	primitives_init_YUV_sse41(prims);
+#if defined(WITH_AVX2)
+	primitives_init_YUV_avx2(prims);
+#endif
 	primitives_init_YUV_neon(prims);
 }

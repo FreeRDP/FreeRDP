@@ -1744,10 +1744,10 @@ int TestPrimitivesYUV(int argc, char* argv[])
 		if (!compare_rgb_to_yuv444(roi, type))
 			goto end;
 
-		/* the random roi plus widths around the 16 pixel vector loop */
-		const prim_size_t i444Rois[] = {
-			roi, { 1, 1 }, { 15, 3 }, { 16, 2 }, { 17, 2 }, { 47, 5 }
-		};
+		/* the random roi plus widths around the 16 (SSE4.1, NEON) and 32 (AVX2)
+		 * pixel vector loops */
+		const prim_size_t i444Rois[] = { roi,       { 1, 1 },  { 15, 3 }, { 16, 2 }, { 17, 2 },
+			                             { 31, 2 }, { 32, 2 }, { 33, 2 }, { 47, 5 }, { 63, 3 } };
 		for (size_t x = 0; x < ARRAYSIZE(i444Rois); x++)
 		{
 			if (!compare_rgb_to_i444(i444Rois[x], type))

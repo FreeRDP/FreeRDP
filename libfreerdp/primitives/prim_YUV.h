@@ -39,6 +39,17 @@ static inline void primitives_init_YUV_sse41(primitives_t* WINPR_RESTRICT prims)
 	primitives_init_YUV_sse41_int(prims);
 }
 
+#if defined(WITH_AVX2)
+FREERDP_LOCAL void primitives_init_YUV_avx2_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_YUV_avx2(primitives_t* WINPR_RESTRICT prims)
+{
+	if (!IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_YUV_avx2_int(prims);
+}
+#endif
+
 FREERDP_LOCAL void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims)
 {
