@@ -884,6 +884,133 @@ static pstatus_t neon_YUV420CombineToYUV444(avc444_frame_type type,
 			return -1;
 	}
 }
+
+/* RGBToI444_8u: one Y, U and V sample per pixel, with the exact integer math of
+ * RGB2Y/RGB2U/RGB2V (16 bit lanes are wide enough for every intermediate value),
+ * so the result matches the generic routine byte for byte. */
+
+/* Y, U and V of eight pixels given as 16 bit R, G and B lanes */
+static inline void neon_I444_YUV(uint16x8_t r, uint16x8_t g, uint16x8_t b,
+                                 uint8x8_t* WINPR_RESTRICT y, uint8x8_t* WINPR_RESTRICT u,
+                                 uint8x8_t* WINPR_RESTRICT v)
+{
+	const int16x8_t c128 = vdupq_n_s16(128);
+
+	/* (54 R + 183 G + 18 B) >> 8: at most 65025, exact as unsigned 16 bit */
+	uint16x8_t t = vmulq_n_u16(r, 54);
+	t = vmlaq_n_u16(t, g, 183);
+	t = vmlaq_n_u16(t, b, 18);
+	*y = vshrn_n_u16(t, 8);
+
+	const int16x8_t rs = vreinterpretq_s16_u16(r);
+	const int16x8_t gs = vreinterpretq_s16_u16(g);
+	const int16x8_t bs = vreinterpretq_s16_u16(b);
+
+	/* ((128 B - (29 R + 99 G)) >> 8) + 128: both terms are at most 32640 */
+	int16x8_t s = vmlaq_n_s16(vmulq_n_s16(rs, 29), gs, 99);
+	s = vsubq_s16(vshlq_n_s16(bs, 7), s);
+	*u = vqmovun_s16(vaddq_s16(vshrq_n_s16(s, 8), c128));
+
+	/* ((128 R - (116 G + 12 B)) >> 8) + 128 */
+	s = vmlaq_n_s16(vmulq_n_s16(gs, 116), bs, 12);
+	s = vsubq_s16(vshlq_n_s16(rs, 7), s);
+	*v = vqmovun_s16(vaddq_s16(vshrq_n_s16(s, 8), c128));
+}
+
+/* one of the four byte planes of vld4q_u8, picked with constant indices: indexing
+ * px.val[] with a variable makes the compiler spill all four to the stack */
+static inline uint8x16_t neon_I444_plane(const uint8x16x4_t px, const size_t off)
+{
+	switch (off)
+	{
+		case 0:
+			return px.val[0];
+		case 1:
+			return px.val[1];
+		case 2:
+			return px.val[2];
+		default:
+			return px.val[3];
+	}
+}
+
+static inline pstatus_t neon_RGBToI444_32bpp(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcStep,
+                                             BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
+                                             const prim_size_t* WINPR_RESTRICT roi,
+                                             const size_t rOff, const size_t gOff,
+                                             const size_t bOff)
+{
+	const size_t width = roi->width;
+
+	for (size_t row = 0; row < roi->height; row++)
+	{
+		const BYTE* src = &pSrc[row * srcStep];
+		BYTE* yd = &pDst[0][row * dstStep[0]];
+		BYTE* ud = &pDst[1][row * dstStep[1]];
+		BYTE* vd = &pDst[2][row * dstStep[2]];
+
+		size_t x = 0;
+		for (; x + 16 <= width; x += 16)
+		{
+			/* sixteen pixels, split into one register per byte of the pixel */
+			const uint8x16x4_t px = vld4q_u8(&src[4 * x]);
+			const uint8x16_t R = neon_I444_plane(px, rOff);
+			const uint8x16_t G = neon_I444_plane(px, gOff);
+			const uint8x16_t B = neon_I444_plane(px, bOff);
+
+			uint8x8_t y0 = vdup_n_u8(0);
+			uint8x8_t u0 = vdup_n_u8(0);
+			uint8x8_t v0 = vdup_n_u8(0);
+			uint8x8_t y1 = vdup_n_u8(0);
+			uint8x8_t u1 = vdup_n_u8(0);
+			uint8x8_t v1 = vdup_n_u8(0);
+			neon_I444_YUV(vmovl_u8(vget_low_u8(R)), vmovl_u8(vget_low_u8(G)),
+			              vmovl_u8(vget_low_u8(B)), &y0, &u0, &v0);
+			neon_I444_YUV(vmovl_u8(vget_high_u8(R)), vmovl_u8(vget_high_u8(G)),
+			              vmovl_u8(vget_high_u8(B)), &y1, &u1, &v1);
+			vst1q_u8(&yd[x], vcombine_u8(y0, y1));
+			vst1q_u8(&ud[x], vcombine_u8(u0, u1));
+			vst1q_u8(&vd[x], vcombine_u8(v0, v1));
+		}
+
+		for (; x < width; x++)
+		{
+			const BYTE* p = &src[4 * x];
+			const BYTE r = p[rOff];
+			const BYTE g = p[gOff];
+			const BYTE b = p[bOff];
+			yd[x] = RGB2Y(r, g, b);
+			ud[x] = RGB2U(r, g, b);
+			vd[x] = RGB2V(r, g, b);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t neon_RGBToI444_8u(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                   const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                   const UINT32 dstStep[3], const prim_size_t* WINPR_RESTRICT roi)
+{
+	/* byte offsets of R, G and B in memory, as in general_RGBToI444_8u */
+	switch (SrcFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return neon_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 2, 1, 0);
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return neon_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 0, 1, 2);
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return neon_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 1, 2, 3);
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return neon_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 3, 2, 1);
+		default:
+			return generic->RGBToI444_8u(pSrc, SrcFormat, srcStep, pDst, dstStep, roi);
+	}
+}
 #endif
 
 void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims)
@@ -894,6 +1021,7 @@ void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims)
 	prims->YUV420ToRGB_8u_P3AC4R = neon_YUV420ToRGB_8u_P3AC4R;
 	prims->YUV444ToRGB_8u_P3AC4R = neon_YUV444ToRGB_8u_P3AC4R;
 	prims->I444ToRGB_8u = neon_I444ToRGB_8u;
+	prims->RGBToI444_8u = neon_RGBToI444_8u;
 	prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");

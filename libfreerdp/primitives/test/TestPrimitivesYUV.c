@@ -1196,6 +1196,118 @@ fail:
 	return rc;
 }
 
+/* Check RGBToI444_8u against a per pixel reference: every pixel decoded on its
+ * own with FreeRDPReadColor and converted with the RGB2Y/RGB2U/RGB2V formula,
+ * for each 32 bit format and a 24 bit one, with padded source and destination
+ * strides. The vector routines must match it byte for byte, including the
+ * scalar tail of a width that is not a multiple of the vector width. */
+static BOOL compare_rgb_to_i444(prim_size_t roi, DWORD type)
+{
+	BOOL rc = FALSE;
+	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBA32,
+		                       PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,
+		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_BGR24 };
+	const size_t srcStep = 4ULL * roi.width + 12;
+	const UINT32 dstStep[3] = { roi.width + 5, roi.width + 7, roi.width + 9 };
+	BYTE* rgb = nullptr;
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	BYTE* ref[3] = WINPR_C_ARRAY_INIT;
+
+	primitives_t* prims = primitives_get_by_type(type);
+	if (!prims)
+	{
+		printf("primitives type %" PRIu32 " not supported, skipping\n", type);
+		return TRUE;
+	}
+	if (!prims->RGBToI444_8u)
+		goto fail;
+
+	rgb = calloc(roi.height, srcStep);
+	if (!rgb)
+		goto fail;
+	for (size_t x = 0; x < 3; x++)
+	{
+		yuv[x] = calloc(roi.height, dstStep[x]);
+		ref[x] = calloc(roi.height, dstStep[x]);
+		if (!yuv[x] || !ref[x])
+			goto fail;
+	}
+
+	if (winpr_RAND(rgb, roi.height * srcStep) < 0)
+		goto fail;
+	/* the corners of the colour cube first: the extremes of every formula */
+	for (size_t x = 0; x < MIN(32ULL, roi.width * 4ULL); x++)
+		rgb[x] = ((x >> (x % 4)) & 1) ? 0xFF : 0x00;
+
+	for (size_t f = 0; f < ARRAYSIZE(formats); f++)
+	{
+		const UINT32 format = formats[f];
+		const size_t bpp = FreeRDPGetBytesPerPixel(format);
+
+		for (size_t y = 0; y < roi.height; y++)
+		{
+			for (size_t x = 0; x < roi.width; x++)
+			{
+				BYTE R = 0;
+				BYTE G = 0;
+				BYTE B = 0;
+				const UINT32 color = FreeRDPReadColor(&rgb[y * srcStep + x * bpp], format);
+				FreeRDPSplitColor(color, format, &R, &G, &B, nullptr, nullptr);
+				ref[0][y * dstStep[0] + x] = (BYTE)((54 * R + 183 * G + 18 * B) >> 8);
+				ref[1][y * dstStep[1] + x] = (BYTE)(((-29 * R - 99 * G + 128 * B) >> 8) + 128);
+				ref[2][y * dstStep[2] + x] = (BYTE)(((128 * R - 116 * G - 12 * B) >> 8) + 128);
+			}
+		}
+
+		for (size_t x = 0; x < 3; x++)
+			memset(yuv[x], PADDING_FILL_VALUE, roi.height * dstStep[x]);
+
+		if (prims->RGBToI444_8u(rgb, format, (UINT32)srcStep, yuv, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+
+		for (size_t y = 0; y < roi.height; y++)
+		{
+			for (size_t x = 0; x < 3; x++)
+			{
+				const BYTE* line = &yuv[x][y * dstStep[x]];
+				const BYTE* expect = &ref[x][y * dstStep[x]];
+				if (memcmp(line, expect, roi.width) != 0)
+				{
+					(void)fprintf(stderr,
+					              "[%s] %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
+					              " differs in line %" PRIuz "\n",
+					              __func__, FreeRDPGetColorFormatName(format), roi.width,
+					              roi.height, x, y);
+					goto fail;
+				}
+				/* nothing written past the width */
+				for (size_t p = roi.width; p < dstStep[x]; p++)
+				{
+					if (line[p] != PADDING_FILL_VALUE)
+					{
+						(void)fprintf(stderr, "[%s] %s: plane %" PRIuz " overwrote padding\n",
+						              __func__, FreeRDPGetColorFormatName(format), x);
+						goto fail;
+					}
+				}
+			}
+		}
+	}
+
+	rc = TRUE;
+fail:
+	printf("%s %" PRIu32 "x%" PRIu32 " finished with %s\n", __func__, roi.width, roi.height,
+	       rc ? "SUCCESS" : "FAILURE");
+	free(rgb);
+	for (size_t x = 0; x < 3; x++)
+	{
+		free(yuv[x]);
+		free(ref[x]);
+	}
+	return rc;
+}
+
 /* Check the result of generic matches the optimized routine.
  *
  */
@@ -1631,6 +1743,16 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 		if (!compare_rgb_to_yuv444(roi, type))
 			goto end;
+
+		/* the random roi plus widths around the 16 pixel vector loop */
+		const prim_size_t i444Rois[] = {
+			roi, { 1, 1 }, { 15, 3 }, { 16, 2 }, { 17, 2 }, { 47, 5 }
+		};
+		for (size_t x = 0; x < ARRAYSIZE(i444Rois); x++)
+		{
+			if (!compare_rgb_to_i444(i444Rois[x], type))
+				goto end;
+		}
 
 		if (!compare_yuv420_to_rgb(roi, type))
 			goto end;
