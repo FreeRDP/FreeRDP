@@ -64,6 +64,8 @@ struct S_FREERDP_AV1_CONTEXT
 	aom_enc_frame_flags_t eflags;
 	aom_codec_flags_t flags;
 	aom_codec_iface_t* iface;
+	/* the next frame converts the whole surface to YUV (after a reset or a failure) */
+	bool fullFrameNext;
 #endif
 #if defined(WITH_LIBAOM) && !defined(WITH_DAV1D)
 	aom_codec_dec_cfg_t dcfg;
@@ -136,6 +138,31 @@ static BOOL av1_aom_apply_controls(FREERDP_AV1_CONTEXT* av1)
 	return TRUE;
 }
 
+/* Clip the damaged rectangle to the frame and round it out to even coordinates, so the
+ * I420 chroma samples it touches are whole. FALSE: encode the whole frame. */
+WINPR_ATTR_NODISCARD
+static BOOL av1_aom_damage(const FREERDP_AV1_CONTEXT* av1, const RECTANGLE_16* regionRect,
+                           UINT32 width, UINT32 height, RECTANGLE_16* damage)
+{
+	if (av1->fullFrameNext || !regionRect)
+		return FALSE;
+
+	const UINT32 left = regionRect->left & ~1u;
+	const UINT32 top = regionRect->top & ~1u;
+	const UINT32 right = MIN(width, (regionRect->right + 1u) & ~1u);
+	const UINT32 bottom = MIN(height, (regionRect->bottom + 1u) & ~1u);
+	if ((left >= right) || (top >= bottom))
+		return FALSE;
+	if ((left == 0) && (top == 0) && (right == width) && (bottom == height))
+		return FALSE;
+
+	damage->left = (UINT16)left;
+	damage->top = (UINT16)top;
+	damage->right = (UINT16)right;
+	damage->bottom = (UINT16)bottom;
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
                                     RDPGFX_H264_METABLOCK* meta, size_t count)
@@ -170,6 +197,7 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
 	}
 	return TRUE;
 }
+
 #endif
 
 BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEXT_OPTION option,
@@ -296,7 +324,34 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 		return -1;
 	}
 
-	const prim_size_t roi = { .width = nSrcWidth, .height = nSrcHeight };
+	/* Only the damaged part is converted: the YUV planes still hold the previous frame. */
+	RECTANGLE_16 damage = WINPR_C_ARRAY_INIT;
+	const BOOL partial = av1_aom_damage(av1, regionRect, nSrcWidth, nSrcHeight, &damage);
+	if (!partial)
+	{
+		damage.left = 0;
+		damage.top = 0;
+		damage.right = WINPR_ASSERTING_INT_CAST(UINT16, nSrcWidth);
+		damage.bottom = WINPR_ASSERTING_INT_CAST(UINT16, nSrcHeight);
+	}
+
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+	if (bpp == 0)
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "Unsupported source format %s",
+		           FreeRDPGetColorFormatName(SrcFormat));
+		return -1;
+	}
+
+	const prim_size_t roi = { .width = damage.right - damage.left,
+		                      .height = damage.bottom - damage.top };
+	const UINT32 chromaShift = (av1->ecfg.g_profile == 0) ? 1 : 0;
+	const size_t chromaX = damage.left >> chromaShift;
+	const size_t chromaY = damage.top >> chromaShift;
+	const BYTE* pSrc = &pSrcData[1ull * damage.top * nSrcStep + 1ull * damage.left * bpp];
+	BYTE* pDst[3] = { &av1->yuvdata[0][1ull * damage.top * av1->yuvStride[0] + damage.left],
+		              &av1->yuvdata[1][chromaY * av1->yuvStride[1] + chromaX],
+		              &av1->yuvdata[2][chromaY * av1->yuvStride[2] + chromaX] };
 
 	aom_image_t buffer = WINPR_C_ARRAY_INIT;
 
@@ -314,16 +369,16 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 				img->fmt = AOM_IMG_FMT_I420;
 				img->x_chroma_shift = 1;
 				img->y_chroma_shift = 1;
-				rec = ARGBToI420(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
-				                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
+				rec = ARGBToI420(pSrc, nSrcStep, pDst[0], av1->yuvStride[0], pDst[1],
+				                 av1->yuvStride[1], pDst[2],
 				                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.width),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.height));
 				break;
 			case 1:
 				img->fmt = AOM_IMG_FMT_I444;
-				rec = ARGBToI444(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
-				                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
+				rec = ARGBToI444(pSrc, nSrcStep, pDst[0], av1->yuvStride[0], pDst[1],
+				                 av1->yuvStride[1], pDst[2],
 				                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.width),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.height));
@@ -343,13 +398,13 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 				img->fmt = AOM_IMG_FMT_I420;
 				img->x_chroma_shift = 1;
 				img->y_chroma_shift = 1;
-				rec = primitives->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
+				rec = primitives->RGBToYUV420_8u_P3AC4R(pSrc, SrcFormat, nSrcStep, pDst,
 				                                        av1->yuvStride, &roi);
 				break;
 			case 1:
 				img->fmt = AOM_IMG_FMT_I444;
-				rec = primitives->RGBToI444_8u(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
-				                               av1->yuvStride, &roi);
+				rec =
+				    primitives->RGBToI444_8u(pSrc, SrcFormat, nSrcStep, pDst, av1->yuvStride, &roi);
 				break;
 			default:
 				WLog_Print(av1->log, WLOG_ERROR, "Unsupoorted AV1 profile %" PRIu32,
@@ -360,11 +415,13 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	if (rec != 0)
 	{
 		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
+		av1->fullFrameNext = true;
 		return -1;
 	}
+	av1->fullFrameNext = false;
 	img->bit_depth = 8;
-	img->d_w = img->r_w = img->w = roi.width;
-	img->d_h = img->r_h = img->h = roi.height;
+	img->d_w = img->r_w = img->w = nSrcWidth;
+	img->d_h = img->r_h = img->h = nSrcHeight;
 	img->stride[0] = WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[0]);
 	img->stride[1] = WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[1]);
 	img->stride[2] = WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]);
@@ -763,6 +820,7 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 		av1->framecount = 0;
 		av1->eflags = 0; // AOM_EFLAG_FORCE_KF;
 		av1->initialized = true;
+		av1->fullFrameNext = true;
 
 		if (!av1_aom_apply_controls(av1))
 			return FALSE;
