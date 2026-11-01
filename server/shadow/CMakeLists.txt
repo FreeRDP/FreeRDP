@@ -159,6 +159,10 @@ if(WITH_SERVER_SHADOW_CLI)
   add_subdirectory(cli)
 endif()
 
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
 # Do not set Requires.Private if not a static build
