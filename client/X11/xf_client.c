@@ -1493,19 +1493,6 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto disconnect;
 	}
 
-	if (!status)
-	{
-		WLog_ERR(TAG, "Freerdp connect error exit status %" PRId32 "", !status);
-		exit_code = freerdp_error_info(instance);
-
-		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
-			exit_code = XF_EXIT_AUTH_FAILURE;
-		else if (exit_code == ERRINFO_SUCCESS)
-			exit_code = XF_EXIT_CONN_FAILED;
-
-		goto disconnect;
-	}
-
 	inputEvent = xfc->x11event;
 
 	while (!freerdp_shall_disconnect_context(instance->context))
