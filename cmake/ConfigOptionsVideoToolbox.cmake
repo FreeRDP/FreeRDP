@@ -17,7 +17,7 @@ if(_videotoolbox_platform_supported AND CMAKE_OSX_DEPLOYMENT_TARGET)
   endif()
 endif()
 
-option(WITH_APPLE_VIDEOTOOLBOX "Use Apple VideoToolbox directly for H.264 decoding" ${_videotoolbox_default})
+option(WITH_APPLE_VIDEOTOOLBOX "Use Apple VideoToolbox directly for H.264" ${_videotoolbox_default})
 if(WITH_APPLE_VIDEOTOOLBOX)
   if(NOT _videotoolbox_platform_supported)
     message(FATAL_ERROR "WITH_APPLE_VIDEOTOOLBOX requires a macOS or iOS target")

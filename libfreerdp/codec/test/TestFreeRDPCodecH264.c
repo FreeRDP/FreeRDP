@@ -527,7 +527,7 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 		}
 	}
 
-	/* The shared flag includes all H.264 backends, including decoder-only VideoToolbox. */
+	/* The shared flag includes all H.264 backends. */
 #if !defined(WITH_GFX_H264)
 	(void)fprintf(stderr, "[%s] skipping, no H264 encoder/decoder support compiled in\n", __func__);
 	return 0;
@@ -558,8 +558,9 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 	if (!testDecodeAvc444(RDPGFX_CODECID_AVC444) || !testDecodeAvc444(RDPGFX_CODECID_AVC444v2))
 		return -1;
 
-#if !defined(WITH_MEDIA_FOUNDATION) && \
-    (defined(WITH_OPENH264) || defined(WITH_VIDEO_FFMPEG) || defined(WITH_MEDIACODEC))
+#if !defined(WITH_MEDIA_FOUNDATION) &&                                                   \
+    (defined(WITH_OPENH264) || defined(WITH_VIDEO_FFMPEG) || defined(WITH_MEDIACODEC) || \
+	 defined(WITH_APPLE_VIDEOTOOLBOX))
 	/* Decoder-only builds cannot run the compression tests. */
 	if (!testContextOptions(TRUE, width, height))
 		return -1;
