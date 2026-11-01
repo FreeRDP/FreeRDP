@@ -1396,6 +1396,107 @@ static int similarY(const BYTE* a, const BYTE* b, size_t size, size_t type)
 /* Check the result of generic matches the optimized routine.
  *
  */
+#if defined(NEON_INTRINSICS_ENABLED)
+/* The NEON RGBToYUV420_8u_P3AC4R keeps the generic integer math, so it must
+ * match the generic routine byte for byte, unlike the SSE4.1 one (which uses 7
+ * and 8 bit coefficients). Odd widths and heights, padded strides, the formats
+ * it handles and one it hands back to the generic routine. */
+static BOOL compare_rgb_to_yuv420_exact(prim_size_t roi, DWORD type)
+{
+	BOOL rc = FALSE;
+	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBA32,
+		                       PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_ARGB32 };
+	const size_t srcStep = 4ULL * roi.width + 12;
+	const UINT32 cw = (roi.width + 1) / 2;
+	const UINT32 ch = (roi.height + 1) / 2;
+	const UINT32 dstStep[3] = { roi.width + 5, cw + 7, cw + 9 };
+	const UINT32 rows[3] = { roi.height, ch, ch };
+	const UINT32 used[3] = { roi.width, cw, cw };
+	BYTE* rgb = nullptr;
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	BYTE* ref[3] = WINPR_C_ARRAY_INIT;
+
+	primitives_t* prims = primitives_get_by_type(type);
+	primitives_t* soft = primitives_get_by_type(PRIMITIVES_PURE_SOFT);
+	if (!prims)
+	{
+		printf("primitives type %" PRIu32 " not supported, skipping\n", type);
+		return TRUE;
+	}
+	if (!soft)
+		goto fail;
+
+	rgb = calloc(roi.height, srcStep);
+	if (!rgb)
+		goto fail;
+	for (size_t x = 0; x < 3; x++)
+	{
+		yuv[x] = calloc(rows[x], dstStep[x]);
+		ref[x] = calloc(rows[x], dstStep[x]);
+		if (!yuv[x] || !ref[x])
+			goto fail;
+	}
+	if (winpr_RAND(rgb, roi.height * srcStep) < 0)
+		goto fail;
+
+	for (size_t f = 0; f < ARRAYSIZE(formats); f++)
+	{
+		const UINT32 format = formats[f];
+		for (size_t x = 0; x < 3; x++)
+		{
+			memset(yuv[x], PADDING_FILL_VALUE, 1ULL * rows[x] * dstStep[x]);
+			memset(ref[x], PADDING_FILL_VALUE, 1ULL * rows[x] * dstStep[x]);
+		}
+
+		if (soft->RGBToYUV420_8u_P3AC4R(rgb, format, (UINT32)srcStep, ref, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+		if (prims->RGBToYUV420_8u_P3AC4R(rgb, format, (UINT32)srcStep, yuv, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+
+		for (size_t x = 0; x < 3; x++)
+		{
+			for (size_t y = 0; y < rows[x]; y++)
+			{
+				const BYTE* line = &yuv[x][y * dstStep[x]];
+				const BYTE* expect = &ref[x][y * dstStep[x]];
+				if (memcmp(line, expect, dstStep[x]) != 0)
+				{
+					(void)fprintf(stderr,
+					              "[%s] %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
+					              " differs in line %" PRIuz "\n",
+					              __func__, FreeRDPGetColorFormatName(format), roi.width,
+					              roi.height, x, y);
+					goto fail;
+				}
+				for (size_t p = used[x]; p < dstStep[x]; p++)
+				{
+					if (line[p] != PADDING_FILL_VALUE)
+					{
+						(void)fprintf(stderr, "[%s] %s: plane %" PRIuz " overwrote padding\n",
+						              __func__, FreeRDPGetColorFormatName(format), x);
+						goto fail;
+					}
+				}
+			}
+		}
+	}
+
+	rc = TRUE;
+fail:
+	printf("%s %" PRIu32 "x%" PRIu32 " finished with %s\n", __func__, roi.width, roi.height,
+	       rc ? "SUCCESS" : "FAILURE");
+	free(rgb);
+	for (size_t x = 0; x < 3; x++)
+	{
+		free(yuv[x]);
+		free(ref[x]);
+	}
+	return rc;
+}
+#endif
+
 static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
@@ -1636,6 +1737,16 @@ int TestPrimitivesYUV(int argc, char* argv[])
 			goto end;
 		if (!compare_rgb_to_yuv420(roi, type))
 			goto end;
+#if defined(NEON_INTRINSICS_ENABLED)
+		/* the random roi plus sizes around the 16x2 vector blocks */
+		const prim_size_t yuv420Rois[] = { roi,       { 1, 1 },  { 15, 3 }, { 16, 2 },
+			                               { 17, 3 }, { 32, 1 }, { 33, 5 }, { 47, 4 } };
+		for (size_t x = 0; x < ARRAYSIZE(yuv420Rois); x++)
+		{
+			if (!compare_rgb_to_yuv420_exact(yuv420Rois[x], type))
+				goto end;
+		}
+#endif
 
 		/* the random roi may be too narrow for the vector loops; 1744 is an
 		 * odd number of macroblocks */

@@ -597,6 +597,160 @@ static pstatus_t neon_I444ToRGB_8u(const BYTE* WINPR_RESTRICT pSrc[3], const UIN
 	}
 }
 
+/* RGBToYUV420_8u_P3AC4R: Y for every pixel, U and V from the average R, G and B of
+ * each 2x2 block, with the exact integer math of the generic routine (RGB2Y,
+ * RGB2U, RGB2V; the average is the sum of four >> 2), so the result matches it
+ * byte for byte. 16 bit lanes are wide enough for every intermediate value. */
+
+/* the low byte of 16 bit lanes: (54 R + 183 G + 18 B) >> 8, at most 65025 */
+static inline uint8x8_t neon_YUV420_Y8(uint16x8_t r, uint16x8_t g, uint16x8_t b)
+{
+	uint16x8_t t = vmulq_n_u16(r, 54);
+	t = vmlaq_n_u16(t, g, 183);
+	t = vmlaq_n_u16(t, b, 18);
+	return vshrn_n_u16(t, 8);
+}
+
+static inline uint8x16_t neon_YUV420_Y(uint8x16_t r, uint8x16_t g, uint8x16_t b)
+{
+	const uint8x8_t lo = neon_YUV420_Y8(vmovl_u8(vget_low_u8(r)), vmovl_u8(vget_low_u8(g)),
+	                                    vmovl_u8(vget_low_u8(b)));
+	const uint8x8_t hi = neon_YUV420_Y8(vmovl_u8(vget_high_u8(r)), vmovl_u8(vget_high_u8(g)),
+	                                    vmovl_u8(vget_high_u8(b)));
+	return vcombine_u8(lo, hi);
+}
+
+/* U and V of eight 2x2 blocks given as their average R, G and B in 16 bit lanes:
+ * ((128 B - (29 R + 99 G)) >> 8) + 128 and ((128 R - (116 G + 12 B)) >> 8) + 128,
+ * both terms at most 32640 */
+static inline void neon_YUV420_UV(uint16x8_t r, uint16x8_t g, uint16x8_t b,
+                                  uint8x8_t* WINPR_RESTRICT u, uint8x8_t* WINPR_RESTRICT v)
+{
+	const int16x8_t c128 = vdupq_n_s16(128);
+	const int16x8_t rs = vreinterpretq_s16_u16(r);
+	const int16x8_t gs = vreinterpretq_s16_u16(g);
+	const int16x8_t bs = vreinterpretq_s16_u16(b);
+
+	int16x8_t s = vmlaq_n_s16(vmulq_n_s16(rs, 29), gs, 99);
+	s = vsubq_s16(vshlq_n_s16(bs, 7), s);
+	*u = vqmovun_s16(vaddq_s16(vshrq_n_s16(s, 8), c128));
+
+	s = vmlaq_n_s16(vmulq_n_s16(gs, 116), bs, 12);
+	s = vsubq_s16(vshlq_n_s16(rs, 7), s);
+	*v = vqmovun_s16(vaddq_s16(vshrq_n_s16(s, 8), c128));
+}
+
+/* one of the four byte planes of vld4q_u8, picked with constant indices: indexing
+ * px.val[] with a variable makes the compiler spill all four to the stack */
+static inline uint8x16_t neon_YUV420_plane(const uint8x16x4_t px, const size_t off)
+{
+	switch (off)
+	{
+		case 0:
+			return px.val[0];
+		case 1:
+			return px.val[1];
+		case 2:
+			return px.val[2];
+		default:
+			return px.val[3];
+	}
+}
+
+static inline pstatus_t neon_RGBToYUV420_32bpp(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                               UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                               const UINT32 dstStep[3],
+                                               const prim_size_t* WINPR_RESTRICT roi,
+                                               const size_t rOff, const size_t bOff)
+{
+	const size_t gOff = 1;
+	/* the vector loop takes 16x2 pixel blocks; the generic routine does the
+	 * columns right of them and an odd last row, so the edges keep its exact
+	 * behaviour */
+	const size_t width = roi->width - roi->width % 16;
+	const size_t height = roi->height - roi->height % 2;
+
+	for (size_t row = 0; row < height; row += 2)
+	{
+		const BYTE* src0 = &pSrc[row * srcStep];
+		const BYTE* src1 = &pSrc[(row + 1) * srcStep];
+		BYTE* y0 = &pDst[0][row * dstStep[0]];
+		BYTE* y1 = &pDst[0][(row + 1) * dstStep[0]];
+		BYTE* ud = &pDst[1][(row / 2) * dstStep[1]];
+		BYTE* vd = &pDst[2][(row / 2) * dstStep[2]];
+
+		for (size_t x = 0; x < width; x += 16)
+		{
+			const uint8x16x4_t p0 = vld4q_u8(&src0[4 * x]);
+			const uint8x16x4_t p1 = vld4q_u8(&src1[4 * x]);
+			const uint8x16_t r0 = neon_YUV420_plane(p0, rOff);
+			const uint8x16_t g0 = neon_YUV420_plane(p0, gOff);
+			const uint8x16_t b0 = neon_YUV420_plane(p0, bOff);
+			const uint8x16_t r1 = neon_YUV420_plane(p1, rOff);
+			const uint8x16_t g1 = neon_YUV420_plane(p1, gOff);
+			const uint8x16_t b1 = neon_YUV420_plane(p1, bOff);
+
+			vst1q_u8(&y0[x], neon_YUV420_Y(r0, g0, b0));
+			vst1q_u8(&y1[x], neon_YUV420_Y(r1, g1, b1));
+
+			/* the sum of each 2x2 block: pairs in a row, then the two rows */
+			const uint16x8_t r = vshrq_n_u16(vpadalq_u8(vpaddlq_u8(r0), r1), 2);
+			const uint16x8_t g = vshrq_n_u16(vpadalq_u8(vpaddlq_u8(g0), g1), 2);
+			const uint16x8_t b = vshrq_n_u16(vpadalq_u8(vpaddlq_u8(b0), b1), 2);
+			uint8x8_t u = vdup_n_u8(0);
+			uint8x8_t v = vdup_n_u8(0);
+			neon_YUV420_UV(r, g, b, &u, &v);
+			vst1_u8(&ud[x / 2], u);
+			vst1_u8(&vd[x / 2], v);
+		}
+	}
+
+	/* the columns right of the vector blocks, every row */
+	if (width < roi->width)
+	{
+		const BYTE* src = &pSrc[4 * width];
+		BYTE* dst[3] = { &pDst[0][width], &pDst[1][width / 2], &pDst[2][width / 2] };
+		const prim_size_t rest = { roi->width - (UINT32)width, roi->height };
+		const pstatus_t rc =
+		    generic->RGBToYUV420_8u_P3AC4R(src, SrcFormat, srcStep, dst, dstStep, &rest);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+
+	/* an odd last row, left of those columns */
+	if ((height < roi->height) && (width > 0))
+	{
+		const BYTE* src = &pSrc[height * srcStep];
+		BYTE* dst[3] = { &pDst[0][height * dstStep[0]], &pDst[1][(height / 2) * dstStep[1]],
+			             &pDst[2][(height / 2) * dstStep[2]] };
+		const prim_size_t rest = { (UINT32)width, 1 };
+		return generic->RGBToYUV420_8u_P3AC4R(src, SrcFormat, srcStep, dst, dstStep, &rest);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t neon_RGBToYUV420_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                            UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                            const UINT32 dstStep[3],
+                                            const prim_size_t* WINPR_RESTRICT roi)
+{
+	/* FreeRDPReadColor reads 32 bit pixels most significant byte first: the
+	 * first channel of the format name is the first byte in memory. The other
+	 * formats average differently in the generic routine, so they stay there. */
+	switch (SrcFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return neon_RGBToYUV420_32bpp(pSrc, SrcFormat, srcStep, pDst, dstStep, roi, 2, 0);
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return neon_RGBToYUV420_32bpp(pSrc, SrcFormat, srcStep, pDst, dstStep, roi, 0, 2);
+		default:
+			return generic->RGBToYUV420_8u_P3AC4R(pSrc, SrcFormat, srcStep, pDst, dstStep, roi);
+	}
+}
+
 static pstatus_t neon_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3], const UINT32 srcStep[3],
                                    BYTE* WINPR_RESTRICT pDstRaw[3], const UINT32 dstStep[3],
                                    const RECTANGLE_16* WINPR_RESTRICT roi)
@@ -891,6 +1045,7 @@ void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims)
 #if defined(NEON_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	WLog_VRB(PRIM_TAG, "NEON optimizations");
+	prims->RGBToYUV420_8u_P3AC4R = neon_RGBToYUV420_8u_P3AC4R;
 	prims->YUV420ToRGB_8u_P3AC4R = neon_YUV420ToRGB_8u_P3AC4R;
 	prims->YUV444ToRGB_8u_P3AC4R = neon_YUV444ToRGB_8u_P3AC4R;
 	prims->I444ToRGB_8u = neon_I444ToRGB_8u;
