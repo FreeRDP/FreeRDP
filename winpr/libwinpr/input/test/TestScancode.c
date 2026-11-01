@@ -68,11 +68,10 @@ static bool testAppleModifiers(void)
 	{
 		DWORD keycode;
 		DWORD vkcode;
-	} modifiers[] = {
-		{ 0x37, VK_LWIN | KBDEXT },    { 0x38, VK_LSHIFT }, { 0x3A, VK_LMENU },
-		{ 0x3B, VK_LCONTROL },         { 0x3C, VK_RSHIFT }, { 0x3D, VK_RMENU | KBDEXT },
-		{ 0x3E, VK_RCONTROL | KBDEXT }
-	};
+	} modifiers[] = { { 0x36, VK_RWIN | KBDEXT },  { 0x37, VK_LWIN | KBDEXT },
+		              { 0x38, VK_LSHIFT },         { 0x3A, VK_LMENU },
+		              { 0x3B, VK_LCONTROL },       { 0x3C, VK_RSHIFT },
+		              { 0x3D, VK_RMENU | KBDEXT }, { 0x3E, VK_RCONTROL | KBDEXT } };
 
 	for (size_t x = 0; x < ARRAYSIZE(modifiers); x++)
 	{
