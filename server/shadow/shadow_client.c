@@ -1240,6 +1240,49 @@ static inline UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* ha
 }
 
 #if defined(WITH_GFX_AV1)
+/* Encoder statistics, logged every few seconds at debug level to
+ * com.freerdp.server.shadow.av1 (WLOG_FILTER=com.freerdp.server.shadow.av1:DEBUG) */
+#define SHADOW_AV1_STATS_INTERVAL_NS (5ull * 1000ull * 1000ull * 1000ull)
+
+static void shadow_client_av1_stats(rdpShadowEncoder* encoder, UINT64 startNS, UINT64 endNS,
+                                    size_t bytes, UINT32 codec)
+{
+	if (!encoder->av1Stats.log)
+		encoder->av1Stats.log = WLog_Get(SERVER_TAG("shadow.av1"));
+	wLog* log = encoder->av1Stats.log;
+
+	if (!WLog_IsLevelActive(log, WLOG_DEBUG))
+		return;
+
+	const UINT64 encodeNS = endNS - startNS;
+	if (encoder->av1Stats.frames == 0)
+		encoder->av1Stats.startNS = startNS;
+	encoder->av1Stats.frames++;
+	encoder->av1Stats.encodeNS += encodeNS;
+	encoder->av1Stats.bytes += bytes;
+	if (encodeNS > encoder->av1Stats.maxEncodeNS)
+		encoder->av1Stats.maxEncodeNS = encodeNS;
+
+	const UINT64 elapsedNS = endNS - encoder->av1Stats.startNS;
+	if (elapsedNS < SHADOW_AV1_STATS_INTERVAL_NS)
+		return;
+
+	const double seconds = (double)elapsedNS / 1e9;
+	WLog_Print(log, WLOG_DEBUG,
+	           "AV1 %" PRIu32 "x%" PRIu32 " %s: %" PRIu32 " frames in %.1f s (%.1f fps), "
+	           "encode avg %.1f ms max %.1f ms, %.0f kbit/s",
+	           encoder->width, encoder->height, (codec == FREERDP_CODEC_AV1_I444) ? "I444" : "I420",
+	           encoder->av1Stats.frames, seconds, encoder->av1Stats.frames / seconds,
+	           (double)encoder->av1Stats.encodeNS / encoder->av1Stats.frames / 1e6,
+	           (double)encoder->av1Stats.maxEncodeNS / 1e6,
+	           (double)encoder->av1Stats.bytes * 8.0 / 1000.0 / seconds);
+
+	encoder->av1Stats.frames = 0;
+	encoder->av1Stats.encodeNS = 0;
+	encoder->av1Stats.maxEncodeNS = 0;
+	encoder->av1Stats.bytes = 0;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL shadow_client_send_av1(rdpShadowClient* client, const BYTE* pSrcData, UINT32 nSrcStep,
                                    UINT32 SrcFormat, UINT16 nWidth, UINT16 nHeight,
@@ -1275,6 +1318,7 @@ static BOOL shadow_client_send_av1(rdpShadowClient* client, const BYTE* pSrcData
 	regionRect.top = (UINT16)cmd->top;
 	regionRect.right = (UINT16)cmd->right;
 	regionRect.bottom = (UINT16)cmd->bottom;
+	const UINT64 startNS = winpr_GetTickCount64NS();
 	rc = freerdp_av1_compress(encoder->av1, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight,
 	                          &regionRect, &avc420.data, &avc420.length, &avc420.meta);
 	if (rc < 0)
@@ -1286,6 +1330,8 @@ static BOOL shadow_client_send_av1(rdpShadowClient* client, const BYTE* pSrcData
 	/* rc > 0 means new data */
 	if (rc > 0)
 	{
+		shadow_client_av1_stats(encoder, startNS, winpr_GetTickCount64NS(), avc420.length, flags);
+
 		cmd->codecId = RDPGFX_CODECID_AV1;
 		cmd->extra = (void*)&avc420;
 
