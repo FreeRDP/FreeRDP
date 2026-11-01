@@ -277,10 +277,56 @@ static inline BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	return FALSE;
 }
 
+/* The AVC444v2 auxiliary view keeps the chroma detail of screen columns [left, right) in two
+ * halves (MS-RDPEGFX 3.3.8.3.3): in its Y plane at [left / 2, right / 2) and, width / 2 further,
+ * at [width / 2 + left / 2, width / 2 + right / 2) on the same rows; in its U and V planes at a
+ * quarter of those columns on half the rows. Comparing the tile's own columns there, as
+ * diff_tile does, looks at other pixels, so a tile whose chroma changed could go unreported
+ * and the client kept its old colours. */
+WINPR_ATTR_NODISCARD
+static inline BOOL diff_tile_avc444v2_aux(const RECTANGLE_16* tile, UINT32 width, BYTE* pYUVData[3],
+                                          BYTE* pOldYUVData[3], UINT32 const iStride[3])
+{
+	if (!tile || !pYUVData || !pOldYUVData || !iStride || (tile->right <= tile->left))
+		return FALSE;
+
+	const size_t l2 = tile->left / 2u;
+	const size_t n2 = (tile->right + 1u) / 2u - l2;
+	const size_t h2 = width / 2u;
+	const size_t l4 = tile->left / 4u;
+	const size_t n4 = (tile->right + 3u) / 4u - l4;
+	const size_t h4 = width / 4u;
+
+	if ((h2 + l2 + n2 > iStride[0]) || (h4 + l4 + n4 > iStride[1]) || (h4 + l4 + n4 > iStride[2]))
+		return TRUE; /* can't tell: send it */
+
+	for (size_t y = tile->top; y < tile->bottom; y++)
+	{
+		const BYTE* cur = &pYUVData[0][y * iStride[0]];
+		const BYTE* old = &pOldYUVData[0][y * iStride[0]];
+		if ((memcmp(&cur[l2], &old[l2], n2) != 0) ||
+		    (memcmp(&cur[h2 + l2], &old[h2 + l2], n2) != 0))
+			return TRUE;
+	}
+
+	for (size_t y = tile->top / 2u; y < (tile->bottom + 1u) / 2u; y++)
+	{
+		for (size_t p = 1; p < 3; p++)
+		{
+			const BYTE* cur = &pYUVData[p][y * iStride[p]];
+			const BYTE* old = &pOldYUVData[p][y * iStride[p]];
+			if ((memcmp(&cur[l4], &old[l4], n4) != 0) ||
+			    (memcmp(&cur[h4 + l4], &old[h4 + l4], n4) != 0))
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE_16* regionRect,
                            BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
-                           RDPGFX_H264_METABLOCK* meta)
+                           UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
 {
 	size_t count = 0;
 	size_t wc = 0;
@@ -313,7 +359,11 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 				    (UINT16)MIN(UINT16_MAX, MIN(regionRect->left + x + 64, regionRect->right));
 				rect.bottom =
 				    (UINT16)MIN(UINT16_MAX, MIN(regionRect->top + y + 64, regionRect->bottom));
-				if (diff_tile(&rect, pYUVData, pOldYUVData, iStride))
+				const BOOL changed =
+				    v2AuxWidth
+				        ? diff_tile_avc444v2_aux(&rect, v2AuxWidth, pYUVData, pOldYUVData, iStride)
+				        : diff_tile(&rect, pYUVData, pOldYUVData, iStride);
+				if (changed)
 					rectangles[count++] = rect;
 			}
 		}
@@ -392,7 +442,7 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		goto fail;
 
 	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, regionRect, pYUVData, pOldYUVData,
-	                    h264->iStride, meta))
+	                    h264->iStride, 0, meta))
 		goto fail;
 
 	if (meta->numRegionRects == 0)
@@ -461,10 +511,11 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		goto fail;
 
 	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, region, pYUV444Data, pOldYUV444Data,
-	                    h264->iStride, meta))
+	                    h264->iStride, 0, meta))
 		goto fail;
+	/* in AVC444v2 the auxiliary view is laid out by the frame width, not by screen position */
 	if (!detect_changes(h264->firstChromaFrameDone, h264->QP, region, pYUVData, pOldYUVData,
-	                    h264->iStride, auxMeta))
+	                    h264->iStride, (version == 2) ? h264->width : 0, auxMeta))
 		goto fail;
 
 	/* [MS-RDPEGFX] 2.2.4.5 RFX_AVC444_BITMAP_STREAM
