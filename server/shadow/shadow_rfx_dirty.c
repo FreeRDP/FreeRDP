@@ -131,7 +131,7 @@ int shadow_rfx_plan_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UINT3
 	const UINT32 startTy = cmd->top / RFX_TILE_SIZE;
 	const UINT32 endTy = (y1 - 1) / RFX_TILE_SIZE;
 
-	RFX_RECT* rects = calloc(gridW * gridH, sizeof(RFX_RECT));
+	RFX_RECT* rects = calloc(gridW, (size_t)gridH * sizeof(RFX_RECT));
 	if (!rects)
 		return -1;
 
