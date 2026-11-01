@@ -261,17 +261,27 @@ static inline BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	for (size_t y = regionRect->top; y < regionRect->bottom; y++)
 	{
 		const BYTE* cur0 = &pYUVData[0][y * iStride[0]];
-		const BYTE* cur1 = &pYUVData[1][y * iStride[1]];
-		const BYTE* cur2 = &pYUVData[2][y * iStride[2]];
 		const BYTE* old0 = &pOldYUVData[0][y * iStride[0]];
-		const BYTE* old1 = &pOldYUVData[1][y * iStride[1]];
-		const BYTE* old2 = &pOldYUVData[2][y * iStride[2]];
 
 		if (memcmp(&cur0[regionRect->left], &old0[regionRect->left], size) != 0)
 			return TRUE;
-		if (memcmp(&cur1[regionRect->left / 2], &old1[regionRect->left / 2], size / 2) != 0)
+	}
+
+	/* the U and V planes have half the rows: the tile's chroma is on rows top / 2 to
+	 * (bottom + 1) / 2. Row y of them is screen row 2 * y, so reading row y here compared
+	 * another part of the screen (and past the planes' content below half height). */
+	const size_t uvLeft = regionRect->left / 2u;
+	const size_t uvSize = (regionRect->right + 1u) / 2u - uvLeft;
+	for (size_t y = regionRect->top / 2u; y < (regionRect->bottom + 1u) / 2u; y++)
+	{
+		const BYTE* cur1 = &pYUVData[1][y * iStride[1]];
+		const BYTE* cur2 = &pYUVData[2][y * iStride[2]];
+		const BYTE* old1 = &pOldYUVData[1][y * iStride[1]];
+		const BYTE* old2 = &pOldYUVData[2][y * iStride[2]];
+
+		if (memcmp(&cur1[uvLeft], &old1[uvLeft], uvSize) != 0)
 			return TRUE;
-		if (memcmp(&cur2[regionRect->left / 2], &old2[regionRect->left / 2], size / 2) != 0)
+		if (memcmp(&cur2[uvLeft], &old2[uvLeft], uvSize) != 0)
 			return TRUE;
 	}
 	return FALSE;
