@@ -418,6 +418,33 @@ static RECTANGLE_16 h264_align_region(const RECTANGLE_16* rect, UINT32 width, UI
 	return aligned;
 }
 
+/* The encoder alternates between two sets of planes: the one it converts into this frame held
+ * the frame before last, and only the region is converted. Outside the region the encoder then
+ * saw that older picture, a change every frame where nothing changed, which costs bits (and
+ * takes them from what did change). Start from the last frame, unless the region is all of it. */
+static void h264_keep_last_frame(const RECTANGLE_16* region, UINT32 width, UINT32 height,
+                                 BYTE* dst[3], BYTE* const src[3], const size_t size[3])
+{
+	WINPR_ASSERT(region);
+	if ((region->left == 0) && (region->top == 0) && (region->right >= width) &&
+	    (region->bottom >= height))
+		return;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (dst[x] && src[x] && (size[x] > 0))
+			memcpy(dst[x], src[x], size[x]);
+	}
+}
+
+/* the size of the 4:2:0 planes, as yuv_ensure_buffer allocates them */
+static void h264_yuv420_plane_sizes(const H264_CONTEXT* h264, size_t size[3])
+{
+	const size_t rows = h264->height + 32u - h264->height % 16u;
+	for (size_t x = 0; x < 3; x++)
+		size[x] = 1ull * h264->iStride[x] * rows;
+}
+
 INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                       UINT32 nSrcWidth, UINT32 nSrcHeight, const RECTANGLE_16* regionRect,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)
@@ -453,6 +480,11 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		}
 	}
 	h264->encodingBuffer = !h264->encodingBuffer;
+	{
+		size_t size420[3] = WINPR_C_ARRAY_INIT;
+		h264_yuv420_plane_sizes(h264, size420);
+		h264_keep_last_frame(regionRect, nSrcWidth, nSrcHeight, pYUVData, pOldYUVData, size420);
+	}
 
 	const RECTANGLE_16 aligned = h264_align_region(regionRect, nSrcWidth, nSrcHeight);
 	if (!yuv420_context_encode(h264->yuv, pSrcData, nSrcStep, SrcFormat, h264->iStride, pYUVData,
@@ -523,6 +555,15 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		pOldYUVData = h264->pOldYUVData;
 	}
 	h264->encodingBuffer = !h264->encodingBuffer;
+	{
+		size_t size420[3] = WINPR_C_ARRAY_INIT;
+		size_t size444[3] = WINPR_C_ARRAY_INIT;
+		h264_yuv420_plane_sizes(h264, size420);
+		for (size_t x = 0; x < 3; x++)
+			size444[x] = h264->iYUV444Size[x];
+		h264_keep_last_frame(region, nSrcWidth, nSrcHeight, pYUVData, pOldYUVData, size420);
+		h264_keep_last_frame(region, nSrcWidth, nSrcHeight, pYUV444Data, pOldYUV444Data, size444);
+	}
 
 	const RECTANGLE_16 aligned = h264_align_region(region, nSrcWidth, nSrcHeight);
 	if (!yuv444_context_encode(h264->yuv, version, pSrcData, nSrcStep, SrcFormat, h264->iStride,
