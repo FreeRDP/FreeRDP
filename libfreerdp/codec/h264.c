@@ -401,6 +401,23 @@ INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
 	return h264->subsystem->Compress(h264, pcYUVData, h264->iStride, ppDstData, pDstSize);
 }
 
+/* The region to encode, rounded out to the 16 pixel macroblock grid inside the frame.
+ * Clients rebuild AVC444 colours relative to each region's corner: the odd chroma columns and
+ * rows, and every fourth sample in AVC444v2 (MS-RDPEGFX 3.3.8.3.2, 3.3.8.3.3), are counted from
+ * left and top. A region starting at an odd or unaligned column or row (the shadow server sends
+ * the bounding box of what changed, at any pixel) put those samples one pixel off. Encoders work
+ * on 16x16 macroblocks anyway, so the wider region costs no bits. */
+static RECTANGLE_16 h264_align_region(const RECTANGLE_16* rect, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(rect);
+	const UINT32 right = MIN(width, ((UINT32)rect->right + 15u) & ~15u);
+	const UINT32 bottom = MIN(height, ((UINT32)rect->bottom + 15u) & ~15u);
+	const RECTANGLE_16 aligned = { (UINT16)(rect->left & ~15u), (UINT16)(rect->top & ~15u),
+		                           (UINT16)MAX(rect->right, right),
+		                           (UINT16)MAX(rect->bottom, bottom) };
+	return aligned;
+}
+
 INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                       UINT32 nSrcWidth, UINT32 nSrcHeight, const RECTANGLE_16* regionRect,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)
@@ -437,11 +454,12 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	}
 	h264->encodingBuffer = !h264->encodingBuffer;
 
+	const RECTANGLE_16 aligned = h264_align_region(regionRect, nSrcWidth, nSrcHeight);
 	if (!yuv420_context_encode(h264->yuv, pSrcData, nSrcStep, SrcFormat, h264->iStride, pYUVData,
-	                           regionRect, 1))
+	                           &aligned, 1))
 		goto fail;
 
-	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, regionRect, pYUVData, pOldYUVData,
+	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, &aligned, pYUVData, pOldYUVData,
 	                    h264->iStride, 0, meta))
 		goto fail;
 
@@ -506,15 +524,16 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	}
 	h264->encodingBuffer = !h264->encodingBuffer;
 
+	const RECTANGLE_16 aligned = h264_align_region(region, nSrcWidth, nSrcHeight);
 	if (!yuv444_context_encode(h264->yuv, version, pSrcData, nSrcStep, SrcFormat, h264->iStride,
-	                           pYUV444Data, pYUVData, region, 1))
+	                           pYUV444Data, pYUVData, &aligned, 1))
 		goto fail;
 
-	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, region, pYUV444Data, pOldYUV444Data,
+	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, &aligned, pYUV444Data, pOldYUV444Data,
 	                    h264->iStride, 0, meta))
 		goto fail;
 	/* in AVC444v2 the auxiliary view is laid out by the frame width, not by screen position */
-	if (!detect_changes(h264->firstChromaFrameDone, h264->QP, region, pYUVData, pOldYUVData,
+	if (!detect_changes(h264->firstChromaFrameDone, h264->QP, &aligned, pYUVData, pOldYUVData,
 	                    h264->iStride, (version == 2) ? h264->width : 0, auxMeta))
 		goto fail;
 
