@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <winpr/sysinfo.h>
+
 #include <freerdp/codec/av1.h>
 #include <freerdp/primitives.h>
 #include <freerdp/log.h>
@@ -84,6 +86,54 @@ static void av1_aom_destroy(FREERDP_AV1_CONTEXT* av1)
 	const aom_codec_err_t rc = aom_codec_destroy(&av1->ctx);
 	if (rc != AOM_CODEC_OK)
 		WLog_Print(av1->log, WLOG_WARN, "aom_codec_destroy: %s", aom_codec_err_to_string(rc));
+}
+
+/* Speed preset for AOM_USAGE_REALTIME, 0 (slowest) to 12 (fastest). libaom defaults to 0 and
+ * raises it to 7 only for frames of 1080 lines or more, so smaller desktops got the slowest
+ * search. */
+#define AV1_AOM_RT_SPEED 10
+
+/* libaom encodes on one thread by default; more than 4 did not make 1080p faster. */
+#define AV1_AOM_MAX_THREADS 4
+
+static unsigned int av1_aom_threads(void)
+{
+	SYSTEM_INFO sysInfo = WINPR_C_ARRAY_INIT;
+	GetNativeSystemInfo(&sysInfo);
+	if (sysInfo.dwNumberOfProcessors < 1)
+		return 1;
+	if (sysInfo.dwNumberOfProcessors > AV1_AOM_MAX_THREADS)
+		return AV1_AOM_MAX_THREADS;
+	return sysInfo.dwNumberOfProcessors;
+}
+
+/* aom_codec_enc_init() starts from the defaults again, so apply these after every init. */
+WINPR_ATTR_NODISCARD
+static BOOL av1_aom_apply_controls(FREERDP_AV1_CONTEXT* av1)
+{
+	const struct
+	{
+		int id;
+		int value;
+		const char* name;
+	} controls[] = {
+		{ AOME_SET_CPUUSED, AV1_AOM_RT_SPEED, "AOME_SET_CPUUSED" },
+		/* screen content tools (palette, intra block copy): sharp text at a lower bit rate */
+		{ AV1E_SET_TUNE_CONTENT, AOM_CONTENT_SCREEN, "AV1E_SET_TUNE_CONTENT" },
+		{ AV1E_SET_ROW_MT, 1, "AV1E_SET_ROW_MT" },
+	};
+
+	for (size_t x = 0; x < ARRAYSIZE(controls); x++)
+	{
+		const aom_codec_err_t rc = aom_codec_control(&av1->ctx, controls[x].id, controls[x].value);
+		if (rc != AOM_CODEC_OK)
+		{
+			WLog_Print(av1->log, WLOG_WARN, "aom_codec_control(%s, %d): %s", controls[x].name,
+			           controls[x].value, aom_codec_err_to_string(rc));
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -713,6 +763,9 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 		av1->framecount = 0;
 		av1->eflags = 0; // AOM_EFLAG_FORCE_KF;
 		av1->initialized = true;
+
+		if (!av1_aom_apply_controls(av1))
+			return FALSE;
 #else
 		WLog_Print(av1->log, WLOG_ERROR,
 		           "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
@@ -849,6 +902,7 @@ FREERDP_AV1_CONTEXT* freerdp_av1_context_new(BOOL Compressor)
 			           aom_codec_err_to_string(rc));
 			goto fail;
 		}
+		ctx->ecfg.g_threads = av1_aom_threads();
 #else
 		WLog_Print(ctx->log, WLOG_ERROR,
 		           "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
