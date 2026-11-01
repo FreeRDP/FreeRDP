@@ -83,6 +83,11 @@ struct win_shadow_subsystem
 	DXGI_OUTDUPL_FRAME_INFO dxgiFrameInfo;
 	ID3D11DeviceContext* dxgiDeviceContext;
 	IDXGIOutputDuplication* dxgiOutputDuplication;
+	/* the input desktop is one this process may not capture (the secure desktop for a process
+	 * in the user's session): capture is paused, the duplication is tried again from
+	 * dxgiRetryTime on */
+	BOOL dxgiDenied;
+	UINT64 dxgiRetryTime;
 #endif
 };
 

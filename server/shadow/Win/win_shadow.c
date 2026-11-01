@@ -560,9 +560,14 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 				 * desktop, and send all of it. DXGI reports changes only: on a
 				 * desktop that does not change, a new client would otherwise wait
 				 * for its first picture until something moves; a new duplication
-				 * starts with the whole desktop image */
-				if (win_shadow_follow_input_desktop() || refresh ||
-				    !subsystem->dxgiOutputDuplication)
+				 * starts with the whole desktop image. While capture is paused (a desktop
+				 * this process may not capture) a missing duplication is tried again only
+				 * every WIN_SHADOW_DXGI_DENIED_RETRY_MS, not on every pass */
+				const BOOL followed = win_shadow_follow_input_desktop();
+				const BOOL retry =
+				    !subsystem->dxgiOutputDuplication &&
+				    (!subsystem->dxgiDenied || (GetTickCount64() >= subsystem->dxgiRetryTime));
+				if (followed || refresh || retry)
 				{
 					refresh = FALSE;
 					if (win_shadow_dxgi_restart_duplication(subsystem) > 0)
