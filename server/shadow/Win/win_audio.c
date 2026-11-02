@@ -35,6 +35,12 @@
 
 #define TAG SERVER_TAG("shadow.win")
 
+/* The loopback stream is polled: win_wasapi_loopback_read() takes what the capture has and
+ * does not wait for more, so this wait (on the stop event) paces the loop. 10 ms is the period
+ * of the shared mode audio engine, the rate at which new samples arrive; with 0 the loop would
+ * spin a CPU core. (An event driven loopback stream is not signalled on every Windows version.) */
+#define WIN_AUDIO_POLL_MS 10
+
 /* What the clients get: 48 kHz, 2 channels, 16 bits. The build has no
  * resampler (SOXR or FFmpeg) unless asked for one, so every format offered
  * has the rate and channels of the captured samples, and 16 bits a sample:
@@ -130,7 +136,7 @@ static DWORD WINAPI win_audio_thread(LPVOID arg)
 
 		/* until stopped, or the endpoint went away: then the default one again */
 		log = TRUE;
-		while (WaitForSingleObject(subsystem->audioStopEvent, 10) == WAIT_TIMEOUT)
+		while (WaitForSingleObject(subsystem->audioStopEvent, WIN_AUDIO_POLL_MS) == WAIT_TIMEOUT)
 		{
 			const BOOL rc = win_wasapi_loopback_read(loopback, s);
 			win_audio_post(subsystem, s);
