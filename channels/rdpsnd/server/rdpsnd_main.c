@@ -522,13 +522,19 @@ static UINT rdpsnd_server_training(RdpsndServerContext* context, UINT16 timestam
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpsnd_server_align_wave_pdu(wStream* s, UINT32 alignment)
+/* Pads the wave with zeros to a multiple of the block alignment of its format.
+ * Not an Opus packet: it has no frame sync, every byte after it is taken as
+ * part of it, and with zeros there it no longer decodes (the client echoes
+ * back the alignment the server offered, which may well be more than 1). */
+static BOOL rdpsnd_server_align_wave_pdu(wStream* s, const AUDIO_FORMAT* format)
 {
 	size_t size = 0;
 	Stream_SealLength(s);
 	size = Stream_Length(s);
 
-	if ((size % alignment) != 0)
+	WINPR_ASSERT(format);
+	const UINT32 alignment = format->nBlockAlign;
+	if ((format->wFormatTag != WAVE_FORMAT_OPUS) && ((size % alignment) != 0))
 	{
 		size_t offset = alignment - size % alignment;
 
@@ -582,7 +588,7 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTi
 		return ERROR_INTERNAL_ERROR;
 
 	/* Set stream size */
-	if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
+	if (!rdpsnd_server_align_wave_pdu(s, format))
 		return ERROR_INTERNAL_ERROR;
 
 	const size_t end = Stream_GetPosition(s);
@@ -688,7 +694,7 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context, UINT16 fo
 		}
 
 		const AUDIO_FORMAT* format = &context->client_formats[formatNo];
-		if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
+		if (!rdpsnd_server_align_wave_pdu(s, format))
 		{
 			error = ERROR_INTERNAL_ERROR;
 			goto out;
