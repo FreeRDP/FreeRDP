@@ -558,9 +558,21 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 	if (!testDecodeAvc444(RDPGFX_CODECID_AVC444) || !testDecodeAvc444(RDPGFX_CODECID_AVC444v2))
 		return -1;
 
-#if !defined(WITH_MEDIA_FOUNDATION) &&                                                   \
-    (defined(WITH_OPENH264) || defined(WITH_VIDEO_FFMPEG) || defined(WITH_MEDIACODEC) || \
-	 defined(WITH_APPLE_VIDEOTOOLBOX))
+#if defined(WITH_MEDIA_FOUNDATION) || defined(WITH_OPENH264) || defined(WITH_VIDEO_FFMPEG) || \
+    defined(WITH_MEDIACODEC) || defined(WITH_APPLE_VIDEOTOOLBOX)
+#if defined(WITH_MEDIA_FOUNDATION)
+	/* Windows ships the Media Foundation H.264 encoder, but not every edition: N editions
+	 * and Windows Server without the Media Foundation feature have none. */
+	H264_CONTEXT* encoder = h264_context_new(TRUE);
+	if (!encoder)
+	{
+		(void)fprintf(stderr, "[%s] H.264 compression tests skipped: no encoder on this system\n",
+		              __func__);
+		return 0;
+	}
+	h264_context_free(encoder);
+#endif
+
 	/* Decoder-only builds cannot run the compression tests. */
 	if (!testContextOptions(TRUE, width, height))
 		return -1;
@@ -576,9 +588,6 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 				return -1;
 		}
 	}
-#elif defined(WITH_MEDIA_FOUNDATION)
-	(void)fprintf(stderr,
-	              "TODO: WITH_MEDIA_FOUNDATION: compression tests skipped, not implemented\n");
 #else
 	(void)fprintf(stderr, "H.264 compression tests skipped: no encoder configured\n");
 #endif
