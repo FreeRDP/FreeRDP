@@ -278,6 +278,34 @@ BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 
  * send an update to the RDP server informing it of the new window position
  * and size.
  */
+BOOL xf_rail_window_can_resize(const xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(appWindow);
+	/* Missing style information is not an explicit fixed-size contract. */
+	if (appWindow->resizeCapabilityKnown)
+		return appWindow->canResize;
+	return !appWindow->windowStyleKnown || ((appWindow->dwStyle & WS_SIZEBOX) != 0);
+}
+
+void xf_rail_update_window_style(xfAppWindow* appWindow, UINT32 style, UINT32 extendedStyle)
+{
+	WINPR_ASSERT(appWindow);
+	/* The server can temporarily strip the frame and visibility bits while
+	 * updating activation or show state. Retain the last established capability
+	 * until a normal style update supplies it again, including genuine changes
+	 * from a resizable framed window to a fixed one. */
+	const UINT32 frame = WS_CAPTION | WS_SIZEBOX | WS_VISIBLE;
+	if (!appWindow->resizeCapabilityKnown || (style & frame))
+	{
+		appWindow->canResize = (style & WS_SIZEBOX) != 0;
+		appWindow->hasServerFrame = (style & WS_CAPTION) != 0;
+		appWindow->resizeCapabilityKnown = TRUE;
+	}
+	appWindow->dwStyle = style;
+	appWindow->dwExStyle = extendedStyle;
+	appWindow->windowStyleKnown = TRUE;
+}
+
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
 	RAIL_WINDOW_MOVE_ORDER windowMove = WINPR_C_ARRAY_INIT;
@@ -514,8 +542,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (!appWindow)
 			goto fail;
 
-		appWindow->dwStyle = windowState->style;
-		appWindow->dwExStyle = windowState->extendedStyle;
+		xf_rail_update_window_style(appWindow, windowState->style, windowState->extendedStyle);
 		window_state_log_style(xfc->log, windowState);
 
 		/* Ensure window always gets a window title */
@@ -597,8 +624,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-		appWindow->dwStyle = windowState->style;
-		appWindow->dwExStyle = windowState->extendedStyle;
+		xf_rail_update_window_style(appWindow, windowState->style, windowState->extendedStyle);
 		window_state_log_style(xfc->log, windowState);
 	}
 
@@ -691,6 +717,8 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	}
 
 	/* Update Window */
+	if (fieldFlags & (WINDOW_ORDER_STATE_NEW | WINDOW_ORDER_FIELD_STYLE | WINDOW_ORDER_FIELD_WND_SIZE))
+		xf_UpdateWindowSizeHints(xfc, appWindow);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{

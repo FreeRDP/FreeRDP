@@ -63,6 +63,12 @@ struct xf_app_window
 	UINT32 dwStyle;
 	UINT32 dwExStyle;
 	UINT32 showState;
+	BOOL windowStyleKnown;
+	BOOL resizeCapabilityKnown;
+	BOOL canResize;
+	BOOL hasServerFrame;
+	BOOL minMaxInfoKnown;
+	RAIL_MINMAXINFO_ORDER minMaxInfo;
 
 	INT32 clientOffsetX;
 	INT32 clientOffsetY;
@@ -131,6 +137,10 @@ BOOL xf_rail_schedule_workarea(xfContext* xfc);
 
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
+
+BOOL xf_rail_window_can_resize(const xfAppWindow* appWindow);
+
+void xf_rail_update_window_style(xfAppWindow* appWindow, UINT32 style, UINT32 extendedStyle);
 
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
 

@@ -883,6 +883,8 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 {
 	Atom window_type = 0;
 	BOOL redirect = FALSE;
+	const BOOL wasTransient = appWindow->is_transient;
+	appWindow->is_transient = FALSE;
 
 	window_type = xfc->NET_WM_WINDOW_TYPE_NORMAL;
 
@@ -916,6 +918,10 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 			xf_SetWindowUnlisted(xfc, appWindow->handle);
 		}
 	}
+
+	if (wasTransient && !appWindow->is_transient)
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4, NET_WM_STATE_REMOVE,
+		                   xfc->NET_WM_STATE_SKIP_PAGER, xfc->NET_WM_STATE_SKIP_TASKBAR, 0);
 
 	if (!(style == 0 && ex_style == 0))
 	{
@@ -968,7 +974,7 @@ void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
 	if (!(appWindow->dwStyle & WS_MINIMIZEBOX))
 		allowed_actions[1] = 0;
 
-	if (!(appWindow->dwStyle & WS_SIZEBOX))
+	if (!xf_rail_window_can_resize(appWindow))
 		allowed_actions[3] = 0;
 
 	if (!(appWindow->dwStyle & WS_MAXIMIZEBOX))
@@ -1049,6 +1055,7 @@ BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow, BOOL hidden)
 
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
 	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	xf_UpdateWindowSizeHints(xfc, appWindow);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
 	LogDynAndXClearWindow(xfc->log, xfc->display, appWindow->handle);
 
@@ -1165,21 +1172,44 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_U
                             WINPR_ATTR_UNUSED int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight)
 {
-	XSizeHints* size_hints = nullptr;
-	size_hints = XAllocSizeHints();
+	appWindow->minMaxInfo.minTrackWidth = WINPR_ASSERTING_INT_CAST(INT16, minTrackWidth);
+	appWindow->minMaxInfo.minTrackHeight = WINPR_ASSERTING_INT_CAST(INT16, minTrackHeight);
+	appWindow->minMaxInfo.maxTrackWidth = WINPR_ASSERTING_INT_CAST(INT16, maxTrackWidth);
+	appWindow->minMaxInfo.maxTrackHeight = WINPR_ASSERTING_INT_CAST(INT16, maxTrackHeight);
+	appWindow->minMaxInfoKnown = TRUE;
+	xf_UpdateWindowSizeHints(xfc, appWindow);
+}
 
-	if (size_hints)
+void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	if ((!appWindow->windowStyleKnown && !appWindow->minMaxInfoKnown) ||
+	    (appWindow->dwStyle & WS_MINIMIZE) ||
+	    ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) &&
+	     (appWindow->showState != WINDOW_SHOW) && (appWindow->showState != WINDOW_SHOW_MAXIMIZED)))
+		return;
+	XSizeHints hints = { .flags = PResizeInc, .width_inc = 1, .height_inc = 1 };
+	if (!xf_rail_window_can_resize(appWindow))
 	{
-		size_hints->flags = PMinSize | PMaxSize | PResizeInc;
-		size_hints->min_width = minTrackWidth;
-		size_hints->min_height = minTrackHeight;
-		size_hints->max_width = maxTrackWidth;
-		size_hints->max_height = maxTrackHeight;
-		/* to speedup window drawing we need to select optimal value for sizing step. */
-		size_hints->width_inc = size_hints->height_inc = 1;
-		XSetWMNormalHints(xfc->display, appWindow->handle, size_hints);
-		XFree(size_hints);
+		if (!appWindow->windowWidth || !appWindow->windowHeight)
+			return;
+		/* RAIL min/max ranges alone do not grant resize permission. Publish
+		 * the current server size, including later programmatic size changes. */
+		hints.flags |= PMinSize | PMaxSize;
+		hints.min_width = hints.max_width = WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth);
+		hints.min_height = hints.max_height =
+		    WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight);
 	}
+	else if (appWindow->minMaxInfoKnown)
+	{
+		hints.flags |= PMinSize | PMaxSize;
+		hints.min_width = appWindow->minMaxInfo.minTrackWidth;
+		hints.min_height = appWindow->minMaxInfo.minTrackHeight;
+		hints.max_width = appWindow->minMaxInfo.maxTrackWidth;
+		hints.max_height = appWindow->minMaxInfo.maxTrackHeight;
+	}
+	XSetWMNormalHints(xfc->display, appWindow->handle, &hints);
 }
 
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y)
