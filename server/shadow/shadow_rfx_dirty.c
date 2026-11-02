@@ -131,7 +131,7 @@ int shadow_rfx_plan_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UINT3
 	const UINT32 startTy = cmd->top / RFX_TILE_SIZE;
 	const UINT32 endTy = (y1 - 1) / RFX_TILE_SIZE;
 
-	RFX_RECT* rects = calloc(gridW, (size_t)gridH * sizeof(RFX_RECT));
+	RFX_RECT* rects = calloc(gridW, gridH * sizeof(RFX_RECT));
 	if (!rects)
 		return -1;
 
@@ -139,7 +139,7 @@ int shadow_rfx_plan_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UINT3
 	UINT16 numRects = 0;
 
 	/* per-tile dirty flags within one tile row (reused per band) */
-	BOOL* bandChanged = (BOOL*)calloc(gridW, sizeof(BOOL));
+	BOOL* bandChanged = calloc(gridW, sizeof(BOOL));
 	if (!bandChanged)
 	{
 		free(rects);
@@ -211,10 +211,10 @@ int shadow_rfx_plan_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UINT3
 
 			if (changed)
 			{
-				rects[numRects].x = (UINT16)tileX;
-				rects[numRects].y = (UINT16)tileY;
-				rects[numRects].width = (UINT16)tileW;
-				rects[numRects].height = (UINT16)tileH;
+				rects[numRects].x = WINPR_ASSERTING_INT_CAST(UINT16, tileX);
+				rects[numRects].y = WINPR_ASSERTING_INT_CAST(UINT16, tileY);
+				rects[numRects].width = WINPR_ASSERTING_INT_CAST(UINT16, tileW);
+				rects[numRects].height = WINPR_ASSERTING_INT_CAST(UINT16, tileH);
 				numRects++;
 			}
 		}
@@ -237,6 +237,7 @@ void shadow_rfx_commit_tiles(rdpShadowEncoder* encoder, const BYTE* pSrcData, UI
 	WINPR_ASSERT(encoder);
 	WINPR_ASSERT(pSrcData);
 	WINPR_ASSERT(rects || (numRects == 0));
+	WINPR_ASSERT(nSrcStep > 0);
 
 	if (!encoder->gfxSnapshotValid)
 		return;
