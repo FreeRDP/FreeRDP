@@ -1,6 +1,7 @@
 #include <winpr/print.h>
+#include <winpr/string.h>
+#include <winpr/ndr.h>
 
-#include <rdpear-common/ndr.h>
 #include <rdpear-common/rdpear_common.h>
 
 #ifndef MAX
@@ -125,65 +126,22 @@ static int TestNdrEarWrite(int argc, char* argv[])
 	if (!s)
 		return -1;
 
-	NdrContext* context = ndr_context_new(FALSE, 1);
-	if (!context)
+	WinPrNdrEncoder* encoder = winpr_ndr_encoder_new(FALSE, 1);
+	if (!encoder)
 		goto fail;
 
-	if (!ndr_write_KERB_ASN1_DATA(context, s, nullptr, &asn1))
+	if (!ndr_encoder_write_KERB_ASN1_DATA(encoder, s, nullptr, &asn1))
 		goto fail;
-	if (!ndr_treat_deferred_write(context, s))
+	if (!winpr_ndr_encoder_treat_deferreds(encoder, s))
 		goto fail;
 
 	// winpr_HexDump("", WLOG_DEBUG, Stream_Buffer(s), Stream_GetPosition(s));
 
 	rc = 0;
 fail:
-	ndr_context_destroy(&context);
+	winpr_ndr_encoder_destroy(&encoder);
 	Stream_Free(s, TRUE);
 	return rc;
-}
-
-static BOOL run_payload(NdrContext* context, const BYTE* payload4, size_t sizeofPayload4)
-{
-	WINPR_ASSERT(context);
-
-	if (!payload4)
-		return FALSE;
-
-	CreateApReqAuthenticatorReq createApReqAuthenticatorReq = WINPR_C_ARRAY_INIT;
-
-	wStream staticS = WINPR_C_ARRAY_INIT;
-	wStream* s = Stream_StaticConstInit(&staticS, payload4, sizeofPayload4);
-	if (!ndr_skip_bytes(context, s, 4)) /* skip union id */
-		return FALSE;
-	if (!ndr_read_CreateApReqAuthenticatorReq(context, s, nullptr, &createApReqAuthenticatorReq))
-		return FALSE;
-	if (!ndr_treat_deferred_read(context, s))
-		return FALSE;
-	if (createApReqAuthenticatorReq.KeyUsage != 7)
-		return FALSE;
-	if (!createApReqAuthenticatorReq.EncryptionKey)
-		return FALSE;
-	if (createApReqAuthenticatorReq.SubKey)
-		return FALSE;
-	if (!createApReqAuthenticatorReq.ClientName)
-		return FALSE;
-	if (createApReqAuthenticatorReq.ClientName->nameHints.count != 1)
-		return FALSE;
-	if (!createApReqAuthenticatorReq.ClientRealm)
-		return FALSE;
-	if (!createApReqAuthenticatorReq.AuthData)
-		return FALSE;
-	if (createApReqAuthenticatorReq.AuthData->Asn1BufferHints.count != 2)
-		return FALSE;
-	if (!createApReqAuthenticatorReq.SkewTime)
-		return FALSE;
-	if (createApReqAuthenticatorReq.SkewTime->QuadPart != 0)
-		return FALSE;
-
-	ndr_destroy_CreateApReqAuthenticatorReq(context, nullptr, &createApReqAuthenticatorReq);
-	ndr_context_reset(context);
-	return TRUE;
 }
 
 static int TestNdrEarRead(int argc, char* argv[])
@@ -191,192 +149,19 @@ static int TestNdrEarRead(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	int retCode = -1;
+	int retCode = -2;
 
 	/* ====================================================================== */
-	NdrContext* context = ndr_context_new(FALSE, 1);
-	if (!context)
+	WinPrNdrDecoder* decoder = winpr_ndr_decoder_new(FALSE, 1);
+	if (!decoder)
 		return -1;
 
-	{
-		retCode = -2;
-		const BYTE payload[] = {
-			0x00, 0x00, 0x00, 0x00, // (PduType)
-			0x02, 0x00, 0x00, 0x00, // (Length)
-			0x28, 0x00, 0x02, 0x00, // (Asn1Buffer)
-
-			// == conformant array ==
-			0x02, 0x00, 0x00, 0x00, // (nitems)
-			0x30, 0x00,             // content
-			0x00, 0x00              // (padding)
-		};
-
-		wStream staticS = WINPR_C_ARRAY_INIT;
-		wStream* s = Stream_StaticConstInit(&staticS, payload, sizeof(payload));
-
-		KERB_ASN1_DATA asn1 = WINPR_C_ARRAY_INIT;
-		if (!ndr_read_KERB_ASN1_DATA(context, s, nullptr, &asn1) ||
-		    !ndr_treat_deferred_read(context, s) || asn1.Asn1BufferHints.count != 2 ||
-		    *asn1.Asn1Buffer != 0x30)
-			goto out;
-		ndr_destroy_KERB_ASN1_DATA(context, nullptr, &asn1);
-		ndr_context_reset(context);
-
-		/* ====================================================================== */
-	}
-	{
-		retCode = -3;
-		const BYTE payload2[] = {
-			// ------------ a RPC_UNICODE_STRING: Administrateur -------------------------
-			0x1c, 0x00,             // (Length)
-			0x1e, 0x00,             // (MaximumLength)
-			0x1c, 0x00, 0x02, 0x00, // (Buffer ptr)
-			                        // == conformant array ==
-			0x0f, 0x00, 0x00, 0x00, // (maximum count)
-			0x00, 0x00, 0x00, 0x00, // (offset)
-			0x0e, 0x00, 0x00, 0x00, // (length)
-
-			0x48, 0x00, 0x41, 0x00, 0x52, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00, 0x49, 0x00,
-			0x4e, 0x00, 0x47, 0x00, 0x33, 0x00, 0x2e, 0x00, 0x43, 0x00, 0x4f, 0x00, 0x4d, 0x00,
-			0x00, 0x00,
-
-			0x00, 0x00
-		};
-
-		wStream staticS = WINPR_C_ARRAY_INIT;
-		wStream* s = Stream_StaticConstInit(&staticS, payload2, sizeof(payload2));
-		RPC_UNICODE_STRING unicode = WINPR_C_ARRAY_INIT;
-		if (!ndr_read_RPC_UNICODE_STRING(context, s, nullptr, &unicode) ||
-		    !ndr_treat_deferred_read(context, s))
-			goto out;
-		ndr_destroy_RPC_UNICODE_STRING(context, nullptr, &unicode);
-		ndr_context_reset(context);
-	}
-	{
-		retCode = -4;
-		/* ====================================================================== */
-		const BYTE payload3[] = {
-			// ------------ an KERB_RPC_INTERNAL_NAME: HARDENING3.COM -------------------------
-			0x01, 0x00,             // (NameType)
-			0x01, 0x00,             // (NameCount)
-			0x10, 0x00, 0x02, 0x00, // (Names)
-			                        // == conformant array ==
-			0x01, 0x00, 0x00, 0x00, // (nitems)
-
-			// = RPC_UNICODE_STRING =
-			0x1c, 0x00,             // (Length)
-			0x1e, 0x00,             // (MaximumLength)
-			0x14, 0x00, 0x02, 0x00, /// (Buffer ptr)
-			                        // == Uni-dimensional Conformant-varying Array ==
-			0x0f, 0x00, 0x00, 0x00, // (maximum count)
-			0x00, 0x00, 0x00, 0x00, // (offset)
-			0x0e, 0x00, 0x00, 0x00, // (length)
-			0x41, 0x00, 0x64, 0x00, 0x6d, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00,
-			0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00, 0x65, 0x00, 0x75, 0x00, 0x72, 0x00,
-			0x00, 0x00,
-
-			0x00, 0x00
-		};
-		KERB_RPC_INTERNAL_NAME intName = WINPR_C_ARRAY_INIT;
-
-		wStream staticS = WINPR_C_ARRAY_INIT;
-		wStream* s = Stream_StaticConstInit(&staticS, payload3, sizeof(payload3));
-		if (!ndr_read_KERB_RPC_INTERNAL_NAME(context, s, nullptr, &intName) ||
-		    !ndr_treat_deferred_read(context, s))
-			goto out;
-		ndr_destroy_KERB_RPC_INTERNAL_NAME(context, nullptr, &intName);
-		ndr_context_reset(context);
-	}
+	wStream staticS = WINPR_C_ARRAY_INIT;
+	wStream* s = nullptr;
 
 	/* ====================================================================== */
-	{
-		retCode = -5;
-		const BYTE payload4[] = {
-			0x03, 0x01, 0x03, 0x01, // unionId / unionId
-			0x04, 0x00, 0x02, 0x00, // (EncryptionKey ptr)
-			0xf8, 0xca, 0x95, 0x11, // (SequenceNumber)
-			0x0c, 0x00, 0x02, 0x00, // (ClientName ptr)
-			0x18, 0x00, 0x02, 0x00, // (ClientRealm ptr)
-			0x20, 0x00, 0x02, 0x00, // (SkewTime ptr)
-			0x00, 0x00, 0x00, 0x00, // (SubKey ptr)
-			0x24, 0x00, 0x02, 0x00, // (AuthData ptr)
-			0x2c, 0x00, 0x02, 0x00, // (GssChecksum ptr)
-			0x07, 0x00, 0x00, 0x00, // (KeyUsage)
-
-			// === EncryptionKey ===
-			0x40, 0xe9, 0x12, 0xdf, // reserved1
-			0x12, 0x00, 0x00, 0x00, // reserved2
-			                        // KERB_RPC_OCTET_STRING
-			0x4c, 0x00, 0x00, 0x00, // (length)
-			0x08, 0x00, 0x02, 0x00, // (value ptr)
-			                        // == conformant array ==
-			0x4c, 0x00, 0x00, 0x00, // (length)
-			0xc4, 0x41, 0xee, 0x34, 0x82, 0x2b, 0x29, 0x61, 0xe2, 0x96, 0xb5, 0x75, 0x61, 0x2d,
-			0xbf, 0x86, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x89, 0x08, 0x60, 0x2e, 0x30, 0x3e, 0xfe, 0x56, 0x11, 0xf0,
-			0x31, 0xf2, 0xd6, 0x2e, 0x3d, 0x33, 0xfe, 0xce, 0x56, 0x12, 0xbf, 0xb2, 0xe5, 0x86,
-			0x29, 0x8d, 0x29, 0x74, 0x1f, 0x8a, 0xf9, 0xb9, 0x8c, 0xd4, 0x86, 0x3a, 0x21, 0x92,
-			0xb2, 0x07, 0x95, 0x4b, 0xea, 0xee,
-
-			//=== ClientName - KERB_RPC_INTERNAL_NAME ===
-			0x01, 0x00,             // (NameType)
-			0x01, 0x00,             // (NameCount)
-			0x10, 0x00, 0x02, 0x00, // (Names)
-
-			0x01, 0x00, 0x00, 0x00, // (nitems)
-
-			// = RPC_UNICODE_STRING =
-			0x1c, 0x00,             // (Length)
-			0x1e, 0x00,             // (MaximumLength)
-			0x14, 0x00, 0x02, 0x00, //(Buffer ptr)
-			// == Uni-dimensional Conformant-varying Array ==
-			0x0f, 0x00, 0x00, 0x00, // (maximum count)
-			0x00, 0x00, 0x00, 0x00, // (offset)
-			0x0e, 0x00, 0x00, 0x00, // (length)
-			0x41, 0x00, 0x64, 0x00, 0x6d, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00,
-			0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00, 0x65, 0x00, 0x75, 0x00, 0x72, 0x00,
-
-			// === ClientRealm - RPC_UNICODE_STRING ===
-			0x1c, 0x00,             // (Length)
-			0x1e, 0x00,             // (MaximumLength)
-			0x1c, 0x00, 0x02, 0x00, // (Buffer ptr)
-			                        // == Uni-dimensional conformant varying array ==
-			0x0f, 0x00, 0x00, 0x00, // (maximum count)
-			0x00, 0x00, 0x00, 0x00, // (offset)
-			0x0e, 0x00, 0x00, 0x00, // (length)
-			0x48, 0x00, 0x41, 0x00, 0x52, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00, 0x49, 0x00,
-			0x4e, 0x00, 0x47, 0x00, 0x33, 0x00, 0x2e, 0x00, 0x43, 0x00, 0x4f, 0x00, 0x4d, 0x00,
-
-			0x00, 0x00, 0x00, 0x00, // padding
-
-			// == SkewTime ==
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-			// === AuthData - KERB_ASN1_DATA ==
-			0x00, 0x00, 0x00, 0x00, // (PduType)
-			0x02, 0x00, 0x00, 0x00, // (Length)
-			0x28, 0x00, 0x02, 0x00, // (Asn1Buffer)
-			                        // == conformant array ==
-			0x02, 0x00, 0x00, 0x00, // (nitems)
-			0x30, 0x00, 0x00, 0x00, // (padding)
-
-			// === GssChecksum - KERB_ASN1_DATA ===
-			0x08, 0x00, 0x00, 0x00, // (PduType)
-			0x1b, 0x00, 0x00, 0x00, // (Length)
-			0x30, 0x00, 0x02, 0x00, // (Asn1Buffer)
-			                        // == conformant array ==
-			0x1b, 0x00, 0x00, 0x00, // (length)
-			0x30, 0x19, 0xa0, 0x03, 0x02, 0x01, 0x07, 0xa1, 0x12, 0x04, 0x10, 0xb9, 0x4f, 0xcd,
-			0xae, 0xd9, 0xa8, 0xff, 0x49, 0x69, 0x5a, 0xd1, 0x1d, 0x38, 0x49, 0xb6, 0x92, 0x00
-		};
-		if (!run_payload(context, payload4, sizeof(payload4)))
-			goto out;
-	}
-
-	{
-		retCode = -6;
-		size_t sizeofPayload4 = 0;
-		BYTE* payload4 = parseHexBlock("03 01 03 01 \
+	size_t sizeofPayload4 = 0;
+	BYTE* payload4 = parseHexBlock("03 01 03 01 \
 		04 00 02 00 38 9e ef 6b 0c 00 02 00 18 00 02 00 \
 		20 00 02 00 00 00 00 00 24 00 02 00 2c 00 02 00 \
 		07 00 00 00 13 8a a5 a8 12 00 00 00 20 00 00 00 \
@@ -394,17 +179,85 @@ static int TestNdrEarRead(int argc, char* argv[])
 		08 00 00 00 1b 00 00 00 30 00 02 00 1b 00 00 00 \
 		30 19 a0 03 02 01 07 a1 12 04 10 e4 aa ff 2b 93 \
 		97 4c f2 5c 0b 49 85 72 92 94 54 00",
-		                               &sizeofPayload4);
-		const BOOL rc = run_payload(context, payload4, sizeofPayload4);
-		free(payload4);
-		if (!rc)
-			goto out;
-	}
+	                               &sizeofPayload4);
+
+	if (!payload4)
+		goto out;
+
+	CreateApReqAuthenticatorReq createApReqAuthenticatorReq = WINPR_C_ARRAY_INIT;
+	s = Stream_StaticConstInit(&staticS, payload4, sizeofPayload4);
+	if (!winpr_ndr_decoder_skip_bytes(decoder, s, 4) || /* skip union id */
+	    !ndr_decoder_read_CreateApReqAuthenticatorReq(decoder, s, nullptr,
+	                                                  &createApReqAuthenticatorReq) ||
+	    !winpr_ndr_decoder_treat_deferreds(decoder, s) ||
+	    createApReqAuthenticatorReq.KeyUsage != 7 || !createApReqAuthenticatorReq.EncryptionKey ||
+	    createApReqAuthenticatorReq.SubKey || !createApReqAuthenticatorReq.ClientName ||
+	    createApReqAuthenticatorReq.ClientName->nameHints.count != 1 ||
+	    !createApReqAuthenticatorReq.ClientRealm || !createApReqAuthenticatorReq.AuthData ||
+	    createApReqAuthenticatorReq.AuthData->Asn1BufferHints.count != 2 ||
+	    !createApReqAuthenticatorReq.SkewTime ||
+	    createApReqAuthenticatorReq.SkewTime->QuadPart != 0)
+		goto out;
+	ndr_destroy_CreateApReqAuthenticatorReq(nullptr, &createApReqAuthenticatorReq);
 
 	/* ============ successful end of test =============== */
 	retCode = 0;
 out:
-	ndr_context_destroy(&context);
+	free(payload4);
+	winpr_ndr_decoder_destroy(&decoder);
+	return retCode;
+}
+
+/* the referents of the Names items come in item order after the Names array */
+static int TestNdrEarInternalNames(void)
+{
+	const BYTE payload[] = {
+		0x01, 0x00, 0x02, 0x00, /* NameType, NameCount */
+		0x00, 0x00, 0x02, 0x00, /* Names */
+		0x02, 0x00, 0x00, 0x00, /* Names: conformance */
+		0x06, 0x00, 0x06, 0x00, /* Names[0]: Length, MaximumLength */
+		0x04, 0x00, 0x02, 0x00, /* Names[0]: Buffer */
+		0x0c, 0x00, 0x0c, 0x00, /* Names[1]: Length, MaximumLength */
+		0x08, 0x00, 0x02, 0x00, /* Names[1]: Buffer */
+		0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, /* Names[0] */
+		'a',  0x00, 'b',  0x00, 'c',  0x00, 0x00, 0x00,                         /* padding */
+		0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, /* Names[1] */
+		'd',  0x00, 'e',  0x00, 'f',  0x00, 'g',  0x00, 'h',  0x00, 'i',  0x00
+	};
+	const char* expected[] = { "abc", "defghi" };
+
+	int retCode = -1;
+	KERB_RPC_INTERNAL_NAME name = WINPR_C_ARRAY_INIT;
+	wStream staticS = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&staticS, payload, sizeof(payload));
+
+	WinPrNdrDecoder* decoder = winpr_ndr_decoder_new(FALSE, 1);
+	if (!decoder)
+		return -1;
+
+	retCode = -2;
+	if (!ndr_decoder_read_KERB_RPC_INTERNAL_NAME(decoder, s, nullptr, &name) ||
+	    !winpr_ndr_decoder_treat_deferreds(decoder, s))
+		goto out;
+
+	retCode = -3;
+	if ((Stream_GetRemainingLength(s) != 0) || (name.nameHints.count != ARRAYSIZE(expected)))
+		goto out;
+
+	for (UINT32 i = 0; i < name.nameHints.count; i++)
+	{
+		char* str =
+		    ConvertWCharNToUtf8Alloc(name.Names[i].Buffer, name.Names[i].strLength, nullptr);
+		const BOOL match = str && (strcmp(str, expected[i]) == 0);
+		free(str);
+		if (!match)
+			goto out;
+	}
+
+	retCode = 0;
+out:
+	ndr_destroy_KERB_RPC_INTERNAL_NAME(nullptr, &name);
+	winpr_ndr_decoder_destroy(&decoder);
 	return retCode;
 }
 
@@ -413,5 +266,10 @@ int TestNdrEar(int argc, char* argv[])
 	const int rc = TestNdrEarWrite(argc, argv);
 	if (rc)
 		return rc;
+
+	const int rc2 = TestNdrEarInternalNames();
+	if (rc2)
+		return rc2;
+
 	return TestNdrEarRead(argc, argv);
 }

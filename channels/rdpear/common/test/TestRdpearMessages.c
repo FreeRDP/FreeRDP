@@ -1,0 +1,864 @@
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * RDPEAR message encoding tests
+ *
+ * Copyright 2026 David Fort <contact@hardening-consulting.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <stdio.h>
+
+#include <winpr/print.h>
+#include <winpr/ndr.h>
+#include <winpr/nt.h>
+#include <winpr/string.h>
+
+#include <freerdp/channels/log.h>
+
+#include <rdpear-common/rdpear_common.h>
+
+/* The calls are object data of KerbCredIsoRemoteInput and NtlmCredIsoRemoteInput (MS-RDPEAR
+ * 2.2.1.2.9 and 2.2.1.3.7), they are wrapped in the type serialization and object headers by
+ * wrap_call(). The replies are complete type serialization buffers.
+ */
+
+/* ========================== calls ========================== */
+
+static const BYTE kerb_negotiate_version_call[] = {
+	0x00, 0x00, 0x02, 0x00, /* referent id */
+	0x00, 0x00, 0x00, 0x00, /* align 8 */
+	0x00, 0x01, 0x00, 0x01, /* CallId, discriminant */
+	0x00, 0x00, 0x00, 0x00, /* MaxSupportedVersion */
+};
+
+/* a captured CreateApReqAuthenticator call */
+static const BYTE kerb_create_ap_req_authenticator_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x03, 0x01, 0x04, 0x00, 0x02, 0x00,
+	0x38, 0x9e, 0xef, 0x6b, 0x0c, 0x00, 0x02, 0x00, 0x18, 0x00, 0x02, 0x00, 0x20, 0x00, 0x02, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x24, 0x00, 0x02, 0x00, 0x2c, 0x00, 0x02, 0x00, 0x07, 0x00, 0x00, 0x00,
+	0x13, 0x8a, 0xa5, 0xa8, 0x12, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00,
+	0x20, 0x00, 0x00, 0x00, 0xc9, 0x03, 0x42, 0xa8, 0x17, 0x8f, 0xd9, 0xc4, 0x9b, 0xd2, 0xc4, 0x6e,
+	0x73, 0x64, 0x98, 0x7b, 0x90, 0xf5, 0x9a, 0x28, 0x77, 0x8e, 0xca, 0xde, 0x29, 0x2e, 0xa3, 0x8d,
+	0x8a, 0x56, 0x36, 0xd5, 0x01, 0x00, 0x01, 0x00, 0x10, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00,
+	0x1c, 0x00, 0x1e, 0x00, 0x14, 0x00, 0x02, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x0e, 0x00, 0x00, 0x00, 0x41, 0x00, 0x64, 0x00, 0x6d, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00,
+	0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00, 0x65, 0x00, 0x75, 0x00, 0x72, 0x00,
+	0x1c, 0x00, 0x1e, 0x00, 0x1c, 0x00, 0x02, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x0e, 0x00, 0x00, 0x00, 0x48, 0x00, 0x41, 0x00, 0x52, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00,
+	0x49, 0x00, 0x4e, 0x00, 0x47, 0x00, 0x33, 0x00, 0x2e, 0x00, 0x43, 0x00, 0x4f, 0x00, 0x4d, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+	0x28, 0x00, 0x02, 0x00, 0x02, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+	0x1b, 0x00, 0x00, 0x00, 0x30, 0x00, 0x02, 0x00, 0x1b, 0x00, 0x00, 0x00, 0x30, 0x19, 0xa0, 0x03,
+	0x02, 0x01, 0x07, 0xa1, 0x12, 0x04, 0x10, 0xe4, 0xaa, 0xff, 0x2b, 0x93, 0x97, 0x4c, 0xf2, 0x5c,
+	0x0b, 0x49, 0x85, 0x72, 0x92, 0x94, 0x54, 0x00,
+};
+
+/* the captured call with a client name of an odd length: "Administrateu", the ClientRealm that
+ * follows is aligned on 4 */
+static const BYTE kerb_create_ap_req_authenticator_odd_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x03, 0x01, 0x04, 0x00, 0x02, 0x00,
+	0x38, 0x9e, 0xef, 0x6b, 0x0c, 0x00, 0x02, 0x00, 0x18, 0x00, 0x02, 0x00, 0x20, 0x00, 0x02, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x24, 0x00, 0x02, 0x00, 0x2c, 0x00, 0x02, 0x00, 0x07, 0x00, 0x00, 0x00,
+	0x13, 0x8a, 0xa5, 0xa8, 0x12, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00,
+	0x20, 0x00, 0x00, 0x00, 0xc9, 0x03, 0x42, 0xa8, 0x17, 0x8f, 0xd9, 0xc4, 0x9b, 0xd2, 0xc4, 0x6e,
+	0x73, 0x64, 0x98, 0x7b, 0x90, 0xf5, 0x9a, 0x28, 0x77, 0x8e, 0xca, 0xde, 0x29, 0x2e, 0xa3, 0x8d,
+	0x8a, 0x56, 0x36, 0xd5, 0x01, 0x00, 0x01, 0x00, 0x10, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00,
+	0x1a, 0x00, 0x1c, 0x00, 0x14, 0x00, 0x02, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x0d, 0x00, 0x00, 0x00, 0x41, 0x00, 0x64, 0x00, 0x6d, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00,
+	0x73, 0x00, 0x74, 0x00, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00, 0x65, 0x00, 0x75, 0x00, 0x00, 0x00,
+	0x1c, 0x00, 0x1e, 0x00, 0x1c, 0x00, 0x02, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x0e, 0x00, 0x00, 0x00, 0x48, 0x00, 0x41, 0x00, 0x52, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00,
+	0x49, 0x00, 0x4e, 0x00, 0x47, 0x00, 0x33, 0x00, 0x2e, 0x00, 0x43, 0x00, 0x4f, 0x00, 0x4d, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+	0x28, 0x00, 0x02, 0x00, 0x02, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+	0x1b, 0x00, 0x00, 0x00, 0x30, 0x00, 0x02, 0x00, 0x1b, 0x00, 0x00, 0x00, 0x30, 0x19, 0xa0, 0x03,
+	0x02, 0x01, 0x07, 0xa1, 0x12, 0x04, 0x10, 0xe4, 0xaa, 0xff, 0x2b, 0x93, 0x97, 0x4c, 0xf2, 0x5c,
+	0x0b, 0x49, 0x85, 0x72, 0x92, 0x94, 0x54, 0x00,
+};
+
+static const BYTE kerb_decrypt_ap_reply_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, /* referent id, align 8 */
+	0x04, 0x01, 0x04, 0x01,                         /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00,                         /* EncryptedReply */
+	0x08, 0x00, 0x02, 0x00,                         /* Key */
+	0x31, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, /* EncryptedReply: Pdu, Asn1BufferSize */
+	0x0c, 0x00, 0x02, 0x00,                         /* EncryptedReply: Asn1Buffer */
+	0x05, 0x00, 0x00, 0x00, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0x00, 0x00, 0x00, /* Asn1Buffer */
+	0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, /* Key: reserved1, reserved2 */
+	0x04, 0x00, 0x00, 0x00, 0x10, 0x00, 0x02, 0x00, /* Key: reserved3 */
+	0x04, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, /* reserved3.value */
+};
+
+static const BYTE kerb_unpack_kdc_reply_body_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, /* referent id, align 8 */
+	0x05, 0x01, 0x05, 0x01,                         /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00,                         /* EncryptedData */
+	0x08, 0x00, 0x02, 0x00,                         /* Key */
+	0x00, 0x00, 0x00, 0x00,                         /* StrengthenKey */
+	0x1a, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, /* Pdu, KeyUsage */
+	0x04, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, /* EncryptedData: Pdu, Asn1BufferSize */
+	0x0c, 0x00, 0x02, 0x00,                         /* EncryptedData: Asn1Buffer */
+	0x03, 0x00, 0x00, 0x00, 0xf1, 0xf2, 0xf3, 0x00, /* Asn1Buffer */
+	0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, /* Key: reserved1, reserved2 */
+	0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x02, 0x00, /* Key: reserved3 */
+	0x02, 0x00, 0x00, 0x00, 0x99, 0x98,             /* reserved3.value */
+};
+
+static const BYTE kerb_compute_tgs_checksum_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, /* referent id, align 8 */
+	0x06, 0x01, 0x06, 0x01,                         /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00,                         /* requestBody */
+	0x08, 0x00, 0x02, 0x00,                         /* Key */
+	0x10, 0x00, 0x00, 0x00,                         /* ChecksumType */
+	0x0b, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, /* requestBody: Pdu, Asn1BufferSize */
+	0x0c, 0x00, 0x02, 0x00,                         /* requestBody: Asn1Buffer */
+	0x03, 0x00, 0x00, 0x00, 0xb1, 0xb2, 0xb3, 0x00, /* Asn1Buffer */
+	0x00, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, /* Key: reserved1, reserved2 */
+	0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x02, 0x00, /* Key: reserved3 */
+	0x02, 0x00, 0x00, 0x00, 0xc1, 0xc2,             /* reserved3.value */
+};
+
+static const BYTE kerb_build_encrypted_auth_data_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, /* referent id, align 8 */
+	0x07, 0x01, 0x07, 0x01,                         /* CallId, discriminant */
+	0x05, 0x00, 0x00, 0x00,                         /* KeyUsage */
+	0x04, 0x00, 0x02, 0x00,                         /* Key */
+	0x08, 0x00, 0x02, 0x00,                         /* PlainAuthData */
+	0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, /* Key: reserved1, reserved2 */
+	0x03, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x02, 0x00, /* Key: reserved3 */
+	0x03, 0x00, 0x00, 0x00, 0xd1, 0xd2, 0xd3, 0x00, /* reserved3.value */
+	0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, /* PlainAuthData: Pdu, Asn1BufferSize */
+	0x10, 0x00, 0x02, 0x00,                         /* PlainAuthData: Asn1Buffer */
+	0x02, 0x00, 0x00, 0x00, 0xe1, 0xe2,             /* Asn1Buffer */
+};
+
+static const BYTE kerb_pack_ap_reply_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, /* referent id, align 8 */
+	0x08, 0x01, 0x08, 0x01,                         /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00,                         /* Reply */
+	0x08, 0x00, 0x02, 0x00,                         /* ReplyBody */
+	0x0c, 0x00, 0x02, 0x00,                         /* SessionKey */
+	0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, /* Reply: Pdu, Asn1BufferSize */
+	0x10, 0x00, 0x02, 0x00,                         /* Reply: Asn1Buffer */
+	0x01, 0x00, 0x00, 0x00, 0x77, 0x00, 0x00, 0x00, /* Asn1Buffer */
+	0x03, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, /* ReplyBody: Pdu, Asn1BufferSize */
+	0x14, 0x00, 0x02, 0x00,                         /* ReplyBody: Asn1Buffer */
+	0x02, 0x00, 0x00, 0x00, 0x66, 0x65, 0x00, 0x00, /* Asn1Buffer */
+	0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, /* SessionKey: reserved1, reserved2 */
+	0x01, 0x00, 0x00, 0x00, 0x18, 0x00, 0x02, 0x00, /* SessionKey: reserved3 */
+	0x01, 0x00, 0x00, 0x00, 0x55,                   /* reserved3.value */
+};
+
+static const BYTE ntlm_negotiate_version_call[] = {
+	0x00, 0x00, 0x02, 0x00, /* referent id */
+	0x00, 0x02, 0x00, 0x02, /* CallId, discriminant */
+	0x00, 0x00, 0x00, 0x00, /* MaxSupportedVersion */
+};
+
+static const BYTE ntlm_lm20_get_ntlm3_challenge_response_call[] = {
+	0x00, 0x00, 0x02, 0x00,                         /* referent id */
+	0x01, 0x02, 0x01, 0x02,                         /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00,                         /* Credential */
+	0x08, 0x00, 0x02, 0x00,                         /* UserName */
+	0x0c, 0x00, 0x02, 0x00,                         /* LogonDomainName */
+	0x00, 0x00, 0x00, 0x00,                         /* ServerName */
+	0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, /* ChallengeToClient */
+	0x00, 0x00, 0x00, 0x00, /* Credential: reserved1, reserved2, reserved3, padding */
+	0x02, 0x00,             /* Credential: reserved4 */
+	0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b,
+	0x7c, 0x7d, 0x7e, 0x7f, 0x80, 0x81, 0x82, 0x83, /* Credential: reserved5 */
+	0x00, 0x00,                                     /* padding */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Credential: reservedSize, reserved6 */
+	0x06, 0x00, 0x08, 0x00, 0x10, 0x00, 0x02, 0x00, /* UserName: Length, MaximumLength, Buffer */
+	0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, /* Buffer */
+	'u',  0x00, 's',  0x00, 'r',  0x00, 0x00, 0x00,                         /* Buffer, padding */
+	0x04, 0x00, 0x04, 0x00, 0x14, 0x00, 0x02, 0x00,                         /* LogonDomainName */
+	0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, /* Buffer */
+	'D',  0x00, 'M',  0x00,
+};
+
+static const BYTE ntlm_calculate_nt_response_call[] = {
+	0x00, 0x00, 0x02, 0x00,                         /* referent id */
+	0x02, 0x02, 0x02, 0x02,                         /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00,                         /* NtChallenge */
+	0x08, 0x00, 0x02, 0x00,                         /* Credential */
+	0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, /* NtChallenge */
+	0x00, 0x00, 0x00, 0x00, /* Credential: reserved1, reserved2, reserved3, padding */
+	0x02, 0x00,             /* Credential: reserved4 */
+	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+	0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63, /* Credential: reserved5 */
+	0x00, 0x00,                                                 /* padding */
+	0x01, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x02, 0x00, /* Credential: reservedSize, reserved6 */
+	0x01, 0x00, 0x00, 0x00, 0xee,                   /* reserved6 */
+};
+
+static const BYTE ntlm_compare_credentials_call[] = {
+	0x00, 0x00, 0x02, 0x00, /* referent id */
+	0x04, 0x02, 0x04, 0x02, /* CallId, discriminant */
+	0x04, 0x00, 0x02, 0x00, /* LhsCredential */
+	0x08, 0x00, 0x02, 0x00, /* RhsCredential */
+	0x01, 0x00, 0x01, 0x00, /* Lhs: reserved1, reserved2, reserved3, padding */
+	0x02, 0x00,             /* Lhs: reserved4 */
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+	0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, /* Lhs: reserved5 */
+	0x00, 0x00,                                                 /* padding */
+	0x03, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x02, 0x00,             /* Lhs: reservedSize, reserved6 */
+	0x03, 0x00, 0x00, 0x00, 0xa0, 0xa1, 0xa2, 0x00,             /* reserved6, padding */
+	0x00, 0x01, 0x00, 0x00, /* Rhs: reserved1, reserved2, reserved3 */
+	0x02, 0x00,             /* Rhs: reserved4 */
+	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+	0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, /* Rhs: reserved5 */
+	0x00, 0x00,                                                 /* padding */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,             /* Rhs: reservedSize, reserved6 */
+};
+
+/* a Kerberos call that is not described: decoded without its arm */
+static const BYTE kerb_verify_checksum_call[] = {
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, /* referent id, align 8 */
+	0x0b, 0x01, 0x0b, 0x01,                         /* CallId, discriminant */
+	0x11, 0x22, 0x33, 0x44,                         /* not decoded */
+};
+
+/* ========================== replies ========================== */
+
+/* The Kerberos replies and ntlm_negotiate_version_reply are the bytes written by the hand coded
+ * encoder of rdpear_prepare_response(), before the move to the union descriptors.
+ */
+
+static const BYTE kerb_negotiate_version_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+static const BYTE kerb_create_ap_req_authenticator_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x07, 0x06, 0x05, 0x04,
+	0x03, 0x02, 0x01, 0x07, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00,
+	0x44, 0x33, 0x22, 0x11, 0x03, 0x00, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0x00,
+};
+static const BYTE kerb_asn1_data_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x04, 0x01, 0x00, 0x00, 0x31, 0x00, 0x00, 0x00, 0x04, 0x00,
+	0x00, 0x00, 0x04, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
+};
+static const BYTE kerb_unpack_kdc_reply_body_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x05, 0x01, 0x00, 0x00, 0x88, 0x77, 0x66, 0x55, 0x1a, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+	0x04, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00, 0x51, 0x52, 0x53, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+static const BYTE kerb_pack_ap_reply_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x04, 0x00,
+	0x02, 0x00, 0x05, 0x00, 0x00, 0x00, 0x61, 0x62, 0x63, 0x64, 0x65, 0x00, 0x00, 0x00,
+};
+static const BYTE kerb_unhandled_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x01, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x0b, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+static const BYTE ntlm_negotiate_version_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+/* the NTLM replies are derived from the IDL */
+static const BYTE ntlm_lm20_not_supported_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, /* type serialization header */
+	0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* object header */
+	0x00, 0x00, 0x02, 0x00,                         /* referent id */
+	0x01, 0x02, 0x00, 0x00,                         /* CallId, padding */
+	0xbb, 0x00, 0x00, 0xc0,                         /* Status: STATUS_NOT_SUPPORTED */
+	0x01, 0x02, 0x00, 0x00,                         /* discriminant, padding */
+	0x00, 0x00, 0x00, 0x00,                         /* Ntlm3ResponseLength, padding */
+	0x00, 0x00, 0x00, 0x00,                         /* Ntlm3Response */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Lm3Response */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,                         /* UserSessionKey */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* LmSessionKey */
+};
+
+static const BYTE ntlm_lm20_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, /* type serialization header */
+	0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* object header */
+	0x00, 0x00, 0x02, 0x00,                         /* referent id */
+	0x01, 0x02, 0x00, 0x00,                         /* CallId, padding */
+	0x00, 0x00, 0x00, 0x00,                         /* Status */
+	0x01, 0x02, 0x00, 0x00,                         /* discriminant, padding */
+	0x03, 0x00, 0x00, 0x00,                         /* Ntlm3ResponseLength, padding */
+	0x04, 0x00, 0x02, 0x00,                         /* Ntlm3Response */
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
+	0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, /* Lm3Response */
+	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
+	0x3c, 0x3d, 0x3e, 0x3f,                         /* UserSessionKey */
+	0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, /* LmSessionKey */
+	0x03, 0x00, 0x00, 0x00, 0xa1, 0xa2, 0xa3,       /* Ntlm3Response */
+	0x00,                                           /* object padding */
+};
+
+static const BYTE ntlm_calculate_nt_response_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, /* type serialization header */
+	0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* object header */
+	0x00, 0x00, 0x02, 0x00,                         /* referent id */
+	0x02, 0x02, 0x00, 0x00,                         /* CallId, padding */
+	0x00, 0x00, 0x00, 0x00,                         /* Status */
+	0x02, 0x02,                                     /* discriminant */
+	0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b,
+	0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, /* NtResponse */
+	0x00, 0x00,                                                             /* object padding */
+};
+
+static const BYTE ntlm_compare_credentials_reply[] = {
+	0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, /* type serialization header */
+	0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* object header */
+	0x00, 0x00, 0x02, 0x00,                         /* referent id */
+	0x04, 0x02, 0x00, 0x00,                         /* CallId, padding */
+	0x00, 0x00, 0x00, 0x00,                         /* Status */
+	0x04, 0x02, 0x00, 0x00,                         /* discriminant, padding */
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* AreNtOwfsEqual, AreLmOwfsEqual */
+	0x01, 0x00, 0x00, 0x00,                         /* AreShaOwfsEqual */
+	0x00, 0x00, 0x00, 0x00,                         /* object padding */
+};
+
+/* ========================== helpers ========================== */
+
+/** @brief wraps the object data of a call in the type serialization and object headers */
+static wStream* wrap_call(const BYTE* data, size_t len)
+{
+	const size_t padding = (8 - (len % 8)) % 8;
+	wStream* s = Stream_New(nullptr, 16 + len + padding);
+	if (!s)
+		return nullptr;
+
+	const BYTE header[] = { 0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc };
+	Stream_Write(s, header, sizeof(header));
+	Stream_Write_UINT32(s, (UINT32)(len + padding));
+	Stream_Write_UINT32(s, 0);
+	Stream_Write(s, data, len);
+	Stream_Zero(s, padding);
+	Stream_SealLength(s);
+	Stream_SetPosition(s, 0);
+	return s;
+}
+
+static BOOL check_bytes(const char* what, const BYTE* got, size_t gotLen, const BYTE* expected,
+                        size_t expectedLen)
+{
+	if ((gotLen == expectedLen) && (memcmp(got, expected, gotLen) == 0))
+		return TRUE;
+
+	(void)fprintf(stderr, "%s: mismatch, got %" PRIuz " bytes:\n", what, gotLen);
+	for (size_t i = 0; i < gotLen; i++)
+		(void)fprintf(stderr, "0x%02" PRIx8 ",%s", got[i], ((i % 12) == 11) ? "\n" : " ");
+	(void)fprintf(stderr, "\n");
+	return FALSE;
+}
+
+static BOOL check_asn1(const KERB_ASN1_DATA* asn1, UINT32 pdu, const BYTE* data, UINT32 len)
+{
+	return asn1 && (asn1->Pdu == pdu) && (asn1->Asn1BufferHints.count == len) && asn1->Asn1Buffer &&
+	       (memcmp(asn1->Asn1Buffer, data, len) == 0);
+}
+
+static BOOL check_key(const KERB_RPC_ENCRYPTION_KEY* key, UINT32 enctype, const BYTE* data,
+                      UINT32 len)
+{
+	return key && (key->reserved2 == enctype) && (key->reserved3.length == len) &&
+	       key->reserved3.value && (memcmp(key->reserved3.value, data, len) == 0);
+}
+
+static BOOL check_unicode_string(const RPC_UNICODE_STRING* str, const char* expected)
+{
+	if (!str)
+		return FALSE;
+
+	char* utf8 = ConvertWCharNToUtf8Alloc(str->Buffer, str->strLength, nullptr);
+	const BOOL rc = utf8 && (strcmp(utf8, expected) == 0);
+	free(utf8);
+	return rc;
+}
+
+/* ========================== call decoding ========================== */
+
+static BOOL decode_kerb(wStream* s, KerbCredIsoRemoteInput* input)
+{
+	WinPrNdrDecoder* decoder = winpr_ndr_decoder_new_fromStream(s);
+	const BOOL rc = decoder && rdpear_kerb_input_read(decoder, s, input);
+	winpr_ndr_decoder_destroy(&decoder);
+	return rc;
+}
+
+static BOOL decode_ntlm(wStream* s, NtlmCredIsoRemoteInput* input)
+{
+	WinPrNdrDecoder* decoder = winpr_ndr_decoder_new_fromStream(s);
+	const BOOL rc = decoder && rdpear_ntlm_input_read(decoder, s, input);
+	winpr_ndr_decoder_destroy(&decoder);
+	return rc;
+}
+
+typedef BOOL (*CallCheckFn)(wStream* s);
+
+static BOOL check_kerb_negotiate_version(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbNegotiateVersion) &&
+	                (input.Input.NegotiateVersion == 0);
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_create_ap_req_authenticator(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const CreateApReqAuthenticatorReq* req = &input.Input.CreateApReqAuthenticator;
+	const BYTE gssChecksum[] = { 0x30, 0x19, 0xa0, 0x03, 0x02, 0x01, 0x07, 0xa1, 0x12,
+		                         0x04, 0x10, 0xe4, 0xaa, 0xff, 0x2b, 0x93, 0x97, 0x4c,
+		                         0xf2, 0x5c, 0x0b, 0x49, 0x85, 0x72, 0x92, 0x94, 0x54 };
+	const BYTE authData[] = { 0x30, 0x00 };
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbCreateApReqAuthenticator);
+	rc = rc && (req->SequenceNumber == 0x6bef9e38) && (req->KeyUsage == 7) && !req->SubKey &&
+	     req->EncryptionKey && (req->EncryptionKey->reserved2 == 0x12) &&
+	     (req->EncryptionKey->reserved3.length == 0x20) && req->ClientName &&
+	     (req->ClientName->NameType == 1) && (req->ClientName->nameHints.count == 1) &&
+	     (req->ClientName->Names[0].strLength == 14) && req->ClientRealm &&
+	     (req->ClientRealm->strLength == 14) && req->SkewTime && (req->SkewTime->QuadPart == 0) &&
+	     check_asn1(req->AuthData, 0, authData, sizeof(authData)) &&
+	     check_asn1(req->GssChecksum, 8, gssChecksum, sizeof(gssChecksum));
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_create_ap_req_authenticator_odd(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const CreateApReqAuthenticatorReq* req = &input.Input.CreateApReqAuthenticator;
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbCreateApReqAuthenticator);
+	rc = rc && req->ClientName && (req->ClientName->nameHints.count == 1) &&
+	     check_unicode_string(&req->ClientName->Names[0], "Administrateu") &&
+	     check_unicode_string(req->ClientRealm, "HARDENING3.COM") && req->GssChecksum &&
+	     (req->GssChecksum->Asn1BufferHints.count == 27);
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_decrypt_ap_reply(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const DecryptApReplyReq* req = &input.Input.DecryptApReply;
+	const BYTE reply[] = { 0xa1, 0xa2, 0xa3, 0xa4, 0xa5 };
+	const BYTE key[] = { 0x01, 0x02, 0x03, 0x04 };
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbDecryptApReply);
+	rc = rc && check_asn1(req->EncryptedReply, 0x31, reply, sizeof(reply)) &&
+	     check_key(req->Key, 0x12, key, sizeof(key));
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_unpack_kdc_reply_body(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const UnpackKdcReplyBodyReq* req = &input.Input.UnpackKdcReplyBody;
+	const BYTE data[] = { 0xf1, 0xf2, 0xf3 };
+	const BYTE key[] = { 0x99, 0x98 };
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbUnpackKdcReplyBody);
+	rc = rc && (req->Pdu == 0x1a) && (req->KeyUsage == 3) && !req->StrengthenKey &&
+	     check_asn1(req->EncryptedData, 4, data, sizeof(data)) &&
+	     check_key(req->Key, 0x12, key, sizeof(key));
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_compute_tgs_checksum(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const ComputeTgsChecksumReq* req = &input.Input.ComputeTgsChecksum;
+	const BYTE body[] = { 0xb1, 0xb2, 0xb3 };
+	const BYTE key[] = { 0xc1, 0xc2 };
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbComputeTgsChecksum);
+	rc = rc && (req->ChecksumType == 0x10) &&
+	     check_asn1(req->requestBody, 0x0b, body, sizeof(body)) &&
+	     check_key(req->Key, 0x11, key, sizeof(key));
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_build_encrypted_auth_data(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const BuildEncryptedAuthDataReq* req = &input.Input.BuildEncryptedAuthData;
+	const BYTE data[] = { 0xe1, 0xe2 };
+	const BYTE key[] = { 0xd1, 0xd2, 0xd3 };
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbBuildEncryptedAuthData);
+	rc = rc && (req->KeyUsage == 5) && check_asn1(req->PlainAuthData, 1, data, sizeof(data)) &&
+	     check_key(req->Key, 0x12, key, sizeof(key));
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_pack_ap_reply(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const PackApReplyReq* req = &input.Input.PackApReply;
+	const BYTE reply[] = { 0x77 };
+	const BYTE body[] = { 0x66, 0x65 };
+	const BYTE key[] = { 0x55 };
+
+	BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbPackApReply);
+	rc = rc && check_asn1(req->Reply, 2, reply, sizeof(reply)) &&
+	     check_asn1(req->ReplyBody, 3, body, sizeof(body)) &&
+	     check_key(req->SessionKey, 0x12, key, sizeof(key));
+
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_kerb_verify_checksum(wStream* s)
+{
+	KerbCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const BOOL rc = decode_kerb(s, &input) && (input.CallId == RemoteCallKerbVerifyChecksum);
+	rdpear_kerb_input_free(&input);
+	return rc;
+}
+
+static BOOL check_ntlm_negotiate_version(wStream* s)
+{
+	NtlmCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const BOOL rc = decode_ntlm(s, &input) && (input.CallId == RemoteCallNtlmNegotiateVersion) &&
+	                (input.Input.NegotiateVersion == 0);
+	rdpear_ntlm_input_free(&input);
+	return rc;
+}
+
+static BOOL check_credential(const MSV1_0_REMOTE_ENCRYPTED_SECRETS* cred, BYTE reserved2,
+                             BYTE firstKeyByte, const BYTE* secret, UINT32 secretLen)
+{
+	if (!cred || (cred->reserved1 != 0) || (cred->reserved2 != reserved2) ||
+	    (cred->reserved3 != 0) || (cred->reserved4 != 2) || (cred->reservedSize.count != secretLen))
+		return FALSE;
+
+	for (size_t i = 0; i < sizeof(cred->reserved5); i++)
+	{
+		if (cred->reserved5[i] != (BYTE)(firstKeyByte + i))
+			return FALSE;
+	}
+
+	if (!secretLen)
+		return !cred->reserved6;
+	return cred->reserved6 && (memcmp(cred->reserved6, secret, secretLen) == 0);
+}
+
+static BOOL check_ntlm_lm20_get_ntlm3_challenge_response(wStream* s)
+{
+	NtlmCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const Lm20GetNtlm3ChallengeResponseReq* req = &input.Input.Lm20GetNtlm3ChallengeResponse;
+	const BYTE challenge[] = { 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7 };
+
+	BOOL rc =
+	    decode_ntlm(s, &input) && (input.CallId == RemoteCallNtlmLm20GetNtlm3ChallengeResponse);
+	rc = rc && check_credential(req->Credential, 0, 0x70, nullptr, 0) &&
+	     check_unicode_string(req->UserName, "usr") &&
+	     check_unicode_string(req->LogonDomainName, "DM") && !req->ServerName &&
+	     (memcmp(req->ChallengeToClient, challenge, sizeof(challenge)) == 0);
+
+	rdpear_ntlm_input_free(&input);
+	return rc;
+}
+
+static BOOL check_ntlm_calculate_nt_response(wStream* s)
+{
+	NtlmCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const CalculateNtResponseReq* req = &input.Input.CalculateNtResponse;
+	const BYTE challenge[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+	const BYTE secret[] = { 0xee };
+
+	BOOL rc = decode_ntlm(s, &input) && (input.CallId == RemoteCallNtlmCalculateNtResponse);
+	rc = rc && req->NtChallenge &&
+	     (memcmp(req->NtChallenge->Data, challenge, sizeof(challenge)) == 0) &&
+	     check_credential(req->Credential, 0, 0x50, secret, sizeof(secret));
+
+	rdpear_ntlm_input_free(&input);
+	return rc;
+}
+
+static BOOL check_ntlm_compare_credentials(wStream* s)
+{
+	NtlmCredIsoRemoteInput input = WINPR_C_ARRAY_INIT;
+	const CompareCredentialsReq* req = &input.Input.CompareCredentials;
+	const BYTE secret[] = { 0xa0, 0xa1, 0xa2 };
+
+	BOOL rc = decode_ntlm(s, &input) && (input.CallId == RemoteCallNtlmCompareCredentials);
+	rc = rc && (req->LhsCredential->reserved1 == 1) && (req->LhsCredential->reserved3 == 1) &&
+	     req->RhsCredential && (req->RhsCredential->reserved2 == 1) &&
+	     (req->LhsCredential->reservedSize.count == sizeof(secret)) &&
+	     (memcmp(req->LhsCredential->reserved6, secret, sizeof(secret)) == 0) &&
+	     (req->LhsCredential->reserved5[0] == 0x10) &&
+	     check_credential(req->RhsCredential, 1, 0x30, nullptr, 0);
+
+	rdpear_ntlm_input_free(&input);
+	return rc;
+}
+
+typedef struct
+{
+	const char* name;
+	const BYTE* data;
+	size_t len;
+	CallCheckFn check;
+} CallVector;
+
+#define CALL_VECTOR(NAME) { #NAME, NAME##_call, sizeof(NAME##_call), check_##NAME }
+
+static const CallVector callVectors[] = {
+	CALL_VECTOR(kerb_negotiate_version),
+	CALL_VECTOR(kerb_create_ap_req_authenticator),
+	CALL_VECTOR(kerb_create_ap_req_authenticator_odd),
+	CALL_VECTOR(kerb_decrypt_ap_reply),
+	CALL_VECTOR(kerb_unpack_kdc_reply_body),
+	CALL_VECTOR(kerb_compute_tgs_checksum),
+	CALL_VECTOR(kerb_build_encrypted_auth_data),
+	CALL_VECTOR(kerb_pack_ap_reply),
+	CALL_VECTOR(kerb_verify_checksum),
+	CALL_VECTOR(ntlm_negotiate_version),
+	CALL_VECTOR(ntlm_lm20_get_ntlm3_challenge_response),
+	CALL_VECTOR(ntlm_calculate_nt_response),
+	CALL_VECTOR(ntlm_compare_credentials),
+};
+
+static BOOL test_calls(void)
+{
+	for (size_t i = 0; i < ARRAYSIZE(callVectors); i++)
+	{
+		const CallVector* v = &callVectors[i];
+		wStream* s = wrap_call(v->data, v->len);
+		const BOOL ok = s && v->check(s);
+		Stream_Free(s, TRUE);
+		if (!ok)
+		{
+			(void)fprintf(stderr, "%s: decoding failed\n", v->name);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+/** @brief the truncated calls must be rejected without reading out of bounds */
+static BOOL test_truncated_calls(void)
+{
+	for (size_t i = 0; i < ARRAYSIZE(callVectors); i++)
+	{
+		const CallVector* v = &callVectors[i];
+
+		/* the arm of a call that is not described is not decoded */
+		if (v->check == check_kerb_verify_checksum)
+			continue;
+
+		for (size_t len = 0; len < v->len; len++)
+		{
+			wStream* s = wrap_call(v->data, len);
+			if (!s)
+				return FALSE;
+
+			/* the object length is padded, the truncated part must be really missing */
+			Stream_SetLength(s, 16 + len);
+			Stream_SetPosition(s, 8);
+			Stream_Write_UINT32(s, (UINT32)len);
+			Stream_SetPosition(s, 0);
+
+			const BOOL ok = v->check(s);
+			Stream_Free(s, TRUE);
+			if (ok && (len + 4 <= v->len))
+			{
+				(void)fprintf(stderr, "%s: truncated call of %" PRIuz " bytes accepted\n", v->name,
+				              len);
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
+static BOOL test_bad_discriminant(void)
+{
+	BYTE data[sizeof(kerb_decrypt_ap_reply_call)] = WINPR_C_ARRAY_INIT;
+	memcpy(data, kerb_decrypt_ap_reply_call, sizeof(data));
+	data[10] = 0x05; /* discriminant: RemoteCallKerbUnpackKdcReplyBody */
+
+	wStream* s = wrap_call(data, sizeof(data));
+	const BOOL ok = s && !check_kerb_decrypt_ap_reply(s);
+	Stream_Free(s, TRUE);
+	return ok;
+}
+
+/* ========================== reply encoding ========================== */
+
+static BOOL check_kerb_reply(const char* what, const KerbCredIsoRemoteOutput* output,
+                             const BYTE* expected, size_t expectedLen)
+{
+	WinPrNdrEncoder* encoder = winpr_ndr_encoder_new(FALSE, 1);
+	wStream* s = Stream_New(nullptr, 64);
+	const BOOL rc =
+	    encoder && s && rdpear_kerb_output_write(encoder, s, output) &&
+	    check_bytes(what, Stream_Buffer(s), Stream_GetPosition(s), expected, expectedLen);
+	Stream_Free(s, TRUE);
+	winpr_ndr_encoder_destroy(&encoder);
+	return rc;
+}
+
+static BOOL check_ntlm_reply(const char* what, const NtlmCredIsoRemoteOutput* output,
+                             const BYTE* expected, size_t expectedLen)
+{
+	WinPrNdrEncoder* encoder = winpr_ndr_encoder_new(FALSE, 1);
+	wStream* s = Stream_New(nullptr, 64);
+	const BOOL rc =
+	    encoder && s && rdpear_ntlm_output_write(encoder, s, output) &&
+	    check_bytes(what, Stream_Buffer(s), Stream_GetPosition(s), expected, expectedLen);
+	Stream_Free(s, TRUE);
+	winpr_ndr_encoder_destroy(&encoder);
+	return rc;
+}
+
+static void fill_bytes(BYTE* data, size_t len, BYTE first)
+{
+	for (size_t i = 0; i < len; i++)
+		data[i] = (BYTE)(first + i);
+}
+
+static BOOL test_kerb_replies(void)
+{
+	BOOL rc = TRUE;
+
+	const KerbCredIsoRemoteOutput version = { .CallId = RemoteCallKerbNegotiateVersion };
+	rc &= check_kerb_reply("kerb_negotiate_version", &version, kerb_negotiate_version_reply,
+	                       sizeof(kerb_negotiate_version_reply));
+
+	BYTE authenticator[] = { 0xaa, 0xbb, 0xcc };
+	const KerbCredIsoRemoteOutput
+	    createApReq = { .CallId = RemoteCallKerbCreateApReqAuthenticator,
+		                .Output = {
+		                    .CreateApReqAuthenticator = {
+		                        .AuthenticatorTime = { .QuadPart = 0x0102030405060708 },
+		                        .Authenticator = { 7, { sizeof(authenticator) }, authenticator },
+		                        .KerbProtocolError = 0x11223344 } } };
+	rc &= check_kerb_reply("kerb_create_ap_req_authenticator", &createApReq,
+	                       kerb_create_ap_req_authenticator_reply,
+	                       sizeof(kerb_create_ap_req_authenticator_reply));
+
+	BYTE asn1Buffer[] = { 0x01, 0x02, 0x03, 0x04 };
+	const KerbCredIsoRemoteOutput asn1 = {
+		.CallId = RemoteCallKerbDecryptApReply,
+		.Output = { .DecryptApReply = { 0x31, { sizeof(asn1Buffer) }, asn1Buffer } }
+	};
+	rc &= check_kerb_reply("kerb_asn1_data", &asn1, kerb_asn1_data_reply,
+	                       sizeof(kerb_asn1_data_reply));
+
+	BYTE replyBody[] = { 0x51, 0x52, 0x53 };
+	const KerbCredIsoRemoteOutput unpack = {
+		.CallId = RemoteCallKerbUnpackKdcReplyBody,
+		.Output = { .UnpackKdcReplyBody = { 0x55667788,
+		                                    { 0x1a, { sizeof(replyBody) }, replyBody } } }
+	};
+	rc &= check_kerb_reply("kerb_unpack_kdc_reply_body", &unpack, kerb_unpack_kdc_reply_body_reply,
+	                       sizeof(kerb_unpack_kdc_reply_body_reply));
+
+	BYTE packed[] = { 0x61, 0x62, 0x63, 0x64, 0x65 };
+	const KerbCredIsoRemoteOutput pack = { .CallId = RemoteCallKerbPackApReply,
+		                                   .Output = {
+		                                       .PackApReply = { { sizeof(packed) }, packed } } };
+	rc &= check_kerb_reply("kerb_pack_ap_reply", &pack, kerb_pack_ap_reply_reply,
+	                       sizeof(kerb_pack_ap_reply_reply));
+
+	const KerbCredIsoRemoteOutput unhandled = { .CallId = RemoteCallKerbVerifyChecksum };
+	rc &= check_kerb_reply("kerb_unhandled", &unhandled, kerb_unhandled_reply,
+	                       sizeof(kerb_unhandled_reply));
+	return rc;
+}
+
+static BOOL test_ntlm_replies(void)
+{
+	BOOL rc = TRUE;
+
+	const NtlmCredIsoRemoteOutput version = { .CallId = RemoteCallNtlmNegotiateVersion };
+	rc &= check_ntlm_reply("ntlm_negotiate_version", &version, ntlm_negotiate_version_reply,
+	                       sizeof(ntlm_negotiate_version_reply));
+
+	const NtlmCredIsoRemoteOutput notSupported = { .CallId =
+		                                               RemoteCallNtlmLm20GetNtlm3ChallengeResponse,
+		                                           .Status = (UINT32)STATUS_NOT_SUPPORTED };
+	rc &= check_ntlm_reply("ntlm_lm20_not_supported", &notSupported, ntlm_lm20_not_supported_reply,
+	                       sizeof(ntlm_lm20_not_supported_reply));
+
+	BYTE ntlm3Response[] = { 0xa1, 0xa2, 0xa3 };
+	NtlmCredIsoRemoteOutput lm20 = { .CallId = RemoteCallNtlmLm20GetNtlm3ChallengeResponse };
+	Lm20GetNtlm3ChallengeResponseResp* resp = &lm20.Output.Lm20GetNtlm3ChallengeResponse;
+	resp->Ntlm3ResponseLength.count = sizeof(ntlm3Response);
+	resp->Ntlm3Response = ntlm3Response;
+	fill_bytes(resp->Lm3Response.Response, sizeof(resp->Lm3Response.Response), 0x10);
+	fill_bytes(resp->Lm3Response.ChallengeFromClient, sizeof(resp->Lm3Response.ChallengeFromClient),
+	           0x20);
+	fill_bytes(resp->UserSessionKey.Data, sizeof(resp->UserSessionKey.Data), 0x30);
+	fill_bytes(resp->LmSessionKey.Data, sizeof(resp->LmSessionKey.Data), 0x40);
+	rc &= check_ntlm_reply("ntlm_lm20", &lm20, ntlm_lm20_reply, sizeof(ntlm_lm20_reply));
+
+	NtlmCredIsoRemoteOutput ntResponse = { .CallId = RemoteCallNtlmCalculateNtResponse };
+	fill_bytes(ntResponse.Output.CalculateNtResponse.Data,
+	           sizeof(ntResponse.Output.CalculateNtResponse.Data), 0x60);
+	rc &= check_ntlm_reply("ntlm_calculate_nt_response", &ntResponse,
+	                       ntlm_calculate_nt_response_reply,
+	                       sizeof(ntlm_calculate_nt_response_reply));
+
+	const NtlmCredIsoRemoteOutput compare = { .CallId = RemoteCallNtlmCompareCredentials,
+		                                      .Output = {
+		                                          .CompareCredentials = { TRUE, FALSE, TRUE } } };
+	rc &= check_ntlm_reply("ntlm_compare_credentials", &compare, ntlm_compare_credentials_reply,
+	                       sizeof(ntlm_compare_credentials_reply));
+	return rc;
+}
+
+int TestRdpearMessages(int argc, char* argv[])
+{
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
+	(void)WLog_SetLogLevel(WLog_Get("com.winpr.ndr"), WLOG_OFF);
+	(void)WLog_SetLogLevel(WLog_Get(CHANNELS_TAG("rdpear")), WLOG_OFF);
+
+	if (!test_calls())
+		return -1;
+	if (!test_truncated_calls())
+		return -2;
+	if (!test_bad_discriminant())
+		return -3;
+	if (!test_kerb_replies())
+		return -4;
+	if (!test_ntlm_replies())
+		return -5;
+	return 0;
+}
