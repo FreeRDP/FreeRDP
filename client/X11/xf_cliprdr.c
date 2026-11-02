@@ -1373,7 +1373,13 @@ static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
 	{
 		if (xevent->property == None)
 		{
-			xf_cliprdr_send_client_format_list(clipboard);
+			/* The owner refused to list its targets. Do not ask again from here:
+			 * xf_cliprdr_send_client_format_list would issue a new TARGETS request,
+			 * and an owner that keeps refusing (Xwayland can) turns that into a
+			 * busy loop that also sends the server a format list on every turn,
+			 * built from the stale TARGETS of the previous owner. Drop what was
+			 * cached and wait for the next owner change. */
+			xf_cliprdr_send_format_list(clipboard, nullptr, 0, nullptr, 0);
 		}
 		else
 		{
