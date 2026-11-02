@@ -179,6 +179,8 @@ static rdpPrinter* printer_android_new_printer(rdpAndroidPrinterDriver* drv, con
 		return nullptr;
 
 	ap->printer.backend = &drv->driver;
+	WINPR_ASSERT(ap->printer.backend->AddRef);
+	ap->printer.backend->AddRef(ap->printer.backend);
 	ap->printer.id = drv->id_sequence++;
 	ap->printer.name = _strdup(name ? name : ANDROID_PRINTER_NAME);
 	if (!ap->printer.name)
@@ -196,9 +198,6 @@ static rdpPrinter* printer_android_new_printer(rdpAndroidPrinterDriver* drv, con
 
 	WINPR_ASSERT(ap->printer.AddRef);
 	ap->printer.AddRef(&ap->printer);
-
-	WINPR_ASSERT(ap->printer.backend->AddRef);
-	ap->printer.backend->AddRef(ap->printer.backend);
 
 	return &ap->printer;
 
