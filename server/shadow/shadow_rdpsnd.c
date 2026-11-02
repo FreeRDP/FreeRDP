@@ -66,8 +66,20 @@ int shadow_client_rdpsnd_init(rdpShadowClient* client)
 
 	if (client->subsystem->rdpsndFormats)
 	{
-		rdpsnd->server_formats = client->subsystem->rdpsndFormats;
-		rdpsnd->num_server_formats = client->subsystem->nRdpsndFormats;
+		/* rdpsnd_server_context_free() frees the list: each client gets its own
+		 * copy (shadow_client_rdpsnd_uninit() cleans up after a failure here) */
+		const size_t count = client->subsystem->nRdpsndFormats;
+		rdpsnd->server_formats = audio_formats_new(count);
+		if (!rdpsnd->server_formats)
+			return -1;
+
+		for (size_t x = 0; x < count; x++)
+		{
+			if (!audio_format_copy(&client->subsystem->rdpsndFormats[x],
+			                       &rdpsnd->server_formats[x]))
+				return -1;
+		}
+		rdpsnd->num_server_formats = count;
 	}
 	else
 	{

@@ -2583,7 +2583,10 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 			WINPR_ASSERT(msg);
 
-			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+			/* Samples that arrive before the client agreed on a format (or when it
+			 * agreed on none) are dropped */
+			if (client->activated && client->rdpsnd && client->rdpsnd->Activated &&
+			    (client->rdpsnd->selected_client_format < client->rdpsnd->num_client_formats))
 			{
 				client->rdpsnd->src_format = msg->audio_format;
 
@@ -2591,7 +2594,10 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 				    IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SendSamples, client->rdpsnd,
 				                 msg->buf, msg->nFrames, msg->wTimestamp);
 				if (CHANNEL_RC_OK != error)
+				{
+					shadow_client_free_queued_message(message);
 					return -1;
+				}
 			}
 
 			break;
