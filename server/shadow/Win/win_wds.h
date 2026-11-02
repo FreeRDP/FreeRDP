@@ -19,7 +19,9 @@
 #ifndef FREERDP_SERVER_SHADOW_WIN_WDS_H
 #define FREERDP_SERVER_SHADOW_WIN_WDS_H
 
+#if !defined(WITH_DXGI_1_2)
 #define WITH_WDS_API 1
+#endif
 
 #ifndef CINTERFACE
 #define CINTERFACE
