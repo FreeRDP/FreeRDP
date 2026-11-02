@@ -18,6 +18,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -32,6 +33,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewConfigurationCompat;
 
 import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.utils.DoubleGestureDetector;
@@ -104,8 +106,10 @@ public class SessionView extends View
 		invalidRegions = new Stack<>();
 		gestureDetector = new GestureDetector(context, new SessionGestureListener(), null, true);
 		ViewConfiguration vc = ViewConfiguration.get(context);
-		notchPxX = Math.max(1.0f, vc.getScaledHorizontalScrollFactor());
-		notchPxY = Math.max(1.0f, vc.getScaledVerticalScrollFactor());
+		notchPxX =
+		    Math.max(1.0f, ViewConfigurationCompat.getScaledHorizontalScrollFactor(vc, context));
+		notchPxY =
+		    Math.max(1.0f, ViewConfigurationCompat.getScaledVerticalScrollFactor(vc, context));
 		doubleGestureDetector =
 		    new DoubleGestureDetector(context, null, new SessionDoubleGestureListener());
 
@@ -317,7 +321,8 @@ public class SessionView extends View
 			// Some ROMs (e.g. HarmonyOS) deliver the wheel as a touch event.
 			if (action == MotionEvent.ACTION_SCROLL)
 				return onGenericMotionEvent(event);
-			if (event.getClassification() == MotionEvent.CLASSIFICATION_TWO_FINGER_SWIPE)
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+			    event.getClassification() == MotionEvent.CLASSIFICATION_TWO_FINGER_SWIPE)
 			{
 				handleTouchpadScroll(event);
 				return true;
