@@ -79,6 +79,9 @@ enum MF_EXIT_CODE
 
 void ios_init_freerdp(void);
 void ios_uninit_freerdp(void);
+
+void ios_freerdp_free(freerdp *instance);
+
+WINPR_ATTR_MALLOC(ios_freerdp_free, 1)
 freerdp *ios_freerdp_new(void);
 int ios_run_freerdp(freerdp *instance);
-void ios_freerdp_free(freerdp *instance);
