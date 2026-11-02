@@ -1836,7 +1836,8 @@ static BOOL nla_encode_ts_password_credentials(rdpNla* nla, WinPrAsn1Encoder* en
 
 	const BOOL enabled =
 	    !freerdp_settings_get_bool(settings, FreeRDP_DisableCredentialsDelegation) &&
-	    !freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired);
+	    !freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_RemoteCredentialGuard);
 	if (enabled && nla->identity)
 	{
 		username.len = nla->identity->UserLength * sizeof(WCHAR);
