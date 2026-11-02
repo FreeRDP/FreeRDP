@@ -192,6 +192,9 @@ extern "C"
 	    UINT32 reservedAV1[2];
 #endif
 		BOOL h264HwAccel; /** @since version 3.32.0 */
+		/** how many clients hold each key of rdpShadowClient::keysDown, guarded by lock
+		 *  @since version 3.33.0 */
+		UINT16 keysHeld[0x400];
 	};
 
 	struct rdp_shadow_surface

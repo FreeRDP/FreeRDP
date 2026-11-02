@@ -46,32 +46,37 @@ static BOOL shadow_input_key_is_down(const rdpShadowClient* client, size_t index
 	return (client->keysDown[index / 8] & (1u << (index % 8))) != 0;
 }
 
-static void shadow_input_key_set(rdpShadowClient* client, size_t index, BOOL down)
+/* Marks the key as pressed or released by this client and returns whether any client sharing
+ * the desktop still holds it.
+ *
+ * rdpShadowServer::keysHeld counts the clients holding each key, so that this needs no walk over
+ * server->clients: a capture thread may hold that list's lock while it waits for this client to
+ * take a frame, and this runs on the client thread. Guarded by server->lock, which nothing else
+ * takes. */
+static BOOL shadow_input_key_update(rdpShadowClient* client, size_t index, BOOL down)
 {
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(index < KEY_INDEX_COUNT);
+	rdpShadowServer* server = client->server;
+	WINPR_ASSERT(server);
+
 	const BYTE bit = (BYTE)(1u << (index % 8));
-	if (down)
-		client->keysDown[index / 8] |= bit;
-	else
-		client->keysDown[index / 8] &= (BYTE)~bit;
-}
 
-/* Another client sharing the desktop still holds the key: it must stay down for that one.
- * Called with server->clients locked. */
-static BOOL shadow_input_key_held_by_other(const rdpShadowClient* client, size_t index)
-{
-	WINPR_ASSERT(client);
-	WINPR_ASSERT(client->server);
-
-	for (size_t x = 0; x < ArrayList_Count(client->server->clients); x++)
+	EnterCriticalSection(&server->lock);
+	if (down && !shadow_input_key_is_down(client, index))
 	{
-		const rdpShadowClient* other =
-		    (const rdpShadowClient*)ArrayList_GetItem(client->server->clients, x);
-		if (other && (other != client) && shadow_input_key_is_down(other, index))
-			return TRUE;
+		client->keysDown[index / 8] |= bit;
+		server->keysHeld[index]++;
 	}
-	return FALSE;
+	else if (!down && shadow_input_key_is_down(client, index))
+	{
+		client->keysDown[index / 8] &= (BYTE)~bit;
+		WINPR_ASSERT(server->keysHeld[index] > 0);
+		server->keysHeld[index]--;
+	}
+	const BOOL held = server->keysHeld[index] > 0;
+	LeaveCriticalSection(&server->lock);
+	return held;
 }
 
 void shadow_input_release_keys(rdpShadowClient* client)
@@ -81,13 +86,12 @@ void shadow_input_release_keys(rdpShadowClient* client)
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 	WINPR_ASSERT(subsystem);
 
-	ArrayList_Lock(client->server->clients);
 	for (size_t index = 0; index < KEY_INDEX_COUNT; index++)
 	{
 		if (!shadow_input_key_is_down(client, index))
 			continue;
-		shadow_input_key_set(client, index, FALSE);
-		if (shadow_input_key_held_by_other(client, index))
+		/* another client sharing the desktop still holds it: it stays down for that one */
+		if (shadow_input_key_update(client, index, FALSE))
 			continue;
 
 		UINT16 flags = KBD_FLAGS_RELEASE;
@@ -103,7 +107,6 @@ void shadow_input_release_keys(rdpShadowClient* client)
 			WLog_WARN(TAG, "releasing key 0x%02" PRIx8 " flags=0x%04" PRIx16 " failed", code,
 			          flags);
 	}
-	ArrayList_Unlock(client->server->clients);
 }
 
 WINPR_ATTR_NODISCARD
@@ -142,8 +145,8 @@ static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 cod
 
 	const BOOL rc = IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code);
 	if (rc)
-		shadow_input_key_set(client, shadow_input_key_index(flags, code),
-		                     (flags & KBD_FLAGS_RELEASE) == 0);
+		(void)shadow_input_key_update(client, shadow_input_key_index(flags, code),
+		                              (flags & KBD_FLAGS_RELEASE) == 0);
 	return rc;
 }
 
