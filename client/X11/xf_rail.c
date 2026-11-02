@@ -316,7 +316,7 @@ static BOOL xf_rail_apply_configure_geometry(xfContext* xfc, xfAppWindow* appWin
 	if (appWindow->configureGeometryPending)
 		xf_rail_schedule_geometry(xfc, appWindow, 50);
 	xf_UpdateWindowVisibilityRects(xfc, appWindow);
-
+	xf_UpdateWindowInputRegion(xfc, appWindow);
 	return rc;
 }
 
@@ -357,7 +357,7 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
 			 * current root position and size, never a new position + old event size. */
 			appWindow->configureGeometryPending = TRUE;
 			xf_rail_schedule_geometry(xfc, appWindow, 0);
-
+			xf_UpdateWindowInputRegion(xfc, appWindow);
 			WLog_Print(xfc->log, WLOG_DEBUG,
 			           "[rail-geometry] defer child configure windowId=0x%08" PRIx64
 			           " event=%d,%d %dx%d until end of X11 event batch",
@@ -1444,7 +1444,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	{
 	    xf_SetWindowRects(xfc, appWindow, appWindow->windowRects, appWindow->numWindowRects);
 	}*/
-
+	xf_UpdateWindowInputRegion(xfc, appWindow);
 	rc = TRUE;
 fail:
 	xf_rail_return_window(appWindow, FALSE);
@@ -2203,7 +2203,7 @@ fail:
 	xfc->railGeometryTimer = nullptr;
 	xfc->railGeometryTimerReady = FALSE;
 	HashTable_Free(xfc->railWindows);
-
+	xf_ClearWindowInputWatches(xfc);
 	xfc->railWindows = nullptr;
 	return 0;
 }
@@ -2230,7 +2230,7 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 	if (xfc->railWindows)
 	{
 		HashTable_Free(xfc->railWindows);
-
+		xf_ClearWindowInputWatches(xfc);
 		xfc->railWindows = nullptr;
 	}
 

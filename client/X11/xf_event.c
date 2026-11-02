@@ -1105,7 +1105,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 			appWindow->is_mapped = TRUE;
 			if (appWindow->stateGeometryPending)
 				xf_rail_schedule_geometry(xfc, appWindow, 0);
-
+			xf_UpdateWindowInputRegion(xfc, appWindow);
 			if (appWindow->surfaceStale)
 			{
 				const UINT64 windowId = appWindow->windowId;
@@ -1137,7 +1137,7 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 		if (appWindow)
 		{
 			appWindow->is_mapped = FALSE;
-
+			xf_UpdateWindowInputRegion(xfc, appWindow);
 		}
 		xf_rail_return_window(appWindow, FALSE);
 	}
@@ -1494,6 +1494,8 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
+	if (xfc->remote_app && xfc->railWindows && xf_WindowInputAncestorEvent(xfc, event))
+		return TRUE;
 	if (xfc->remote_app && xfc->railLocalMoveWindowId)
 	{
 		BOOL handled = FALSE;
@@ -1664,7 +1666,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			{
 				xfAppWindow* owner = xf_AppWindowFromX11Window(xfc, event->xreparent.window);
 				if (owner)
-
+					xf_UpdateWindowInputRegion(xfc, owner);
 				xf_rail_return_window(owner, FALSE);
 			}
 			break;

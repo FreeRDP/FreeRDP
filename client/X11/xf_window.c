@@ -1213,6 +1213,270 @@ void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow)
 	XSetWMNormalHints(xfc->display, appWindow->handle, &hints);
 }
 
+typedef struct xf_input_watch
+{
+	Window handle;
+	long originalMask;
+	size_t references;
+	BOOL destroyed;
+	struct xf_input_watch* next;
+} xfInputWatch;
+
+void xf_ClearWindowInputWatches(xfContext* xfc)
+{
+	while (xfc->railInputWatches)
+	{
+		xfInputWatch* watch = xfc->railInputWatches;
+		xfc->railInputWatches = watch->next;
+		if (!watch->destroyed)
+			XSelectInput(xfc->display, watch->handle, watch->originalMask);
+		free(watch);
+	}
+}
+
+static void xf_ReleaseInputAncestors(xfContext* xfc, xfAppWindow* appWindow)
+{
+	for (size_t i = 0; i < appWindow->inputAncestorCount; i++)
+	{
+		for (xfInputWatch** p = &xfc->railInputWatches; *p; p = &(*p)->next)
+		{
+			xfInputWatch* watch = *p;
+			if (watch->handle != appWindow->inputAncestors[i])
+				continue;
+			if (--watch->references)
+				break;
+			if (!watch->destroyed)
+				XSelectInput(xfc->display, watch->handle, watch->originalMask);
+			*p = watch->next;
+			free(watch);
+			break;
+		}
+	}
+	appWindow->inputAncestorCount = 0;
+}
+
+static BOOL xf_WatchInputAncestors(xfContext* xfc, xfAppWindow* appWindow, const Window* ancestors,
+                                   size_t count)
+{
+	if (count == appWindow->inputAncestorCount &&
+	    memcmp(ancestors, appWindow->inputAncestors, count * sizeof(Window)) == 0)
+		return TRUE;
+	xf_ReleaseInputAncestors(xfc, appWindow);
+	for (size_t i = 0; i < count; i++)
+	{
+		xfInputWatch* watch = xfc->railInputWatches;
+		for (; watch && watch->handle != ancestors[i]; watch = watch->next)
+		{
+		}
+		if (!watch)
+		{
+			XWindowAttributes attrs = WINPR_C_ARRAY_INIT;
+			if (!XGetWindowAttributes(xfc->display, ancestors[i], &attrs))
+				goto fail;
+			watch = calloc(1, sizeof(*watch));
+			if (!watch)
+				goto fail;
+			watch->handle = ancestors[i];
+			watch->originalMask = attrs.your_event_mask;
+			watch->next = xfc->railInputWatches;
+			xfc->railInputWatches = watch;
+			XSelectInput(xfc->display, watch->handle,
+			             attrs.your_event_mask | StructureNotifyMask | VisibilityChangeMask);
+		}
+		watch->references++;
+		appWindow->inputAncestors[appWindow->inputAncestorCount++] = ancestors[i];
+	}
+	return TRUE;
+fail:
+	xf_ReleaseInputAncestors(xfc, appWindow);
+	return FALSE;
+}
+
+BOOL xf_WindowInputAncestorEvent(xfContext* xfc, const XEvent* event)
+{
+	Window target = None;
+	switch (event->type)
+	{
+		case ConfigureNotify:
+			target = event->xconfigure.window;
+			break;
+		case MapNotify:
+			target = event->xmap.window;
+			break;
+		case UnmapNotify:
+			target = event->xunmap.window;
+			break;
+		case ReparentNotify:
+			target = event->xreparent.window;
+			break;
+		case DestroyNotify:
+			target = event->xdestroywindow.window;
+			break;
+		case VisibilityNotify:
+			target = event->xvisibility.window;
+			break;
+		default:
+			return FALSE;
+	}
+	xf_lock_x11(xfc);
+	xfInputWatch* watch = xfc->railInputWatches;
+	for (; watch && watch->handle != target; watch = watch->next)
+	{
+	}
+	if (!watch)
+	{
+		xf_unlock_x11(xfc);
+		return FALSE;
+	}
+	if (event->type == DestroyNotify)
+		watch->destroyed = TRUE;
+	/* Frame events are not client geometry. Refresh only their owners, never
+	 * interpreting frame-local coordinates as application root coordinates. */
+	ULONG_PTR* keys = nullptr;
+	const size_t count = HashTable_GetKeys(xfc->railWindows, &keys);
+	for (size_t k = 0; k < count; k++)
+	{
+		xfAppWindow* owner = xf_rail_get_window(xfc, *(UINT64*)keys[k], FALSE);
+		if (!owner)
+			continue;
+		for (size_t i = 0; i < owner->inputAncestorCount; i++)
+		{
+			if (owner->inputAncestors[i] != target)
+				continue;
+			if (event->type == DestroyNotify)
+			{
+				if (owner->inputMapped)
+					XUnmapWindow(xfc->display, owner->inputHandle);
+				owner->inputMapped = FALSE;
+				xf_ReleaseInputAncestors(xfc, owner);
+			}
+			else
+				xf_UpdateWindowInputRegion(xfc, owner);
+			break;
+		}
+		xf_rail_return_window(owner, FALSE);
+	}
+	free(keys);
+	xf_unlock_x11(xfc);
+	return TRUE;
+}
+
+void xf_UpdateWindowInputRegion(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+#ifdef WITH_XEXT
+	if (!xfc->display)
+		return;
+	if (!appWindow->is_mapped || appWindow->is_transient || appWindow->decorations ||
+	    appWindow->configureGeometryPending || !xf_rail_window_can_resize(appWindow) ||
+	    !xf_rail_has_resize_margins(appWindow) ||
+	    (appWindow->dwStyle & (WS_CHILD | WS_DISABLED | WS_MINIMIZE | WS_MAXIMIZE)) ||
+	    (appWindow->dwExStyle & WS_EX_NOACTIVATE) ||
+	    (appWindow->rail_state == WINDOW_SHOW_MINIMIZED) ||
+	    (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED))
+		goto hide;
+	const INT64 left = appWindow->resizeMarginLeft;
+	const INT64 top = appWindow->resizeMarginTop;
+	const INT64 right = appWindow->resizeMarginRight;
+	const INT64 bottom = appWindow->resizeMarginBottom;
+	const INT64 width = (INT64)appWindow->width + left + right;
+	const INT64 height = (INT64)appWindow->height + top + bottom;
+	const INT64 x = (INT64)appWindow->x - left;
+	const INT64 y = (INT64)appWindow->y - top;
+	if (!(left || top || right || bottom) || (appWindow->width <= 0) || (appWindow->height <= 0) ||
+	    (width > INT16_MAX) || (height > INT16_MAX) || (x < INT16_MIN) || (x > INT16_MAX) ||
+	    (y < INT16_MIN) || (y > INT16_MAX))
+		goto hide;
+
+	/* Follow the owner's WM frame in the root stacking order. Placing a
+	 * shaped input-only sibling immediately above that frame covers its
+	 * margins without occluding the owner's content or foreground windows. */
+	Window sibling = appWindow->handle;
+	Window root = None;
+	Window ancestors[64] = WINPR_C_ARRAY_INIT;
+	size_t ancestorCount = 0;
+	for (size_t level = 0; level < 64; level++)
+	{
+		Window parent = None;
+		Window* children = nullptr;
+		unsigned int count = 0;
+		const Status rc = XQueryTree(xfc->display, sibling, &root, &parent, &children, &count);
+		if (children)
+			XFree(children);
+		if (!rc || !parent)
+			goto hide;
+		if (parent == root)
+			break;
+		ancestors[ancestorCount++] = parent;
+		sibling = parent;
+		if (level == 63)
+			goto hide;
+	}
+	if (!xf_WatchInputAncestors(xfc, appWindow, ancestors, ancestorCount))
+		goto hide;
+	XWindowAttributes attributes = WINPR_C_ARRAY_INIT;
+	if (!XGetWindowAttributes(xfc->display, appWindow->handle, &attributes) ||
+	    (attributes.map_state != IsViewable))
+		goto hide;
+	if (!appWindow->inputHandle)
+	{
+		int eventBase = 0;
+		int errorBase = 0;
+		if (!XShapeQueryExtension(xfc->display, &eventBase, &errorBase))
+			return;
+		XSetWindowAttributes attrs = { .override_redirect = True,
+			                           .event_mask = ButtonPressMask | ButtonReleaseMask |
+			                                         PointerMotionMask | EnterWindowMask |
+			                                         LeaveWindowMask };
+		appWindow->inputHandle =
+		    XCreateWindow(xfc->display, root, (int)x, (int)y, (unsigned)width, (unsigned)height, 0,
+		                  0, InputOnly, CopyFromParent, CWOverrideRedirect | CWEventMask, &attrs);
+		if (!appWindow->inputHandle)
+			return;
+	}
+	XRectangle rects[4] = WINPR_C_ARRAY_INIT;
+	int count = 0;
+	if (top)
+		rects[count++] = (XRectangle){ 0, 0, (unsigned short)width, (unsigned short)top };
+	if (left)
+		rects[count++] =
+		    (XRectangle){ 0, (short)top, (unsigned short)left, (unsigned short)appWindow->height };
+	if (right)
+		rects[count++] = (XRectangle){ (short)(left + appWindow->width), (short)top,
+			                           (unsigned short)right, (unsigned short)appWindow->height };
+	if (bottom)
+		rects[count++] = (XRectangle){ 0, (short)(top + appWindow->height), (unsigned short)width,
+			                           (unsigned short)bottom };
+	XShapeCombineRectangles(xfc->display, appWindow->inputHandle, ShapeBounding, 0, 0, rects, count,
+	                        ShapeSet, Unsorted);
+	XWindowChanges changes = { .x = (int)x,
+		                       .y = (int)y,
+		                       .width = (int)width,
+		                       .height = (int)height,
+		                       .sibling = sibling,
+		                       .stack_mode = Above };
+	XConfigureWindow(xfc->display, appWindow->inputHandle,
+	                 CWX | CWY | CWWidth | CWHeight | CWSibling | CWStackMode, &changes);
+#ifdef WITH_XCURSOR
+	if (xfc->appWindow == appWindow && xfc->pointer)
+		XDefineCursor(xfc->display, appWindow->inputHandle, xfc->pointer->cursor);
+#endif
+	if (!appWindow->inputMapped)
+	{
+		XMapWindow(xfc->display, appWindow->inputHandle);
+		appWindow->inputMapped = TRUE;
+	}
+	return;
+hide:
+	if (appWindow->inputMapped)
+	{
+		XUnmapWindow(xfc->display, appWindow->inputHandle);
+		appWindow->inputMapped = FALSE;
+	}
+#endif
+}
+
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y)
 {
 	if (appWindow->local_move.state != LMS_NOT_ACTIVE)
@@ -1311,7 +1575,7 @@ BOOL xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	if (xfc->railLocalMoveWindowId == appWindow->windowId)
 		xfc->railLocalMoveWindowId = 0;
 	xf_UpdateWindowVisibilityRects(xfc, appWindow);
-
+	xf_UpdateWindowInputRegion(xfc, appWindow);
 	return redraw;
 }
 
@@ -1355,6 +1619,7 @@ BOOL xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	else
 		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, x, y);
 
+	xf_UpdateWindowInputRegion(xfc, appWindow);
 	return FALSE;
 }
 
@@ -1660,6 +1925,7 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 
 	xf_AppWindowDestroyImage(appWindow);
 
+	xf_ReleaseInputAncestors(xfc, appWindow);
 	if (appWindow->handle)
 	{
 		if (appWindow->inputHandle)
