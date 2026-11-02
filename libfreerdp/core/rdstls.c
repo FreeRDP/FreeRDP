@@ -726,7 +726,10 @@ static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData
                             const UINT16 clientDataLength)
 {
 	if (serverDataLength == 0)
-		return FALSE;
+	{
+		WLog_Print(log, WLOG_DEBUG, "serverDataLength == 0, nothing to compare. ignore");
+		return TRUE;
+	}
 
 	if (clientDataLength == 0)
 	{
@@ -747,6 +750,8 @@ static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData
 		if (serverData[x] != 0)
 			return TRUE;
 	}
+
+	WLog_Print(log, WLOG_ERROR, "serverData not initialized, reject");
 	return FALSE;
 }
 
@@ -977,6 +982,9 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s,
 	    freerdp_settings_get_uint32(rdstls->context->settings, FreeRDP_RdstlsEnabledModes);
 	if ((dataType > 31) || ((allowedDataTypes & (1 << dataType)) == 0))
 	{
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "dataType=0x%08" PRIx32 ", allowedDataTypes=0x%08" PRIx32 ", deny", dataType,
+		           allowedDataTypes);
 		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 		return TRUE;
 	}
@@ -1104,6 +1112,8 @@ static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls, uint16_t* pVer
 {
 	BOOL rc = FALSE;
 	WINPR_ASSERT(pVersion);
+
+	rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
 
 	if (!rdstls_required_role_is_server(rdstls, TRUE))
 		return FALSE;

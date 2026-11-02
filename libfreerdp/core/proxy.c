@@ -802,7 +802,8 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 
 	rc = TRUE;
 fail:
-	WLog_ERR(TAG, "Failed to connect to proxy");
+	if (!rc)
+		WLog_ERR(TAG, "Failed to connect to proxy");
 	Stream_Free(s, TRUE);
 	return rc;
 }
