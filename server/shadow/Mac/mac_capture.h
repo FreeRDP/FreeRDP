@@ -64,12 +64,17 @@ extern "C"
 
 	/* Screen Recording permission: TRUE when granted; when not, asks for it
 	 * once (the system shows its own prompt) and returns FALSE. */
+	WINPR_ATTR_NODISCARD
 	BOOL mac_capture_check_access(void);
 
-	macCapture *mac_capture_new(const macCaptureConfig *config);
 	void mac_capture_free(macCapture *capture);
 
+	WINPR_ATTR_MALLOC(mac_capture_free, 1)
+	macCapture *mac_capture_new(const macCaptureConfig *config);
+
+	WINPR_ATTR_NODISCARD
 	BOOL mac_capture_start(macCapture *capture);
+
 	void mac_capture_stop(macCapture *capture);
 
 #ifdef __cplusplus
