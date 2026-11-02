@@ -53,15 +53,6 @@ struct rdp_shadow_encoder
 	PROGRESSIVE_CONTEXT* progressive;
 #if defined(WITH_GFX_AV1)
 	FREERDP_AV1_CONTEXT* av1;
-	struct
-	{
-		wLog* log;
-		UINT64 startNS;
-		UINT64 encodeNS;
-		UINT64 maxEncodeNS;
-		UINT64 bytes;
-		UINT32 frames;
-	} av1Stats;
 #endif
 	UINT32 fps;
 	UINT32 maxFps;

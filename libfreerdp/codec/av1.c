@@ -66,6 +66,15 @@ struct S_FREERDP_AV1_CONTEXT
 	aom_codec_iface_t* iface;
 	/* the next frame converts the whole surface to YUV (after a reset or a failure) */
 	bool fullFrameNext;
+	/* encoder statistics, see av1_encoder_stats() */
+	struct
+	{
+		UINT64 startNS;
+		UINT64 encodeNS;
+		UINT64 maxEncodeNS;
+		UINT64 bytes;
+		UINT32 frames;
+	} stats;
 #endif
 #if defined(WITH_LIBAOM) && !defined(WITH_DAV1D)
 	aom_codec_dec_cfg_t dcfg;
@@ -288,6 +297,49 @@ UINT32 freerdp_av1_context_get_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONT
 #endif
 }
 
+#if defined(WITH_LIBAOM)
+/* Encoder statistics, logged every few seconds at debug level to com.freerdp.codec.av1
+ * (e.g. with WLOG_LEVEL=DEBUG) */
+#define AV1_STATS_INTERVAL_NS (5ull * 1000ull * 1000ull * 1000ull)
+
+static void av1_encoder_stats(FREERDP_AV1_CONTEXT* av1, UINT64 startNS, size_t bytes)
+{
+	WINPR_ASSERT(av1);
+
+	if (!WLog_IsLevelActive(av1->log, WLOG_DEBUG))
+		return;
+
+	const UINT64 endNS = winpr_GetTickCount64NS();
+	const UINT64 encodeNS = endNS - startNS;
+	if (av1->stats.frames == 0)
+		av1->stats.startNS = startNS;
+	av1->stats.frames++;
+	av1->stats.encodeNS += encodeNS;
+	av1->stats.bytes += bytes;
+	if (encodeNS > av1->stats.maxEncodeNS)
+		av1->stats.maxEncodeNS = encodeNS;
+
+	const UINT64 elapsedNS = endNS - av1->stats.startNS;
+	if (elapsedNS < AV1_STATS_INTERVAL_NS)
+		return;
+
+	const double seconds = (double)elapsedNS / 1e9;
+	WLog_Print(av1->log, WLOG_DEBUG,
+	           "AV1 %" PRIu32 "x%" PRIu32 " %s: %" PRIu32 " frames in %.1f s (%.1f fps), "
+	           "encode avg %.1f ms max %.1f ms, %.0f kbit/s",
+	           av1->yuvWidth, av1->yuvHeight, (av1->ecfg.g_profile == 1) ? "I444" : "I420",
+	           av1->stats.frames, seconds, av1->stats.frames / seconds,
+	           (double)av1->stats.encodeNS / av1->stats.frames / 1e6,
+	           (double)av1->stats.maxEncodeNS / 1e6,
+	           (double)av1->stats.bytes * 8.0 / 1000.0 / seconds);
+
+	av1->stats.frames = 0;
+	av1->stats.encodeNS = 0;
+	av1->stats.maxEncodeNS = 0;
+	av1->stats.bytes = 0;
+}
+#endif
+
 INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD SrcFormat,
                            UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
                            const RECTANGLE_16* regionRect, BYTE** ppDstData, UINT32* pDstSize,
@@ -303,6 +355,7 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	}
 
 #if defined(WITH_LIBAOM)
+	const UINT64 startNS = winpr_GetTickCount64NS();
 	primitives_t* primitives = primitives_get();
 	if (!primitives)
 	{
@@ -450,6 +503,8 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	};
 	if (*pDstSize == 0)
 		return 0;
+
+	av1_encoder_stats(av1, startNS, *pDstSize);
 
 	RECTANGLE_16* rect = calloc(1, sizeof(RECTANGLE_16));
 	if (rect)
