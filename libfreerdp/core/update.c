@@ -231,18 +231,21 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 		return FALSE;
 	}
 
-	const UINT32 w = bitmapData->destRight - bitmapData->destLeft;
-	if (w != bitmapData->width - 1)
+	/* The bitmap may be wider than the rectangle it is drawn to: servers pad
+	 * the width (xrdp to a multiple of 4, as the interleaved codec needs), and
+	 * only right - left + 1 columns are painted. It must not be smaller. */
+	const UINT32 w = 1u + bitmapData->destRight - bitmapData->destLeft;
+	if (w > bitmapData->width)
 	{
-		WLog_ERR(TAG, "Invalid BITMAP_DATA: width=%" PRIu32 " != right - left=%" PRIu32,
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: width=%" PRIu16 " < right - left + 1=%" PRIu32,
 		         bitmapData->width, w);
 		return FALSE;
 	}
 
-	const UINT32 h = bitmapData->destBottom - bitmapData->destTop;
-	if (h != bitmapData->height - 1)
+	const UINT32 h = 1u + bitmapData->destBottom - bitmapData->destTop;
+	if (h > bitmapData->height)
 	{
-		WLog_ERR(TAG, "Invalid BITMAP_DATA: height=%" PRIu32 " != bottom - top=%" PRIu32,
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: height=%" PRIu16 " < bottom - top + 1=%" PRIu32,
 		         bitmapData->height, h);
 		return FALSE;
 	}
