@@ -1396,12 +1396,25 @@ static int similarY(const BYTE* a, const BYTE* b, size_t size, size_t type)
 /* Check the result of generic matches the optimized routine.
  *
  */
-#if defined(NEON_INTRINSICS_ENABLED)
-/* The NEON RGBToYUV420_8u_P3AC4R keeps the generic integer math, so it must
- * match the generic routine byte for byte, unlike the SSE4.1 one (which uses 7
- * and 8 bit coefficients). Odd widths and heights, padded strides, the formats
- * it handles and one it hands back to the generic routine. */
-static BOOL compare_rgb_to_yuv420_exact(prim_size_t roi, DWORD type)
+/* How far an optimized RGB to YUV conversion may be from the generic one: the SSE4.1
+ * routines use 7 and 8 bit coefficients, which puts Y up to 1 and U and V up to 2 off;
+ * the NEON ones keep the generic integer math and match it. */
+#define YUV_ENCODE_TOLERANCE 2
+
+static BOOL yuv_encode_close(const BYTE* a, const BYTE* b, size_t len)
+{
+	for (size_t x = 0; x < len; x++)
+	{
+		if (abs((int)a[x] - (int)b[x]) > YUV_ENCODE_TOLERANCE)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/* RGBToYUV420_8u_P3AC4R against the generic routine at odd widths and heights, with padded
+ * strides, for the formats it handles and one it hands back to the generic routine: the
+ * values within YUV_ENCODE_TOLERANCE, and nothing written into the padding. */
+static BOOL compare_rgb_to_yuv420_edges(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
 	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBA32,
@@ -1461,7 +1474,7 @@ static BOOL compare_rgb_to_yuv420_exact(prim_size_t roi, DWORD type)
 			{
 				const BYTE* line = &yuv[x][y * dstStep[x]];
 				const BYTE* expect = &ref[x][y * dstStep[x]];
-				if (memcmp(line, expect, dstStep[x]) != 0)
+				if (!yuv_encode_close(line, expect, used[x]))
 				{
 					(void)fprintf(stderr,
 					              "[%s] %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
@@ -1496,11 +1509,10 @@ fail:
 	return rc;
 }
 
-/* The NEON RGBToAVC444YUV and RGBToAVC444YUVv2 keep the generic integer math and
- * layout, so they must match the generic routines byte for byte. Both views are
- * compared whole: the buffers start with the same fill, so a byte written in the
- * wrong place shows up as well. */
-static BOOL compare_rgb_to_avc444_exact(prim_size_t roi, DWORD type, UINT32 version)
+/* RGBToAVC444YUV and RGBToAVC444YUVv2 against the generic routines at the same sizes, the
+ * values within YUV_ENCODE_TOLERANCE. Both views are compared whole: the buffers start with
+ * the same fill, so a byte written in the wrong place shows up as well. */
+static BOOL compare_rgb_to_avc444_edges(prim_size_t roi, DWORD type, UINT32 version)
 {
 	BOOL rc = FALSE;
 	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBX32 };
@@ -1566,15 +1578,14 @@ static BOOL compare_rgb_to_avc444_exact(prim_size_t roi, DWORD type, UINT32 vers
 
 		for (size_t x = 0; x < 3; x++)
 		{
-			if ((memcmp(main1[x], main2[x], rows * step) != 0) ||
-			    (memcmp(aux1[x], aux2[x], rows * step) != 0))
+			const BOOL mainClose = yuv_encode_close(main1[x], main2[x], rows * step);
+			if (!mainClose || !yuv_encode_close(aux1[x], aux2[x], rows * step))
 			{
-				(void)fprintf(
-				    stderr,
-				    "[%s] v%" PRIu32 " %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
-				    " of the %s view differs\n",
-				    __func__, version, FreeRDPGetColorFormatName(format), roi.width, roi.height, x,
-				    (memcmp(main1[x], main2[x], rows * step) != 0) ? "main" : "auxiliary");
+				(void)fprintf(stderr,
+				              "[%s] v%" PRIu32 " %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
+				              " of the %s view differs\n",
+				              __func__, version, FreeRDPGetColorFormatName(format), roi.width,
+				              roi.height, x, mainClose ? "auxiliary" : "main");
 				goto fail;
 			}
 		}
@@ -1594,7 +1605,6 @@ fail:
 	}
 	return rc;
 }
-#endif
 
 static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 {
@@ -1836,9 +1846,6 @@ int TestPrimitivesYUV(int argc, char* argv[])
 			goto end;
 		if (!compare_rgb_to_yuv420(roi, type))
 			goto end;
-		/* byte exact only where the optimized routine keeps the generic integer math (NEON);
-		 * the SSE4.1 one uses 7 and 8 bit coefficients, see compare_rgb_to_yuv420_exact() */
-#if defined(NEON_INTRINSICS_ENABLED)
 		/* the random roi plus sizes around the 16x2 vector blocks */
 		const prim_size_t yuv420Rois[] = {
 			roi,       { 1, 1 },  { 15, 3 }, { 16, 2 },  { 17, 3 },
@@ -1846,13 +1853,12 @@ int TestPrimitivesYUV(int argc, char* argv[])
 		};
 		for (size_t x = 0; x < ARRAYSIZE(yuv420Rois); x++)
 		{
-			if (!compare_rgb_to_yuv420_exact(yuv420Rois[x], type))
+			if (!compare_rgb_to_yuv420_edges(yuv420Rois[x], type))
 				goto end;
-			if (!compare_rgb_to_avc444_exact(yuv420Rois[x], type, 1) ||
-			    !compare_rgb_to_avc444_exact(yuv420Rois[x], type, 2))
+			if (!compare_rgb_to_avc444_edges(yuv420Rois[x], type, 1) ||
+			    !compare_rgb_to_avc444_edges(yuv420Rois[x], type, 2))
 				goto end;
 		}
-#endif
 
 		/* the random roi may be too narrow for the vector loops; 1744 is an
 		 * odd number of macroblocks */
