@@ -15,6 +15,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.core.os.ParcelCompat;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -299,9 +300,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 		out.writeParcelable(debugSettings, flags);
 		out.writeString(hostname);
 		out.writeInt(port);
-		out.writeBoolean(enableGatewaySettings);
+		ParcelCompat.writeBoolean(out, enableGatewaySettings);
 		out.writeParcelable(gatewaySettings, flags);
-		out.writeBoolean(directConnect);
+		ParcelCompat.writeBoolean(out, directConnect);
 	}
 
 	// write to shared preferences
@@ -460,15 +461,15 @@ public class BookmarkBase implements Parcelable, Cloneable
 
 		public PerformanceFlags(Parcel parcel)
 		{
-			remotefx = parcel.readBoolean();
-			gfx = parcel.readBoolean();
-			h264 = parcel.readBoolean();
-			wallpaper = parcel.readBoolean();
-			theming = parcel.readBoolean();
-			fullWindowDrag = parcel.readBoolean();
-			menuAnimations = parcel.readBoolean();
-			fontSmoothing = parcel.readBoolean();
-			desktopComposition = parcel.readBoolean();
+			remotefx = ParcelCompat.readBoolean(parcel);
+			gfx = ParcelCompat.readBoolean(parcel);
+			h264 = ParcelCompat.readBoolean(parcel);
+			wallpaper = ParcelCompat.readBoolean(parcel);
+			theming = ParcelCompat.readBoolean(parcel);
+			fullWindowDrag = ParcelCompat.readBoolean(parcel);
+			menuAnimations = ParcelCompat.readBoolean(parcel);
+			fontSmoothing = ParcelCompat.readBoolean(parcel);
+			desktopComposition = ParcelCompat.readBoolean(parcel);
 		}
 
 		public boolean getRemoteFX()
@@ -568,15 +569,15 @@ public class BookmarkBase implements Parcelable, Cloneable
 
 		@Override public void writeToParcel(@NonNull Parcel out, int flags)
 		{
-			out.writeBoolean(remotefx);
-			out.writeBoolean(gfx);
-			out.writeBoolean(h264);
-			out.writeBoolean(wallpaper);
-			out.writeBoolean(theming);
-			out.writeBoolean(fullWindowDrag);
-			out.writeBoolean(menuAnimations);
-			out.writeBoolean(fontSmoothing);
-			out.writeBoolean(desktopComposition);
+			ParcelCompat.writeBoolean(out, remotefx);
+			ParcelCompat.writeBoolean(out, gfx);
+			ParcelCompat.writeBoolean(out, h264);
+			ParcelCompat.writeBoolean(out, wallpaper);
+			ParcelCompat.writeBoolean(out, theming);
+			ParcelCompat.writeBoolean(out, fullWindowDrag);
+			ParcelCompat.writeBoolean(out, menuAnimations);
+			ParcelCompat.writeBoolean(out, fontSmoothing);
+			ParcelCompat.writeBoolean(out, desktopComposition);
 		}
 	}
 
@@ -848,9 +849,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 		// Session Settings
 		public DebugSettings(@NonNull Parcel parcel)
 		{
-			asyncChannel = parcel.readBoolean();
-			asyncTransport = parcel.readBoolean();
-			asyncUpdate = parcel.readBoolean();
+			asyncChannel = ParcelCompat.readBoolean(parcel);
+			asyncTransport = ParcelCompat.readBoolean(parcel);
+			asyncUpdate = ParcelCompat.readBoolean(parcel);
 			debug = Objects.requireNonNull(parcel.readString());
 		}
 
@@ -907,9 +908,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 
 		@Override public void writeToParcel(@NonNull Parcel out, int flags)
 		{
-			out.writeBoolean(asyncChannel);
-			out.writeBoolean(asyncTransport);
-			out.writeBoolean(asyncUpdate);
+			ParcelCompat.writeBoolean(out, asyncChannel);
+			ParcelCompat.writeBoolean(out, asyncTransport);
+			ParcelCompat.writeBoolean(out, asyncUpdate);
 			out.writeString(debug);
 		}
 	}
@@ -956,14 +957,14 @@ public class BookmarkBase implements Parcelable, Cloneable
 		public AdvancedSettings(@NonNull Parcel parcel)
 		{
 			loadBalanceInfo = Objects.requireNonNull(parcel.readString());
-			redirectSDCard = parcel.readBoolean();
+			redirectSDCard = ParcelCompat.readBoolean(parcel);
 			redirectSound = parcel.readInt();
-			redirectMicrophone = parcel.readBoolean();
-			redirectCamera = parcel.readBoolean();
-			redirectPrinter = parcel.readBoolean();
+			redirectMicrophone = ParcelCompat.readBoolean(parcel);
+			redirectCamera = ParcelCompat.readBoolean(parcel);
+			redirectPrinter = ParcelCompat.readBoolean(parcel);
 			security = parcel.readInt();
-			consoleMode = parcel.readBoolean();
-			vmConnectMode = parcel.readBoolean();
+			consoleMode = ParcelCompat.readBoolean(parcel);
+			vmConnectMode = ParcelCompat.readBoolean(parcel);
 			vmConnectGuid = Objects.requireNonNull(parcel.readString());
 			remoteProgram = Objects.requireNonNull(parcel.readString());
 			alternateShell = Objects.requireNonNull(parcel.readString());
@@ -1157,14 +1158,14 @@ public class BookmarkBase implements Parcelable, Cloneable
 		@Override public void writeToParcel(@NonNull Parcel out, int flags)
 		{
 			out.writeString(loadBalanceInfo);
-			out.writeBoolean(redirectSDCard);
+			ParcelCompat.writeBoolean(out, redirectSDCard);
 			out.writeInt(redirectSound);
-			out.writeBoolean(redirectMicrophone);
-			out.writeBoolean(redirectCamera);
-			out.writeBoolean(redirectPrinter);
+			ParcelCompat.writeBoolean(out, redirectMicrophone);
+			ParcelCompat.writeBoolean(out, redirectCamera);
+			ParcelCompat.writeBoolean(out, redirectPrinter);
 			out.writeInt(security);
-			out.writeBoolean(consoleMode);
-			out.writeBoolean(vmConnectMode);
+			ParcelCompat.writeBoolean(out, consoleMode);
+			ParcelCompat.writeBoolean(out, vmConnectMode);
 			out.writeString(vmConnectGuid);
 			out.writeString(remoteProgram);
 			out.writeString(alternateShell);
