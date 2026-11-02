@@ -1174,7 +1174,7 @@ rdpShadowServer* shadow_server_new(void)
 	server->h264HwAccel = FALSE;
 	server->authentication = TRUE;
 #if defined(WITH_GFX_AV1)
-	server->AV1BitRate = 500;
+	server->AV1BitRate = 3000; /* kbit/s */
 	server->AV1RateControlMode = FREERDP_AV1_VBR;
 #endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);

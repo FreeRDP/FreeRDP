@@ -1241,9 +1241,17 @@ static inline UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* ha
 
 #if defined(WITH_GFX_AV1)
 WINPR_ATTR_NODISCARD
+static BOOL shadow_client_av1_enabled(const rdpShadowClient* client)
+{
+	WINPR_ASSERT(client);
+	return freerdp_settings_get_bool(client->context.settings, FreeRDP_GfxCodecAV1) &&
+	       (client->confirmedCaps.version == RDPGFX_CAPVERSION_FRDP_1);
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL shadow_client_send_av1(rdpShadowClient* client, const BYTE* pSrcData, UINT32 nSrcStep,
                                    UINT32 SrcFormat, UINT16 nWidth, UINT16 nHeight,
-                                   RDPGFX_SURFACE_COMMAND* cmd,
+                                   const RECTANGLE_16* damage, RDPGFX_SURFACE_COMMAND* cmd,
                                    const RDPGFX_START_FRAME_PDU* cmdstart,
                                    const RDPGFX_END_FRAME_PDU* cmdend)
 {
@@ -1255,7 +1263,6 @@ static BOOL shadow_client_send_av1(rdpShadowClient* client, const BYTE* pSrcData
 	UINT error = CHANNEL_RC_OK;
 	INT32 rc = 0;
 	RDPGFX_AVC420_BITMAP_STREAM avc420 = WINPR_C_ARRAY_INIT;
-	RECTANGLE_16 regionRect = WINPR_C_ARRAY_INIT;
 
 	UINT32 flags = FREERDP_CODEC_AV1_I444;
 	if ((client->confirmedCaps.flags & RDPGFX_CAPS_FLAG_AV1_I444_DISABLED) != 0)
@@ -1267,16 +1274,10 @@ static BOOL shadow_client_send_av1(rdpShadowClient* client, const BYTE* pSrcData
 		return FALSE;
 	}
 
-	WINPR_ASSERT(cmd->left <= UINT16_MAX);
-	WINPR_ASSERT(cmd->top <= UINT16_MAX);
-	WINPR_ASSERT(cmd->right <= UINT16_MAX);
-	WINPR_ASSERT(cmd->bottom <= UINT16_MAX);
-	regionRect.left = (UINT16)cmd->left;
-	regionRect.top = (UINT16)cmd->top;
-	regionRect.right = (UINT16)cmd->right;
-	regionRect.bottom = (UINT16)cmd->bottom;
-	rc = freerdp_av1_compress(encoder->av1, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight,
-	                          &regionRect, &avc420.data, &avc420.length, &avc420.meta);
+	/* The whole surface is encoded, but only the damaged part needs converting to YUV. */
+	WINPR_ASSERT(damage);
+	rc = freerdp_av1_compress(encoder->av1, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight, damage,
+	                          &avc420.data, &avc420.length, &avc420.meta);
 	if (rc < 0)
 	{
 		WLog_ERR(TAG, "freerdp_av1_compress failed");
@@ -1737,7 +1738,8 @@ WINPR_ATTR_NODISCARD
 static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* pSrcData,
                                            UINT32 nSrcStep, UINT32 SrcFormat, UINT16 nXSrc,
                                            UINT16 nYSrc, UINT16 nWidth, UINT16 nHeight,
-                                           UINT16 srcWidth, UINT16 srcHeight)
+                                           UINT16 srcWidth, UINT16 srcHeight,
+                                           const RECTANGLE_16* damage)
 {
 	const rdpContext* context = (const rdpContext*)client;
 	RDPGFX_SURFACE_COMMAND cmd = WINPR_C_ARRAY_INIT;
@@ -1745,7 +1747,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	RDPGFX_END_FRAME_PDU cmdend = WINPR_C_ARRAY_INIT;
 	SYSTEMTIME sTime = WINPR_C_ARRAY_INIT;
 
-	if (!context || !pSrcData)
+	if (!context || !pSrcData || !damage)
 		return FALSE;
 
 	const rdpSettings* settings = context->settings;
@@ -1783,13 +1785,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	cmd.height = nHeight;
 
 #if defined(WITH_GFX_AV1)
-	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	if (shadow_client_av1_enabled(client))
 	{
-		if (client->confirmedCaps.version == RDPGFX_CAPVERSION_FRDP_1)
-		{
-			return shadow_client_send_av1(client, pSrcData, nSrcStep, SrcFormat, nWidth, nHeight,
-			                              &cmd, &cmdstart, &cmdend);
-		}
+		return shadow_client_send_av1(client, pSrcData, nSrcStep, SrcFormat, nWidth, nHeight,
+		                              damage, &cmd, &cmdstart, &cmdend);
 	}
 #endif
 
@@ -2366,11 +2365,20 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 		if (pStatus->gfxOpened && client->areGfxCapsReady)
 		{
 			/* Only codecs that need constant full-frame dimensions (SPS/PPS
-			 * bind the resolution) must encode the whole desktop. rfx and
-			 * progressive interpret nWidth/nHeight as source image dims with
-			 * the cmd rect as the dirty region, and planar/uncompressed encode
-			 * the cmd rect directly, so those may keep the dirty extents. */
+			 * bind the resolution, AV1 the sequence header) must encode the
+			 * whole desktop. rfx and progressive interpret nWidth/nHeight as
+			 * source image dims with the cmd rect as the dirty region, and
+			 * planar/uncompressed encode the cmd rect directly, so those may
+			 * keep the dirty extents. */
+			const RECTANGLE_16 damage = { .left = WINPR_ASSERTING_INT_CAST(UINT16, nXSrc),
+				                          .top = WINPR_ASSERTING_INT_CAST(UINT16, nYSrc),
+				                          .right = WINPR_ASSERTING_INT_CAST(UINT16, nXSrc + nWidth),
+				                          .bottom =
+				                              WINPR_ASSERTING_INT_CAST(UINT16, nYSrc + nHeight) };
 			const BOOL fullframegfx =
+#if defined(WITH_GFX_AV1)
+			    shadow_client_av1_enabled(client) ||
+#endif
 			    freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
 			    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) ||
 			    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444v2) ||
@@ -2403,7 +2411,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			ret = shadow_client_send_surface_gfx(
 			    client, pSrcData, nSrcStep, SrcFormat, fullframegfx ? 0 : (UINT16)nXSrc,
 			    fullframegfx ? 0 : (UINT16)nYSrc, (UINT16)nWidth, (UINT16)nHeight,
-			    (UINT16)surface->width, (UINT16)surface->height);
+			    (UINT16)surface->width, (UINT16)surface->height, &damage);
 		}
 		else
 		{
