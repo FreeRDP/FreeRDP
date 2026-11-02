@@ -537,7 +537,9 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (!appWindow->title)
 			goto fail;
 
-		if (xf_AppWindowInit(xfc, appWindow))
+		const BOOL hidden = ((fieldFlags & WINDOW_ORDER_FIELD_SHOW) != 0) &&
+		                    (windowState->showState == WINDOW_HIDE);
+		if (xf_AppWindowInit(xfc, appWindow, hidden))
 			redraw = TRUE;
 	}
 
