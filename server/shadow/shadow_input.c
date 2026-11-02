@@ -29,6 +29,7 @@
 #define KEY_INDEX_EXTENDED1 0x200
 #define KEY_INDEX_COUNT 0x400
 
+WINPR_ATTR_NODISCARD
 static size_t shadow_input_key_index(UINT16 flags, UINT8 code)
 {
 	size_t index = code;
@@ -39,6 +40,7 @@ static size_t shadow_input_key_index(UINT16 flags, UINT8 code)
 	return index;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_key_is_down(const rdpShadowClient* client, size_t index)
 {
 	WINPR_ASSERT(client);
@@ -46,14 +48,12 @@ static BOOL shadow_input_key_is_down(const rdpShadowClient* client, size_t index
 	return (client->keysDown[index / 8] & (1u << (index % 8))) != 0;
 }
 
-/* Marks the key as pressed or released by this client and returns whether any client sharing
- * the desktop still holds it.
- *
- * rdpShadowServer::keysHeld counts the clients holding each key, so that this needs no walk over
- * server->clients: a capture thread may hold that list's lock while it waits for this client to
- * take a frame, and this runs on the client thread. Guarded by server->lock, which nothing else
- * takes. */
-static BOOL shadow_input_key_update(rdpShadowClient* client, size_t index, BOOL down)
+/* rdpShadowServer::keysHeld counts the clients holding each key, so that no client thread needs
+ * to walk server->clients: a capture thread may hold that list's lock while it waits for the
+ * client thread to take a frame. Guarded by server->lock, which nothing else takes. */
+
+/* Marks the key as pressed or released by this client. */
+static void shadow_input_key_mark(rdpShadowClient* client, size_t index, BOOL down)
 {
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(index < KEY_INDEX_COUNT);
@@ -74,24 +74,39 @@ static BOOL shadow_input_key_update(rdpShadowClient* client, size_t index, BOOL 
 		WINPR_ASSERT(server->keysHeld[index] > 0);
 		server->keysHeld[index]--;
 	}
+	LeaveCriticalSection(&server->lock);
+}
+
+/* Marks the key as released by this client and returns whether another client sharing the
+ * desktop still holds it, in one step under the lock. */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_input_key_release(rdpShadowClient* client, size_t index)
+{
+	WINPR_ASSERT(client);
+	rdpShadowServer* server = client->server;
+	WINPR_ASSERT(server);
+
+	EnterCriticalSection(&server->lock);
+	shadow_input_key_mark(client, index, FALSE);
 	const BOOL held = server->keysHeld[index] > 0;
 	LeaveCriticalSection(&server->lock);
 	return held;
 }
 
-void shadow_input_release_keys(rdpShadowClient* client)
+BOOL shadow_input_release_keys(rdpShadowClient* client)
 {
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->server);
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 	WINPR_ASSERT(subsystem);
 
+	BOOL rc = TRUE;
 	for (size_t index = 0; index < KEY_INDEX_COUNT; index++)
 	{
 		if (!shadow_input_key_is_down(client, index))
 			continue;
 		/* another client sharing the desktop still holds it: it stays down for that one */
-		if (shadow_input_key_update(client, index, FALSE))
+		if (shadow_input_key_release(client, index))
 			continue;
 
 		UINT16 flags = KBD_FLAGS_RELEASE;
@@ -103,10 +118,15 @@ void shadow_input_release_keys(rdpShadowClient* client)
 
 		WLog_DBG(TAG, "releasing key 0x%02" PRIx8 " flags=0x%04" PRIx16 " the client left down",
 		         code, flags);
+		/* keep releasing the other keys, but report the failure */
 		if (!IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code))
+		{
 			WLog_WARN(TAG, "releasing key 0x%02" PRIx8 " flags=0x%04" PRIx16 " failed", code,
 			          flags);
+			rc = FALSE;
+		}
 	}
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
@@ -125,8 +145,9 @@ static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 
 	/* the client starts its keyboard state over (it sends this when it gets the focus back):
 	 * what it held before is up now */
-	shadow_input_release_keys(client);
-	return IFCALLRESULT(TRUE, subsystem->SynchronizeEvent, subsystem, client, flags);
+	const BOOL released = shadow_input_release_keys(client);
+	const BOOL synced = IFCALLRESULT(TRUE, subsystem->SynchronizeEvent, subsystem, client, flags);
+	return released && synced;
 }
 
 WINPR_ATTR_NODISCARD
@@ -145,8 +166,8 @@ static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 cod
 
 	const BOOL rc = IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code);
 	if (rc)
-		(void)shadow_input_key_update(client, shadow_input_key_index(flags, code),
-		                              (flags & KBD_FLAGS_RELEASE) == 0);
+		shadow_input_key_mark(client, shadow_input_key_index(flags, code),
+		                      (flags & KBD_FLAGS_RELEASE) == 0);
 	return rc;
 }
 
