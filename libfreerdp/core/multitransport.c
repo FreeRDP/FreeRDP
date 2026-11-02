@@ -752,9 +752,9 @@ static state_run_t multitransport_server_handle_response(rdpMultitransport* mult
 
 	if (reqId != multi->reliableReqId)
 	{
-		WLog_ERR(TAG, "multi-transport response for request %" PRIu32 ", expected %" PRIu32, reqId,
-		         multi->reliableReqId);
-		return STATE_RUN_FAILED;
+		WLog_WARN(
+		    TAG, "multi-transport response for request %" PRIu32 ", expected %" PRIu32 ", ignoring",
+		    reqId, multi->reliableReqId);
 	}
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
