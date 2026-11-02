@@ -389,16 +389,28 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin *device, const BYTE *data, size_t
 			}
 		}
 
-		rdpsnd_mac_start(device);
+		/* AVAudioEngine reports some failures as exceptions, e.g. "player did not see an IO
+		 * cycle" from [player play] when the output device runs no IO for this process.
+		 * Uncaught, one ends the whole client process. */
+		@try
+		{
+			rdpsnd_mac_start(device);
 
-		[mac->player scheduleBuffer:buffer
-		          completionHandler:^{
-			          UINT64 stop = GetTickCount64();
-			          if (start > stop)
-				          mac->diff = 0;
-			          else
-				          mac->diff = stop - start;
-		          }];
+			[mac->player scheduleBuffer:buffer
+			          completionHandler:^{
+				          UINT64 stop = GetTickCount64();
+				          if (start > stop)
+					          mac->diff = 0;
+				          else
+					          mac->diff = stop - start;
+			          }];
+		}
+		@catch (NSException *e)
+		{
+			WLog_ERR(TAG, "audio output failed, dropping sound until the device is closed: %s",
+			         [e.reason UTF8String]);
+			mac->device.Close(&mac->device);
+		}
 
 		[buffer release];
 
