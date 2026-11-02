@@ -1142,7 +1142,7 @@ static BOOL map_ensure_capacity(wfClipboard* clipboard)
 		if (!new_map)
 			return FALSE;
 
-		memset(&new_map[clipboard->map_size, 0, sizeof(formatMapping) * diff]);
+		memset(&new_map[clipboard->map_size], 0, sizeof(formatMapping) * diff);
 		clipboard->format_mappings = new_map;
 		clipboard->map_capacity = new_size;
 	}

@@ -430,11 +430,13 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 	}
 	rc = TRUE;
 fail:
+{
 	const UINT32 surfaceId = appWindow->surfaceId;
 	region16_uninit(&windowInvalidRegion);
 	xf_rail_return_window(appWindow, FALSE);
 	if (redraw)
 		xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
+}
 	return rc;
 }
 

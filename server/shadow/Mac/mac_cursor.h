@@ -39,7 +39,9 @@ extern "C"
 
 	/* The cursor shown now, if it is no larger than maxSize in either
 	 * direction. Free the pixels with mac_cursor_image_free. */
+	WINPR_ATTR_NODISCARD
 	BOOL mac_cursor_get(macCursorImage* image, UINT32 maxSize);
+
 	void mac_cursor_image_free(macCursorImage* image);
 
 #ifdef __cplusplus
