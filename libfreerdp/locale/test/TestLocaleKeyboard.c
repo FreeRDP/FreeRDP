@@ -219,8 +219,7 @@ static BOOL test_layouts(DWORD types)
 		}
 
 		const DWORD id = freerdp_keyboard_get_layout_id_from_name(cur->name);
-		// if (id != cur->code) {
-		if (id == 0)
+		if (id != cur->code)
 		{
 			(void)fprintf(stderr,
 			              "freerdp_keyboard_get_layouts(type: %" PRIu32 ") -> %" PRIuz
@@ -238,6 +237,32 @@ static BOOL test_layouts(DWORD types)
 fail:
 	freerdp_keyboard_layouts_free(layouts, count);
 	return rc;
+}
+
+/* Keyboard identifiers from https://learn.microsoft.com/globalization/windows-keyboard-layouts */
+static BOOL test_layout_ids(void)
+{
+	const struct
+	{
+		const char* name;
+		DWORD code;
+	} layouts[] = { { "Persian", 0x00000429 },     { "Central Kurdish", 0x00000492 },
+		            { "Latvian", 0x00000426 },     { "Latvian (Standard)", 0x00020426 },
+		            { "Greek (220)", 0x00010408 }, { "Uyghur", 0x00010480 } };
+
+	for (size_t x = 0; x < ARRAYSIZE(layouts); x++)
+	{
+		const DWORD id = freerdp_keyboard_get_layout_id_from_name(layouts[x].name);
+		if (id != layouts[x].code)
+		{
+			(void)fprintf(stderr,
+			              "freerdp_keyboard_get_layout_id_from_name(%s) -> 0x%08" PRIx32
+			              " != 0x%08" PRIx32 "\n",
+			              layouts[x].name, id, layouts[x].code);
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 
 static DWORD get_random(DWORD offset)
@@ -387,6 +412,8 @@ int TestLocaleKeyboard(int argc, char* argv[])
 		return -1;
 	if (!test_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD | RDP_KEYBOARD_LAYOUT_TYPE_VARIANT |
 	                  RDP_KEYBOARD_LAYOUT_TYPE_IME))
+		return -1;
+	if (!test_layout_ids())
 		return -1;
 	if (test_layouts(UINT32_MAX &
 	                 ~(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD | RDP_KEYBOARD_LAYOUT_TYPE_VARIANT |
