@@ -118,6 +118,7 @@ struct rdpsnd_plugin
 	BOOL firstFlagReceived;
 	UINT32 totalLength;
 	BOOL connected;
+	UINT64 badWaves; /* waves dropped because they did not decode */
 };
 
 WINPR_ATTR_NODISCARD
@@ -661,7 +662,6 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	if (rdpsnd->device && rdpsnd->attached && !rdpsnd_detect_overrun(rdpsnd, format, size))
 	{
-		UINT status = CHANNEL_RC_OK;
 		wStream* pcmData = StreamPool_Take(rdpsnd->pool, 4096);
 
 		if (rdpsnd->device->FormatSupported(rdpsnd->device, format))
@@ -683,12 +683,18 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 				                       Stream_Buffer(pcmData), Stream_Length(pcmData));
 		}
 		else
-			status = ERROR_INTERNAL_ERROR;
+		{
+			/* Dropped, and confirmed like the others: an error here would end the
+			 * thread that plays the sound, and with it the sound of the session */
+			rdpsnd->badWaves++;
+			WLog_Print(rdpsnd->log, (rdpsnd->badWaves == 1) ? WLOG_WARN : WLOG_DEBUG,
+			           "%s dropped a %s wave of %" PRIuz " bytes that does not decode (%" PRIu64
+			           " so far)",
+			           rdpsnd_is_dyn_str(rdpsnd->dynamic),
+			           audio_format_get_tag_string(format->wFormatTag), size, rdpsnd->badWaves);
+		}
 
 		Stream_Release(pcmData);
-
-		if (status != CHANNEL_RC_OK)
-			return status;
 	}
 
 	end = GetTickCount64();
