@@ -638,9 +638,9 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 		if (!new_rgn)
 			return FALSE;
 
-		memset(&new_rgn[hdc->hwnd->count], 0, sizeof(GDI_RGN) * diff);
-		hdc->hwnd->count = (UINT32)new_cnt;
 		cinvalid = new_rgn;
+		memset(&cinvalid[hdc->hwnd->count], 0, sizeof(GDI_RGN) * diff);
+		hdc->hwnd->count = (UINT32)new_cnt;
 	}
 
 	hdc->hwnd->cinvalid = cinvalid;
