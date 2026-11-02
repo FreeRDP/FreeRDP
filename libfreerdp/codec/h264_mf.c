@@ -157,13 +157,19 @@ typedef struct
 	BOOL encWarned;
 } H264_CONTEXT_MF;
 
+WINPR_ATTR_NODISCARD
 static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
                                    IMFMediaType** ppMediaType)
 {
 	DWORD idx = 0;
-	GUID mediaGuid;
+	GUID mediaGuid = WINPR_C_ARRAY_INIT;
 	HRESULT hr = S_OK;
 	IMFMediaType* pMediaType = nullptr;
+
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(sys->transform);
+	WINPR_ASSERT(guid);
+	WINPR_ASSERT(ppMediaType);
 
 	while (1)
 	{
@@ -172,9 +178,9 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
 		if (FAILED(hr))
 			break;
 
-		pMediaType->lpVtbl->GetGUID(pMediaType, &sMF_MT_SUBTYPE, &mediaGuid);
-
-		if (IsEqualGUID(&mediaGuid, guid))
+		/* a type without a subtype can't be the one we look for, try the next */
+		if (SUCCEEDED(pMediaType->lpVtbl->GetGUID(pMediaType, &sMF_MT_SUBTYPE, &mediaGuid)) &&
+		    IsEqualGUID(&mediaGuid, guid))
 		{
 			*ppMediaType = pMediaType;
 			return S_OK;
@@ -187,10 +193,15 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
 	return hr;
 }
 
+WINPR_ATTR_NODISCARD
 static HRESULT mf_create_output_sample(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 {
 	HRESULT hr = S_OK;
 	MFT_OUTPUT_STREAM_INFO streamInfo;
+
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(sys->transform);
 
 	if (sys->outputSample)
 	{
@@ -254,10 +265,14 @@ static size_t getSrcOffset(const H264_CONTEXT_MF* sys, UINT32 line, size_t plane
 	return offset + row * stride;
 }
 
+WINPR_ATTR_NODISCARD
 static HRESULT mf_process_output(H264_CONTEXT_MF* sys)
 {
 	DWORD status = 0;
 	MFT_OUTPUT_DATA_BUFFER buffer = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(sys->transform);
 
 	buffer.pSample = sys->outputSample;
 	const HRESULT hr =
@@ -267,6 +282,7 @@ static HRESULT mf_process_output(H264_CONTEXT_MF* sys)
 	return hr;
 }
 
+WINPR_ATTR_NODISCARD
 static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RESTRICT pSrcData,
                          UINT32 SrcSize)
 {
@@ -279,8 +295,10 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	IMFMediaBuffer* outputBuffer = nullptr;
 
 	WINPR_ASSERT(h264);
+	WINPR_ASSERT(pSrcData);
 
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
+	WINPR_ASSERT(sys);
 	UINT32* iStride = h264->iStride;
 	BYTE** pYUVData = h264->pYUVData;
 	HRESULT hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
@@ -508,10 +526,16 @@ error:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static HRESULT mf_encoder_set_value(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, const GUID* guid,
                                     const char* name, VARTYPE vt, UINT64 value)
 {
 	VARIANT var = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(guid);
+	WINPR_ASSERT(name);
 
 	if (!sys->codecApi)
 		return E_NOINTERFACE;
@@ -531,8 +555,47 @@ static HRESULT mf_encoder_set_value(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, co
 	return hr;
 }
 
+/* Every ICodecAPI property below tunes the encoder on top of its media types, which carry what
+ * the stream needs (size, frame rate, bit rate, profile). An encoder without a property keeps
+ * its default and still produces a valid stream, so that is not an error: an encoder without
+ * ICodecAPI (E_NOINTERFACE here), or Wine's, which answers E_NOTIMPL to every property. An
+ * encoder that has the property (IsSupported) but refuses our value is an error. */
+WINPR_ATTR_NODISCARD
+static BOOL mf_encoder_check_value(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, const GUID* guid,
+                                   const char* name, HRESULT hr)
+{
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(guid);
+	WINPR_ASSERT(name);
+
+	if (SUCCEEDED(hr))
+		return TRUE;
+
+	if ((hr != E_NOTIMPL) && (hr != E_NOINTERFACE) && sys->codecApi &&
+	    (sys->codecApi->lpVtbl->IsSupported(sys->codecApi, guid) == S_OK))
+	{
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "H264 encoder refuses ICodecAPI property %s: 0x%08" PRIX32 "", name, (UINT32)hr);
+		return FALSE;
+	}
+
+	WLog_Print(h264->log, WLOG_DEBUG, "H264 encoder does not support %s, using its default", name);
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL mf_encoder_set_optional(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, const GUID* guid,
+                                    const char* name, VARTYPE vt, UINT64 value)
+{
+	const HRESULT hr = mf_encoder_set_value(h264, sys, guid, name, vt, value);
+	return mf_encoder_check_value(h264, sys, guid, name, hr);
+}
+
 static void mf_encoder_release(H264_CONTEXT_MF* sys)
 {
+	WINPR_ASSERT(sys);
+
 	if (sys->outputSample)
 	{
 		sys->outputSample->lpVtbl->Release(sys->outputSample);
@@ -561,8 +624,12 @@ static void mf_encoder_release(H264_CONTEXT_MF* sys)
 	sys->encStreaming = FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_encoder_create(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 {
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+
 	HRESULT hr = CoCreateInstance(&sCLSID_CMSH264EncoderMFT, nullptr, CLSCTX_INPROC_SERVER,
 	                              &sIID_IMFTransform, (void**)&sys->transform);
 
@@ -588,11 +655,18 @@ static BOOL mf_encoder_create(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static HRESULT mf_encoder_media_type(H264_CONTEXT_MF* sys, IMFMediaType** ppType,
                                      const GUID* subtype, UINT32 width, UINT32 height,
                                      UINT32 frameRate, UINT32 bitRate)
 {
 	IMFMediaType* type = nullptr;
+
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(sys->MFCreateMediaType);
+	WINPR_ASSERT(ppType);
+	WINPR_ASSERT(subtype);
+
 	HRESULT hr = sys->MFCreateMediaType(&type);
 
 	if (FAILED(hr))
@@ -629,55 +703,77 @@ static HRESULT mf_encoder_media_type(H264_CONTEXT_MF* sys, IMFMediaType** ppType
 	return S_OK;
 }
 
-static void mf_encoder_rate_control(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT32 bitRate)
+WINPR_ATTR_NODISCARD
+static BOOL mf_encoder_rate_control(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT32 bitRate)
 {
-	/* without it the encoder holds frames back (4 on Windows Server 2025). It is a VT_BOOL;
-	 * the encoder answers E_INVALIDARG to VT_UI4, which other MFTs (the decoder) take */
-	if (FAILED(mf_encoder_set_value(h264, sys, &sCODECAPI_AVLowLatencyMode, "AVLowLatencyMode",
-	                                VT_BOOL, 1)))
-		(void)mf_encoder_set_value(h264, sys, &sCODECAPI_AVLowLatencyMode, "AVLowLatencyMode",
-		                           VT_UI4, 1);
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+
+	/* without it the encoder holds frames back (4 on Windows Server 2025); mf_compress copes
+	 * with that, so the property is optional. It is a VT_BOOL; the encoder answers E_INVALIDARG
+	 * to VT_UI4, which other MFTs (the decoder) take, so VT_UI4 is the second try */
+	HRESULT hr = mf_encoder_set_value(h264, sys, &sCODECAPI_AVLowLatencyMode, "AVLowLatencyMode",
+	                                  VT_BOOL, 1);
+	if (FAILED(hr))
+		hr = mf_encoder_set_value(h264, sys, &sCODECAPI_AVLowLatencyMode, "AVLowLatencyMode",
+		                          VT_UI4, 1);
+	if (!mf_encoder_check_value(h264, sys, &sCODECAPI_AVLowLatencyMode, "AVLowLatencyMode", hr))
+		return FALSE;
 
 	/* the encoder's default is a keyframe every second (30 frames); over RDP's reliable
 	 * transport a new encoder starts with one and that is enough, as with OpenH264, so ask for
-	 * a long interval (65535 frames, 36 minutes at 30 fps); an encoder that refuses keeps its
-	 * own */
-	(void)mf_encoder_set_value(h264, sys, &sCODECAPI_AVEncMPVGOPSize, "AVEncMPVGOPSize", VT_UI4,
-	                           UINT16_MAX);
+	 * a long interval (65535 frames, 36 minutes at 30 fps); an encoder without the property
+	 * keeps its own */
+	if (!mf_encoder_set_optional(h264, sys, &sCODECAPI_AVEncMPVGOPSize, "AVEncMPVGOPSize", VT_UI4,
+	                             UINT16_MAX))
+		return FALSE;
 
 	switch (h264->RateControlMode)
 	{
 		case H264_RATECONTROL_CQP:
 		{
-			(void)mf_encoder_set_value(h264, sys, &sCODECAPI_AVEncCommonRateControlMode,
-			                           "AVEncCommonRateControlMode", VT_UI4, FREERDP_MF_RC_QUALITY);
+			if (!mf_encoder_set_optional(h264, sys, &sCODECAPI_AVEncCommonRateControlMode,
+			                             "AVEncCommonRateControlMode", VT_UI4,
+			                             FREERDP_MF_RC_QUALITY))
+				return FALSE;
 			/* AVEncVideoEncodeQP: the QP in the low 16 bits; older encoders only have the
-			 * 0..100 quality scale, so map the QP (0..51, lower is better) onto it */
+			 * 0..100 quality scale, so when the QP is refused for any reason map it (0..51,
+			 * lower is better) onto that scale; the quality scale's result decides */
 			if (FAILED(mf_encoder_set_value(h264, sys, &sCODECAPI_AVEncVideoEncodeQP,
 			                                "AVEncVideoEncodeQP", VT_UI8, h264->QP & 0xFFFF)))
 			{
 				const UINT32 qp = MIN(h264->QP, 51);
-				(void)mf_encoder_set_value(h264, sys, &sCODECAPI_AVEncCommonQuality,
-				                           "AVEncCommonQuality", VT_UI4, 100 - (qp * 100 / 51));
+				if (!mf_encoder_set_optional(h264, sys, &sCODECAPI_AVEncCommonQuality,
+				                             "AVEncCommonQuality", VT_UI4, 100 - (qp * 100 / 51)))
+					return FALSE;
 			}
 		}
 		break;
 
 		case H264_RATECONTROL_VBR:
 		default:
-			/* a target bit rate, like OpenH264's RC_BITRATE_MODE */
-			(void)mf_encoder_set_value(h264, sys, &sCODECAPI_AVEncCommonRateControlMode,
-			                           "AVEncCommonRateControlMode", VT_UI4, FREERDP_MF_RC_CBR);
-			(void)mf_encoder_set_value(h264, sys, &sCODECAPI_AVEncCommonMeanBitRate,
-			                           "AVEncCommonMeanBitRate", VT_UI4, bitRate);
+			/* a target bit rate, like OpenH264's RC_BITRATE_MODE; the bit rate is also on the
+			 * output type (MF_MT_AVG_BITRATE), which every encoder reads */
+			if (!mf_encoder_set_optional(h264, sys, &sCODECAPI_AVEncCommonRateControlMode,
+			                             "AVEncCommonRateControlMode", VT_UI4, FREERDP_MF_RC_CBR))
+				return FALSE;
+			if (!mf_encoder_set_optional(h264, sys, &sCODECAPI_AVEncCommonMeanBitRate,
+			                             "AVEncCommonMeanBitRate", VT_UI4, bitRate))
+				return FALSE;
 			break;
 	}
+
+	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_encoder_configure(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT32 width,
                                  UINT32 height, UINT32 frameRate, UINT32 bitRate)
 {
 	MFT_OUTPUT_STREAM_INFO streamInfo = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
 
 	/* the types of a running encoder can't change, start a new one */
 	if (sys->encStreaming || !sys->transform)
@@ -688,13 +784,18 @@ static BOOL mf_encoder_configure(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT3
 	}
 
 	/* rate control is read when the output type is set, so it goes first */
-	mf_encoder_rate_control(h264, sys, bitRate);
+	if (!mf_encoder_rate_control(h264, sys, bitRate))
+		goto fail;
 
 	/* the H.264 encoder wants the output type before the input type */
 	HRESULT hr = mf_encoder_media_type(sys, &sys->outputType, &sMFVideoFormat_H264, width, height,
 	                                   frameRate, bitRate);
 	if (FAILED(hr))
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "encoder output type failure: 0x%08" PRIX32 "",
+		           (UINT32)hr);
 		goto fail;
+	}
 
 	hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
 	if (FAILED(hr))
@@ -707,7 +808,11 @@ static BOOL mf_encoder_configure(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT3
 	hr = mf_encoder_media_type(sys, &sys->inputType, &sMFVideoFormat_NV12, width, height, frameRate,
 	                           bitRate);
 	if (FAILED(hr))
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "encoder input type failure: 0x%08" PRIX32 "",
+		           (UINT32)hr);
 		goto fail;
+	}
 
 	hr = sys->transform->lpVtbl->SetInputType(sys->transform, 0, sys->inputType, 0);
 	if (FAILED(hr))
@@ -781,6 +886,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_encoder_append(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, IMFSample* sample)
 {
 	IMFMediaBuffer* buffer = nullptr;
@@ -788,6 +894,10 @@ static BOOL mf_encoder_append(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, IMFSampl
 	DWORD maxLength = 0;
 	DWORD length = 0;
 	BOOL rc = FALSE;
+
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(sample);
 
 	HRESULT hr = sample->lpVtbl->ConvertToContiguousBuffer(sample, &buffer);
 	if (FAILED(hr))
@@ -804,24 +914,34 @@ static BOOL mf_encoder_append(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, IMFSampl
 		goto out;
 	}
 
-	if (sys->encDataLength + length > sys->encDataSize)
+	BOOL copied = FALSE;
+	const size_t needed = sys->encDataLength + length;
+	if (needed > sys->encDataSize)
 	{
-		const size_t size = sys->encDataLength + length;
-		BYTE* tmp = realloc(sys->encData, size);
-		if (!tmp)
+		BYTE* tmp = realloc(sys->encData, needed);
+		if (tmp)
 		{
-			(void)buffer->lpVtbl->Unlock(buffer);
-			goto out;
+			sys->encData = tmp;
+			sys->encDataSize = needed;
 		}
-		sys->encData = tmp;
-		sys->encDataSize = size;
+	}
+	if (needed <= sys->encDataSize)
+	{
+		if (length > 0)
+			memcpy(&sys->encData[sys->encDataLength], data, length);
+		sys->encDataLength = needed;
+		copied = TRUE;
 	}
 
-	if (length > 0)
-		memcpy(&sys->encData[sys->encDataLength], data, length);
-	sys->encDataLength += length;
-	(void)buffer->lpVtbl->Unlock(buffer);
-	rc = TRUE;
+	/* one Unlock for both outcomes, so its result is checked on every path */
+	hr = buffer->lpVtbl->Unlock(buffer);
+	if (FAILED(hr))
+		WLog_Print(h264->log, WLOG_ERROR, "Unlock failure: 0x%08" PRIX32 "", (UINT32)hr);
+	else if (!copied)
+		WLog_Print(h264->log, WLOG_ERROR, "encoder output: out of memory (%" PRIuz " bytes)",
+		           needed);
+	else
+		rc = TRUE;
 
 out:
 	buffer->lpVtbl->Release(buffer);
@@ -829,8 +949,13 @@ out:
 }
 
 /* collect everything the encoder has ready; MF_E_TRANSFORM_NEED_MORE_INPUT ends it */
+WINPR_ATTR_NODISCARD
 static HRESULT mf_encoder_drain(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 {
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+	WINPR_ASSERT(sys->transform);
+
 	const BOOL provides = (sys->encOutputFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES) != 0;
 
 	for (size_t i = 0; i < 16; i++)
@@ -840,12 +965,21 @@ static HRESULT mf_encoder_drain(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 
 		if (!provides)
 		{
+			/* the encoder writes into our sample: give it an empty buffer each time */
 			IMFMediaBuffer* buffer = nullptr;
-			if (SUCCEEDED(
-			        sys->outputSample->lpVtbl->GetBufferByIndex(sys->outputSample, 0, &buffer)))
+
+			WINPR_ASSERT(sys->outputSample);
+			HRESULT hr = sys->outputSample->lpVtbl->GetBufferByIndex(sys->outputSample, 0, &buffer);
+			if (SUCCEEDED(hr))
 			{
-				(void)buffer->lpVtbl->SetCurrentLength(buffer, 0);
+				hr = buffer->lpVtbl->SetCurrentLength(buffer, 0);
 				buffer->lpVtbl->Release(buffer);
+			}
+			if (FAILED(hr))
+			{
+				WLog_Print(h264->log, WLOG_ERROR,
+				           "encoder output buffer reset failure: 0x%08" PRIX32 "", (UINT32)hr);
+				return hr;
 			}
 			output.pSample = sys->outputSample;
 		}
@@ -871,15 +1005,19 @@ static HRESULT mf_encoder_drain(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 		if (provides && output.pSample)
 			output.pSample->lpVtbl->Release(output.pSample);
 		if (!ok)
-			return E_OUTOFMEMORY;
+			return E_FAIL; /* mf_encoder_append logged why */
 	}
 
 	return S_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_encoder_update(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT32 width, UINT32 height,
                               UINT32 frameRate, UINT32 bitRate)
 {
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+
 	if (!sys->encStreaming || (sys->encWidth != width) || (sys->encHeight != height) ||
 	    (sys->encFrameRate != frameRate) || (sys->encRateControl != h264->RateControlMode))
 		return mf_encoder_configure(h264, sys, width, height, frameRate, bitRate);
@@ -908,6 +1046,13 @@ static BOOL mf_encoder_update(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UINT32 w
 static void mf_encoder_copy_nv12(BYTE* WINPR_RESTRICT dst, const BYTE** WINPR_RESTRICT pSrcYuv,
                                  const UINT32* WINPR_RESTRICT pStride, UINT32 width, UINT32 height)
 {
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(pSrcYuv);
+	WINPR_ASSERT(pSrcYuv[0]);
+	WINPR_ASSERT(pSrcYuv[1]);
+	WINPR_ASSERT(pSrcYuv[2]);
+	WINPR_ASSERT(pStride);
+
 	for (UINT32 y = 0; y < height; y++)
 		memcpy(&dst[1ull * y * width], &pSrcYuv[0][1ull * y * pStride[0]], width);
 
@@ -926,6 +1071,7 @@ static void mf_encoder_copy_nv12(BYTE* WINPR_RESTRICT dst, const BYTE** WINPR_RE
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static int mf_compress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE** WINPR_RESTRICT ppSrcYuv,
                        const UINT32* WINPR_RESTRICT pStride, BYTE** WINPR_RESTRICT ppDstData,
                        UINT32* WINPR_RESTRICT pDstSize)
@@ -976,15 +1122,30 @@ static int mf_compress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE** WINPR_RES
 	}
 
 	hr = buffer->lpVtbl->Lock(buffer, &data, &maxLength, &curLength);
-	if (FAILED(hr) || (maxLength < size))
+	if (FAILED(hr))
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "Lock failure: 0x%08" PRIX32 "", (UINT32)hr);
-		if (SUCCEEDED(hr))
-			(void)buffer->lpVtbl->Unlock(buffer);
 		goto out;
 	}
-	mf_encoder_copy_nv12(data, ppSrcYuv, pStride, width, height);
-	(void)buffer->lpVtbl->Unlock(buffer);
+
+	const BOOL fits = (maxLength >= size);
+	if (fits)
+		mf_encoder_copy_nv12(data, ppSrcYuv, pStride, width, height);
+
+	/* one Unlock for both outcomes, so its result is checked on every path */
+	hr = buffer->lpVtbl->Unlock(buffer);
+	if (FAILED(hr))
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "Unlock failure: 0x%08" PRIX32 "", (UINT32)hr);
+		goto out;
+	}
+	if (!fits)
+	{
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "encoder input buffer too small: %" PRIu32 " < %" PRIu32 " bytes",
+		           (UINT32)maxLength, (UINT32)size);
+		goto out;
+	}
 
 	hr = buffer->lpVtbl->SetCurrentLength(buffer, size);
 	if (SUCCEEDED(hr))
@@ -1059,14 +1220,18 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_plat_loaded(H264_CONTEXT_MF* sys)
 {
+	WINPR_ASSERT(sys);
 	return sys->MFStartup && sys->MFShutdown && sys->MFCreateSample && sys->MFCreateMemoryBuffer &&
 	       sys->MFCreateMediaType;
 }
 
 static void mf_uninit(H264_CONTEXT* h264)
 {
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
 
 	if (sys)
@@ -1104,7 +1269,13 @@ static void mf_uninit(H264_CONTEXT* h264)
 		if (sys->mfplat)
 		{
 			if (mf_plat_loaded(sys))
-				sys->MFShutdown();
+			{
+				/* nothing to undo in a cleanup path, say so and go on */
+				const HRESULT hr = sys->MFShutdown();
+				if (FAILED(hr))
+					WLog_Print(h264->log, WLOG_WARN, "MFShutdown failure: 0x%08" PRIX32 "",
+					           (UINT32)hr);
+			}
 
 			FreeLibrary(sys->mfplat);
 			sys->mfplat = nullptr;
@@ -1125,9 +1296,13 @@ static void mf_uninit(H264_CONTEXT* h264)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_init(H264_CONTEXT* h264)
 {
 	HRESULT hr;
+
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)calloc(1, sizeof(H264_CONTEXT_MF));
 
 	if (!sys)
