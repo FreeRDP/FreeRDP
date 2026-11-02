@@ -314,7 +314,7 @@ static BOOL xf_rail_apply_configure_geometry(xfContext* xfc, xfAppWindow* appWin
 	if (!rc)
 		appWindow->configureGeometryPending = TRUE;
 	if (appWindow->configureGeometryPending)
-		xf_rail_schedule_geometry(xfc, appWindow, 50);
+		xf_rail_schedule_geometry(xfc, appWindow, MAX(50, appWindow->backingRetryDelay));
 	xf_UpdateWindowVisibilityRects(xfc, appWindow);
 	xf_UpdateWindowInputRegion(xfc, appWindow);
 	return rc;
@@ -612,7 +612,7 @@ void xf_rail_flush_configure_geometry(xfContext* xfc)
 			                             window->localMoveGeometryTime ||
 			                             window->stateGeometryPending
 			                         ? 50
-			                         : 50;
+			                         : MAX(50, window->backingRetryDelay);
 			xf_rail_schedule_geometry(xfc, window, delay);
 		}
 		const UINT32 surfaceId = window->surfaceId;

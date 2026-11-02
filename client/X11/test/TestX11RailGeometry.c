@@ -1449,7 +1449,112 @@ out:
 	return FALSE;
 }
 
-
+static BOOL test_requested_observed_geometry(xfContext* xfc)
+{
+	appWindow.local_move.state = LMS_NOT_ACTIVE;
+	appWindow.localMoveGeometryTime = 0;
+	appWindow.stateGeometryPending = FALSE;
+	appWindow.windowGeometryPending = FALSE;
+	appWindow.serverConfigure = FALSE;
+	appWindow.dwStyle = WS_VISIBLE | WS_CAPTION | WS_SIZEBOX;
+	xf_rail_update_window_style(&appWindow, appWindow.dwStyle, 0);
+	appWindow.resizeMarginXKnown = appWindow.resizeMarginYKnown = TRUE;
+	appWindow.resizeMarginLeft = appWindow.resizeMarginRight = 0;
+	appWindow.resizeMarginTop = appWindow.resizeMarginBottom = 0;
+	appWindow.windowMovePending = FALSE;
+	appWindow.x = rootX = 120;
+	appWindow.y = rootY = 90;
+	appWindow.width = currentWidth = 400;
+	appWindow.height = currentHeight = 300;
+	const unsigned beforeMoves = moves;
+	const unsigned beforeRequests = xMoves;
+	CHECK(!xf_MoveWindow(xfc, &appWindow, 220, 140, 800, 600));
+	CHECK(appWindow.windowGeometryPending && appWindow.serverConfigure);
+	CHECK(appWindow.x == 120 && appWindow.width == 400);
+	const XConfigureEvent stale = {
+		.send_event = True, .serial = 99, .x = 100, .y = 80, .width = 350, .height = 250
+	};
+	CHECK(!xf_rail_update_configure_geometry(xfc, &appWindow, &stale));
+	CHECK(appWindow.windowGeometryPending && appWindow.x == 120 && appWindow.width == 400);
+	CHECK(!xf_rail_sync_configure_geometry(xfc, &appWindow));
+	CHECK(appWindow.windowGeometryPending && appWindow.configureGeometryPending);
+	CHECK(!xf_MoveWindow(xfc, &appWindow, 220, 140, 800, 600));
+	CHECK(xMoves == beforeRequests + 1);
+	/* The WM clamps the target: report its accepted tuple once, otherwise
+	 * Windows would route input using the rejected server position. */
+	rootX = 210;
+	rootY = 130;
+	currentWidth = 780;
+	currentHeight = 580;
+	CHECK(xf_rail_sync_configure_geometry(xfc, &appWindow));
+	CHECK(appWindow.windowGeometryPending && appWindow.configureGeometryPending);
+	CHECK(!xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(moves == beforeMoves);
+	/* A different intermediate snapshot must not undo the target. Report
+	 * only the still-clamped current tuple after the WM response deadline. */
+	appWindow.lastGeometryRequest = 1;
+	CHECK(xf_rail_sync_configure_geometry(xfc, &appWindow));
+	CHECK(!appWindow.windowGeometryPending && !appWindow.serverConfigure);
+	CHECK(appWindow.x == 210 && appWindow.width == 780);
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(moves == beforeMoves + 1);
+	/* A subsequent independent local configure must still be reported. */
+	const XConfigureEvent local = {
+		.send_event = True, .x = 230, .y = 150, .width = 790, .height = 590
+	};
+	CHECK(xf_rail_update_configure_geometry(xfc, &appWindow, &local));
+	CHECK(!appWindow.serverConfigure && xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(moves == beforeMoves + 2);
+	/* A denied/no-op request expires without inventing observed success. */
+	CHECK(!xf_MoveWindow(xfc, &appWindow, 800, 700, 1200, 900));
+	appWindow.lastGeometryRequest = 1;
+	rootX = 230;
+	rootY = 150;
+	currentWidth = 790;
+	currentHeight = 590;
+	CHECK(xf_rail_sync_configure_geometry(xfc, &appWindow));
+	CHECK(!appWindow.windowGeometryPending && appWindow.x == 230 && appWindow.width == 790);
+	CHECK(xf_rail_adjust_position(xfc, &appWindow, nullptr));
+	CHECK(moves == beforeMoves + 2);
+	/* Keep the previous backing store if replacement allocation fails,
+	 * retain the observed bounds and retry allocation at a later flush. */
+	const Pixmap oldPixmap = appWindow.pixmap;
+	const UINT32 oldWidth = appWindow.pixmapWidth;
+	const unsigned oldFrees = pixmapFrees;
+	pixmapFailure = TRUE;
+	XConfigureEvent enlarged = local;
+	enlarged.width = 900;
+	CHECK(!xf_rail_update_configure_geometry(xfc, &appWindow, &enlarged));
+	CHECK(appWindow.width == 900 && appWindow.configureGeometryPending);
+	CHECK(appWindow.pixmap == oldPixmap && appWindow.pixmapWidth == oldWidth);
+	CHECK(pixmapFrees == oldFrees);
+	pixmapFailure = FALSE;
+	appWindow.backingRetryTime = 0;
+	currentWidth = 900;
+	CHECK(xf_rail_sync_configure_geometry(xfc, &appWindow));
+	CHECK(appWindow.pixmapWidth == 900 && !appWindow.configureGeometryPending);
+	/* Temporary and final startup sizes are never filtered by arrival time.
+	 * Delay WM acknowledgement until the final server target is queued. */
+	const WINDOW_ORDER_INFO info = { .windowId = appWindow.windowId,
+		                             .fieldFlags = WINDOW_ORDER_FIELD_WND_OFFSET |
+		                                           WINDOW_ORDER_FIELD_WND_SIZE };
+	WINDOW_STATE_ORDER state = {
+		.windowOffsetX = 80, .windowOffsetY = 70, .windowWidth = 200, .windowHeight = 100
+	};
+	CHECK(xfc->common.context.update->window->WindowUpdate(&xfc->common.context, &info, &state));
+	state.windowWidth = 1000;
+	state.windowHeight = 700;
+	CHECK(xfc->common.context.update->window->WindowUpdate(&xfc->common.context, &info, &state));
+	CHECK(appWindow.windowWidth == 1000 && appWindow.requestedGeometry.width == 1000);
+	CHECK(appWindow.width == 900);
+	CHECK(acknowledge_window_request(xfc));
+	CHECK(appWindow.width == 1000 && appWindow.height == 700);
+	return TRUE;
+out:
+	pixmapFailure = FALSE;
+	return FALSE;
+}
 
 static BOOL test_move_end_position(xfContext* xfc)
 {
@@ -2087,6 +2192,63 @@ out:
 	return FALSE;
 }
 
+static BOOL test_retry_recovery(xfContext* xfc)
+{
+	xf_rail_cancel_geometry(xfc, &appWindow);
+	appWindow.localMoveGeometryTime = 0;
+	appWindow.surfaceStale = TRUE;
+	appWindow.surfaceId = UINT32_MAX;
+	xf_rail_schedule_geometry(xfc, &appWindow, 0);
+	xf_rail_flush_configure_geometry(xfc);
+	CHECK(appWindow.surfaceStale && !appWindow.geometryQueued);
+	/* Retain damage when no surface exists, without polling a missing mapping. */
+	appWindow.surfaceStale = FALSE;
+	CHECK(xf_AppWindowResize(xfc, &appWindow));
+	const Pixmap oldPixmap = appWindow.pixmap;
+	const unsigned oldFrees = pixmapFrees;
+	appWindow.width = currentWidth = 600;
+	appWindow.height = currentHeight = 420;
+	pixmapFailure = TRUE;
+	UINT32 previousDelay = 0;
+	for (unsigned i = 0; i < 8; i++)
+	{
+		xf_rail_cancel_geometry(xfc, &appWindow);
+		appWindow.backingRetryTime = 0;
+		CHECK(!xf_AppWindowResize(xfc, &appWindow));
+		CHECK(appWindow.backingRetryDelay >= previousDelay && appWindow.backingRetryDelay <= 1000);
+		previousDelay = appWindow.backingRetryDelay;
+		const unsigned attempts = pixmapAllocations;
+		CHECK(!xf_AppWindowResize(xfc, &appWindow));
+		CHECK(pixmapAllocations == attempts);
+		CHECK(appWindow.pixmap == oldPixmap && pixmapFrees == oldFrees);
+	}
+	CHECK(previousDelay == 1000);
+	pixmapFailure = FALSE;
+	appWindow.backingRetryTime = 0;
+	CHECK(xf_rail_sync_configure_geometry(xfc, &appWindow));
+	CHECK(appWindow.pixmapWidth == 600 && !appWindow.backingRetryDelay);
+	CHECK(!appWindow.configureGeometryPending && pixmapFrees == oldFrees + 1);
+	/* A failed deferred send terminates once, rather than replaying release. */
+	xf_rail_cancel_geometry(xfc, &appWindow);
+	appWindow.local_move.state = LMS_ACTIVE;
+	appWindow.local_move.direction = NET_WM_MOVERESIZE_MOVE;
+	appWindow.local_move.completionPending = TRUE;
+	appWindow.local_move.completionTime = winpr_GetTickCount64NS();
+	const unsigned before = releases;
+	inputSuccess = FALSE;
+	xf_rail_schedule_geometry(xfc, &appWindow, 0);
+	xf_rail_flush_configure_geometry(xfc);
+	CHECK(!appWindow.local_move.completionPending && appWindow.local_move.state == LMS_TERMINATING);
+	xf_rail_flush_configure_geometry(xfc);
+	CHECK(releases == before + 1);
+	inputSuccess = TRUE;
+	return TRUE;
+out:
+	inputSuccess = TRUE;
+	pixmapFailure = FALSE;
+	return FALSE;
+}
+
 static DWORD WINAPI enqueue_idle_geometry(LPVOID arg)
 {
 	xfContext* xfc = arg;
@@ -2201,6 +2363,7 @@ int main(int argc, char* argv[])
 			{ "late-tile-delivery", test_late_tile_delivery },
 			{ "completed-server-move", test_completed_server_move },
 			{ "keyboard-completion-error", test_keyboard_completion_error },
+			{ "retry-recovery", test_retry_recovery },
 			{ "refused-release", test_refused_move_release },
 			{ "show-transition", test_state_transition_deadline },
 			{ "idle-deadline", test_owned_geometry_deadline },
@@ -2242,6 +2405,7 @@ int main(int argc, char* argv[])
 	CHECK(test_deferred_repaint(&xfc));
 	CHECK(test_connection_move_owner(&xfc));
 	CHECK(test_resize_style_transitions(&xfc));
+	CHECK(test_requested_observed_geometry(&xfc));
 	CHECK(test_move_end_position(&xfc));
 	CHECK(test_tiled_position_before_size(&xfc));
 	CHECK(test_same_size_tile(&xfc));

@@ -935,6 +935,11 @@ static int xf_error_handler(Display* d, XErrorEvent* ev)
 
 static int xf_error_handler_ex(Display* d, XErrorEvent* ev)
 {
+	if (xf_AppWindowPixmapError(d, ev))
+	{
+		return 0;
+	}
+
 	/*
 	 * ungrab the keyboard, in case a debugger is running in
 	 * another window. This make xf_error_handler() a potential

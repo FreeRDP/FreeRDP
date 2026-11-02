@@ -2189,6 +2189,10 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 	if (!TryEnterCriticalSection(&gfx->mux))
 	{
 		WLog_VRB(TAG, "gfx mux busy, deferring repaint of window 0x%08" PRIx64, windowId);
+		xfAppWindow* window = xf_rail_get_window(xfc, windowId, FALSE);
+		if (window && window->is_mapped)
+			xf_rail_schedule_geometry(xfc, window, 500);
+		xf_rail_return_window(window, FALSE);
 		return TRUE;
 	}
 
@@ -2197,6 +2201,81 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 		rc = xf_AppUpdateWindowFromSurface(xfc, surface);
 	LeaveCriticalSection(&gfx->mux);
 	return rc == CHANNEL_RC_OK;
+}
+
+typedef struct xf_pixmap_request
+{
+	Display* display;
+	unsigned long serial;
+	BYTE error;
+	struct xf_pixmap_request* next;
+} xfPixmapRequest;
+
+static INIT_ONCE pixmapRequestInit = INIT_ONCE_STATIC_INIT;
+static CRITICAL_SECTION pixmapRequestLock;
+static xfPixmapRequest* pixmapRequests;
+
+static BOOL CALLBACK xf_InitPixmapRequests(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                           WINPR_ATTR_UNUSED PVOID parameter,
+                                           WINPR_ATTR_UNUSED PVOID* context)
+{
+	return InitializeCriticalSectionAndSpinCount(&pixmapRequestLock, 0);
+}
+
+BOOL xf_AppWindowPixmapError(Display* display, const XErrorEvent* error)
+{
+	if (!xf_is_create_pixmap_request(error->request_code) ||
+	    !InitOnceExecuteOnce(&pixmapRequestInit, xf_InitPixmapRequests, nullptr, nullptr))
+		return FALSE;
+	BOOL owned = FALSE;
+	EnterCriticalSection(&pixmapRequestLock);
+	for (xfPixmapRequest* request = pixmapRequests; request; request = request->next)
+	{
+		if (request->display == display && request->serial == error->serial)
+		{
+			request->error = error->error_code;
+			owned = TRUE;
+			break;
+		}
+	}
+	LeaveCriticalSection(&pixmapRequestLock);
+	return owned;
+}
+
+static Pixmap xf_CreateWindowPixmap(xfContext* xfc, UINT32 width, UINT32 height)
+{
+	if (!InitOnceExecuteOnce(&pixmapRequestInit, xf_InitPixmapRequests, nullptr, nullptr))
+		return None;
+	/* Serialize the request serial through XSync. The process-wide X error
+	 * handler records only this display/serial; unrelated errors retain their
+	 * normal handling, and no registry lock is held across an Xlib call. */
+	xf_lock_x11(xfc);
+	xfPixmapRequest request = { .display = xfc->display, .serial = XNextRequest(xfc->display) };
+	EnterCriticalSection(&pixmapRequestLock);
+	request.next = pixmapRequests;
+	pixmapRequests = &request;
+	LeaveCriticalSection(&pixmapRequestLock);
+	const Pixmap pixmap =
+	    LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, width, height,
+	                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	XSync(xfc->display, False);
+	EnterCriticalSection(&pixmapRequestLock);
+	for (xfPixmapRequest** p = &pixmapRequests; *p; p = &(*p)->next)
+	{
+		if (*p != &request)
+			continue;
+		*p = request.next;
+		break;
+	}
+	LeaveCriticalSection(&pixmapRequestLock);
+	xf_unlock_x11(xfc);
+	if (request.error)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "Backing pixmap allocation failed: X11 error %u",
+		           request.error);
+		return None;
+	}
+	return pixmap;
 }
 
 BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
@@ -2211,14 +2290,35 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	 * when the size did not change, it is what an Expose is repainted from. */
 	if ((appWindow->pixmap != 0) && (appWindow->pixmapWidth == width) &&
 	    (appWindow->pixmapHeight == height))
+	{
+		appWindow->backingRetryTime = 0;
+		appWindow->backingRetryDelay = 0;
 		return TRUE;
-
-	if (appWindow->pixmap != 0)
-		LogDynAndXFreePixmap(xfc->log, xfc->display, appWindow->pixmap);
+	}
 
 	WINPR_ASSERT(xfc->depth != 0);
-	appWindow->pixmap = LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, width, height,
-	                                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	const UINT64 now = winpr_GetTickCount64NS();
+	if (now < appWindow->backingRetryTime)
+	{
+		appWindow->configureGeometryPending = TRUE;
+		const UINT32 delay = (UINT32)((appWindow->backingRetryTime - now + 999999) / 1000000);
+		xf_rail_schedule_geometry(xfc, appWindow, delay);
+		return FALSE;
+	}
+	const Pixmap pixmap = xf_CreateWindowPixmap(xfc, width, height);
+	if (!pixmap)
+	{
+		appWindow->configureGeometryPending = TRUE;
+		appWindow->backingRetryDelay = MIN(1000, MAX(50, appWindow->backingRetryDelay * 2));
+		appWindow->backingRetryTime = now + (UINT64)appWindow->backingRetryDelay * 1000000;
+		xf_rail_schedule_geometry(xfc, appWindow, appWindow->backingRetryDelay);
+		return FALSE;
+	}
+	appWindow->backingRetryTime = 0;
+	appWindow->backingRetryDelay = 0;
+	if (appWindow->pixmap != 0)
+		LogDynAndXFreePixmap(xfc->log, xfc->display, appWindow->pixmap);
+	appWindow->pixmap = pixmap;
 	appWindow->pixmapWidth = width;
 	appWindow->pixmapHeight = height;
 	xf_AppWindowDestroyImage(appWindow);
@@ -2226,7 +2326,10 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	/* The new pixmap has undefined content, the next paint from the surface has to cover the
 	 * whole window. */
 	if (appWindow->surfaceId < UINT16_MAX)
+	{
 		appWindow->surfaceStale = TRUE;
+		xf_rail_schedule_geometry(xfc, appWindow, 0);
+	}
 
 	return appWindow->pixmap != 0;
 }

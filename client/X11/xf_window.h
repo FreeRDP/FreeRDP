@@ -102,6 +102,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
 WINPR_ATTR_NODISCARD
 BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow, BOOL hidden);
 
+BOOL xf_AppWindowPixmapError(Display* display, const XErrorEvent* error);
 BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow);
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name);

@@ -5,6 +5,7 @@ late-reply-before-tile
 late-tile-delivery
 completed-server-move
 keyboard-completion-error
+retry-recovery
 refused-release
 show-transition
 idle-deadline

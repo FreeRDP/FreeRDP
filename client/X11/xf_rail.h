@@ -175,6 +175,9 @@ struct xf_app_window
 	/* Surface updates were skipped while the X window was unmapped, the next
 	 * paint has to cover the whole window. */
 	BOOL surfaceStale;
+	/* Backing allocation failures keep damage pending without a busy retry loop. */
+	UINT64 backingRetryTime;
+	UINT32 backingRetryDelay;
 	Pixmap pixmap;
 	UINT32 pixmapWidth;
 	UINT32 pixmapHeight;

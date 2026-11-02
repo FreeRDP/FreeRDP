@@ -406,6 +406,221 @@ out:
 	return FALSE;
 }
 
+static gdiGfxSurface testSurface;
+
+static void* get_test_surface(RdpgfxClientContext* gfx, UINT16 surfaceId)
+{
+	WINPR_UNUSED(gfx);
+	return (surfaceId == testSurface.surfaceId) ? &testSurface : nullptr;
+}
+
+typedef struct
+{
+	RdpgfxClientContext* gfx;
+	HANDLE locked;
+	HANDLE release;
+} RepaintLock;
+
+static DWORD WINAPI hold_gfx_lock(void* arg)
+{
+	RepaintLock* lock = arg;
+	EnterCriticalSection(&lock->gfx->mux);
+	SetEvent(lock->locked);
+	WaitForSingleObject(lock->release, INFINITE);
+	LeaveCriticalSection(&lock->gfx->mux);
+	return 0;
+}
+
+static unsigned ownedPixmapErrors;
+static unsigned unrelatedErrors;
+static Display* activeTrapOtherDisplay;
+static BOOL activeTrapForeignRejected;
+
+static int pixmap_error_handler(Display* display, XErrorEvent* error)
+{
+	if (activeTrapOtherDisplay && display != activeTrapOtherDisplay)
+	{
+		/* This callback runs before the owned request is removed. Exercise the
+		 * registry while active, including an otherwise identical foreign error. */
+		XErrorEvent foreign = *error;
+		foreign.display = activeTrapOtherDisplay;
+		activeTrapForeignRejected = !xf_AppWindowPixmapError(activeTrapOtherDisplay, &foreign);
+		foreign = *error;
+		foreign.serial++;
+		activeTrapForeignRejected &= !xf_AppWindowPixmapError(display, &foreign);
+		foreign = *error;
+		foreign.request_code++;
+		activeTrapForeignRejected &= !xf_AppWindowPixmapError(display, &foreign);
+	}
+	if (xf_AppWindowPixmapError(display, error))
+		ownedPixmapErrors++;
+	else
+		unrelatedErrors++;
+	return 0;
+}
+
+static BOOL asynchronous_pixmap_failure(xfContext* xfc, xfAppWindow* window, Display* other)
+{
+	BOOL result = FALSE;
+	const Drawable drawable = xfc->drawable;
+	int (*previous)(Display*, XErrorEvent*) = XSetErrorHandler(pixmap_error_handler);
+	const Pixmap backing = window->pixmap;
+	const UINT32 oldWidth = window->pixmapWidth;
+	const UINT32 oldHeight = window->pixmapHeight;
+	Window invalid = XCreateSimpleWindow(xfc->display, drawable, 0, 0, 1, 1, 0, 0, 0);
+	XDestroyWindow(xfc->display, invalid);
+	XSync(xfc->display, False);
+	xfc->drawable = invalid;
+	activeTrapOtherDisplay = other;
+	window->width += 10;
+	window->height += 10;
+	CHECK(!xf_AppWindowResize(xfc, window));
+	CHECK(ownedPixmapErrors == 1 && !unrelatedErrors);
+	CHECK(activeTrapForeignRejected);
+	activeTrapOtherDisplay = nullptr;
+	CHECK(window->pixmap == backing && window->pixmapWidth == oldWidth &&
+	      window->pixmapHeight == oldHeight);
+	CHECK(!xf_UpdateWindowArea(xfc, window, 0, 0, window->width, window->height));
+	/* A different display's error must not be consumed by the allocation trap. */
+	(void)XCreatePixmap(other, invalid, 10, 10, (unsigned)xfc->depth);
+	XSync(other, False);
+	CHECK(unrelatedErrors == 1);
+	xfc->drawable = drawable;
+	window->backingRetryTime = 0;
+	CHECK(xf_AppWindowResize(xfc, window));
+	CHECK(window->pixmap != backing && window->pixmapWidth == (UINT32)window->width);
+	result = TRUE;
+out:
+	activeTrapOtherDisplay = nullptr;
+	xfc->drawable = drawable;
+	XSetErrorHandler(previous);
+	return result;
+}
+
+static BOOL painted_pixel(xfContext* xfc, xfAppWindow* window, int x, int y)
+{
+	XSync(xfc->display, False);
+	XImage* image = XGetImage(xfc->display, window->handle, x, y, 1, 1, AllPlanes, ZPixmap);
+	if (!image)
+		return FALSE;
+	const BOOL painted = (XGetPixel(image, 0, 0) & 0xFFFFFF) == 0x123456;
+	XDestroyImage(image);
+	return painted;
+}
+
+static BOOL repaint_gfx_window(xfContext* xfc, xfAppWindow* window)
+{
+	BOOL result = FALSE;
+	RdpgfxClientContext gfx = { .GetSurfaceData = get_test_surface };
+	rdpGdi* gdi = xfc->common.context.gdi;
+	RdpgfxClientContext* previous = gdi->gfx;
+	RepaintLock lock = { .gfx = &gfx };
+	HANDLE thread = nullptr;
+	InitializeCriticalSection(&gfx.mux);
+	testSurface = (gdiGfxSurface){ .surfaceId = 1,
+		                           .windowId = window->windowId,
+		                           .windowMapped = TRUE,
+		                           .width = 1000,
+		                           .height = 800,
+		                           .mappedWidth = 1000,
+		                           .mappedHeight = 800,
+		                           .scanline = 4000 };
+	region16_init(&testSurface.invalidRegion);
+	testSurface.data = calloc(800, 4000);
+	CHECK(testSurface.data);
+	for (size_t i = 0; i < 800000; i++)
+		((UINT32*)testSurface.data)[i] = 0x123456;
+	gdi->gfx = &gfx;
+	xfc->visual = DefaultVisual(xfc->display, DefaultScreen(xfc->display));
+	xfc->scanline_pad = 32;
+	CHECK(freerdp_settings_set_bool(xfc->common.context.settings, FreeRDP_SoftwareGdi, TRUE));
+	window->surfaceId = 1;
+	window->is_mapped = TRUE;
+	XResizeWindow(xfc->display, window->handle, 640, 480);
+	const XConfigureEvent size = { .send_event = True, .width = 640, .height = 480 };
+	CHECK(xf_rail_update_configure_geometry(xfc, window, &size));
+	CHECK(window->surfaceStale);
+	freerdp instance = { .context = &xfc->common.context };
+	xfc->exposedWindow = window->handle;
+	xfc->exposedArea.w = 640;
+	xfc->exposedArea.h = 480;
+	xfc->exposeRequested = TRUE;
+	CHECK(xf_event_update_screen(&instance));
+	CHECK(!window->surfaceStale && painted_pixel(xfc, window, 630, 470));
+
+	/* Both a never-started WM operation and an active server cancellation
+	 * reconcile and paint new bounds after returning the RAIL window. */
+	for (int state = LMS_STARTING; state <= LMS_ACTIVE; state++)
+	{
+		window->local_move.state = state;
+		window->serverGeometryPending = TRUE;
+		window->serverSizeGeneration++;
+		window->windowWidth = (UINT32)(660 + state * 10);
+		window->windowHeight = 510;
+		const RAIL_LOCALMOVESIZE_ORDER end = { .windowId = (UINT32)window->windowId };
+		CHECK(xfc->rail->ServerLocalMoveSize(xfc->rail, &end) == CHANNEL_RC_OK);
+		XSync(xfc->display, False);
+		xf_rail_flush_configure_geometry(xfc);
+		CHECK(!window->surfaceStale && painted_pixel(xfc, window, 650, 500));
+	}
+
+	lock.locked = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	lock.release = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	CHECK(lock.locked && lock.release);
+	thread = CreateThread(nullptr, 0, hold_gfx_lock, &lock, 0, nullptr);
+	CHECK(thread && WaitForSingleObject(lock.locked, 5000) == WAIT_OBJECT_0);
+	window->surfaceStale = TRUE;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(window->surfaceStale); /* A busy GFX thread must not block X11. */
+	SetEvent(lock.release);
+	CHECK(WaitForSingleObject(thread, 5000) == WAIT_OBJECT_0);
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(!window->surfaceStale && painted_pixel(xfc, window, 650, 500));
+	testSurface.windowId++;
+	window->surfaceStale = TRUE;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(window->surfaceStale); /* A stale mapping must not paint a different window. */
+	testSurface.windowId--;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(!window->surfaceStale);
+	window->is_mapped = FALSE;
+	window->surfaceStale = TRUE;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(window->surfaceStale);
+	window->is_mapped = TRUE;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(!window->surfaceStale);
+	window->surfaceStale = TRUE;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 2));
+	CHECK(window->surfaceStale); /* The old surface may already have been deleted. */
+	testSurface.windowId++;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, testSurface.windowId, 1));
+	CHECK(window->surfaceStale); /* The deferred window may have been deleted too. */
+	testSurface.windowId--;
+	CHECK(xf_AppWindowRepaintFromSurface(xfc, window->windowId, 1));
+	CHECK(!window->surfaceStale);
+	result = TRUE;
+out:
+	if (lock.release)
+		SetEvent(lock.release);
+	if (thread)
+	{
+		WaitForSingleObject(thread, INFINITE);
+		CloseHandle(thread);
+	}
+	if (lock.locked)
+		CloseHandle(lock.locked);
+	if (lock.release)
+		CloseHandle(lock.release);
+	xf_AppWindowDestroyImage(window);
+	window->surfaceId = UINT32_MAX;
+	gdi->gfx = previous;
+	DeleteCriticalSection(&gfx.mux);
+	region16_uninit(&testSurface.invalidRegion);
+	free(testSurface.data);
+	return result;
+}
+
 static BOOL window_state_limits(xfContext* xfc, xfAppWindow* window)
 {
 #define INIT_ATOM(field) xfc->field = XInternAtom(xfc->display, "_" #field, False)
@@ -895,9 +1110,11 @@ int main(int argc, char* argv[])
 	CHECK(resize_window(&xfc, &window, injector, 500, 400, FALSE, FALSE));
 	CHECK(resize_window(&xfc, &window, injector, 900, 650, FALSE, TRUE));
 	CHECK(resize_window(&xfc, &window, injector, 600, 450, TRUE, TRUE));
+	CHECK(asynchronous_pixmap_failure(&xfc, &window, injector));
 	CHECK(cancel_resize(&xfc, &window));
 	CHECK(fixed_size_window(&xfc, &window));
 	CHECK(wm_owned_resize(&xfc, &window, injector));
+	CHECK(repaint_gfx_window(&xfc, &window));
 	CHECK(window_state_limits(&xfc, &window));
 	CHECK(maximized_shape_updates(&xfc, &window));
 	CHECK(transparent_resize_margins(&xfc, &window, injector, frame));
