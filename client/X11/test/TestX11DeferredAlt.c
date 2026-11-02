@@ -146,6 +146,17 @@ int XFreeModifiermap(XModifierKeymap* modmap)
 	return 1;
 }
 
+KeySym XLookupKeysym(XKeyEvent* event, int index)
+{
+	WINPR_UNUSED(index);
+	for (size_t i = 0; i < ARRAYSIZE(keys); i++)
+	{
+		if (keys[i].code == event->keycode)
+			return keys[i].sym;
+	}
+	return NoSymbol;
+}
+
 int XQueryKeymap(Display* display, char map[32])
 {
 	WINPR_UNUSED(display);
@@ -573,6 +584,8 @@ out:
 	return rc;
 }
 
+
+
 int main(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -661,6 +674,24 @@ int main(int argc, char* argv[])
 			goto out;
 		}
 	}
+	/* A WM keyboard grab can consume releases without a core KeyRelease.
+	 * Reconcile only physically released keys, leaving held modifiers down. */
+	memset(xfc.KeyboardState, 0, sizeof(xfc.KeyboardState));
+	memset(&xfc.deferredAlt, 0, sizeof(xfc.deferredAlt));
+	memset(physical, 0, sizeof(physical));
+	used = 0;
+	trace[0] = '\0';
+	failAlt = FALSE;
+	xfc.deferAlt = TRUE;
+	xfc.KeyboardState[37] = TRUE;
+	xfc.KeyboardState[50] = TRUE;
+	physical[50 / 8] |= 1U << (50 % 8);
+	xf_keyboard_reconcile(&xfc);
+	if (strcmp(trace, "C-") || xfc.KeyboardState[37] || !xfc.KeyboardState[50])
+		goto out;
+	xf_keyboard_reconcile(&xfc);
+	if (strcmp(trace, "C-"))
+		goto out;
 	rc = 0;
 out:
 	PubSub_Free(pubSub);
