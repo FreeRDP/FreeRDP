@@ -297,6 +297,14 @@ struct xf_context
 
 	RailClientContext* rail;
 	wHashTable* railWindows;
+	struct xf_input_watch* railInputWatches;
+	Time lastInputTime;
+	UINT64 railGeometryGeneration;
+	HANDLE railGeometryTimer;
+	BOOL railGeometryTimerReady;
+	xfAppWindow* railGeometryPending;
+	UINT32 railActiveWindowId;
+	UINT64 railLocalMoveWindowId;
 	xfRailIconCache* railIconCache;
 	/* gdi's DeleteSurface, wrapped with software GDI to detach RemoteApp windows */
 	pcRdpgfxDeleteSurface gdiDeleteSurface;

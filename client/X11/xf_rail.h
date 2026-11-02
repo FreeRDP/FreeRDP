@@ -41,10 +41,28 @@ struct xf_localmove
 	int root_y;
 	int window_x;
 	int window_y;
+	int window_width;
+	int window_height;
+	UINT64 positionGeneration;
+	UINT64 sizeGeneration;
+	BOOL reconcileOnEnd;
+	/* Retain a received release while the WM geometry is still changing. */
+	BOOL completionPending;
+	UINT64 completionTime;
+	int release_x;
+	int release_y;
 	enum xf_localmove_state state;
 	int direction;
 };
 typedef struct xf_localmove xfLocalMove;
+
+typedef struct
+{
+	int x;
+	int y;
+	int width;
+	int height;
+} xfWindowGeometry;
 
 struct xf_app_window
 {
@@ -96,10 +114,49 @@ struct xf_app_window
 	UINT32 resizeMarginTop;
 	UINT32 resizeMarginRight;
 	UINT32 resizeMarginBottom;
+	/* Omitted fields do not advertise zero margins (notably Server 2016 dialogs). */
+	BOOL resizeMarginXKnown;
+	BOOL resizeMarginYKnown;
+	BOOL unknownMarginWarning;
+	UINT64 lastUnknownMarginReconcile;
+	BOOL serverGeometryPending;
+	BOOL serverMoveActive;
+	UINT64 serverPositionGeneration;
+	UINT64 serverSizeGeneration;
+	BOOL visibilityShapeDeferred;
+	/* Suppress post-release echoes until the drawing channel catches up. */
+	UINT64 localMoveGeometryTime;
+	BOOL completionGeometryReported;
+	BOOL completionGeometryAcknowledged;
+	xfWindowGeometry completionGeometry;
+	/* A real reparented ConfigureNotify needs a current root/size snapshot. */
+	BOOL configureGeometryPending;
+	/* Pending work is linked under the connection's X11 lock. */
+	BOOL geometryQueued;
+	UINT64 geometryDeadline;
+	UINT64 geometryGeneration;
+	struct xf_app_window* geometryNext;
+	/* An asynchronous WM request is not an observed configure snapshot. */
+	BOOL windowGeometryPending;
+	BOOL serverConfigure;
+	UINT64 observedGeometryGeneration;
+	xfWindowGeometry requestedGeometry;
+	UINT64 lastGeometryRequest;
+	unsigned long geometryRequestSerial;
+	/* Deduplicate only the last successfully queued, still-unanswered move.
+	 * A server geometry update ends this scope, including adjusted replies. */
+	BOOL windowMovePending;
+	UINT64 lastWindowMoveTime;
+	RAIL_WINDOW_MOVE_ORDER lastWindowMove;
 
 	GC gc;
 	int shmid;
 	Window handle;
+	/* Input-only ring for the server's transparent, hit-testable margins. */
+	Window inputHandle;
+	Window inputAncestors[64];
+	size_t inputAncestorCount;
+	BOOL inputMapped;
 	Window* xfwin;
 	BOOL fullscreen;
 	BOOL decorations;
@@ -110,12 +167,14 @@ struct xf_app_window
 	BOOL maxVert;
 	BOOL maxHorz;
 	BOOL minimized;
+	/* Do not echo a show-state configure before its server bounds arrive. */
+	BOOL stateGeometryPending;
+	UINT64 stateGeometryDeadline;
 	BOOL rail_ignore_configure;
 	BOOL rail_fullscreen_normalizing;
 	/* Surface updates were skipped while the X window was unmapped, the next
 	 * paint has to cover the whole window. */
 	BOOL surfaceStale;
-
 	Pixmap pixmap;
 	UINT32 pixmapWidth;
 	UINT32 pixmapHeight;
@@ -138,11 +197,31 @@ BOOL xf_rail_schedule_workarea(xfContext* xfc);
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 
+/* Store a deferred repaint request in redraw, if supplied. Repaint only after
+ * releasing the window lock; the return value reports geometry handling. */
+BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow, BOOL* redraw);
+
+BOOL xf_rail_has_resize_margins(const xfAppWindow* appWindow);
+
 BOOL xf_rail_window_can_resize(const xfAppWindow* appWindow);
 
 void xf_rail_update_window_style(xfAppWindow* appWindow, UINT32 style, UINT32 extendedStyle);
 
-BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+/* Return whether a surface repaint is required after releasing the window lock. */
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_reconcile_window(xfContext* xfc, xfAppWindow* appWindow);
+
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
+                                       const XConfigureEvent* event);
+
+BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow);
+
+HANDLE xf_rail_geometry_event(xfContext* xfc);
+void xf_rail_begin_state_transition(xfContext* xfc, xfAppWindow* appWindow);
+void xf_rail_schedule_geometry(xfContext* xfc, xfAppWindow* appWindow, UINT32 delayMs);
+void xf_rail_cancel_geometry(xfContext* xfc, xfAppWindow* appWindow);
+void xf_rail_flush_configure_geometry(xfContext* xfc);
 
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
 

@@ -1,0 +1,12 @@
+pending-size
+same-size-snap
+reply-before-tile
+late-reply-before-tile
+late-tile-delivery
+completed-server-move
+keyboard-completion-error
+refused-release
+show-transition
+idle-deadline
+mouse-modifiers
+invalid-mode
