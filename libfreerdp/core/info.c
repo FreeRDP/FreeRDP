@@ -892,7 +892,8 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	}
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired) &&
-	    !freerdp_settings_get_bool(settings, FreeRDP_DisableCredentialsDelegation))
+	    !freerdp_settings_get_bool(settings, FreeRDP_DisableCredentialsDelegation) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_RemoteCredentialGuard))
 	{
 		domainW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &cbDomain);
 		if (cbDomain > UINT16_MAX / sizeof(WCHAR))
