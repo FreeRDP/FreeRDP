@@ -94,7 +94,7 @@ static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 	VK_LCONTROL,          /* APPLE_VK_Control (0x3B) */
 	VK_RSHIFT,            /* APPLE_VK_RightShift (0x3C) */
 	VK_RMENU | KBDEXT,    /* APPLE_VK_RightOption (0x3D) */
-	VK_RWIN | KBDEXT,     /* APPLE_VK_RightControl (0x3E) */
+	VK_RCONTROL | KBDEXT, /* APPLE_VK_RightControl (0x3E) */
 	VK_RWIN | KBDEXT,     /* APPLE_VK_Function (0x3F) */
 	VK_F17,               /* APPLE_VK_F17 (0x40) */
 	VK_DECIMAL,           /* APPLE_VK_ANSI_KeypadDecimal (0x41) */
