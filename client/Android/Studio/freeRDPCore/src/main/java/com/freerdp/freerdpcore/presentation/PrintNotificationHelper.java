@@ -17,6 +17,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.FileProvider;
@@ -29,11 +30,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PrintNotificationHelper
 {
 	private static final String CHANNEL_ID = "rdp_print";
-	private static final String AUTHORITY = "com.freerdp.afreerdp.fileprovider";
 	private static final AtomicInteger notifId = new AtomicInteger(1000);
 
 	public static void ensureChannel(Context ctx)
 	{
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+			return;
 		NotificationManager nm = ctx.getSystemService(NotificationManager.class);
 		if (nm.getNotificationChannel(CHANNEL_ID) != null)
 			return;
@@ -47,7 +49,7 @@ public class PrintNotificationHelper
 	{
 		ensureChannel(ctx);
 
-		Uri uri = FileProvider.getUriForFile(ctx, AUTHORITY, pdfFile);
+		Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".fileprovider", pdfFile);
 
 		PendingIntent openIntent = PendingIntent.getActivity(
 		    ctx, notifId.get(),
