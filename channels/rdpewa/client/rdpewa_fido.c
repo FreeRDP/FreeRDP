@@ -131,6 +131,8 @@ static bool notifyWait(rdpContext* context, HANDLE ft, fido_dev_t* dev)
 	const bool rc = (status == WAIT_OBJECT_0);
 	if (!rc)
 		fido_dev_cancel(dev);
+
+	(void)WaitForSingleObject(ft, INFINITE);
 	return rc;
 }
 /**
