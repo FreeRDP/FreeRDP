@@ -320,7 +320,7 @@ void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 {
 	std::unique_lock lock(_windowsLock);
 	auto appWindow = getWindowBySdlId(id);
-	if (!appWindow || (appWindow->isPopup() && !appWindow->isFullscreen()) || !appWindow->window())
+	if (!appWindow || !appWindow->activatable() || !appWindow->window())
 		return;
 
 	/* Ignore focus loss while dragging: mapping restore shadow frames can steal focus
@@ -373,7 +373,7 @@ void SdlRail::ensureActive(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
 	auto* appWindow = getWindowBySdlId(id);
-	if (!appWindow || (appWindow->isPopup() && !appWindow->isFullscreen()) || !appWindow->window())
+	if (!appWindow || !appWindow->activatable() || !appWindow->window())
 		return;
 	const auto wid = static_cast<uint32_t>(appWindow->id());
 	if (wid == _clientActiveId)
