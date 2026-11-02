@@ -675,7 +675,10 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 		{
 			Stream_SealLength(pcmData);
 
-			if (rdpsnd->device->PlayEx)
+			/* Decoders with priming delay (e.g. AAC) may legitimately produce no PCM yet */
+			if (Stream_Length(pcmData) == 0)
+				latency = 0;
+			else if (rdpsnd->device->PlayEx)
 				latency = rdpsnd->device->PlayEx(rdpsnd->device, format, Stream_Buffer(pcmData),
 				                                 Stream_Length(pcmData));
 			else
