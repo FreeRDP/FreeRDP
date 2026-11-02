@@ -109,8 +109,6 @@ struct xf_app_window
 	/* Surface updates were skipped while the X window was unmapped, the next
 	 * paint has to cover the whole window. */
 	BOOL surfaceStale;
-	/* Timestamp of the last accepted WINDOW_ORDER_FIELD_WND_SIZE update. */
-	UINT64 lastWndSizeUpdate;
 
 	Pixmap pixmap;
 	UINT32 pixmapWidth;
