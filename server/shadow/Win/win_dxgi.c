@@ -18,6 +18,7 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/library.h>
@@ -667,6 +668,8 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem)
  * one. */
 int win_shadow_dxgi_restart_duplication(winShadowSubsystem* subsystem)
 {
+	WINPR_ASSERT(subsystem);
+
 	if (!subsystem->dxgiDevice)
 		return win_shadow_dxgi_init(subsystem);
 
@@ -849,7 +852,12 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 	RECT* pDirtyRectsBuffer;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRect;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRectBuffer;
-	rdpShadowSurface* surface = subsystem->base.server->surface;
+	rdpShadowSurface* surface = nullptr;
+
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(subsystem->base.server);
+	surface = subsystem->base.server->surface;
+	WINPR_ASSERT(surface);
 
 	if (subsystem->dxgiFrameInfo.AccumulatedFrames == 0)
 		return 0;

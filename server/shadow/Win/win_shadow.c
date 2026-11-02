@@ -48,6 +48,7 @@ static WINPR_TLS HDESK win_shadow_thread_desktop = nullptr;
  * the secure one (Winlogon: the logon and lock screens, UAC prompts). A user
  * process cannot open the secure desktop and stays where it is. Returns TRUE
  * when the thread moved. */
+WINPR_ATTR_NODISCARD
 static BOOL win_shadow_follow_input_desktop(void)
 {
 	WCHAR inputName[64] = WINPR_C_ARRAY_INIT;
@@ -57,9 +58,13 @@ static BOOL win_shadow_follow_input_desktop(void)
 	if (!input)
 		return FALSE;
 
-	(void)GetUserObjectInformationW(input, UOI_NAME, inputName, sizeof(inputName), nullptr);
-	(void)GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()), UOI_NAME, threadName,
-	                                sizeof(threadName), nullptr);
+	if (!GetUserObjectInformationW(input, UOI_NAME, inputName, sizeof(inputName), nullptr))
+		WLog_WARN(TAG, "GetUserObjectInformationW(input desktop, UOI_NAME) failed: 0x%08lX",
+		          GetLastError());
+	if (!GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()), UOI_NAME, threadName,
+	                               sizeof(threadName), nullptr))
+		WLog_WARN(TAG, "GetUserObjectInformationW(thread desktop, UOI_NAME) failed: 0x%08lX",
+		          GetLastError());
 
 	if (_wcsicmp(inputName, threadName) == 0)
 	{
@@ -89,6 +94,8 @@ static BOOL win_shadow_follow_input_desktop(void)
  * when an input handler fails */
 static void win_shadow_send_input(INPUT* event)
 {
+	WINPR_ASSERT(event);
+
 	if (SendInput(1, event, sizeof(INPUT)) == 0)
 		WLog_WARN(TAG, "SendInput refused the event (0x%08lX), it is dropped", GetLastError());
 }
@@ -106,9 +113,12 @@ static void win_shadow_send_sas(void)
 		return;
 	}
 
-	(void)SetEvent(event);
+	if (SetEvent(event))
+		WLog_INFO(TAG,
+		          "Ctrl+Alt+Del: asked freerdp-shadow-service for the secure attention sequence");
+	else
+		WLog_WARN(TAG, "Ctrl+Alt+Del: SetEvent failed (0x%08lX)", GetLastError());
 	(void)CloseHandle(event);
-	WLog_INFO(TAG, "Ctrl+Alt+Del: asked freerdp-shadow-service for the secure attention sequence");
 }
 
 static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
@@ -124,6 +134,7 @@ static BOOL win_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	winShadowSubsystem* win = (winShadowSubsystem*)subsystem;
 	const BOOL down = (flags & KBD_FLAGS_RELEASE) == 0;
 
+	WINPR_ASSERT(win);
 	(void)win_shadow_follow_input_desktop();
 
 	/* scan codes: Ctrl 0x1D, Alt 0x38 (the right ones extended), Delete
@@ -488,6 +499,7 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 	HANDLE StopEvent;
 	StopEvent = subsystem->base.server->StopEvent;
 	wMessagePipe* MsgPipe = subsystem->base.MsgPipe;
+	WINPR_ASSERT(MsgPipe);
 	nCount = 0;
 	events[nCount++] = StopEvent;
 	events[nCount++] = MessageQueue_Event(MsgPipe->In);
@@ -551,6 +563,7 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 			{
 				const int changed = win_shadow_dxgi_get_invalid_region(subsystem);
 				rdpShadowSurface* surface = subsystem->base.server->surface;
+				WINPR_ASSERT(surface);
 				EnterCriticalSection(&(surface->lock));
 				const BOOL pending = !region16_is_empty(&(surface->invalidRegion));
 				LeaveCriticalSection(&(surface->lock));
