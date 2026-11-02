@@ -136,29 +136,19 @@ static BOOL pixel_equal_same_format(const BYTE* WINPR_RESTRICT a, UINT32 formatA
 }
 
 /* 32 bpp formats that differ only in having alpha (e.g. BGRX32 and BGRA32) keep the colour
- * channels in the same bytes, so compare words but never the alpha or padding byte: an X
- * server leaves it 0 in a depth 24 image, while the X format of the surface reads as opaque. */
+ * channels at the same bits, so compare the colours under a mask of those bits, never the alpha
+ * or padding byte: an X server leaves it 0 in a depth 24 image, while the X format of the
+ * surface reads as opaque. */
 WINPR_ATTR_NODISCARD
 static BOOL pixel_equal_32_ignore_alpha(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
                                         const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count)
 {
-	const UINT32 alphaFormat = FreeRDPColorHasAlpha(formatA) ? formatA : formatB;
-	BYTE alpha[4] = WINPR_C_ARRAY_INIT;
-	if (!FreeRDPWriteColor(alpha, alphaFormat, FreeRDPGetColor(alphaFormat, 0, 0, 0, 0xFF)))
-		return pixel_equal_no_alpha(a, formatA, b, formatB, count);
-
-	BYTE maskBytes[4] = WINPR_C_ARRAY_INIT;
-	for (size_t x = 0; x < ARRAYSIZE(maskBytes); x++)
-		maskBytes[x] = (alpha[x] != 0) ? 0x00 : 0xFF;
-	UINT32 mask = 0;
-	memcpy(&mask, maskBytes, sizeof(mask));
+	const UINT32 mask = FreeRDPGetColor(formatA, 0xFF, 0xFF, 0xFF, 0x00);
 
 	for (size_t x = 0; x < count; x++)
 	{
-		UINT32 colorA = 0;
-		UINT32 colorB = 0;
-		memcpy(&colorA, &a[4 * x], sizeof(colorA));
-		memcpy(&colorB, &b[4 * x], sizeof(colorB));
+		const UINT32 colorA = FreeRDPReadColor(&a[4 * x], formatA);
+		const UINT32 colorB = FreeRDPReadColor(&b[4 * x], formatB);
 		if (((colorA ^ colorB) & mask) != 0)
 			return FALSE;
 	}
