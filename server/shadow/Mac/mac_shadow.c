@@ -77,7 +77,7 @@
 
 static const AUDIO_FORMAT mac_audio_offered_formats[] = {
 	{ WAVE_FORMAT_OPUS, MAC_AUDIO_CHANNELS, MAC_AUDIO_RATE, 12000, 1, 16, 0, nullptr },
-	{ WAVE_FORMAT_PCM, MAC_AUDIO_CHANNELS, MAC_AUDIO_RATE, MAC_AUDIO_RATE* MAC_AUDIO_FRAME_BYTES,
+	{ WAVE_FORMAT_PCM, MAC_AUDIO_CHANNELS, MAC_AUDIO_RATE, (MAC_AUDIO_RATE * MAC_AUDIO_FRAME_BYTES),
 	  MAC_AUDIO_FRAME_BYTES, 16, 0, nullptr },
 };
 
@@ -86,7 +86,7 @@ static const AUDIO_FORMAT mac_audio_offered_formats[] = {
 static AUDIO_FORMAT mac_audio_source_format = { WAVE_FORMAT_PCM,
 	                                            MAC_AUDIO_CHANNELS,
 	                                            MAC_AUDIO_RATE,
-	                                            MAC_AUDIO_RATE* MAC_AUDIO_FRAME_BYTES,
+	                                            (MAC_AUDIO_RATE * MAC_AUDIO_FRAME_BYTES),
 	                                            MAC_AUDIO_FRAME_BYTES,
 	                                            16,
 	                                            0,
