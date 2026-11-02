@@ -40,13 +40,13 @@ extern "C"
 	/* Starts loopback capture on the default render endpoint: what the
 	 * speakers play. The calling thread has COM initialized. log is FALSE
 	 * while retrying after a failure that was reported. */
-	winWasapiLoopback* win_wasapi_loopback_open(BOOL log);
+	WINPR_ATTR_NODISCARD winWasapiLoopback* win_wasapi_loopback_open(BOOL log);
 	void win_wasapi_loopback_close(winWasapiLoopback* loopback);
 
 	/* Appends what was captured since the last call to s. FALSE when the
 	 * capture stopped: the endpoint went away (unplugged, the default
 	 * changed, the audio service stopped) or memory ran out. */
-	BOOL win_wasapi_loopback_read(winWasapiLoopback* loopback, wStream* s);
+	WINPR_ATTR_NODISCARD BOOL win_wasapi_loopback_read(winWasapiLoopback* loopback, wStream* s);
 
 #ifdef __cplusplus
 }

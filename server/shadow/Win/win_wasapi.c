@@ -92,7 +92,8 @@ static void win_wasapi_release(winWasapiLoopback* cap)
 
 /* The mix format, when the audio engine did not convert it for us: 48 kHz
  * only (there is no resampler), float or integer samples */
-static BOOL win_wasapi_use_mix_format(winWasapiLoopback* cap, const WAVEFORMATEX* mix)
+WINPR_ATTR_NODISCARD static BOOL win_wasapi_use_mix_format(winWasapiLoopback* cap,
+                                                           const WAVEFORMATEX* mix)
 {
 	WINPR_ASSERT(cap);
 	WINPR_ASSERT(mix);
@@ -124,7 +125,7 @@ static BOOL win_wasapi_use_mix_format(winWasapiLoopback* cap, const WAVEFORMATEX
 	return TRUE;
 }
 
-static HRESULT win_wasapi_activate(winWasapiLoopback* cap)
+WINPR_ATTR_NODISCARD static HRESULT win_wasapi_activate(winWasapiLoopback* cap)
 {
 	WINPR_ASSERT(cap);
 
@@ -135,7 +136,7 @@ static HRESULT win_wasapi_activate(winWasapiLoopback* cap)
 	                                     nullptr, (void**)&cap->client);
 }
 
-static BOOL win_wasapi_start(winWasapiLoopback* cap, BOOL log)
+WINPR_ATTR_NODISCARD static BOOL win_wasapi_start(winWasapiLoopback* cap, BOOL log)
 {
 	const DWORD level = log ? WLOG_WARN : WLOG_DEBUG;
 	const REFERENCE_TIME bufferDuration = 2000000; /* 200 ms, in 100 ns units */
@@ -252,7 +253,7 @@ fail:
 	return FALSE;
 }
 
-static INT16 win_wasapi_sample(const winWasapiLoopback* cap, const BYTE* src)
+WINPR_ATTR_NODISCARD static INT16 win_wasapi_sample(const winWasapiLoopback* cap, const BYTE* src)
 {
 	switch (cap->type)
 	{
@@ -278,8 +279,8 @@ static INT16 win_wasapi_sample(const winWasapiLoopback* cap, const BYTE* src)
 }
 
 /* Appends frames to s as 16-bit stereo; silence when the engine says so */
-static BOOL win_wasapi_append(const winWasapiLoopback* cap, wStream* s, const BYTE* data,
-                              UINT32 frames, DWORD flags)
+WINPR_ATTR_NODISCARD static BOOL win_wasapi_append(const winWasapiLoopback* cap, wStream* s,
+                                                   const BYTE* data, UINT32 frames, DWORD flags)
 {
 	WINPR_ASSERT(cap);
 

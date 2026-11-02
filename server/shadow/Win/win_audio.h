@@ -19,6 +19,8 @@
 #ifndef FREERDP_SERVER_SHADOW_WIN_AUDIO_H
 #define FREERDP_SERVER_SHADOW_WIN_AUDIO_H
 
+#include <winpr/wtypes.h>
+
 typedef struct win_shadow_subsystem winShadowSubsystem;
 
 #ifdef __cplusplus
@@ -28,9 +30,9 @@ extern "C"
 
 	/* The sound the computer plays, captured with WASAPI loopback on the
 	 * default render endpoint and sent to the clients' rdpsnd channels */
-	BOOL win_shadow_audio_init(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD BOOL win_shadow_audio_init(winShadowSubsystem* subsystem);
 	void win_shadow_audio_uninit(winShadowSubsystem* subsystem);
-	BOOL win_shadow_audio_start(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD BOOL win_shadow_audio_start(winShadowSubsystem* subsystem);
 	void win_shadow_audio_stop(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
