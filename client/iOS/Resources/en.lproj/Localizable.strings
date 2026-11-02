@@ -32,6 +32,9 @@
    Screen resolution selector: Automatic resolution (full screen on iPad, reasonable size on iPhone) */
 "Automatic" = "Automatic";
 
+/* Avoid Screen Edges UI setting */
+"Avoid Screen Edges" = "Avoid Screen Edges";
+
 /* Bookmark data validation: label blank title. */
 "Bookmark labels cannot be blank" = "Bookmark labels cannot be blank";
 
@@ -188,6 +191,9 @@
 
 /* Incomplete bookmark error message */
 "Press 'Cancel' to abort!\nPress 'Continue' to specify the required fields!" = "Press 'Cancel' to abort!\nPress 'Continue' to specify the required fields!";
+
+/* Connecting progress view - reconnect label */
+"Reconnecting" = "Reconnecting";
 
 /* 'Remote Program': Bookmark remote program settings */
 "Remote Program" = "Remote Program";

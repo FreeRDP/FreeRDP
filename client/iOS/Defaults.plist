@@ -86,5 +86,7 @@
 		<key>tsg_domain</key>
 		<string></string>
 	</dict>
+	<key>ui.avoid_screen_edges</key>
+	<true/>
 </dict>
 </plist>

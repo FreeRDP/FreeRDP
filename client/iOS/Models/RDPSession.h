@@ -31,6 +31,8 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 - (void)sessionDidConnect:(RDPSession *)session;
 - (void)sessionWillDisconnect:(RDPSession *)session;
 - (void)sessionDidDisconnect:(RDPSession *)session;
+- (void)sessionWillReconnect:(RDPSession *)session;
+- (void)sessionDidReconnect:(RDPSession *)session;
 - (void)sessionBitmapContextWillChange:(RDPSession *)session;
 - (void)sessionBitmapContextDidChange:(RDPSession *)session;
 - (void)session:(RDPSession *)session needsRedrawInRect:(CGRect)rect;
@@ -38,11 +40,13 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 - (void)session:(RDPSession *)session didMoveRemoteCursor:(CGPoint)position;
 - (void)sessionDidHideRemoteCursor:(RDPSession *)session;
 - (void)sessionDidSetDefaultRemoteCursor:(RDPSession *)session;
+- (void)session:(RDPSession *)session didChangeRemoteClipboardText:(NSString *)text;
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session;
 
 - (void)session:(RDPSession *)session
     requestsAuthenticationWithParams:(NSMutableDictionary *)params;
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params;
+- (void)session:(RDPSession *)session requestsClipboardTextWithParams:(NSMutableDictionary *)params;
 
 @end
 
@@ -99,6 +103,9 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 // send input event to the server
 - (void)sendInputEvent:(NSDictionary *)event;
 
+// tell the server whether the local clipboard has text
+- (void)sendClipboardHasText:(BOOL)hasText;
+
 // session needs a refresh of its view
 - (void)setNeedsDisplayInRectAsValue:(NSValue *)rect_value;
 
@@ -107,6 +114,9 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 - (void)setRemoteCursorPositionValue:(NSValue *)positionValue;
 - (void)hideRemoteCursor;
 - (void)setDefaultRemoteCursor;
+
+// handle text copied on the server
+- (void)setRemoteClipboardText:(NSString *)text;
 
 // get a small session screenshot
 - (UIImage *)getScreenshotWithSize:(CGSize)size;

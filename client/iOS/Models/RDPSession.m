@@ -31,6 +31,8 @@ NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 - (void)sessionDidConnect;
 - (void)sessionDidDisconnect;
 - (void)sessionDidFailToConnect:(int)reason;
+- (void)sessionWillReconnect;
+- (void)sessionDidReconnect;
 - (void)sessionBitmapContextWillChange;
 - (void)sessionBitmapContextDidChange;
 @end
@@ -258,6 +260,9 @@ static void freeArguments(int argc, char **argv)
 	if (!addArgument(&argc, &argv, "/kbd:unicode:on"))
 		goto out_free;
 
+	if (!addArgument(&argc, &argv, "/auto-reconnect"))
+		goto out_free;
+
 	status =
 	    freerdp_client_settings_parse_command_line(_freerdp->context->settings, argc, argv, FALSE);
 
@@ -334,6 +339,9 @@ out_free:
 	if (mfi->connection_state == TSXConnectionConnecting)
 	{
 		mfi->unwanted = YES;
+
+		// disconnect
+		freerdp_abort_connect_context(_freerdp->context);
 		[self sessionDidDisconnect];
 		return;
 	}
@@ -386,6 +394,16 @@ out_free:
 		ios_events_send([self mfi], eventDescriptor);
 }
 
+- (void)sendClipboardHasText:(BOOL)hasText
+{
+	// not sendInputEvent: the first check runs in sessionDidConnect, before the state is
+	// connected; the event waits in the pipe until the run loop starts
+	ios_events_send([self mfi],
+	                [NSDictionary dictionaryWithObjectsAndKeys:@"clipboard", @"type",
+	                                                           [NSNumber numberWithBool:hasText],
+	                                                           @"has_text", nil]);
+}
+
 #pragma mark -
 #pragma mark Server events (main thread)
 
@@ -417,6 +435,12 @@ out_free:
 {
 	if ([[self delegate] respondsToSelector:@selector(sessionDidSetDefaultRemoteCursor:)])
 		[[self delegate] sessionDidSetDefaultRemoteCursor:self];
+}
+
+- (void)setRemoteClipboardText:(NSString *)text
+{
+	if ([[self delegate] respondsToSelector:@selector(session:didChangeRemoteClipboardText:)])
+		[[self delegate] session:self didChangeRemoteClipboardText:text];
 }
 
 #pragma mark -
@@ -506,6 +530,18 @@ out_free:
 		[[self delegate] sessionWillConnect:self];
 }
 
+- (void)sessionWillReconnect
+{
+	if ([[self delegate] respondsToSelector:@selector(sessionWillReconnect:)])
+		[[self delegate] sessionWillReconnect:self];
+}
+
+- (void)sessionDidReconnect
+{
+	if ([[self delegate] respondsToSelector:@selector(sessionDidReconnect:)])
+		[[self delegate] sessionDidReconnect:self];
+}
+
 - (void)sessionDidConnect
 {
 	if ([[self delegate] respondsToSelector:@selector(sessionDidConnect:)])
@@ -553,6 +589,12 @@ out_free:
 {
 	if ([[self delegate] respondsToSelector:@selector(session:verifyCertificateWithParams:)])
 		[[self delegate] session:self verifyCertificateWithParams:params];
+}
+
+- (void)sessionRequestsClipboardTextWithParams:(NSMutableDictionary *)params
+{
+	if ([[self delegate] respondsToSelector:@selector(session:requestsClipboardTextWithParams:)])
+		[[self delegate] session:self requestsClipboardTextWithParams:params];
 }
 
 @end

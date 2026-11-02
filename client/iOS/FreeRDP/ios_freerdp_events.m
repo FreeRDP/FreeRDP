@@ -11,6 +11,7 @@
 #include <winpr/assert.h>
 
 #include "ios_freerdp_events.h"
+#include "ios_cliprdr.h"
 
 #pragma mark -
 #pragma mark Sending compacted input events (from main thread)
@@ -98,6 +99,16 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 		else
 			NSLog(@"%s: doesn't know how to send keyboard input with subtype %@", __func__,
 			      [event_description objectForKey:@"subtype"]);
+	}
+	else if ([event_type isEqualToString:@"clipboard"])
+	{
+		mfContext *afc = mfi->context;
+		afc->clipboardHasText = [[event_description objectForKey:@"has_text"] boolValue];
+
+		// before the channel is ready the monitor ready handler sends the list instead
+		if (afc->cliprdr && afc->clipboardSync &&
+		    (ios_cliprdr_send_client_format_list(afc->cliprdr) != CHANNEL_RC_OK))
+			NSLog(@"%s: failed to send the clipboard format list.", __func__);
 	}
 	else if ([event_type isEqualToString:@"disconnect"])
 		should_continue = FALSE;

@@ -29,6 +29,10 @@
 - (void)fitSessionViewToViewport;
 - (void)centerSessionViewInViewport;
 - (void)setKeyboardOverlap:(CGFloat)overlap;
+- (CGRect)sessionViewportFrame;
+- (void)showConnectingViewWithText:(NSString *)text;
+- (void)hideConnectingView;
+- (void)endBackgroundTask;
 - (CGPoint)remotePositionForSessionViewPosition:(CGPoint)position;
 - (CGPoint)sessionViewPositionForRemotePosition:(CGPoint)position;
 - (CGPoint)clampedSessionViewCursorPosition:(CGPoint)position;
@@ -149,6 +153,9 @@
 {
 	[super viewDidLoad];
 
+	// shown around the session when it avoids the screen edges
+	[[self view] setBackgroundColor:[UIColor blackColor]];
+
 	[_session_scrollview setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
 	[_session_scrollview setContentInset:UIEdgeInsetsZero];
 	[_session_scrollview setScrollIndicatorInsets:UIEdgeInsetsZero];
@@ -163,7 +170,7 @@
 {
 	[super viewDidLayoutSubviews];
 
-	CGRect viewportFrame = [[self view] bounds];
+	CGRect viewportFrame = [self sessionViewportFrame];
 	[_session_scrollview setFrame:viewportFrame];
 
 	CGSize viewportSize = [_session_scrollview bounds].size;
@@ -439,10 +446,7 @@
 
 - (void)session:(RDPSession *)session didFailToConnect:(int)reason
 {
-	// remove and release connecting view
-	[_connecting_indicator_view stopAnimating];
-	[_connecting_view removeFromSuperview];
-	[_connecting_view autorelease];
+	[self hideConnectingView];
 
 	// return to bookmark list
 	[[self navigationController] popViewControllerAnimated:YES];
@@ -450,21 +454,22 @@
 
 - (void)sessionWillConnect:(RDPSession *)session
 {
-	// load connecting view
-	[[NSBundle mainBundle] loadNibNamed:@"RDPConnectingView" owner:self options:nil];
+	[self showConnectingViewWithText:NSLocalizedString(@"Connecting",
+	                                                   @"Connecting progress view - label")];
+}
 
-	// set strings
-	[_lbl_connecting setText:NSLocalizedString(@"Connecting", @"Connecting progress view - label")];
-	[_cancel_connect_button setTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
-	                        forState:UIControlStateNormal];
+- (void)sessionWillReconnect:(RDPSession *)session
+{
+	(void)session;
+	[self showConnectingViewWithText:NSLocalizedString(
+	                                     @"Reconnecting",
+	                                     @"Connecting progress view - reconnect label")];
+}
 
-	// center view and give it round corners
-	[_connecting_view setCenter:[[self view] center]];
-	[[_connecting_view layer] setCornerRadius:10];
-
-	// display connecting view and start indicator
-	[[self view] addSubview:_connecting_view];
-	[_connecting_indicator_view startAnimating];
+- (void)sessionDidReconnect:(RDPSession *)session
+{
+	(void)session;
+	[self hideConnectingView];
 }
 
 - (void)sessionDidConnect:(RDPSession *)session
@@ -494,10 +499,25 @@
 	                                           object:nil];
 	[self hardwareKeyboardChanged:nil];
 
-	// remove and release connecting view
-	[_connecting_indicator_view stopAnimating];
-	[_connecting_view removeFromSuperview];
-	[_connecting_view autorelease];
+	// another app may have changed the clipboard while this one was inactive
+	[[NSNotificationCenter defaultCenter] addObserver:self
+	                                         selector:@selector(localClipboardChanged:)
+	                                             name:UIApplicationDidBecomeActiveNotification
+	                                           object:nil];
+	[self localClipboardChanged:nil];
+
+	// ios can suspends the app soon after it switched to the background and may then take its
+	// socket away
+	[[NSNotificationCenter defaultCenter] addObserver:self
+	                                         selector:@selector(applicationDidEnterBackground:)
+	                                             name:UIApplicationDidEnterBackgroundNotification
+	                                           object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
+	                                         selector:@selector(applicationWillEnterForeground:)
+	                                             name:UIApplicationWillEnterForegroundNotification
+	                                           object:nil];
+
+	[self hideConnectingView];
 
 	// check if session settings changed ...
 	// The 2nd width check is to ignore changes in resolution settings due to the RDVH display bug
@@ -529,6 +549,9 @@
 
 - (void)sessionDidDisconnect:(RDPSession *)session
 {
+	[self hideConnectingView];
+	[self endBackgroundTask];
+
 	// return to bookmark list
 	[[self navigationController] popViewControllerAnimated:YES];
 }
@@ -612,6 +635,24 @@
 {
 	(void)session;
 	[_session_view setDefaultRemoteCursor];
+}
+
+- (void)session:(RDPSession *)session didChangeRemoteClipboardText:(NSString *)text
+{
+	(void)session;
+	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+	[pasteboard setString:text];
+
+	// don't announce the server's own text back to it
+	_pasteboard_change_count = [pasteboard changeCount];
+}
+
+- (void)session:(RDPSession *)session requestsClipboardTextWithParams:(NSMutableDictionary *)params
+{
+	(void)session;
+	NSString *text = [[UIPasteboard generalPasteboard] string];
+	if (text)
+		[params setObject:text forKey:@"text"];
 }
 
 - (void)session:(RDPSession *)session requestsAuthenticationWithParams:(NSMutableDictionary *)params
@@ -713,7 +754,7 @@
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session
 {
 	// set remote resolution that matches the on-screen viewport.
-	CGSize size = [self view].bounds.size;
+	CGSize size = [self sessionViewportFrame].size;
 	UIScreen *screen = [[self view] window] ? [[[self view] window] screen] : [UIScreen mainScreen];
 	CGFloat scale =
 	    [screen respondsToSelector:@selector(nativeScale)] ? [screen nativeScale] : [screen scale];
@@ -877,7 +918,8 @@
 	CGRect keyboardFrame =
 	    [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
 	keyboardFrame = [[self view] convertRect:keyboardFrame fromView:nil];
-	CGRect coveredArea = CGRectIntersection([[self view] bounds], keyboardFrame);
+
+	CGRect coveredArea = CGRectIntersection([_session_scrollview frame], keyboardFrame);
 
 	[self setKeyboardOverlap:CGRectGetHeight(coveredArea)];
 }
@@ -909,6 +951,33 @@
 		[_session_view becomeFirstResponder];
 	else if (!connected)
 		[_session_view resignFirstResponder];
+}
+
+- (void)localClipboardChanged:(NSNotification *)notification
+{
+	// hasStrings does not show the paste permission alert, unlike reading the string
+	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+	if ([pasteboard changeCount] == _pasteboard_change_count)
+		return;
+
+	_pasteboard_change_count = [pasteboard changeCount];
+	[_session sendClipboardHasText:[pasteboard hasStrings]];
+}
+
+- (void)applicationDidEnterBackground:(NSNotification *)notification
+{
+	// keeps the connection alive for a short visit to another app
+	// after a longer one the session will reconnect
+	[self endBackgroundTask];
+	_background_task =
+	    [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+		    [self endBackgroundTask];
+	    }];
+}
+
+- (void)applicationWillEnterForeground:(NSNotification *)notification
+{
+	[self endBackgroundTask];
 }
 
 #pragma mark -
@@ -1107,6 +1176,58 @@
 
 #pragma mark -
 #pragma mark Helper functions
+
+- (void)showConnectingViewWithText:(NSString *)text
+{
+	[self hideConnectingView];
+
+	// load connecting view
+	[[NSBundle mainBundle] loadNibNamed:@"RDPConnectingView" owner:self options:nil];
+
+	// set strings
+	[_lbl_connecting setText:text];
+	[_cancel_connect_button setTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
+	                        forState:UIControlStateNormal];
+
+	// center view and give it round corners
+	[_connecting_view setCenter:[[self view] center]];
+	[[_connecting_view layer] setCornerRadius:10];
+
+	// display connecting view and start indicator
+	[[self view] addSubview:_connecting_view];
+	[_connecting_indicator_view startAnimating];
+}
+
+- (void)hideConnectingView
+{
+	if (!_connecting_view)
+		return;
+
+	// remove and release connecting view
+	[_connecting_indicator_view stopAnimating];
+	[_connecting_view removeFromSuperview];
+	[_connecting_view autorelease];
+	_connecting_view = nil;
+}
+
+- (void)endBackgroundTask
+{
+	if (_background_task == UIBackgroundTaskInvalid)
+		return;
+
+	[[UIApplication sharedApplication] endBackgroundTask:_background_task];
+	_background_task = UIBackgroundTaskInvalid;
+}
+
+- (CGRect)sessionViewportFrame
+{
+	// use full screen (ipad or 'Avoid Screen Edges' disabled)
+	if (IsPad() || ![[NSUserDefaults standardUserDefaults] boolForKey:@"ui.avoid_screen_edges"])
+		return [[self view] bounds];
+
+	// if 'Avoid Screen Edges' enabled (only for iphone)
+	return UIEdgeInsetsInsetRect([[self view] bounds], [[self view] safeAreaInsets]);
+}
 
 - (void)fitSessionViewToViewport
 {

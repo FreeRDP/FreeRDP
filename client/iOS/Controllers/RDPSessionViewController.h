@@ -67,6 +67,12 @@
 	BOOL _long_press_active;
 	BOOL _mouse_drag_active;
 	BOOL _pointer_is_indirect;
+
+	// last local clipboard change already sent to the server
+	NSInteger _pasteboard_change_count;
+
+	// keeps the session running for a moment when app switched background
+	UIBackgroundTaskIdentifier _background_task;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil

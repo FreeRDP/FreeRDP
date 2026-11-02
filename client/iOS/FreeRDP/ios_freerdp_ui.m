@@ -11,6 +11,7 @@
 #import <Foundation/Foundation.h>
 
 #import <freerdp/gdi/gdi.h>
+#import <freerdp/client.h>
 #import "ios_freerdp_ui.h"
 
 #import "RDPSession.h"
@@ -136,6 +137,31 @@ DWORD ios_ui_verify_changed_certificate_ex(freerdp *instance, const char *host, 
 	                                    fingerprint, flags);
 }
 
+SSIZE_T ios_ui_retry_dialog(freerdp *instance, const char *what, size_t current, void *userarg)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(what);
+
+	// waiting for an Azure VM to start ("arm-transport")
+	if (strcmp(what, "connection") != 0)
+		return client_common_retry_dialog(instance, what, current, userarg);
+
+	mfInfo *mfi = MFI_FROM_INSTANCE(instance);
+	WINPR_ASSERT(mfi);
+
+	// cancel button of the connecting view
+	if (mfi->unwanted)
+		return -1;
+
+	if (current == 0)
+		[mfi->session performSelectorOnMainThread:@selector(sessionWillReconnect)
+		                               withObject:nil
+		                            waitUntilDone:NO];
+
+	// delay before the next attempt, in ms
+	return 5000;
+}
+
 #pragma mark -
 #pragma mark Graphics updates
 
@@ -209,6 +235,46 @@ BOOL ios_ui_resize_window(rdpContext *context)
 
 	ios_resize_display_buffer(MFI_FROM_INSTANCE(context->instance));
 	return TRUE;
+}
+
+#pragma mark -
+#pragma mark Clipboard
+
+void ios_ui_set_clipboard_text(rdpContext *context, const char *text, UINT32 size)
+{
+	WINPR_ASSERT(context);
+
+	mfInfo *mfi = MFI_FROM_INSTANCE(context->instance);
+	WINPR_ASSERT(mfi);
+
+	NSString *string = [[NSString alloc] initWithBytes:text
+	                                            length:size
+	                                          encoding:NSUTF8StringEncoding];
+	if (string)
+		[mfi->session performSelectorOnMainThread:@selector(setRemoteClipboardText:)
+		                               withObject:string
+		                            waitUntilDone:NO];
+	[string release];
+}
+
+char *ios_ui_get_clipboard_text(rdpContext *context)
+{
+	WINPR_ASSERT(context);
+
+	mfInfo *mfi = MFI_FROM_INSTANCE(context->instance);
+	WINPR_ASSERT(mfi);
+
+	// called on the cliprdr channel thread, which has no autorelease pool
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	NSMutableDictionary *params = [NSMutableDictionary dictionary];
+	[mfi->session performSelectorOnMainThread:@selector(sessionRequestsClipboardTextWithParams:)
+	                               withObject:params
+	                            waitUntilDone:YES];
+
+	NSString *text = [params objectForKey:@"text"];
+	char *result = text ? _strdup([text UTF8String]) : nullptr;
+	[pool release];
+	return result;
 }
 
 #pragma mark -

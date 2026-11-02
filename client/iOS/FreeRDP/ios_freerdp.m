@@ -329,6 +329,22 @@ static void ios_post_disconnect(freerdp *instance)
 #pragma mark -
 #pragma mark Running the connection
 
+static BOOL ios_reconnect(freerdp *instance)
+{
+	mfInfo *mfi = MFI_FROM_INSTANCE(instance);
+
+	// keeps input from being queued for the dropped connection and lets cancel abort the attempts
+	mfi->connection_state = TSXConnectionConnecting;
+	if (!client_auto_reconnect_ex(instance, nullptr))
+		return FALSE;
+
+	mfi->connection_state = TSXConnectionConnected;
+	[mfi->session performSelectorOnMainThread:@selector(sessionDidReconnect)
+	                               withObject:nil
+	                            waitUntilDone:NO];
+	return TRUE;
+}
+
 int ios_run_freerdp(freerdp *instance)
 {
 	mfContext *context = (mfContext *)instance->context;
@@ -374,7 +390,7 @@ int ios_run_freerdp(freerdp *instance)
 		}
 
 		// Check the libfreerdp fds
-		if (!freerdp_check_event_handles(instance->context))
+		if (!freerdp_check_event_handles(instance->context) && !ios_reconnect(instance))
 		{
 			NSLog(@"%s: freerdp_check_event_handles failed.", __func__);
 			break;
@@ -429,6 +445,7 @@ static BOOL ios_client_new(freerdp *instance, rdpContext *context)
 	instance->AuthenticateEx = ios_ui_authenticate_ex;
 	instance->VerifyCertificateEx = ios_ui_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = ios_ui_verify_changed_certificate_ex;
+	instance->RetryDialog = ios_ui_retry_dialog;
 	instance->LogonErrorInfo = nullptr;
 	return TRUE;
 }
@@ -499,24 +516,4 @@ void ios_uninit_freerdp()
 size_t fwrite$UNIX2003(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 	return fwrite(ptr, size, nmemb, stream);
-}
-
-void ios_send_clipboard_data(void *context, const void *data, UINT32 size)
-{
-	mfContext *afc = (mfContext *)context;
-	ClipboardLock(afc->clipboard);
-	UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
-	if (size)
-	{
-		if (!ClipboardSetData(afc->clipboard, formatId, data, size))
-		{
-			ClipboardUnlock(afc->clipboard);
-			WLog_ERR(TAG, "ClipboardSetData failed");
-			return;
-		}
-	}
-	else
-		ClipboardEmpty(afc->clipboard);
-	ClipboardUnlock(afc->clipboard);
-	ios_cliprdr_send_client_format_list(afc->cliprdr);
 }

@@ -82,7 +82,8 @@
 	switch (section)
 	{
 		case SECTION_UI_SETTINGS: // UI settings
-			return 2;
+			// avoiding screen edges only applies to iPhone
+			return IsPad() ? 2 : 3;
 		case SECTION_CERTIFICATE_HANDLING_SETTINGS: // certificate handling settings
 			return 2;
 		default:
@@ -123,6 +124,7 @@
 			{
 				case 0:
 				case 1:
+				case 2:
 					cellIdentifier = TableCellIdentifierYesNo;
 					break;
 			}
@@ -194,6 +196,19 @@
 			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[flagCell toggle]
 			    setOn:[[NSUserDefaults standardUserDefaults] boolForKey:@"ui.invert_scrolling"]];
+			[[flagCell toggle] addTarget:self
+			                      action:@selector(toggleSettingValue:)
+			            forControlEvents:UIControlEventValueChanged];
+			break;
+		}
+		case 2:
+		{
+			EditFlagTableViewCell *flagCell = (EditFlagTableViewCell *)cell;
+			[flagCell
+			    setTitle:NSLocalizedString(@"Avoid Screen Edges", "Avoid Screen Edges UI setting")];
+			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
+			[[flagCell toggle]
+			    setOn:[[NSUserDefaults standardUserDefaults] boolForKey:@"ui.avoid_screen_edges"]];
 			[[flagCell toggle] addTarget:self
 			                      action:@selector(toggleSettingValue:)
 			            forControlEvents:UIControlEventValueChanged];
@@ -301,6 +316,11 @@
 			[[NSUserDefaults standardUserDefaults] setBool:[valueSwitch isOn]
 			                                        forKey:@"ui.invert_scrolling"];
 			SetInvertScrollingFlag([valueSwitch isOn]);
+			break;
+
+		case GET_TAG(SECTION_UI_SETTINGS, 2):
+			[[NSUserDefaults standardUserDefaults] setBool:[valueSwitch isOn]
+			                                        forKey:@"ui.avoid_screen_edges"];
 			break;
 
 		case GET_TAG(SECTION_CERTIFICATE_HANDLING_SETTINGS, 0):
