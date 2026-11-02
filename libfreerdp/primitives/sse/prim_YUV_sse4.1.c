@@ -784,8 +784,12 @@ static pstatus_t sse41_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 
 		return !PRIMITIVES_SUCCESS;
 	}
 
-	size_t y = 0;
-	for (; y < roi->height - roi->height % 2; y += 2)
+	/* The loops below take 2x2 pixel blocks; an odd last column and an odd last row have U and V
+	 * too, which they would never reach, so the generic routine does those edges. */
+	const UINT32 width = roi->width - roi->width % 2;
+	const size_t height = roi->height - roi->height % 2;
+
+	for (size_t y = 0; y < height; y += 2)
 	{
 		const BYTE* line1 = &pSrc[y * srcStep];
 		const BYTE* line2 = &pSrc[(1ULL + y) * srcStep];
@@ -794,16 +798,34 @@ static pstatus_t sse41_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 
 		BYTE* udst = &pDst[1][y / 2 * dstStep[1]];
 		BYTE* vdst = &pDst[2][y / 2 * dstStep[2]];
 
-		sse41_RGBToYUV420_BGRX_UV(line1, line2, udst, vdst, roi->width);
-		sse41_RGBToYUV420_BGRX_Y(line1, ydst1, roi->width);
-		sse41_RGBToYUV420_BGRX_Y(line2, ydst2, roi->width);
+		sse41_RGBToYUV420_BGRX_UV(line1, line2, udst, vdst, width);
+		sse41_RGBToYUV420_BGRX_Y(line1, ydst1, width);
+		sse41_RGBToYUV420_BGRX_Y(line2, ydst2, width);
 	}
 
-	for (; y < roi->height; y++)
+	WINPR_ASSERT(generic);
+
+	/* the odd last column, every row */
+	if (width < roi->width)
 	{
-		const BYTE* line = &pSrc[y * srcStep];
-		BYTE* ydst = &pDst[0][1ULL * y * dstStep[0]];
-		sse41_RGBToYUV420_BGRX_Y(line, ydst, roi->width);
+		const BYTE* src = &pSrc[4ULL * width];
+		BYTE* dst[3] = { &pDst[0][width], &pDst[1][width / 2], &pDst[2][width / 2] };
+		const prim_size_t rest = { 1, roi->height };
+		const pstatus_t rc =
+		    generic->RGBToYUV420_8u_P3AC4R(src, PIXEL_FORMAT_BGRX32, srcStep, dst, dstStep, &rest);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+
+	/* the odd last row, left of that column */
+	if ((height < roi->height) && (width > 0))
+	{
+		const BYTE* src = &pSrc[height * srcStep];
+		BYTE* dst[3] = { &pDst[0][height * dstStep[0]], &pDst[1][(height / 2) * dstStep[1]],
+			             &pDst[2][(height / 2) * dstStep[2]] };
+		const prim_size_t rest = { width, 1 };
+		return generic->RGBToYUV420_8u_P3AC4R(src, PIXEL_FORMAT_BGRX32, srcStep, dst, dstStep,
+		                                      &rest);
 	}
 
 	return PRIMITIVES_SUCCESS;

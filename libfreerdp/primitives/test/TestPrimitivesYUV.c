@@ -1396,6 +1396,216 @@ static int similarY(const BYTE* a, const BYTE* b, size_t size, size_t type)
 /* Check the result of generic matches the optimized routine.
  *
  */
+/* How far an optimized RGB to YUV conversion may be from the generic one: the SSE4.1
+ * routines use 7 and 8 bit coefficients, which puts Y up to 1 and U and V up to 2 off;
+ * the NEON ones keep the generic integer math and match it. */
+#define YUV_ENCODE_TOLERANCE 2
+
+static BOOL yuv_encode_close(const BYTE* a, const BYTE* b, size_t len)
+{
+	for (size_t x = 0; x < len; x++)
+	{
+		if (abs((int)a[x] - (int)b[x]) > YUV_ENCODE_TOLERANCE)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/* RGBToYUV420_8u_P3AC4R against the generic routine at odd widths and heights, with padded
+ * strides, for the formats it handles and one it hands back to the generic routine: the
+ * values within YUV_ENCODE_TOLERANCE, and nothing written into the padding. */
+static BOOL compare_rgb_to_yuv420_edges(prim_size_t roi, DWORD type)
+{
+	BOOL rc = FALSE;
+	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBA32,
+		                       PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_ARGB32 };
+	const size_t srcStep = 4ULL * roi.width + 12;
+	const UINT32 cw = (roi.width + 1) / 2;
+	const UINT32 ch = (roi.height + 1) / 2;
+	const UINT32 dstStep[3] = { roi.width + 5, cw + 7, cw + 9 };
+	const UINT32 rows[3] = { roi.height, ch, ch };
+	const UINT32 used[3] = { roi.width, cw, cw };
+	BYTE* rgb = nullptr;
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	BYTE* ref[3] = WINPR_C_ARRAY_INIT;
+
+	primitives_t* prims = primitives_get_by_type(type);
+	primitives_t* soft = primitives_get_by_type(PRIMITIVES_PURE_SOFT);
+	if (!prims)
+	{
+		printf("primitives type %" PRIu32 " not supported, skipping\n", type);
+		return TRUE;
+	}
+	if (!soft)
+		goto fail;
+
+	rgb = calloc(roi.height, srcStep);
+	if (!rgb)
+		goto fail;
+	for (size_t x = 0; x < 3; x++)
+	{
+		yuv[x] = calloc(rows[x], dstStep[x]);
+		ref[x] = calloc(rows[x], dstStep[x]);
+		if (!yuv[x] || !ref[x])
+			goto fail;
+	}
+	if (winpr_RAND(rgb, roi.height * srcStep) < 0)
+		goto fail;
+
+	for (size_t f = 0; f < ARRAYSIZE(formats); f++)
+	{
+		const UINT32 format = formats[f];
+		for (size_t x = 0; x < 3; x++)
+		{
+			memset(yuv[x], PADDING_FILL_VALUE, 1ULL * rows[x] * dstStep[x]);
+			memset(ref[x], PADDING_FILL_VALUE, 1ULL * rows[x] * dstStep[x]);
+		}
+
+		if (soft->RGBToYUV420_8u_P3AC4R(rgb, format, (UINT32)srcStep, ref, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+		if (prims->RGBToYUV420_8u_P3AC4R(rgb, format, (UINT32)srcStep, yuv, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+
+		for (size_t x = 0; x < 3; x++)
+		{
+			for (size_t y = 0; y < rows[x]; y++)
+			{
+				const BYTE* line = &yuv[x][y * dstStep[x]];
+				const BYTE* expect = &ref[x][y * dstStep[x]];
+				if (!yuv_encode_close(line, expect, used[x]))
+				{
+					(void)fprintf(stderr,
+					              "[%s] %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
+					              " differs in line %" PRIuz "\n",
+					              __func__, FreeRDPGetColorFormatName(format), roi.width,
+					              roi.height, x, y);
+					goto fail;
+				}
+				for (size_t p = used[x]; p < dstStep[x]; p++)
+				{
+					if (line[p] != PADDING_FILL_VALUE)
+					{
+						(void)fprintf(stderr, "[%s] %s: plane %" PRIuz " overwrote padding\n",
+						              __func__, FreeRDPGetColorFormatName(format), x);
+						goto fail;
+					}
+				}
+			}
+		}
+	}
+
+	rc = TRUE;
+fail:
+	printf("%s %" PRIu32 "x%" PRIu32 " finished with %s\n", __func__, roi.width, roi.height,
+	       rc ? "SUCCESS" : "FAILURE");
+	free(rgb);
+	for (size_t x = 0; x < 3; x++)
+	{
+		free(yuv[x]);
+		free(ref[x]);
+	}
+	return rc;
+}
+
+/* RGBToAVC444YUV and RGBToAVC444YUVv2 against the generic routines at the same sizes, the
+ * values within YUV_ENCODE_TOLERANCE. Both views are compared whole: the buffers start with
+ * the same fill, so a byte written in the wrong place shows up as well. */
+static BOOL compare_rgb_to_avc444_edges(prim_size_t roi, DWORD type, UINT32 version)
+{
+	BOOL rc = FALSE;
+	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBX32 };
+	const size_t srcStep = 4ULL * roi.width + 12;
+	const UINT32 step = roi.width + 24;
+	/* the v1 auxiliary view writes up to 8 rows past the row pair */
+	const size_t rows = roi.height + 24ULL;
+	const UINT32 dstStep[3] = { step, step, step };
+	BYTE* rgb = nullptr;
+	BYTE* main1[3] = WINPR_C_ARRAY_INIT;
+	BYTE* aux1[3] = WINPR_C_ARRAY_INIT;
+	BYTE* main2[3] = WINPR_C_ARRAY_INIT;
+	BYTE* aux2[3] = WINPR_C_ARRAY_INIT;
+
+	primitives_t* prims = primitives_get_by_type(type);
+	primitives_t* soft = primitives_get_by_type(PRIMITIVES_PURE_SOFT);
+	if (!prims)
+	{
+		printf("primitives type %" PRIu32 " not supported, skipping\n", type);
+		return TRUE;
+	}
+	if (!soft)
+		goto fail;
+
+	const fn_RGBToAVC444YUV_t fkt =
+	    (version == 1) ? prims->RGBToAVC444YUV : prims->RGBToAVC444YUVv2;
+	const fn_RGBToAVC444YUV_t gen = (version == 1) ? soft->RGBToAVC444YUV : soft->RGBToAVC444YUVv2;
+	if (!fkt || !gen)
+		goto fail;
+
+	rgb = calloc(roi.height, srcStep);
+	if (!rgb)
+		goto fail;
+	for (size_t x = 0; x < 3; x++)
+	{
+		main1[x] = calloc(rows, step);
+		aux1[x] = calloc(rows, step);
+		main2[x] = calloc(rows, step);
+		aux2[x] = calloc(rows, step);
+		if (!main1[x] || !aux1[x] || !main2[x] || !aux2[x])
+			goto fail;
+	}
+	if (winpr_RAND(rgb, roi.height * srcStep) < 0)
+		goto fail;
+
+	for (size_t f = 0; f < ARRAYSIZE(formats); f++)
+	{
+		const UINT32 format = formats[f];
+		for (size_t x = 0; x < 3; x++)
+		{
+			memset(main1[x], PADDING_FILL_VALUE, rows * step);
+			memset(aux1[x], PADDING_FILL_VALUE, rows * step);
+			memset(main2[x], PADDING_FILL_VALUE, rows * step);
+			memset(aux2[x], PADDING_FILL_VALUE, rows * step);
+		}
+
+		if (gen(rgb, format, (UINT32)srcStep, main1, dstStep, aux1, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+		if (fkt(rgb, format, (UINT32)srcStep, main2, dstStep, aux2, dstStep, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			goto fail;
+
+		for (size_t x = 0; x < 3; x++)
+		{
+			const BOOL mainClose = yuv_encode_close(main1[x], main2[x], rows * step);
+			if (!mainClose || !yuv_encode_close(aux1[x], aux2[x], rows * step))
+			{
+				(void)fprintf(stderr,
+				              "[%s] v%" PRIu32 " %s %" PRIu32 "x%" PRIu32 ": plane %" PRIuz
+				              " of the %s view differs\n",
+				              __func__, version, FreeRDPGetColorFormatName(format), roi.width,
+				              roi.height, x, mainClose ? "auxiliary" : "main");
+				goto fail;
+			}
+		}
+	}
+
+	rc = TRUE;
+fail:
+	printf("%s v%" PRIu32 " %" PRIu32 "x%" PRIu32 " finished with %s\n", __func__, version,
+	       roi.width, roi.height, rc ? "SUCCESS" : "FAILURE");
+	free(rgb);
+	for (size_t x = 0; x < 3; x++)
+	{
+		free(main1[x]);
+		free(aux1[x]);
+		free(main2[x]);
+		free(aux2[x]);
+	}
+	return rc;
+}
+
 static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
@@ -1636,6 +1846,19 @@ int TestPrimitivesYUV(int argc, char* argv[])
 			goto end;
 		if (!compare_rgb_to_yuv420(roi, type))
 			goto end;
+		/* the random roi plus sizes around the 16x2 vector blocks */
+		const prim_size_t yuv420Rois[] = {
+			roi,       { 1, 1 },  { 15, 3 }, { 16, 2 },  { 17, 3 },
+			{ 32, 1 }, { 33, 5 }, { 47, 4 }, { 48, 40 }, { 64, 17 }
+		};
+		for (size_t x = 0; x < ARRAYSIZE(yuv420Rois); x++)
+		{
+			if (!compare_rgb_to_yuv420_edges(yuv420Rois[x], type))
+				goto end;
+			if (!compare_rgb_to_avc444_edges(yuv420Rois[x], type, 1) ||
+			    !compare_rgb_to_avc444_edges(yuv420Rois[x], type, 2))
+				goto end;
+		}
 
 		/* the random roi may be too narrow for the vector loops; 1744 is an
 		 * odd number of macroblocks */
