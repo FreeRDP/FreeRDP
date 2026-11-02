@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Apple VideoToolbox H.264 decoder
+ * Apple VideoToolbox H.264 decoder and encoder
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -548,9 +548,574 @@ fail:
 	return result;
 }
 
+/* The encoder: VideoToolbox compresses NV12 into AVCC (length-prefixed NAL units, the
+ * parameter sets kept in the format description); RDP's AVC420 carries an Annex B stream, so
+ * the lengths become start codes and SPS/PPS go in front of every keyframe. */
+typedef struct
+{
+	VTCompressionSessionRef session;
+	UINT32 width;
+	UINT32 height;
+	UINT32 frameRate;
+	UINT32 bitRate;
+	UINT32 qp;
+	H264_RATECONTROL_MODE rateControl;
+	INT64 frameIndex;
+	BYTE* data;
+	size_t size;
+	size_t length;
+	OSStatus status;
+	BOOL failed;
+	wLog* log;
+} H264_CONTEXT_VT_ENCODER;
+
+/* full range: FreeRDP's RGB to YUV conversion uses the whole 0..255 range */
+#define VIDEOTOOLBOX_ENCODER_FORMAT kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_append(H264_CONTEXT_VT_ENCODER* enc, const void* data, size_t size)
+{
+	WINPR_ASSERT(enc);
+
+	if (size > SIZE_MAX - enc->length)
+		return FALSE;
+	const size_t need = enc->length + size;
+	if (need > enc->size)
+	{
+		size_t newSize = MAX(need, 4096);
+		if (enc->size <= SIZE_MAX / 2)
+			newSize = MAX(newSize, enc->size * 2);
+		BYTE* tmp = realloc(enc->data, newSize);
+		if (!tmp)
+			return FALSE;
+		enc->data = tmp;
+		enc->size = newSize;
+	}
+	if (size > 0)
+		memcpy(&enc->data[enc->length], data, size);
+	enc->length = need;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_append_nal(H264_CONTEXT_VT_ENCODER* enc, const void* nal,
+                                            size_t size)
+{
+	static const BYTE startCode[] = { 0x00, 0x00, 0x00, 0x01 };
+	return videotoolbox_encoder_append(enc, startCode, sizeof(startCode)) &&
+	       videotoolbox_encoder_append(enc, nal, size);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_is_keyframe(CMSampleBufferRef sample)
+{
+	/* a sample without attachments is a sync sample */
+	CFArrayRef attachments = CMSampleBufferGetSampleAttachmentsArray(sample, false);
+	if (!attachments || (CFArrayGetCount(attachments) < 1))
+		return TRUE;
+	CFDictionaryRef dict = CFArrayGetValueAtIndex(attachments, 0);
+	const void* notSync = nullptr;
+	if (dict && CFDictionaryGetValueIfPresent(dict, kCMSampleAttachmentKey_NotSync, &notSync) &&
+	    notSync && CFBooleanGetValue((CFBooleanRef)notSync))
+		return FALSE;
+	return TRUE;
+}
+
+static void videotoolbox_encoder_fail(H264_CONTEXT_VT_ENCODER* enc, OSStatus status,
+                                      const char* what)
+{
+	WINPR_ASSERT(enc);
+	enc->failed = TRUE;
+	enc->status = status;
+	WLog_Print(enc->log, WLOG_ERROR, "VideoToolbox H.264 encoder: %s failed: %d", what,
+	           (int)status);
+}
+
+static void videotoolbox_encoder_output(void* refcon, WINPR_ATTR_UNUSED void* frameRefcon,
+                                        OSStatus status, VTEncodeInfoFlags flags,
+                                        CMSampleBufferRef sample)
+{
+	H264_CONTEXT_VT_ENCODER* enc = refcon;
+	WINPR_ASSERT(enc);
+
+	if (status != noErr)
+	{
+		videotoolbox_encoder_fail(enc, status, "encoding a frame");
+		return;
+	}
+	/* a dropped frame has no sample: nothing to send */
+	if (!sample || ((flags & kVTEncodeInfo_FrameDropped) != 0))
+		return;
+
+	int nalHeaderLength = 4;
+	CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sample);
+	if (format)
+	{
+		size_t count = 0;
+		OSStatus rc = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+		    format, 0, nullptr, nullptr, &count, &nalHeaderLength);
+		if (rc != noErr)
+		{
+			videotoolbox_encoder_fail(enc, rc, "reading the parameter sets");
+			return;
+		}
+		if (videotoolbox_encoder_is_keyframe(sample))
+		{
+			for (size_t x = 0; x < count; x++)
+			{
+				const uint8_t* set = nullptr;
+				size_t setSize = 0;
+				rc = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, x, &set, &setSize,
+				                                                        nullptr, nullptr);
+				if (rc != noErr)
+				{
+					videotoolbox_encoder_fail(enc, rc, "reading a parameter set");
+					return;
+				}
+				if (!videotoolbox_encoder_append_nal(enc, set, setSize))
+				{
+					videotoolbox_encoder_fail(enc, kVTAllocationFailedErr,
+					                          "copying a parameter set");
+					return;
+				}
+			}
+		}
+	}
+	if ((nalHeaderLength < 1) || (nalHeaderLength > 4))
+	{
+		videotoolbox_encoder_fail(enc, kVTParameterErr, "the NAL length size");
+		return;
+	}
+
+	CMBlockBufferRef block = CMSampleBufferGetDataBuffer(sample);
+	if (!block)
+	{
+		videotoolbox_encoder_fail(enc, kVTParameterErr, "getting the frame data");
+		return;
+	}
+
+	size_t total = 0;
+	size_t contiguous = 0;
+	char* ptr = nullptr;
+	BYTE* copy = nullptr;
+	OSStatus rc = CMBlockBufferGetDataPointer(block, 0, &contiguous, &total, &ptr);
+	if ((rc == noErr) && (contiguous < total))
+	{
+		/* not one piece: copy it */
+		copy = malloc(total);
+		if (!copy)
+			rc = kVTAllocationFailedErr;
+		else
+			rc = CMBlockBufferCopyDataBytes(block, 0, total, copy);
+		ptr = (char*)copy;
+	}
+	if (rc != noErr)
+	{
+		videotoolbox_encoder_fail(enc, rc, "reading the frame data");
+		free(copy);
+		return;
+	}
+
+	const BYTE* data = (const BYTE*)ptr;
+	const size_t header = (size_t)nalHeaderLength;
+	size_t offset = 0;
+	while (total - offset > header)
+	{
+		size_t nalSize = 0;
+		for (size_t x = 0; x < header; x++)
+			nalSize = (nalSize << 8) | data[offset + x];
+		offset += header;
+		if (nalSize > total - offset)
+		{
+			videotoolbox_encoder_fail(enc, kVTParameterErr, "a NAL unit longer than the frame");
+			break;
+		}
+		if (!videotoolbox_encoder_append_nal(enc, &data[offset], nalSize))
+		{
+			videotoolbox_encoder_fail(enc, kVTAllocationFailedErr, "copying a NAL unit");
+			break;
+		}
+		offset += nalSize;
+	}
+	free(copy);
+}
+
+static void videotoolbox_encoder_destroy(H264_CONTEXT_VT_ENCODER* enc)
+{
+	WINPR_ASSERT(enc);
+
+	if (enc->session)
+	{
+		(void)VTCompressionSessionCompleteFrames(enc->session, kCMTimeInvalid);
+		VTCompressionSessionInvalidate(enc->session);
+		CFRelease(enc->session);
+		enc->session = nullptr;
+	}
+}
+
+static BOOL videotoolbox_encoder_set(H264_CONTEXT_VT_ENCODER* enc, CFStringRef key, CFTypeRef value,
+                                     const char* name)
+{
+	WINPR_ASSERT(enc);
+	if (!value)
+		return FALSE;
+	const OSStatus rc = VTSessionSetProperty(enc->session, key, value);
+	if (rc != noErr)
+	{
+		WLog_Print(enc->log, WLOG_DEBUG, "VideoToolbox H.264 encoder: %s not set: %d", name,
+		           (int)rc);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL videotoolbox_encoder_set_int(H264_CONTEXT_VT_ENCODER* enc, CFStringRef key,
+                                         int32_t value, const char* name)
+{
+	CFNumberRef number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &value);
+	const BOOL rc = videotoolbox_encoder_set(enc, key, number, name);
+	if (number)
+		CFRelease(number);
+	return rc;
+}
+
+static BOOL videotoolbox_encoder_set_float(H264_CONTEXT_VT_ENCODER* enc, CFStringRef key,
+                                           float value, const char* name)
+{
+	CFNumberRef number = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloat32Type, &value);
+	const BOOL rc = videotoolbox_encoder_set(enc, key, number, name);
+	if (number)
+		CFRelease(number);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_set_qp(H264_CONTEXT_VT_ENCODER* enc, UINT32 qp)
+{
+	const int32_t value = (int32_t)MIN(qp, 51);
+	if (__builtin_available(macOS 13.0, iOS 16.0, *))
+	{
+		/* a constant QP: the same lower and upper bound */
+		if (videotoolbox_encoder_set_int(enc, kVTCompressionPropertyKey_MinAllowedFrameQP, value,
+		                                 "MinAllowedFrameQP") &&
+		    videotoolbox_encoder_set_int(enc, kVTCompressionPropertyKey_MaxAllowedFrameQP, value,
+		                                 "MaxAllowedFrameQP"))
+			return TRUE;
+	}
+	/* otherwise the 0..1 quality scale (1 best), from the QP scale (0..51, 0 best) */
+	return videotoolbox_encoder_set_float(enc, kVTCompressionPropertyKey_Quality,
+	                                      1.0f - (1.0f * (float)value / 51.0f), "Quality");
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_create(H264_CONTEXT* h264, H264_CONTEXT_VT_ENCODER* enc,
+                                        UINT32 width, UINT32 height, UINT32 frameRate,
+                                        UINT32 bitRate)
+{
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(enc);
+
+	BOOL rc = FALSE;
+	CFMutableDictionaryRef source = nullptr;
+	CFMutableDictionaryRef surface = nullptr;
+	CFNumberRef number = nullptr;
+
+	videotoolbox_encoder_destroy(enc);
+	if ((width > INT32_MAX) || (height > INT32_MAX) || (frameRate > INT32_MAX))
+		return FALSE;
+
+	source = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
+	                                   &kCFTypeDictionaryValueCallBacks);
+	surface = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
+	                                    &kCFTypeDictionaryValueCallBacks);
+	const int32_t pixelFormat = VIDEOTOOLBOX_ENCODER_FORMAT;
+	number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &pixelFormat);
+	if (!source || !surface || !number)
+		goto fail;
+	CFDictionarySetValue(source, kCVPixelBufferPixelFormatTypeKey, number);
+	/* IOSurface backed buffers go to the hardware encoder without a copy */
+	CFDictionarySetValue(source, kCVPixelBufferIOSurfacePropertiesKey, surface);
+
+	OSStatus status = VTCompressionSessionCreate(
+	    kCFAllocatorDefault, (int32_t)width, (int32_t)height, kCMVideoCodecType_H264, nullptr,
+	    source, kCFAllocatorDefault, videotoolbox_encoder_output, enc, &enc->session);
+	if (status != noErr)
+	{
+		WLog_Print(h264->log, WLOG_WARN,
+		           "VideoToolbox H.264 encoder: VTCompressionSessionCreate %" PRIu32 "x%" PRIu32
+		           " failed: %d",
+		           width, height, (int)status);
+		enc->session = nullptr;
+		goto fail;
+	}
+
+	/* every frame goes out at once: no frame reordering (B frames would hold frames back),
+	 * real time scheduling */
+	(void)videotoolbox_encoder_set(enc, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue,
+	                               "RealTime");
+	if (!videotoolbox_encoder_set(enc, kVTCompressionPropertyKey_AllowFrameReordering,
+	                              kCFBooleanFalse, "AllowFrameReordering"))
+		goto fail;
+	/* Baseline, as OpenH264 sends: every RDP client decodes it */
+	(void)videotoolbox_encoder_set(enc, kVTCompressionPropertyKey_ProfileLevel,
+	                               kVTProfileLevel_H264_Baseline_AutoLevel, "ProfileLevel");
+	/* over RDP's reliable transport a new encoder starts with a keyframe and that is enough,
+	 * as with OpenH264 and Media Foundation: ask for a long interval */
+	(void)videotoolbox_encoder_set_int(enc, kVTCompressionPropertyKey_MaxKeyFrameInterval,
+	                                   UINT16_MAX, "MaxKeyFrameInterval");
+	(void)videotoolbox_encoder_set_int(enc, kVTCompressionPropertyKey_ExpectedFrameRate,
+	                                   (int32_t)frameRate, "ExpectedFrameRate");
+
+	switch (h264->RateControlMode)
+	{
+		case H264_RATECONTROL_CQP:
+			if (!videotoolbox_encoder_set_qp(enc, h264->QP))
+				goto fail;
+			break;
+		case H264_RATECONTROL_VBR:
+		default:
+			if (!videotoolbox_encoder_set_int(enc, kVTCompressionPropertyKey_AverageBitRate,
+			                                  (int32_t)MIN(bitRate, INT32_MAX), "AverageBitRate"))
+				goto fail;
+			break;
+	}
+
+	status = VTCompressionSessionPrepareToEncodeFrames(enc->session);
+	if (status != noErr)
+	{
+		WLog_Print(h264->log, WLOG_WARN,
+		           "VideoToolbox H.264 encoder: VTCompressionSessionPrepareToEncodeFrames failed: "
+		           "%d",
+		           (int)status);
+		goto fail;
+	}
+
+	/* only logged: to yuv_ensure_buffer h264->hwAccel means NV12 YUV buffers, and this encoder
+	 * takes the I420 buffers FreeRDP fills */
+	BOOL hardware = FALSE;
+	CFBooleanRef usingHardware = nullptr;
+	if ((VTSessionCopyProperty(enc->session,
+	                           kVTCompressionPropertyKey_UsingHardwareAcceleratedVideoEncoder,
+	                           kCFAllocatorDefault, &usingHardware) == noErr) &&
+	    usingHardware)
+	{
+		hardware = CFBooleanGetValue(usingHardware) ? TRUE : FALSE;
+		CFRelease(usingHardware);
+	}
+
+	enc->width = width;
+	enc->height = height;
+	enc->frameRate = frameRate;
+	enc->bitRate = bitRate;
+	enc->qp = h264->QP;
+	enc->rateControl = h264->RateControlMode;
+	enc->frameIndex = 0;
+	WLog_Print(
+	    h264->log, WLOG_DEBUG,
+	    "VideoToolbox H.264 encoder: %" PRIu32 "x%" PRIu32 " at %" PRIu32 " fps, %s, hardware %s",
+	    width, height, frameRate,
+	    (h264->RateControlMode == H264_RATECONTROL_CQP) ? "constant QP" : "variable bit rate",
+	    hardware ? "yes" : "no");
+	rc = TRUE;
+
+fail:
+	if (number)
+		CFRelease(number);
+	if (surface)
+		CFRelease(surface);
+	if (source)
+		CFRelease(source);
+	if (!rc)
+		videotoolbox_encoder_destroy(enc);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_update(H264_CONTEXT* h264, H264_CONTEXT_VT_ENCODER* enc,
+                                        UINT32 width, UINT32 height, UINT32 frameRate,
+                                        UINT32 bitRate)
+{
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(enc);
+
+	if (!enc->session || (enc->width != width) || (enc->height != height) ||
+	    (enc->frameRate != frameRate) || (enc->rateControl != h264->RateControlMode))
+		return videotoolbox_encoder_create(h264, enc, width, height, frameRate, bitRate);
+
+	/* bit rate and QP can change while the session runs; start over where they can't */
+	if ((h264->RateControlMode != H264_RATECONTROL_CQP) && (enc->bitRate != bitRate))
+	{
+		if (!videotoolbox_encoder_set_int(enc, kVTCompressionPropertyKey_AverageBitRate,
+		                                  (int32_t)MIN(bitRate, INT32_MAX), "AverageBitRate"))
+			return videotoolbox_encoder_create(h264, enc, width, height, frameRate, bitRate);
+		enc->bitRate = bitRate;
+	}
+	if ((h264->RateControlMode == H264_RATECONTROL_CQP) && (enc->qp != h264->QP))
+	{
+		if (!videotoolbox_encoder_set_qp(enc, h264->QP))
+			return videotoolbox_encoder_create(h264, enc, width, height, frameRate, bitRate);
+		enc->qp = h264->QP;
+	}
+	return TRUE;
+}
+
+/* I420 planes (FreeRDP's YUV buffers) into the NV12 picture the encoder takes */
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_copy(CVPixelBufferRef image, const BYTE** WINPR_RESTRICT pSrcYuv,
+                                      const UINT32* WINPR_RESTRICT pStride, UINT32 width,
+                                      UINT32 height)
+{
+	if (CVPixelBufferLockBaseAddress(image, 0) != kCVReturnSuccess)
+		return FALSE;
+
+	BOOL rc = FALSE;
+	BYTE* luma = CVPixelBufferGetBaseAddressOfPlane(image, 0);
+	BYTE* chroma = CVPixelBufferGetBaseAddressOfPlane(image, 1);
+	const size_t lumaStride = CVPixelBufferGetBytesPerRowOfPlane(image, 0);
+	const size_t chromaStride = CVPixelBufferGetBytesPerRowOfPlane(image, 1);
+	if (!luma || !chroma || (lumaStride < width) || (chromaStride < width) ||
+	    (CVPixelBufferGetHeightOfPlane(image, 0) < height) ||
+	    (CVPixelBufferGetHeightOfPlane(image, 1) < height / 2))
+		goto out;
+
+	for (UINT32 y = 0; y < height; y++)
+		memcpy(&luma[y * lumaStride], &pSrcYuv[0][1ull * y * pStride[0]], width);
+	for (UINT32 y = 0; y < height / 2; y++)
+	{
+		const BYTE* u = &pSrcYuv[1][1ull * y * pStride[1]];
+		const BYTE* v = &pSrcYuv[2][1ull * y * pStride[2]];
+		BYTE* uv = &chroma[y * chromaStride];
+		for (UINT32 x = 0; x < width / 2; x++)
+		{
+			uv[2 * x] = u[x];
+			uv[2 * x + 1] = v[x];
+		}
+	}
+	rc = TRUE;
+out:
+	(void)CVPixelBufferUnlockBaseAddress(image, 0);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static int videotoolbox_compress(H264_CONTEXT* WINPR_RESTRICT h264,
+                                 const BYTE** WINPR_RESTRICT pSrcYuv,
+                                 const UINT32* WINPR_RESTRICT pStride,
+                                 BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
+{
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(pSrcYuv);
+	WINPR_ASSERT(pStride);
+	WINPR_ASSERT(ppDstData);
+	WINPR_ASSERT(pDstSize);
+
+	H264_CONTEXT_VT_ENCODER* enc = h264->pSystemData;
+	if (!enc || !pSrcYuv[0] || !pSrcYuv[1] || !pSrcYuv[2])
+		return -1;
+	if ((h264->width == 0) || (h264->height == 0) || (h264->width > UINT16_MAX) ||
+	    (h264->height > UINT16_MAX))
+		return -1;
+
+	/* 4:2:0 needs even sizes; the YUV buffers are padded (yuv_ensure_buffer), so one more
+	 * column or row is readable */
+	const UINT32 width = (h264->width + 1) & ~1u;
+	const UINT32 height = (h264->height + 1) & ~1u;
+	const UINT32 frameRate = (h264->FrameRate > 0) ? MIN(h264->FrameRate, 1000) : 30;
+	const UINT32 bitRate = (h264->BitRate > 0) ? h264->BitRate : 1000000;
+
+	if (!videotoolbox_encoder_update(h264, enc, width, height, frameRate, bitRate))
+		return -1;
+
+	CVPixelBufferRef image = nullptr;
+	CVPixelBufferPoolRef pool = VTCompressionSessionGetPixelBufferPool(enc->session);
+	const CVReturn cv = pool ? CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &image)
+	                         : CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+	                                               VIDEOTOOLBOX_ENCODER_FORMAT, nullptr, &image);
+	if ((cv != kCVReturnSuccess) || !image)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "VideoToolbox H.264 encoder: no picture buffer: %d",
+		           (int)cv);
+		return -1;
+	}
+	if (!videotoolbox_encoder_copy(image, pSrcYuv, pStride, width, height))
+	{
+		CVPixelBufferRelease(image);
+		return -1;
+	}
+
+	enc->length = 0;
+	enc->failed = FALSE;
+	enc->status = noErr;
+	const CMTime pts = CMTimeMake(enc->frameIndex++, (int32_t)frameRate);
+	const CMTime duration = CMTimeMake(1, (int32_t)frameRate);
+	OSStatus status = VTCompressionSessionEncodeFrame(enc->session, image, pts, duration, nullptr,
+	                                                  nullptr, nullptr);
+	CVPixelBufferRelease(image);
+	if (status == noErr)
+		/* the output callback has run for this frame when this returns */
+		status = VTCompressionSessionCompleteFrames(enc->session, pts);
+	if ((status != noErr) || enc->failed)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "VideoToolbox H.264 encoder: frame failed: %d / %d",
+		           (int)status, (int)enc->status);
+		/* the next frame starts a new session, with a keyframe */
+		videotoolbox_encoder_destroy(enc);
+		return -1;
+	}
+
+	if ((enc->length == 0) || (enc->length > UINT32_MAX))
+		return 0;
+
+	*ppDstData = enc->data;
+	*pDstSize = (UINT32)enc->length;
+	return 1;
+}
+
+static void videotoolbox_encoder_uninit(H264_CONTEXT* h264)
+{
+	WINPR_ASSERT(h264);
+
+	H264_CONTEXT_VT_ENCODER* enc = h264->pSystemData;
+	if (!enc)
+		return;
+	videotoolbox_encoder_destroy(enc);
+	free(enc->data);
+	free(enc);
+	h264->pSystemData = nullptr;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_init(H264_CONTEXT* h264)
+{
+	WINPR_ASSERT(h264);
+
+	H264_CONTEXT_VT_ENCODER* enc = calloc(1, sizeof(*enc));
+	if (!enc)
+		return FALSE;
+	enc->log = h264->log;
+	h264->pSystemData = enc;
+
+	/* a session for the real size is made with the first frame; one small session now tells
+	 * whether this system has an H.264 encoder at all, so that registration can go on to
+	 * another backend if not */
+	if (!videotoolbox_encoder_create(h264, enc, 64, 64, 30, 1000000))
+	{
+		videotoolbox_encoder_uninit(h264);
+		return FALSE;
+	}
+	videotoolbox_encoder_destroy(enc);
+	return TRUE;
+}
+
 static void videotoolbox_uninit(H264_CONTEXT* h264)
 {
 	WINPR_ASSERT(h264);
+
+	if (h264->Compressor)
+	{
+		videotoolbox_encoder_uninit(h264);
+		return;
+	}
 
 	H264_CONTEXT_VIDEOTOOLBOX* sys = h264->pSystemData;
 	if (!sys)
@@ -570,9 +1135,9 @@ static BOOL videotoolbox_init(H264_CONTEXT* h264)
 {
 	WINPR_ASSERT(h264);
 
-	/* Let registration continue to an encoder-capable backend for compressor contexts. */
 	if (h264->Compressor)
-		return FALSE;
+		return videotoolbox_encoder_init(h264);
+
 	H264_CONTEXT_VIDEOTOOLBOX* sys = calloc(1, sizeof(*sys));
 	if (!sys)
 		return FALSE;
@@ -584,5 +1149,6 @@ static BOOL videotoolbox_init(H264_CONTEXT* h264)
 }
 
 const H264_CONTEXT_SUBSYSTEM g_Subsystem_VideoToolbox = { "VideoToolbox", videotoolbox_init,
-	                                                      videotoolbox_uninit,
-	                                                      videotoolbox_decompress, nullptr };
+                                                          videotoolbox_uninit,
+                                                          videotoolbox_decompress,
+                                                          videotoolbox_compress };
