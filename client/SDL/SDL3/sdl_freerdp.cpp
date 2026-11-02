@@ -378,9 +378,13 @@ static void sdl_client_free([[maybe_unused]] freerdp* instance, rdpContext* cont
 
 [[nodiscard]] static int sdl_client_stop(rdpContext* context)
 {
+	const int rc = freerdp_client_common_stop(context);
 	auto sdl = get_context(context);
 	WINPR_ASSERT(sdl);
-	return sdl->join();
+	const int rc2 = sdl->join();
+	if (rc < 0)
+		return rc;
+	return rc2;
 }
 
 static void RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
