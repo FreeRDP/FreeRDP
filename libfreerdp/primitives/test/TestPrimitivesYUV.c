@@ -1836,6 +1836,8 @@ int TestPrimitivesYUV(int argc, char* argv[])
 			goto end;
 		if (!compare_rgb_to_yuv420(roi, type))
 			goto end;
+		/* byte exact only where the optimized routine keeps the generic integer math (NEON);
+		 * the SSE4.1 one uses 7 and 8 bit coefficients, see compare_rgb_to_yuv420_exact() */
 #if defined(NEON_INTRINSICS_ENABLED)
 		/* the random roi plus sizes around the 16x2 vector blocks */
 		const prim_size_t yuv420Rois[] = {
