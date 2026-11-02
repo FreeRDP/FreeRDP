@@ -21,6 +21,7 @@
 
 #include <freerdp/config.h>
 
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -153,11 +154,11 @@ static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 }
 #endif
 
-static Uint32 scale(Uint32 val, float scale)
+/* a length in pixels at the given dots per inch, in millimetres (the unit of the physical size) */
+static Uint32 to_mm(Uint32 pixels, float dpi)
 {
-	const auto dval = static_cast<float>(val);
-	const auto sval = dval / scale;
-	return static_cast<Uint32>(sval);
+	const auto inches = static_cast<float>(pixels) / dpi;
+	return static_cast<Uint32>(std::lround(inches * 25.4f));
 }
 
 static BOOL sdl_apply_display_properties(SdlContext* sdl)
@@ -251,8 +252,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		monitor.attributes.desktopScaleFactor = static_cast<UINT32>(factor);
 		monitor.attributes.deviceScaleFactor = 100;
 		monitor.attributes.orientation = rdp_orientation;
-		monitor.attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
-		monitor.attributes.physicalHeight = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
+		monitor.attributes.physicalWidth = to_mm(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
+		monitor.attributes.physicalHeight = to_mm(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
 		monitors.emplace_back(monitor);
 	}
 	return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),

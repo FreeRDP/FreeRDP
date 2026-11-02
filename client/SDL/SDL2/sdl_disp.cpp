@@ -119,8 +119,9 @@ BOOL sdlDispContext::sendResize()
 		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
-		layout.PhysicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
+		/* millimetres, unknown here: 0 (not given) rather than the size in pixels */
+		layout.PhysicalWidth = 0;
+		layout.PhysicalHeight = 0;
 
 		if (IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, 1, &layout) !=
 		    CHANNEL_RC_OK)
