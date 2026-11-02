@@ -1050,6 +1050,9 @@ BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
 	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
+	/* Install a fixed-canvas limit even before the first server MINMAXINFO. */
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_DynamicResolutionUpdate))
+		xf_SetWindowMinMaxInfo(xfc, appWindow, 0, 0, 0, 0, 1, 1, 0, 0);
 	if (xf_ShowWindow(xfc, appWindow, WINDOW_SHOW))
 		redraw = TRUE;
 	LogDynAndXClearWindow(xfc->log, xfc->display, appWindow->handle);
@@ -1160,6 +1163,19 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_U
 
 	if (size_hints)
 	{
+		const rdpSettings* settings = xfc->common.context.settings;
+		const UINT32 desktopWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		const UINT32 desktopHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+		const BOOL fixed = !freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
+		/* Preserve stricter application limits and never contradict its minimum size. */
+		if (fixed && desktopWidth > 0 && desktopWidth <= INT_MAX &&
+		    minTrackWidth <= (int)desktopWidth)
+			maxTrackWidth =
+			    (maxTrackWidth > 0) ? MIN(maxTrackWidth, (int)desktopWidth) : (int)desktopWidth;
+		if (fixed && desktopHeight > 0 && desktopHeight <= INT_MAX &&
+		    minTrackHeight <= (int)desktopHeight)
+			maxTrackHeight =
+			    (maxTrackHeight > 0) ? MIN(maxTrackHeight, (int)desktopHeight) : (int)desktopHeight;
 		size_hints->flags = PMinSize | PMaxSize | PResizeInc;
 		size_hints->min_width = minTrackWidth;
 		size_hints->min_height = minTrackHeight;
@@ -1169,6 +1185,23 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_U
 		size_hints->width_inc = size_hints->height_inc = 1;
 		XSetWMNormalHints(xfc->display, appWindow->handle, size_hints);
 		XFree(size_hints);
+	}
+}
+
+void xf_AppWindowReapplySizeHints(xfContext* xfc, xfAppWindow* appWindow)
+{
+	if (freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_DynamicResolutionUpdate))
+		return;
+	XSizeHints hints = WINPR_C_ARRAY_INIT;
+	long supplied = 0;
+	if (XGetWMNormalHints(xfc->display, appWindow->handle, &hints, &supplied) &&
+	    (hints.flags & PMaxSize) &&
+	    ((hints.max_width > 0 && appWindow->width > hints.max_width) ||
+	     (hints.max_height > 0 && appWindow->height > hints.max_height)))
+	{
+		/* Some WMs re-evaluate size limits only after entering the maximized state.
+		 * Reapply the existing property, preserving application minima/aspect/increments. */
+		XSetWMNormalHints(xfc->display, appWindow->handle, &hints);
 	}
 }
 
@@ -1238,6 +1271,16 @@ BOOL xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 
 	if (appWindow->local_move.state == LMS_STARTING || appWindow->local_move.state == LMS_ACTIVE)
 		return FALSE;
+
+	/* Superseded configure notifications must not echo obsolete server geometry. */
+	if (resize || appWindow->x != x || appWindow->y != y)
+	{
+		appWindow->rail_configure.pending = TRUE;
+		appWindow->rail_configure.x = x;
+		appWindow->rail_configure.y = y;
+		appWindow->rail_configure.width = width;
+		appWindow->rail_configure.height = height;
+	}
 
 	appWindow->x = x;
 	appWindow->y = y;

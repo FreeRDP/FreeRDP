@@ -490,13 +490,14 @@ static BOOL dispatch(xfContext* xfc, Event event)
 		case WHILE_GRABBED_OUT:
 			return focus(xfc, FocusOut, NotifyWhileGrabbed);
 		case MOTION:
-			return xf_generic_MotionNotify(xfc, 10, 20, None, FALSE);
+			return xf_generic_MotionNotify(xfc, 10, 20, 10, 20, None, FALSE);
 		case BUTTON_DOWN:
 		case BUTTON_UP:
-			return xf_generic_ButtonEvent(xfc, 10, 20, 1, None, FALSE, event == BUTTON_DOWN);
+			return xf_generic_ButtonEvent(xfc, 10, 20, 10, 20, 1, None, FALSE,
+			                              event == BUTTON_DOWN);
 		case WHEEL_DOWN:
 		case WHEEL_UP:
-			return xf_generic_ButtonEvent(xfc, 10, 20, 4, None, FALSE, event == WHEEL_DOWN);
+			return xf_generic_ButtonEvent(xfc, 10, 20, 10, 20, 4, None, FALSE, event == WHEEL_DOWN);
 		case RAW_BUTTON_DOWN:
 			return xf_generic_RawButtonEvent(xfc, 8, FALSE, TRUE);
 		case LOCAL_CANCEL:

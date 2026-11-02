@@ -100,6 +100,12 @@ struct xf_app_window
 	BOOL is_mapped;
 	BOOL is_transient;
 	xfLocalMove local_move;
+	/* Last server-requested X11 geometry, protected by the app-window lock. */
+	struct
+	{
+		BOOL pending;
+		INT32 x, y, width, height;
+	} rail_configure;
 	BYTE rail_state;
 	BOOL maxVert;
 	BOOL maxHorz;
@@ -119,6 +125,11 @@ struct xf_app_window
 };
 typedef struct xf_app_window xfAppWindow;
 typedef struct xf_rail_icon_cache xfRailIconCache;
+
+void xf_rail_pointer_to_desktop(const xfAppWindow* window, int rootX, int rootY, int* x, int* y);
+BOOL xf_rail_configure_ack(xfAppWindow* window);
+BOOL xf_rail_popup_to_local(const xfAppWindow* owner, int ownerRootX, int ownerRootY, int* x,
+                            int* y);
 
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);

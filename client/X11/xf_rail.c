@@ -33,6 +33,7 @@
 
 #include "xf_window.h"
 #include "xf_rail.h"
+#include "xf_rail_workarea.h"
 #include "xf_utils.h"
 
 #include <freerdp/log.h>
@@ -191,6 +192,20 @@ static UINT xf_rail_send_workarea(xfContext* xfc)
 	if (!xf_rail_get_workarea(xfc, &current))
 		return CHANNEL_RC_OK;
 
+	const rdpSettings* settings = xfc->common.context.settings;
+	RECTANGLE_16 area = WINPR_C_ARRAY_INIT;
+	if (!xf_rail_workarea_clip(current.x, current.y, current.width, current.height,
+	                           freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                           freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), &area))
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "Ignoring work area outside the negotiated desktop");
+		return CHANNEL_RC_OK;
+	}
+	current.x = area.left;
+	current.y = area.top;
+	current.width = area.right - area.left;
+	current.height = area.bottom - area.top;
+
 	if ((current.x == xfc->railWorkArea.x) && (current.y == xfc->railWorkArea.y) &&
 	    (current.width == xfc->railWorkArea.width) && (current.height == xfc->railWorkArea.height))
 	{
@@ -201,15 +216,7 @@ static UINT xf_rail_send_workarea(xfContext* xfc)
 		return CHANNEL_RC_OK;
 	}
 
-	const INT64 right = (INT64)current.x + current.width;
-	const INT64 bottom = (INT64)current.y + current.height;
-	const RAIL_SYSPARAM_ORDER sysparam = { .params = SPI_MASK_SET_WORK_AREA,
-		                                   .workArea.left =
-		                                       WINPR_CXX_COMPAT_CAST(UINT16, current.x),
-		                                   .workArea.top = WINPR_CXX_COMPAT_CAST(UINT16, current.y),
-		                                   .workArea.right = WINPR_CXX_COMPAT_CAST(UINT16, right),
-		                                   .workArea.bottom =
-		                                       WINPR_CXX_COMPAT_CAST(UINT16, bottom) };
+	const RAIL_SYSPARAM_ORDER sysparam = { .params = SPI_MASK_SET_WORK_AREA, .workArea = area };
 
 	WLog_Print(xfc->log, WLOG_DEBUG,
 	           "Sending work area %" PRId32 ",%" PRId32 " %" PRIu32 "x%" PRIu32, current.x,
@@ -233,6 +240,66 @@ BOOL xf_rail_schedule_workarea(xfContext* xfc)
 	}
 
 	return xf_rail_send_workarea(xfc) == CHANNEL_RC_OK;
+}
+
+void xf_rail_pointer_to_desktop(const xfAppWindow* window, int rootX, int rootY, int* x, int* y)
+{
+	WINPR_ASSERT(window);
+	WINPR_ASSERT(x);
+	WINPR_ASSERT(y);
+	/* Never combine queued local input with a different generation of window geometry. */
+	INT64 remoteX = rootX;
+	INT64 remoteY = rootY;
+	if ((window->dwStyle & WS_MAXIMIZE) ||
+	    ((window->dwStyle & WS_POPUP) && (window->dwExStyle & WS_EX_NOACTIVATE)))
+	{
+		remoteX = (INT64)*x + window->windowOffsetX;
+		remoteY = (INT64)*y + window->windowOffsetY;
+	}
+	/* Invert the maximized-surface inset used by xf_AppUpdateWindowFromSurface. */
+	if (window->dwStyle & WS_MAXIMIZE)
+	{
+		if (window->width > 0 && window->windowWidth > (UINT32)window->width)
+			remoteX += window->resizeMarginLeft;
+		if (window->height > 0 && window->windowHeight > (UINT32)window->height)
+			remoteY += window->resizeMarginTop;
+	}
+	*x = (int)MIN(MAX(remoteX, 0), UINT16_MAX);
+	*y = (int)MIN(MAX(remoteY, 0), UINT16_MAX);
+}
+
+BOOL xf_rail_popup_to_local(const xfAppWindow* owner, int ownerRootX, int ownerRootY, int* x,
+                            int* y)
+{
+	WINPR_ASSERT(owner);
+	WINPR_ASSERT(x);
+	WINPR_ASSERT(y);
+	INT64 originX = owner->windowOffsetX;
+	INT64 originY = owner->windowOffsetY;
+	if (owner->dwStyle & WS_MAXIMIZE)
+	{
+		if (owner->width > 0 && owner->windowWidth > (UINT32)owner->width)
+			originX += owner->resizeMarginLeft;
+		if (owner->height > 0 && owner->windowHeight > (UINT32)owner->height)
+			originY += owner->resizeMarginTop;
+	}
+	const INT64 targetX = (INT64)*x + ownerRootX - originX;
+	const INT64 targetY = (INT64)*y + ownerRootY - originY;
+	if (targetX < INT_MIN || targetX > INT_MAX || targetY < INT_MIN || targetY > INT_MAX)
+		return FALSE;
+	*x = (int)targetX;
+	*y = (int)targetY;
+	return TRUE;
+}
+
+BOOL xf_rail_configure_ack(xfAppWindow* window)
+{
+	WINPR_ASSERT(window);
+	if (window->rail_configure.pending && window->x == window->rail_configure.x &&
+	    window->y == window->rail_configure.y && window->width == window->rail_configure.width &&
+	    window->height == window->rail_configure.height)
+		window->rail_configure.pending = FALSE;
+	return !window->rail_configure.pending;
 }
 
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
@@ -285,13 +352,13 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
-	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
+	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE ||
+	    appWindow->rail_configure.pending || appWindow->rail_state == WINDOW_SHOW_MAXIMIZED ||
+	    ((appWindow->dwStyle & WS_POPUP) && (appWindow->dwExStyle & WS_EX_NOACTIVATE)))
 		return FALSE;
 
-	/* NOTE: this geometry report is required - if it is dropped the server no
-	 * longer knows where the window manager placed the window and all mouse
-	 * events are routed to the wrong coordinates (buttons stop responding).
-	 * The window size feedback loop is handled in xf_rail_window_common(). */
+	/* Preserve genuine local WM placement feedback for ordinary windows, but do not
+	 * echo an unacknowledged server request or a source-relative presentation offset. */
 	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
 	    appWindow->width != (INT64)appWindow->windowWidth ||
 	    appWindow->height != (INT64)appWindow->windowHeight)
@@ -736,6 +803,24 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (position_or_size_updated)
 	{
+		int targetX = appWindow->windowOffsetX;
+		int targetY = appWindow->windowOffsetY;
+		/* Menus follow the owner's local placement but retain source input coordinates. */
+		if ((appWindow->dwStyle & WS_POPUP) && (appWindow->dwExStyle & WS_EX_NOACTIVATE) &&
+		    appWindow->ownerWindowId && appWindow->ownerWindowId != appWindow->windowId)
+		{
+			xfAppWindow* owner = xf_rail_get_window(xfc, appWindow->ownerWindowId, TRUE);
+			Window child = None;
+			int ownerRootX = 0;
+			int ownerRootY = 0;
+			if (owner &&
+			    XTranslateCoordinates(xfc->display, owner->handle, RootWindowOfScreen(xfc->screen),
+			                          0, 0, &ownerRootX, &ownerRootY, &child))
+			{
+				if (!xf_rail_popup_to_local(owner, ownerRootX, ownerRootY, &targetX, &targetY))
+					goto fail;
+			}
+		}
 		const INT32 visibilityRectsOffsetX =
 		    (appWindow->visibleOffsetX -
 		     (appWindow->clientOffsetX - appWindow->windowClientDeltaX));
@@ -752,8 +837,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		{
 			const BOOL maximized = (appWindow->dwStyle & WS_MAXIMIZE) != 0;
 			/* Leave maximized windows to the WM, which honors the work area. */
-			if (maximized || (appWindow->x == (INT64)appWindow->windowOffsetX &&
-			                  appWindow->y == (INT64)appWindow->windowOffsetY &&
+			if (maximized || (appWindow->x == targetX && appWindow->y == targetY &&
 			                  appWindow->width == (INT64)appWindow->windowWidth &&
 			                  appWindow->height == (INT64)appWindow->windowHeight))
 			{
@@ -764,8 +848,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			}
 			else
 			{
-				if (xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX,
-				                  appWindow->windowOffsetY,
+				if (xf_MoveWindow(xfc, appWindow, targetX, targetY,
 				                  WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
 				                  WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight)))
 					redraw = TRUE;

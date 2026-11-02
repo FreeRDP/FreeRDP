@@ -404,11 +404,9 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, const XVisibilityEvent* ev
 	return TRUE;
 }
 
-BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
-                              const char* file, const char* fkt, size_t line)
+BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, int rootX, int rootY, Window window,
+                              BOOL app, const char* file, const char* fkt, size_t line)
 {
-	Window childWindow = None;
-
 	if (WLog_IsLevelActive(xfc->log, mouseLogLevel))
 		WLog_PrintTextMessage(xfc->log, mouseLogLevel, line, file, fkt,
 		                      "%s: x=%d, y=%d, window=0x%08lx, app=%d", __func__, x, y, window,
@@ -421,13 +419,11 @@ BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL 
 	{
 		/* make sure window exists */
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
-		xf_rail_return_window(appWindow, FALSE);
 		if (!appWindow)
 			return TRUE;
 
-		/* Translate to desktop coordinates */
-		XTranslateCoordinates(xfc->display, window, RootWindowOfScreen(xfc->screen), x, y, &x, &y,
-		                      &childWindow);
+		xf_rail_pointer_to_desktop(appWindow, rootX, rootY, &x, &y);
+		xf_rail_return_window(appWindow, FALSE);
 	}
 
 	xf_event_adjust_coordinates(xfc, &x, &y);
@@ -472,14 +468,15 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
 		return TRUE;
 
-	return xf_generic_MotionNotify(xfc, event->x, event->y, event->window, app);
+	return xf_generic_MotionNotify(xfc, event->x, event->y, event->x_root, event->y_root,
+	                               event->window, app);
 }
 
-BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
-                             BOOL down, const char* file, const char* fkt, size_t line)
+BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int rootX, int rootY, int button,
+                             Window window, BOOL app, BOOL down, const char* file, const char* fkt,
+                             size_t line)
 {
 	UINT16 flags = 0;
-	Window childWindow = None;
 
 	if (WLog_IsLevelActive(xfc->log, mouseLogLevel))
 		WLog_PrintTextMessage(xfc->log, mouseLogLevel, line, file, fkt,
@@ -533,13 +530,11 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 			{
 				/* make sure window exists */
 				xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
-				xf_rail_return_window(appWindow, FALSE);
 				if (!appWindow)
 					return TRUE;
 
-				/* Translate to desktop coordinates */
-				XTranslateCoordinates(xfc->display, window, RootWindowOfScreen(xfc->screen), x, y,
-				                      &x, &y, &childWindow);
+				xf_rail_pointer_to_desktop(appWindow, rootX, rootY, &x, &y);
+				xf_rail_return_window(appWindow, FALSE);
 			}
 
 			xf_event_adjust_coordinates(xfc, &x, &y);
@@ -594,7 +589,7 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 		return TRUE;
 	if (!app && xfc_is_floatbar_window(xfc, event->window))
 		return TRUE;
-	return xf_generic_ButtonEvent(xfc, event->x, event->y,
+	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->x_root, event->y_root,
 	                              WINPR_ASSERTING_INT_CAST(int, event->button), event->window, app,
 	                              TRUE);
 }
@@ -605,7 +600,7 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 
 	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
 		return TRUE;
-	return xf_generic_ButtonEvent(xfc, event->x, event->y,
+	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->x_root, event->y_root,
 	                              WINPR_ASSERTING_INT_CAST(int, event->button), event->window, app,
 	                              FALSE);
 }
@@ -916,6 +911,9 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			appWindow->height = event->height;
 
 			xf_AppWindowResize(xfc, appWindow);
+			if ((appWindow->dwStyle & WS_MAXIMIZE) ||
+			    appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
+				xf_AppWindowReapplySizeHints(xfc, appWindow);
 
 			/*
 			 * Additional checks for not in a local move and not ignoring configure to send
@@ -923,7 +921,11 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			 * send to server yet (i.e. resizing using window decoration).
 			 * The server will be updated when the window gets refocused.
 			 */
-			if (appWindow->decorations)
+			if (!xf_rail_configure_ack(appWindow))
+			{
+				/* Still waiting for the latest server-requested geometry. */
+			}
+			else if (appWindow->decorations)
 			{
 				/* moving resizing using window decoration */
 				xf_rail_adjust_position(xfc, appWindow);
@@ -1071,6 +1073,9 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				}
 
 				XFree(prop);
+
+				if (appWindow && !fullscreen && appWindow->maxVert && appWindow->maxHorz)
+					xf_AppWindowReapplySizeHints(xfc, appWindow);
 
 				if (appWindow && appWindow->rail_fullscreen_normalizing)
 				{
