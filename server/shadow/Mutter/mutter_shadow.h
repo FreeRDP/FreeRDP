@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 
 #include <systemd/sd-bus.h>
 #include <pipewire/pipewire.h>
@@ -89,6 +90,21 @@ struct mutter_shadow_subsystem
 	BOOL cursorResend;
 	INT32 cursorX;
 	INT32 cursorY;
+
+	/* sound: a capture of the default sink's monitor, running only while
+	 * clients are connected; samples go out in messages of 20 ms */
+	struct pw_stream* audio;
+	struct spa_hook audioListener;
+	wStream* audioStream;
+	BOOL audioActive;
+	UINT64 audioFrames;
+	UINT64 audioMessages;
+	float audioPeak;
+	UINT64 audioLogged;
+
+	/* the clients connected; the event tells the thread the count changed */
+	volatile LONG clients;
+	HANDLE clientsEvent;
 
 	HANDLE thread;
 	HANDLE stopEvent;
