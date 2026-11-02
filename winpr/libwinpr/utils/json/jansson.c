@@ -21,6 +21,9 @@
 #include <winpr/json.h>
 #include <winpr/assert.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("utils.json.jansson")
+
 #if !defined(WITH_JANSSON)
 #error "This file must only be compiled if jansson library is linked in"
 #endif
@@ -321,6 +324,18 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
 {
 	json_t* obj = json_integer(number);
+	return add_to_object(object, name, obj);
+}
+
+WINPR_JSON* WINPR_JSON_AddUIntegerToObject(WINPR_JSON* object, const char* name, uint64_t number)
+{
+	if (number > INT64_MAX)
+	{
+		WLog_ERR(TAG, "jansson does not support integers > %" PRId64, INT64_MAX);
+		return nullptr;
+	}
+
+	json_t* obj = json_integer((int64_t)number);
 	return add_to_object(object, name, obj);
 }
 
