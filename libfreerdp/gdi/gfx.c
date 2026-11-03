@@ -1322,15 +1322,28 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
 			status = gdi_SurfaceCommand_Uncompressed(gdi, context, cmd);
 			break;
 
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
-			status = gdi_SurfaceCommand_AV1(gdi, context, cmd);
-			break;
+			/* the codec ID is shared, the confirmed caps version tells AV1 from AV2 */
+			switch (context->CapsVersion)
+			{
+#if defined(WITH_GFX_AV1)
+				case RDPGFX_CAPVERSION_FRDP_1:
+					status = gdi_SurfaceCommand_AV1(gdi, context, cmd);
+					break;
 #endif
-
 #if defined(WITH_GFX_AV2)
-		case RDPGFX_CODECID_AV2:
-			status = gdi_SurfaceCommand_AV2(gdi, context, cmd);
+				case RDPGFX_CAPVERSION_FRDP_2:
+					status = gdi_SurfaceCommand_AV2(gdi, context, cmd);
+					break;
+#endif
+				default:
+					WLog_ERR(TAG,
+					         "SurfaceCommand %s [0x%08" PRIX16 "] not valid with caps 0x%08" PRIX32,
+					         rdpgfx_get_codec_id_string(codecId), codecId, context->CapsVersion);
+					status = ERROR_INVALID_DATA;
+					break;
+			}
 			break;
 #endif
 

@@ -1479,7 +1479,8 @@ static BOOL shadow_client_send_av2(rdpShadowClient* client, const BYTE* pSrcData
 	/* rc > 0 means new data */
 	if (rc > 0)
 	{
-		cmd->codecId = RDPGFX_CODECID_AV2;
+		/* AV2 uses the AV1 codec ID, the RDPGFX_CAPVERSION_FRDP_2 caps tell them apart */
+		cmd->codecId = RDPGFX_CODECID_AV1;
 		cmd->extra = (void*)&avc420;
 
 		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,

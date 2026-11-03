@@ -192,13 +192,9 @@ typedef struct
 typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
 {
 	RDPGFX_CODECID_UNCOMPRESSED = 0x0000u,
-#if defined(WITH_GFX_AV1)
-	RDPGFX_CODECID_AV1 =
-		0x0001u, /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used */
-#endif
-#if defined(WITH_GFX_AV2)
-	RDPGFX_CODECID_AV2 =
-		0x0002u, /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_2 is used */
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+	RDPGFX_CODECID_AV1 = 0x0001u, /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1
+		                           * (AV1) or RDPGFX_CAPVERSION_FRDP_2 (AV2) is used */
 #endif
 	RDPGFX_CODECID_CAVIDEO = 0x0003u,
 	RDPGFX_CODECID_CLEARCODEC = 0x0008u,
