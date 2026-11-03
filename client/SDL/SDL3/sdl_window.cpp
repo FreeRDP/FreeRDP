@@ -206,7 +206,9 @@ void SdlWindow::setBordered(bool bordered)
 {
 	if (_window)
 		SDL_SetWindowBordered(_window, bordered);
-	std::ignore = SDL_SyncWindow(_window);
+	/* No SDL_SyncWindow: this runs for every window event, and on macOS each one waited for SDL's
+	 * sync timeout (2.5 s) while a full screen change was pending. SDL ignores an unchanged border
+	 * anyway. */
 }
 
 void SdlWindow::raise()
