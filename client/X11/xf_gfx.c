@@ -467,6 +467,8 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 	{
 		if (surface->gdi.windowMapped)
 		{
+			/* tells xf_UnmapWindowForSurface this surface is going away */
+			surface->gdi.windowMapped = FALSE;
 			status = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
 			                      surface->gdi.windowId);
 			if (status != CHANNEL_RC_OK)
@@ -496,15 +498,35 @@ static UINT xf_UnmapWindowForSurface(RdpgfxClientContext* context, UINT64 window
 	xfContext* xfc = (xfContext*)gdi->context;
 	WINPR_ASSERT(gdi->context);
 
-	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
+	/* Surfaces are only mapped to windows in RemoteApp mode */
+	if (!freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
+		return CHANNEL_RC_OK;
+
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID, FALSE);
+	if (!appWindow)
+		return CHANNEL_RC_OK;
+
+	/*
+	 * Called from DeleteSurface with gfx->mux held, after the deleted surface has been marked
+	 * not window mapped but before it is freed. Only the window ID is passed, and the server
+	 * may already have mapped another surface to this window, which appWindow->surfaceId
+	 * picks up lazily in xf_AppUpdateWindowFromSurface(). So only detach the window when the
+	 * surface it shows is no longer mapped to it.
+	 */
+	const UINT32 surfaceId = appWindow->surfaceId;
+	const gdiGfxSurface* surface = nullptr;
+	if (surfaceId < UINT16_MAX)
+		surface = context->GetSurfaceData(context, (UINT16)surfaceId);
+
+	if (!surface || !surface->windowMapped || (surface->windowId != windowID))
 	{
-		xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID, FALSE);
-		if (appWindow)
-			xf_AppWindowDestroyImage(appWindow);
-		xf_rail_return_window(appWindow, FALSE);
+		/* With software GDI the window image wraps the surface data that is about to be freed */
+		xf_AppWindowDestroyImage(appWindow);
+		appWindow->surfaceId = UINT32_MAX;
+		appWindow->surfaceStale = FALSE;
 	}
 
-	WLog_WARN(TAG, "function not implemented");
+	xf_rail_return_window(appWindow, FALSE);
 	return CHANNEL_RC_OK;
 }
 
