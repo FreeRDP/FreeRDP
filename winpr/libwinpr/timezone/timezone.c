@@ -315,11 +315,32 @@ static char* winpr_translate_time_zone(const char* tzid)
 	return ntzid;
 }
 
+#if defined(__EMSCRIPTEN__)
+/* in timezone_emscripten.js: writes the browser's IANA time zone to buffer, or an empty string */
+extern void winpr_timezone_js_get(char* buffer, size_t size);
+
+static char* winpr_get_browser_timezone_identifier(void)
+{
+	char tzid[128] = WINPR_C_ARRAY_INIT;
+
+	winpr_timezone_js_get(tzid, sizeof(tzid));
+	if (tzid[0] == '\0')
+		return nullptr;
+
+	return _strdup(tzid);
+}
+#endif
+
 static char* winpr_guess_time_zone(void)
 {
 	char* tzid = winpr_time_zone_from_env();
 	if (tzid)
 		goto end;
+#if defined(__EMSCRIPTEN__)
+	tzid = winpr_get_browser_timezone_identifier();
+	if (tzid)
+		goto end;
+#endif
 	tzid = winpr_get_unix_timezone_identifier_from_file();
 	if (tzid)
 		goto end;
