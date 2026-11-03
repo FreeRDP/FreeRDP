@@ -125,7 +125,6 @@ static bool notifyWait(rdpContext* context, HANDLE ft, fido_dev_t* dev)
 	const UINT64 id = winpr_GetTickCount64NS();
 	(void)notify(context, id, false);
 	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, INFINITE);
-	CloseHandle(ft);
 	(void)notify(context, id, true);
 
 	const bool rc = (status == WAIT_OBJECT_0);
@@ -133,6 +132,7 @@ static bool notifyWait(rdpContext* context, HANDLE ft, fido_dev_t* dev)
 		fido_dev_cancel(dev);
 
 	(void)WaitForSingleObject(ft, INFINITE);
+	CloseHandle(ft);
 	return rc;
 }
 /**
