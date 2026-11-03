@@ -1659,11 +1659,31 @@ static BOOL shadow_client_send_uncompressed(rdpShadowClient* client, const BYTE*
                                             const RDPGFX_END_FRAME_PDU* cmdend)
 {
 	WINPR_ASSERT(client);
+	WINPR_ASSERT(cmd);
+	WINPR_ASSERT(pSrcData);
+	WINPR_ASSERT(cmdstart);
+	WINPR_ASSERT(cmdend);
 
 	UINT error = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(cmd->right >= cmd->left);
+	WINPR_ASSERT(cmd->bottom >= cmd->top);
+
 	const UINT32 w = cmd->right - cmd->left;
 	const UINT32 h = cmd->bottom - cmd->top;
-	const UINT32 length = w * 4 * h;
+	if ((w == 0) || (h == 0) || (w > UINT32_MAX / 4 / h))
+	{
+		WLog_ERR(TAG, "input width=%" PRIu32 " x height=%" PRIu32 " is 0 or exceeds UINT32_MAX", w,
+		         h);
+		return FALSE;
+	}
+	const UINT32 length = w * 4ul * h;
+
+	if (length == 0)
+	{
+		WLog_ERR(TAG, "input length == 0");
+		return FALSE;
+	}
 
 	BYTE* data = malloc(length);
 	if (!data)

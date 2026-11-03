@@ -610,7 +610,7 @@ inline BOOL gdi_PtInRect(const GDI_RECT* rc, INT32 x, INT32 y)
  * @return nonzero on success, 0 otherwise
  */
 
-inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h)
+BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h)
 {
 	GDI_RECT inv = WINPR_C_ARRAY_INIT;
 	GDI_RECT rgn = WINPR_C_ARRAY_INIT;
@@ -625,8 +625,13 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 		return TRUE;
 
 	GDI_RGN* cinvalid = hdc->hwnd->cinvalid;
+	if (hdc->hwnd->ninvalid < 0)
+	{
+		WLog_ERR(TAG, "ninvalid %" PRId32 " < 0", hdc->hwnd->ninvalid);
+		return FALSE;
+	}
 
-	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
+	if ((hdc->hwnd->ninvalid + 1ll) > (INT64)hdc->hwnd->count)
 	{
 		const size_t new_cnt = (size_t)hdc->hwnd->ninvalid + 128ull;
 		if (new_cnt > UINT32_MAX)
