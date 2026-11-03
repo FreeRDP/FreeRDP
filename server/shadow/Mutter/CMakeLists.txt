@@ -19,6 +19,5 @@ else()
   message("building without PAM authentication support")
 endif()
 
-add_compile_definitions(WITH_SHADOW_MUTTER)
-add_library(freerdp-shadow-subsystem-impl STATIC mutter_shadow.h mutter_shadow.c)
-target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE ${LIBS})
+add_library(freerdp-shadow-subsystem-mutter STATIC mutter_shadow.h mutter_shadow.c)
+target_link_libraries(freerdp-shadow-subsystem-mutter PRIVATE ${LIBS})

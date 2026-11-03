@@ -18,15 +18,202 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/cmdline.h>
+
+#include <freerdp/log.h>
+
 #include "shadow.h"
 
 #include "shadow_subsystem.h"
 
+#define TAG SERVER_TAG("shadow")
+
+/* The subsystems built in, in the order they are tried */
+#define SHADOW_SUBSYSTEM_MAX 8
+#define SHADOW_SUBSYSTEM_MONITORS 16
+
+typedef struct
+{
+	char name[32];
+	pfnShadowSubsystemEntry entry;
+} SHADOW_SUBSYSTEM_CANDIDATE;
+
+static SHADOW_SUBSYSTEM_CANDIDATE g_Candidates[SHADOW_SUBSYSTEM_MAX] = WINPR_C_ARRAY_INIT;
+static size_t g_CandidateCount = 0;
+
+/* /subsystem: indexes into g_Candidates; empty means all of them, in their order */
+static size_t g_Order[SHADOW_SUBSYSTEM_MAX] = WINPR_C_ARRAY_INIT;
+static size_t g_OrderCount = 0;
+
+/* The subsystem in use: set by shadow_subsystem_set_entry or picked from the candidates */
 static pfnShadowSubsystemEntry pSubsystemEntry = nullptr;
 
 void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry)
 {
 	pSubsystemEntry = pEntry;
+}
+
+BOOL shadow_subsystem_add_entry(const char* name, pfnShadowSubsystemEntry pEntry)
+{
+	if (!name || !pEntry || (g_CandidateCount >= SHADOW_SUBSYSTEM_MAX))
+		return FALSE;
+
+	SHADOW_SUBSYSTEM_CANDIDATE* candidate = &g_Candidates[g_CandidateCount];
+	const int rc = _snprintf(candidate->name, sizeof(candidate->name), "%s", name);
+	if ((rc < 0) || ((size_t)rc >= sizeof(candidate->name)))
+		return FALSE;
+
+	candidate->entry = pEntry;
+	g_CandidateCount++;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static size_t shadow_subsystem_order_count(void)
+{
+	return (g_OrderCount > 0) ? g_OrderCount : g_CandidateCount;
+}
+
+WINPR_ATTR_NODISCARD
+static const SHADOW_SUBSYSTEM_CANDIDATE* shadow_subsystem_order_at(size_t index)
+{
+	WINPR_ASSERT(index < shadow_subsystem_order_count());
+	const size_t candidate = (g_OrderCount > 0) ? g_Order[index] : index;
+	WINPR_ASSERT(candidate < g_CandidateCount);
+	return &g_Candidates[candidate];
+}
+
+/* The number of monitors a subsystem finds: 0 when it cannot run here */
+WINPR_ATTR_NODISCARD
+static UINT32 shadow_subsystem_probe(const SHADOW_SUBSYSTEM_CANDIDATE* candidate)
+{
+	WINPR_ASSERT(candidate);
+	WINPR_ASSERT(candidate->entry);
+
+	RDP_SHADOW_ENTRY_POINTS ep = WINPR_C_ARRAY_INIT;
+	if ((candidate->entry(&ep) < 0) || !ep.EnumMonitors)
+		return 0;
+
+	MONITOR_DEF monitors[SHADOW_SUBSYSTEM_MONITORS] = WINPR_C_ARRAY_INIT;
+	return ep.EnumMonitors(monitors, ARRAYSIZE(monitors));
+}
+
+/* Pick the first subsystem that finds a monitor. With a single one there is
+ * nothing to choose, so it is used without asking (and reports its own errors). */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_subsystem_select(void)
+{
+	if (pSubsystemEntry)
+		return TRUE;
+
+	const size_t count = shadow_subsystem_order_count();
+	if (count == 0)
+		return FALSE;
+
+	const SHADOW_SUBSYSTEM_CANDIDATE* first = shadow_subsystem_order_at(0);
+	if (count == 1)
+	{
+		if (g_CandidateCount > 1)
+			WLog_INFO(TAG, "subsystem: %s", first->name);
+		pSubsystemEntry = first->entry;
+		return TRUE;
+	}
+
+	for (size_t index = 0; index < count; index++)
+	{
+		const SHADOW_SUBSYSTEM_CANDIDATE* candidate = shadow_subsystem_order_at(index);
+		if (shadow_subsystem_probe(candidate) > 0)
+		{
+			WLog_INFO(TAG, "subsystem: %s", candidate->name);
+			pSubsystemEntry = candidate->entry;
+			return TRUE;
+		}
+
+		WLog_INFO(TAG, "subsystem %s found no monitor%s", candidate->name,
+		          (index + 1 < count) ? ", trying the next one" : "");
+	}
+
+	WLog_WARN(TAG, "no subsystem found a monitor, using %s", first->name);
+	pSubsystemEntry = first->entry;
+	return TRUE;
+}
+
+BOOL shadow_subsystem_set_order(const char* names)
+{
+	if (!names)
+		return FALSE;
+
+	if (g_CandidateCount == 0)
+	{
+		WLog_ERR(TAG, "this build has a single fixed subsystem");
+		return FALSE;
+	}
+
+	size_t count = 0;
+	char** list = CommandLineParseCommaSeparatedValues(names, &count);
+	if (!list || (count == 0))
+	{
+		free((void*)list);
+		return FALSE;
+	}
+
+	BOOL rc = TRUE;
+	size_t orderCount = 0;
+	size_t order[SHADOW_SUBSYSTEM_MAX] = WINPR_C_ARRAY_INIT;
+	for (size_t x = 0; rc && (x < count); x++)
+	{
+		size_t found = g_CandidateCount;
+		for (size_t y = 0; y < g_CandidateCount; y++)
+		{
+			if (_stricmp(list[x], g_Candidates[y].name) == 0)
+				found = y;
+		}
+
+		if (found == g_CandidateCount)
+		{
+			WLog_ERR(TAG, "unknown subsystem '%s' (/subsystem lists them)", list[x]);
+			rc = FALSE;
+			break;
+		}
+
+		BOOL duplicate = FALSE;
+		for (size_t y = 0; y < orderCount; y++)
+		{
+			if (order[y] == found)
+				duplicate = TRUE;
+		}
+
+		if (!duplicate)
+			order[orderCount++] = found;
+	}
+	free((void*)list);
+
+	if (!rc)
+		return FALSE;
+
+	memcpy(g_Order, order, sizeof(g_Order));
+	g_OrderCount = orderCount;
+	pSubsystemEntry = nullptr;
+	return TRUE;
+}
+
+void shadow_subsystem_list(void)
+{
+	const size_t count = shadow_subsystem_order_count();
+	BOOL picked = FALSE;
+
+	for (size_t index = 0; index < count; index++)
+	{
+		const SHADOW_SUBSYSTEM_CANDIDATE* candidate = shadow_subsystem_order_at(index);
+		const UINT32 monitors = shadow_subsystem_probe(candidate);
+		const BOOL pick = !picked && (monitors > 0);
+		picked |= pick;
+		WLog_INFO(TAG, "      %s %s: %" PRIu32 " monitor(s)", pick ? "*" : " ", candidate->name,
+		          monitors);
+	}
+
+	if (count == 0)
+		WLog_INFO(TAG, "this build has a single fixed subsystem");
 }
 
 WINPR_ATTR_NODISCARD
@@ -35,7 +222,7 @@ static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoi
 	WINPR_ASSERT(pEntryPoints);
 	ZeroMemory(pEntryPoints, sizeof(RDP_SHADOW_ENTRY_POINTS));
 
-	if (!pSubsystemEntry)
+	if (!shadow_subsystem_select())
 		return -1;
 
 	if (pSubsystemEntry(pEntryPoints) < 0)
