@@ -2211,6 +2211,15 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			status = -1;
 			break;
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+		/* queried by the TLS layer on every write; openssl internals test these with
+		 * if (!BIO_get_ktls_send(...)), so answer "no KTLS offloading" with 0, like rdg/wst */
+		case BIO_CTRL_GET_KTLS_SEND:
+		case BIO_CTRL_GET_KTLS_RECV:
+			status = 0;
+			break;
+#endif
+
 		default:
 			WLog_ERR(TAG, "Unsupported BIO_CTRL %d", cmd);
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
