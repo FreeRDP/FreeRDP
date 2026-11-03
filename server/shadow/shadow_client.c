@@ -1479,6 +1479,7 @@ static BOOL shadow_client_send_rfx(rdpShadowClient* client, const BYTE* pSrcData
 		{
 			WLog_ERR(TAG, "shadow_rfx_plan_tiles failed");
 			Stream_Free(s, TRUE);
+			free(rects);
 			return FALSE;
 		}
 
@@ -1493,6 +1494,7 @@ static BOOL shadow_client_send_rfx(rdpShadowClient* client, const BYTE* pSrcData
 			 * and stall the preferred_fps backpressure. */
 			encoder->frameId--;
 			Stream_Free(s, TRUE);
+			free(rects);
 			return TRUE;
 		}
 

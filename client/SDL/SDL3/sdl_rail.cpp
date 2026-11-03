@@ -862,7 +862,11 @@ bool SdlRail::init(RailClientContext* rail)
 #if SDL_VERSION_ATLEAST(3, 4, 10)
 	/* Synchronize WM-driven X11 resizes via _NET_WM_SYNC_REQUEST to prevent torn frames. */
 	if (sdl::utils::isX11Driver())
-		SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT, "1");
+	{
+		if (!SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT, "1"))
+			WLog_WARN(TAG, "SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT) failed: %s",
+			          SDL_GetError());
+	}
 #endif
 	/* Like Windows, the click that activates a window also reaches the app. */
 	if (!SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1"))
@@ -1034,9 +1038,9 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 					sdlId = appWindow->sdlId();
 				}
 			}
-			if (sdlId != 0)
-				rail->syncGeometry(sdlId);
 		}
+		if (sdlId != 0)
+			rail->syncGeometry(sdlId);
 	}
 	return CHANNEL_RC_OK;
 }
@@ -1109,52 +1113,59 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 		return;
 	const bool compositor = (model == RailDragModel::CompositorResize);
 
-	std::unique_lock lock(_windowsLock);
-	auto appWindow = getWindow(windowId);
-	if (!appWindow || !appWindow->window() || appWindow->isPopup())
-		return;
-
-	const bool isMove = (moveType == RAIL_WMSZ_MOVE);
-	WLog_DBG(TAG, "local move start id=0x%08" PRIx32 " driver=%s type=%" PRIu16 " %s", windowId,
-	         SDL_GetCurrentVideoDriver(), moveType, isMove ? "move" : "resize");
-	const bool started = railPlatformBeginDrag(appWindow->window(), moveType);
-	/* Latch and drive the local frame; a Wayland move needs neither (the compositor owns it). */
-	if (started && (!compositor || !isMove))
+	bool complete = false;
 	{
-		_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
-		_localMove.id = windowId;
-		_localMove.type = moveType;
-		if (!compositor)
+		std::unique_lock lock(_windowsLock);
+		auto appWindow = getWindow(windowId);
+		if (!appWindow || !appWindow->window() || appWindow->isPopup())
+			return;
+
+		const bool isMove = (moveType == RAIL_WMSZ_MOVE);
+		WLog_DBG(TAG, "local move start id=0x%08" PRIx32 " driver=%s type=%" PRIu16 " %s", windowId,
+		         SDL_GetCurrentVideoDriver(), moveType, isMove ? "move" : "resize");
+		const bool started = railPlatformBeginDrag(appWindow->window(), moveType);
+		/* Latch and drive the local frame; a Wayland move needs neither (the compositor owns it).
+		 */
+		if (started && (!compositor || !isMove))
 		{
-			/* Latch drag anchors for release calculation. */
-			_localMove.anchor = _lastPressServer;
-			_localMove.pointer = _lastPointerServer;
-			/* Clear prior loop-end state on new drag. */
-			appWindow->clearLoopEnd();
+			_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
+			_localMove.id = windowId;
+			_localMove.type = moveType;
+			if (!compositor)
+			{
+				/* Latch drag anchors for release calculation. */
+				_localMove.anchor = _lastPressServer;
+				_localMove.pointer = _lastPointerServer;
+				/* Clear prior loop-end state on new drag. */
+				appWindow->clearLoopEnd();
+			}
+			appWindow->setLocalMoveActive(true);
+			if (!isMove)
+			{
+				/* Anchor the stale frame to the fixed edge (opposite the dragged one). */
+				const RailEdges e = railEdges(moveType);
+				appWindow->setResizeAnchor(e.left, e.top);
+			}
 		}
-		appWindow->setLocalMoveActive(true);
-		if (!isMove)
+		else if (!started)
 		{
-			/* Anchor the stale frame to the fixed edge (opposite the dragged one). */
-			const RailEdges e = railEdges(moveType);
-			appWindow->setResizeAnchor(e.left, e.top);
+			WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
+		}
+
+		/* Native modal loop: runs unlocked until the drag ends. */
+		if (started && (model == RailDragModel::ModalLoop))
+		{
+			SDL_Window* sdlWindow = appWindow->window();
+			_sizeMoveRedraws = 0;
+			railPlatformRunModalDrag(sdlWindow, moveType);
+			WLog_DBG(TAG, "modal drag end id=0x%08" PRIx32 " redraws=%" PRIu32, windowId,
+			         _sizeMoveRedraws);
+			complete = true;
 		}
 	}
-	else if (!started)
-	{
-		WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
-	}
-
-	/* Native modal loop: runs unlocked until the drag ends. */
-	if (started && (model == RailDragModel::ModalLoop))
-	{
-		SDL_Window* sdlWindow = appWindow->window();
-		_sizeMoveRedraws = 0;
-		railPlatformRunModalDrag(sdlWindow, moveType);
-		WLog_DBG(TAG, "modal drag end id=0x%08" PRIx32 " redraws=%" PRIu32, windowId,
-		         _sizeMoveRedraws);
+	// avoid double lock, _windowsLock is not held here.
+	if (complete)
 		completeLocalMoveIfPending();
-	}
 }
 
 /* Wayland: keep server window position in sync with the active monitor across displays. */
