@@ -36,6 +36,10 @@
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/server/cliprdr.h>
 
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -45,10 +49,10 @@
 /* Clipboard semantics are a poor fit for bulk transfers, so file pulls are
  * capped: a single file larger than CLIP_MAX_FILE_BYTES or a total larger
  * than CLIP_MAX_TOTAL_BYTES is rejected. */
-#define CLIP_MAX_FILE_BYTES (512ull * 1024 * 1024)
-#define CLIP_MAX_TOTAL_BYTES (2ull * 1024 * 1024 * 1024)
-#define CLIP_CHUNK (4u * 1024 * 1024)
-#define CLIP_MAX_FILES 256
+static const UINT64 CLIP_MAX_FILE_BYTES = 512ull * 1024 * 1024;
+static const UINT64 CLIP_MAX_TOTAL_BYTES = 2ull * 1024 * 1024 * 1024;
+static const UINT32 CLIP_CHUNK = 4u * 1024 * 1024;
+static const UINT32 CLIP_MAX_FILES = 256;
 
 #define FMT_BASE 0xC000 /* base for our self-assigned named format ids */
 
@@ -95,10 +99,6 @@ typedef struct
 	UINT32 reqHead, reqTail;
 	UINT32 peerFgdId; /* FileGroupDescriptorW id announced by the client */
 
-	/* same-shape announce gate (ping-pong loop breaker) */
-	UINT64 lastAnnounceSig;
-	UINT64 lastAnnounceTick;
-
 	WCHAR stageDir[MAX_PATH];
 	CRITICAL_SECTION lock;
 } ShadowClip;
@@ -118,6 +118,11 @@ static void cliprdr_check_send(UINT rc, const char* what)
 
 /* ---------- remote clipboard I/O (caller: channel thread, synchronous) ---------- */
 
+/* The clipboard is a session-global resource with exclusive open: any window
+ * of the session may hold it for a while (Explorer refreshing after a paste,
+ * other viewers...). OpenClipboard therefore fails transiently under
+ * contention; retry for ~0.5 s in small steps before giving up. */
+WINPR_ATTR_NODISCARD
 static BOOL open_clipboard_retry(void)
 {
 	for (int i = 0; i < 20; ++i)
@@ -133,6 +138,9 @@ static BOOL open_clipboard_retry(void)
  * watcher thread skips the resulting WM_CLIPBOARDUPDATE. */
 static void write_remote_text(ShadowClip* clip, const BYTE* utf16, UINT32 len)
 {
+	WINPR_ASSERT(clip);
+	WINPR_ASSERT(utf16);
+
 	HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE, len + 2);
 	if (!hMem)
 		return;
@@ -141,8 +149,8 @@ static void write_remote_text(ShadowClip* clip, const BYTE* utf16, UINT32 len)
 	{
 		CopyMemory(p, utf16, len);
 		ZeroMemory((BYTE*)p + len, 2); /* terminating NUL for CF_UNICODETEXT */
+		GlobalUnlock(hMem);
 	}
-	GlobalUnlock(hMem);
 	InterlockedIncrement(&clip->suppress);
 	if (open_clipboard_retry())
 	{
@@ -166,6 +174,8 @@ static void write_remote_text(ShadowClip* clip, const BYTE* utf16, UINT32 len)
  * ordinary local file copy. */
 static void write_remote_hdrop(ShadowClip* clip)
 {
+	WINPR_ASSERT(clip);
+
 	UINT32 n = 0;
 	SIZE_T bytes = sizeof(DROPFILES) + sizeof(WCHAR);
 	WLog_INFO(TAG, "write_remote_hdrop: enter inCount=%u", clip->inCount);
@@ -229,39 +239,6 @@ static void write_remote_hdrop(ShadowClip* clip)
 		GlobalUnlock(hEff);
 	}
 
-	/* Same-machine loop breaker: when client and server run on the same host,
-	 * writing here triggers the client clipboard monitor to re-announce, the
-	 * server pulls and writes again -- a full loop was observed closing in
-	 * ~250ms. If the clipboard already holds a byte-identical HDROP, skip the
-	 * write entirely: no clipboard change event, loop broken at lap one. */
-	if (open_clipboard_retry())
-	{
-		BOOL same = FALSE;
-		HANDLE cur = GetClipboardData(CF_HDROP);
-		if (cur)
-		{
-			const SIZE_T csz = GlobalSize(cur);
-			const DROPFILES* cdf = (const DROPFILES*)GlobalLock(cur);
-			BYTE* nd = (BYTE*)GlobalLock(hMem);
-			if (cdf && nd && cdf->fWide && csz == GlobalSize(hMem) &&
-			    cdf->pFiles == sizeof(DROPFILES) && memcmp(cdf, nd, csz) == 0)
-				same = TRUE;
-			if (cdf)
-				GlobalUnlock(cur);
-			if (nd)
-				GlobalUnlock(hMem);
-		}
-		CloseClipboard();
-		if (same)
-		{
-			GlobalFree(hMem);
-			if (hEff)
-				GlobalFree(hEff);
-			WLog_INFO(TAG, "write_remote_hdrop: skip -- clipboard already current");
-			return;
-		}
-	}
-
 	InterlockedIncrement(&clip->suppress);
 	if (open_clipboard_retry())
 	{
@@ -299,6 +276,12 @@ static void write_remote_hdrop(ShadowClip* clip)
 static void clipfiles_push(ClipFile** list, UINT32* n, UINT32* cap, const WCHAR* full,
                            const WCHAR* rel)
 {
+	WINPR_ASSERT(list);
+	WINPR_ASSERT(n);
+	WINPR_ASSERT(cap);
+	WINPR_ASSERT(full);
+	WINPR_ASSERT(rel);
+
 	DWORD a = GetFileAttributesW(full);
 	if (a == INVALID_FILE_ATTRIBUTES || *n >= CLIP_MAX_FILES)
 		return;
@@ -355,6 +338,8 @@ static void clipfiles_push(ClipFile** list, UINT32* n, UINT32* cap, const WCHAR*
 
 static void snapshot_remote_files(ShadowClip* clip)
 {
+	WINPR_ASSERT(clip);
+
 	HANDLE h = GetClipboardData(CF_HDROP); /* OpenClipboard already held by caller */
 	if (!h)
 		return;
@@ -381,6 +366,8 @@ static void snapshot_remote_files(ShadowClip* clip)
 
 static void announce_local(ShadowClip* clip)
 {
+	WINPR_ASSERT(clip);
+
 	if (!open_clipboard_retry())
 		return;
 	const BOOL hasText =
@@ -390,24 +377,7 @@ static void announce_local(ShadowClip* clip)
 		snapshot_remote_files(clip);
 	CloseClipboard();
 
-	/* Same-shape time gate: skip the announce if the format shape (text/files
-	 * combination) did not change within 10s. With multiple clients plus local
-	 * write-backs (write_remote_text/hdrop) the announces would ping-pong --
-	 * every server announce resets the client's signature memory, so the gate
-	 * has to live at the source. */
-	{
-		const UINT64 now = GetTickCount64();
-		const UINT64 sig = ((UINT64)hasText << 1) | (UINT64)hasFiles;
-		if (sig == clip->lastAnnounceSig && now - clip->lastAnnounceTick < 10000)
-		{
-			WLog_INFO(TAG, "announce_local: same shape within 10s -- skip");
-			return;
-		}
-		clip->lastAnnounceSig = sig;
-		clip->lastAnnounceTick = now;
-	}
-
-	CLIPRDR_FORMAT fmts[4];
+	CLIPRDR_FORMAT fmts[4] = WINPR_C_ARRAY_INIT;
 	UINT32 n = 0;
 	if (hasText)
 	{
@@ -443,6 +413,8 @@ static void announce_local(ShadowClip* clip)
 
 static void pull_abort(ShadowClip* clip)
 {
+	WINPR_ASSERT(clip);
+
 	if (clip->inFile != INVALID_HANDLE_VALUE && clip->inFile)
 		CloseHandle(clip->inFile);
 	clip->inFile = nullptr;
@@ -499,6 +471,9 @@ static void wipe_stage_dir(ShadowClip* clip)
  * file materialization. */
 static void mkdirs_under(ShadowClip* clip, const WCHAR* rel, BOOL includeLast)
 {
+	WINPR_ASSERT(clip);
+	WINPR_ASSERT(rel);
+
 	WCHAR acc[MAX_PATH];
 	wcscpy_s(acc, MAX_PATH, clip->stageDir);
 	const WCHAR* p = rel;
@@ -535,8 +510,11 @@ static void pull_skip_dirs(ShadowClip* clip)
 }
 
 /* Sends the next FileContentsRequest; FALSE means the pull is finished. */
+WINPR_ATTR_NODISCARD
 static BOOL pull_step(ShadowClip* clip)
 {
+	WINPR_ASSERT(clip);
+
 	if (clip->inIdx >= clip->inCount)
 		return FALSE;
 	CLIPRDR_FILE_CONTENTS_REQUEST req = { .common = { .msgType = CB_FILECONTENTS_REQUEST,
@@ -573,6 +551,8 @@ static BOOL pull_step(ShadowClip* clip)
 /* Current file complete -> next file; all done -> place the CF_HDROP. */
 static void pull_advance(ShadowClip* clip)
 {
+	WINPR_ASSERT(clip);
+
 	if (clip->inFile && clip->inFile != INVALID_HANDLE_VALUE)
 		CloseHandle(clip->inFile);
 	clip->inFile = nullptr;
@@ -585,11 +565,14 @@ static void pull_advance(ShadowClip* clip)
 		pull_abort(clip); /* release state, desc is consumed */
 		return;
 	}
-	pull_step(clip);
+	(void)pull_step(clip);
 }
 
 static void on_client_file_contents(ShadowClip* clip, const CLIPRDR_FILE_CONTENTS_RESPONSE* r)
 {
+	WINPR_ASSERT(clip);
+	WINPR_ASSERT(r);
+
 	if (!clip->inDesc || (r->common.msgFlags & CB_RESPONSE_FAIL))
 	{
 		WLog_WARN(TAG, "filecontents response fail/idle (flags=0x%x)", r->common.msgFlags);
@@ -666,7 +649,7 @@ static void on_client_file_contents(ShadowClip* clip, const CLIPRDR_FILE_CONTENT
 	if (clip->inGot >= clip->inSize)
 		pull_advance(clip);
 	else
-		pull_step(clip);
+		(void)pull_step(clip);
 	WLog_INFO(TAG, "pull: RANGE idx=%u got=%u/%u", clip->inIdx, (unsigned)clip->inGot,
 	          (unsigned)clip->inSize);
 }
@@ -675,6 +658,9 @@ static void on_client_file_contents(ShadowClip* clip, const CLIPRDR_FILE_CONTENT
 
 static UINT srv_client_format_list(CliprdrServerContext* ctx, const CLIPRDR_FORMAT_LIST* list)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(list);
+
 	ShadowClip* clip = clipOf(ctx);
 	UINT32 textId = 0;
 	UINT32 fgdId = 0;
@@ -715,6 +701,9 @@ static UINT srv_client_format_list(CliprdrServerContext* ctx, const CLIPRDR_FORM
 static UINT srv_client_format_data_response(CliprdrServerContext* ctx,
                                             const CLIPRDR_FORMAT_DATA_RESPONSE* r)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(r);
+
 	ShadowClip* clip = clipOf(ctx);
 	UINT32 id = 0;
 	if (clip->reqHead != clip->reqTail)
@@ -749,7 +738,7 @@ static UINT srv_client_format_data_response(CliprdrServerContext* ctx,
 		clip->inFile = nullptr;
 		pull_skip_dirs(clip);
 		if (clip->inIdx < clip->inCount)
-			pull_step(clip);
+			(void)pull_step(clip);
 		else
 		{
 			/* only directory descriptors (e.g. empty folders): nothing to
@@ -767,6 +756,9 @@ static UINT srv_client_format_data_response(CliprdrServerContext* ctx,
 static UINT srv_client_format_data_request(CliprdrServerContext* ctx,
                                            const CLIPRDR_FORMAT_DATA_REQUEST* req)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(req);
+
 	ShadowClip* clip = clipOf(ctx);
 	CLIPRDR_FORMAT_DATA_RESPONSE resp = { .common = { .msgType = CB_FORMAT_DATA_RESPONSE,
 		                                              .msgFlags = CB_RESPONSE_FAIL,
@@ -848,6 +840,9 @@ static UINT srv_client_format_data_request(CliprdrServerContext* ctx,
 static UINT srv_client_file_contents_request(CliprdrServerContext* ctx,
                                              const CLIPRDR_FILE_CONTENTS_REQUEST* req)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(req);
+
 	ShadowClip* clip = clipOf(ctx);
 	CLIPRDR_FILE_CONTENTS_RESPONSE resp = { .common = { .msgType = CB_FILECONTENTS_RESPONSE,
 		                                                .msgFlags = CB_RESPONSE_FAIL,
@@ -903,6 +898,9 @@ static UINT srv_client_file_contents_request(CliprdrServerContext* ctx,
 static UINT srv_client_file_contents_response(CliprdrServerContext* ctx,
                                               const CLIPRDR_FILE_CONTENTS_RESPONSE* r)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(r);
+
 	on_client_file_contents(clipOf(ctx), r);
 	return CHANNEL_RC_OK;
 }
@@ -915,6 +913,8 @@ static UINT srv_client_capabilities(CliprdrServerContext* ctx, const CLIPRDR_CAP
 
 static UINT srv_monitor_ready(CliprdrServerContext* ctx, const CLIPRDR_MONITOR_READY* ready)
 {
+	WINPR_ASSERT(ctx);
+
 	ShadowClip* clip = clipOf(ctx);
 	WLog_INFO(TAG, "cliprdr ready -- announcing current remote clipboard");
 	announce_local(clip);
@@ -923,6 +923,9 @@ static UINT srv_monitor_ready(CliprdrServerContext* ctx, const CLIPRDR_MONITOR_R
 
 static UINT srv_temp_directory(CliprdrServerContext* ctx, const CLIPRDR_TEMP_DIRECTORY* td)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(td);
+
 	WLog_DBG(TAG, "client temp dir: %s", td->szTempDir);
 	return CHANNEL_RC_OK;
 }
@@ -950,6 +953,8 @@ static LRESULT CALLBACK clip_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
 static DWORD WINAPI clip_watch_thread(LPVOID arg)
 {
 	ShadowClip* clip = (ShadowClip*)arg;
+	WINPR_ASSERT(clip);
+
 	WNDCLASSW wc = WINPR_C_ARRAY_INIT;
 	wc.lpfnWndProc = clip_wndproc;
 	wc.hInstance = GetModuleHandleW(nullptr);
@@ -963,7 +968,7 @@ static DWORD WINAPI clip_watch_thread(LPVOID arg)
 		AddClipboardFormatListener(clip->hwnd);
 	}
 	SetEvent(clip->ready);
-	MSG msg;
+	MSG msg = WINPR_C_ARRAY_INIT;
 	while (GetMessageW(&msg, nullptr, 0, 0) > 0)
 	{
 		if (WaitForSingleObject(clip->stopEvt, 0) == WAIT_OBJECT_0)
@@ -981,9 +986,107 @@ static DWORD WINAPI clip_watch_thread(LPVOID arg)
 
 /* ---------- lifecycle ---------- */
 
+/* TRUE when the client connects from this machine: its RDP clipboard is then
+ * the very clipboard this bridge writes to, so announcing and pulling
+ * degenerates into a ping-pong loop between the two copies of the clipboard
+ * (a full loop was observed closing in ~250 ms). Such sessions get the
+ * clipboard channel deactivated (per review discussion on #13955): there is
+ * nothing to sync that the local clipboard does not already have. */
+static BOOL clip_client_is_local(rdpShadowClient* client)
+{
+	WINPR_ASSERT(client);
+	const rdpSettings* settings = client->context.settings;
+	WINPR_ASSERT(settings);
+
+	const char* addr = settings->ClientAddress;
+	if (!addr)
+		return FALSE;
+
+	if (_stricmp(addr, "localhost") == 0 || strncmp(addr, "127.", 4) == 0 ||
+	    strcmp(addr, "::1") == 0)
+		return TRUE;
+
+	/* Literal addresses only: a hostname client is assumed remote. */
+	union
+	{
+		struct sockaddr_in v4;
+		struct sockaddr_in6 v6;
+	} peer = { 0 };
+	size_t peerLen = 0;
+	if (strchr(addr, ':'))
+	{
+		if (inet_pton(AF_INET6, addr, &peer.v6.sin6_addr) == 1)
+			peerLen = sizeof(struct sockaddr_in6);
+	}
+	else if (inet_pton(AF_INET, addr, &peer.v4.sin_addr) == 1)
+		peerLen = sizeof(struct sockaddr_in);
+
+	if (peerLen == 0)
+		return FALSE;
+
+	/* Walk the local interface addresses; a match means the client sits on
+	 * the same host. */
+	ULONG size = 15 * 1024;
+	PIP_ADAPTER_ADDRESSES adapters = nullptr;
+	for (int attempt = 0; attempt < 3; ++attempt)
+	{
+		adapters = (PIP_ADAPTER_ADDRESSES)malloc(size);
+		if (!adapters)
+			return FALSE;
+		const ULONG rc =
+		    GetAdaptersAddresses(AF_UNSPEC,
+		                         GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+		                             GAA_FLAG_SKIP_DNS_SERVER,
+		                         nullptr, adapters, &size);
+		if (rc == ERROR_SUCCESS)
+			break;
+		free(adapters);
+		adapters = nullptr;
+		if (rc != ERROR_BUFFER_OVERFLOW)
+			return FALSE;
+	}
+	if (!adapters)
+		return FALSE;
+
+	BOOL local = FALSE;
+	for (PIP_ADAPTER_ADDRESSES cur = adapters; cur && !local; cur = cur->Next)
+	{
+		for (PIP_ADAPTER_UNICAST_ADDRESS u = cur->FirstUnicastAddress; u && !local; u = u->Next)
+		{
+			const struct sockaddr* sa = u->Address.lpSockaddr;
+			if (!sa)
+				continue;
+			if ((sa->sa_family == AF_INET) && (peerLen == sizeof(struct sockaddr_in)))
+			{
+				const struct sockaddr_in* s4 = (const struct sockaddr_in*)sa;
+				if (memcmp(&s4->sin_addr, &peer.v4.sin_addr, sizeof(struct in_addr)) == 0)
+					local = TRUE;
+			}
+			else if ((sa->sa_family == AF_INET6) && (peerLen == sizeof(struct sockaddr_in6)))
+			{
+				const struct sockaddr_in6* s6 = (const struct sockaddr_in6*)sa;
+				if (memcmp(&s6->sin6_addr, &peer.v6.sin6_addr, sizeof(struct in6_addr)) == 0)
+					local = TRUE;
+			}
+		}
+	}
+	free(adapters);
+	return local;
+}
+
 int win_shadow_cliprdr_init(rdpShadowClient* client)
 {
 	WINPR_ASSERT(client);
+
+	/* Same-machine session: deactivate the clipboard channel instead of
+	 * bridging a clipboard onto itself. Connecting without the cliprdr
+	 * channel still works (the join check below stays in place). */
+	if (clip_client_is_local(client))
+	{
+		WLog_INFO(TAG, "client %s is local: clipboard bridge deactivated",
+		          client->context.settings->ClientAddress);
+		return 0;
+	}
 
 	ShadowClip* clip = (ShadowClip*)calloc(1, sizeof(ShadowClip));
 	if (!clip)
