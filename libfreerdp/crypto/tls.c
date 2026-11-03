@@ -206,6 +206,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 #endif
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
+	BIO_clear_retry_flags(bio);
 	EnterCriticalSection(&tls->lock);
 	status = SSL_write(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
@@ -275,6 +276,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 #endif
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
+	BIO_clear_retry_flags(bio);
 	EnterCriticalSection(&tls->lock);
 	status = SSL_read(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
