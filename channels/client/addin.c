@@ -660,7 +660,16 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
 		if (internals->firstFlagReceived)
+		{
+			WLog_ERR(TAG, "%s_plugin_process_received: CHANNEL_FLAG_FIRST during incomplete"
+			              " reassembly, resetting state",
+			         internals->channel_name);
+			Stream_Free(internals->data_in, TRUE);
+			internals->data_in = nullptr;
+			internals->totalLength = 0;
+			internals->firstFlagReceived = FALSE;
 			return ERROR_INVALID_DATA;
+		}
 		internals->firstFlagReceived = TRUE;
 
 		if (internals->data_in)
@@ -690,8 +699,12 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	if ((Stream_GetPosition(data_in) > totalLength) || (internals->totalLength != totalLength))
 	{
+		WLog_ERR(TAG, "%s_plugin_process_received: fragment length mismatch, resetting state",
+		         internals->channel_name);
 		Stream_Free(internals->data_in, TRUE);
 		internals->data_in = nullptr;
+		internals->totalLength = 0;
+		internals->firstFlagReceived = FALSE;
 		return ERROR_INVALID_DATA;
 	}
 
