@@ -1548,22 +1548,27 @@ rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-WINPR_ATTR_NODISCARD static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context,
+                                                           wStream* data)
 {
-	size_t end = 0;
+	size_t packetlen = 0;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	RDPGFX_HEADER header = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
-	size_t beg = Stream_GetPosition(s);
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if ((error = rdpgfx_read_header(context->priv->log, s, &header, nullptr)))
+	if ((error = rdpgfx_read_header(context->priv->log, data, &header, &packetlen)))
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR,
 		           "rdpgfx_read_header failed with error %" PRIu32 "!", error);
 		return error;
 	}
+
+	/* Limit the PDU parsers to the data of this PDU, the stream might contain more of them */
+	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_ConstPointer(data), packetlen);
+	Stream_Seek(data, packetlen);
 
 	WLog_Print(context->priv->log, WLOG_TRACE,
 	           "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
@@ -1621,15 +1626,13 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* 
 		return error;
 	}
 
-	end = Stream_GetPosition(s);
+	const size_t end = Stream_GetPosition(s);
 
-	if (end != (beg + header.pduLength))
+	if (end != packetlen)
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR,
 		           "Unexpected gfx pdu end: Actual: %" PRIuz ", Expected: %" PRIuz "", end,
-		           (beg + header.pduLength));
-		if (!Stream_SetPosition(s, (beg + header.pduLength)))
-			return ERROR_INVALID_DATA;
+		           packetlen);
 	}
 
 	return error;
