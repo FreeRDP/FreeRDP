@@ -446,9 +446,16 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	                                   nullptr, FREERDP_FLIP_NONE))
 		return ERROR_INTERNAL_ERROR;
 
-	ArrayList_Lock(server->clients);
+	/* shadow_subsystem_frame_update() publishes the frame to all subscriber
+	 * clients and waits until every one of them consumed it. That wait must
+	 * not happen while the server clients list is locked: the listener
+	 * thread needs this lock in shadow_client_accepted() (ArrayList_Append)
+	 * and shadow_server_check_peer_restrictions() (ArrayList Count), so
+	 * holding it across an unresponsive subscriber would stop accepting new
+	 * connections entirely. The frame publication iterates the update
+	 * event's own subscriber list, not the server clients list, so the lock
+	 * is not needed here at all. */
 	shadow_subsystem_frame_update(&subsystem->base);
-	ArrayList_Unlock(server->clients);
 	region16_clear(&(surface->invalidRegion));
 	return 1;
 }
