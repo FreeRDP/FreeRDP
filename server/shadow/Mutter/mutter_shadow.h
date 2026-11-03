@@ -20,6 +20,7 @@
 #define FREERDP_SERVER_SHADOW_MUTTER_SHADOW_H
 
 #include <freerdp/server/shadow.h>
+#include <freerdp/codec/audio.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -98,6 +99,9 @@ struct mutter_shadow_subsystem
 	struct pw_stream* audio;
 	struct spa_hook audioListener;
 	wStream* audioStream;
+	/* the format of the samples in each message: it outlives every client, since
+	 * rdpsnd keeps the pointer as its source format */
+	AUDIO_FORMAT audioSourceFormat;
 	BOOL audioActive;
 	UINT64 audioFrames;
 	UINT64 audioMessages;
