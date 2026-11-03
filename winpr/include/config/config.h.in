@@ -44,6 +44,10 @@
 #cmakedefine WITH_WINPR_JSON /** @since version 3.6.0 */
 #cmakedefine WITH_WINPR_I18N /** @since version 3.33.0 */
 
+/** The least stack size in bytes of a thread created with the default size (POSIX), 0 for the
+ * platform default. @since version 3.34.0 */
+#define WINPR_THREAD_DEFAULT_STACK_SIZE @WINPR_THREAD_DEFAULT_STACK_SIZE@
+
 #cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_EVENTS

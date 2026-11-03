@@ -112,9 +112,6 @@
 #include "../log.h"
 #define TAG WINPR_TAG("thread")
 
-/* the least stack a thread created with the default size gets (winpr_StartThread) */
-#define WINPR_THREAD_DEFAULT_STACK_SIZE (8ull * 1024ull * 1024ull)
-
 static WINPR_THREAD mainThread;
 
 #if defined(WITH_THREAD_LIST)
@@ -587,8 +584,11 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 	{
 		const int err = pthread_attr_setstacksize(&attr, stackSize);
 		if (err != 0)
+		{
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_WARN(TAG, "pthread_attr_setstacksize(%" PRIuz ") failed: %s", stackSize,
-			          strerror(err));
+			          winpr_strerror(err, ebuffer, sizeof(ebuffer)));
+		}
 	}
 
 	thread->started = TRUE;
