@@ -40,6 +40,7 @@ typedef struct
 	HANDLE hProcess;
 	HANDLE copyThread;
 	HANDLE writeComplete;
+	HANDLE writeTerminated;
 	DWORD openHandle;
 	void* initHandle;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
@@ -162,7 +163,8 @@ static DWORD WINAPI copyThread(void* data)
 		}
 
 		HANDLE handles[] = { plugin->writeComplete,
-			                 freerdp_abort_event(plugin->channelEntryPoints.context) };
+			                 freerdp_abort_event(plugin->channelEntryPoints.context),
+			                 plugin->writeTerminated };
 		status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	}
 
@@ -234,10 +236,18 @@ static void channel_terminated(Plugin* plugin)
 	if (!plugin)
 		return;
 
+	if (plugin->writeTerminated)
+		SetEvent(plugin->writeTerminated);
+
 	if (plugin->copyThread)
+	{
+		(void)WaitForSingleObject(plugin->copyThread, INFINITE);
 		(void)CloseHandle(plugin->copyThread);
+	}
 	if (plugin->writeComplete)
 		(void)CloseHandle(plugin->writeComplete);
+	if (plugin->writeTerminated)
+		(void)CloseHandle(plugin->writeTerminated);
 
 	(void)CloseHandle(plugin->hStdInputWrite);
 	(void)CloseHandle(plugin->hStdOutputRead);
@@ -252,9 +262,15 @@ static void channel_initialized(Plugin* plugin)
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(!plugin->writeComplete);
 	plugin->writeComplete = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	WINPR_ASSERT(plugin->writeComplete);
+
+	WINPR_ASSERT(!plugin->writeTerminated);
+	plugin->writeTerminated = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	WINPR_ASSERT(plugin->writeTerminated);
 
 	WINPR_ASSERT(!plugin->copyThread);
 	plugin->copyThread = CreateThread(nullptr, 0, copyThread, plugin, 0, nullptr);
+	WINPR_ASSERT(plugin->copyThread);
 }
 
 static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInitHandle, UINT event,
