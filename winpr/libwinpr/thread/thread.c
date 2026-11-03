@@ -112,6 +112,9 @@
 #include "../log.h"
 #define TAG WINPR_TAG("thread")
 
+/* the least stack a thread created with the default size gets (winpr_StartThread) */
+#define WINPR_THREAD_DEFAULT_STACK_SIZE (8ull * 1024ull * 1024ull)
+
 static WINPR_THREAD mainThread;
 
 #if defined(WITH_THREAD_LIST)
@@ -571,8 +574,25 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	if (thread->dwStackSize > 0)
-		pthread_attr_setstacksize(&attr, thread->dwStackSize);
+	/* A thread created with the default size gets at least 8 MiB of stack, what a Linux thread
+	 * usually gets: macOS gives a secondary thread only 512 KiB, too little for the codecs FreeRDP
+	 * runs (an AV2 encoder overflowed it). A larger platform default is kept. */
+	size_t stackSize = thread->dwStackSize;
+	if (stackSize == 0)
+	{
+		size_t platformDefault = 0;
+		if ((pthread_attr_getstacksize(&attr, &platformDefault) == 0) &&
+		    (platformDefault < WINPR_THREAD_DEFAULT_STACK_SIZE))
+			stackSize = WINPR_THREAD_DEFAULT_STACK_SIZE;
+	}
+
+	if (stackSize > 0)
+	{
+		const int err = pthread_attr_setstacksize(&attr, stackSize);
+		if (err != 0)
+			WLog_WARN(TAG, "pthread_attr_setstacksize(%" PRIuz ") failed: %s", stackSize,
+			          strerror(err));
+	}
 
 	thread->started = TRUE;
 	reset_event(thread);

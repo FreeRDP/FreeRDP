@@ -39,8 +39,6 @@
 
 #define TAG CLIENT_TAG("shadow")
 
-#define SHADOW_CLIENT_THREAD_STACK_SIZE (8ull * 1024ull * 1024ull)
-
 typedef struct
 {
 	BOOL gfxOpened;
@@ -3077,12 +3075,7 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
 
-	/* The client thread runs the GFX encoders, and some of them (libavm's AV2 bitstream packer, for
-	 * one) need more stack than the 512 KiB a secondary thread gets by default on macOS. Ask for
-	 * the 8 MiB a Linux thread usually gets; on Windows it is only reserved, not committed. */
-	if (!(client->thread =
-	          CreateThread(nullptr, SHADOW_CLIENT_THREAD_STACK_SIZE, shadow_client_thread, client,
-	                       STACK_SIZE_PARAM_IS_A_RESERVATION, nullptr)))
+	if (!(client->thread = CreateThread(nullptr, 0, shadow_client_thread, client, 0, nullptr)))
 	{
 		freerdp_peer_context_free(peer);
 		return FALSE;
