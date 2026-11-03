@@ -362,6 +362,7 @@ static BOOL check_settings_modem_with_fonts(rdpSettings* settings)
 #define FLOATBAR_FLAG_POSITION_LEFT 0x40u
 #define FLOATBAR_FLAG_POSITION_RIGHT 0x80u
 
+WINPR_ATTR_NODISCARD
 static BOOL check_floatbar_position(rdpSettings* settings, UINT32 expected_position_bits)
 {
 	const UINT32 floatbar = freerdp_settings_get_uint32(settings, FreeRDP_Floatbar);
@@ -369,25 +370,28 @@ static BOOL check_floatbar_position(rdpSettings* settings, UINT32 expected_posit
 
 	if (actual_position_bits != expected_position_bits)
 	{
-		TEST_FAILURE("Expected Floatbar position bits 0x%02x, got 0x%02x (Floatbar=0x%08x)\n",
-		             (unsigned)expected_position_bits, (unsigned)actual_position_bits,
-		             (unsigned)floatbar);
+		TEST_FAILURE("Expected Floatbar position bits 0x%02" PRIx32 ", got 0x%02" PRIx32
+		             " (Floatbar=0x%08" PRIx32 ")\n",
+		             expected_position_bits, actual_position_bits, floatbar);
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL check_settings_floatbar_position_default(rdpSettings* settings)
 {
 	return check_floatbar_position(settings, 0);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL check_settings_floatbar_position_left(rdpSettings* settings)
 {
 	return check_floatbar_position(settings, FLOATBAR_FLAG_POSITION_LEFT);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL check_settings_floatbar_position_right(rdpSettings* settings)
 {
 	return check_floatbar_position(settings, FLOATBAR_FLAG_POSITION_RIGHT);
