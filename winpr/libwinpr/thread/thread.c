@@ -571,8 +571,25 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	if (thread->dwStackSize > 0)
-		pthread_attr_setstacksize(&attr, thread->dwStackSize);
+	size_t stackSize = thread->dwStackSize;
+	if (stackSize == 0)
+	{
+		size_t platformDefault = 0;
+		if ((pthread_attr_getstacksize(&attr, &platformDefault) == 0) &&
+		    (platformDefault < WINPR_THREAD_DEFAULT_STACK_SIZE))
+			stackSize = WINPR_THREAD_DEFAULT_STACK_SIZE;
+	}
+
+	if (stackSize > 0)
+	{
+		const int err = pthread_attr_setstacksize(&attr, stackSize);
+		if (err != 0)
+		{
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
+			WLog_WARN(TAG, "pthread_attr_setstacksize(%" PRIuz ") failed: %s", stackSize,
+			          winpr_strerror(err, ebuffer, sizeof(ebuffer)));
+		}
+	}
 
 	thread->started = TRUE;
 	reset_event(thread);
