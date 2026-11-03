@@ -743,6 +743,9 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s
 	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_PREFIX_E1))
 		flags |= KBD_FLAGS_EXTENDED1;
 
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
 
@@ -750,7 +753,6 @@ WINPR_ATTR_NODISCARD
 static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, wStream* s,
                                             WINPR_ATTR_UNUSED BYTE eventFlags)
 {
-	rdpInput* input = nullptr;
 	UINT16 pointerFlags = 0;
 	UINT16 xPos = 0;
 	UINT16 yPos = 0;
@@ -762,7 +764,11 @@ static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, wStream* s,
 	if (!Stream_CheckAndLogRequiredLengthWLog(fastpath->log, s, 6))
 		return FALSE;
 
-	input = fastpath->rdp->input;
+	rdpInput* input = fastpath->rdp->input;
+
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 
 	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	Stream_Read_UINT16(s, xPos);         /* xPos (2 bytes) */
@@ -802,6 +808,9 @@ static BOOL fastpath_recv_input_event_relmouse(rdpFastPath* fastpath, wStream* s
 		return FALSE;
 	}
 
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->RelMouseEvent, input, pointerFlags, xDelta, yDelta);
 }
 
@@ -832,6 +841,9 @@ static BOOL fastpath_recv_input_event_qoe(rdpFastPath* fastpath, wStream* s,
 		return FALSE;
 	}
 
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->QoEEvent, input, timestampMS);
 }
 
@@ -868,6 +880,10 @@ static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, wStream* s,
 		return FALSE;
 	}
 
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
+
 	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
 }
 
@@ -875,14 +891,16 @@ WINPR_ATTR_NODISCARD
 static BOOL fastpath_recv_input_event_sync(rdpFastPath* fastpath, WINPR_ATTR_UNUSED wStream* s,
                                            BYTE eventFlags)
 {
-	rdpInput* input = nullptr;
-
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(fastpath->rdp);
 	WINPR_ASSERT(fastpath->rdp->input);
 	WINPR_ASSERT(s);
 
-	input = fastpath->rdp->input;
+	rdpInput* input = fastpath->rdp->input;
+
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, eventFlags);
 }
 
@@ -903,6 +921,10 @@ static BOOL fastpath_recv_input_event_unicode(rdpFastPath* fastpath, wStream* s,
 
 	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE))
 		flags |= KBD_FLAGS_RELEASE;
+
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(fastpath->rdp->input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 
 	WINPR_ASSERT(fastpath->rdp);
 	WINPR_ASSERT(fastpath->rdp);
@@ -1072,7 +1094,6 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	BOOL rc = FALSE;
 	BYTE eventHeader = 0;
 	BOOL should_unlock = FALSE;
-	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(iNumEvents > 0);
 	if (!s)
@@ -1081,16 +1102,24 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	if (!fastpath)
 		goto fail;
 
-	rdp = fastpath->rdp;
+	rdpRdp* rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
 
 	{
 		const CONNECTION_STATE state = rdp_get_state(rdp);
 		if (!rdp_is_active_state(rdp))
 		{
-			WLog_Print(fastpath->log, WLOG_WARN, "called before activation [%s]",
+			if (!rdp->was_deactivated)
+			{
+				WLog_Print(fastpath->log, WLOG_WARN, "called before activation [%s]",
+				           rdp_state_string(state));
+				goto fail;
+			}
+
+			WLog_Print(fastpath->log, WLOG_DEBUG,
+			           "called during deactivate-reactivate [%s], ignoring",
 			           rdp_state_string(state));
-			goto fail;
+			return TRUE;
 		}
 	}
 
