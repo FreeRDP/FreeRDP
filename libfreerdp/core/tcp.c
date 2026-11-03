@@ -887,7 +887,8 @@ fail:
 
 			getnameinfo(addr, WINPR_ASSERTING_INT_CAST(socklen_t, addrlen), hostname,
 			            WINPR_ASSERTING_INT_CAST(socklen_t, sizeof(hostname)), serv,
-			            WINPR_ASSERTING_INT_CAST(socklen_t, sizeof(serv)), NI_NUMERICSERV);
+			            WINPR_ASSERTING_INT_CAST(socklen_t, sizeof(serv)),
+			            NI_NUMERICHOST | NI_NUMERICSERV);
 			WLog_WARN(TAG, "connect to %s:%s failed with error: %s [%" PRId32 "]", hostname, serv,
 			          winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
 			rc = FALSE;
