@@ -518,10 +518,12 @@ typedef struct
 	UINT32 totalLength;
 } msg_proc_internals;
 
-/* A malformed fragment sequence must not wedge the channel for its whole
- * lifetime: drop the buffers and the flags so the next well-formed
- * CHANNEL_FLAG_FIRST starts a fresh reassembly. The error is still
- * returned to the caller, which logs it. */
+/* A malformed fragment sequence is fatal for the connection: the error is
+ * returned to the channel open event handler, which forwards it to
+ * setChannelError(), and the main loop disconnects via
+ * checkChannelErrorEvent(). The reset only keeps the failure paths uniform:
+ * no half-assembled buffer or stale fragment flags survive the error
+ * return, so the generic teardown always observes the same clean state. */
 static void channel_client_reassembly_reset(msg_proc_internals* internals)
 {
 	WINPR_ASSERT(internals);
@@ -729,6 +731,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		if (internals->totalLength != Stream_GetPosition(data_in))
 		{
 			WLog_ERR(TAG, "%s_plugin_process_received: read error", internals->channel_name);
+			channel_client_reassembly_reset(internals);
 			return ERROR_INTERNAL_ERROR;
 		}
 
