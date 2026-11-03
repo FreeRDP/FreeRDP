@@ -1461,7 +1461,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		InterlockedIncrement(&value->semaphore);
+		const LONG start = InterlockedIncrement(&value->semaphore);
 
 		const freerdp* inst = freerdp_settings_get_pointer(smartcard->settings, FreeRDP_instance);
 		WINPR_ASSERT(inst);
@@ -1521,7 +1521,9 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 				break;
 			}
 		} while (dwTimeout > 0);
-		InterlockedDecrement(&value->semaphore);
+		const LONG end = InterlockedDecrement(&value->semaphore);
+		WLog_Print(smartcard->log, smartcard->log_default_level,
+		           "[semaphore count] before: %" PRId32 ", after: %" PRId32, start, end);
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
@@ -1547,7 +1549,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		InterlockedIncrement(&value->semaphore);
+		const LONG start = InterlockedIncrement(&value->semaphore);
 		const freerdp* inst = freerdp_settings_get_pointer(smartcard->settings, FreeRDP_instance);
 		WINPR_ASSERT(inst);
 
@@ -1607,7 +1609,9 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 				break;
 			}
 		} while (dwTimeout > 0);
-		InterlockedDecrement(&value->semaphore);
+		const LONG end = InterlockedDecrement(&value->semaphore);
+		WLog_Print(smartcard->log, smartcard->log_default_level,
+		           "[semaphore count] before: %" PRId32 ", after: %" PRId32, start, end);
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
