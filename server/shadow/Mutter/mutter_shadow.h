@@ -54,7 +54,12 @@ struct mutter_shadow_subsystem
 	BOOL haveNode;
 	BOOL closed;
 	BOOL shellGone;
+	BOOL monitorGone; /* the shared monitor left the layout */
 	BOOL closedLogged;
+	BOOL streamGone; /* Mutter ended the stream (the monitor's layout changed) */
+	UINT64 streamGoneAt;
+	BOOL awaitNode; /* a stream recorded again waits for its PipeWire node */
+	BOOL reconnect; /* that node is there: connect the PipeWire stream to it */
 
 	/* the monitors as Mutter lays them out, and their connectors */
 	char connectors[MUTTER_SHADOW_MAX_MONITORS][MUTTER_SHADOW_CONNECTOR_SIZE];
@@ -65,6 +70,8 @@ struct mutter_shadow_subsystem
 	struct pw_context* context;
 	struct pw_core* core;
 	struct spa_hook coreListener;
+	struct pw_registry* registry; /* tells when Mutter's node goes away */
+	struct spa_hook registryListener;
 	struct pw_stream* stream;
 	struct spa_hook streamListener;
 	UINT32 width;
