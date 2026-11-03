@@ -1235,15 +1235,6 @@ rdpShadowServer* shadow_server_new(void)
 	server->AV2RateControlMode = FREERDP_AV2_VBR;
 #endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
-#if defined(WITH_GFX_AV2)
-	/* AV2 only on request (/gfx-av2): the reference encoder is far from realtime */
-	if (server->settings &&
-	    !freerdp_settings_set_bool(server->settings, FreeRDP_GfxCodecAV2, FALSE))
-	{
-		shadow_server_free(server);
-		return nullptr;
-	}
-#endif
 	return server;
 }
 
