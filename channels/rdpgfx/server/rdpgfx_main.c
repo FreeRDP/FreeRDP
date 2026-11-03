@@ -780,11 +780,8 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream
 
 		switch (cmd->codecId)
 		{
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 			case RDPGFX_CODECID_AV1:
-#endif
-#if defined(WITH_GFX_AV2)
-			case RDPGFX_CODECID_AV2:
 #endif
 			case RDPGFX_CODECID_AVC420:
 			{

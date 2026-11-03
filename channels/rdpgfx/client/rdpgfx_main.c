@@ -606,6 +606,8 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, capsSet.flags);   /* capsData (4 bytes) */
 	gfx->TotalDecodedFrames = 0;
 	gfx->ConnectionCaps = capsSet;
+	if (context)
+		context->CapsVersion = capsSet.version;
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: 0x%08" PRIX32 "",
 	           rdpgfx_caps_version_str(capsSet.version), capsSet.version, capsSet.flags);
@@ -1575,33 +1577,26 @@ static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_C
 		case RDPGFX_CODECID_CAPROGRESSIVE:
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
 			return TRUE;
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
-			if (gfx->ConnectionCaps.version != RDPGFX_CAPVERSION_FRDP_1)
+			/* AV1 with RDPGFX_CAPVERSION_FRDP_1, AV2 with RDPGFX_CAPVERSION_FRDP_2 */
+			switch (gfx->ConnectionCaps.version)
 			{
-				WLog_Print(gfx->base.log, WLOG_ERROR,
-				           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
-				           " only supported with %s but connection uses %s [0x%08" PRIx32 "]",
-				           cmd->codecId, rdpgfx_caps_version_str(RDPGFX_CAPVERSION_FRDP_1),
-				           rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
-				           gfx->ConnectionCaps.version);
-				return FALSE;
-			}
-			return TRUE;
+#if defined(WITH_GFX_AV1)
+				case RDPGFX_CAPVERSION_FRDP_1:
 #endif
 #if defined(WITH_GFX_AV2)
-		case RDPGFX_CODECID_AV2:
-			if (gfx->ConnectionCaps.version != RDPGFX_CAPVERSION_FRDP_2)
-			{
-				WLog_Print(gfx->base.log, WLOG_ERROR,
-				           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
-				           " only supported with %s but connection uses %s [0x%08" PRIx32 "]",
-				           cmd->codecId, rdpgfx_caps_version_str(RDPGFX_CAPVERSION_FRDP_2),
-				           rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
-				           gfx->ConnectionCaps.version);
-				return FALSE;
+				case RDPGFX_CAPVERSION_FRDP_2:
+#endif
+					return TRUE;
+				default:
+					WLog_Print(gfx->base.log, WLOG_ERROR,
+					           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
+					           " not supported with connection caps %s [0x%08" PRIx32 "]",
+					           cmd->codecId, rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
+					           gfx->ConnectionCaps.version);
+					return FALSE;
 			}
-			return TRUE;
 #endif
 		default:
 			WLog_Print(gfx->base.log, WLOG_ERROR,
