@@ -49,6 +49,7 @@
 #include <spa/param/buffers.h>
 #include <spa/buffer/meta.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/collections.h>
 #include <winpr/input.h>
@@ -122,34 +123,47 @@
 /* how often the sound statistics are logged (debug level) */
 #define MUTTER_AUDIO_LOG_MS 5000
 
+/* xkbcommon's core modifiers: Lock is Caps Lock, Mod2 is Num Lock in every
+ * stock keymap */
+#define MUTTER_MOD_LOCK (1u << 1)
+#define MUTTER_MOD_NUM (1u << 4)
+
+/* DisplayConfig.GetCurrentState: a physical monitor's connector and the size of
+ * its current mode */
+typedef struct
+{
+	char connector[MUTTER_SHADOW_CONNECTOR_SIZE];
+	INT32 width;
+	INT32 height;
+} MUTTER_MODE;
+
+/* DisplayConfig.GetCurrentState: a logical monitor, where it is in the layout */
+typedef struct
+{
+	INT32 x;
+	INT32 y;
+	double scale;
+	uint32_t transform;
+	int primary;
+	char connector[MUTTER_SHADOW_CONNECTOR_SIZE];
+} MUTTER_LOGICAL;
+
 static const AUDIO_FORMAT mutter_audio_offered_formats[] = {
 	{ WAVE_FORMAT_OPUS, MUTTER_AUDIO_CHANNELS, MUTTER_AUDIO_RATE, 12000, 1, 16, 0, nullptr },
 	{ WAVE_FORMAT_PCM, MUTTER_AUDIO_CHANNELS, MUTTER_AUDIO_RATE,
 	  (MUTTER_AUDIO_RATE * MUTTER_AUDIO_FRAME_BYTES), MUTTER_AUDIO_FRAME_BYTES, 16, 0, nullptr },
 };
 
-/* The format of the samples in each message: it outlives every client, since
- * rdpsnd keeps the pointer as its source format */
-static AUDIO_FORMAT mutter_audio_source_format = { WAVE_FORMAT_PCM,
-	                                               MUTTER_AUDIO_CHANNELS,
-	                                               MUTTER_AUDIO_RATE,
-	                                               (MUTTER_AUDIO_RATE * MUTTER_AUDIO_FRAME_BYTES),
-	                                               MUTTER_AUDIO_FRAME_BYTES,
-	                                               16,
-	                                               0,
-	                                               nullptr };
-
-/* xkbcommon's core modifiers: Lock is Caps Lock, Mod2 is Num Lock in every
- * stock keymap */
-#define MUTTER_MOD_LOCK (1u << 1)
-#define MUTTER_MOD_NUM (1u << 4)
-
 /* ------------------------------------------------------------------------ */
 /* D-Bus                                                                     */
 /* ------------------------------------------------------------------------ */
 
+WINPR_ATTR_NODISCARD
 static BOOL mutter_wait_for_name(sd_bus* bus, const char* name, UINT64 timeoutMs)
 {
+	WINPR_ASSERT(bus);
+	WINPR_ASSERT(name);
+
 	const UINT64 start = GetTickCount64();
 	BOOL logged = FALSE;
 
@@ -159,16 +173,15 @@ static BOOL mutter_wait_for_name(sd_bus* bus, const char* name, UINT64 timeoutMs
 		sd_bus_message* reply = nullptr;
 		int hasOwner = 0;
 
-		const int r =
+		const int called =
 		    sd_bus_call_method(bus, "org.freedesktop.DBus", "/org/freedesktop/DBus",
 		                       "org.freedesktop.DBus", "NameHasOwner", &err, &reply, "s", name);
-		if ((r >= 0) && (sd_bus_message_read(reply, "b", &hasOwner) >= 0) && hasOwner)
-		{
-			sd_bus_message_unref(reply);
-			return TRUE;
-		}
+		const BOOL owned =
+		    (called >= 0) && (sd_bus_message_read(reply, "b", &hasOwner) >= 0) && hasOwner;
 		sd_bus_message_unref(reply);
 		sd_bus_error_free(&err);
+		if (owned)
+			return TRUE;
 
 		if (GetTickCount64() - start > timeoutMs)
 			return FALSE;
@@ -182,90 +195,111 @@ static BOOL mutter_wait_for_name(sd_bus* bus, const char* name, UINT64 timeoutMs
 }
 
 /* Calls a method that returns one object path; *out gets a copy */
+WINPR_ATTR_NODISCARD
 static BOOL mutter_call_for_path(sd_bus* bus, sd_bus_message* call, const char* what, char** out)
 {
+	WINPR_ASSERT(bus);
+	WINPR_ASSERT(call);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(out);
+
 	sd_bus_error err = SD_BUS_ERROR_NULL;
 	sd_bus_message* reply = nullptr;
 	const char* path = nullptr;
 
-	int r = sd_bus_call(bus, call, 0, &err, &reply);
-	if (r < 0)
+	const int called = sd_bus_call(bus, call, 0, &err, &reply);
+	if (called < 0)
 	{
-		WLog_ERR(TAG, "%s failed: %s", what, err.message ? err.message : strerror(-r));
+		WLog_ERR(TAG, "%s failed: %s", what, err.message ? err.message : strerror(-called));
 		sd_bus_error_free(&err);
 		return FALSE;
 	}
 
-	r = sd_bus_message_read(reply, "o", &path);
-	if ((r >= 0) && path)
+	if ((sd_bus_message_read(reply, "o", &path) >= 0) && path)
 		*out = _strdup(path);
 	sd_bus_message_unref(reply);
-	return (r >= 0) && *out;
+	return *out != nullptr;
 }
 
-typedef struct
+/* Reads a dictionary, a{sv}: the value of key (of type 'b', 'u' or 's') goes to value
+ * when the key is there, the other entries are skipped */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_read_dict(sd_bus_message* msg, const char* key, char type, void* value)
 {
-	char connector[MUTTER_SHADOW_CONNECTOR_SIZE];
-	INT32 width;
-	INT32 height;
-} MUTTER_MODE;
+	WINPR_ASSERT(msg);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(value);
 
-/* Reads one physical monitor, ((ssss)a(siiddada{sv})a{sv}): its connector
- * and the size of its current mode */
-static int mutter_read_monitor(sd_bus_message* reply, MUTTER_MODE* mode)
+	const char contents[2] = { type, '\0' };
+
+	if (sd_bus_message_enter_container(msg, 'a', "{sv}") < 0)
+		return FALSE;
+
+	for (;;)
+	{
+		const int entered = sd_bus_message_enter_container(msg, 'e', "sv");
+		if (entered < 0)
+			return FALSE;
+		if (entered == 0)
+			break;
+
+		const char* name = nullptr;
+		if (sd_bus_message_read(msg, "s", &name) < 0)
+			return FALSE;
+		if (name && (strcmp(name, key) == 0))
+		{
+			if (sd_bus_message_read(msg, "v", contents, value) < 0)
+				return FALSE;
+		}
+		else if (sd_bus_message_skip(msg, "v") < 0)
+			return FALSE;
+
+		if (sd_bus_message_exit_container(msg) < 0)
+			return FALSE;
+	}
+
+	return sd_bus_message_exit_container(msg) >= 0;
+}
+
+/* Reads one physical monitor, ((ssss)a(siiddada{sv})a{sv}): its connector and the
+ * size of its current mode. *more is FALSE after the last one. */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_read_monitor(sd_bus_message* reply, MUTTER_MODE* mode, BOOL* more)
 {
+	WINPR_ASSERT(reply);
+	WINPR_ASSERT(mode);
+	WINPR_ASSERT(more);
+
+	const int entered = sd_bus_message_enter_container(reply, 'r', "(ssss)a(siiddada{sv})a{sv}");
+	if (entered < 0)
+		return FALSE;
+	*more = (entered > 0);
+	if (!*more)
+		return TRUE;
+
 	const char* connector = nullptr;
-	int r = sd_bus_message_enter_container(reply, 'r', "(ssss)a(siiddada{sv})a{sv}");
-	if (r <= 0)
-		return r;
-
-	r = sd_bus_message_read(reply, "(ssss)", &connector, nullptr, nullptr, nullptr);
-	if (r < 0)
-		return r;
+	if (sd_bus_message_read(reply, "(ssss)", &connector, nullptr, nullptr, nullptr) < 0)
+		return FALSE;
 	(void)_snprintf(mode->connector, sizeof(mode->connector), "%s", connector ? connector : "");
 
-	r = sd_bus_message_enter_container(reply, 'a', "(siiddada{sv})");
-	if (r < 0)
-		return r;
-	while ((r = sd_bus_message_enter_container(reply, 'r', "siiddada{sv}")) > 0)
+	if (sd_bus_message_enter_container(reply, 'a', "(siiddada{sv})") < 0)
+		return FALSE;
+	for (;;)
 	{
+		const int modeEntered = sd_bus_message_enter_container(reply, 'r', "siiddada{sv}");
+		if (modeEntered < 0)
+			return FALSE;
+		if (modeEntered == 0)
+			break;
+
 		int32_t width = 0;
 		int32_t height = 0;
-		r = sd_bus_message_read(reply, "siidd", nullptr, &width, &height, nullptr, nullptr);
-		if (r < 0)
-			return r;
-		r = sd_bus_message_skip(reply, "ad");
-		if (r < 0)
-			return r;
-
 		int current = 0;
-		r = sd_bus_message_enter_container(reply, 'a', "{sv}");
-		if (r < 0)
-			return r;
-		while ((r = sd_bus_message_enter_container(reply, 'e', "sv")) > 0)
-		{
-			const char* key = nullptr;
-			r = sd_bus_message_read(reply, "s", &key);
-			if (r < 0)
-				return r;
-			if (key && (strcmp(key, "is-current") == 0))
-				r = sd_bus_message_read(reply, "v", "b", &current);
-			else
-				r = sd_bus_message_skip(reply, "v");
-			if (r < 0)
-				return r;
-			r = sd_bus_message_exit_container(reply);
-			if (r < 0)
-				return r;
-		}
-		if (r < 0)
-			return r;
-		r = sd_bus_message_exit_container(reply); /* a{sv} */
-		if (r < 0)
-			return r;
-		r = sd_bus_message_exit_container(reply); /* the mode */
-		if (r < 0)
-			return r;
+		if ((sd_bus_message_read(reply, "siidd", nullptr, &width, &height, nullptr, nullptr) < 0) ||
+		    (sd_bus_message_skip(reply, "ad") < 0) ||
+		    !mutter_read_dict(reply, "is-current", 'b', &current) ||
+		    (sd_bus_message_exit_container(reply) < 0))
+			return FALSE;
 
 		if (current)
 		{
@@ -273,134 +307,142 @@ static int mutter_read_monitor(sd_bus_message* reply, MUTTER_MODE* mode)
 			mode->height = height;
 		}
 	}
-	if (r < 0)
-		return r;
-	r = sd_bus_message_exit_container(reply); /* the modes */
-	if (r < 0)
-		return r;
-	r = sd_bus_message_skip(reply, "a{sv}");
-	if (r < 0)
-		return r;
-	r = sd_bus_message_exit_container(reply);
-	return (r < 0) ? r : 1;
+
+	return (sd_bus_message_exit_container(reply) >= 0) && /* the modes */
+	       (sd_bus_message_skip(reply, "a{sv}") >= 0) &&
+	       (sd_bus_message_exit_container(reply) >= 0);
+}
+
+/* Reads one logical monitor, (iiduba(ssss)a{sv}): where it is and its (first)
+ * connector. *more is FALSE after the last one. */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_read_logical(sd_bus_message* reply, MUTTER_LOGICAL* logical, BOOL* more)
+{
+	WINPR_ASSERT(reply);
+	WINPR_ASSERT(logical);
+	WINPR_ASSERT(more);
+
+	const int entered = sd_bus_message_enter_container(reply, 'r', "iiduba(ssss)a{sv}");
+	if (entered < 0)
+		return FALSE;
+	*more = (entered > 0);
+	if (!*more)
+		return TRUE;
+
+	int32_t x = 0;
+	int32_t y = 0;
+	double scale = 1.0;
+	uint32_t transform = 0;
+	int primary = 0;
+	if ((sd_bus_message_read(reply, "iidub", &x, &y, &scale, &transform, &primary) < 0) ||
+	    (sd_bus_message_enter_container(reply, 'a', "(ssss)") < 0))
+		return FALSE;
+
+	const char* connector = nullptr;
+	for (;;)
+	{
+		const char* name = nullptr;
+		const int read = sd_bus_message_read(reply, "(ssss)", &name, nullptr, nullptr, nullptr);
+		if (read < 0)
+			return FALSE;
+		if (read == 0)
+			break;
+		if (!connector)
+			connector = name;
+	}
+
+	logical->x = x;
+	logical->y = y;
+	logical->scale = (scale > 0.0) ? scale : 1.0;
+	logical->transform = transform;
+	logical->primary = primary;
+	(void)_snprintf(logical->connector, sizeof(logical->connector), "%s",
+	                connector ? connector : "");
+
+	return (sd_bus_message_exit_container(reply) >= 0) && /* the connectors */
+	       (sd_bus_message_skip(reply, "a{sv}") >= 0) &&
+	       (sd_bus_message_exit_container(reply) >= 0);
+}
+
+/* Reads GetCurrentState's reply: the physical monitors' modes, the logical
+ * monitors, and the layout mode */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_read_state(sd_bus_message* reply, MUTTER_MODE* modes, size_t* nmodes,
+                              MUTTER_LOGICAL* logical, size_t* nlogical, uint32_t* layoutMode)
+{
+	WINPR_ASSERT(reply);
+	WINPR_ASSERT(modes);
+	WINPR_ASSERT(nmodes);
+	WINPR_ASSERT(logical);
+	WINPR_ASSERT(nlogical);
+	WINPR_ASSERT(layoutMode);
+
+	if ((sd_bus_message_read(reply, "u", nullptr) < 0) ||
+	    (sd_bus_message_enter_container(reply, 'a', "((ssss)a(siiddada{sv})a{sv})") < 0))
+		return FALSE;
+	for (;;)
+	{
+		MUTTER_MODE mode = WINPR_C_ARRAY_INIT;
+		BOOL more = FALSE;
+		if (!mutter_read_monitor(reply, &mode, &more))
+			return FALSE;
+		if (!more)
+			break;
+		if (*nmodes < MUTTER_SHADOW_MAX_MONITORS)
+			modes[(*nmodes)++] = mode;
+	}
+	if ((sd_bus_message_exit_container(reply) < 0) ||
+	    (sd_bus_message_enter_container(reply, 'a', "(iiduba(ssss)a{sv})") < 0))
+		return FALSE;
+
+	for (;;)
+	{
+		MUTTER_LOGICAL entry = WINPR_C_ARRAY_INIT;
+		BOOL more = FALSE;
+		if (!mutter_read_logical(reply, &entry, &more))
+			return FALSE;
+		if (!more)
+			break;
+		if (*nlogical < MUTTER_SHADOW_MAX_MONITORS)
+			logical[(*nlogical)++] = entry;
+	}
+	if (sd_bus_message_exit_container(reply) < 0)
+		return FALSE;
+
+	return mutter_read_dict(reply, "layout-mode", 'u', layoutMode);
 }
 
 /* The logical monitors, in Mutter's layout, primary first. connectors gets
  * each one's (first) connector. Returns the count. */
+WINPR_ATTR_NODISCARD
 static UINT32 mutter_list_monitors(sd_bus* bus, MONITOR_DEF* monitors,
                                    char (*connectors)[MUTTER_SHADOW_CONNECTOR_SIZE], UINT32 max)
 {
+	WINPR_ASSERT(bus);
+	WINPR_ASSERT(monitors);
+
 	sd_bus_error err = SD_BUS_ERROR_NULL;
 	sd_bus_message* reply = nullptr;
 	MUTTER_MODE modes[MUTTER_SHADOW_MAX_MONITORS] = WINPR_C_ARRAY_INIT;
+	MUTTER_LOGICAL logical[MUTTER_SHADOW_MAX_MONITORS] = WINPR_C_ARRAY_INIT;
 	size_t nmodes = 0;
-	UINT32 count = 0;
+	size_t nlogical = 0;
 	uint32_t layoutMode = 1; /* logical: sizes are divided by the scale */
+	UINT32 count = 0;
 
-	int r = sd_bus_call_method(bus, DC_NAME, DC_PATH, DC_NAME, "GetCurrentState", &err, &reply, "");
-	if (r < 0)
+	const int called =
+	    sd_bus_call_method(bus, DC_NAME, DC_PATH, DC_NAME, "GetCurrentState", &err, &reply, "");
+	if (called < 0)
 	{
-		WLog_WARN(TAG, "GetCurrentState failed: %s", err.message ? err.message : strerror(-r));
+		WLog_WARN(TAG, "GetCurrentState failed: %s", err.message ? err.message : strerror(-called));
 		sd_bus_error_free(&err);
 		return 0;
 	}
 
-	struct
-	{
-		INT32 x;
-		INT32 y;
-		double scale;
-		uint32_t transform;
-		int primary;
-		char connector[MUTTER_SHADOW_CONNECTOR_SIZE];
-	} logical[MUTTER_SHADOW_MAX_MONITORS] = WINPR_C_ARRAY_INIT;
-	size_t nlogical = 0;
-
-	r = sd_bus_message_read(reply, "u", nullptr);
-	if (r >= 0)
-		r = sd_bus_message_enter_container(reply, 'a', "((ssss)a(siiddada{sv})a{sv})");
-	while (r >= 0)
-	{
-		MUTTER_MODE mode = WINPR_C_ARRAY_INIT;
-		r = mutter_read_monitor(reply, &mode);
-		if (r <= 0)
-			break;
-		if (nmodes < ARRAYSIZE(modes))
-			modes[nmodes++] = mode;
-	}
-	if (r >= 0)
-		r = sd_bus_message_exit_container(reply);
-
-	if (r >= 0)
-		r = sd_bus_message_enter_container(reply, 'a', "(iiduba(ssss)a{sv})");
-	while (r >= 0)
-	{
-		r = sd_bus_message_enter_container(reply, 'r', "iiduba(ssss)a{sv}");
-		if (r <= 0)
-			break;
-
-		int32_t x = 0;
-		int32_t y = 0;
-		double scale = 1.0;
-		uint32_t transform = 0;
-		int primary = 0;
-		r = sd_bus_message_read(reply, "iidub", &x, &y, &scale, &transform, &primary);
-		if (r < 0)
-			break;
-
-		const char* connector = nullptr;
-		r = sd_bus_message_enter_container(reply, 'a', "(ssss)");
-		if (r < 0)
-			break;
-		while ((r = sd_bus_message_read(reply, "(ssss)", connector ? nullptr : &connector, nullptr,
-		                                nullptr, nullptr)) > 0)
-		{
-		}
-		if (r < 0)
-			break;
-		r = sd_bus_message_exit_container(reply);
-		if (r >= 0)
-			r = sd_bus_message_skip(reply, "a{sv}");
-		if (r >= 0)
-			r = sd_bus_message_exit_container(reply);
-		if (r < 0)
-			break;
-
-		if (nlogical < ARRAYSIZE(logical))
-		{
-			logical[nlogical].x = x;
-			logical[nlogical].y = y;
-			logical[nlogical].scale = (scale > 0.0) ? scale : 1.0;
-			logical[nlogical].transform = transform;
-			logical[nlogical].primary = primary;
-			(void)_snprintf(logical[nlogical].connector, sizeof(logical[nlogical].connector), "%s",
-			                connector ? connector : "");
-			nlogical++;
-		}
-	}
-	if (r >= 0)
-		r = sd_bus_message_exit_container(reply);
-
-	if (r >= 0)
-		r = sd_bus_message_enter_container(reply, 'a', "{sv}");
-	while (r > 0)
-	{
-		r = sd_bus_message_enter_container(reply, 'e', "sv");
-		if (r <= 0)
-			break;
-		const char* key = nullptr;
-		r = sd_bus_message_read(reply, "s", &key);
-		if ((r >= 0) && key && (strcmp(key, "layout-mode") == 0))
-			r = sd_bus_message_read(reply, "v", "u", &layoutMode);
-		else if (r >= 0)
-			r = sd_bus_message_skip(reply, "v");
-		if (r >= 0)
-			r = sd_bus_message_exit_container(reply);
-	}
+	const BOOL parsed = mutter_read_state(reply, modes, &nmodes, logical, &nlogical, &layoutMode);
 	sd_bus_message_unref(reply);
-
-	if (r < 0)
-		WLog_WARN(TAG, "GetCurrentState: unexpected reply: %s", strerror(-r));
+	if (!parsed)
+		WLog_WARN(TAG, "GetCurrentState: unexpected reply");
 
 	/* primary first, then Mutter's order */
 	for (int pass = 0; pass < 2; pass++)
@@ -452,13 +494,16 @@ static UINT32 mutter_list_monitors(sd_bus* bus, MONITOR_DEF* monitors,
 	return count;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 mutter_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 {
+	WINPR_ASSERT(monitors);
+
 	sd_bus* bus = nullptr;
-	const int r = sd_bus_open_user(&bus);
-	if (r < 0)
+	const int opened = sd_bus_open_user(&bus);
+	if (opened < 0)
 	{
-		WLog_WARN(TAG, "cannot connect to the session bus: %s", strerror(-r));
+		WLog_WARN(TAG, "cannot connect to the session bus: %s", strerror(-opened));
 		return 0;
 	}
 
@@ -468,12 +513,15 @@ static UINT32 mutter_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonit
 	return count;
 }
 
+WINPR_ATTR_NODISCARD
 static int mutter_on_stream_added(sd_bus_message* msg, void* data,
                                   WINPR_ATTR_UNUSED sd_bus_error* err)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
-	uint32_t node = 0;
+	WINPR_ASSERT(msg);
+	WINPR_ASSERT(mutter);
 
+	uint32_t node = 0;
 	if (sd_bus_message_read(msg, "u", &node) >= 0)
 	{
 		mutter->nodeId = node;
@@ -483,23 +531,29 @@ static int mutter_on_stream_added(sd_bus_message* msg, void* data,
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int mutter_on_closed(WINPR_ATTR_UNUSED sd_bus_message* msg, void* data,
                             WINPR_ATTR_UNUSED sd_bus_error* err)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	WINPR_ASSERT(mutter);
+
 	mutter->closed = TRUE;
 	return 0;
 }
 
 /* GNOME Shell left the session bus (it ended, or crashed): the sessions went with it */
+WINPR_ATTR_NODISCARD
 static int mutter_on_name_owner_changed(sd_bus_message* msg, void* data,
                                         WINPR_ATTR_UNUSED sd_bus_error* err)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	WINPR_ASSERT(msg);
+	WINPR_ASSERT(mutter);
+
 	const char* name = nullptr;
 	const char* oldOwner = nullptr;
 	const char* newOwner = nullptr;
-
 	if ((sd_bus_message_read(msg, "sss", &name, &oldOwner, &newOwner) >= 0) && newOwner &&
 	    (newOwner[0] == '\0'))
 	{
@@ -512,46 +566,35 @@ static int mutter_on_name_owner_changed(sd_bus_message* msg, void* data,
 /* The stream's "mapping-id" parameter names the libei region of its monitor */
 static void mutter_read_stream_parameters(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	sd_bus_error err = SD_BUS_ERROR_NULL;
 	sd_bus_message* reply = nullptr;
+	const char* mappingId = nullptr;
 
-	int r = sd_bus_get_property(mutter->bus, SC_NAME, mutter->streamPath, SC_STREAM_IFACE,
-	                            "Parameters", &err, &reply, "a{sv}");
-	if (r < 0)
+	const int got = sd_bus_get_property(mutter->bus, SC_NAME, mutter->streamPath, SC_STREAM_IFACE,
+	                                    "Parameters", &err, &reply, "a{sv}");
+	if (got < 0)
 	{
-		WLog_DBG(TAG, "no stream parameters: %s", err.message ? err.message : strerror(-r));
+		WLog_DBG(TAG, "no stream parameters: %s", err.message ? err.message : strerror(-got));
 		sd_bus_error_free(&err);
 		return;
 	}
 
-	r = sd_bus_message_enter_container(reply, 'a', "{sv}");
-	while (r > 0)
+	if (mutter_read_dict(reply, "mapping-id", 's', &mappingId) && mappingId)
 	{
-		r = sd_bus_message_enter_container(reply, 'e', "sv");
-		if (r <= 0)
-			break;
-		const char* key = nullptr;
-		const char* value = nullptr;
-		r = sd_bus_message_read(reply, "s", &key);
-		if ((r >= 0) && key && (strcmp(key, "mapping-id") == 0))
-		{
-			r = sd_bus_message_read(reply, "v", "s", &value);
-			if ((r >= 0) && value)
-			{
-				free(mutter->mappingId);
-				mutter->mappingId = _strdup(value);
-			}
-		}
-		else if (r >= 0)
-			r = sd_bus_message_skip(reply, "v");
-		if (r >= 0)
-			r = sd_bus_message_exit_container(reply);
+		free(mutter->mappingId);
+		mutter->mappingId = _strdup(mappingId);
 	}
 	sd_bus_message_unref(reply);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* connector)
 {
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(connector);
+
 	sd_bus_error err = SD_BUS_ERROR_NULL;
 	sd_bus_message* call = nullptr;
 	sd_bus_message* reply = nullptr;
@@ -568,11 +611,11 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 		goto out;
 	call = sd_bus_message_unref(call);
 
-	int r = sd_bus_get_property_string(mutter->bus, RD_NAME, mutter->rdSessionPath,
-	                                   RD_SESSION_IFACE, "SessionId", &err, &sessionId);
-	if (r < 0)
+	const int gotId = sd_bus_get_property_string(mutter->bus, RD_NAME, mutter->rdSessionPath,
+	                                             RD_SESSION_IFACE, "SessionId", &err, &sessionId);
+	if (gotId < 0)
 	{
-		WLog_ERR(TAG, "no SessionId: %s", err.message ? err.message : strerror(-r));
+		WLog_ERR(TAG, "no SessionId: %s", err.message ? err.message : strerror(-gotId));
 		goto out;
 	}
 
@@ -616,12 +659,12 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 
 	/* 4. start, then wait for the PipeWire node */
 	WLog_DBG(TAG, "RemoteDesktop.Session.Start");
-	r = sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE, "Start",
-	                       &err, nullptr, "");
-	if (r < 0)
+	const int started = sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath,
+	                                       RD_SESSION_IFACE, "Start", &err, nullptr, "");
+	if (started < 0)
 	{
 		WLog_ERR(TAG, "RemoteDesktop.Session.Start failed: %s",
-		         err.message ? err.message : strerror(-r));
+		         err.message ? err.message : strerror(-started));
 		goto out;
 	}
 	mutter->started = TRUE;
@@ -629,10 +672,10 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 	const UINT64 start = GetTickCount64();
 	while (!mutter->haveNode)
 	{
-		r = sd_bus_process(mutter->bus, nullptr);
-		if (r < 0)
+		const int processed = sd_bus_process(mutter->bus, nullptr);
+		if (processed < 0)
 			goto out;
-		if (r > 0)
+		if (processed > 0)
 			continue;
 		if (GetTickCount64() - start > MUTTER_STREAM_TIMEOUT_MS)
 		{
@@ -645,9 +688,10 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 
 	/* 5. input */
 	int fd = -1;
-	r = sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE,
+	const int connected =
+	    sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE,
 	                       "ConnectToEIS", &err, &reply, "a{sv}", 0);
-	if ((r < 0) || (sd_bus_message_read(reply, "h", &fd) < 0))
+	if ((connected < 0) || (sd_bus_message_read(reply, "h", &fd) < 0))
 	{
 		WLog_WARN(TAG, "ConnectToEIS failed: %s: the clients can only watch",
 		          err.message ? err.message : "bad reply");
@@ -694,9 +738,12 @@ static void mutter_cursor_msg_free(UINT32 id, SHADOW_MSG_OUT* msg)
 	free(msg);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 mutter_cursor_hash(const BYTE* pixels, UINT32 width, UINT32 height, UINT32 xHot,
                                  UINT32 yHot)
 {
+	WINPR_ASSERT(pixels);
+
 	/* FNV-1a over the size, the hot spot and the pixels */
 	UINT32 hash = 2166136261u;
 	const UINT32 header[] = { width, height, xHot, yHot };
@@ -716,6 +763,9 @@ static UINT32 mutter_cursor_hash(const BYTE* pixels, UINT32 width, UINT32 height
 static void mutter_cursor_send_shape(mutterShadowSubsystem* mutter, const BYTE* pixels,
                                      UINT32 width, UINT32 height, UINT32 xHot, UINT32 yHot)
 {
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(pixels);
+
 	const UINT32 hash = mutter_cursor_hash(pixels, width, height, xHot, yHot);
 	if (mutter->cursorKnown && !mutter->cursorResend && (hash == mutter->cursorHash))
 		return;
@@ -750,6 +800,8 @@ static void mutter_cursor_send_shape(mutterShadowSubsystem* mutter, const BYTE* 
 
 static void mutter_cursor_send_position(mutterShadowSubsystem* mutter, INT32 x, INT32 y)
 {
+	WINPR_ASSERT(mutter);
+
 	if ((x == mutter->cursorX) && (y == mutter->cursorY))
 		return;
 	mutter->cursorX = x;
@@ -785,6 +837,9 @@ static void mutter_cursor_send_position(mutterShadowSubsystem* mutter, INT32 x, 
 /* The cursor in a buffer's metadata: its position, and its shape when it changed */
 static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffer* buf)
 {
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(buf);
+
 	struct spa_meta* meta = spa_buffer_find_meta(buf, SPA_META_Cursor);
 	if (!meta || (meta->size < sizeof(struct spa_meta_cursor)))
 		return;
@@ -859,6 +914,8 @@ static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffe
 
 static void mutter_set_monitor_size(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	rdpShadowSubsystem* subsystem = &mutter->common;
 	MONITOR_DEF* monitor = &subsystem->monitors[subsystem->selectedMonitor];
 
@@ -882,6 +939,8 @@ static void mutter_set_monitor_size(mutterShadowSubsystem* mutter)
 static void mutter_on_param_changed(void* data, uint32_t id, const struct spa_pod* param)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	WINPR_ASSERT(mutter);
+
 	struct spa_video_info_raw info = WINPR_C_ARRAY_INIT;
 	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
 	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
@@ -947,6 +1006,10 @@ static void mutter_copy_rect(mutterShadowSubsystem* mutter, rdpShadowSurface* su
                              const BYTE* src, UINT32 stride, INT32 x, INT32 y, INT32 width,
                              INT32 height)
 {
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(src);
+
 	const INT32 maxW = (INT32)MIN(mutter->width, surface->width);
 	const INT32 maxH = (INT32)MIN(mutter->height, surface->height);
 	const INT32 left = MAX(x, 0);
@@ -972,6 +1035,8 @@ static void mutter_copy_rect(mutterShadowSubsystem* mutter, rdpShadowSurface* su
 static void mutter_on_process(void* data)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	WINPR_ASSERT(mutter);
+
 	rdpShadowServer* server = mutter->common.server;
 	if (!server || !server->surface)
 		return;
@@ -1065,8 +1130,11 @@ static const struct pw_core_events mutter_core_events = {
 	.error = mutter_on_core_error,
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
 	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
 	const struct spa_rectangle size = SPA_RECTANGLE(1920, 1080);
@@ -1150,6 +1218,9 @@ static void mutter_audio_msg_free(WINPR_ATTR_UNUSED UINT32 id, SHADOW_MSG_OUT* m
 /* Sends what s holds to every client, as one message */
 static void mutter_audio_post(mutterShadowSubsystem* mutter, wStream* s)
 {
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(s);
+
 	const size_t size = Stream_GetPosition(s);
 	Stream_ResetPosition(s);
 	if (size == 0)
@@ -1173,7 +1244,7 @@ static void mutter_audio_post(mutterShadowSubsystem* mutter, wStream* s)
 	memcpy(msg->buf, Stream_Buffer(s), size);
 	mutter->audioMessages++;
 	msg->common.Free = mutter_audio_msg_free;
-	msg->audio_format = &mutter_audio_source_format;
+	msg->audio_format = &mutter->audioSourceFormat;
 	msg->nFrames = size / MUTTER_AUDIO_FRAME_BYTES;
 	msg->wTimestamp = (UINT16)(GetTickCount64() & 0xFFFF);
 	/* the message is freed with its last reference, also when no client took it */
@@ -1184,6 +1255,8 @@ static void mutter_audio_post(mutterShadowSubsystem* mutter, wStream* s)
 
 static void mutter_audio_stats(mutterShadowSubsystem* mutter, size_t frames)
 {
+	WINPR_ASSERT(mutter);
+
 	const UINT64 now = GetTickCount64();
 	if (mutter->audioLogged == 0)
 	{
@@ -1208,6 +1281,8 @@ static void mutter_audio_stats(mutterShadowSubsystem* mutter, size_t frames)
 static void mutter_on_audio_process(void* data)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	WINPR_ASSERT(mutter);
+
 	struct pw_buffer* pb = nullptr;
 
 	while ((pb = pw_stream_dequeue_buffer(mutter->audio)) != nullptr)
@@ -1247,8 +1322,11 @@ static const struct pw_stream_events mutter_audio_events = {
 /* The formats offered to the clients, and a capture of the default sink's
  * monitor, inactive until a client connects. Without it there is no sound,
  * and the rest works. */
+WINPR_ATTR_NODISCARD
 static BOOL mutter_audio_init(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
 	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
 
@@ -1310,6 +1388,8 @@ fail:
 
 static void mutter_audio_uninit(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	if (mutter->audio)
 		pw_stream_destroy(mutter->audio);
 	mutter->audio = nullptr;
@@ -1324,6 +1404,8 @@ static void mutter_audio_uninit(mutterShadowSubsystem* mutter)
 /* in the subsystem thread: capture only while clients are connected */
 static void mutter_audio_follow_clients(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	if (!mutter->audio)
 		return;
 
@@ -1349,6 +1431,8 @@ static void mutter_audio_follow_clients(mutterShadowSubsystem* mutter)
 /* under eiLock */
 static void mutter_process_ei_events(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	struct ei_event* e = nullptr;
 
 	ei_dispatch(mutter->ei);
@@ -1418,6 +1502,8 @@ static void mutter_process_ei_events(mutterShadowSubsystem* mutter)
 /* under eiLock */
 static void mutter_key(mutterShadowSubsystem* mutter, uint32_t code, BOOL down)
 {
+	WINPR_ASSERT(mutter);
+
 	if (!mutter->keyboard || !mutter->keyboardReady)
 		return;
 	/* Mutter keeps the modifier state itself, as for a real keyboard */
@@ -1504,6 +1590,8 @@ static BOOL mutter_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsy
  * libei region of the shared monitor */
 static void mutter_pointer_move(mutterShadowSubsystem* mutter, UINT16 x, UINT16 y)
 {
+	WINPR_ASSERT(mutter);
+
 	struct ei_region* region = nullptr;
 	struct ei_region* first = nullptr;
 
@@ -1547,6 +1635,8 @@ static void mutter_pointer_move(mutterShadowSubsystem* mutter, UINT16 x, UINT16 
 /* under eiLock */
 static void mutter_pointer_button(mutterShadowSubsystem* mutter, uint32_t button, BOOL down)
 {
+	WINPR_ASSERT(mutter);
+
 	if (!ei_device_has_capability(mutter->pointer, EI_DEVICE_CAP_BUTTON))
 		return;
 	ei_device_button_button(mutter->pointer, button, down ? true : false);
@@ -1556,6 +1646,8 @@ static void mutter_pointer_button(mutterShadowSubsystem* mutter, uint32_t button
 /* under eiLock; 120 is one notch, as in RDP */
 static void mutter_pointer_wheel(mutterShadowSubsystem* mutter, UINT16 flags, BOOL horizontal)
 {
+	WINPR_ASSERT(mutter);
+
 	if (!ei_device_has_capability(mutter->pointer, EI_DEVICE_CAP_SCROLL))
 		return;
 
@@ -1640,6 +1732,7 @@ typedef struct
 	const char* password;
 } MUTTER_SHADOW_PAM_DATA;
 
+WINPR_ATTR_NODISCARD
 static int mutter_shadow_pam_conv(int num_msg, const struct pam_message** msg,
                                   struct pam_response** resp, void* appdata_ptr)
 {
@@ -1731,6 +1824,8 @@ static int mutter_shadow_pam_authenticate(WINPR_ATTR_UNUSED rdpShadowSubsystem* 
 
 static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 {
+	WINPR_ASSERT(mutter);
+
 	/* the next frame goes out whole; Mutter sends one when asked for nothing
 	 * else only once something changes, so ask the clients' surface again */
 	mutter->fullPaint = TRUE;
@@ -1759,6 +1854,9 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 
 static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessage* message)
 {
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(message);
+
 	switch (message->id)
 	{
 		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
@@ -1774,9 +1872,12 @@ static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessag
 		message->Free(message);
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)arg;
+	WINPR_ASSERT(mutter);
+
 	wMessagePipe* MsgPipe = mutter->common.MsgPipe;
 	HANDLE events[6] = WINPR_C_ARRAY_INIT;
 	DWORD count = 0;
@@ -1883,14 +1984,15 @@ WINPR_ATTR_NODISCARD
 static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
+	WINPR_ASSERT(mutter);
 
-	int r = sd_bus_open_user(&mutter->bus);
-	if (r < 0)
+	const int opened = sd_bus_open_user(&mutter->bus);
+	if (opened < 0)
 	{
 		WLog_ERR(TAG,
 		         "cannot connect to the session bus: %s (start the server inside the GNOME "
 		         "session, as its user)",
-		         strerror(-r));
+		         strerror(-opened));
 		return -1;
 	}
 
@@ -1938,6 +2040,7 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int mutter_shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
@@ -2006,6 +2109,7 @@ static int mutter_shadow_subsystem_start(rdpShadowSubsystem* subsystem)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int mutter_shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
@@ -2052,8 +2156,10 @@ static void mutter_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 	if (!mutter)
 		return;
 
-	(void)mutter_shadow_subsystem_stop(subsystem);
-	(void)mutter_shadow_subsystem_uninit(subsystem);
+	if (mutter_shadow_subsystem_stop(subsystem) < 0)
+		WLog_WARN(TAG, "the subsystem thread did not stop");
+	if (mutter_shadow_subsystem_uninit(subsystem) < 0)
+		WLog_WARN(TAG, "the subsystem was not uninitialized");
 	DeleteCriticalSection(&mutter->eiLock);
 	if (mutter->stopEvent)
 		(void)CloseHandle(mutter->stopEvent);
@@ -2087,6 +2193,12 @@ static rdpShadowSubsystem* mutter_shadow_subsystem_new(void)
 
 	mutter->cursorX = -1;
 	mutter->cursorY = -1;
+	mutter->audioSourceFormat.wFormatTag = WAVE_FORMAT_PCM;
+	mutter->audioSourceFormat.nChannels = MUTTER_AUDIO_CHANNELS;
+	mutter->audioSourceFormat.nSamplesPerSec = MUTTER_AUDIO_RATE;
+	mutter->audioSourceFormat.nAvgBytesPerSec = MUTTER_AUDIO_RATE * MUTTER_AUDIO_FRAME_BYTES;
+	mutter->audioSourceFormat.nBlockAlign = MUTTER_AUDIO_FRAME_BYTES;
+	mutter->audioSourceFormat.wBitsPerSample = 16;
 	mutter->common.SynchronizeEvent = mutter_shadow_input_synchronize_event;
 	mutter->common.KeyboardEvent = mutter_shadow_input_keyboard_event;
 	mutter->common.UnicodeKeyboardEvent = mutter_shadow_input_unicode_keyboard_event;
@@ -2100,13 +2212,17 @@ static rdpShadowSubsystem* mutter_shadow_subsystem_new(void)
 	return &mutter->common;
 }
 
+WINPR_ATTR_NODISCARD
 FREERDP_API const char* ShadowSubsystemName(void)
 {
 	return "Mutter";
 }
 
+WINPR_ATTR_NODISCARD
 FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
+	WINPR_ASSERT(pEntryPoints);
+
 	pEntryPoints->New = mutter_shadow_subsystem_new;
 	pEntryPoints->Free = mutter_shadow_subsystem_free;
 	pEntryPoints->Init = mutter_shadow_subsystem_init;
