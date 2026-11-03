@@ -1088,8 +1088,13 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		const CONNECTION_STATE state = rdp_get_state(rdp);
 		if (!rdp_is_active_state(rdp))
 		{
-			WLog_Print(fastpath->log, WLOG_WARN, "called before activation [%s]",
+			/* freerdp_input_send_* skip input while the session is not active and report
+			 * success. A Deactivate All can land between that check and this one (the server
+			 * reactivates, e.g. on a resize), so drop the input here the same way: failing would
+			 * make a client end the session over a mouse move. */
+			WLog_Print(fastpath->log, WLOG_WARN, "called before activation [%s], input dropped",
 			           rdp_state_string(state));
+			rc = TRUE;
 			goto fail;
 		}
 	}
