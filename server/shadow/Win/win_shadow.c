@@ -723,13 +723,19 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
  * changed, 0 when it did not and <0 on fatal error. */
 int win_shadow_check_resize(winShadowSubsystem* subsystem)
 {
+	WINPR_ASSERT(subsystem);
+
 	DEVMODEW dm = WINPR_C_ARRAY_INIT;
 	dm.dmSize = (WORD)sizeof(dm);
 
 	if (!EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &dm))
 		return 0;
 
-	if (((int)dm.dmPelsWidth == subsystem->width) && ((int)dm.dmPelsHeight == subsystem->height))
+	/* Compare in the unsigned domain: an int cast of the DWORD values would
+	 * wrap resolutions above INT_MAX to negative numbers, letting them match
+	 * a corrupted negative stored width/height. */
+	if (((UINT32)dm.dmPelsWidth == (UINT32)subsystem->width) &&
+	    ((UINT32)dm.dmPelsHeight == (UINT32)subsystem->height))
 		return 0;
 
 	MONITOR_DEF* virtualScreen = &(subsystem->base.virtualScreen);

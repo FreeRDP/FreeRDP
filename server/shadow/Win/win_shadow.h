@@ -94,6 +94,7 @@ extern "C"
 	/* Refreshes the monitor definition and the shadow screen when the
 	 * desktop display mode changed. Returns 1 when the geometry changed,
 	 * 0 when it did not and <0 on fatal error. */
+	WINPR_ATTR_NODISCARD
 	int win_shadow_check_resize(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
