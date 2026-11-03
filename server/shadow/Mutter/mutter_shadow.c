@@ -107,6 +107,8 @@
 #define MUTTER_NAME_TIMEOUT_MS 10000
 #define MUTTER_STREAM_TIMEOUT_MS 5000
 #define MUTTER_FORMAT_TIMEOUT_MS 5000
+/* after Mutter's node goes away, how long a Closed may take to follow it */
+#define MUTTER_STREAM_GONE_GRACE_MS 250
 
 /* What the clients hear: 48 kHz, 2 channels, 16 bits; PipeWire converts what
  * the sink plays to it. The build may have no resampler, so every format
@@ -527,6 +529,11 @@ static int mutter_on_stream_added(sd_bus_message* msg, void* data,
 		mutter->nodeId = node;
 		mutter->haveNode = TRUE;
 		WLog_DBG(TAG, "PipeWire node %" PRIu32, mutter->nodeId);
+		if (mutter->awaitNode)
+		{
+			mutter->awaitNode = FALSE;
+			mutter->reconnect = TRUE;
+		}
 	}
 	return 0;
 }
@@ -583,10 +590,48 @@ static void mutter_read_stream_parameters(mutterShadowSubsystem* mutter)
 
 	if (mutter_read_dict(reply, "mapping-id", 's', &mappingId) && mappingId)
 	{
+		/* the client threads look it up when they move the pointer */
+		char* copy = _strdup(mappingId);
+		EnterCriticalSection(&mutter->eiLock);
 		free(mutter->mappingId);
-		mutter->mappingId = _strdup(mappingId);
+		mutter->mappingId = copy;
+		LeaveCriticalSection(&mutter->eiLock);
 	}
 	sd_bus_message_unref(reply);
+}
+
+/* A stream of the monitor, in the screen cast session; the clients draw the
+ * cursor from its metadata */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_record_monitor(mutterShadowSubsystem* mutter, const char* connector)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(connector);
+
+	sd_bus_message* call = nullptr;
+	BOOL rc = FALSE;
+
+	if ((sd_bus_message_new_method_call(mutter->bus, &call, SC_NAME, mutter->scSessionPath,
+	                                    SC_SESSION_IFACE, "RecordMonitor") < 0) ||
+	    (sd_bus_message_append(call, "sa{sv}", connector, 1, "cursor-mode", "u",
+	                           (uint32_t)MUTTER_CURSOR_MODE_METADATA) < 0))
+		goto out;
+	WLog_DBG(TAG, "ScreenCast.Session.RecordMonitor('%s')", connector);
+	if (!mutter_call_for_path(mutter->bus, call, "ScreenCast.Session.RecordMonitor",
+	                          &mutter->streamPath))
+		goto out;
+
+	if (sd_bus_match_signal(mutter->bus, &mutter->streamAddedSlot, SC_NAME, mutter->streamPath,
+	                        SC_STREAM_IFACE, "PipeWireStreamAdded", mutter_on_stream_added,
+	                        mutter) < 0)
+	{
+		WLog_ERR(TAG, "cannot watch the stream's signals");
+		goto out;
+	}
+	rc = TRUE;
+out:
+	sd_bus_message_unref(call);
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
@@ -630,22 +675,11 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 		goto out;
 	call = sd_bus_message_unref(call);
 
-	/* 3. the monitor; the clients draw the cursor from its metadata */
-	if ((sd_bus_message_new_method_call(mutter->bus, &call, SC_NAME, mutter->scSessionPath,
-	                                    SC_SESSION_IFACE, "RecordMonitor") < 0) ||
-	    (sd_bus_message_append(call, "sa{sv}", connector, 1, "cursor-mode", "u",
-	                           (uint32_t)MUTTER_CURSOR_MODE_METADATA) < 0))
+	/* 3. the monitor */
+	if (!mutter_record_monitor(mutter, connector))
 		goto out;
-	WLog_DBG(TAG, "ScreenCast.Session.RecordMonitor('%s')", connector);
-	if (!mutter_call_for_path(mutter->bus, call, "ScreenCast.Session.RecordMonitor",
-	                          &mutter->streamPath))
-		goto out;
-	call = sd_bus_message_unref(call);
 
-	if ((sd_bus_match_signal(mutter->bus, &mutter->streamAddedSlot, SC_NAME, mutter->streamPath,
-	                         SC_STREAM_IFACE, "PipeWireStreamAdded", mutter_on_stream_added,
-	                         mutter) < 0) ||
-	    (sd_bus_match_signal(mutter->bus, &mutter->closedSlot, RD_NAME, mutter->rdSessionPath,
+	if ((sd_bus_match_signal(mutter->bus, &mutter->closedSlot, RD_NAME, mutter->rdSessionPath,
 	                         RD_SESSION_IFACE, "Closed", mutter_on_closed, mutter) < 0) ||
 	    (sd_bus_add_match(mutter->bus, &mutter->ownerSlot,
 	                      "type='signal',sender='org.freedesktop.DBus',"
@@ -1130,19 +1164,34 @@ static const struct pw_core_events mutter_core_events = {
 	.error = mutter_on_core_error,
 };
 
+/* Mutter ends a monitor's stream when the monitor's layout changes (its scale,
+ * its rotation, its position): it removes the node, and the session goes on
+ * without a picture. No D-Bus signal says so; PipeWire's registry does. */
+static void mutter_on_global_remove(void* data, uint32_t id)
+{
+	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	WINPR_ASSERT(mutter);
+
+	if (mutter->haveNode && (id == mutter->nodeId))
+	{
+		mutter->haveNode = FALSE;
+		mutter->streamGone = TRUE;
+		mutter->streamGoneAt = GetTickCount64();
+	}
+}
+
+static const struct pw_registry_events mutter_registry_events = {
+	PW_VERSION_REGISTRY_EVENTS,
+	.global_remove = mutter_on_global_remove,
+};
+
+WINPR_ATTR_NODISCARD
+static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter);
+
 WINPR_ATTR_NODISCARD
 static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 {
 	WINPR_ASSERT(mutter);
-
-	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
-	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
-	const struct spa_rectangle size = SPA_RECTANGLE(1920, 1080);
-	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
-	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
-	const struct spa_fraction rate = SPA_FRACTION(0, 1);
-	const struct spa_fraction maxRate = SPA_FRACTION(60, 1);
-	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
 
 	pw_init(nullptr, nullptr);
 	mutter->loop = pw_loop_new(nullptr);
@@ -1160,6 +1209,41 @@ static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 	}
 	pw_core_add_listener(mutter->core, &mutter->coreListener, &mutter_core_events, mutter);
 
+	mutter->registry = pw_core_get_registry(mutter->core, PW_VERSION_REGISTRY, 0);
+	if (!mutter->registry)
+		return FALSE;
+	pw_registry_add_listener(mutter->registry, &mutter->registryListener, &mutter_registry_events,
+	                         mutter);
+
+	if (!mutter_stream_connect_node(mutter))
+		return FALSE;
+
+	/* the surface needs the stream's size before the server starts */
+	const UINT64 start = GetTickCount64();
+	while (!mutter->haveFormat)
+	{
+		if (GetTickCount64() - start > MUTTER_FORMAT_TIMEOUT_MS)
+		{
+			WLog_ERR(TAG, "the stream got no format");
+			return FALSE;
+		}
+		pw_loop_enter(mutter->loop);
+		(void)pw_loop_iterate(mutter->loop, 100);
+		pw_loop_leave(mutter->loop);
+	}
+	return TRUE;
+}
+
+/* A new stream, connected to Mutter's node mutter->nodeId. Each node gets a
+ * stream of its own: a stream connected again keeps its first target. */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(mutter->core);
+
+	if (mutter->stream)
+		pw_stream_destroy(mutter->stream);
 	mutter->stream =
 	    pw_stream_new(mutter->core, "FreeRDP shadow server",
 	                  pw_properties_new(PW_KEY_MEDIA_TYPE, "Video", PW_KEY_MEDIA_CATEGORY,
@@ -1167,6 +1251,15 @@ static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 	if (!mutter->stream)
 		return FALSE;
 	pw_stream_add_listener(mutter->stream, &mutter->streamListener, &mutter_stream_events, mutter);
+
+	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
+	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
+	const struct spa_rectangle size = SPA_RECTANGLE(1920, 1080);
+	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
+	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
+	const struct spa_fraction rate = SPA_FRACTION(0, 1);
+	const struct spa_fraction maxRate = SPA_FRACTION(60, 1);
+	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
 
 	/* no modifiers offered: Mutter sends frames in shared memory */
 	const struct spa_pod* params[] = { spa_pod_builder_add_object(
@@ -1185,20 +1278,6 @@ static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 	{
 		WLog_ERR(TAG, "pw_stream_connect failed");
 		return FALSE;
-	}
-
-	/* the surface needs the stream's size before the server starts */
-	const UINT64 start = GetTickCount64();
-	while (!mutter->haveFormat)
-	{
-		if (GetTickCount64() - start > MUTTER_FORMAT_TIMEOUT_MS)
-		{
-			WLog_ERR(TAG, "the stream got no format");
-			return FALSE;
-		}
-		pw_loop_enter(mutter->loop);
-		(void)pw_loop_iterate(mutter->loop, 100);
-		pw_loop_leave(mutter->loop);
 	}
 	return TRUE;
 }
@@ -1872,6 +1951,65 @@ static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessag
 		message->Free(message);
 }
 
+/* Mutter ended the stream: record the same monitor again in the running
+ * session. Its node comes with PipeWireStreamAdded (see mutter_reconnect). */
+static void mutter_record_again(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	mutter->streamGone = FALSE;
+	const char* connector = mutter->connectors[mutter->common.selectedMonitor];
+	WLog_INFO(TAG, "Mutter ended the stream of %s (its layout changed): recording it again",
+	          connector[0] ? connector : "the primary monitor");
+
+	mutter->streamAddedSlot = sd_bus_slot_unref(mutter->streamAddedSlot);
+	free(mutter->streamPath);
+	mutter->streamPath = nullptr;
+
+	sd_bus_error err = SD_BUS_ERROR_NULL;
+	int started = -1;
+	if (mutter_record_monitor(mutter, connector))
+	{
+		mutter->awaitNode = TRUE;
+		started = sd_bus_call_method(mutter->bus, SC_NAME, mutter->streamPath, SC_STREAM_IFACE,
+		                             "Start", &err, nullptr, "");
+		if (started < 0)
+			WLog_ERR(TAG, "ScreenCast.Stream.Start failed: %s",
+			         err.message ? err.message : strerror(-started));
+	}
+	sd_bus_error_free(&err);
+
+	if (started < 0)
+	{
+		/* the session closed meanwhile, or the monitor is gone (unplugged, or
+		 * disabled): nothing left to share either way */
+		mutter->awaitNode = FALSE;
+		while (sd_bus_process(mutter->bus, nullptr) > 0)
+		{
+		}
+		if (!mutter->closed)
+			mutter->monitorGone = TRUE;
+		mutter->closed = TRUE;
+	}
+}
+
+/* The new node is there: the same PipeWire stream connects to it */
+static void mutter_reconnect(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	mutter->reconnect = FALSE;
+	if (!mutter_stream_connect_node(mutter))
+	{
+		mutter->monitorGone = TRUE;
+		mutter->closed = TRUE;
+		return;
+	}
+	mutter_read_stream_parameters(mutter);
+	mutter->fullPaint = TRUE;
+	WLog_INFO(TAG, "sharing again from PipeWire node %" PRIu32, mutter->nodeId);
+}
+
 WINPR_ATTR_NODISCARD
 static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 {
@@ -1917,6 +2055,8 @@ static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 			const uint64_t waitMs = (usec > now) ? (usec - now + 999) / 1000 : 0;
 			timeout = (DWORD)MIN(waitMs, 1000);
 		}
+		if (mutter->streamGone)
+			timeout = MIN(timeout, 50);
 
 		const DWORD status = WaitForMultipleObjects(count, events, FALSE, timeout);
 		if ((status == WAIT_FAILED) || (WaitForSingleObject(mutter->stopEvent, 0) == WAIT_OBJECT_0))
@@ -1934,6 +2074,8 @@ static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 			 * against the user's choice. */
 			if (mutter->shellGone)
 				WLog_WARN(TAG, "GNOME Shell left the session: the server ends");
+			else if (mutter->monitorGone)
+				WLog_WARN(TAG, "the shared monitor is gone: the server ends");
 			else
 				WLog_WARN(TAG, "the GNOME session stopped the sharing (its user did, or GNOME "
 				               "Shell is ending): the server ends");
@@ -1952,6 +2094,14 @@ static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 		pw_loop_enter(mutter->loop);
 		(void)pw_loop_iterate(mutter->loop, 0);
 		pw_loop_leave(mutter->loop);
+
+		/* a Closed that follows the node's end (the user stopped the sharing)
+		 * wins over recording the monitor again */
+		if (mutter->streamGone && !mutter->closed &&
+		    (GetTickCount64() - mutter->streamGoneAt >= MUTTER_STREAM_GONE_GRACE_MS))
+			mutter_record_again(mutter);
+		if (mutter->reconnect && !mutter->closed)
+			mutter_reconnect(mutter);
 
 		if (mutter->ei)
 		{
@@ -2051,6 +2201,12 @@ static int mutter_shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 	if (mutter->stream)
 		pw_stream_destroy(mutter->stream);
 	mutter->stream = nullptr;
+	if (mutter->registry)
+	{
+		spa_hook_remove(&mutter->registryListener);
+		pw_proxy_destroy((struct pw_proxy*)mutter->registry);
+	}
+	mutter->registry = nullptr;
 	if (mutter->core)
 		pw_core_disconnect(mutter->core);
 	mutter->core = nullptr;
