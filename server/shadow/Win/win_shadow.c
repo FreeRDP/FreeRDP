@@ -548,37 +548,49 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
-			int dxgi_status = 0;
+			int dxgi_status = win_shadow_check_resize(subsystem);
 
-			/* a desktop switch (logon, lock screen, UAC), a refresh request,
-			 * or no duplication yet: duplicate the output again on the input
-			 * desktop, and send all of it. DXGI reports changes only: on a
-			 * desktop that does not change, a new client would otherwise wait
-			 * for its first picture until something moves; a new duplication
-			 * starts with the whole desktop image */
-			if (win_shadow_follow_input_desktop() || refresh || !subsystem->dxgiOutputDuplication)
+			/* Reflow the surface/geometry first when the desktop display
+			 * mode changed: the duplication restart below (and the staging
+			 * texture rebuilt inside it) must see the new size, and a copy
+			 * must not straddle the old/new edge. init_duplication checks
+			 * again as a fallback for the race between the resize and the
+			 * next restart. On a fatal resize error (<0) the geometry is
+			 * left untouched and consistent: skip this round's restart and
+			 * acquire, the next tick retries. */
+			if (dxgi_status >= 0)
 			{
-				refresh = FALSE;
-				if (win_shadow_dxgi_restart_duplication(subsystem) > 0)
-					(void)win_shadow_invalidate_region(subsystem, 0, 0, subsystem->width,
-					                                   subsystem->height);
-			}
+				/* a desktop switch (logon, lock screen, UAC), a refresh request,
+				 * or no duplication yet: duplicate the output again on the input
+				 * desktop, and send all of it. DXGI reports changes only: on a
+				 * desktop that does not change, a new client would otherwise wait
+				 * for its first picture until something moves; a new duplication
+				 * starts with the whole desktop image */
+				if (win_shadow_follow_input_desktop() || refresh ||
+				    !subsystem->dxgiOutputDuplication)
+				{
+					refresh = FALSE;
+					if (win_shadow_dxgi_restart_duplication(subsystem) > 0)
+						(void)win_shadow_invalidate_region(subsystem, 0, 0, subsystem->width,
+						                                   subsystem->height);
+				}
 
-			if (subsystem->dxgiOutputDuplication)
-				dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
+				if (subsystem->dxgiOutputDuplication)
+					dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
 
-			/* a frame without dirty rectangles of its own (the first of a
-			 * new duplication) still holds the whole desktop image: copy
-			 * what is marked invalid already */
-			if (dxgi_status > 0)
-			{
-				const int changed = win_shadow_dxgi_get_invalid_region(subsystem);
-				rdpShadowSurface* surface = subsystem->base.server->surface;
-				WINPR_ASSERT(surface);
-				EnterCriticalSection(&(surface->lock));
-				const BOOL pending = !region16_is_empty(&(surface->invalidRegion));
-				LeaveCriticalSection(&(surface->lock));
-				dxgi_status = ((changed > 0) || ((changed == 0) && pending)) ? 1 : changed;
+				/* a frame without dirty rectangles of its own (the first of a
+				 * new duplication) still holds the whole desktop image: copy
+				 * what is marked invalid already */
+				if (dxgi_status > 0)
+				{
+					const int changed = win_shadow_dxgi_get_invalid_region(subsystem);
+					rdpShadowSurface* surface = subsystem->base.server->surface;
+					WINPR_ASSERT(surface);
+					EnterCriticalSection(&(surface->lock));
+					const BOOL pending = !region16_is_empty(&(surface->invalidRegion));
+					LeaveCriticalSection(&(surface->lock));
+					dxgi_status = ((changed > 0) || ((changed == 0) && pending)) ? 1 : changed;
+				}
 			}
 
 			if (dxgi_status > 0)
@@ -696,6 +708,68 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 	}
 
 	return numMonitors;
+}
+
+/* The desktop display mode can change while the server is running (the
+ * user changing the resolution locally, or a remote display control
+ * request). The X11 subsystem has x11_shadow_check_resize for this; the
+ * Win subsystem did not track it at all, so the shadow surface, the DXGI
+ * staging texture and the virtual screen geometry drifted out of sync
+ * with the real desktop.
+ *
+ * The cheap check uses EnumDisplaySettingsW (no DC is created); only on
+ * a mismatch the monitors are re-enumerated, the shadow screen resized
+ * and the subsystem geometry updated. Returns 1 when the geometry
+ * changed, 0 when it did not and <0 on fatal error. */
+int win_shadow_check_resize(winShadowSubsystem* subsystem)
+{
+	DEVMODEW dm = WINPR_C_ARRAY_INIT;
+	dm.dmSize = (WORD)sizeof(dm);
+
+	if (!EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &dm))
+		return 0;
+
+	if (((int)dm.dmPelsWidth == subsystem->width) && ((int)dm.dmPelsHeight == subsystem->height))
+		return 0;
+
+	MONITOR_DEF* virtualScreen = &(subsystem->base.virtualScreen);
+
+	/* The display mode changed -- refresh the monitor definition. If the
+	 * attached device geometry did not actually change (a false alarm
+	 * from a non-primary device), bail out to avoid per-tick flapping.
+	 * MONITOR_DEF right/bottom are inclusive, like shadow_screen_resize
+	 * reads them. */
+	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
+
+	if (subsystem->base.numMonitors < 1)
+		return 0;
+
+	{
+		const MONITOR_DEF* primary = &subsystem->base.monitors[0];
+		const int newWidth = primary->right - primary->left + 1;
+		const int newHeight = primary->bottom - primary->top + 1;
+
+		if ((newWidth == subsystem->width) && (newHeight == subsystem->height))
+			return 0;
+
+		/* The screen does not exist yet while the subsystem is initialized;
+		 * in that case updating the geometry below is all that is needed. */
+		if (subsystem->base.server && subsystem->base.server->screen &&
+		    !shadow_screen_resize(subsystem->base.server->screen))
+			return -1;
+
+		subsystem->width = newWidth;
+		subsystem->height = newHeight;
+	}
+
+	virtualScreen->left = 0;
+	virtualScreen->top = 0;
+	virtualScreen->right = subsystem->width - 1;
+	virtualScreen->bottom = subsystem->height - 1;
+	virtualScreen->flags = 1;
+
+	WLog_INFO(TAG, "desktop resized to %dx%d", subsystem->width, subsystem->height);
+	return 1;
 }
 
 static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
