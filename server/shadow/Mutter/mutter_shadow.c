@@ -1810,7 +1810,11 @@ static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 		}
 
 		if (WaitForSingleObject(mutter->clientsEvent, 0) == WAIT_OBJECT_0)
+		{
+			/* reset before reading the count: a change after this sets it again */
+			(void)ResetEvent(mutter->clientsEvent);
 			mutter_audio_follow_clients(mutter);
+		}
 
 		pw_loop_enter(mutter->loop);
 		(void)pw_loop_iterate(mutter->loop, 0);
@@ -2039,7 +2043,9 @@ static rdpShadowSubsystem* mutter_shadow_subsystem_new(void)
 	}
 
 	mutter->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	mutter->clientsEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	/* manual reset: WinPR has no auto-reset events (it creates a manual-reset one and
+	 * logs an error), so the thread resets it */
+	mutter->clientsEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!mutter->stopEvent || !mutter->clientsEvent)
 	{
 		mutter_shadow_subsystem_free(&mutter->common);
