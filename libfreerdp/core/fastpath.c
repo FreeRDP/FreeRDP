@@ -1119,7 +1119,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 			WLog_Print(fastpath->log, WLOG_DEBUG,
 			           "called during deactivate-reactivate [%s], ignoring",
 			           rdp_state_string(state));
-			return TRUE;
+			rc = TRUE;
+			goto fail;
 		}
 	}
 
