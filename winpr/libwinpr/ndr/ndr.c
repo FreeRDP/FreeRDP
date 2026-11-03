@@ -1414,7 +1414,12 @@ static NdrReferent* ndr_referent_new(WinPrNdrMessageType descr, const void* hint
 void* winpr_ndr_pointer_new(WinPrNdrMessageType descr, const void* hints, size_t size)
 {
 	NdrReferent* ref = ndr_referent_new(descr, hints, size);
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_DO_COVERITY_PRAGMA(
+	    coverity compliance block
+	        deviate 'RESOURCE_LEAK' 'returning a constant offset pointer, winpr_ndr_pointer_release does the inverse')
 	return ref ? ref->payload.data : nullptr;
+	WINPR_PRAGMA_DIAG_POP
 }
 
 size_t winpr_ndr_pointer_size(const void* ptr)

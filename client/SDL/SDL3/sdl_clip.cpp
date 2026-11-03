@@ -1264,7 +1264,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 			auto ptr = std::shared_ptr<void>(fptr, free);
 			if (mime_is_text(mime_type))
 				fsize = textLength(fptr, fsize);
-			clip->_cache_data.insert({ mime_type, { fsize, ptr } });
+			clip->_cache_data.emplace(mime_type, cache_entry{ fsize, ptr });
 
 			auto fcache = clip->_cache_data.find(mime_type);
 			if (fcache != clip->_cache_data.end())

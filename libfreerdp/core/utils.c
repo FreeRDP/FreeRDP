@@ -677,7 +677,7 @@ BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA, const char* i
 		struct sockaddr_in sb = WINPR_C_ARRAY_INIT;
 		const int resultA = inet_pton(AF_INET, ipAddressA, &(sa.sin_addr));
 		const int resultB = inet_pton(AF_INET, ipAddressB, &(sb.sin_addr));
-		if ((resultA != resultB) || (resultA != 0))
+		if ((resultA != resultB) || (resultA != 1))
 			return FALSE;
 		return memcmp(&sa, &sb, sizeof(sa)) == 0;
 	}
@@ -687,7 +687,7 @@ BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA, const char* i
 		struct sockaddr_in6 sb = WINPR_C_ARRAY_INIT;
 		const int resultA = inet_pton(AF_INET6, ipAddressA, &(sa.sin6_addr));
 		const int resultB = inet_pton(AF_INET6, ipAddressB, &(sb.sin6_addr));
-		if ((resultA != resultB) || (resultA != 0))
+		if ((resultA != resultB) || (resultA != 1))
 			return FALSE;
 		return memcmp(&sa, &sb, sizeof(sa)) == 0;
 	}

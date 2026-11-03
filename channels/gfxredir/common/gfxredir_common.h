@@ -27,7 +27,7 @@
 #include <freerdp/api.h>
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL UINT gfxredir_read_header(wStream* s, GFXREDIR_HEADER* header);
+FREERDP_LOCAL UINT gfxredir_read_header(wStream* s, GFXREDIR_HEADER* header, size_t* packetLen);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT gfxredir_write_header(wStream* s, const GFXREDIR_HEADER* header);

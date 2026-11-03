@@ -176,7 +176,6 @@ typedef struct s_http_response HttpResponse;
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
 WINPR_ATTR_MALLOC(http_response_free, 1)
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 
 WINPR_ATTR_MALLOC(http_response_free, 1)

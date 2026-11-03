@@ -198,17 +198,11 @@ static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(disp);
 
-	if ((error = disp_read_header(s, &header)))
+	if ((error = disp_read_header(s, &header, nullptr)))
 	{
 		WLog_Print(disp->base.log, WLOG_ERROR, "disp_read_header failed with error %" PRIu32 "!",
 		           error);
 		return error;
-	}
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, header.length - 8))
-	{
-		WLog_Print(disp->base.log, WLOG_ERROR, "not enough remaining data");
-		return ERROR_INVALID_DATA;
 	}
 
 	switch (header.type)

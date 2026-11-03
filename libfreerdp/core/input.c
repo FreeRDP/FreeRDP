@@ -1124,6 +1124,9 @@ BOOL freerdp_input_send_qoe_timestamp(rdpInput* input, UINT32 timestampMS)
 	if (!input || !input->context)
 		return FALSE;
 
+	if (input_skip(input, "QOE timestamp %" PRIu32, timestampMS))
+		return TRUE;
+
 	return IFCALLRESULT(TRUE, input->QoEEvent, input, timestampMS);
 }
 

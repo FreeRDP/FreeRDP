@@ -128,6 +128,8 @@ class SdlRail
 	void settleWaylandResize();
 
   private:
+	/* Latch a local move/resize; returns the window for a native modal loop. */
+	[[nodiscard]] SDL_Window* beginLocalMove(uint32_t windowId, uint16_t moveType);
 	/* _windows helpers: callers must hold _windowsLock. */
 	[[nodiscard]] SdlRailWindow* getWindow(uint64_t id);
 	[[nodiscard]] SdlRailWindow* getWindowBySdlId(SDL_WindowID id);
