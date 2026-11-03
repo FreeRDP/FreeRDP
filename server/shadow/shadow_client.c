@@ -2765,14 +2765,6 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	if ((!client->vcm) || (!subsystem->updateEvent))
 		goto out;
 
-	UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
-
-	if (!UpdateSubscriber)
-		goto out;
-
-	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
-	WINPR_ASSERT(UpdateEvent);
-
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 	WINPR_ASSERT(ChannelEvent);
 
@@ -2788,7 +2780,30 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	{
 		HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
-		events[nCount++] = UpdateEvent;
+
+		/* The subsystem and all other clients wait until every subscriber has
+		 * consumed the current frame. Only subscribe once the connection sequence
+		 * is done: peer->CheckFileDescriptor blocks this thread during the TLS
+		 * and NLA handshake for as long as the (not yet authenticated) peer wants,
+		 * and before activation there is nothing to send anyway. */
+		if (!UpdateSubscriber && client->activated)
+		{
+			UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
+
+			if (!UpdateSubscriber)
+				goto fail;
+
+			UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
+			WINPR_ASSERT(UpdateEvent);
+
+			/* The full screen refresh requested by shadow_client_activate may
+			 * already have been published without us, request it again */
+			if (!shadow_client_refresh_request(client))
+				goto fail;
+		}
+
+		if (UpdateEvent)
+			events[nCount++] = UpdateEvent;
 		{
 			DWORD tmp = peer->GetEventHandles(peer, &events[nCount], 64 - nCount);
 
@@ -2815,7 +2830,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 			goto fail;
 
-		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
+		if (UpdateEvent && (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0))
 		{
 			/* The UpdateEvent means to start sending current frame. It is
 			 * triggered from subsystem implementation and it should ensure
