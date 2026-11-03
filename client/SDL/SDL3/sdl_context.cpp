@@ -546,6 +546,10 @@ static std::vector<rdpMonitor> sdl_web_monitors(const rdpMonitor& canvas)
 
 bool SdlContext::updateWindowList()
 {
+	/* The windows only know their own size: keep the layout from connect. */
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+		return true;
+
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
