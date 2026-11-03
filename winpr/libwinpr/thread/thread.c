@@ -574,9 +574,6 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	/* A thread created with the default size gets at least 8 MiB of stack, what a Linux thread
-	 * usually gets: macOS gives a secondary thread only 512 KiB, too little for the codecs FreeRDP
-	 * runs (an AV2 encoder overflowed it). A larger platform default is kept. */
 	size_t stackSize = thread->dwStackSize;
 	if (stackSize == 0)
 	{
