@@ -1567,6 +1567,7 @@ static void mutter_process_ei_events(mutterShadowSubsystem* mutter)
 			case EI_EVENT_KEYBOARD_MODIFIERS:
 				mutter->lockedMods = ei_event_keyboard_get_xkb_mods_locked(e);
 				mutter->lockedModsKnown = TRUE;
+				WLog_DBG(TAG, "keyboard: locked modifiers 0x%08" PRIx32, mutter->lockedMods);
 				break;
 			case EI_EVENT_DISCONNECT:
 				WLog_WARN(TAG, "libei disconnected: the clients can only watch");
@@ -1588,6 +1589,14 @@ static void mutter_key(mutterShadowSubsystem* mutter, uint32_t code, BOOL down)
 	/* Mutter keeps the modifier state itself, as for a real keyboard */
 	ei_device_keyboard_key(mutter->keyboard, code, down ? true : false);
 	ei_device_frame(mutter->keyboard, ei_now(mutter->ei));
+
+	/* Mutter reports the new locks later, through libei: until then, follow the
+	 * lock keys pressed here, or a Synchronize that comes first (clients send one
+	 * on each focus) would tap them again and undo them */
+	if (down && (code == KEY_CAPSLOCK))
+		mutter->lockedMods ^= MUTTER_MOD_LOCK;
+	if (down && (code == KEY_NUMLOCK))
+		mutter->lockedMods ^= MUTTER_MOD_NUM;
 }
 
 WINPR_ATTR_NODISCARD
@@ -1599,6 +1608,9 @@ static BOOL mutter_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 		return FALSE;
 
 	EnterCriticalSection(&mutter->eiLock);
+	WLog_DBG(TAG, "synchronize: client caps %d num %d, session %s 0x%08" PRIx32,
+	         (flags & KBD_SYNC_CAPS_LOCK) ? 1 : 0, (flags & KBD_SYNC_NUM_LOCK) ? 1 : 0,
+	         mutter->lockedModsKnown ? "locked" : "unknown", mutter->lockedMods);
 	if (mutter->ei && mutter->lockedModsKnown)
 	{
 		/* the client's lock keys win: tap each one that differs */
