@@ -424,12 +424,9 @@ static BOOL test_is_plain_bmp(const BYTE* bmp, size_t size)
 	if ((size < 54) || (bmp[0] != 'B') || (bmp[1] != 'M'))
 		return FALSE;
 
-	UINT32 biSize = 0;
-	INT32 biHeight = 0;
-	UINT32 biCompression = 0;
-	memcpy(&biSize, &bmp[14], sizeof(biSize));
-	memcpy(&biHeight, &bmp[22], sizeof(biHeight));
-	memcpy(&biCompression, &bmp[30], sizeof(biCompression));
+	const UINT32 biSize = winpr_Data_Get_UINT32(&bmp[14]);
+	const INT32 biHeight = winpr_Data_Get_INT32(&bmp[22]);
+	const UINT32 biCompression = winpr_Data_Get_UINT32(&bmp[30]);
 	if ((biSize != 40) || (biHeight <= 0) || (biCompression != BI_RGB))
 	{
 		test_log("not a plain bottom-up BMP: biSize=%" PRIu32 " biHeight=%" PRId32
