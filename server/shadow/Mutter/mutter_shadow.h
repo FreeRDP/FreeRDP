@@ -44,6 +44,7 @@ struct mutter_shadow_subsystem
 	sd_bus* bus;
 	sd_bus_slot* streamAddedSlot;
 	sd_bus_slot* closedSlot;
+	sd_bus_slot* ownerSlot; /* GNOME Shell leaving the bus */
 	char* rdSessionPath;
 	char* scSessionPath;
 	char* streamPath;
@@ -51,6 +52,7 @@ struct mutter_shadow_subsystem
 	UINT32 nodeId;
 	BOOL haveNode;
 	BOOL closed;
+	BOOL shellGone;
 	BOOL closedLogged;
 
 	/* the monitors as Mutter lays them out, and their connectors */

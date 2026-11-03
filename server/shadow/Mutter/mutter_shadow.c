@@ -491,6 +491,24 @@ static int mutter_on_closed(WINPR_ATTR_UNUSED sd_bus_message* msg, void* data,
 	return 0;
 }
 
+/* GNOME Shell left the session bus (it ended, or crashed): the sessions went with it */
+static int mutter_on_name_owner_changed(sd_bus_message* msg, void* data,
+                                        WINPR_ATTR_UNUSED sd_bus_error* err)
+{
+	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
+	const char* name = nullptr;
+	const char* oldOwner = nullptr;
+	const char* newOwner = nullptr;
+
+	if ((sd_bus_message_read(msg, "sss", &name, &oldOwner, &newOwner) >= 0) && newOwner &&
+	    (newOwner[0] == '\0'))
+	{
+		mutter->shellGone = TRUE;
+		mutter->closed = TRUE;
+	}
+	return 0;
+}
+
 /* The stream's "mapping-id" parameter names the libei region of its monitor */
 static void mutter_read_stream_parameters(mutterShadowSubsystem* mutter)
 {
@@ -585,7 +603,12 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 	                         SC_STREAM_IFACE, "PipeWireStreamAdded", mutter_on_stream_added,
 	                         mutter) < 0) ||
 	    (sd_bus_match_signal(mutter->bus, &mutter->closedSlot, RD_NAME, mutter->rdSessionPath,
-	                         RD_SESSION_IFACE, "Closed", mutter_on_closed, mutter) < 0))
+	                         RD_SESSION_IFACE, "Closed", mutter_on_closed, mutter) < 0) ||
+	    (sd_bus_add_match(mutter->bus, &mutter->ownerSlot,
+	                      "type='signal',sender='org.freedesktop.DBus',"
+	                      "path='/org/freedesktop/DBus',interface='org.freedesktop.DBus',"
+	                      "member='NameOwnerChanged',arg0='" RD_NAME "'",
+	                      mutter_on_name_owner_changed, mutter) < 0))
 	{
 		WLog_ERR(TAG, "cannot watch the stream's signals");
 		goto out;
@@ -1804,9 +1827,18 @@ static DWORD WINAPI mutter_shadow_subsystem_thread(LPVOID arg)
 		(void)sd_bus_flush(mutter->bus);
 		if (mutter->closed && !mutter->closedLogged)
 		{
-			WLog_WARN(TAG, "the GNOME session stopped the sharing (from its screen sharing "
-			               "indicator, or GNOME Shell ended): the clients see the last picture");
+			/* The user stopped the sharing (GNOME's screen sharing indicator, or anything
+			 * that inhibits remote access), or GNOME Shell is gone. The server ends with
+			 * success, so a service restarted on failure does not share the screen again
+			 * against the user's choice. */
+			if (mutter->shellGone)
+				WLog_WARN(TAG, "GNOME Shell left the session: the server ends");
+			else
+				WLog_WARN(TAG, "the GNOME session stopped the sharing (its user did, or GNOME "
+				               "Shell is ending): the server ends");
 			mutter->closedLogged = TRUE;
+			if (mutter->common.server)
+				(void)SetEvent(mutter->common.server->StopEvent);
 		}
 
 		if (WaitForSingleObject(mutter->clientsEvent, 0) == WAIT_OBJECT_0)
@@ -1941,6 +1973,7 @@ static int mutter_shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 			                         "Stop", nullptr, nullptr, "");
 		mutter->streamAddedSlot = sd_bus_slot_unref(mutter->streamAddedSlot);
 		mutter->closedSlot = sd_bus_slot_unref(mutter->closedSlot);
+		mutter->ownerSlot = sd_bus_slot_unref(mutter->ownerSlot);
 		mutter->bus = sd_bus_flush_close_unref(mutter->bus);
 	}
 	mutter->started = FALSE;
