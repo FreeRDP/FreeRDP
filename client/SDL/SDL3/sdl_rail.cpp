@@ -862,7 +862,11 @@ bool SdlRail::init(RailClientContext* rail)
 #if SDL_VERSION_ATLEAST(3, 4, 10)
 	/* Synchronize WM-driven X11 resizes via _NET_WM_SYNC_REQUEST to prevent torn frames. */
 	if (sdl::utils::isX11Driver())
-		SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT, "1");
+	{
+		if (!SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT, "1"))
+			WLog_WARN(TAG, "SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT) failed: %s",
+			          SDL_GetError());
+	}
 #endif
 	/* Like Windows, the click that activates a window also reaches the app. */
 	if (!SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1"))
