@@ -2212,14 +2212,13 @@ static rdpShadowSubsystem* mutter_shadow_subsystem_new(void)
 	return &mutter->common;
 }
 
-WINPR_ATTR_NODISCARD
-FREERDP_API const char* ShadowSubsystemName(void)
+FREERDP_ENTRY_POINT(WINPR_ATTR_NODISCARD const char* MutterShadowSubsystemName(void))
 {
 	return "Mutter";
 }
 
-WINPR_ATTR_NODISCARD
-FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_ENTRY_POINT(
+    WINPR_ATTR_NODISCARD int MutterShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints))
 {
 	WINPR_ASSERT(pEntryPoints);
 
