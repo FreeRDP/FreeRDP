@@ -518,6 +518,19 @@ typedef struct
 	UINT32 totalLength;
 } msg_proc_internals;
 
+/* A malformed fragment sequence must not wedge the channel for its whole
+ * lifetime: drop the buffers and the flags so the next well-formed
+ * CHANNEL_FLAG_FIRST starts a fresh reassembly. The error is still
+ * returned to the caller, which logs it. */
+static void channel_client_reassembly_reset(msg_proc_internals* internals)
+{
+	WINPR_ASSERT(internals);
+	Stream_Free(internals->data_in, TRUE);
+	internals->data_in = nullptr;
+	internals->totalLength = 0;
+	internals->firstFlagReceived = FALSE;
+}
+
 static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -664,10 +677,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 			WLog_ERR(TAG, "%s_plugin_process_received: CHANNEL_FLAG_FIRST during incomplete"
 			              " reassembly, resetting state",
 			         internals->channel_name);
-			Stream_Free(internals->data_in, TRUE);
-			internals->data_in = nullptr;
-			internals->totalLength = 0;
-			internals->firstFlagReceived = FALSE;
+			channel_client_reassembly_reset(internals);
 			return ERROR_INVALID_DATA;
 		}
 		internals->firstFlagReceived = TRUE;
@@ -701,10 +711,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 	{
 		WLog_ERR(TAG, "%s_plugin_process_received: fragment length mismatch, resetting state",
 		         internals->channel_name);
-		Stream_Free(internals->data_in, TRUE);
-		internals->data_in = nullptr;
-		internals->totalLength = 0;
-		internals->firstFlagReceived = FALSE;
+		channel_client_reassembly_reset(internals);
 		return ERROR_INVALID_DATA;
 	}
 
