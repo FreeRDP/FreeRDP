@@ -79,7 +79,6 @@ static const char* filemap[] = { "PortDosName", "PnPName", "DriverName",
 	                             "CachedPrinterConfigData" };
 
 WINPR_ATTR_MALLOC(free, 1)
-WINPR_ATTR_NODISCARD
 static char* get_printer_hash(const WCHAR* name, size_t length)
 {
 	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
@@ -91,8 +90,8 @@ static char* get_printer_hash(const WCHAR* name, size_t length)
 }
 
 WINPR_ATTR_MALLOC(free, 1)
-WINPR_ATTR_NODISCARD
-static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* name, size_t length)
+static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* name, size_t length,
+                                     BOOL create)
 {
 	char* config = nullptr;
 	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
@@ -106,8 +105,15 @@ static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* n
 
 	if (config && !winpr_PathFileExists(config))
 	{
-		if (!winpr_PathMakePath(config, nullptr))
+		if (!create || !winpr_PathMakePath(config, nullptr))
 		{
+			char* uname = ConvertWCharNToUtf8Alloc(name, length, nullptr);
+			if (!create)
+				WLog_WARN(TAG, "Printer configuration for unknown printer %s requested, ignoring",
+				          uname);
+			else
+				WLog_WARN(TAG, "Could not create printer configuration for %s", uname);
+			free(uname);
 			free(config);
 			config = nullptr;
 		}
@@ -119,6 +125,7 @@ fail:
 	return config;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_write_setting(const char* path, prn_conf_t type, const void* data,
                                   size_t length)
 {
@@ -167,6 +174,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_config_valid(const char* path)
 {
 	if (!path)
@@ -178,6 +186,7 @@ static BOOL printer_config_valid(const char* path)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data, UINT32* length)
 {
 	DWORD lowSize = 0;
@@ -251,6 +260,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_save_to_config(const rdpSettings* settings, const char* PortDosName,
                                    size_t PortDosNameLen, const WCHAR* PnPName, size_t PnPNameLen,
                                    const WCHAR* DriverName, size_t DriverNameLen,
@@ -258,7 +268,7 @@ static BOOL printer_save_to_config(const rdpSettings* settings, const char* Port
                                    const BYTE* CachedPrinterConfigData, size_t CacheFieldsLen)
 {
 	BOOL rc = FALSE;
-	char* path = get_printer_config_path(settings, PrinterName, PrintNameLen);
+	char* path = get_printer_config_path(settings, PrinterName, PrintNameLen, FALSE);
 
 	if (!path)
 		goto fail;
@@ -275,17 +285,24 @@ static BOOL printer_save_to_config(const rdpSettings* settings, const char* Port
 	if (!printer_write_setting(path, PRN_CONF_DATA, CachedPrinterConfigData, CacheFieldsLen))
 		goto fail;
 
+	rc = TRUE;
 fail:
 	free(path);
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_update_to_config(const rdpSettings* settings, const WCHAR* name, size_t length,
                                      const BYTE* data, size_t datalen)
 {
 	BOOL rc = FALSE;
-	char* path = get_printer_config_path(settings, name, length);
+	char* path = get_printer_config_path(settings, name, length, FALSE);
+
+	if (!path)
+		goto fail;
+
 	rc = printer_write_setting(path, PRN_CONF_DATA, data, datalen);
+fail:
 	free(path);
 	return rc;
 }
@@ -293,10 +310,17 @@ static BOOL printer_update_to_config(const rdpSettings* settings, const WCHAR* n
 static BOOL printer_remove_config(const rdpSettings* settings, const WCHAR* name, size_t length)
 {
 	BOOL rc = FALSE;
-	char* path = get_printer_config_path(settings, name, length);
+	char* path = get_printer_config_path(settings, name, length, FALSE);
 
 	if (!printer_config_valid(path))
 		goto fail;
+
+	for (size_t x = 0; x < ARRAYSIZE(filemap); x++)
+	{
+		char* abs = GetCombinedPath(path, filemap[x]);
+		(void)winpr_DeleteFile(abs);
+		free(abs);
+	}
 
 	rc = winpr_RemoveDirectory(path);
 fail:
@@ -304,14 +328,15 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_move_config(const rdpSettings* settings, const WCHAR* oldName, size_t oldLength,
                                 const WCHAR* newName, size_t newLength)
 {
 	BOOL rc = FALSE;
-	char* oldPath = get_printer_config_path(settings, oldName, oldLength);
-	char* newPath = get_printer_config_path(settings, newName, newLength);
+	char* oldPath = get_printer_config_path(settings, oldName, oldLength, FALSE);
+	char* newPath = get_printer_config_path(settings, newName, newLength, FALSE);
 
-	if (printer_config_valid(oldPath))
+	if (printer_config_valid(oldPath) && newPath)
 		rc = winpr_MoveFile(oldPath, newPath);
 
 	free(oldPath);
@@ -319,6 +344,7 @@ static BOOL printer_move_config(const rdpSettings* settings, const WCHAR* oldNam
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* printer,
                                      PRINTER_DEVICE* printer_dev)
 {
@@ -344,7 +370,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 		goto fail;
 
 	wlen++;
-	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR));
+	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR), TRUE);
 	{
 		const size_t plen = wlen * sizeof(WCHAR);
 		if (plen > UINT32_MAX)
@@ -422,6 +448,7 @@ fail:
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter* printer)
 {
 	BOOL res = FALSE;
@@ -446,7 +473,7 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 
 	wlen = _wcslen(wname) + 1;
 	dlen = _wcslen(driver) + 1;
-	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR));
+	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR), TRUE);
 
 	if (!path)
 		goto fail;
@@ -470,6 +497,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = nullptr;
@@ -502,6 +530,7 @@ static UINT printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = nullptr;
@@ -533,6 +562,7 @@ static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	UINT32 Length = 0;
@@ -585,6 +615,7 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_process_irp_device_control(WINPR_ATTR_UNUSED PRINTER_DEVICE* printer_dev,
                                                IRP* irp)
 {
@@ -595,6 +626,7 @@ static UINT printer_process_irp_device_control(WINPR_ATTR_UNUSED PRINTER_DEVICE*
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT printer_evaluate(UINT error, IRP* irp)
 {
 	WINPR_ASSERT(irp);
@@ -609,11 +641,13 @@ static UINT printer_evaluate(UINT error, IRP* irp)
 	irp->Discard(irp);
 	return error;
 }
+
 /**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -647,6 +681,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 	return printer_evaluate(error, irp);
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI printer_thread_func(LPVOID arg)
 {
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)arg;
@@ -700,6 +735,7 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_irp_request(DEVICE* device, IRP* irp)
 {
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
@@ -727,6 +763,7 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 packetId, wStream* s)
 {
 	UINT32 eventID = 0;
@@ -974,6 +1011,7 @@ static UINT printer_free(DEVICE* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)
 {
 	PRINTER_DEVICE* printer_dev = nullptr;
@@ -1065,6 +1103,7 @@ error_out:
 	return error;
 }
 
+WINPR_ATTR_NODISCARD
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
 	typedef UINT(VCAPITYPE * backend_load_t)(rdpPrinterDriver**);

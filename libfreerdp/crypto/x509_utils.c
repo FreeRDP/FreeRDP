@@ -420,6 +420,10 @@ extract_string_generic(const X509* x509, GENERAL_NAME* name, void* data, int ind
 			str = name->d.rfc822Name;
 			break;
 
+		case GEN_IPADD:
+			str = name->d.iPAddress;
+			break;
+
 		default:
 			return 1;
 	}
