@@ -47,9 +47,11 @@ while [[ $# -gt 0 ]]; do
     ;;
   -d | --no-deps)
     BUILD_DEPS=0
+    shift # past argument
     ;;
   --build-deps-only)
     BUILD_DEPS_ONLY=1
+    shift # past argument
     ;;
   -t | --target)
     DEPLOYMENT_TARGET="$2"
