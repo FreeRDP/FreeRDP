@@ -1952,6 +1952,16 @@ static UINT rdpgfx_recv_map_surface_to_output_pdu(GENERIC_CHANNEL_CALLBACK* call
 	Stream_Read_UINT16(s, pdu.reserved);      /* reserved (2 bytes) */
 	Stream_Read_UINT32(s, pdu.outputOriginX); /* outputOriginX (4 bytes) */
 	Stream_Read_UINT32(s, pdu.outputOriginY); /* outputOriginY (4 bytes) */
+
+	if ((pdu.outputOriginX > MAX_SURFACE_SIZE) || (pdu.outputOriginY > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->MapSurfaceToOutput outputOriginX[%" PRIu32 "], outputOriginY[%" PRIu32
+		           "] > %" PRIu32,
+		           pdu.outputOriginX, pdu.outputOriginY, MAX_SURFACE_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvMapSurfaceToOutputPdu: surfaceId: %" PRIu16 " outputOriginX: %" PRIu32
 	           " outputOriginY: %" PRIu32 "",
@@ -1989,6 +1999,24 @@ static UINT rdpgfx_recv_map_surface_to_scaled_output_pdu(GENERIC_CHANNEL_CALLBAC
 	Stream_Read_UINT32(s, pdu.outputOriginY); /* outputOriginY (4 bytes) */
 	Stream_Read_UINT32(s, pdu.targetWidth);   /* targetWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.targetHeight);  /* targetHeight (4 bytes) */
+
+	if ((pdu.outputOriginX > MAX_SURFACE_SIZE) || (pdu.outputOriginY > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->MapSurfaceToScaledOutput outputOriginX[%" PRIu32
+		           "], outputOriginY[%" PRIu32 "] > %" PRIu32,
+		           pdu.outputOriginX, pdu.outputOriginY, MAX_SURFACE_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+	if ((pdu.targetWidth > MAX_SURFACE_SIZE) || (pdu.targetHeight > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->MapSurfaceToScaledOutput targetWidth[%" PRIu32
+		           "], targetHeight[%" PRIu32 "] > %" PRIu32,
+		           pdu.targetWidth, pdu.targetHeight, MAX_SURFACE_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvMapSurfaceToScaledOutputPdu: surfaceId: %" PRIu16 " outputOriginX: %" PRIu32
 	           " outputOriginY: %" PRIu32 " targetWidth: %" PRIu32 " targetHeight: %" PRIu32,
@@ -2107,6 +2135,14 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(GENERIC_CHANNEL_CALLBAC
 		           "context->RecvMapSurfaceToScaledWindowPdu mappedWidth[%" PRIu32
 		           "], mappedHeight[%" PRIu32 "] > %" PRIu32,
 		           pdu.mappedWidth, pdu.mappedHeight, MAX_SURFACE_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+	if ((pdu.targetWidth > MAX_SURFACE_SIZE) || (pdu.targetHeight > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->RecvMapSurfaceToScaledWindowPdu targetWidth[%" PRIu32
+		           "], targetHeight[%" PRIu32 "] > %" PRIu32,
+		           pdu.targetWidth, pdu.targetHeight, MAX_SURFACE_SIZE);
 		return ERROR_INVALID_DATA;
 	}
 
