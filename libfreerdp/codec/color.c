@@ -1283,6 +1283,15 @@ static enum AVPixelFormat av_format_for_buffer(UINT32 format)
 }
 #endif
 
+BOOL freerdp_image_scaling_supported(void)
+{
+#if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
+
 BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep,
                          UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
                          const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
