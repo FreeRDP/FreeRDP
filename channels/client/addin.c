@@ -685,7 +685,10 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		if (internals->data_in)
 		{
 			if (!Stream_EnsureCapacity(internals->data_in, dataLength))
+			{
+				channel_client_reassembly_reset(internals);
 				return CHANNEL_RC_NO_MEMORY;
+			}
 		}
 		else
 			internals->data_in = Stream_New(nullptr, dataLength);
@@ -700,8 +703,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{
-		Stream_Free(internals->data_in, TRUE);
-		internals->data_in = nullptr;
+		channel_client_reassembly_reset(internals);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
