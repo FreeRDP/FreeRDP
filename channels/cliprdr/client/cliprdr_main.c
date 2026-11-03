@@ -709,13 +709,6 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	CLIPRDR_FORMAT_LIST filterList = cliprdr_filter_format_list(
 	    formatList, mask, CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES);
 
-	/* Allow initial format list from monitor ready, but ignore later attempts */
-	if (filterList.numFormats == 0)
-	{
-		cliprdr_free_format_list(&filterList);
-		return CHANNEL_RC_OK;
-	}
-
 	const uint32_t level = WLOG_DEBUG;
 	if (WLog_IsLevelActive(cliprdr->log, level))
 	{
