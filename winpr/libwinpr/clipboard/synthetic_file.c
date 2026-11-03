@@ -768,8 +768,8 @@ static BOOL descriptor_is_nested(wLog* log, const FILEDESCRIPTORW* dsc)
 	{
 		char cFileName[260] = WINPR_C_ARRAY_INIT;
 		const int clen = sizeof(cFileName);
-		ConvertWCharNToUtf8(dsc->cFileName, ARRAYSIZE(dsc->cFileName), cFileName,
-		                    ARRAYSIZE(cFileName));
+		(void)ConvertWCharNToUtf8(dsc->cFileName, ARRAYSIZE(dsc->cFileName), cFileName,
+		                          ARRAYSIZE(cFileName));
 		WLog_Print(log, level, "%.*s %s nested", clen, cFileName, found ? "is" : "is NOT");
 	}
 	return found != nullptr;
