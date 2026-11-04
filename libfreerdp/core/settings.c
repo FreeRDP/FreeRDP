@@ -808,9 +808,20 @@ BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 		    log, level,
 		    "Provide at least the following log lines detailing your monitor configuration:");
 		log_monitor_configuration(settings, log, level);
+		return FALSE;
 	}
 
-	return rc;
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
+	{
+		const char* host = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+		if (!host)
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "Inconsistent settings: Gateway support enabled, but no gateway provided.");
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 
 BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
@@ -1893,10 +1904,26 @@ BOOL freerdp_settings_enforce_consistency(rdpSettings* settings)
 		settings->OrderSupportFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
 	}
 
-	if (settings->FrameMarkerCommandEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_FrameMarkerCommandEnabled))
 	{
 		settings->OrderSupportFlagsEx |= ALTSEC_FRAME_MARKER_SUPPORT;
 		settings->OrderSupportFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
+
+	/* Try to fix usage mistakes here.
+	 * When a gateway is requested but no host is given deactivate it.
+	 * Be loud about this and log warnings.
+	 */
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
+	{
+		const char* host = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+		if (utils_str_is_empty(host))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, FALSE))
+				return FALSE;
+			WLog_WARN(TAG,
+			          "Gateway enabled but GatewayHostname is empty, deactivating gateway support");
+		}
 	}
 	return TRUE;
 }

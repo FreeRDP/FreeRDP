@@ -2227,7 +2227,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 
 	if (~file->GatewayUsageMethod)
 	{
-		if (!freerdp_set_gateway_usage_method(settings, file->GatewayUsageMethod))
+		UINT32 GatewayUsageMethod = file->GatewayUsageMethod;
+		const char* host = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+
+		/* If a gateway is requested ensure that there is also a gateway host set. Without one log
+		 * the file inconsistency. */
+		if ((GatewayUsageMethod != TSC_PROXY_MODE_NONE_DIRECT) &&
+		    (GatewayUsageMethod != TSC_PROXY_MODE_NONE_DETECT) && utils_str_is_empty(host))
+		{
+			WLog_WARN(TAG, "[rdp file] Inconsistent gateway settings: gatewayhostname empty or "
+			               "missing.");
+		}
+		if (!freerdp_set_gateway_usage_method(settings, GatewayUsageMethod))
 			return FALSE;
 	}
 
