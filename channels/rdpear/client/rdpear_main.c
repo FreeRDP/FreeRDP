@@ -574,12 +574,14 @@ out:
 	 * version the older windows systems have. So send the old value for older protocol levels, the
 	 * new version for newer...
 	 */
-	const UINT32 version =
-	    freerdp_settings_get_uint32(rdpear->rdp_context->settings, FreeRDP_RdpVersion);
-	if (version <= RDP_VERSION_10_6)
-		resp->Authenticator.Pdu = 6;
-	else
-		resp->Authenticator.Pdu = 7;
+	{
+		const UINT32 version =
+		    freerdp_settings_get_uint32(rdpear->rdp_context->settings, FreeRDP_RdpVersion);
+		if (version <= RDP_VERSION_10_6)
+			resp->Authenticator.Pdu = 6;
+		else
+			resp->Authenticator.Pdu = 7;
+	}
 	resp->KerbProtocolError = rv;
 	krb5_free_principal_contents(rdpear->krbContext, &client);
 	krb5_free_data(rdpear->krbContext, der);
