@@ -166,7 +166,8 @@ public class SessionActivity extends AppCompatActivity
 
 		getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
 		getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-		getWindow().setNavigationBarContrastEnforced(false);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+			getWindow().setNavigationBarContrastEnforced(false);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 		{
@@ -216,7 +217,7 @@ public class SessionActivity extends AppCompatActivity
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 			lp.layoutInDisplayCutoutMode =
 			    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-		else
+		else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
 			lp.layoutInDisplayCutoutMode =
 			    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 		getWindow().setAttributes(lp);
