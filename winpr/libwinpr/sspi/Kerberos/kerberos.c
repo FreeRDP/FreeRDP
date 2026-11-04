@@ -343,6 +343,64 @@ fail:
 #endif /* WITH_KRB5 */
 
 WINPR_ATTR_NODISCARD
+#ifdef WITH_KRB5
+/** @brief parses the client principal name, as an RFC 6806 enterprise principal (name@domain in
+ *  the default realm) if requested and the name has no realm of its own */
+WINPR_ATTR_NODISCARD
+static krb5_error_code kerberos_parse_principal(krb5_context ctx, const char* name,
+                                                const char* domain, BOOL enterprise,
+                                                krb5_principal* principal)
+{
+	krb5_error_code rv = 0;
+
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(principal);
+
+	if (enterprise && domain && !strchr(name, '@'))
+	{
+		char* upn = nullptr;
+		size_t upnlen = 0;
+		(void)winpr_asprintf(&upn, &upnlen, "%s@%s", name, domain);
+		if (!upn)
+			return ENOMEM;
+
+		/* e.g. "user@example.com" becomes "user\@example.com@CORP.EXAMPLE.NET" */
+		rv = krb_log_exec(krb5_parse_name_flags, ctx, upn, KRB5_PRINCIPAL_PARSE_ENTERPRISE,
+		                  principal);
+		free(upn);
+	}
+	else
+	{
+		char* cpszPrincipal = _strdup(name);
+		if (!cpszPrincipal)
+			return ENOMEM;
+
+		/* Find realm component if included and convert to uppercase */
+		char* p = strchr(cpszPrincipal, '@');
+		if (p)
+			CharUpperA(p);
+
+		rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, principal);
+		free(cpszPrincipal);
+	}
+	return rv;
+}
+
+/** @brief errors telling that the realm of a client principal is not a realm we can talk to */
+static BOOL kerberos_is_realm_error(krb5_error_code rv)
+{
+	switch (rv)
+	{
+		case KRB5_REALM_UNKNOWN:
+		case KRB5_KDC_UNREACH:
+		case KRB5KDC_ERR_WRONG_REALM:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+#endif
+
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     WINPR_ATTR_UNUSED SEC_CHAR* pszPrincipal, WINPR_ATTR_UNUSED SEC_CHAR* pszPackage,
     WINPR_ATTR_UNUSED ULONG fCredentialUse, WINPR_ATTR_UNUSED void* pvLogonID,
@@ -365,6 +423,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	char* username = nullptr;
 	char* password = nullptr;
 	BOOL own_ccache = FALSE;
+	BOOL ccache_initialized = FALSE;
+	char* upn_realm = nullptr;
 	const char* const default_ccache_type = "MEMORY";
 
 	if (pAuthData)
@@ -418,7 +478,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	if (krb_log_exec_ptr(krb5_init_context, &ctx))
 		goto cleanup;
 
-	BOOL enterprise = FALSE;
 	if (domain)
 	{
 		char* udomain = _strdup(domain);
@@ -436,22 +495,29 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		else
 		{
 			/* A DNS-style domain that maps to no realm and differs from the configured
-			 * default realm is a UPN suffix, e.g. user@example.com for an account in realm
-			 * CORP.EXAMPLE.NET, which is what /smartcard-logon takes from the certificate. AD
-			 * rejects that as a realm ("Realm not local to KDC") and only accepts it as an
-			 * enterprise principal in the account's realm, as Windows clients send it - so
-			 * keep the configured realm. */
+			 * default realm is either a realm missing from krb5.conf (found via DNS) or a UPN
+			 * suffix, e.g. user@example.com for an account in realm CORP.EXAMPLE.NET, which
+			 * is what /smartcard-logon takes from the certificate. AD rejects a UPN suffix as
+			 * a realm ("Realm not local to KDC") and only accepts it as an enterprise
+			 * principal in the account's realm, as Windows clients send it. Try the domain as
+			 * the realm first and keep the configured realm for that fallback. */
 			char* default_realm = nullptr;
 			if (strchr(udomain, '.') && (krb5_get_default_realm(ctx, &default_realm) == 0) &&
-			    (strcmp(default_realm, udomain) != 0))
-				enterprise = TRUE;
+			    default_realm && (strcmp(default_realm, udomain) != 0))
+			{
+				upn_realm = _strdup(default_realm);
+				if (!upn_realm)
+				{
+					krb5_free_default_realm(ctx, default_realm);
+					free(udomain);
+					goto cleanup;
+				}
+			}
 			krb5_free_default_realm(ctx, default_realm);
 		}
 
-		krb5_error_code rv = 0;
 		/* Will use domain if realm is not specified in username */
-		if (!enterprise)
-			rv = krb_log_exec(krb5_set_default_realm, ctx, realm);
+		const krb5_error_code rv = krb_log_exec(krb5_set_default_realm, ctx, realm);
 		if (host_realms)
 			krb5_free_host_realm(ctx, host_realms);
 		free(udomain);
@@ -462,36 +528,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (pszPrincipal)
 	{
-		krb5_error_code rv = 0;
-		if (enterprise && !strchr(pszPrincipal, '@'))
-		{
-			char* upn = nullptr;
-			size_t upnlen = 0;
-			(void)winpr_asprintf(&upn, &upnlen, "%s@%s", pszPrincipal, domain);
-			if (!upn)
-				goto cleanup;
-
-			/* e.g. "user@example.com" becomes "user\@example.com@CORP.EXAMPLE.NET" */
-			rv = krb_log_exec(krb5_parse_name_flags, ctx, upn, KRB5_PRINCIPAL_PARSE_ENTERPRISE,
-			                  &principal);
-			free(upn);
-		}
-		else
-		{
-			char* cpszPrincipal = _strdup(pszPrincipal);
-			if (!cpszPrincipal)
-				goto cleanup;
-
-			/* Find realm component if included and convert to uppercase */
-			char* p = strchr(cpszPrincipal, '@');
-			if (p)
-				CharUpperA(p);
-
-			rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, &principal);
-			free(cpszPrincipal);
-		}
-
-		if (rv)
+		if (kerberos_parse_principal(ctx, pszPrincipal, domain, FALSE, &principal))
 			goto cleanup;
 		WINPR_ASSERT(principal);
 	}
@@ -522,6 +559,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 			if (krb_log_exec(krb5_cc_initialize, ctx, ccache, principal))
 				goto cleanup;
+			ccache_initialized = TRUE;
 		}
 		else
 		{
@@ -590,8 +628,33 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		krb5_free_cred_contents(ctx, &creds);
 		if (rv)
 		{
-			if (krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache, krb5_prompter,
-			                 password, krb_settings))
+			krb5_error_code ret = krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache,
+			                                   krb5_prompter, password, krb_settings);
+
+			/* The domain is no realm we can reach: retry it as a UPN suffix, see above. Only
+			 * with a ccache this call initialized, a cache found by principal is not ours to
+			 * reset. */
+			if (ret && upn_realm && pszPrincipal && ccache_initialized &&
+			    kerberos_is_realm_error(ret))
+			{
+				WLog_INFO(TAG,
+				          "domain %s is not a reachable Kerberos realm, retrying as an "
+				          "enterprise principal in realm %s",
+				          domain, upn_realm);
+
+				krb5_free_principal(ctx, principal);
+				principal = nullptr;
+				if (krb_log_exec(krb5_set_default_realm, ctx, upn_realm))
+					goto cleanup;
+				if (kerberos_parse_principal(ctx, pszPrincipal, domain, TRUE, &principal))
+					goto cleanup;
+				if (krb_log_exec(krb5_cc_initialize, ctx, ccache, principal))
+					goto cleanup;
+				ret = krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache, krb5_prompter,
+				                   password, krb_settings);
+			}
+
+			if (ret)
 				goto cleanup;
 		}
 	}
@@ -607,6 +670,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 cleanup:
 
+	free(upn_realm);
 	free(domain);
 	free(username);
 	free(password);
