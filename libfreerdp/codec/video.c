@@ -31,7 +31,7 @@
 
 #define VTAG FREERDP_TAG("codec.video")
 
-#if defined(WITH_SWSCALE) || defined(WITH_MEDIACODEC)
+#if defined(WITH_SWSCALE) || defined(WITH_MEDIACODEC) || defined(WITH_APPLE_VIDEOTOOLBOX)
 static UINT32 video_get_h264_bitrate(wLog* log, UINT32 height)
 {
 	static struct
@@ -664,7 +664,7 @@ BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
 	else if (dstFormat == FREERDP_VIDEO_FORMAT_H264)
 	{
 #if !defined(WITH_OPENH264) && !defined(WITH_VIDEO_FFMPEG) && !defined(WITH_MEDIA_FOUNDATION) && \
-    !defined(WITH_MEDIACODEC)
+    !defined(WITH_MEDIACODEC) && !defined(WITH_APPLE_VIDEOTOOLBOX)
 		return FALSE;
 #endif
 	}
@@ -672,13 +672,15 @@ BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
 	return TRUE;
 }
 
-#elif defined(WITH_MEDIACODEC) /* !WITH_SWSCALE */
+#elif defined(WITH_MEDIACODEC) || defined(WITH_APPLE_VIDEOTOOLBOX) /* !WITH_SWSCALE */
 
 /*
  * Without swscale, the H.264 encoder of MediaCodec (h264_mediacodec.c) still encodes the frames of
  * the camera of Android (channels/rdpecam/client/android), which come as NV12: their planes are
  * split here into the three of I420, in the buffer of h264_get_yuv_buffer, and h264_compress hands
  * them to the encoder. Nothing else is converted.
+ * The same applies to VideoToolbox (h264_videotoolbox.c) and the camera of AVFoundation
+ * (channels/rdpecam/client/avfoundation).
  */
 
 /* The longest side that the encoder of MediaCodec takes (MEDIACODEC_MAXIMUM_DIMENSION of
@@ -774,7 +776,8 @@ BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 wi
 		}
 	}
 
-	/* HW_ACCEL off: the three planes of I420, which mediacodec_compress takes */
+	/* HW_ACCEL off: the three planes of I420, which mediacodec_compress takes;
+	 * videotoolbox_compress also takes these planes */
 	if (!h264_context_set_option(context->h264, H264_CONTEXT_OPTION_USAGETYPE, usageType) ||
 	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_FRAMERATE, framerate) ||
 	    !h264_context_set_option(context->h264, H264_CONTEXT_OPTION_BITRATE, bitrate) ||
@@ -793,7 +796,7 @@ BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 wi
 		}
 
 		WLog_Print(context->log, WLOG_INFO,
-		           "camera frames encoded to H.264 by MediaCodec: %" PRIu32 "x%" PRIu32 ", %" PRIu32
+		           "camera frames encoded to H.264: %" PRIu32 "x%" PRIu32 ", %" PRIu32
 		           " fps, %" PRIu32 " bps",
 		           width, height, framerate, bitrate);
 	}
@@ -901,7 +904,7 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 	return TRUE;
 }
 
-#else /* !WITH_SWSCALE && !WITH_MEDIACODEC */
+#else /* !WITH_SWSCALE && !WITH_MEDIACODEC && !WITH_APPLE_VIDEOTOOLBOX */
 
 /* Stubs when swscale is not available */
 

@@ -9,6 +9,12 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 
+#if defined(WITH_APPLE_VIDEOTOOLBOX)
+#include <CoreMedia/CoreMedia.h>
+#include <freerdp/codec/video.h>
+#include "../h264.h"
+#endif
+
 WINPR_ATTR_NODISCARD
 static const char* print_ns(UINT64 start, UINT64 end, char* buffer, size_t len)
 {
@@ -496,6 +502,142 @@ fail:
 	return rc;
 }
 
+#if defined(WITH_APPLE_VIDEOTOOLBOX)
+/* VideoToolbox writes SPS/PPS first, each with a four-byte Annex B start code. */
+WINPR_ATTR_NODISCARD
+static BOOL testH264Range(const BYTE* data, size_t size, BOOL fullRange)
+{
+	WINPR_ASSERT(data);
+	const BYTE startCode[] = { 0, 0, 0, 1 };
+	const BYTE* parameters[2] = WINPR_C_ARRAY_INIT;
+	size_t lengths[2] = WINPR_C_ARRAY_INIT;
+	size_t offset = 0;
+	for (size_t i = 0; i < ARRAYSIZE(parameters); i++)
+	{
+		if ((size - offset < 5) || (memcmp(data + offset, startCode, sizeof(startCode)) != 0) ||
+		    ((data[offset + 4] & 0x1F) != 7 + i))
+			return FALSE;
+		offset += sizeof(startCode);
+		parameters[i] = data + offset;
+		const size_t start = offset;
+		while ((size - offset >= sizeof(startCode)) &&
+		       (memcmp(data + offset, startCode, sizeof(startCode)) != 0))
+			offset++;
+		if (size - offset < sizeof(startCode))
+			return FALSE;
+		lengths[i] = offset - start;
+	}
+	CMVideoFormatDescriptionRef format = nullptr;
+	if (CMVideoFormatDescriptionCreateFromH264ParameterSets(
+	        kCFAllocatorDefault, ARRAYSIZE(parameters), parameters, lengths, 4, &format) != noErr)
+		return FALSE;
+	const BOOL actual = CMFormatDescriptionGetExtension(
+	                        format, kCMFormatDescriptionExtension_FullRangeVideo) == kCFBooleanTrue
+	                        ? TRUE
+	                        : FALSE;
+	CFRelease(format);
+	if (actual != fullRange)
+		(void)fprintf(stderr, "[%s] full range %d, expected %d\n", __func__, actual, fullRange);
+	return actual == fullRange ? TRUE : FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL testCameraEncode(UINT32 width, UINT32 height)
+{
+	BOOL rc = FALSE;
+	const BYTE samples[][3] = { { 16, 128, 128 }, { 235, 128, 128 }, { 96, 64, 192 } };
+	const size_t pixels = (size_t)width * height;
+	BYTE* nv12 = calloc(pixels * 3 / 2, 1);
+	wStream* output = Stream_New(nullptr, 1);
+	FREERDP_VIDEO_CONTEXT* video = freerdp_video_context_new(width, height);
+	H264_CONTEXT* decoder = h264_context_new(FALSE);
+	if (!nv12 || !output || !video || !decoder || !h264_context_reset(decoder, width, height) ||
+	    !freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_NV12, FREERDP_VIDEO_FORMAT_H264))
+		goto fail;
+
+	for (size_t frame = 0; frame < ARRAYSIZE(samples); frame++)
+	{
+		/* Camera redirection reconfigures before every sample. */
+		if (!freerdp_video_context_reconfigure(video, width, height, 30, 0,
+		                                       H264_CAMERA_VIDEO_REAL_TIME))
+			goto fail;
+		memset(nv12, samples[frame][0], pixels);
+		for (size_t i = 0; i < pixels / 2; i += 2)
+		{
+			nv12[pixels + i] = samples[frame][1];
+			nv12[pixels + i + 1] = samples[frame][2];
+		}
+		Stream_ResetPosition(output);
+		Stream_Write_UINT8(output, 0x5a);
+		if (!freerdp_video_sample_convert(video, FREERDP_VIDEO_FORMAT_NV12, nv12, pixels * 3 / 2,
+		                                  FREERDP_VIDEO_FORMAT_H264, output) ||
+		    (Stream_GetPosition(output) <= 1) || (Stream_Buffer(output)[0] != 0x5a))
+			goto fail;
+		const BYTE* encoded = Stream_Buffer(output) + 1;
+		const size_t size = Stream_GetPosition(output) - 1;
+		if ((size > UINT32_MAX) || ((frame == 0) && !testH264Range(encoded, size, FALSE)) ||
+		    (decoder->subsystem->Decompress(decoder, encoded, (UINT32)size) <= 0))
+			goto fail;
+		/* Inspect decoded planes: the desktop RGB converter assumes full-range YUV. */
+		for (size_t plane = 0; plane < 3; plane++)
+		{
+			const UINT32 divisor = plane == 0 ? 1 : 2;
+			const size_t center =
+			    (size_t)(height / (2 * divisor)) * decoder->iStride[plane] + width / (2 * divisor);
+			if (!decoder->pYUVData[plane] ||
+			    (abs(decoder->pYUVData[plane][center] - samples[frame][plane]) > 4))
+				goto fail;
+		}
+	}
+	rc = TRUE;
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] NV12 camera encoding failed at %" PRIu32 "x%" PRIu32 "\n",
+		              __func__, width, height);
+	h264_context_free(decoder);
+	freerdp_video_context_free(video);
+	Stream_Free(output, TRUE);
+	free(nv12);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL testEncodeRange(void)
+{
+	BOOL rc = FALSE;
+	H264_CONTEXT* encoder = h264_context_new(TRUE);
+	if (!encoder || !h264_context_reset(encoder, 64, 48))
+		goto fail;
+	BYTE* planes[3] = WINPR_C_ARRAY_INIT;
+	UINT32 strides[3] = WINPR_C_ARRAY_INIT;
+	if (h264_get_yuv_buffer(encoder, 64, 64, 48, planes, strides) < 0)
+		goto fail;
+	for (size_t plane = 0; plane < 3; plane++)
+		memset(planes[plane], 128, (size_t)strides[plane] * (plane == 0 ? 48 : 24));
+	const H264_USAGETYPE usage[] = { H264_SCREEN_CONTENT_REAL_TIME, H264_CAMERA_VIDEO_REAL_TIME,
+		                             H264_SCREEN_CONTENT_NON_REAL_TIME,
+		                             H264_CAMERA_VIDEO_NON_REAL_TIME,
+		                             H264_SCREEN_CONTENT_REAL_TIME };
+	for (size_t i = 0; i < ARRAYSIZE(usage); i++)
+	{
+		BYTE* encoded = nullptr;
+		UINT32 size = 0;
+		const BOOL fullRange = i % 2 == 0 ? TRUE : FALSE;
+		if (!h264_context_set_option(encoder, H264_CONTEXT_OPTION_USAGETYPE, usage[i]) ||
+		    (h264_context_get_option(encoder, H264_CONTEXT_OPTION_USAGETYPE) != usage[i]) ||
+		    (h264_compress(encoder, &encoded, &size) < 0) || !encoded ||
+		    !testH264Range(encoded, size, fullRange))
+			goto fail;
+	}
+	rc = TRUE;
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] encoder range change failed\n", __func__);
+	h264_context_free(encoder);
+	return rc;
+}
+#endif
+
 WINPR_ATTR_NODISCARD
 int TestFreeRDPCodecH264(int argc, char* argv[])
 {
@@ -578,6 +720,18 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 		return -1;
 	if (!testEncodeOffsetRegion())
 		return -1;
+
+#if defined(WITH_APPLE_VIDEOTOOLBOX)
+	H264_CONTEXT* vtEncoder = h264_context_new(TRUE);
+	const BOOL useVideoToolbox =
+	    vtEncoder && (strcmp(vtEncoder->subsystem->name, "VideoToolbox") == 0) ? TRUE : FALSE;
+	h264_context_free(vtEncoder);
+	if (useVideoToolbox)
+	{
+		if (!testCameraEncode(64, 48) || !testCameraEncode(128, 96) || !testEncodeRange())
+			return -1;
+	}
+#endif
 
 	for (size_t x = 0; x < ARRAYSIZE(formats); x++)
 	{
