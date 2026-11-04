@@ -29,7 +29,7 @@
  * stuck before its TLS handshake, or one stalled mid-send) blocks the
  * subsystem/capture thread forever and, on the Windows subsystem, the
  * listener thread with it (the clients list lock is held across the wait). */
-#define SHADOW_SUBSCRIBER_WAIT_TIMEOUT 1000
+#define SHADOW_SUBSCRIBER_WAIT_TIMEOUT 1000ul
 
 struct rdp_shadow_multiclient_event
 {
@@ -53,48 +53,39 @@ struct rdp_shadow_multiclient_subscriber
 
 rdpShadowMultiClientEvent* shadow_multiclient_new(void)
 {
-	rdpShadowMultiClientEvent* event =
-	    (rdpShadowMultiClientEvent*)calloc(1, sizeof(rdpShadowMultiClientEvent));
+	rdpShadowMultiClientEvent* event = calloc(1, sizeof(rdpShadowMultiClientEvent));
 	if (!event)
-		goto out_error;
+		goto fail;
+
+	if (!InitializeCriticalSectionAndSpinCount(&(event->lock), 4000))
+		goto fail;
 
 	event->event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!event->event)
-		goto out_free;
+		goto fail;
 
 	event->barrierEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!event->barrierEvent)
-		goto out_free_event;
+		goto fail;
 
 	event->doneEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!event->doneEvent)
-		goto out_free_barrierEvent;
+		goto fail;
 
 	event->subscribers = ArrayList_New(TRUE);
 	if (!event->subscribers)
-		goto out_free_doneEvent;
-
-	if (!InitializeCriticalSectionAndSpinCount(&(event->lock), 4000))
-		goto out_free_subscribers;
+		goto fail;
 
 	event->consuming = 0;
 	event->waiting = 0;
 	event->eventid = 0;
-	(void)SetEvent(event->doneEvent);
+	if (!SetEvent(event->doneEvent))
+		goto fail;
 	return event;
 
-out_free_subscribers:
-	ArrayList_Free(event->subscribers);
-out_free_doneEvent:
-	(void)CloseHandle(event->doneEvent);
-out_free_barrierEvent:
-	(void)CloseHandle(event->barrierEvent);
-out_free_event:
-	(void)CloseHandle(event->event);
-out_free:
-	free(event);
-out_error:
-	return (rdpShadowMultiClientEvent*)nullptr;
+fail:
+	shadow_multiclient_free(event);
+	return nullptr;
 }
 
 void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
@@ -105,18 +96,19 @@ void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
 	DeleteCriticalSection(&(event->lock));
 
 	ArrayList_Free(event->subscribers);
-	(void)CloseHandle(event->doneEvent);
-	(void)CloseHandle(event->barrierEvent);
-	(void)CloseHandle(event->event);
+	if (event->doneEvent)
+		(void)CloseHandle(event->doneEvent);
+	if (event->barrierEvent)
+		(void)CloseHandle(event->barrierEvent);
+	if (event->barrierEvent)
+		(void)CloseHandle(event->event);
 	free(event);
 }
 
 static void Publish(rdpShadowMultiClientEvent* event)
 {
-	wArrayList* subscribers = nullptr;
-	struct rdp_shadow_multiclient_subscriber* subscriber = nullptr;
-
-	subscribers = event->subscribers;
+	WINPR_ASSERT(event);
+	wArrayList* subscribers = event->subscribers;
 
 	WINPR_ASSERT(event->consuming == 0);
 
@@ -124,7 +116,8 @@ static void Publish(rdpShadowMultiClientEvent* event)
 	ArrayList_Lock(subscribers);
 	for (size_t i = 0; i < ArrayList_Count(subscribers); i++)
 	{
-		subscriber = (struct rdp_shadow_multiclient_subscriber*)ArrayList_GetItem(subscribers, i);
+		struct rdp_shadow_multiclient_subscriber* subscriber =
+		    (struct rdp_shadow_multiclient_subscriber*)ArrayList_GetItem(subscribers, i);
 		/* Set flag to subscriber: I acknowledge and please handle */
 		subscriber->pleaseHandle = TRUE;
 		event->consuming++;
@@ -169,8 +162,8 @@ static void DiscardRound(rdpShadowMultiClientEvent* event)
 		(void)SetEvent(event->doneEvent);
 	}
 
-	WLog_WARN(TAG, "Event %d dropped: %d subscriber(s) unresponsive for %" PRIu32 " ms",
-	          event->eventid, event->consuming, (UINT32)SHADOW_SUBSCRIBER_WAIT_TIMEOUT);
+	WLog_WARN(TAG, "Event %d dropped: %d subscriber(s) unresponsive for %lu ms", event->eventid,
+	          event->consuming, SHADOW_SUBSCRIBER_WAIT_TIMEOUT);
 	event->consuming = 0;
 	(void)ResetEvent(event->event);
 }
