@@ -119,12 +119,10 @@ option(WITH_SYSTEMD "allows to export wLog to systemd journal" ${libsystemd_FOUN
 if(WITH_SYSTEMD)
   find_package(libsystemd REQUIRED)
   winpr_pc_add_requires_private("libsystemd")
-  set(WINPR_HAVE_JOURNALD_H TRUE)
+  winpr_definition_add(WINPR_HAVE_JOURNALD_H)
   set(JOURNALD_SRCS wlog/JournaldAppender.c wlog/JournaldAppender.h)
   winpr_system_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
   winpr_library_add_private(${LIBSYSTEMD_LIBRARY})
-else()
-  unset(WINPR_HAVE_JOURNALD_H)
 endif()
 
 set(WLOG_SRCS
