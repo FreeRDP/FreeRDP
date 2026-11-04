@@ -1,0 +1,80 @@
+{
+	"TimeZoneIanaAliases": [
+		{
+			"Current": "America/Argentina/Buenos_Aires",
+			"Legacy": "America/Buenos_Aires"
+		},
+		{
+			"Current": "America/Argentina/Cordoba",
+			"Legacy": "America/Cordoba"
+		},
+		{
+			"Current": "America/Argentina/Catamarca",
+			"Legacy": "America/Catamarca"
+		},
+		{
+			"Current": "America/Argentina/Jujuy",
+			"Legacy": "America/Jujuy"
+		},
+		{
+			"Current": "America/Argentina/Mendoza",
+			"Legacy": "America/Mendoza"
+		},
+		{
+			"Current": "America/Atikokan",
+			"Legacy": "America/Coral_Harbour"
+		},
+		{
+			"Current": "Africa/Asmara",
+			"Legacy": "Africa/Asmera"
+		},
+		{
+			"Current": "Pacific/Pohnpei",
+			"Legacy": "Pacific/Ponape"
+		},
+		{
+			"Current": "Pacific/Chuuk",
+			"Legacy": "Pacific/Truk"
+		},
+		{
+			"Current": "Atlantic/Faroe",
+			"Legacy": "Atlantic/Faeroe"
+		},
+		{
+			"Current": "America/Nuuk",
+			"Legacy": "America/Godthab"
+		},
+		{
+			"Current": "Asia/Kolkata",
+			"Legacy": "Asia/Calcutta"
+		},
+		{
+			"Current": "Pacific/Kanton",
+			"Legacy": "Pacific/Enderbury"
+		},
+		{
+			"Current": "Asia/Yangon",
+			"Legacy": "Asia/Rangoon"
+		},
+		{
+			"Current": "Asia/Kathmandu",
+			"Legacy": "Asia/Katmandu"
+		},
+		{
+			"Current": "Europe/Kyiv",
+			"Legacy": "Europe/Kiev"
+		},
+		{
+			"Current": "America/Indiana/Indianapolis",
+			"Legacy": "America/Indianapolis"
+		},
+		{
+			"Current": "America/Kentucky/Louisville",
+			"Legacy": "America/Louisville"
+		},
+		{
+			"Current": "Asia/Ho_Chi_Minh",
+			"Legacy": "Asia/Saigon"
+		}
+	]
+}

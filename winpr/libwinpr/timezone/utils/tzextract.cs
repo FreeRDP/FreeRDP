@@ -224,6 +224,37 @@ internal class Program
 		return true;
 	}
 
+	private static bool writeIanaAliasesJSON(string path, List<string[]> aliases)
+	{
+		string fname = "TimeZoneIanaAliases";
+		string fpath = Path.Combine(path, fname + ".json");
+
+		using (StreamWriter fs = new StreamWriter(fpath))
+		{
+			fs.WriteLine("{");
+			fs.WriteLine("\"" + fname + "\": [");
+
+			bool first = true;
+			foreach (string[] alias in aliases)
+			{
+				StringBuilder sb = new StringBuilder();
+				if (!first)
+					sb.Append(",");
+				first = false;
+				sb.Append("{ \"Current\": \"");
+				sb.Append(alias[0]);
+				sb.Append("\", \"Legacy\": \"");
+				sb.Append(alias[1]);
+				sb.Append("\" }");
+				fs.WriteLine(sb.ToString());
+			}
+
+			fs.WriteLine("]");
+			fs.WriteLine("}");
+		}
+		return true;
+	}
+
 	private static bool updateIanaAliases(string path)
 	{
 		string url =
@@ -250,6 +281,8 @@ internal class Program
 		}
 
 		if (!writeIanaAliasesC(path, url, versions, aliases))
+			return false;
+		if (!writeIanaAliasesJSON(path, aliases))
 			return false;
 
 		stdout.WriteLine("Finished update");

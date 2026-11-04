@@ -27,6 +27,7 @@ After running the scripts check
  * git clang-format -f to eliminate formatting changes
  * winpr/libwinpr/timezone/WindowsZones.c
  * winpr/libwinpr/timezone/TimeZoneIanaAliases_static.h
+ * winpr/libwinpr/timezone/TimeZoneIanaAliases.json
 for changes.
 
 on any machine run the following script from checkout root:

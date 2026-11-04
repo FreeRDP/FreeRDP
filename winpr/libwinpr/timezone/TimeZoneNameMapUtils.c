@@ -97,7 +97,7 @@ static void tz_context_free(void)
 }
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
-static char* tz_get_object_str(WINPR_JSON* json, size_t pos, const char* name)
+char* TimeZoneJsonGetString(WINPR_JSON* json, size_t pos, const char* name)
 {
 	WINPR_ASSERT(json);
 	if (!WINPR_JSON_IsObject(json) || !WINPR_JSON_HasObjectItem(json, name))
@@ -136,11 +136,11 @@ static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEnt
 		return FALSE;
 	}
 
-	entry->Id = tz_get_object_str(json, pos, "Id");
-	entry->StandardName = tz_get_object_str(json, pos, "StandardName");
-	entry->DisplayName = tz_get_object_str(json, pos, "DisplayName");
-	entry->DaylightName = tz_get_object_str(json, pos, "DaylightName");
-	entry->Iana = tz_get_object_str(json, pos, "Iana");
+	entry->Id = TimeZoneJsonGetString(json, pos, "Id");
+	entry->StandardName = TimeZoneJsonGetString(json, pos, "StandardName");
+	entry->DisplayName = TimeZoneJsonGetString(json, pos, "DisplayName");
+	entry->DaylightName = TimeZoneJsonGetString(json, pos, "DaylightName");
+	entry->Iana = TimeZoneJsonGetString(json, pos, "Iana");
 	if (!entry->Id || !entry->StandardName || !entry->DisplayName || !entry->DaylightName ||
 	    !entry->Iana)
 	{
@@ -150,7 +150,7 @@ static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEnt
 	return TRUE;
 }
 
-static WINPR_JSON* load_timezones_from_file(const char* filename)
+WINPR_JSON* TimeZoneJsonParseFile(const char* filename)
 {
 	WINPR_JSON* json = WINPR_JSON_ParseFromFile(filename);
 	if (!json)
@@ -200,7 +200,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 			goto end;
 		}
 
-		json = load_timezones_from_file(filename);
+		json = TimeZoneJsonParseFile(filename);
 		if (!json)
 			goto end;
 
