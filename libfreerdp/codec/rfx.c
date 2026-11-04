@@ -1179,6 +1179,9 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 	if (!context || !data || !length)
 		return FALSE;
 
+	if ((left > UINT16_MAX) || (top > UINT16_MAX) || (dstHeight > UINT16_MAX))
+		return FALSE;
+
 	WINPR_ASSERT(context->priv);
 	RFX_MESSAGE* message = &context->currentMessage;
 
@@ -1355,6 +1358,14 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			const UINT32 rh = 1UL * clippingRect.top + rect->height;
 			const uint16_t right = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rw, dstWidth));
 			const uint16_t bottom = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rh, dstHeight));
+			if ((rw > UINT16_MAX) || (rh > UINT16_MAX) || (right > UINT16_MAX) ||
+			    (bottom > UINT16_MAX))
+			{
+				region16_uninit(&updateRegion);
+				region16_uninit(&clippingRects);
+				return FALSE;
+			}
+
 			clippingRect.right = right;
 			clippingRect.bottom = bottom;
 			if (!region16_union_rect(&clippingRects, &clippingRects, &clippingRect))
@@ -1370,8 +1381,12 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			RECTANGLE_16 updateRect = WINPR_C_ARRAY_INIT;
 			const RFX_TILE* tile = rfx_message_get_tile(message, i);
 
-			WINPR_ASSERT(left + tile->x <= UINT16_MAX);
-			WINPR_ASSERT(top + tile->y <= UINT16_MAX);
+			if ((1ul * left + tile->x <= UINT16_MAX) || (1ul * top + tile->y <= UINT16_MAX))
+			{
+				region16_uninit(&updateRegion);
+				region16_uninit(&clippingRects);
+				return FALSE;
+			}
 
 			updateRect.left = (UINT16)left + tile->x;
 			updateRect.top = (UINT16)top + tile->y;
