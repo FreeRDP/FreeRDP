@@ -298,6 +298,8 @@ struct xf_context
 	RailClientContext* rail;
 	wHashTable* railWindows;
 	xfRailIconCache* railIconCache;
+	/* gdi's DeleteSurface, wrapped with software GDI to detach RemoteApp windows */
+	pcRdpgfxDeleteSurface gdiDeleteSurface;
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	BOOL isRailWindowsLocked;

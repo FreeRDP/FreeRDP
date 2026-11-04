@@ -449,6 +449,39 @@ fail:
 }
 
 /**
+ * Detaches the RemoteApp window showing a surface that is being deleted.
+ *
+ * Called from DeleteSurface with gfx->mux held, before the surface is freed. The server may
+ * already have mapped another surface to the window, which appWindow->surfaceId only picks up on
+ * that surface's first update (see xf_AppUpdateWindowFromSurface()), so only detach the window
+ * if it still shows the deleted surface.
+ */
+static void xf_DetachWindowFromSurface(RdpgfxClientContext* context, const gdiGfxSurface* surface)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(surface);
+
+	if (!surface->windowMapped)
+		return;
+
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
+
+	xfContext* xfc = (xfContext*)gdi->context;
+	WINPR_ASSERT(xfc);
+
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE);
+	if (appWindow && (appWindow->surfaceId == surface->surfaceId))
+	{
+		/* With software GDI the window image wraps the surface data */
+		xf_AppWindowDestroyImage(appWindow);
+		appWindow->surfaceId = UINT32_MAX;
+		appWindow->surfaceStale = FALSE;
+	}
+	xf_rail_return_window(appWindow, FALSE);
+}
+
+/**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
@@ -465,10 +498,10 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 	if (surface)
 	{
+		xf_DetachWindowFromSurface(context, &surface->gdi);
+
 		if (surface->gdi.windowMapped)
 		{
-			/* tells xf_UnmapWindowForSurface this surface is going away */
-			surface->gdi.windowMapped = FALSE;
 			status = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
 			                      surface->gdi.windowId);
 			if (status != CHANNEL_RC_OK)
@@ -489,45 +522,34 @@ fail:
 	return status;
 }
 
-static UINT xf_UnmapWindowForSurface(RdpgfxClientContext* context, UINT64 windowID)
+/**
+ * DeleteSurface with software GDI: detach the RemoteApp window, then let gdi delete the surface
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_DeleteSurfaceSoftwareGdi(RdpgfxClientContext* context,
+                                        const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(deleteSurface);
+
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	WINPR_ASSERT(gdi);
 
 	xfContext* xfc = (xfContext*)gdi->context;
-	WINPR_ASSERT(gdi->context);
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->gdiDeleteSurface);
 
-	/* Surfaces are only mapped to windows in RemoteApp mode */
-	if (!freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
-		return CHANNEL_RC_OK;
+	/* recursive, gdi's DeleteSurface takes it again */
+	EnterCriticalSection(&context->mux);
+	const gdiGfxSurface* surface =
+	    (const gdiGfxSurface*)context->GetSurfaceData(context, deleteSurface->surfaceId);
+	if (surface)
+		xf_DetachWindowFromSurface(context, surface);
 
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID, FALSE);
-	if (!appWindow)
-		return CHANNEL_RC_OK;
-
-	/*
-	 * Called from DeleteSurface with gfx->mux held, after the deleted surface has been marked
-	 * not window mapped but before it is freed. Only the window ID is passed, and the server
-	 * may already have mapped another surface to this window, which appWindow->surfaceId
-	 * picks up lazily in xf_AppUpdateWindowFromSurface(). So only detach the window when the
-	 * surface it shows is no longer mapped to it.
-	 */
-	const UINT32 surfaceId = appWindow->surfaceId;
-	const gdiGfxSurface* surface = nullptr;
-	if (surfaceId < UINT16_MAX)
-		surface = context->GetSurfaceData(context, (UINT16)surfaceId);
-
-	if (!surface || !surface->windowMapped || (surface->windowId != windowID))
-	{
-		/* With software GDI the window image wraps the surface data that is about to be freed */
-		xf_AppWindowDestroyImage(appWindow);
-		appWindow->surfaceId = UINT32_MAX;
-		appWindow->surfaceStale = FALSE;
-	}
-
-	xf_rail_return_window(appWindow, FALSE);
-	return CHANNEL_RC_OK;
+	const UINT status = xfc->gdiDeleteSurface(context, deleteSurface);
+	LeaveCriticalSection(&context->mux);
+	return status;
 }
 
 static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurface* surface)
@@ -568,9 +590,13 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 		gfx->CreateSurface = xf_CreateSurface;
 		gfx->DeleteSurface = xf_DeleteSurface;
 	}
+	else
+	{
+		xfc->gdiDeleteSurface = gfx->DeleteSurface;
+		gfx->DeleteSurface = xf_DeleteSurfaceSoftwareGdi;
+	}
 
 	gfx->UpdateWindowFromSurface = xf_UpdateWindowFromSurface;
-	gfx->UnmapWindowForSurface = xf_UnmapWindowForSurface;
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)

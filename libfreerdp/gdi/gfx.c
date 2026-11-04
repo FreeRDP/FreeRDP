@@ -1390,12 +1390,8 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 	if (surface)
 	{
 		if (surface->windowMapped)
-		{
-			/* lets UnmapWindowForSurface tell this surface from others mapped to the window */
-			surface->windowMapped = FALSE;
 			rc = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
 			                  surface->windowId);
-		}
 
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->h264);
