@@ -1260,7 +1260,7 @@ static BOOL compare_rgb_to_i444(prim_size_t roi, DWORD type)
 		}
 
 		for (size_t x = 0; x < 3; x++)
-			memset(yuv[x], PADDING_FILL_VALUE, roi.height * dstStep[x]);
+			memset(yuv[x], PADDING_FILL_VALUE, 1ull * roi.height * dstStep[x]);
 
 		if (prims->RGBToI444_8u(rgb, format, (UINT32)srcStep, yuv, dstStep, &roi) !=
 		    PRIMITIVES_SUCCESS)

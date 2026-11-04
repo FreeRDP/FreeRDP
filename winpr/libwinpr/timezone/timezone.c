@@ -43,6 +43,7 @@
 #endif
 
 #if !defined(_WIN32)
+WINPR_ATTR_MALLOC(free, 1)
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	const INT CHUNK_SIZE = 32;
@@ -99,6 +100,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 WINPR_ATTR_NODISCARD
 static const char* winpr_get_zoneinfo_dir(void)
 {
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	const char* dir = getenv("TZDIR");
 	if (!dir || (dir[0] == '\0'))
 		return "/usr/share/zoneinfo";
@@ -137,6 +139,7 @@ static const char* winpr_get_timezone_from_zoneinfo_path(const char* path)
 	return name;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
 	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
@@ -217,6 +220,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 #if defined(ANDROID)
 #include "../utils/android.h"
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* winpr_get_android_timezone_identifier(void)
 {
 	char* tzid = nullptr;
@@ -287,6 +291,7 @@ static char* winpr_get_android_timezone_identifier(void)
 }
 #endif
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* winpr_get_unix_timezone_identifier_from_file(void)
 {
 #if defined(ANDROID)
