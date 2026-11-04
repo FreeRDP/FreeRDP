@@ -1033,11 +1033,9 @@ static BOOL clip_client_is_local(rdpShadowClient* client)
 		adapters = (PIP_ADAPTER_ADDRESSES)malloc(size);
 		if (!adapters)
 			return FALSE;
-		const ULONG rc =
-		    GetAdaptersAddresses(AF_UNSPEC,
-		                         GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
-		                             GAA_FLAG_SKIP_DNS_SERVER,
-		                         nullptr, adapters, &size);
+		const ULONG rc = GetAdaptersAddresses(
+		    AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER,
+		    nullptr, adapters, &size);
 		if (rc == ERROR_SUCCESS)
 			break;
 		free(adapters);
