@@ -34,9 +34,11 @@ jobs:
     - name: Format code
       run: |
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/WindowsZones.c
+        clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneIanaAliases_static.h
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.c
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap_static.h
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.json
+        clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneIanaAliases.json
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v6

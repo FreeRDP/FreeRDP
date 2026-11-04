@@ -30,12 +30,12 @@ if(WITH_TIMEZONE_FROM_FILE)
 
   winpr_definition_add(WITH_TIMEZONE_FROM_FILE)
 
-  install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
+  install(FILES TimeZoneNameMap.json TimeZoneIanaAliases.json DESTINATION ${WINPR_RESOURCE_ROOT})
 endif()
 
-set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h timezone.c timezone.h)
+set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h TimeZoneIanaAliases.c TimeZoneIanaAliases.h timezone.c timezone.h)
 if(WITH_TIMEZONE_COMPILED)
-  list(APPEND SRCS TimeZoneNameMap_static.h)
+  list(APPEND SRCS TimeZoneNameMap_static.h TimeZoneIanaAliases_static.h)
 endif()
 
 if(NOT WIN32)
