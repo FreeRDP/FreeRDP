@@ -1878,10 +1878,12 @@ static UINT cliprdr_file_context_server_file_range_request(
 
 	WINPR_ASSERT(fileContentsRequest);
 
-	HashTable_Lock(file->local_streams);
 	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
 	                      ((UINT64)fileContentsRequest->nPositionLow);
+	if (offset > INT64_MAX)
+		return ERROR_INVALID_DATA;
 
+	HashTable_Lock(file->local_streams);
 	CliprdrLocalFile* rfile =
 	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
 	if (!rfile)
