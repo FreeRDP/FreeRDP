@@ -24,6 +24,13 @@
 
 #define TAG SERVER_TAG("shadow.mcevent")
 
+/* Maximum time the publisher waits for all subscribers to consume a frame.
+ * Without this bound a single subscriber that stops consuming (e.g. a client
+ * stuck before its TLS handshake, or one stalled mid-send) blocks the
+ * subsystem/capture thread forever and, on the Windows subsystem, the
+ * listener thread with it (the clients list lock is held across the wait). */
+#define SHADOW_SUBSCRIBER_WAIT_TIMEOUT 1000
+
 struct rdp_shadow_multiclient_event
 {
 	HANDLE event;        /* Kickoff event */
@@ -133,15 +140,56 @@ static void Publish(rdpShadowMultiClientEvent* event)
 	}
 }
 
+static void DiscardRound(rdpShadowMultiClientEvent* event)
+{
+	wArrayList* subscribers = nullptr;
+
+	WINPR_ASSERT(event);
+
+	/* Called with event->lock held after the subscriber wait timed out.
+	 * Reset the round state so that the publisher can continue: subscribers
+	 * waking up late see pleaseHandle == FALSE and skip their consume, and
+	 * clients blocked on the barrier event are released. */
+	subscribers = event->subscribers;
+	ArrayList_Lock(subscribers);
+	for (size_t i = 0; i < ArrayList_Count(subscribers); i++)
+	{
+		struct rdp_shadow_multiclient_subscriber* subscriber =
+		    (struct rdp_shadow_multiclient_subscriber*)ArrayList_GetItem(subscribers, i);
+		subscriber->pleaseHandle = FALSE;
+	}
+	ArrayList_Unlock(subscribers);
+
+	if (event->waiting > 0)
+	{
+		(void)SetEvent(event->barrierEvent);
+	}
+	else
+	{
+		(void)SetEvent(event->doneEvent);
+	}
+
+	WLog_WARN(TAG, "Event %d dropped: %d subscriber(s) unresponsive for %" PRIu32 " ms",
+	          event->eventid, event->consuming, (UINT32)SHADOW_SUBSCRIBER_WAIT_TIMEOUT);
+	event->consuming = 0;
+	(void)ResetEvent(event->event);
+}
+
 static void WaitForSubscribers(rdpShadowMultiClientEvent* event)
 {
+	DWORD status = WAIT_FAILED;
+
 	if (event->consuming > 0)
 	{
 		/* Wait for clients done */
 		WLog_VRB(TAG, "Server wait event %d. %d clients.\n", event->eventid, event->consuming);
 		LeaveCriticalSection(&(event->lock));
-		(void)WaitForSingleObject(event->doneEvent, INFINITE);
+		status = WaitForSingleObject(event->doneEvent, SHADOW_SUBSCRIBER_WAIT_TIMEOUT);
 		EnterCriticalSection(&(event->lock));
+
+		if (status != WAIT_OBJECT_0)
+			DiscardRound(event);
+
 		WLog_VRB(TAG, "Server quit event %d. %d clients.\n", event->eventid, event->consuming);
 	}
 
