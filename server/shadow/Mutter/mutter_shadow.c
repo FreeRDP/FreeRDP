@@ -84,7 +84,7 @@
 #define SC_STREAM_IFACE "org.gnome.Mutter.ScreenCast.Stream"
 
 /* ScreenCast cursor mode: the cursor comes as buffer metadata, not painted in */
-#define MUTTER_CURSOR_MODE_METADATA 2
+#define MUTTER_CURSOR_MODE_EMBEDDED 1
 
 /* cursor metadata: position, hot spot and, when the shape changes, a bitmap;
  * Mutter's bitmaps are up to 384x384 */
@@ -600,8 +600,15 @@ static void mutter_read_stream_parameters(mutterShadowSubsystem* mutter)
 	sd_bus_message_unref(reply);
 }
 
-/* A stream of the monitor, in the screen cast session; the clients draw the
- * cursor from its metadata */
+/* A stream of the monitor, in the screen cast session, with the cursor drawn
+ * into the picture.
+ *
+ * With the cursor as metadata instead (the clients would draw it, with no lag),
+ * Mutter 50 records a cursor frame at each stage update and skips the picture
+ * that follows it as "too early": on a stream that has just started, the
+ * stage may keep updating and no picture comes at all, neither the first one
+ * nor later changes (MUTTER_DEBUG=screen-cast: no full frame and about a
+ * thousand skipped in 10 s). Drawn in, there are no cursor frames to skip. */
 WINPR_ATTR_NODISCARD
 static BOOL mutter_record_monitor(mutterShadowSubsystem* mutter, const char* connector)
 {
@@ -614,7 +621,7 @@ static BOOL mutter_record_monitor(mutterShadowSubsystem* mutter, const char* con
 	if ((sd_bus_message_new_method_call(mutter->bus, &call, SC_NAME, mutter->scSessionPath,
 	                                    SC_SESSION_IFACE, "RecordMonitor") < 0) ||
 	    (sd_bus_message_append(call, "sa{sv}", connector, 1, "cursor-mode", "u",
-	                           (uint32_t)MUTTER_CURSOR_MODE_METADATA) < 0))
+	                           (uint32_t)MUTTER_CURSOR_MODE_EMBEDDED) < 0))
 		goto out;
 	WLog_DBG(TAG, "ScreenCast.Session.RecordMonitor('%s')", connector);
 	if (!mutter_call_for_path(mutter->bus, call, "ScreenCast.Session.RecordMonitor",
@@ -1922,6 +1929,10 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 	mutter->fullPaint = TRUE;
 	mutter->cursorResend = TRUE;
 
+	/* the picture carries the cursor: the clients hide their own pointer */
+	static const BYTE clear[4] = { 0 };
+	mutter_cursor_send_shape(mutter, clear, 1, 1, 0, 0);
+
 	rdpShadowServer* server = mutter->common.server;
 	rdpShadowSurface* surface = server ? server->surface : nullptr;
 	if (!surface)
@@ -2190,8 +2201,9 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	if (!mutter_audio_init(mutter))
 		WLog_WARN(TAG, "sound: no capture of the default sink: no sound");
 
-	/* the frames never carry the cursor: the clients draw it from the shapes
-	 * sent (ShowMouseCursor is otherwise only set by /server-side-cursor) */
+	/* the frames carry the cursor; the clients get a transparent shape so they
+	 * hide their own (shapes go out only with ShowMouseCursor, which is
+	 * otherwise only set by /server-side-cursor) */
 	if (subsystem->server)
 		subsystem->server->ShowMouseCursor = TRUE;
 
