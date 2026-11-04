@@ -1095,16 +1095,19 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	BYTE eventHeader = 0;
 	BOOL should_unlock = FALSE;
 
-	WINPR_ASSERT(iNumEvents > 0);
 	if (!s)
 		return FALSE;
 
 	if (!fastpath)
-		goto fail;
+	{
+		Stream_Release(s);
+		return FALSE;
+	}
 
 	rdpRdp* rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
 
+	WINPR_ASSERT(iNumEvents > 0);
 	{
 		const CONNECTION_STATE state = rdp_get_state(rdp);
 		if (!rdp_is_active_state(rdp))
