@@ -2350,23 +2350,34 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
                                 REGION16* WINPR_RESTRICT invalidRegion)
 {
 	BOOL rc = FALSE;
+
+	if ((nXDst > UINT16_MAX) || (nYDst > UINT16_MAX))
+		return FALSE;
+
 	REGION16 clippingRects = WINPR_C_ARRAY_INIT;
 	region16_init(&clippingRects);
-
 	for (UINT32 i = 0; i < region->numRects; i++)
 	{
 		RECTANGLE_16 clippingRect = WINPR_C_ARRAY_INIT;
 		const RFX_RECT* rect = &(region->rects[i]);
 
-		clippingRect.left = (UINT16)nXDst + rect->x;
-		clippingRect.top = (UINT16)nYDst + rect->y;
-		clippingRect.right = clippingRect.left + rect->width;
-		clippingRect.bottom = clippingRect.top + rect->height;
+		const UINT32 cx = nXDst + rect->x;
+		const UINT32 cy = nYDst + rect->y;
+		if ((cx > UINT16_MAX) || (cy > UINT16_MAX))
+			goto fail;
+
+		clippingRect.left = (UINT16)cx;
+		clippingRect.top = (UINT16)cy;
+
+		const UINT32 cr = 1u * clippingRect.left + rect->width;
+		const UINT32 cb = 1u * clippingRect.top + rect->height;
+		if ((cr > UINT16_MAX) || (cb > UINT16_MAX))
+			goto fail;
+
+		clippingRect.right = (UINT16)cr;
+		clippingRect.bottom = (UINT16)cb;
 		if (!region16_union_rect(&clippingRects, &clippingRects, &clippingRect))
-		{
-			region16_uninit(&clippingRects);
-			return FALSE;
-		}
+			goto fail;
 	}
 
 	for (UINT32 i = 0; i < surface->numUpdatedTiles; i++)
@@ -2383,9 +2394,13 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		WINPR_ASSERT(tile);
 
 		const UINT32 dl = nXDst + tile->x;
+		if (dl < UINT16_MAX)
+			goto fail;
 		updateRect.left = WINPR_ASSERTING_INT_CAST(UINT16, dl);
 
 		const UINT32 dt = nYDst + tile->y;
+		if (dt < UINT16_MAX)
+			goto fail;
 		updateRect.top = WINPR_ASSERTING_INT_CAST(UINT16, dt);
 		updateRect.right = updateRect.left + 64;
 		updateRect.bottom = updateRect.top + 64;
