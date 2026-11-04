@@ -971,13 +971,61 @@ static inline pstatus_t general_RGBToI444_8u_RGB(const BYTE* WINPR_RESTRICT pSrc
 	return PRIMITIVES_SUCCESS;
 }
 
+/* 32 bit formats keep each colour at a fixed byte offset, so read the bytes
+ * directly instead of decoding every pixel with FreeRDPReadColor and
+ * FreeRDPSplitColor; the compiler can vectorize this loop */
+static inline pstatus_t
+general_RGBToI444_8u_32bpp(const BYTE* WINPR_RESTRICT pSrc, const UINT32 srcStep,
+                           BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
+                           const prim_size_t* WINPR_RESTRICT roi, const size_t rOff,
+                           const size_t gOff, const size_t bOff)
+{
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
+
+	for (size_t y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT pRGB = pSrc + y * srcStep;
+		BYTE* WINPR_RESTRICT pY = &pDst[0][y * dstStep[0]];
+		BYTE* WINPR_RESTRICT pU = &pDst[1][y * dstStep[1]];
+		BYTE* WINPR_RESTRICT pV = &pDst[2][y * dstStep[2]];
+
+		for (size_t x = 0; x < nWidth; x++)
+		{
+			const BYTE* px = &pRGB[4ULL * x];
+			const BYTE R = px[rOff];
+			const BYTE G = px[gOff];
+			const BYTE B = px[bOff];
+			pY[x] = RGB2Y(R, G, B);
+			pU[x] = RGB2U(R, G, B);
+			pV[x] = RGB2V(R, G, B);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 static pstatus_t general_RGBToI444_8u(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
                                       const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
                                       const UINT32 dstStep[3],
                                       const prim_size_t* WINPR_RESTRICT roi)
 {
+	/* FreeRDPReadColor reads 32 bit pixels most significant byte first: the
+	 * first channel of the format name is the first byte in memory */
 	switch (SrcFormat)
 	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return general_RGBToI444_8u_32bpp(pSrc, srcStep, pDst, dstStep, roi, 2, 1, 0);
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return general_RGBToI444_8u_32bpp(pSrc, srcStep, pDst, dstStep, roi, 0, 1, 2);
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return general_RGBToI444_8u_32bpp(pSrc, srcStep, pDst, dstStep, roi, 1, 2, 3);
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return general_RGBToI444_8u_32bpp(pSrc, srcStep, pDst, dstStep, roi, 3, 2, 1);
 		default:
 			return general_RGBToI444_8u_RGB(pSrc, SrcFormat, srcStep, pDst, dstStep, roi);
 	}
@@ -2408,5 +2456,6 @@ void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	primitives_init_YUV(prims);
 	primitives_init_YUV_sse41(prims);
+	primitives_init_YUV_avx2(prims);
 	primitives_init_YUV_neon(prims);
 }

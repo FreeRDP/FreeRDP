@@ -42,7 +42,7 @@ set(PRIMITIVES_SSE4_1_SRCS sse/prim_copy_sse4_1.c sse/prim_YUV_sse4.1.c)
 
 set(PRIMITIVES_SSE4_2_SRCS)
 
-set(PRIMITIVES_AVX2_SRCS sse/prim_copy_avx2.c)
+set(PRIMITIVES_AVX2_SRCS sse/prim_copy_avx2.c sse/prim_YUV_avx2.c)
 
 set(PRIMITIVES_NEON_SRCS neon/prim_colors_neon.c neon/prim_YCoCg_neon.c neon/prim_YUV_neon.c)
 
