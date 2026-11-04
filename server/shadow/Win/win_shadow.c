@@ -575,8 +575,11 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 						                                   subsystem->height);
 				}
 
-				if (subsystem->dxgiOutputDuplication)
-					dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
+				/* the resize status only gates this block; without a duplication
+				 * (capture paused, or a failed restart) there is no frame */
+				dxgi_status = subsystem->dxgiOutputDuplication
+				                  ? win_shadow_dxgi_get_next_frame(subsystem)
+				                  : 0;
 
 				/* a frame without dirty rectangles of its own (the first of a
 				 * new duplication) still holds the whole desktop image: copy
