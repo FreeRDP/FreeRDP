@@ -573,7 +573,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 					 * 128MB - which is far beyond anything that should ever be sent by the server.
 					 */
 					const size_t DataLengthLimit = UINT32_MAX / 32;
-					if (LengthName > DataLengthLimit)
+					if (LengthData > DataLengthLimit)
 					{
 						WLog_ERR(TAG,
 						         "[MS-RA] 2.2.1.2 REMOTEDESKTOP_CTL_PACKETHEADER::DataLen(%" PRIu32
