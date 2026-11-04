@@ -550,14 +550,9 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 		{
 			int dxgi_status = win_shadow_check_resize(subsystem);
 
-			/* Reflow the surface/geometry first when the desktop display
-			 * mode changed: the duplication restart below (and the staging
-			 * texture rebuilt inside it) must see the new size, and a copy
-			 * must not straddle the old/new edge. init_duplication checks
-			 * again as a fallback for the race between the resize and the
-			 * next restart. On a fatal resize error (<0) the geometry is
-			 * left untouched and consistent: skip this round's restart and
-			 * acquire, the next tick retries. */
+			/* apply a pending desktop display mode change before the
+			 * restart/acquire below; on fatal resize error (<0) skip this
+			 * round, the next tick retries */
 			if (dxgi_status >= 0)
 			{
 				/* a desktop switch (logon, lock screen, UAC), a refresh request,
@@ -710,16 +705,8 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 	return numMonitors;
 }
 
-/* The desktop display mode can change while the server is running (the
- * user changing the resolution locally, or a remote display control
- * request). The X11 subsystem has x11_shadow_check_resize for this; the
- * Win subsystem did not track it at all, so the shadow surface, the DXGI
- * staging texture and the virtual screen geometry drifted out of sync
- * with the real desktop.
- *
- * The cheap check uses EnumDisplaySettingsW (no DC is created); only on
- * a mismatch the monitors are re-enumerated, the shadow screen resized
- * and the subsystem geometry updated. Returns 1 when the geometry
+/* Win counterpart of x11_shadow_check_resize: track desktop display mode
+ * changes while the server is running. Returns 1 when the geometry
  * changed, 0 when it did not and <0 on fatal error. */
 int win_shadow_check_resize(winShadowSubsystem* subsystem)
 {
@@ -731,20 +718,15 @@ int win_shadow_check_resize(winShadowSubsystem* subsystem)
 	if (!EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &dm))
 		return 0;
 
-	/* Compare in the unsigned domain: an int cast of the DWORD values would
-	 * wrap resolutions above INT_MAX to negative numbers, letting them match
-	 * a corrupted negative stored width/height. */
+	/* compare unsigned: an int cast would wrap resolutions above INT_MAX */
 	if (((UINT32)dm.dmPelsWidth == (UINT32)subsystem->width) &&
 	    ((UINT32)dm.dmPelsHeight == (UINT32)subsystem->height))
 		return 0;
 
 	MONITOR_DEF* virtualScreen = &(subsystem->base.virtualScreen);
 
-	/* The display mode changed -- refresh the monitor definition. If the
-	 * attached device geometry did not actually change (a false alarm
-	 * from a non-primary device), bail out to avoid per-tick flapping.
-	 * MONITOR_DEF right/bottom are inclusive, like shadow_screen_resize
-	 * reads them. */
+	/* refresh the monitor definition; a false alarm from a non-primary
+	 * device bails out below to avoid per-tick flapping */
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
 
 	if (subsystem->base.numMonitors < 1)

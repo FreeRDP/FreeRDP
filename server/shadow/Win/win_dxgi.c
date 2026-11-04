@@ -419,12 +419,8 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	/* Reflow the desktop geometry before creating the staging texture:
-	 * every duplication recovery (desktop switch, refresh request) comes
-	 * through here, and the staging texture must be created at the new
-	 * desktop size after a display mode change. A fatal resize error
-	 * fails the duplication: the caller retries it on the next tick
-	 * instead of building the texture at inconsistent geometry. */
+	/* the staging texture must match the current desktop size; a fatal
+	 * resize error fails the duplication, the caller retries next tick */
 	if (win_shadow_check_resize(subsystem) < 0)
 		return -1;
 
