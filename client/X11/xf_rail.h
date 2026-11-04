@@ -109,8 +109,27 @@ struct xf_app_window
 	/* Surface updates were skipped while the X window was unmapped, the next
 	 * paint has to cover the whole window. */
 	BOOL surfaceStale;
-	/* Timestamp of the last accepted WINDOW_ORDER_FIELD_WND_SIZE update. */
-	UINT64 lastWndSizeUpdate;
+	/* Local size sent in the last Window Move PDU, see xf_rail_adjust_position(). */
+	BOOL sizeReported;
+	INT64 reportedWidth;
+	INT64 reportedHeight;
+	/* The last Window Move PDU, see xf_rail_adjust_position(). */
+	BOOL moveSent;
+	BOOL moveAnswered;
+	RAIL_WINDOW_MOVE_ORDER lastMove;
+	/* Frame the server adds around a window that cannot be resized, learnt from its answer
+	 * to a Window Move PDU, see xf_rail_learn_frame(). */
+	BOOL frameKnown;
+	INT32 frameLeft;
+	INT32 frameTop;
+	INT32 frameRight;
+	INT32 frameBottom;
+	/* Track sizes from the last Min Max Info PDU, see xf_UpdateWindowSizeHints(). */
+	BOOL haveMinMaxInfo;
+	INT32 minTrackWidth;
+	INT32 minTrackHeight;
+	INT32 maxTrackWidth;
+	INT32 maxTrackHeight;
 
 	Pixmap pixmap;
 	UINT32 pixmapWidth;
