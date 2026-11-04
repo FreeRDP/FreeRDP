@@ -33,7 +33,7 @@ if(WITH_TIMEZONE_FROM_FILE)
   install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
 endif()
 
-set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h timezone.c timezone.h)
+set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h TimeZoneIanaAliases.c TimeZoneIanaAliases.h TimeZoneIanaAliases_static.h timezone.c timezone.h)
 if(WITH_TIMEZONE_COMPILED)
   list(APPEND SRCS TimeZoneNameMap_static.h)
 endif()

@@ -40,6 +40,7 @@
 #endif
 
 #include "TimeZoneNameMap.h"
+#include "TimeZoneIanaAliases.h"
 
 #if defined(WITH_TIMEZONE_COMPILED)
 #include "TimeZoneNameMap_static.h"
@@ -393,46 +394,6 @@ static const char* map_fallback(const char* iana, WINPR_ATTR_UNUSED TimeZoneName
 }
 #endif
 
-/* Zones IANA has renamed, as current and legacy name (from CLDR common/bcp47/timezone.xml). */
-WINPR_ATTR_NODISCARD
-static const char* iana_alias(const char* iana)
-{
-	static const struct
-	{
-		const char* current;
-		const char* legacy;
-	} aliases[] = {
-		{ "Africa/Asmara", "Africa/Asmera" },
-		{ "America/Argentina/Buenos_Aires", "America/Buenos_Aires" },
-		{ "America/Argentina/Catamarca", "America/Catamarca" },
-		{ "America/Argentina/Cordoba", "America/Cordoba" },
-		{ "America/Argentina/Jujuy", "America/Jujuy" },
-		{ "America/Argentina/Mendoza", "America/Mendoza" },
-		{ "America/Atikokan", "America/Coral_Harbour" },
-		{ "America/Indiana/Indianapolis", "America/Indianapolis" },
-		{ "America/Kentucky/Louisville", "America/Louisville" },
-		{ "America/Nuuk", "America/Godthab" },
-		{ "Asia/Ho_Chi_Minh", "Asia/Saigon" },
-		{ "Asia/Kathmandu", "Asia/Katmandu" },
-		{ "Asia/Kolkata", "Asia/Calcutta" },
-		{ "Asia/Yangon", "Asia/Rangoon" },
-		{ "Atlantic/Faroe", "Atlantic/Faeroe" },
-		{ "Europe/Kyiv", "Europe/Kiev" },
-		{ "Pacific/Chuuk", "Pacific/Truk" },
-		{ "Pacific/Kanton", "Pacific/Enderbury" },
-		{ "Pacific/Pohnpei", "Pacific/Ponape" },
-	};
-
-	for (size_t x = 0; x < ARRAYSIZE(aliases); x++)
-	{
-		if (strcmp(iana, aliases[x].current) == 0)
-			return aliases[x].legacy;
-		if (strcmp(iana, aliases[x].legacy) == 0)
-			return aliases[x].current;
-	}
-	return nullptr;
-}
-
 WINPR_ATTR_NODISCARD
 static const char* iana_to_windows(const char* iana, TimeZoneNameType type)
 {
@@ -458,7 +419,7 @@ const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
 
 	/* The tables (CLDR) and the system (tzdata, browsers) may each use either the current or the
 	 * legacy name of a renamed zone, so try the other spelling too. */
-	const char* alias = iana_alias(iana);
+	const char* alias = TimeZoneIanaAlias(iana);
 	if (!alias)
 		return nullptr;
 
