@@ -203,6 +203,7 @@ class SdlRail
 	void sendClientWindowMove(SdlRailWindow* appWindow, const SDL_Rect& serverRect);
 	/* Caller holds _windowsLock. */
 	void moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display);
+	[[nodiscard]] bool monitorRect(SDL_DisplayID display, SDL_Rect& rect) const;
 
 	/* MS-RDPERP icon cache slot for cacheId:cacheEntry; nullptr if out of range. cacheId 0xFF =
 	 * "do not cache" scratch slot (the spec says 0xFFFF but the field is one byte). */

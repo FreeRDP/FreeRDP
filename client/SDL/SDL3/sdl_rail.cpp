@@ -1191,7 +1191,7 @@ void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
 	moveToDisplay(appWindow, display);
 }
 
-void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
+bool SdlRail::monitorRect(SDL_DisplayID display, SDL_Rect& rect) const
 {
 	const auto* settings = _context->common()->context.settings;
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
@@ -1199,21 +1199,30 @@ void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
 	{
 		const auto* mon = static_cast<const rdpMonitor*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
-		if (!mon || (mon->orig_screen != display))
-			continue;
-		const SDL_Rect area = { mon->x, mon->y, mon->width, mon->height };
-		SDL_Rect rect = appWindow->windowRect();
-		const SDL_Point center = { rect.x + rect.w / 2, rect.y + rect.h / 2 };
-		if (SDL_PointInRect(&center, &area))
-			return;
-		rect.x = area.x + std::max(0, (area.w - rect.w) / 2);
-		rect.y = area.y + std::max(0, (area.h - rect.h) / 2);
-		WLog_DBG(TAG, "window 0x%08" PRIx32 " now on display %" PRIu32 ", server move to %d,%d",
-		         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
-		sendClientWindowMove(appWindow, rect);
-		appWindow->adoptLocalGeometry(rect);
-		return;
+		if (mon && (mon->orig_screen == display))
+		{
+			rect = { mon->x, mon->y, mon->width, mon->height };
+			return true;
+		}
 	}
+	return false;
+}
+
+void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
+{
+	SDL_Rect area{};
+	if (!monitorRect(display, area))
+		return;
+	SDL_Rect rect = appWindow->windowRect();
+	const SDL_Point center = { rect.x + rect.w / 2, rect.y + rect.h / 2 };
+	if (SDL_PointInRect(&center, &area))
+		return;
+	rect.x = area.x + std::max(0, (area.w - rect.w) / 2);
+	rect.y = area.y + std::max(0, (area.h - rect.h) / 2);
+	WLog_DBG(TAG, "window 0x%08" PRIx32 " now on display %" PRIu32 ", server move to %d,%d",
+	         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
+	sendClientWindowMove(appWindow, rect);
+	appWindow->adoptLocalGeometry(rect);
 }
 
 /* Send ClientWindowMove with full frame geometry including server margins (caller holds
@@ -1261,8 +1270,15 @@ void SdlRail::clampIntoDesktop(const SdlRailWindow& appWindow, int& x, int& y, i
 	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	/* Clamp the content rect to the remote desktop; the resize band may extend outside. */
 	const SDL_Rect s = appWindow.serverRect({ x, y, w, h });
-	x += std::clamp(s.x, _inputOrigin.x, _inputOrigin.x + std::max(0, dw - s.w)) - s.x;
-	y += std::clamp(s.y, _inputOrigin.y, _inputOrigin.y + std::max(0, dh - s.h)) - s.y;
+	SDL_Rect area = { _inputOrigin.x, _inputOrigin.y, dw, dh };
+	/* Wayland: keep the window on its monitor if it fits. */
+	SDL_Rect mon{};
+	if (!railPlatformCaps().supportsWindowPositions &&
+	    monitorRect(SDL_GetDisplayForWindow(appWindow.window()), mon) && (s.w <= mon.w) &&
+	    (s.h <= mon.h))
+		area = mon;
+	x += std::clamp(s.x, area.x, area.x + std::max(0, area.w - s.w)) - s.x;
+	y += std::clamp(s.y, area.y, area.y + std::max(0, area.h - s.h)) - s.y;
 }
 
 void SdlRail::noteDragResize(SDL_WindowID id, int w, int h)
