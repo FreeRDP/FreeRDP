@@ -13,6 +13,7 @@ static BOOL test_tz(const char* iana, const char* expected)
 	char key[128] = WINPR_C_ARRAY_INIT;
 	DYNAMIC_TIME_ZONE_INFORMATION tzif = WINPR_C_ARRAY_INIT;
 
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (setenv("TZ", iana, 1) != 0)
 		return FALSE;
 	tzset();
