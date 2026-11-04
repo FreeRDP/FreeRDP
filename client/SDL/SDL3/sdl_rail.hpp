@@ -90,6 +90,7 @@ class SdlRail
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
 	void handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display);
+	void noteUsableBoundsChanged(SDL_DisplayID display);
 	void updateCoordinates();
 	/* Activate window on server if not already active. */
 	void ensureActive(SDL_WindowID id);

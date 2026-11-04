@@ -227,6 +227,16 @@ void SdlRail::sendWorkArea(const SDL_Rect& local)
 		_sentWorkArea = area;
 }
 
+void SdlRail::noteUsableBoundsChanged(SDL_DisplayID display)
+{
+	if (display != SDL_GetPrimaryDisplay())
+		return;
+	std::unique_lock lock(_windowsLock);
+	_sentWorkArea = {};
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(TAG, "sdl_push_user_event failed");
+}
+
 void SdlRail::handleMaximized(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
@@ -513,7 +523,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 
 	std::unique_lock lock(_windowsLock);
 
-	/* Report workarea once (avoids maximizing under local panels). */
+	/* Report workarea (avoids maximizing under local panels). */
 	if (_sentWorkArea.w == 0)
 	{
 		SDL_Rect usable{};

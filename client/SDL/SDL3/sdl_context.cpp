@@ -1422,6 +1422,10 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 {
 	if (!getDisplayChannelContext().handleEvent(ev))
 		return false;
+#if SDL_VERSION_ATLEAST(3, 3, 2)
+	if (ev.type == SDL_EVENT_DISPLAY_USABLE_BOUNDS_CHANGED)
+		_rail.noteUsableBoundsChanged(ev.displayID);
+#endif
 
 	switch (ev.type)
 	{
