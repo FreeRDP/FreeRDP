@@ -85,6 +85,27 @@
 
 /* ScreenCast cursor mode: the cursor comes as buffer metadata, not painted in */
 #define MUTTER_CURSOR_MODE_EMBEDDED 1
+#define MUTTER_CURSOR_MODE_METADATA 2
+#define MUTTER_VIRTUAL_ENV "FREERDP_SHADOW_MUTTER_VIRTUAL"
+
+/* FREERDP_SHADOW_MUTTER_VIRTUAL=<w>x<h>: TRUE and the size when set and valid */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
+{
+	WINPR_ASSERT(width);
+	WINPR_ASSERT(height);
+
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
+	const char* env = getenv(MUTTER_VIRTUAL_ENV);
+	unsigned w = 0;
+	unsigned h = 0;
+	if (!env || (sscanf(env, "%ux%u", &w, &h) != 2) || (w < 64) || (h < 64) || (w > 8192) ||
+	    (h > 8192))
+		return FALSE;
+	*width = w;
+	*height = h;
+	return TRUE;
+}
 
 /* cursor metadata: position, hot spot and, when the shape changes, a bitmap;
  * Mutter's bitmaps are up to 384x384 */
@@ -501,6 +522,15 @@ static UINT32 mutter_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonit
 {
 	WINPR_ASSERT(monitors);
 
+	UINT32 width = 0;
+	UINT32 height = 0;
+	if ((maxMonitors > 0) && mutter_virtual_size(&width, &height))
+	{
+		/* the monitor this server will add: a GNOME session may have none yet */
+		monitors[0] = (MONITOR_DEF){ 0, 0, (INT32)width - 1, (INT32)height - 1, 1 };
+		return 1;
+	}
+
 	sd_bus* bus = nullptr;
 	const int opened = sd_bus_open_user(&bus);
 	if (opened < 0)
@@ -618,15 +648,33 @@ static BOOL mutter_record_monitor(mutterShadowSubsystem* mutter, const char* con
 	sd_bus_message* call = nullptr;
 	BOOL rc = FALSE;
 
-	if ((sd_bus_message_new_method_call(mutter->bus, &call, SC_NAME, mutter->scSessionPath,
-	                                    SC_SESSION_IFACE, "RecordMonitor") < 0) ||
-	    (sd_bus_message_append(call, "sa{sv}", connector, 1, "cursor-mode", "u",
-	                           (uint32_t)MUTTER_CURSOR_MODE_EMBEDDED) < 0))
-		goto out;
-	WLog_DBG(TAG, "ScreenCast.Session.RecordMonitor('%s')", connector);
-	if (!mutter_call_for_path(mutter->bus, call, "ScreenCast.Session.RecordMonitor",
-	                          &mutter->streamPath))
-		goto out;
+	if (mutter->virtualMonitor)
+	{
+		/* a monitor of its own: Mutter records it directly, with no "too early"
+		 * skips, so the clients draw the cursor (metadata, no lag) */
+		if ((sd_bus_message_new_method_call(mutter->bus, &call, SC_NAME, mutter->scSessionPath,
+		                                    SC_SESSION_IFACE, "RecordVirtual") < 0) ||
+		    (sd_bus_message_append(call, "a{sv}", 1, "cursor-mode", "u",
+		                           (uint32_t)MUTTER_CURSOR_MODE_METADATA) < 0))
+			goto out;
+		WLog_DBG(TAG, "ScreenCast.Session.RecordVirtual(%" PRIu32 "x%" PRIu32 ")",
+		         mutter->virtualWidth, mutter->virtualHeight);
+		if (!mutter_call_for_path(mutter->bus, call, "ScreenCast.Session.RecordVirtual",
+		                          &mutter->streamPath))
+			goto out;
+	}
+	else
+	{
+		if ((sd_bus_message_new_method_call(mutter->bus, &call, SC_NAME, mutter->scSessionPath,
+		                                    SC_SESSION_IFACE, "RecordMonitor") < 0) ||
+		    (sd_bus_message_append(call, "sa{sv}", connector, 1, "cursor-mode", "u",
+		                           (uint32_t)MUTTER_CURSOR_MODE_EMBEDDED) < 0))
+			goto out;
+		WLog_DBG(TAG, "ScreenCast.Session.RecordMonitor('%s')", connector);
+		if (!mutter_call_for_path(mutter->bus, call, "ScreenCast.Session.RecordMonitor",
+		                          &mutter->streamPath))
+			goto out;
+	}
 
 	if (sd_bus_match_signal(mutter->bus, &mutter->streamAddedSlot, SC_NAME, mutter->streamPath,
 	                        SC_STREAM_IFACE, "PipeWireStreamAdded", mutter_on_stream_added,
@@ -1261,7 +1309,10 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 
 	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
 	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
-	const struct spa_rectangle size = SPA_RECTANGLE(1920, 1080);
+	/* a virtual monitor takes the size the stream asks for */
+	const struct spa_rectangle size =
+	    mutter->virtualMonitor ? SPA_RECTANGLE(mutter->virtualWidth, mutter->virtualHeight)
+	                           : SPA_RECTANGLE(1920, 1080);
 	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
 	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
 	const struct spa_fraction rate = SPA_FRACTION(0, 1);
@@ -1930,8 +1981,11 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 	mutter->cursorResend = TRUE;
 
 	/* the picture carries the cursor: the clients hide their own pointer */
-	static const BYTE clear[4] = { 0 };
-	mutter_cursor_send_shape(mutter, clear, 1, 1, 0, 0);
+	if (!mutter->virtualMonitor)
+	{
+		static const BYTE clear[4] = { 0 };
+		mutter_cursor_send_shape(mutter, clear, 1, 1, 0, 0);
+	}
 
 	rdpShadowServer* server = mutter->common.server;
 	rdpShadowSurface* surface = server ? server->surface : nullptr;
@@ -2175,9 +2229,22 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	WLog_DBG(TAG, "DisplayConfig.GetCurrentState");
-	UINT32 count = mutter_list_monitors(mutter->bus, subsystem->monitors, mutter->connectors,
-	                                    MUTTER_SHADOW_MAX_MONITORS);
+	UINT32 count = 0;
+	mutter->virtualMonitor = mutter_virtual_size(&mutter->virtualWidth, &mutter->virtualHeight);
+	if (mutter->virtualMonitor)
+	{
+		/* one monitor, this server's own */
+		subsystem->monitors[0] = (MONITOR_DEF){ 0, 0, (INT32)mutter->virtualWidth - 1,
+			                                    (INT32)mutter->virtualHeight - 1, 1 };
+		mutter->connectors[0][0] = '\0';
+		count = 1;
+	}
+	else
+	{
+		WLog_DBG(TAG, "DisplayConfig.GetCurrentState");
+		count = mutter_list_monitors(mutter->bus, subsystem->monitors, mutter->connectors,
+		                             MUTTER_SHADOW_MAX_MONITORS);
+	}
 	if (count == 0)
 	{
 		/* no layout: the primary monitor, sized by its stream */
@@ -2201,16 +2268,22 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	if (!mutter_audio_init(mutter))
 		WLog_WARN(TAG, "sound: no capture of the default sink: no sound");
 
-	/* the frames carry the cursor; the clients get a transparent shape so they
-	 * hide their own (shapes go out only with ShowMouseCursor, which is
-	 * otherwise only set by /server-side-cursor) */
+	/* mirrored monitors carry the cursor in their frames and the clients get a
+	 * transparent shape; a virtual monitor sends the cursor's shapes. Either way
+	 * shapes go out, which needs ShowMouseCursor (otherwise only set by
+	 * /server-side-cursor) */
 	if (subsystem->server)
 		subsystem->server->ShowMouseCursor = TRUE;
 
-	WLog_INFO(TAG,
-	          "sharing monitor %s (%" PRIu32 " of %" PRIu32 "): %" PRIu32 "x%" PRIu32 ", input %s",
-	          connector[0] ? connector : "(primary)", subsystem->selectedMonitor, count,
-	          mutter->width, mutter->height, mutter->ei ? "through libei" : "off");
+	if (mutter->virtualMonitor)
+		WLog_INFO(TAG, "sharing a virtual monitor of its own: %" PRIu32 "x%" PRIu32 ", input %s",
+		          mutter->width, mutter->height, mutter->ei ? "through libei" : "off");
+	else
+		WLog_INFO(TAG,
+		          "sharing monitor %s (%" PRIu32 " of %" PRIu32 "): %" PRIu32 "x%" PRIu32
+		          ", input %s",
+		          connector[0] ? connector : "(primary)", subsystem->selectedMonitor, count,
+		          mutter->width, mutter->height, mutter->ei ? "through libei" : "off");
 	return 1;
 }
 

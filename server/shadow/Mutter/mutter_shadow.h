@@ -61,6 +61,13 @@ struct mutter_shadow_subsystem
 	BOOL awaitNode; /* a stream recorded again waits for its PipeWire node */
 	BOOL reconnect; /* that node is there: connect the PipeWire stream to it */
 
+	/* FREERDP_SHADOW_MUTTER_VIRTUAL=<w>x<h>: a monitor of its own for this server
+	 * (RecordVirtual), for a session started without one (a headless GNOME),
+	 * instead of a mirror of an existing monitor */
+	BOOL virtualMonitor;
+	UINT32 virtualWidth;
+	UINT32 virtualHeight;
+
 	/* the monitors as Mutter lays them out, and their connectors */
 	char connectors[MUTTER_SHADOW_MAX_MONITORS][MUTTER_SHADOW_CONNECTOR_SIZE];
 
