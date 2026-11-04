@@ -207,6 +207,7 @@ class SdlRail
 	/* Send ClientWindowMove to server. */
 	void sendClientWindowMove(SdlRailWindow* appWindow, const SDL_Rect& serverRect);
 	/* Caller holds _windowsLock. */
+	void followDisplay(SdlRailWindow* appWindow, bool now);
 	void moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display);
 	[[nodiscard]] bool monitorRect(SDL_DisplayID display, SDL_Rect& rect) const;
 

@@ -253,6 +253,8 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
 	}
+	/* Move first: the server maximizes on its window's monitor. */
+	followDisplay(appWindow, true);
 	appWindow->setRailMaximized(true);
 	/* Force full repaint (skips dirty-rect). */
 	appWindow->invalidateAll();
@@ -261,6 +263,12 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 	{
 		appWindow->deferMaximize();
 		WLog_DBG(TAG, "local maximize deferred id=0x%08" PRIx32 " (modal loop open)",
+		         static_cast<UINT32>(appWindow->id()));
+	}
+	else if (appWindow->deferMaximizeUntilEcho())
+	{
+		/* Right after a move, Windows can keep the restored size. */
+		WLog_DBG(TAG, "local maximize deferred id=0x%08" PRIx32 " (move not confirmed)",
 		         static_cast<UINT32>(appWindow->id()));
 	}
 	else
@@ -397,6 +405,9 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow)
 		return false;
+	/* Input is translated with the server rect: move first. */
+	if (!appWindow->effectivelyMaximized())
+		followDisplay(appWindow, true);
 	SDL_FPoint rpos = { x, y };
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
@@ -627,6 +638,10 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			         static_cast<uint32_t>(win.id()), unconfirmed.w, unconfirmed.h);
 			sendClientWindowMove(&win, unconfirmed);
 		}
+		if (!win.effectivelyMaximized())
+			followDisplay(&win, false);
+		if (win.takeMaximizeAfterEcho() && win.effectivelyMaximized())
+			sendSystemCommand(&win, SC_MAXIMIZE);
 		if (win.takeRestoreRetry())
 		{
 			WLog_DBG(TAG, "restore resent id=0x%08" PRIx32, static_cast<uint32_t>(win.id()));
@@ -1180,7 +1195,19 @@ void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
 		return;
 	std::unique_lock lock(_windowsLock);
 	auto* appWindow = getWindowBySdlId(id);
-	if (!appWindow || appWindow->isPopup() || appWindow->effectivelyMaximized())
+	if (!appWindow || appWindow->isPopup())
+		return;
+	WLog_DBG(TAG, "display changed id=0x%08" PRIx32 " display %" PRIu32,
+	         static_cast<uint32_t>(appWindow->id()), display);
+	appWindow->noteDisplayChange();
+}
+
+void SdlRail::followDisplay(SdlRailWindow* appWindow, bool now)
+{
+	if (!appWindow->takeDisplayChange(now))
+		return;
+	const SDL_DisplayID display = SDL_GetDisplayForWindow(appWindow->window());
+	if (display == 0)
 		return;
 	/* The end of the server move loop would undo it. */
 	if (_moveLoop.id == appWindow->id())
