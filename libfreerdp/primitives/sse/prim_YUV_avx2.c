@@ -80,8 +80,8 @@ static inline void avx2_I444_16px(const BYTE* WINPR_RESTRICT src, const __m256i 
                                   __m256i* WINPR_RESTRICT y, __m256i* WINPR_RESTRICT u,
                                   __m256i* WINPR_RESTRICT v)
 {
-	const __m256i p0 = _mm256_loadu_si256((const __m256i*)src);
-	const __m256i p1 = _mm256_loadu_si256((const __m256i*)(src + 32));
+	const __m256i p0 = _mm256_loadu_si256(WINPR_PACKED_ALIGN_CAST(const __m256i*, src));
+	const __m256i p1 = _mm256_loadu_si256(WINPR_PACKED_ALIGN_CAST(const __m256i*, &src[32]));
 	const __m256i r =
 	    _mm256_or_si256(_mm256_shuffle_epi8(p0, masks[0]), _mm256_shuffle_epi8(p1, masks[1]));
 	const __m256i g =
@@ -128,9 +128,13 @@ static pstatus_t avx2_RGBToI444_32bpp(const BYTE* WINPR_RESTRICT pSrc, UINT32 sr
 			__m256i v1 = _mm256_setzero_si256();
 			avx2_I444_16px(&src[4 * x], masks, &y0, &u0, &v0);
 			avx2_I444_16px(&src[4 * x + 64], masks, &y1, &u1, &v1);
-			_mm256_storeu_si256((__m256i*)&yd[x], avx2_I444_pack(y0, y1));
-			_mm256_storeu_si256((__m256i*)&ud[x], avx2_I444_pack(u0, u1));
-			_mm256_storeu_si256((__m256i*)&vd[x], avx2_I444_pack(v0, v1));
+
+			__m256i* cyd = WINPR_PACKED_ALIGN_CAST(__m256i*, &yd[x]);
+			__m256i* cud = WINPR_PACKED_ALIGN_CAST(__m256i*, &ud[x]);
+			__m256i* cvd = WINPR_PACKED_ALIGN_CAST(__m256i*, &vd[x]);
+			_mm256_storeu_si256(cyd, avx2_I444_pack(y0, y1));
+			_mm256_storeu_si256(cud, avx2_I444_pack(u0, u1));
+			_mm256_storeu_si256(cvd, avx2_I444_pack(v0, v1));
 		}
 
 		for (; x < width; x++)
