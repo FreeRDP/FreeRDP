@@ -419,6 +419,11 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
+	/* the staging texture must match the current desktop size; a fatal
+	 * resize error fails the duplication, the caller retries next tick */
+	if (win_shadow_check_resize(subsystem) < 0)
+		return -1;
+
 	textureDesc.Width = subsystem->width;
 	textureDesc.Height = subsystem->height;
 	textureDesc.MipLevels = 1;
