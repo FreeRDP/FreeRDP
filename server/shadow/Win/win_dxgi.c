@@ -273,8 +273,8 @@ const char* GetDxgiErrorString(HRESULT hr)
 			return "DXGI_DDI_ERR_UNSUPPORTED";
 		case DXGI_DDI_ERR_NONEXCLUSIVE:
 			return "DXGI_DDI_ERR_NONEXCLUSIVE";
-		case 0x80070005:
-			return "DXGI_ERROR_ACCESS_DENIED";
+		case E_ACCESSDENIED:
+			return "E_ACCESSDENIED";
 	}
 
 	return "DXGI_ERROR_UNKNOWN";
