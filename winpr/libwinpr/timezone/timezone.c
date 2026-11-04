@@ -96,6 +96,47 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 	return tzid;
 }
 
+WINPR_ATTR_NODISCARD
+static const char* winpr_get_zoneinfo_dir(void)
+{
+	const char* dir = getenv("TZDIR");
+	if (!dir || (dir[0] == '\0'))
+		return "/usr/share/zoneinfo";
+	return dir;
+}
+
+WINPR_ATTR_NODISCARD
+static const char* winpr_get_timezone_from_zoneinfo_path(const char* path)
+{
+	char* dir = realpath(winpr_get_zoneinfo_dir(), nullptr);
+	if (!dir)
+		return nullptr;
+
+	const char* name = nullptr;
+	const size_t len = strlen(dir);
+	if ((strncmp(path, dir, len) == 0) && (path[len] == '/'))
+		name = &path[len + 1];
+	free(dir);
+	if (!name)
+		return nullptr;
+
+	/* these hold variants of the same zones */
+	const char* variants[] = { "posix/", "right/" };
+	for (size_t x = 0; x < ARRAYSIZE(variants); x++)
+	{
+		const size_t vlen = strlen(variants[x]);
+		if (strncmp(name, variants[x], vlen) == 0)
+		{
+			name += vlen;
+			break;
+		}
+	}
+
+	if (name[0] == '\0')
+		return nullptr;
+	return name;
+}
+
 static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
 	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
@@ -121,6 +162,15 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 
 		if (buf)
 		{
+			const char* name = winpr_get_timezone_from_zoneinfo_path(buf);
+			if (name)
+			{
+				tzid = _strdup(name);
+				if (tzid)
+					WLog_DBG(TAG, "tzid: %s", tzid);
+				goto end;
+			}
+
 			size_t sep = 0;
 			size_t alloc = 0;
 			size_t pos = 0;
@@ -291,7 +341,6 @@ fail:
 
 static char* winpr_translate_time_zone(const char* tzid)
 {
-	const char* zipath = "/usr/share/zoneinfo/";
 	char* buf = nullptr;
 	const char* links[] = { buf };
 
@@ -306,7 +355,7 @@ static char* winpr_translate_time_zone(const char* tzid)
 	else
 	{
 		size_t bsize = 0;
-		winpr_asprintf(&buf, &bsize, "%s%s", zipath, tzid);
+		winpr_asprintf(&buf, &bsize, "%s/%s", winpr_get_zoneinfo_dir(), tzid);
 		links[0] = buf;
 	}
 
