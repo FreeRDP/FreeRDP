@@ -1254,7 +1254,9 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 	}
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
 	{
-		_lastMotion = { ev.windowID, { ev.x, ev.y }, { copy.motion.x, copy.motion.y } };
+		_lastMotion = {
+			ev.windowID, { ev.x, ev.y }, { copy.motion.x, copy.motion.y }, _rail.pointerEpoch()
+		};
 		_rail.noteServerPointer(copy.motion.x, copy.motion.y);
 		return SdlTouch::handleEvent(this, copy.motion);
 	}
@@ -1483,6 +1485,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 		{
 			/* The window may have moved since the last motion: keep the server's position. */
 			if ((ev.windowID == _lastMotion.window) &&
+			    (_lastMotion.epoch == _rail.pointerEpoch()) &&
 			    (fabsf(ev.x - _lastMotion.local.x) < FLT_EPSILON) &&
 			    (fabsf(ev.y - _lastMotion.local.y) < FLT_EPSILON))
 			{

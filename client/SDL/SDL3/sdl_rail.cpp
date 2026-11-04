@@ -1223,6 +1223,7 @@ void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
 	         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
 	sendClientWindowMove(appWindow, rect);
 	appWindow->adoptLocalGeometry(rect);
+	_pointerEpoch++;
 }
 
 /* Send ClientWindowMove with full frame geometry including server margins (caller holds

@@ -108,6 +108,11 @@ class SdlRail
 	{
 		_lastPointerServer = { static_cast<int>(x), static_cast<int>(y) };
 	}
+	/* Changes when the client moves a server window. */
+	[[nodiscard]] uint32_t pointerEpoch() const
+	{
+		return _pointerEpoch;
+	}
 	/* Local move/resize under the WM grab: server input is suppressed meanwhile. */
 	bool dragActive(SDL_WindowID id);
 	/* Suppress motion events during active local move/resize. */
@@ -218,6 +223,7 @@ class SdlRail
 	RailClientContext* _rail = nullptr;
 	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
 	std::atomic<bool> _enabled = false;
+	std::atomic<uint32_t> _pointerEpoch = 0;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
 	std::atomic<bool> _appStarted = false;
 	/* The desktop window may show: RAIL started, a logon prompt, or the hold ran out. */
