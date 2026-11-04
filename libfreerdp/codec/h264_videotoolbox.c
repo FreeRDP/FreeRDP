@@ -560,6 +560,7 @@ typedef struct
 	UINT32 bitRate;
 	UINT32 qp;
 	H264_RATECONTROL_MODE rateControl;
+	BOOL fullRange;
 	INT64 frameIndex;
 	BYTE* data;
 	size_t size;
@@ -569,8 +570,21 @@ typedef struct
 	wLog* log;
 } H264_CONTEXT_VT_ENCODER;
 
-/* full range: FreeRDP's RGB to YUV conversion uses the whole 0..255 range */
-#define VIDEOTOOLBOX_ENCODER_FORMAT kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+/* full range: FreeRDP's RGB to YUV conversion uses the whole 0..255 range
+ * video range: FreeRDP's camera path supplies video-range YUV */
+WINPR_ATTR_NODISCARD
+static BOOL videotoolbox_encoder_full_range(const H264_CONTEXT* h264)
+{
+	WINPR_ASSERT(h264);
+	switch (h264->UsageType)
+	{
+		case H264_CAMERA_VIDEO_REAL_TIME:
+		case H264_CAMERA_VIDEO_NON_REAL_TIME:
+			return FALSE;
+		default:
+			return TRUE;
+	}
+}
 
 WINPR_ATTR_NODISCARD
 static BOOL videotoolbox_encoder_append(H264_CONTEXT_VT_ENCODER* enc, const void* data, size_t size)
@@ -828,7 +842,9 @@ static BOOL videotoolbox_encoder_create(H264_CONTEXT* h264, H264_CONTEXT_VT_ENCO
 	                                   &kCFTypeDictionaryValueCallBacks);
 	surface = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
 	                                    &kCFTypeDictionaryValueCallBacks);
-	const int32_t pixelFormat = VIDEOTOOLBOX_ENCODER_FORMAT;
+	const BOOL fullRange = videotoolbox_encoder_full_range(h264);
+	const int32_t pixelFormat = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+	                                      : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
 	number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &pixelFormat);
 	if (!source || !surface || !number)
 		goto fail;
@@ -893,14 +909,17 @@ static BOOL videotoolbox_encoder_create(H264_CONTEXT* h264, H264_CONTEXT_VT_ENCO
 	/* only logged: to yuv_ensure_buffer h264->hwAccel means NV12 YUV buffers, and this encoder
 	 * takes the I420 buffers FreeRDP fills */
 	BOOL hardware = FALSE;
-	CFBooleanRef usingHardware = nullptr;
-	if ((VTSessionCopyProperty(enc->session,
-	                           kVTCompressionPropertyKey_UsingHardwareAcceleratedVideoEncoder,
-	                           kCFAllocatorDefault, &usingHardware) == noErr) &&
-	    usingHardware)
+	if (__builtin_available(macOS 10.9, iOS 17.4, tvOS 17.4, *))
 	{
-		hardware = CFBooleanGetValue(usingHardware) ? TRUE : FALSE;
-		CFRelease(usingHardware);
+		CFTypeRef usingHardware = nullptr;
+		if ((VTSessionCopyProperty(enc->session,
+		                           kVTCompressionPropertyKey_UsingHardwareAcceleratedVideoEncoder,
+		                           kCFAllocatorDefault, (void*)&usingHardware) == noErr) &&
+		    usingHardware)
+		{
+			hardware = (usingHardware == kCFBooleanTrue) ? TRUE : FALSE;
+			CFRelease(usingHardware);
+		}
 	}
 
 	enc->width = width;
@@ -909,6 +928,7 @@ static BOOL videotoolbox_encoder_create(H264_CONTEXT* h264, H264_CONTEXT_VT_ENCO
 	enc->bitRate = bitRate;
 	enc->qp = h264->QP;
 	enc->rateControl = h264->RateControlMode;
+	enc->fullRange = fullRange;
 	enc->frameIndex = 0;
 	WLog_Print(
 	    h264->log, WLOG_DEBUG,
@@ -939,7 +959,8 @@ static BOOL videotoolbox_encoder_update(H264_CONTEXT* h264, H264_CONTEXT_VT_ENCO
 	WINPR_ASSERT(enc);
 
 	if (!enc->session || (enc->width != width) || (enc->height != height) ||
-	    (enc->frameRate != frameRate) || (enc->rateControl != h264->RateControlMode))
+	    (enc->frameRate != frameRate) || (enc->rateControl != h264->RateControlMode) ||
+	    (enc->fullRange != videotoolbox_encoder_full_range(h264)))
 		return videotoolbox_encoder_create(h264, enc, width, height, frameRate, bitRate);
 
 	/* bit rate and QP can change while the session runs; start over where they can't */
@@ -1028,9 +1049,11 @@ static int videotoolbox_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	CVPixelBufferRef image = nullptr;
 	CVPixelBufferPoolRef pool = VTCompressionSessionGetPixelBufferPool(enc->session);
+	const OSType pixelFormat = enc->fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+	                                          : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
 	const CVReturn cv = pool ? CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &image)
-	                         : CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-	                                               VIDEOTOOLBOX_ENCODER_FORMAT, nullptr, &image);
+	                         : CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat,
+	                                               nullptr, &image);
 	if ((cv != kCVReturnSuccess) || !image)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "VideoToolbox H.264 encoder: no picture buffer: %d",
