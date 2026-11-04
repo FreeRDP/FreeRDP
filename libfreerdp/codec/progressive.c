@@ -2394,12 +2394,12 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		WINPR_ASSERT(tile);
 
 		const UINT32 dl = nXDst + tile->x;
-		if (dl < UINT16_MAX)
+		if (dl > UINT16_MAX - 64)
 			goto fail;
 		updateRect.left = WINPR_ASSERTING_INT_CAST(UINT16, dl);
 
 		const UINT32 dt = nYDst + tile->y;
-		if (dt < UINT16_MAX)
+		if (dt > UINT16_MAX - 64)
 			goto fail;
 		updateRect.top = WINPR_ASSERTING_INT_CAST(UINT16, dt);
 		updateRect.right = updateRect.left + 64;
