@@ -1306,8 +1306,10 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 	WINPR_ASSERT(nSrcStep / FreeRDPGetBytesPerPixel(SrcFormat) >= nXSrc + nSrcWidth);
 
 #if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
-	const BYTE* src = &pSrcData[nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
-	BYTE* dst = &pDstData[nXDst * FreeRDPGetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+	const BYTE* src =
+	    &pSrcData[1ULL * nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + 1ULL * nYSrc * nSrcStep];
+	BYTE* dst =
+	    &pDstData[1ULL * nXDst * FreeRDPGetBytesPerPixel(DstFormat) + 1ULL * nYDst * nDstStep];
 #endif
 
 	/* direct copy is much faster than scaling, so check if we can simply copy... */
@@ -1333,6 +1335,19 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 		if (!freerdp_swscale_available())
 		{
 			WLog_WARN(TAG, "swscale not available");
+			return FALSE;
+		}
+
+		/* swscale addresses lines as line * stride in int arithmetic, every byte of an image must
+		 * be addressable with a signed int (see av_image_check_size). For larger images the
+		 * offset wraps and the last lines are read or written 4GiB in front of the buffer. */
+		if ((1ULL * nSrcStep * nSrcHeight > INT32_MAX) ||
+		    (1ULL * nDstStep * nDstHeight > INT32_MAX))
+		{
+			WLog_ERR(TAG,
+			         "image too large to scale: source %" PRIu32 " x %" PRIu32
+			         " bytes, destination %" PRIu32 " x %" PRIu32 " bytes",
+			         nSrcStep, nSrcHeight, nDstStep, nDstHeight);
 			return FALSE;
 		}
 
@@ -1366,6 +1381,10 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 			return FALSE;
 
 		if ((nDstWidth > INT_MAX) || (nDstHeight > INT_MAX) || (nDstStep > INT_MAX))
+			return FALSE;
+
+		/* cairo (pixman) addresses lines as line * stride in int arithmetic as well */
+		if ((1ULL * nSrcStep * nSrcHeight > INT_MAX) || (1ULL * nDstStep * nDstHeight > INT_MAX))
 			return FALSE;
 
 		csrc = cairo_image_surface_create_for_data((void*)src, CAIRO_FORMAT_ARGB32, (int)nSrcWidth,

@@ -73,6 +73,10 @@ typedef struct rdp_arm rdpArm;
 #define TAG FREERDP_TAG("core.gateway.arm")
 
 #ifdef WITH_AAD
+/* Upper limit for the interfaces and addresses accepted in azureInstanceNetworkMetadata.
+ * The arrays are accessed by index, which (depending on the JSON backend) is O(n) per element. */
+#define ARM_MAX_TARGET_ADDRESSES 1024
+
 WINPR_ATTR_NODISCARD
 static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, UINT32 timeout)
 {
@@ -832,6 +836,13 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metada
 			goto out;
 		}
 
+		if (interfaceSz > ARM_MAX_TARGET_ADDRESSES)
+		{
+			WLog_Print(log, WLOG_ERROR, "too many interfaces in azure instance metadata: %" PRIuz,
+			           interfaceSz);
+			goto out;
+		}
+
 		{
 			size_t count = 0;
 			for (size_t i = 0; i < interfaceSz; i++)
@@ -847,6 +858,13 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metada
 				WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItemCaseSensitive(interN, "ipv4");
 				if (ipv4)
 					count += arm_parse_ipvx_count(ipv4);
+			}
+
+			if (count > ARM_MAX_TARGET_ADDRESSES)
+			{
+				WLog_Print(log, WLOG_ERROR,
+				           "too many addresses in azure instance metadata: %" PRIuz, count);
+				goto out;
 			}
 
 			if (!freerdp_target_net_adresses_reset(settings, count))

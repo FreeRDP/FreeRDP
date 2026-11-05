@@ -515,6 +515,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(token);
 
+	/* The peer might not have sent a token at all */
+	if (!input->pvBuffer || (input->cbBuffer == 0))
+		return FALSE;
+
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, input->pvBuffer, input->cbBuffer);
 
 	if (!WinPrAsn1DecPeekTag(&dec, &tag))

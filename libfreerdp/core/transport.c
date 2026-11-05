@@ -2220,6 +2220,11 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			break;
 #endif
 
+		case BIO_C_GET_SOCKET:
+		case BIO_C_SET_SOCKET:
+			status = -1;
+			break;
+
 		default:
 			WLog_ERR(TAG, "Unsupported BIO_CTRL %d", cmd);
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);

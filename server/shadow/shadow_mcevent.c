@@ -100,7 +100,7 @@ void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
 		(void)CloseHandle(event->doneEvent);
 	if (event->barrierEvent)
 		(void)CloseHandle(event->barrierEvent);
-	if (event->barrierEvent)
+	if (event->event)
 		(void)CloseHandle(event->event);
 	free(event);
 }

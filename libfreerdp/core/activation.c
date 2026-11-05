@@ -406,7 +406,7 @@ static RDP_BITMAP_PERSISTENT_INFO rdp_persist_update(UINT32 offset, UINT16 step,
 	{
 		copy.numEntriesCache2 =
 		    MIN(step, WINPR_ASSERTING_INT_CAST(UINT16, (info->totalEntriesCache2 - offset)));
-		step -= copy.numEntriesCache3;
+		step -= copy.numEntriesCache2;
 	}
 	if (offset < 1ull * info->totalEntriesCache0 + info->totalEntriesCache1 +
 	                 info->totalEntriesCache2 + info->totalEntriesCache3)

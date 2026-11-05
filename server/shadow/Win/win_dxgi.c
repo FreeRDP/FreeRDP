@@ -197,6 +197,7 @@ DEFINE_GUID(IID_IDXGIAdapter2, 0x0AA1AE0A, 0xFA0E, 0x4B84, 0x86, 0x44, 0xE0, 0x5
 DEFINE_GUID(IID_IDXGIOutput1, 0x00cddea8, 0x939b, 0x4b83, 0xa3, 0x40, 0xa6, 0x85, 0x22, 0x66, 0x66,
             0xcc);
 
+WINPR_ATTR_NODISCARD
 const char* GetDxgiErrorString(HRESULT hr)
 {
 	switch (hr)
@@ -293,7 +294,8 @@ static void win_shadow_d3d11_module_init()
 	pfnD3D11CreateDevice = GetProcAddressAs(d3d11_module, "D3D11CreateDevice", fnD3D11CreateDevice);
 }
 
-int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem);
+WINPR_ATTR_NODISCARD
+static int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem);
 
 /* How often a paused capture tries to duplicate the output again */
 #define WIN_SHADOW_DXGI_DENIED_RETRY_MS 250
@@ -301,6 +303,7 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem);
 /* The input desktop is one this process may not capture: the secure desktop (logon, lock
  * screen, UAC) for a process in the user's session. DuplicateOutput says E_ACCESSDENIED,
  * AcquireNextFrame and Map DXGI_ERROR_ACCESS_DENIED. */
+WINPR_ATTR_NODISCARD
 static BOOL win_shadow_dxgi_is_denied(HRESULT hr)
 {
 	return (hr == DXGI_ERROR_ACCESS_DENIED) || (hr == E_ACCESSDENIED);
@@ -347,7 +350,8 @@ static void win_shadow_dxgi_drop_duplication(winShadowSubsystem* subsystem)
 	}
 }
 
-int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
+WINPR_ATTR_NODISCARD
+static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 {
 	HRESULT hr;
 	UINT dTop, i = 0;

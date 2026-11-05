@@ -1774,11 +1774,14 @@ WINPR_ATTR_NODISCARD
 static void* stream_copy(const void* obj)
 {
 	const wStream* src = obj;
-	wStream* dst = Stream_New(nullptr, Stream_Capacity(src));
+	/* src is the (reused, never shrinking) reassembly buffer of the session,
+	 * only copy the data of the current PDU and not the whole capacity */
+	const size_t len = Stream_Length(src);
+	wStream* dst = Stream_New(nullptr, len);
 	if (!dst)
 		return nullptr;
-	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), Stream_Capacity(dst));
-	if (!Stream_SetLength(dst, Stream_Length(src)))
+	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), len);
+	if (!Stream_SetLength(dst, len))
 		goto fail;
 	if (!Stream_SetPosition(dst, Stream_GetPosition(src)))
 		goto fail;
@@ -1885,6 +1888,16 @@ BOOL pf_channel_rdpdr_server_new(pServerContext* ps)
 
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->interceptContextMap);
+
+	/* WTSVirtualChannelOpenEx returns the same handle for every open of a static channel and
+	 * pf_channel_rdpdr_server_context_free closes it, so replacing an existing context in
+	 * interceptContextMap would leave the new one with a dangling handle. */
+	if (HashTable_Contains(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME))
+	{
+		WLog_Print(WLog_Get(RTAG), WLOG_ERROR, "Channel %s already set up in interceptContextMap",
+		           RDPDR_SVC_CHANNEL_NAME);
+		return FALSE;
+	}
 
 	rdpdr = calloc(1, sizeof(pf_channel_server_context));
 	if (!rdpdr)
