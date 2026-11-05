@@ -140,6 +140,7 @@ extern "C"
 	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context,
 	                                                                      const char* which);
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	/** Helper to fetch a \b WINPR_JSON object from AAD/ARM::wellknown JSON
 	 *
 	 * @param  log A logger instance to use
@@ -150,10 +151,27 @@ extern "C"
 	 *
 	 *  @since version 3.10.0
 	 */
+	WINPR_DEPRECATED_VAR("[since 3.34.0] use freerdp_utils_aad_get_wellknown_context instead",
+	                     WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	                         FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown(
+	                             wLog* log, const char* base, const char* tenantid));
+#endif
+
+	/** Helper to fetch a \b WINPR_JSON object from AAD/ARM::wellknown JSON
+	 *
+	 * @param context A rdp context to use for SSL handling
+	 * @param  log A logger instance to use
+	 * @param base the base URL to connect to
+	 * @param tenantid the tenant to use for the connection, use \b common for default
+	 *  @return A \b WINPR_JSON object to be used for queries or \b nullptr in case it does not
+	 * exist.
+	 *
+	 *  @since version 3.34.0
+	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	WINPR_ATTR_NODISCARD
-	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base,
-	                                                        const char* tenantid);
+	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown_context(rdpContext* context, wLog* log,
+	                                                                const char* base,
+	                                                                const char* tenantid);
 
 #ifdef __cplusplus
 }
