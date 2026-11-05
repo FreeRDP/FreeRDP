@@ -45,6 +45,7 @@
 /* Fallback support for older libavcodec versions */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 59, 100)
 #define AV_CODEC_ID_H264 CODEC_ID_H264
+#define AV_CODEC_ID_HEVC CODEC_ID_NONE /* no HEVC decoder */
 #endif
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(56, 34, 2)
@@ -403,7 +404,7 @@ static enum AVPixelFormat get_hwctx_image_format(H264_CONTEXT_LIBAVCODEC* sys, w
 			return AV_PIX_FMT_D3D12;
 #endif
 		case AV_HWDEVICE_TYPE_D3D11VA:
-			return AV_PIX_FMT_D3D11VA_VLD;
+			return AV_PIX_FMT_D3D11;
 		case AV_HWDEVICE_TYPE_DRM:
 			return AV_PIX_FMT_DRM_PRIME;
 		case AV_HWDEVICE_TYPE_OPENCL:
@@ -777,6 +778,20 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	if (gotFrame)
 	{
 		WINPR_ASSERT(sys->videoFrame);
+
+		/* HEVC 4:4:4 from RDP servers is YCbCr, but its VUI may say RGB (matrix 0): libavcodec
+		 * then reports GBRP. The planes are in coding order (Y, Cb, Cr) either way. */
+		switch (sys->videoFrame->format)
+		{
+			case AV_PIX_FMT_YUV444P:
+			case AV_PIX_FMT_YUVJ444P:
+			case AV_PIX_FMT_GBRP:
+				h264->yuv444 = TRUE;
+				break;
+			default:
+				h264->yuv444 = FALSE;
+				break;
+		}
 
 		pYUVData[0] = sys->videoFrame->data[0];
 		pYUVData[1] = sys->videoFrame->data[1];
@@ -1353,11 +1368,12 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	if (!h264->Compressor)
 	{
-		sys->codecDecoder = avcodec_find_decoder(AV_CODEC_ID_H264);
+		sys->codecDecoder = avcodec_find_decoder(h264->hevc ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264);
 
 		if (!sys->codecDecoder)
 		{
-			WLog_Print(h264->log, WLOG_ERROR, "Failed to find libav H.264 codec");
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to find libav %s codec",
+			           h264->hevc ? "HEVC" : "H.264");
 			goto EXCEPTION;
 		}
 
@@ -1377,6 +1393,13 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #endif
 
 #ifdef WITH_FFMPEG_HWACCEL
+		/* the frame transfer and the hardware frame pools here assume 4:2:0 */
+		if (h264->hevc && h264->hevc444 && sys->useHwDecoder)
+		{
+			WLog_Print(h264->log, WLOG_DEBUG, "HEVC 4:4:4 is decoded in software");
+			sys->useHwDecoder = FALSE;
+		}
+
 		if (sys->useHwDecoder && (sys->type != AV_HWDEVICE_TYPE_NONE))
 			WLog_Print(h264->log, WLOG_DEBUG,
 			           "Trying to initialize hardware backed decoder of type %s",
@@ -1405,8 +1428,9 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 					goto fail_hwdevice_create;
 				}
 			}
-			WLog_Print(h264->log, WLOG_INFO, "Using %s [%s|%s] for accelerated H264 decoding",
-			           av_hwdevice_get_type_name(type), get_hwctx_device(sys), vaapi_vendor(sys));
+			WLog_Print(h264->log, WLOG_INFO, "Using %s [%s|%s] for accelerated %s decoding",
+			           av_hwdevice_get_type_name(type), get_hwctx_device(sys), vaapi_vendor(sys),
+			           h264->hevc ? "HEVC" : "H264");
 
 			sys->codecDecoderContext->get_format = libavcodec_get_format;
 			sys->hw_pix_fmt = get_hwctx_image_format(sys, h264->log);
@@ -1416,8 +1440,8 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #endif
 		sys->codecDecoderContext->opaque = (void*)h264;
 
-	fail_hwdevice_create:
-	}
+		fail_hwdevice_create:;
+		}
 #endif
 
 		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, nullptr) < 0)
@@ -1426,7 +1450,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			goto EXCEPTION;
 		}
 
-		sys->codecParser = av_parser_init(AV_CODEC_ID_H264);
+		sys->codecParser = av_parser_init(h264->hevc ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264);
 
 		if (!sys->codecParser)
 		{
@@ -1515,6 +1539,10 @@ EXCEPTION:
 	return FALSE;
 }
 
-const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec", libavcodec_init,
-	                                                    libavcodec_uninit, libavcodec_decompress,
-	                                                    libavcodec_compress };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec",
+                                                        libavcodec_init,
+                                                        libavcodec_uninit,
+                                                        libavcodec_decompress,
+                                                        libavcodec_compress,
+                                                        TRUE,
+                                                        TRUE };
