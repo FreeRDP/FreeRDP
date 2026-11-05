@@ -569,19 +569,13 @@ static UINT32 rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear,
 	status = 0;
 
 out:
-	/* HACK: Older windows systems expect the Pdu field to contain version 6, newer ones 7.
-	 * We do not know exactly what the switch it depends on is (maybe LSASS?) but we know the RDP
-	 * version the older windows systems have. So send the old value for older protocol levels, the
-	 * new version for newer...
-	 */
-	{
-		const UINT32 version =
-		    freerdp_settings_get_uint32(rdpear->rdp_context->settings, FreeRDP_RdpVersion);
-		if (version <= RDP_VERSION_10_6)
-			resp->Authenticator.Pdu = 6;
-		else
-			resp->Authenticator.Pdu = 7;
-	}
+	/* Pdu is the slot of EncryptedData in the host's compiled Kerberos ASN.1 module: 6 up to
+	 * Server 2022, 7 from Windows 11 24H2 / Server 2025, and an updated host rejects a mismatch.
+	 * The host labels its GSS checksum with its own Checksum slot: 8 on the older module, blank
+	 * on the newer one. */
+	resp->Authenticator.Pdu = (req->GssChecksum && (req->GssChecksum->Pdu == 8)) ? 6 : 7;
+	WLog_VRB(TAG, "host checksum PDU %" PRIu32 " -> authenticator PDU %" PRIu32,
+	         req->GssChecksum ? req->GssChecksum->Pdu : 0, resp->Authenticator.Pdu);
 	resp->KerbProtocolError = rv;
 	krb5_free_principal_contents(rdpear->krbContext, &client);
 	krb5_free_data(rdpear->krbContext, der);
