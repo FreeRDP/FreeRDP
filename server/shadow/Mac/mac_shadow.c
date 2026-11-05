@@ -21,6 +21,8 @@
 #include <pwd.h>
 #include <unistd.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/input.h>
@@ -996,6 +998,8 @@ static BOOL mac_shadow_capture_restart(macShadowSubsystem* mac)
 /* the virtual screen spans every monitor (they start at 0, see mac_shadow_list_displays) */
 static void mac_shadow_set_virtual_screen(rdpShadowSubsystem* subsystem, UINT32 count)
 {
+	WINPR_ASSERT(subsystem);
+
 	MONITOR_DEF* virtualScreen = &subsystem->virtualScreen;
 	virtualScreen->left = 0;
 	virtualScreen->top = 0;
@@ -1014,6 +1018,9 @@ static void mac_shadow_set_virtual_screen(rdpShadowSubsystem* subsystem, UINT32 
  * again at the new size. */
 static void mac_shadow_displays_changed(macShadowSubsystem* mac, BOOL* lost)
 {
+	WINPR_ASSERT(mac);
+	WINPR_ASSERT(lost);
+
 	rdpShadowSubsystem* subsystem = &mac->common;
 	MONITOR_DEF monitors[MAC_SHADOW_MAX_DISPLAYS] = WINPR_C_ARRAY_INIT;
 	CGDirectDisplayID ids[MAC_SHADOW_MAX_DISPLAYS] = WINPR_C_ARRAY_INIT;
@@ -1030,8 +1037,8 @@ static void mac_shadow_displays_changed(macShadowSubsystem* mac, BOOL* lost)
 			selected = x; /* the same display if it is still there */
 	}
 	const MONITOR_DEF* monitor = &monitors[selected];
-	const UINT32 width = (UINT32)(monitor->right - monitor->left + 1);
-	const UINT32 height = (UINT32)(monitor->bottom - monitor->top + 1);
+	const UINT32 width = WINPR_ASSERTING_INT_CAST(UINT32, monitor->right - monitor->left + 1);
+	const UINT32 height = WINPR_ASSERTING_INT_CAST(UINT32, monitor->bottom - monitor->top + 1);
 
 	WLog_INFO(TAG,
 	          "the displays changed: sharing display %" PRIu32 " (%" PRIu32 " of %" PRIu32
@@ -1072,6 +1079,9 @@ static void mac_shadow_displays_changed(macShadowSubsystem* mac, BOOL* lost)
 
 static void mac_shadow_check_displays(macShadowSubsystem* mac, UINT64 now, BOOL* lost)
 {
+	WINPR_ASSERT(mac);
+	WINPR_ASSERT(lost);
+
 	if (now < mac->displaysChecked + MAC_SHADOW_DISPLAYS_MS)
 		return;
 	mac->displaysChecked = now;
