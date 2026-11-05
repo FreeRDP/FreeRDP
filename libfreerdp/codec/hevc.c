@@ -21,6 +21,8 @@
 #include <freerdp/codec/region.h>
 #include <freerdp/codec/h264.h>
 
+#include "h264.h"
+
 #define TAG FREERDP_TAG("codec.hevc")
 
 struct S_FREERDP_HEVC_CONTEXT
@@ -83,18 +85,14 @@ INT32 freerdp_hevc_compress(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
 	return -1;
 }
 
-INT32 freerdp_hevc_decompress(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
-                              WINPR_ATTR_UNUSED const BYTE* pSrcData,
-                              WINPR_ATTR_UNUSED UINT32 SrcSize, WINPR_ATTR_UNUSED BYTE* pDstData,
-                              WINPR_ATTR_UNUSED DWORD DstFormat, WINPR_ATTR_UNUSED UINT32 nDstStep,
-                              WINPR_ATTR_UNUSED UINT32 nDstWidth,
-                              WINPR_ATTR_UNUSED UINT32 nDstHeight,
-                              WINPR_ATTR_UNUSED const RECTANGLE_16* regionRects,
-                              WINPR_ATTR_UNUSED UINT32 numRegionRect)
+INT32 freerdp_hevc_decompress(FREERDP_HEVC_CONTEXT* hevc, const BYTE* pSrcData, UINT32 SrcSize,
+                              BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
+                              UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                              UINT32 numRegionRect)
 {
 	WINPR_ASSERT(hevc);
-	return avc420_decompress(hevc->decoder, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
-	                         nDstWidth, nDstHeight, regionRects, numRegionRect);
+	return h26X_decompress(hevc->decoder, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
+	                       nDstWidth, nDstHeight, regionRects, numRegionRect);
 }
 
 BOOL freerdp_hevc_context_reset(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
