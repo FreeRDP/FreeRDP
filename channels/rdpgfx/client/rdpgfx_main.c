@@ -48,6 +48,31 @@
 
 #define RDPGFX_NUMBER_CAPSETS 0x100
 
+/* The codecs with a decoder that reports its results */
+enum
+{
+	RDPGFX_DECODER_AV1,
+	RDPGFX_DECODER_AVC420,
+	RDPGFX_DECODER_AVC444,
+	RDPGFX_DECODER_AVC444v2,
+	RDPGFX_DECODER_MAX
+};
+
+/* The stats of each of them */
+enum
+{
+	RDPGFX_DECODER_PICTURES,
+	RDPGFX_DECODER_FAILED,
+	RDPGFX_DECODER_NO_PICTURE,
+	RDPGFX_DECODER_KEY_FRAMES,
+	RDPGFX_DECODER_DECODE_NS_SUM,
+	RDPGFX_DECODER_DECODE_NS_MAX,
+	RDPGFX_DECODER_LAST_PICTURE_NS, /* a point in time: read as its age */
+	RDPGFX_DECODER_HARDWARE,
+	RDPGFX_DECODER_FALLBACKS,
+	RDPGFX_DECODER_STATS
+};
+
 typedef struct
 {
 	uint64_t cntGfxCodecID[RDPGFX_CODECID_MAX];
@@ -55,12 +80,14 @@ typedef struct
 	uint64_t bytesGfxCodecID[RDPGFX_CODECID_MAX];
 	uint64_t framesDecoded;
 	uint64_t framesUnacknowledged;
+	uint64_t decoder[RDPGFX_DECODER_MAX][RDPGFX_DECODER_STATS];
 } RdpgfxClientContextStats;
 
 typedef struct
 {
 	RdpgfxClientContext common;
 	RdpgfxClientContextStats stats;
+	const char* decoderBackend[RDPGFX_DECODER_MAX];
 } RdpgfxClientContextInt;
 
 /* The name of a byte counter is the name of its codec ID with _BYTES added */
@@ -77,6 +104,18 @@ static BOOL CALLBACK rdpgfx_stats_init_names(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	return TRUE;
 }
 
+#define RDPGFX_STATS_DECODER_NAMES(decoder)                                                        \
+	"RDPGFX_DECODER_" #decoder "_PICTURES", "RDPGFX_DECODER_" #decoder "_FAILED",                  \
+	    "RDPGFX_DECODER_" #decoder "_NO_PICTURE", "RDPGFX_DECODER_" #decoder "_KEY_FRAMES",        \
+	    "RDPGFX_DECODER_" #decoder "_DECODE_NS_SUM", "RDPGFX_DECODER_" #decoder "_DECODE_NS_MAX",  \
+	    "RDPGFX_DECODER_" #decoder "_LAST_PICTURE_AGE_NS", "RDPGFX_DECODER_" #decoder "_HARDWARE", \
+	    "RDPGFX_DECODER_" #decoder "_FALLBACKS",
+
+static const char* const decoderNames[] = { RDPGFX_STATS_DECODER_NAMES(AV1)
+	                                            RDPGFX_STATS_DECODER_NAMES(AVC420)
+	                                                RDPGFX_STATS_DECODER_NAMES(AVC444)
+	                                                    RDPGFX_STATS_DECODER_NAMES(AVC444v2) };
+
 static const UINT32 MAX_SURFACE_SIZE = 32766;
 static const UINT32 MAX_MONITOR_COUNT = 16;
 
@@ -87,6 +126,10 @@ size_t rdpgfx_stats_max_index(void)
 
 const char* rdpgfx_stats_name_for_index(size_t index)
 {
+	/* in a function: without C11 this is an assert(), which a file scope does not take */
+	WINPR_STATIC_ASSERT(ARRAYSIZE(decoderNames) ==
+	                    1ull * RDPGFX_DECODER_MAX * RDPGFX_DECODER_STATS);
+
 	if (index < RDPGFX_CODECID_MAX)
 		return rdpgfx_get_codec_id_string(WINPR_ASSERTING_INT_CAST(UINT16, index));
 
@@ -110,6 +153,10 @@ const char* rdpgfx_stats_name_for_index(size_t index)
 		return "RDPGFX_FRAMES_DECODED";
 	if (index == 1)
 		return "RDPGFX_FRAMES_UNACKNOWLEDGED";
+
+	index -= 2;
+	if (index < ARRAYSIZE(decoderNames))
+		return decoderNames[index];
 	return "RDPGFX_STATS_UNUSED";
 }
 
@@ -135,7 +182,84 @@ uint64_t rdpgfx_stats_value_for_index(RdpgfxClientContext* context, size_t index
 		return intCtx->stats.framesDecoded;
 	if (index == 1)
 		return intCtx->stats.framesUnacknowledged;
+
+	index -= 2;
+	if (index < ARRAYSIZE(decoderNames))
+	{
+		const size_t stat = index % RDPGFX_DECODER_STATS;
+		const uint64_t value = intCtx->stats.decoder[index / RDPGFX_DECODER_STATS][stat];
+		if ((stat == RDPGFX_DECODER_LAST_PICTURE_NS) && (value != 0))
+			return winpr_GetTickCount64NS() - value;
+		return value;
+	}
 	return 0;
+}
+
+WINPR_ATTR_NODISCARD
+static int rdpgfx_stats_decoder_index(UINT16 codecId)
+{
+	switch (codecId)
+	{
+#if defined(WITH_GFX_AV1)
+		case RDPGFX_CODECID_AV1:
+			return RDPGFX_DECODER_AV1;
+#endif
+		case RDPGFX_CODECID_AVC420:
+			return RDPGFX_DECODER_AVC420;
+		case RDPGFX_CODECID_AVC444:
+			return RDPGFX_DECODER_AVC444;
+		case RDPGFX_CODECID_AVC444v2:
+			return RDPGFX_DECODER_AVC444v2;
+		default:
+			return -1;
+	}
+}
+
+const char* rdpgfx_stats_decoder_backend(RdpgfxClientContext* context, UINT16 codecId)
+{
+	const int decoder = rdpgfx_stats_decoder_index(codecId);
+	if (!context || (decoder < 0))
+		return nullptr;
+	const RdpgfxClientContextInt* intCtx = (const RdpgfxClientContextInt*)context;
+	return intCtx->decoderBackend[decoder];
+}
+
+static void rdpgfx_stats_decode_result(RdpgfxClientContext* context, UINT16 codecId,
+                                       const FREERDP_DECODE_RESULT* result, UINT64 decodeNS)
+{
+	const int decoder = rdpgfx_stats_decoder_index(codecId);
+	if (!context || !result || (decoder < 0))
+		return;
+
+	RdpgfxClientContextInt* intCtx = (RdpgfxClientContextInt*)context;
+	uint64_t* stats = intCtx->stats.decoder[decoder];
+
+	switch (result->status)
+	{
+		case FREERDP_DECODE_PICTURE:
+			stats[RDPGFX_DECODER_PICTURES]++;
+			stats[RDPGFX_DECODER_LAST_PICTURE_NS] = winpr_GetTickCount64NS();
+			break;
+		case FREERDP_DECODE_FAILED:
+			stats[RDPGFX_DECODER_FAILED]++;
+			break;
+		case FREERDP_DECODE_NO_PICTURE:
+			stats[RDPGFX_DECODER_NO_PICTURE]++;
+			break;
+		case FREERDP_DECODE_NONE:
+		default:
+			return;
+	}
+
+	if (result->keyFrame)
+		stats[RDPGFX_DECODER_KEY_FRAMES]++;
+	if (result->fellBack)
+		stats[RDPGFX_DECODER_FALLBACKS]++;
+	stats[RDPGFX_DECODER_DECODE_NS_SUM] += decodeNS;
+	if (decodeNS > stats[RDPGFX_DECODER_DECODE_NS_MAX])
+		stats[RDPGFX_DECODER_DECODE_NS_MAX] = decodeNS;
+	stats[RDPGFX_DECODER_HARDWARE] = (uint64_t)result->hardware;
+	intCtx->decoderBackend[decoder] = result->backend;
 }
 
 static void rdpgfx_codecid_event(RdpgfxClientContext* context, uint32_t index, uint32_t length)
@@ -2531,6 +2655,8 @@ static UINT rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 		RdpgfxClientContextInt* ctx = (RdpgfxClientContextInt*)context;
 		const RdpgfxClientContextStats empty = WINPR_C_ARRAY_INIT;
 		ctx->stats = empty;
+		for (size_t x = 0; x < ARRAYSIZE(ctx->decoderBackend); x++)
+			ctx->decoderBackend[x] = nullptr;
 	}
 
 	if (do_caps_advertise)
@@ -2782,6 +2908,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext,
 	}
 
 	context->common.handle = (void*)gfx;
+	context->common.DecodeResult = rdpgfx_stats_decode_result;
 	context->common.GetSurfaceIds = rdpgfx_get_surface_ids;
 	context->common.SetSurfaceData = rdpgfx_set_surface_data;
 	context->common.GetSurfaceData = rdpgfx_get_surface_data;
