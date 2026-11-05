@@ -24,7 +24,7 @@
 
 #include <freerdp/api.h>
 
-/** @brief The client side of a reliable (RDP-UDP-R) connection.
+/** @brief One end of a reliable (RDP-UDP-R) connection.
  *
  * The SYN / SYN+ACK exchange always uses the [MS-RDPEUDP] datagram format. The version agreed
  * there decides the data phase: versions 1 and 2 keep using [MS-RDPEUDP], version 3 switches to
@@ -61,9 +61,23 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUdp* rdpudp_new(wLog* log, const BYTE* cookieHash, rdpUdpReceiveFn receive,
                                  void* custom);
 
-/** Opens the socket and sends the SYN. */
+/** Client: opens the socket and sends the SYN. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen);
+
+/** Server: answers a client's SYN with a SYN+ACK. The connection then sends on sockfd, which
+ *  belongs to the caller, to addr, and gets the client's datagrams through rdpudp_input().
+ *  Only version 3 is accepted, the caller matched the SYN's cookieHash already.
+ *  @param udp a connection made with rdpudp_new() and a nullptr cookieHash */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_accept(rdpUdp* udp, SOCKET sockfd, const struct sockaddr* addr,
+                                 size_t addrlen, const BYTE* syn, size_t length);
+
+/** Server: processes one datagram from the client, in place: data is changed. rdpudp_check()
+ *  still runs the timers.
+ *  @return FALSE once the connection has failed */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_input(rdpUdp* udp, BYTE* data, size_t length);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SOCKET rdpudp_get_socket(const rdpUdp* udp);
@@ -82,7 +96,12 @@ FREERDP_LOCAL size_t rdpudp_get_max_payload(const rdpUdp* udp);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpudp_get_timeout(const rdpUdp* udp);
 
-/** Reads every datagram waiting on the socket and runs the timers.
+/** Takes the cookieHash out of a client's version 3 SYN, which says what connection it is for.
+ *  @return FALSE for anything else */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_get_syn_cookie_hash(const BYTE* data, size_t length, BYTE hash[32]);
+
+/** Reads every datagram waiting on the socket (client only) and runs the timers.
  *  @return FALSE once the connection has failed */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_check(rdpUdp* udp);

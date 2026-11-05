@@ -71,6 +71,11 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_send_autodetect_response(rdpMultitransport* multi,
                                                            const BYTE* data, size_t length);
 
+/** Sends the dynamic virtual channel PDUs a server gathered for the reliable UDP tunnel with
+ * freerdp_multitransport_send_dvc(). */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_flush_dvc(rdpMultitransport* multi);
+
 /** TRUE when the connection was ended because its UDP tunnel broke down. Cleared by
  * multitransport_reset(). */
 WINPR_ATTR_NODISCARD

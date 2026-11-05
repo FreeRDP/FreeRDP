@@ -161,7 +161,7 @@ if(WITH_RDPEUDP)
   endif()
   include(WarnExperimental)
   warn_experimental("UDP multitransport" "-DWITH_RDPEUDP=OFF")
-  list(APPEND ${MODULE_PREFIX}_SRCS rdpudp.c rdpudp.h rdpemt.c rdpemt.h)
+  list(APPEND ${MODULE_PREFIX}_SRCS rdpudp.c rdpudp.h rdpemt.c rdpemt.h udplistener.c udplistener.h)
 endif()
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
