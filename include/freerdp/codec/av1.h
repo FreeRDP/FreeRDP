@@ -25,6 +25,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/codec/decode_result.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -78,6 +79,18 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width,
 	                                           UINT32 height);
+
+	/** @brief Get the result of the last freerdp_av1_decompress()
+	 *
+	 *  @param av1 The decoder context
+	 *  @param result Where to store the result
+	 *
+	 *  @return \b TRUE if the result was stored, \b FALSE for invalid arguments
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_av1_context_get_last_decode(const FREERDP_AV1_CONTEXT* av1,
+	                                                     FREERDP_DECODE_RESULT* result);
 
 	FREERDP_API void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1);
 
