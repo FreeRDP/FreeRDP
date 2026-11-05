@@ -183,6 +183,29 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
 			return FALSE;
 
+		/* The server takes the scale of a single monitor from the core data only, so put the
+		 * display scale there too. Otherwise the session starts at 100% and is redone once the
+		 * display channel sends the layout. */
+		if ((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
+		     FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0)
+		{
+			UINT32 scale = 0;
+			for (UINT32 x = 0; x < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); x++)
+			{
+				auto monitor = static_cast<const rdpMonitor*>(
+				    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
+				if (monitor && monitor->is_primary)
+					scale = monitor->attributes.desktopScaleFactor;
+			}
+			if ((scale == 0) && !sdl->monitorIds().empty())
+				scale = sdl->getDisplay(sdl->monitorIds().front()).attributes.desktopScaleFactor;
+			if ((scale >= 100) && (scale <= 500))
+			{
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, scale))
+					return FALSE;
+			}
+		}
+
 		if ((maxWidth != 0) && (maxHeight != 0) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
