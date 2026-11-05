@@ -155,9 +155,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 	RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE = 0x00000080U /* 10.7+ */
 #if defined(WITH_GFX_AZURE)
 	,
-	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100, /* 11.0+, undocumented, Azure only */
-	RDPGFX_CAPS_FLAG_HEVC_ENABLE = 0x00000400, /* 11.2+, undocumented */
-	RDPGFX_CAPS_FLAG_HEVC_I444 = 0x00002000    /* 11.5+, undocumented */
+	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100,  /* 11.0+, undocumented, Azure only */
+	RDPGFX_CAPS_FLAG_HEVC_ENABLE = 0x00000400,  /* 11.2+, undocumented */
+	RDPGFX_CAPS_FLAG_AVCMM_ENABLE = 0x00000800, /* 11.3 and 11.5, undocumented, needs AVC */
+	RDPGFX_CAPS_FLAG_HEVC_I444 = 0x00002000     /* 11.5+, undocumented */
 #endif
 #if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 	,

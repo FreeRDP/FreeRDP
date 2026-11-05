@@ -597,6 +597,15 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 						}
 					}
 				}
+				/* AVC mixed mode is valid in RDPGFX_CAPVERSION_113 and RDPGFX_CAPVERSION_115.
+				 * The server then mixes AVC420 or AVC444 regions with the other codecs on a
+				 * surface, all of which are decoded already, so offer it whenever AVC is. */
+				if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAVCMM))
+				{
+					if ((cap >= RDPGFX_CAPVERSION_113) &&
+					    ((caps10Flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0))
+						caps10Flags |= RDPGFX_CAPS_FLAG_AVCMM_ENABLE;
+				}
 
 				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 				if (!capsSet)
