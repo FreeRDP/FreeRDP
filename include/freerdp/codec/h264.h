@@ -25,6 +25,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/codec/decode_result.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -140,6 +141,18 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
+
+	/** @brief Get the result of the last avc420_decompress() or avc444_decompress()
+	 *
+	 *  @param h264 The decoder context
+	 *  @param result Where to store the result
+	 *
+	 *  @return \b TRUE if the result was stored, \b FALSE for invalid arguments
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL h264_context_get_last_decode(const H264_CONTEXT* h264,
+	                                              FREERDP_DECODE_RESULT* result);
 
 	FREERDP_API void h264_context_free(H264_CONTEXT* h264);
 
