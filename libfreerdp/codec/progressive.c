@@ -1163,6 +1163,15 @@ static inline INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 
 	while (mag < max)
 	{
+		/* Past its end the stream only yields '0' bits, the unary code would never terminate.
+		 * Compare position and length directly, earlier unchecked reads may already have moved
+		 * position past length and BitStream_GetRemainingLength would wrap. */
+		if (bs->position >= bs->length)
+		{
+			mag = max;
+			break;
+		}
+
 		const UINT32 bit = (bs->accumulator & 0x80000000) ? 1 : 0;
 		BitStream_Shift(bs, 1);
 
