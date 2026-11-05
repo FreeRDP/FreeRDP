@@ -27,6 +27,7 @@
 
 #include <freerdp/config.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -50,7 +51,33 @@ typedef struct
 	UINT32 rate;
 	UINT32 volume;
 	volatile int queued_ms; /* written by the main thread */
+	AUDIO_FORMAT asked;     /* the last format passed to FormatSupported() */
 } rdpsndEmscriptenPlugin;
+
+/*
+ * The format the server sends on the wire, for the web page's Info panel:
+ * [0] wFormatTag (WAVE_FORMAT_UNKNOWN = no audio yet), [1] nSamplesPerSec, [2] nChannels.
+ *
+ * Open() only sees the PCM format the device plays: for Opus, AAC or ADPCM rdpsnd opens the
+ * device with a PCM copy of the wire format and decodes with freerdp_dsp. The wire format is
+ * what rdpsnd asked FormatSupported() about right before Open() (rdpsnd_ensure_device_is_open),
+ * and the PCM copy keeps its rate and channels. Open() takes the asked format only when rate
+ * and channels match, and otherwise publishes the format it opened with.
+ */
+static uint32_t web_audio_format[3];
+
+EMSCRIPTEN_KEEPALIVE uint32_t* freerdp_web_audio_format(void);
+EMSCRIPTEN_KEEPALIVE uint32_t* freerdp_web_audio_format(void)
+{
+	return web_audio_format;
+}
+
+static void web_audio_format_set(UINT16 tag, UINT32 rate, UINT16 channels)
+{
+	__atomic_store_n(&web_audio_format[1], rate, __ATOMIC_RELAXED);
+	__atomic_store_n(&web_audio_format[2], channels, __ATOMIC_RELAXED);
+	__atomic_store_n(&web_audio_format[0], tag, __ATOMIC_RELEASE);
+}
 
 typedef struct
 {
@@ -77,8 +104,8 @@ static void play_on_main(void* arg)
 	free(job);
 }
 
-static BOOL rdpsnd_emscripten_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
-                                               const AUDIO_FORMAT* format)
+WINPR_ATTR_NODISCARD
+static BOOL pcm_playable(const AUDIO_FORMAT* format)
 {
 	WINPR_ASSERT(format);
 
@@ -87,16 +114,36 @@ static BOOL rdpsnd_emscripten_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlu
 	       (format->nChannels >= 1) && (format->nChannels <= 2) && (format->nSamplesPerSec > 0);
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL rdpsnd_emscripten_format_supported(rdpsndDevicePlugin* device,
+                                               const AUDIO_FORMAT* format)
+{
+	rdpsndEmscriptenPlugin* p = (rdpsndEmscriptenPlugin*)device;
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(format);
+
+	p->asked = *format;
+	p->asked.data = nullptr;
+	return pcm_playable(format);
+}
+
 static BOOL rdpsnd_emscripten_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
                                    WINPR_ATTR_UNUSED UINT32 latency)
 {
 	rdpsndEmscriptenPlugin* p = (rdpsndEmscriptenPlugin*)device;
 	WINPR_ASSERT(p);
 
-	if (!format || !rdpsnd_emscripten_format_supported(device, format))
+	if (!format || !pcm_playable(format))
 		return FALSE;
 	p->channels = format->nChannels;
 	p->rate = format->nSamplesPerSec;
+
+	const AUDIO_FORMAT* wire = format;
+	if ((p->asked.wFormatTag != WAVE_FORMAT_UNKNOWN) &&
+	    (p->asked.nSamplesPerSec == format->nSamplesPerSec) &&
+	    (p->asked.nChannels == format->nChannels))
+		wire = &p->asked;
+	web_audio_format_set(wire->wFormatTag, wire->nSamplesPerSec, wire->nChannels);
 	return TRUE;
 }
 
@@ -181,6 +228,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE emscripten_freerdp_rdpsnd_client_subsystem_en
 		return CHANNEL_RC_NO_MEMORY;
 
 	p->volume = UINT32_MAX;
+	web_audio_format_set(WAVE_FORMAT_UNKNOWN, 0, 0); /* a new session: no audio yet */
 	p->device.Open = rdpsnd_emscripten_open;
 	p->device.FormatSupported = rdpsnd_emscripten_format_supported;
 	p->device.GetVolume = rdpsnd_emscripten_get_volume;
