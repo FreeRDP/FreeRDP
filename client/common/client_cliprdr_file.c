@@ -1253,6 +1253,31 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
+WINPR_ATTR_FORMAT_ARG(4, 5)
+static UINT cliprdr_fail_content_reponse(CliprdrFileContext* file_context,
+                                         CliprdrFuseRequest* fuse_request, UINT32 streamID,
+                                         WINPR_FORMAT_ARG const char* format, ...)
+{
+	WINPR_ASSERT(file_context);
+	WINPR_ASSERT(fuse_request);
+	WINPR_ASSERT(format);
+
+	const DWORD level = WLOG_WARN;
+	if (WLog_IsLevelActive(file_context->log, level))
+	{
+		va_list ap;
+		va_start(ap, format);
+		WLog_PrintVA(file_context->log, WLOG_WARN, format, ap);
+		va_end(ap);
+	}
+
+	fuse_reply_err(fuse_request->fuse_req, EIO);
+	HashTable_Remove(file_context->request_table, (void*)(uintptr_t)streamID);
+	HashTable_Unlock(file_context->inode_table);
+	return CHANNEL_RC_OK;
+}
+
 static UINT cliprdr_file_context_server_file_contents_response(
     CliprdrClientContext* cliprdr_context,
     const CLIPRDR_FILE_CONTENTS_RESPONSE* file_contents_response)
@@ -1278,29 +1303,20 @@ static UINT cliprdr_file_context_server_file_contents_response(
 
 	if (!(file_contents_response->common.msgFlags & CB_RESPONSE_OK))
 	{
-		WLog_Print(file_context->log, WLOG_WARN,
-		           "FileContentsRequests for file \"%s\" was unsuccessful",
-		           fuse_request->fuse_file->filename);
-
-		fuse_reply_err(fuse_request->fuse_req, EIO);
-		HashTable_Remove(file_context->request_table,
-		                 (void*)(uintptr_t)file_contents_response->streamId);
-		HashTable_Unlock(file_context->inode_table);
-		return CHANNEL_RC_OK;
+		return cliprdr_fail_content_reponse(file_context, fuse_request,
+		                                    file_contents_response->streamId,
+		                                    "FileContentsRequests for file \"%s\" was unsuccessful",
+		                                    fuse_request->fuse_file->filename);
 	}
 
 	if ((fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
 	     fuse_request->operation_type == FUSE_LL_OPERATION_GETATTR) &&
 	    file_contents_response->cbRequested != sizeof(UINT64))
 	{
-		WLog_Print(file_context->log, WLOG_WARN,
-		           "Received invalid file size for file \"%s\" from the client",
-		           fuse_request->fuse_file->filename);
-		fuse_reply_err(fuse_request->fuse_req, EIO);
-		HashTable_Remove(file_context->request_table,
-		                 (void*)(uintptr_t)file_contents_response->streamId);
-		HashTable_Unlock(file_context->inode_table);
-		return CHANNEL_RC_OK;
+		return cliprdr_fail_content_reponse(
+		    file_context, fuse_request, file_contents_response->streamId,
+		    "Received invalid file size for file \"%s\" from the client",
+		    fuse_request->fuse_file->filename);
 	}
 
 	if (fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
@@ -1311,6 +1327,13 @@ static UINT cliprdr_file_context_server_file_contents_response(
 
 		fuse_request->fuse_file->size =
 		    *(WINPR_PACKED_ALIGN_CAST(const UINT64*, file_contents_response->requestedData));
+		if (fuse_request->fuse_file->size > INT64_MAX)
+		{
+			return cliprdr_fail_content_reponse(
+			    file_context, fuse_request, file_contents_response->streamId,
+			    "Received invalid file size for file \"%s\" from the client",
+			    fuse_request->fuse_file->filename);
+		}
 		fuse_request->fuse_file->has_size = TRUE;
 
 		entry.ino = fuse_request->fuse_file->ino;
