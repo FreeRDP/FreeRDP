@@ -62,6 +62,12 @@ static const GUID sMFVideoFormat_H264 = {
 static const GUID sMFVideoFormat_IYUV = {
 	0x56555949, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 }
 };
+static const GUID sMFVideoFormat_HEVC = {
+	0x43564548, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 }
+};
+static const GUID sMFT_CATEGORY_VIDEO_DECODER = {
+	0xd6c02d4b, 0x6833, 0x45b4, { 0x97, 0x1a, 0x05, 0xa4, 0xb0, 0x4b, 0xab, 0x91 }
+};
 static const GUID sIID_ICodecAPI = {
 	0x901db4c7, 0x31ce, 0x41a2, { 0x85, 0xdc, 0x8f, 0xa0, 0xbf, 0x41, 0xb8, 0xda }
 };
@@ -118,6 +124,10 @@ typedef HRESULT(__stdcall* pfnMFShutdown)(void);
 typedef HRESULT(__stdcall* pfnMFCreateSample)(IMFSample** ppIMFSample);
 typedef HRESULT(__stdcall* pfnMFCreateMemoryBuffer)(DWORD cbMaxLength, IMFMediaBuffer** ppBuffer);
 typedef HRESULT(__stdcall* pfnMFCreateMediaType)(IMFMediaType** ppMFType);
+typedef HRESULT(__stdcall* pfnMFTEnumEx)(GUID guidCategory, UINT32 Flags,
+                                         const MFT_REGISTER_TYPE_INFO* pInputType,
+                                         const MFT_REGISTER_TYPE_INFO* pOutputType,
+                                         IMFActivate*** pppMFTActivate, UINT32* pnumMFTActivate);
 
 typedef struct
 {
@@ -136,8 +146,12 @@ typedef struct
 	pfnMFCreateSample MFCreateSample;
 	pfnMFCreateMemoryBuffer MFCreateMemoryBuffer;
 	pfnMFCreateMediaType MFCreateMediaType;
+	pfnMFTEnumEx MFTEnumEx;
 	UINT32 stride;
 	BOOL bottomUp;
+	BOOL nv12; /* decoder output is NV12 (interleaved chroma) instead of IYUV */
+	LONGLONG decSampleTime;
+	BOOL hevcAudSent; /* the last input ended with the access unit delimiter of the next frame */
 
 	/* encoder state: the media types are set on the first frame and again on a size change */
 	BOOL encStreaming;
@@ -193,6 +207,31 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
 	return hr;
 }
 
+/* The H264 decoder offers IYUV, HEVC decoders (HEVC Video Extensions) usually only NV12 */
+WINPR_ATTR_NODISCARD
+static HRESULT mf_select_output_type(H264_CONTEXT_MF* sys)
+{
+	WINPR_ASSERT(sys);
+
+	if (sys->outputType)
+	{
+		sys->outputType->lpVtbl->Release(sys->outputType);
+		sys->outputType = nullptr;
+	}
+
+	HRESULT hr = mf_find_output_type(sys, &sMFVideoFormat_IYUV, &sys->outputType);
+	sys->nv12 = FALSE;
+	if (FAILED(hr))
+	{
+		hr = mf_find_output_type(sys, &sMFVideoFormat_NV12, &sys->outputType);
+		sys->nv12 = SUCCEEDED(hr);
+	}
+	if (FAILED(hr))
+		return hr;
+
+	return sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
+}
+
 WINPR_ATTR_NODISCARD
 static HRESULT mf_create_output_sample(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 {
@@ -246,11 +285,23 @@ error:
 	return hr;
 }
 
-/* IYUV output: full size Y plane followed by the quarter size U and V planes */
+/* IYUV output: full size Y plane followed by the quarter size U and V planes
+ * NV12 output: full size Y plane followed by one half height plane of interleaved U/V samples,
+ *              plane 1 addresses it, plane 2 is not used */
 WINPR_ATTR_NODISCARD
 static size_t getSrcOffset(const H264_CONTEXT_MF* sys, UINT32 line, size_t plane)
 {
 	WINPR_ASSERT(sys);
+
+	if (sys->nv12)
+	{
+		WINPR_ASSERT(plane < 2);
+		const size_t height = (plane == 0) ? sys->frameHeight : sys->frameHeight / 2u;
+		const size_t offset = (plane == 0) ? 0 : (size_t)sys->stride * sys->frameHeight;
+		WINPR_ASSERT(line < height);
+		const size_t row = sys->bottomUp ? height - line - 1u : line;
+		return offset + row * sys->stride;
+	}
 
 	const size_t stride = (plane == 0) ? sys->stride : sys->stride / 2u;
 	const size_t height = (plane == 0) ? sys->frameHeight : sys->frameHeight / 2u;
@@ -282,6 +333,25 @@ static HRESULT mf_process_output(H264_CONTEXT_MF* sys)
 	return hr;
 }
 
+/* HEVC access unit delimiter NAL (type 35, pic_type 2), as Windows servers start every frame */
+static const BYTE sHevcAud[] = { 0x00, 0x00, 0x00, 0x01, 0x46, 0x01, 0x50 };
+
+/* @return the length of an access unit delimiter NAL at the start of data, 0 if there is none */
+WINPR_ATTR_NODISCARD
+static size_t mf_hevc_aud_length(const BYTE* data, size_t length)
+{
+	size_t sc = 0;
+	if ((length >= 4) && (data[0] == 0) && (data[1] == 0) && (data[2] == 0) && (data[3] == 1))
+		sc = 4;
+	else if ((length >= 3) && (data[0] == 0) && (data[1] == 0) && (data[2] == 1))
+		sc = 3;
+
+	/* start code, 2 byte NAL header, 1 byte pic_type + rbsp stop bit */
+	if ((sc == 0) || (length < sc + 3) || (((data[sc] >> 1) & 0x3F) != 35))
+		return 0;
+	return sc + 3;
+}
+
 WINPR_ATTR_NODISCARD
 static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RESTRICT pSrcData,
                          UINT32 SrcSize)
@@ -301,7 +371,28 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	WINPR_ASSERT(sys);
 	UINT32* iStride = h264->iStride;
 	BYTE** pYUVData = h264->pYUVData;
-	HRESULT hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
+
+	/* The HEVC decoder only finishes a picture when the next access unit starts, which would
+	 * show every frame one update late. RDP sends one complete frame per surface command:
+	 * end each input with the delimiter of the next access unit and drop the delimiter the
+	 * next frame starts with, the decoder sees the same bitstream split at other places. */
+	const BYTE* src = pSrcData;
+	UINT32 srcLength = SrcSize;
+	UINT32 appendLength = 0;
+	if (h264->hevc)
+	{
+		if (sys->hevcAudSent)
+		{
+			const size_t skip = mf_hevc_aud_length(pSrcData, SrcSize);
+			src += skip;
+			srcLength -= (UINT32)skip;
+		}
+		if (srcLength > UINT32_MAX - sizeof(sHevcAud))
+			return -1;
+		appendLength = sizeof(sHevcAud);
+	}
+
+	HRESULT hr = sys->MFCreateMemoryBuffer(srcLength + appendLength, &inputBuffer);
 
 	if (FAILED(hr))
 	{
@@ -317,8 +408,10 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
-	CopyMemory(pbBuffer, pSrcData, SrcSize);
-	hr = inputBuffer->lpVtbl->SetCurrentLength(inputBuffer, SrcSize);
+	CopyMemory(pbBuffer, src, srcLength);
+	if (appendLength > 0)
+		CopyMemory(&pbBuffer[srcLength], sHevcAud, appendLength);
+	hr = inputBuffer->lpVtbl->SetCurrentLength(inputBuffer, srcLength + appendLength);
 
 	if (FAILED(hr))
 	{
@@ -350,6 +443,11 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
+	/* some decoders (HEVC) want time stamps, RDP has none: count in 30 fps steps (100ns units) */
+	(void)inputSample->lpVtbl->SetSampleTime(inputSample, sys->decSampleTime);
+	(void)inputSample->lpVtbl->SetSampleDuration(inputSample, 333333);
+	sys->decSampleTime += 333333;
+
 	hr = sys->transform->lpVtbl->ProcessInput(sys->transform, 0, inputSample, 0);
 
 	if (FAILED(hr))
@@ -357,6 +455,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		WLog_Print(h264->log, WLOG_ERROR, "ProcessInput failure: 0x%08" PRIX32 "", hr);
 		goto error;
 	}
+	sys->hevcAudSent = (appendLength > 0);
 
 	hr = mf_create_output_sample(h264, sys);
 
@@ -372,25 +471,11 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	{
 		UINT64 frameSize = 0;
 
-		if (sys->outputType)
-		{
-			sys->outputType->lpVtbl->Release(sys->outputType);
-			sys->outputType = nullptr;
-		}
-
-		hr = mf_find_output_type(sys, &sMFVideoFormat_IYUV, &sys->outputType);
+		hr = mf_select_output_type(sys);
 
 		if (FAILED(hr))
 		{
-			WLog_Print(h264->log, WLOG_ERROR, "mf_find_output_type failure: 0x%08" PRIX32 "", hr);
-			goto error;
-		}
-
-		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
-
-		if (FAILED(hr))
-		{
-			WLog_Print(h264->log, WLOG_ERROR, "SetOutputType failure: 0x%08" PRIX32 "", hr);
+			WLog_Print(h264->log, WLOG_ERROR, "mf_select_output_type failure: 0x%08" PRIX32 "", hr);
 			goto error;
 		}
 
@@ -416,6 +501,13 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		sys->frameHeight = (UINT32)frameSize;
 		hr = sys->outputType->lpVtbl->GetUINT32(sys->outputType, &sMF_MT_DEFAULT_STRIDE,
 		                                        &sys->stride);
+
+		if (FAILED(hr) && sys->nv12)
+		{
+			/* NV12 is a planar 8 bit format, the stride defaults to the width */
+			sys->stride = sys->frameWidth;
+			hr = S_OK;
+		}
 
 		if (FAILED(hr))
 		{
@@ -493,12 +585,27 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		}
 		for (UINT32 x = 0; x < sys->frameHeight / 2; x++)
 		{
-			const size_t srcUOffset = getSrcOffset(sys, x, 1);
-			const size_t srcVOffset = getSrcOffset(sys, x, 2);
 			const UINT32 dstUOffset = (UINT32)iStride[1] * x;
 			const UINT32 dstVOffset = (UINT32)iStride[2] * x;
-			CopyMemory(&pYUVData[1][dstUOffset], &buffer[srcUOffset], sys->stride / 2u);
-			CopyMemory(&pYUVData[2][dstVOffset], &buffer[srcVOffset], sys->stride / 2u);
+
+			if (sys->nv12)
+			{
+				const BYTE* uv = &buffer[getSrcOffset(sys, x, 1)];
+				BYTE* u = &pYUVData[1][dstUOffset];
+				BYTE* v = &pYUVData[2][dstVOffset];
+				for (UINT32 y = 0; y < sys->stride / 2ull; y++)
+				{
+					u[y] = uv[2ull * y];
+					v[y] = uv[2ull * y + 1ull];
+				}
+			}
+			else
+			{
+				const size_t srcUOffset = getSrcOffset(sys, x, 1);
+				const size_t srcVOffset = getSrcOffset(sys, x, 2);
+				CopyMemory(&pYUVData[1][dstUOffset], &buffer[srcUOffset], sys->stride / 2ull);
+				CopyMemory(&pYUVData[2][dstVOffset], &buffer[srcVOffset], sys->stride / 2ull);
+			}
 		}
 
 		hr = outputBuffer->lpVtbl->Unlock(outputBuffer);
@@ -1292,6 +1399,51 @@ static void mf_uninit(H264_CONTEXT* h264)
 	}
 }
 
+/* There is no fixed CLSID for an HEVC decoder: Windows ships it with the HEVC Video Extensions
+ * (or a GPU vendor package), so enumerate the registered synchronous decoders. */
+WINPR_ATTR_NODISCARD
+static HRESULT mf_decoder_create_hevc(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
+{
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(sys);
+
+	if (!sys->MFTEnumEx)
+		return E_NOTIMPL;
+
+	const MFT_REGISTER_TYPE_INFO input = { sMFMediaType_Video, sMFVideoFormat_HEVC };
+	IMFActivate** activates = nullptr;
+	UINT32 count = 0;
+	HRESULT hr =
+	    sys->MFTEnumEx(sMFT_CATEGORY_VIDEO_DECODER,
+		               MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_LOCALMFT | MFT_ENUM_FLAG_SORTANDFILTER,
+		               &input, nullptr, &activates, &count);
+	if (FAILED(hr))
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "MFTEnumEx(HEVC decoder) failure: 0x%08" PRIX32 "",
+		           (UINT32)hr);
+		return hr;
+	}
+
+	hr = MF_E_TOPO_CODEC_NOT_FOUND;
+	for (UINT32 x = 0; x < count; x++)
+	{
+		IMFActivate* activate = activates[x];
+		if (FAILED(hr))
+			hr = activate->lpVtbl->ActivateObject(activate, &sIID_IMFTransform,
+			                                      (void**)&sys->transform);
+		activate->lpVtbl->Release(activate);
+	}
+	CoTaskMemFree((void*)activates);
+
+	if (count == 0)
+		WLog_Print(h264->log, WLOG_WARN,
+		           "no MediaFoundation HEVC decoder found, install the HEVC Video Extensions");
+	else if (FAILED(hr))
+		WLog_Print(h264->log, WLOG_ERROR, "ActivateObject(HEVC decoder) failure: 0x%08" PRIX32 "",
+		           (UINT32)hr);
+	return hr;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL mf_init(H264_CONTEXT* h264)
 {
@@ -1319,6 +1471,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	    GetProcAddressAs(sys->mfplat, "MFCreateMemoryBuffer", pfnMFCreateMemoryBuffer);
 	sys->MFCreateMediaType =
 	    GetProcAddressAs(sys->mfplat, "MFCreateMediaType", pfnMFCreateMediaType);
+	/* only needed for HEVC */
+	sys->MFTEnumEx = GetProcAddressAs(sys->mfplat, "MFTEnumEx", pfnMFTEnumEx);
 
 	if (!mf_plat_loaded(sys))
 		goto error;
@@ -1355,35 +1509,66 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = CoCreateInstance(&sCLSID_CMSH264DecoderMFT, nullptr, CLSCTX_INPROC_SERVER,
-		                      &sIID_IMFTransform, (void**)&sys->transform);
-
-		if (FAILED(hr))
+		if (h264->hevc)
 		{
-			WLog_Print(h264->log, WLOG_ERROR,
-			           "CoCreateInstance(CLSID_CMSH264DecoderMFT) failure: 0x%08" PRIX32 "", hr);
-			goto error;
+			hr = mf_decoder_create_hevc(h264, sys);
+			if (FAILED(hr))
+				goto error;
+		}
+		else
+		{
+			hr = CoCreateInstance(&sCLSID_CMSH264DecoderMFT, nullptr, CLSCTX_INPROC_SERVER,
+			                      &sIID_IMFTransform, (void**)&sys->transform);
+
+			if (FAILED(hr))
+			{
+				WLog_Print(h264->log, WLOG_ERROR,
+				           "CoCreateInstance(CLSID_CMSH264DecoderMFT) failure: 0x%08" PRIX32 "",
+				           hr);
+				goto error;
+			}
 		}
 
+		/* MF_LOW_LATENCY (same GUID as CODECAPI_AVLowLatencyMode) on the transform attributes:
+		 * without it the HEVC decoder never returns a picture. Not fatal, ICodecAPI follows. */
+		{
+			IMFAttributes* attributes = nullptr;
+			hr = sys->transform->lpVtbl->GetAttributes(sys->transform, &attributes);
+			if (SUCCEEDED(hr) && attributes)
+			{
+				hr = attributes->lpVtbl->SetUINT32(attributes, &sCODECAPI_AVLowLatencyMode, TRUE);
+				attributes->lpVtbl->Release(attributes);
+			}
+			if (FAILED(hr))
+				WLog_Print(h264->log, WLOG_DEBUG,
+				           "MF_LOW_LATENCY transform attribute failure: 0x%08" PRIX32, (UINT32)hr);
+		}
+
+		/* The H264 decoder must run in low latency mode, else it holds back frames.
+		 * Other decoders may not offer ICodecAPI, they decode with their defaults. */
 		hr = sys->transform->lpVtbl->QueryInterface(sys->transform, &sIID_ICodecAPI,
 		                                            (void**)&sys->codecApi);
 
-		if (FAILED(hr))
+		if (FAILED(hr) && !h264->hevc)
 		{
 			WLog_Print(h264->log, WLOG_ERROR,
 			           "QueryInterface(IID_ICodecAPI) failure: 0x%08" PRIX32 "", hr);
 			goto error;
 		}
 
-		var.n1.n2.vt = VT_UI4;
-		var.n1.n2.n3.ulVal = 1;
-		hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &sCODECAPI_AVLowLatencyMode, &var);
-
-		if (FAILED(hr))
+		if (sys->codecApi)
 		{
-			WLog_Print(h264->log, WLOG_ERROR,
-			           "SetValue(CODECAPI_AVLowLatencyMode) failure: 0x%08" PRIX32 "", hr);
-			goto error;
+			var.n1.n2.vt = VT_UI4;
+			var.n1.n2.n3.ulVal = 1;
+			hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &sCODECAPI_AVLowLatencyMode, &var);
+
+			if (FAILED(hr))
+			{
+				WLog_Print(h264->log, h264->hevc ? WLOG_WARN : WLOG_ERROR,
+				           "SetValue(CODECAPI_AVLowLatencyMode) failure: 0x%08" PRIX32 "", hr);
+				if (!h264->hevc)
+					goto error;
+			}
 		}
 
 		hr = sys->MFCreateMediaType(&sys->inputType);
@@ -1404,13 +1589,29 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &sMF_MT_SUBTYPE, &sMFVideoFormat_H264);
+		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &sMF_MT_SUBTYPE,
+		                                     h264->hevc ? &sMFVideoFormat_HEVC
+		                                                : &sMFVideoFormat_H264);
 
 		if (FAILED(hr))
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "SetGUID(MF_MT_SUBTYPE) failure: 0x%08" PRIX32 "",
 			           hr);
 			goto error;
+		}
+
+		/* HEVC decoders only offer output types once they know the frame size */
+		if (h264->hevc && (h264->width > 0) && (h264->height > 0))
+		{
+			const UINT64 frameSize = ((UINT64)h264->width << 32) | h264->height;
+			hr = sys->inputType->lpVtbl->SetUINT64(sys->inputType, &sMF_MT_FRAME_SIZE, frameSize);
+
+			if (FAILED(hr))
+			{
+				WLog_Print(h264->log, WLOG_ERROR,
+				           "SetUINT64(MF_MT_FRAME_SIZE) failure: 0x%08" PRIX32 "", hr);
+				goto error;
+			}
 		}
 
 		hr = sys->transform->lpVtbl->SetInputType(sys->transform, 0, sys->inputType, 0);
@@ -1421,29 +1622,30 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = mf_find_output_type(sys, &sMFVideoFormat_IYUV, &sys->outputType);
-
-		if (FAILED(hr))
+		if (h264->hevc && ((h264->width == 0) || (h264->height == 0)))
 		{
-			WLog_Print(h264->log, WLOG_ERROR, "mf_find_output_type failure: 0x%08" PRIX32 "", hr);
-			goto error;
+			/* h264_context_reset() initializes again with the surface size */
+			WLog_Print(h264->log, WLOG_DEBUG, "HEVC decoder created, frame size not yet known");
 		}
-
-		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
-
-		if (FAILED(hr))
+		else
 		{
-			WLog_Print(h264->log, WLOG_ERROR, "SetOutputType failure: 0x%08" PRIX32 "", hr);
-			goto error;
-		}
+			hr = mf_select_output_type(sys);
 
-		hr = mf_create_output_sample(h264, sys);
+			if (FAILED(hr))
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "mf_select_output_type failure: 0x%08" PRIX32 "",
+				           hr);
+				goto error;
+			}
 
-		if (FAILED(hr))
-		{
-			WLog_Print(h264->log, WLOG_ERROR, "mf_create_output_sample failure: 0x%08" PRIX32 "",
-			           hr);
-			goto error;
+			hr = mf_create_output_sample(h264, sys);
+
+			if (FAILED(hr))
+			{
+				WLog_Print(h264->log, WLOG_ERROR,
+				           "mf_create_output_sample failure: 0x%08" PRIX32 "", hr);
+				goto error;
+			}
 		}
 	}
 
@@ -1454,5 +1656,5 @@ error:
 	return FALSE;
 }
 
-const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init, mf_uninit,
-	                                            mf_decompress, mf_compress };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init,     mf_uninit,
+                                                mf_decompress,     mf_compress, TRUE };
