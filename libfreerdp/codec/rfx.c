@@ -1381,7 +1381,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			RECTANGLE_16 updateRect = WINPR_C_ARRAY_INIT;
 			const RFX_TILE* tile = rfx_message_get_tile(message, i);
 
-			if ((1ul * left + tile->x <= UINT16_MAX) || (1ul * top + tile->y <= UINT16_MAX))
+			if ((1ul * left + tile->x > UINT16_MAX - 64) || (1ul * top + tile->y > UINT16_MAX - 64))
 			{
 				region16_uninit(&updateRegion);
 				region16_uninit(&clippingRects);
