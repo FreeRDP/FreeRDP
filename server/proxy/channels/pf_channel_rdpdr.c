@@ -1774,11 +1774,14 @@ WINPR_ATTR_NODISCARD
 static void* stream_copy(const void* obj)
 {
 	const wStream* src = obj;
-	wStream* dst = Stream_New(nullptr, Stream_Capacity(src));
+	/* src is the (reused, never shrinking) reassembly buffer of the session,
+	 * only copy the data of the current PDU and not the whole capacity */
+	const size_t len = Stream_Length(src);
+	wStream* dst = Stream_New(nullptr, len);
 	if (!dst)
 		return nullptr;
-	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), Stream_Capacity(dst));
-	if (!Stream_SetLength(dst, Stream_Length(src)))
+	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), len);
+	if (!Stream_SetLength(dst, len))
 		goto fail;
 	if (!Stream_SetPosition(dst, Stream_GetPosition(src)))
 		goto fail;
