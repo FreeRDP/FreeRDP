@@ -560,9 +560,14 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 				 * desktop, and send all of it. DXGI reports changes only: on a
 				 * desktop that does not change, a new client would otherwise wait
 				 * for its first picture until something moves; a new duplication
-				 * starts with the whole desktop image */
-				if (win_shadow_follow_input_desktop() || refresh ||
-				    !subsystem->dxgiOutputDuplication)
+				 * starts with the whole desktop image. While capture is paused (a desktop
+				 * this process may not capture) a missing duplication is tried again only
+				 * every WIN_SHADOW_DXGI_DENIED_RETRY_MS, not on every pass */
+				const BOOL followed = win_shadow_follow_input_desktop();
+				const BOOL retry =
+				    !subsystem->dxgiOutputDuplication &&
+				    (!subsystem->dxgiDenied || (GetTickCount64() >= subsystem->dxgiRetryTime));
+				if (followed || refresh || retry)
 				{
 					refresh = FALSE;
 					if (win_shadow_dxgi_restart_duplication(subsystem) > 0)
@@ -570,8 +575,11 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 						                                   subsystem->height);
 				}
 
-				if (subsystem->dxgiOutputDuplication)
-					dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
+				/* the resize status only gates this block; without a duplication
+				 * (capture paused, or a failed restart) there is no frame */
+				dxgi_status = subsystem->dxgiOutputDuplication
+				                  ? win_shadow_dxgi_get_next_frame(subsystem)
+				                  : 0;
 
 				/* a frame without dirty rectangles of its own (the first of a
 				 * new duplication) still holds the whole desktop image: copy
