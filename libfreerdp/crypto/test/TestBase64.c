@@ -173,6 +173,22 @@ int TestBase64(int argc, char* argv[])
 	}
 	free(encoded);
 	(void)fprintf(stderr, "ok\n");
+	testNb++;
+
+	/* lengths that overflow the encoded size must be rejected */
+	(void)fprintf(stderr, "%d:encode base64 length overflow...", testNb);
+	const size_t overflowLen[] = { SIZE_MAX / 4 - 2, SIZE_MAX };
+	for (size_t i = 0; i < ARRAYSIZE(overflowLen); i++)
+	{
+		encoded = crypto_base64_encode((const BYTE*)longStr, overflowLen[i]);
+		if (encoded)
+		{
+			(void)fprintf(stderr, "ko, length %" PRIuz " not rejected\n", overflowLen[i]);
+			free(encoded);
+			return -1;
+		}
+	}
+	(void)fprintf(stderr, "ok\n");
 
 	return 0;
 }

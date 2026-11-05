@@ -308,6 +308,10 @@ static inline char* base64_encode_ex(const char* WINPR_RESTRICT alphabet,
                                      const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad,
                                      BOOL crLf, size_t lineSize, size_t* plen)
 {
+	/* ensure the output buffer size calculation does not overflow */
+	if (length > SIZE_MAX / 4 - 3)
+		return nullptr;
+
 	size_t outLen = (length + 3) * 4 / 3;
 	size_t extra = 0;
 	if (crLf)

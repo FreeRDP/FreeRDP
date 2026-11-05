@@ -71,6 +71,11 @@ WINPR_ATTR_NODISCARD
 static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length, size_t* plen)
 {
 	WINPR_ASSERT(plen);
+
+	/* ensure the output buffer size calculation does not overflow */
+	if (length > SIZE_MAX / 4 - 3)
+		return nullptr;
+
 	const BYTE* WINPR_RESTRICT alphabet = enc_base64url;
 	int c = 0;
 	size_t blocks = 0;
