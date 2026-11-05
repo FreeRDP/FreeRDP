@@ -1183,17 +1183,17 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 
 	size_t len = 0;
 
-	/* No data, empty return */
-	if ((total_bytes <= 0) && !clipboard->incr_starts)
-	{
-		xf_cliprdr_stop_incr(clipboard);
-	}
 	/* We have to read incremental updates */
-	else if (type == clipboard->incr_atom)
+	if ((type == clipboard->incr_atom) && !clipboard->incr_starts)
 	{
 		xf_cliprdr_stop_incr(clipboard);
 		clipboard->incr_starts = TRUE;
 		has_data = TRUE; /* data will follow in PropertyNotify event */
+	}
+	/* No data, empty return */
+	else if ((total_bytes <= 0) && !clipboard->incr_starts)
+	{
+		xf_cliprdr_stop_incr(clipboard);
 	}
 	else
 	{

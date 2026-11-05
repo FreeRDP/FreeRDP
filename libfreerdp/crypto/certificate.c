@@ -1958,19 +1958,16 @@ BOOL freerdp_certificate_matches_hostname(const rdpCertificate* cert, const char
 	BOOL skip = FALSE;
 	if (utils_is_valid_ipN(hostname, hostlen))
 	{
-		if ((hostlen != 0) && ip_names && (ip_names_count > 0))
+		for (size_t index = 0; index < ip_names_count; index++)
 		{
-			for (size_t index = 0; index < ip_names_count; index++)
+			if (utils_compare_ip_strings(ip_names[index], ip_names_lengths[index], hostname,
+			                             hostlen))
 			{
-				if (utils_compare_ip_strings(ip_names[index], ip_names_lengths[index], hostname,
-				                             hostlen))
-				{
-					hostname_match = TRUE;
-					break;
-				}
+				hostname_match = TRUE;
+				break;
 			}
-			skip = TRUE;
 		}
+		skip = TRUE;
 	}
 
 	/* compare against alternative names */

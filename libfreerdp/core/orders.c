@@ -2673,7 +2673,7 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 	const BYTE bitsPerPixelId = (flags >> 3) & 0x000000F;
 	cache_bitmap_v3->bpp = get_cbr2_bpp(bitsPerPixelId, &rc);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 21))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 22))
 		goto fail;
 
 	Stream_Read_UINT16(s, cache_bitmap_v3->cacheIndex); /* cacheIndex (2 bytes) */

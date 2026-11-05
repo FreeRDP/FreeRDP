@@ -627,8 +627,6 @@ BOOL security_establish_keys(rdpRdp* rdp)
 
 	const BYTE* server_random = freerdp_settings_get_pointer(settings, FreeRDP_ServerRandom);
 	const BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
-	WINPR_ASSERT(client_random);
-	WINPR_ASSERT(server_random);
 
 	const UINT32 ClientRandomLength =
 	    freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength);
@@ -636,9 +634,11 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	    freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength);
 	/* The server random is peer supplied (gcc_read_server_security_data rejects only a length
 	 * of 0) while both randoms are consumed below as fixed 32 byte values, so a shorter buffer
-	 * would be read past its end. WINPR_ASSERT is compiled out in release builds, enforce the
-	 * length at runtime. */
-	if ((ClientRandomLength != 32) || (ServerRandomLength != 32))
+	 * would be read past its end. It is missing altogether if the server did not send a security
+	 * data block. WINPR_ASSERT is compiled out in release builds and aborts in all others, enforce
+	 * presence and length at runtime. */
+	if (!client_random || !server_random || (ClientRandomLength != 32) ||
+	    (ServerRandomLength != 32))
 	{
 		WLog_ERR(TAG, "invalid client (%" PRIu32 ") or server (%" PRIu32 ") random length",
 		         ClientRandomLength, ServerRandomLength);
