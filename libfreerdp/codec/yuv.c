@@ -924,19 +924,48 @@ BOOL yuv444_context_encode(YUV_CONTEXT* WINPR_RESTRICT context, BYTE version,
                            BYTE* WINPR_RESTRICT pYUVChromaData[3],
                            const RECTANGLE_16* WINPR_RESTRICT regionRects, UINT32 numRegionRects)
 {
-	PTP_WORK_CALLBACK cb = nullptr;
 	switch (version)
 	{
 		case 1:
-			cb = yuv444v1_encode_work_callback;
-			break;
+			return pool_encode(context, yuv444v1_encode_work_callback, pSrcData, nSrcStep,
+			                   SrcFormat, iStride, pYUVLumaData, pYUVChromaData, regionRects,
+			                   numRegionRects);
 		case 2:
-			cb = yuv444v2_encode_work_callback;
 			break;
 		default:
 			return FALSE;
 	}
 
-	return pool_encode(context, cb, pSrcData, nSrcStep, SrcFormat, iStride, pYUVLumaData,
-	                   pYUVChromaData, regionRects, numRegionRects);
+	if (!context || !regionRects)
+		return FALSE;
+
+	/* AVC444v2 puts the chroma detail of a row into the two halves of the auxiliary view
+	 * (MS-RDPEGFX 3.3.8.3.3): U into the left half at x / 2, V into the right half at
+	 * width / 2 + x / 2. RGBToAVC444YUVv2 places the right half at roi->width / 2 from the
+	 * left one, which is only width / 2 when the region spans the whole width; for a narrower
+	 * region (the shadow server encodes what changed) it wrote the chroma detail into the wrong
+	 * columns, and the client showed smeared, blocky colours. Convert whole rows: which parts of
+	 * the frame are sent is still decided by the change detection afterwards. */
+	RECTANGLE_16 stackRects[8] = WINPR_C_ARRAY_INIT;
+	RECTANGLE_16* rows = stackRects;
+	if (numRegionRects > ARRAYSIZE(stackRects))
+	{
+		rows = calloc(numRegionRects, sizeof(RECTANGLE_16));
+		if (!rows)
+			return FALSE;
+	}
+
+	for (UINT32 x = 0; x < numRegionRects; x++)
+	{
+		rows[x] = regionRects[x];
+		rows[x].left = 0;
+		rows[x].right = (UINT16)MIN(UINT16_MAX, MAX(context->width, regionRects[x].right));
+	}
+
+	const BOOL rc =
+	    pool_encode(context, yuv444v2_encode_work_callback, pSrcData, nSrcStep, SrcFormat, iStride,
+	                pYUVLumaData, pYUVChromaData, rows, numRegionRects);
+	if (rows != stackRects)
+		free(rows);
+	return rc;
 }

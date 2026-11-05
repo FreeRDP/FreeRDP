@@ -261,18 +261,74 @@ static inline BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	for (size_t y = regionRect->top; y < regionRect->bottom; y++)
 	{
 		const BYTE* cur0 = &pYUVData[0][y * iStride[0]];
-		const BYTE* cur1 = &pYUVData[1][y * iStride[1]];
-		const BYTE* cur2 = &pYUVData[2][y * iStride[2]];
 		const BYTE* old0 = &pOldYUVData[0][y * iStride[0]];
-		const BYTE* old1 = &pOldYUVData[1][y * iStride[1]];
-		const BYTE* old2 = &pOldYUVData[2][y * iStride[2]];
 
 		if (memcmp(&cur0[regionRect->left], &old0[regionRect->left], size) != 0)
 			return TRUE;
-		if (memcmp(&cur1[regionRect->left / 2], &old1[regionRect->left / 2], size / 2) != 0)
+	}
+
+	/* the U and V planes have half the rows: the tile's chroma is on rows top / 2 to
+	 * (bottom + 1) / 2. Row y of them is screen row 2 * y, so reading row y here compared
+	 * another part of the screen (and past the planes' content below half height). */
+	const size_t uvLeft = regionRect->left / 2u;
+	const size_t uvSize = (regionRect->right + 1u) / 2u - uvLeft;
+	for (size_t y = regionRect->top / 2u; y < (regionRect->bottom + 1u) / 2u; y++)
+	{
+		const BYTE* cur1 = &pYUVData[1][y * iStride[1]];
+		const BYTE* cur2 = &pYUVData[2][y * iStride[2]];
+		const BYTE* old1 = &pOldYUVData[1][y * iStride[1]];
+		const BYTE* old2 = &pOldYUVData[2][y * iStride[2]];
+
+		if (memcmp(&cur1[uvLeft], &old1[uvLeft], uvSize) != 0)
 			return TRUE;
-		if (memcmp(&cur2[regionRect->left / 2], &old2[regionRect->left / 2], size / 2) != 0)
+		if (memcmp(&cur2[uvLeft], &old2[uvLeft], uvSize) != 0)
 			return TRUE;
+	}
+	return FALSE;
+}
+
+/* The AVC444v2 auxiliary view keeps the chroma detail of screen columns [left, right) in two
+ * halves (MS-RDPEGFX 3.3.8.3.3): in its Y plane at [left / 2, right / 2) and, width / 2 further,
+ * at [width / 2 + left / 2, width / 2 + right / 2) on the same rows; in its U and V planes at a
+ * quarter of those columns on half the rows. Comparing the tile's own columns there, as
+ * diff_tile does, looks at other pixels, so a tile whose chroma changed could go unreported
+ * and the client kept its old colours. */
+WINPR_ATTR_NODISCARD
+static inline BOOL diff_tile_avc444v2_aux(const RECTANGLE_16* tile, UINT32 width, BYTE* pYUVData[3],
+                                          BYTE* pOldYUVData[3], UINT32 const iStride[3])
+{
+	if (!tile || !pYUVData || !pOldYUVData || !iStride || (tile->right <= tile->left))
+		return FALSE;
+
+	const size_t l2 = tile->left / 2u;
+	const size_t n2 = (tile->right + 1u) / 2u - l2;
+	const size_t h2 = width / 2u;
+	const size_t l4 = tile->left / 4u;
+	const size_t n4 = (tile->right + 3u) / 4u - l4;
+	const size_t h4 = width / 4u;
+
+	if ((h2 + l2 + n2 > iStride[0]) || (h4 + l4 + n4 > iStride[1]) || (h4 + l4 + n4 > iStride[2]))
+		return TRUE; /* can't tell: send it */
+
+	for (size_t y = tile->top; y < tile->bottom; y++)
+	{
+		const BYTE* cur = &pYUVData[0][y * iStride[0]];
+		const BYTE* old = &pOldYUVData[0][y * iStride[0]];
+		if ((memcmp(&cur[l2], &old[l2], n2) != 0) ||
+		    (memcmp(&cur[h2 + l2], &old[h2 + l2], n2) != 0))
+			return TRUE;
+	}
+
+	for (size_t y = tile->top / 2u; y < (tile->bottom + 1u) / 2u; y++)
+	{
+		for (size_t p = 1; p < 3; p++)
+		{
+			const BYTE* cur = &pYUVData[p][y * iStride[p]];
+			const BYTE* old = &pOldYUVData[p][y * iStride[p]];
+			if ((memcmp(&cur[l4], &old[l4], n4) != 0) ||
+			    (memcmp(&cur[h4 + l4], &old[h4 + l4], n4) != 0))
+				return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -280,7 +336,7 @@ static inline BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 WINPR_ATTR_NODISCARD
 static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE_16* regionRect,
                            BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
-                           RDPGFX_H264_METABLOCK* meta)
+                           UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
 {
 	size_t count = 0;
 	size_t wc = 0;
@@ -313,7 +369,11 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 				    (UINT16)MIN(UINT16_MAX, MIN(regionRect->left + x + 64, regionRect->right));
 				rect.bottom =
 				    (UINT16)MIN(UINT16_MAX, MIN(regionRect->top + y + 64, regionRect->bottom));
-				if (diff_tile(&rect, pYUVData, pOldYUVData, iStride))
+				const BOOL changed =
+				    v2AuxWidth
+				        ? diff_tile_avc444v2_aux(&rect, v2AuxWidth, pYUVData, pOldYUVData, iStride)
+				        : diff_tile(&rect, pYUVData, pOldYUVData, iStride);
+				if (changed)
 					rectangles[count++] = rect;
 			}
 		}
@@ -351,6 +411,50 @@ INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
 	return h264->subsystem->Compress(h264, pcYUVData, h264->iStride, ppDstData, pDstSize);
 }
 
+/* The region to encode, rounded out to the 16 pixel macroblock grid inside the frame.
+ * Clients rebuild AVC444 colours relative to each region's corner: the odd chroma columns and
+ * rows, and every fourth sample in AVC444v2 (MS-RDPEGFX 3.3.8.3.2, 3.3.8.3.3), are counted from
+ * left and top. A region starting at an odd or unaligned column or row (the shadow server sends
+ * the bounding box of what changed, at any pixel) put those samples one pixel off. Encoders work
+ * on 16x16 macroblocks anyway, so the wider region costs no bits. */
+static RECTANGLE_16 h264_align_region(const RECTANGLE_16* rect, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(rect);
+	const UINT32 right = MIN(width, ((UINT32)rect->right + 15u) & ~15u);
+	const UINT32 bottom = MIN(height, ((UINT32)rect->bottom + 15u) & ~15u);
+	const RECTANGLE_16 aligned = { (UINT16)(rect->left & ~15u), (UINT16)(rect->top & ~15u),
+		                           (UINT16)MAX(rect->right, right),
+		                           (UINT16)MAX(rect->bottom, bottom) };
+	return aligned;
+}
+
+/* The encoder alternates between two sets of planes: the one it converts into this frame held
+ * the frame before last, and only the region is converted. Outside the region the encoder then
+ * saw that older picture, a change every frame where nothing changed, which costs bits (and
+ * takes them from what did change). Start from the last frame, unless the region is all of it. */
+static void h264_keep_last_frame(const RECTANGLE_16* region, UINT32 width, UINT32 height,
+                                 BYTE* dst[3], BYTE* const src[3], const size_t size[3])
+{
+	WINPR_ASSERT(region);
+	if ((region->left == 0) && (region->top == 0) && (region->right >= width) &&
+	    (region->bottom >= height))
+		return;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (dst[x] && src[x] && (size[x] > 0))
+			memcpy(dst[x], src[x], size[x]);
+	}
+}
+
+/* the size of the 4:2:0 planes, as yuv_ensure_buffer allocates them */
+static void h264_yuv420_plane_sizes(const H264_CONTEXT* h264, size_t size[3])
+{
+	const size_t rows = h264->height + 32u - h264->height % 16u;
+	for (size_t x = 0; x < 3; x++)
+		size[x] = 1ull * h264->iStride[x] * rows;
+}
+
 INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                       UINT32 nSrcWidth, UINT32 nSrcHeight, const RECTANGLE_16* regionRect,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)
@@ -386,13 +490,19 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		}
 	}
 	h264->encodingBuffer = !h264->encodingBuffer;
+	{
+		size_t size420[3] = WINPR_C_ARRAY_INIT;
+		h264_yuv420_plane_sizes(h264, size420);
+		h264_keep_last_frame(regionRect, nSrcWidth, nSrcHeight, pYUVData, pOldYUVData, size420);
+	}
 
+	const RECTANGLE_16 aligned = h264_align_region(regionRect, nSrcWidth, nSrcHeight);
 	if (!yuv420_context_encode(h264->yuv, pSrcData, nSrcStep, SrcFormat, h264->iStride, pYUVData,
-	                           regionRect, 1))
+	                           &aligned, 1))
 		goto fail;
 
-	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, regionRect, pYUVData, pOldYUVData,
-	                    h264->iStride, meta))
+	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, &aligned, pYUVData, pOldYUVData,
+	                    h264->iStride, 0, meta))
 		goto fail;
 
 	if (meta->numRegionRects == 0)
@@ -455,16 +565,27 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		pOldYUVData = h264->pOldYUVData;
 	}
 	h264->encodingBuffer = !h264->encodingBuffer;
+	{
+		size_t size420[3] = WINPR_C_ARRAY_INIT;
+		size_t size444[3] = WINPR_C_ARRAY_INIT;
+		h264_yuv420_plane_sizes(h264, size420);
+		for (size_t x = 0; x < 3; x++)
+			size444[x] = h264->iYUV444Size[x];
+		h264_keep_last_frame(region, nSrcWidth, nSrcHeight, pYUVData, pOldYUVData, size420);
+		h264_keep_last_frame(region, nSrcWidth, nSrcHeight, pYUV444Data, pOldYUV444Data, size444);
+	}
 
+	const RECTANGLE_16 aligned = h264_align_region(region, nSrcWidth, nSrcHeight);
 	if (!yuv444_context_encode(h264->yuv, version, pSrcData, nSrcStep, SrcFormat, h264->iStride,
-	                           pYUV444Data, pYUVData, region, 1))
+	                           pYUV444Data, pYUVData, &aligned, 1))
 		goto fail;
 
-	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, region, pYUV444Data, pOldYUV444Data,
-	                    h264->iStride, meta))
+	if (!detect_changes(h264->firstLumaFrameDone, h264->QP, &aligned, pYUV444Data, pOldYUV444Data,
+	                    h264->iStride, 0, meta))
 		goto fail;
-	if (!detect_changes(h264->firstChromaFrameDone, h264->QP, region, pYUVData, pOldYUVData,
-	                    h264->iStride, auxMeta))
+	/* in AVC444v2 the auxiliary view is laid out by the frame width, not by screen position */
+	if (!detect_changes(h264->firstChromaFrameDone, h264->QP, &aligned, pYUVData, pOldYUVData,
+	                    h264->iStride, (version == 2) ? h264->width : 0, auxMeta))
 		goto fail;
 
 	/* [MS-RDPEGFX] 2.2.4.5 RFX_AVC444_BITMAP_STREAM
