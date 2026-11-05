@@ -47,6 +47,10 @@
 #define MAC_SHADOW_FPS 30
 /* how often to look for the display again after the stream ended */
 #define MAC_SHADOW_RESTART_MS 1000
+/* how often to look at the displays: a reconfiguration callback only reaches a
+ * process with an application's connection to the window server, and this
+ * one is a command line tool */
+#define MAC_SHADOW_DISPLAYS_MS 1000
 /* how often to look at the cursor, and how long after a client moved the
  * pointer not to tell it where the pointer is: its own cursor is ahead of
  * what the server sees by a round trip, and would jump back */
@@ -747,13 +751,11 @@ static void mac_shadow_send_frame(macShadowSubsystem* mac)
 	if ((CVPixelBufferGetWidth(frame) != surface->width) ||
 	    (CVPixelBufferGetHeight(frame) != surface->height))
 	{
-		/* the display mode changed under us: the surface keeps its size */
+		/* the display mode changed: the frames fit again once the surface has followed it */
 		if (!mac->sizeWarned)
-			WLog_WARN(TAG,
-			          "frames of %zux%zu for a surface of %" PRIu32 "x%" PRIu32
-			          ": restart the server after changing the display mode",
-			          CVPixelBufferGetWidth(frame), CVPixelBufferGetHeight(frame),
-			          (UINT32)surface->width, (UINT32)surface->height);
+			WLog_DBG(TAG, "frames of %zux%zu for a surface of %" PRIu32 "x%" PRIu32 ": dropped",
+			         CVPixelBufferGetWidth(frame), CVPixelBufferGetHeight(frame),
+			         (UINT32)surface->width, (UINT32)surface->height);
 		mac->sizeWarned = TRUE;
 		goto out;
 	}
@@ -991,6 +993,98 @@ static BOOL mac_shadow_capture_restart(macShadowSubsystem* mac)
 	return TRUE;
 }
 
+/* the virtual screen spans every monitor (they start at 0, see mac_shadow_list_displays) */
+static void mac_shadow_set_virtual_screen(rdpShadowSubsystem* subsystem, UINT32 count)
+{
+	MONITOR_DEF* virtualScreen = &subsystem->virtualScreen;
+	virtualScreen->left = 0;
+	virtualScreen->top = 0;
+	virtualScreen->right = 0;
+	virtualScreen->bottom = 0;
+	for (UINT32 x = 0; x < count; x++)
+	{
+		virtualScreen->right = MAX(virtualScreen->right, subsystem->monitors[x].right);
+		virtualScreen->bottom = MAX(virtualScreen->bottom, subsystem->monitors[x].bottom);
+	}
+	virtualScreen->flags = 1;
+}
+
+/* The displays changed: the surface takes the new size of the display shared,
+ * the clients get a desktop resize from the server, and the capture starts
+ * again at the new size. */
+static void mac_shadow_displays_changed(macShadowSubsystem* mac, BOOL* lost)
+{
+	rdpShadowSubsystem* subsystem = &mac->common;
+	MONITOR_DEF monitors[MAC_SHADOW_MAX_DISPLAYS] = WINPR_C_ARRAY_INIT;
+	CGDirectDisplayID ids[MAC_SHADOW_MAX_DISPLAYS] = WINPR_C_ARRAY_INIT;
+	CGRect bounds[MAC_SHADOW_MAX_DISPLAYS] = WINPR_C_ARRAY_INIT;
+
+	const UINT32 count = mac_shadow_list_displays(monitors, ids, bounds, MAC_SHADOW_MAX_DISPLAYS);
+	if (count == 0)
+		return;
+
+	UINT32 selected = 0;
+	for (UINT32 x = 0; x < count; x++)
+	{
+		if (ids[x] == mac->display)
+			selected = x; /* the same display if it is still there */
+	}
+	const MONITOR_DEF* monitor = &monitors[selected];
+	const UINT32 width = (UINT32)(monitor->right - monitor->left + 1);
+	const UINT32 height = (UINT32)(monitor->bottom - monitor->top + 1);
+
+	WLog_INFO(TAG,
+	          "the displays changed: sharing display %" PRIu32 " (%" PRIu32 " of %" PRIu32
+	          "), %" PRIu32 "x%" PRIu32 " (was %" PRIu32 "x%" PRIu32 ")",
+	          ids[selected], selected, count, width, height, mac->width, mac->height);
+
+	mac_capture_stop(mac->capture);
+	mac_capture_free(mac->capture);
+	mac->capture = nullptr;
+
+	memcpy(subsystem->monitors, monitors, sizeof(MONITOR_DEF) * count);
+	subsystem->numMonitors = count;
+	subsystem->selectedMonitor = selected;
+	mac_shadow_set_virtual_screen(subsystem, count);
+	mac->display = ids[selected];
+	mac->bounds = bounds[selected];
+	mac->width = width;
+	mac->height = height;
+	mac->config.display = mac->display;
+	mac->config.width = width;
+	mac->config.height = height;
+
+	/* a frame of the old size is no use any more */
+	EnterCriticalSection(&mac->frameLock);
+	if (mac->frame)
+		CVPixelBufferRelease(mac->frame);
+	mac->frame = nullptr;
+	region16_clear(&mac->pending);
+	LeaveCriticalSection(&mac->frameLock);
+	mac->sizeWarned = FALSE;
+
+	if (!shadow_screen_resize(subsystem->server->screen))
+		WLog_ERR(TAG, "the surface could not take the new size");
+
+	/* tried again every second if this fails */
+	*lost = !mac_shadow_capture_restart(mac);
+}
+
+static void mac_shadow_check_displays(macShadowSubsystem* mac, UINT64 now, BOOL* lost)
+{
+	if (now < mac->displaysChecked + MAC_SHADOW_DISPLAYS_MS)
+		return;
+	mac->displaysChecked = now;
+
+	uint32_t count = 0;
+	const CGRect bounds = CGDisplayBounds(mac->display);
+	if ((CGGetActiveDisplayList(0, nullptr, &count) != kCGErrorSuccess) ||
+	    ((count == mac->common.numMonitors) && CGRectEqualToRect(bounds, mac->bounds)))
+		return;
+
+	mac_shadow_displays_changed(mac, lost);
+}
+
 static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 {
 	macShadowSubsystem* mac = (macShadowSubsystem*)arg;
@@ -1003,9 +1097,9 @@ static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 	while (1)
 	{
 		/* with clients, look at the cursor; without a stream, try to make one
-		 * again every second */
+		 * again every second; in any case look at the displays every second */
 		const BOOL clients = mac_shadow_has_clients(mac);
-		DWORD timeout = clients ? MAC_SHADOW_CURSOR_MS : INFINITE;
+		DWORD timeout = clients ? MAC_SHADOW_CURSOR_MS : MAC_SHADOW_DISPLAYS_MS;
 		if (lost)
 			timeout = MIN(timeout, MAC_SHADOW_RESTART_MS);
 
@@ -1033,6 +1127,7 @@ static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 			}
 		}
 
+		mac_shadow_check_displays(mac, now, &lost);
 		if (clients)
 			mac_shadow_cursor_update(mac, now);
 
@@ -1102,17 +1197,7 @@ static int mac_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	mac->width = (UINT32)(monitor->right - monitor->left + 1);
 	mac->height = (UINT32)(monitor->bottom - monitor->top + 1);
 
-	MONITOR_DEF* virtualScreen = &subsystem->virtualScreen;
-	virtualScreen->left = 0;
-	virtualScreen->top = 0;
-	virtualScreen->right = 0;
-	virtualScreen->bottom = 0;
-	for (UINT32 x = 0; x < count; x++)
-	{
-		virtualScreen->right = MAX(virtualScreen->right, subsystem->monitors[x].right);
-		virtualScreen->bottom = MAX(virtualScreen->bottom, subsystem->monitors[x].bottom);
-	}
-	virtualScreen->flags = 1;
+	mac_shadow_set_virtual_screen(subsystem, count);
 
 	WLog_INFO(TAG,
 	          "sharing display %" PRIu32 " (%" PRIu32 " of %" PRIu32 "): %" PRIu32 "x%" PRIu32
