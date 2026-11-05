@@ -310,6 +310,9 @@ static BOOL win_shadow_dxgi_is_denied(HRESULT hr)
  * after WIN_SHADOW_DXGI_DENIED_RETRY_MS (and at once when the input desktop changes) */
 static void win_shadow_dxgi_pause(winShadowSubsystem* subsystem, const char* what, HRESULT hr)
 {
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(what);
+
 	if (!subsystem->dxgiDenied)
 		WLog_WARN(TAG,
 		          "%s: %s (0x%08lX): this process may not capture the current desktop (the "
@@ -321,6 +324,8 @@ static void win_shadow_dxgi_pause(winShadowSubsystem* subsystem, const char* wha
 
 static void win_shadow_dxgi_drop_duplication(winShadowSubsystem* subsystem)
 {
+	WINPR_ASSERT(subsystem);
+
 	(void)win_shadow_dxgi_release_frame_data(subsystem);
 
 	if (subsystem->dxgiDesktopImage)
@@ -354,6 +359,8 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	IDXGIAdapter* dxgiAdapter = nullptr;
 	IDXGIOutput* dxgiOutput = nullptr;
 	IDXGIOutput1* dxgiOutput1 = nullptr;
+
+	WINPR_ASSERT(subsystem);
 
 	hr = subsystem->dxgiDevice->lpVtbl->QueryInterface(subsystem->dxgiDevice, &IID_IDXGIDevice,
 	                                                   (void**)&dxgiDevice);
