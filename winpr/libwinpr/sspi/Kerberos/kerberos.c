@@ -1494,6 +1494,11 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 	krb5_principal target_princ = WINPR_C_ARRAY_INIT;
 	char* default_realm = nullptr;
 
+	/* server-name is optional in a KERB-TGT-REQUEST, without one there is no principal to look
+	 * up a TGT for */
+	if (!target)
+		return FALSE;
+
 	krb5_error_code rv =
 	    krb_log_exec(krb5_parse_name_flags, credentials->ctx, target, 0, &target_princ);
 	if (rv)
