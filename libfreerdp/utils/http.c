@@ -383,8 +383,11 @@ BOOL freerdp_http_request_context(rdpContext* context, const char* url, const ch
 				goto out;
 		}
 
+		tls->hostname = hostname;
+		tls->port = 443;
+		tls->isHttpRequest = TRUE;
 		UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
-		if (!utils_tls_connect(context, tls, log, hostname, 443, FALSE, TcpConnectTimeout))
+		if (!utils_tls_connect(context, tls, log, hostname, tls->port, FALSE, TcpConnectTimeout))
 			goto out;
 
 		{

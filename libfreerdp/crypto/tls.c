@@ -1789,6 +1789,9 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	if (tls->isGatewayTransport)
 		flags |= VERIFY_CERT_FLAG_GATEWAY;
 
+	if (tls->isHttpRequest)
+		flags |= VERIFY_CERT_FLAG_HTTP;
+
 	if (is_redirected(tls))
 		flags |= VERIFY_CERT_FLAG_REDIRECT;
 

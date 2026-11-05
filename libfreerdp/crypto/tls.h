@@ -82,6 +82,7 @@ struct rdp_tls
 	int alertDescription;
 	BOOL isGatewayTransport;
 	BOOL isClientMode;
+	BOOL isHttpRequest;
 };
 
 /** @brief result of a handshake operation */
