@@ -894,17 +894,19 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		redirection_free_array(&redirection->TargetNetAddresses,
 		                       &redirection->TargetNetAddressesCount);
-		if (TargetNetAddressesCount > 0)
+		if (TargetNetAddressesCount == 0)
 		{
-			redirection->TargetNetAddresses =
-			    (char**)calloc(TargetNetAddressesCount, sizeof(char*));
+			WLog_ERR(TAG, "LB_TARGET_NET_ADDRESSES set, but TargetNetAddressesCount is 0");
+			return STATE_RUN_FAILED;
+		}
 
-			if (!redirection->TargetNetAddresses)
-			{
-				WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate",
-				         TargetNetAddressesCount);
-				return STATE_RUN_FAILED;
-			}
+		redirection->TargetNetAddresses = (char**)calloc(TargetNetAddressesCount, sizeof(char*));
+
+		if (!redirection->TargetNetAddresses)
+		{
+			WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate",
+			         TargetNetAddressesCount);
+			return STATE_RUN_FAILED;
 		}
 		redirection->TargetNetAddressesCount = TargetNetAddressesCount;
 
