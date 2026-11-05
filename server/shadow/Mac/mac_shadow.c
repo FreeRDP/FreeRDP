@@ -1128,6 +1128,13 @@ static int mac_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	}
 	virtualScreen->flags = 1;
 
+	/* the frames never carry the cursor (ScreenCaptureKit leaves it out): the
+	 * clients draw it, from the shapes the server sends. Without this the
+	 * server sends them the default arrow instead, ShowMouseCursor being
+	 * otherwise set only by /server-side-cursor */
+	if (subsystem->server)
+		subsystem->server->ShowMouseCursor = TRUE;
+
 	WLog_INFO(TAG,
 	          "sharing display %" PRIu32 " (%" PRIu32 " of %" PRIu32 "): %" PRIu32 "x%" PRIu32
 	          " at %.0f,%.0f",
