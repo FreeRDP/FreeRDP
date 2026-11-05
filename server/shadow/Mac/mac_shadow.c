@@ -190,12 +190,26 @@ static BOOL mac_shadow_post(CGEventRef event)
 
 WINPR_ATTR_NODISCARD
 static BOOL mac_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
-                                               rdpShadowClient* client,
-                                               WINPR_ATTR_UNUSED UINT32 flags)
+                                               rdpShadowClient* client, UINT32 flags)
 {
+	macShadowSubsystem* mac = (macShadowSubsystem*)subsystem;
+
 	if (!subsystem || !client)
 		return FALSE;
 
+	/* The client sends its lock keys when it connects and when it gets the
+	 * focus back. Caps Lock is the only one a Mac has. The events posted from
+	 * here carry mac->modifiers, so taking the client's state there makes the
+	 * next key type the case the client shows. No event is posted for it: a
+	 * Caps Lock event would also switch input sources on Macs set up that
+	 * way. Num and Scroll Lock have no Mac state to follow. */
+	if (flags & KBD_SYNC_CAPS_LOCK)
+		mac->modifiers |= kCGEventFlagMaskAlphaShift;
+	else
+		mac->modifiers &= ~kCGEventFlagMaskAlphaShift;
+
+	WLog_DBG(TAG, "synchronize 0x%08" PRIx32 ": caps lock %s", flags,
+	         (flags & KBD_SYNC_CAPS_LOCK) ? "on" : "off");
 	return TRUE;
 }
 
