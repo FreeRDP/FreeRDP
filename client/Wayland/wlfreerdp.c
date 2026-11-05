@@ -773,8 +773,7 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 	 * drawing buffer temporarily invalidates its index. This critical section
 	 * is recursive, as wl_update_buffer also calls this function while holding it. */
 	EnterCriticalSection(&wlf->critical);
-	const UwacReturnCode rc =
-	    UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, nullptr);
+	const UwacReturnCode rc = UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, nullptr);
 	LeaveCriticalSection(&wlf->critical);
 	if (rc != UWAC_SUCCESS)
 		return FALSE;
