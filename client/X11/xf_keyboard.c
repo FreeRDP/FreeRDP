@@ -502,6 +502,7 @@ BOOL xf_keyboard_update_modifier_map(xfContext* xfc)
 
 static BOOL xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* ev);
 static DWORD get_rdp_scancode_from_x11_keycode(xfContext* xfc, DWORD keycode);
+static int xf_keyboard_get_keymask(xfContext* xfc, KeySym keysym);
 
 static BOOL xf_sync_kbd_state(xfContext* xfc)
 {
@@ -928,11 +929,93 @@ BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
 	return TRUE;
 }
 
+/* A key that another client has grabbed (for example mutter grabs the bare
+ * "locate pointer" modifier, Control_L by default) never reaches this client as
+ * a KeyPress event. Modifier state is tracked from the events that do arrive,
+ * so a grabbed modifier silently disappears from every combination sent to the
+ * remote application: it receives the plain key without the modifier.
+ *
+ * The X server still reports the physical key state, so compare the modifier
+ * mask carried by the event against the modifiers tracked here and forward any
+ * modifier that is physically pressed but was never seen pressed. */
+static void xf_keyboard_sync_pressed_modifiers(xfContext* xfc, UINT32 state, KeyCode skip)
+{
+	static const KeySym keysyms[] = { XK_Shift_L, XK_Shift_R, XK_Control_L, XK_Control_R,
+		                              XK_Alt_L,   XK_Alt_R,   XK_Super_L,   XK_Super_R };
+	char keys[32] = WINPR_C_ARRAY_INIT;
+	int expected = 0;
+	int tracked = 0;
+
+	WINPR_ASSERT(xfc);
+
+	if (!xfc->display)
+		return;
+
+	for (size_t i = 0; i < ARRAYSIZE(keysyms); i++)
+	{
+		/* Alt is deferred or forwarded by the deferred Alt logic. */
+		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
+			continue;
+
+		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
+		if ((keycode == 0) || (keycode >= ARRAYSIZE(xfc->KeyboardState)))
+			continue;
+
+		const int mask = xf_keyboard_get_keymask(xfc, keysyms[i]);
+		if (mask == 0)
+			continue;
+
+		expected |= mask;
+		if ((keycode != skip) && xfc->KeyboardState[keycode])
+			tracked |= mask;
+	}
+
+	/* Fast path: the modifier state carried by the event matches the tracked keys. */
+	if (((int)state & expected) == tracked)
+		return;
+
+	if (XQueryKeymap(xfc->display, keys) == 0)
+		return;
+
+	for (size_t i = 0; i < ARRAYSIZE(keysyms); i++)
+	{
+		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
+			continue;
+
+		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
+		if ((keycode == 0) || (keycode >= ARRAYSIZE(xfc->KeyboardState)) || (keycode == skip))
+			continue;
+		if (xfc->KeyboardState[keycode])
+			continue;
+
+		const int mask = xf_keyboard_get_keymask(xfc, keysyms[i]);
+		if ((mask != 0) && ((tracked & mask) == mask))
+			continue;
+
+		/* Only the keyboard reports the physical state, the event mask cannot tell
+		 * the left from the right key of the same modifier. */
+		if ((keys[keycode / 8] & (1 << (keycode % 8))) == 0)
+			continue;
+
+		const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, keycode);
+		if (scancode == 0)
+			continue;
+
+		xfc->KeyboardState[keycode] = TRUE;
+		if (!freerdp_input_send_keyboard_event_ex(xfc->common.context.input, TRUE, FALSE, scancode))
+			xfc->KeyboardState[keycode] = FALSE;
+		else
+			tracked |= mask;
+	}
+}
+
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
+
+	xf_keyboard_sync_pressed_modifiers(xfc, event->state, (KeyCode)event->keycode);
 
 	const BOOL defer = xfc->deferAlt;
 	const BOOL last = xfc->KeyboardState[event->keycode];
