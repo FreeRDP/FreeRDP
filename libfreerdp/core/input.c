@@ -383,21 +383,29 @@ static BOOL input_send_keyboard_pause_event(rdpInput* input)
 
 static BOOL input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	UINT16 sec_flags = 0;
-	wStream* s = nullptr;
-	rdpRdp* rdp = nullptr;
-
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
 
-	rdp = input->context->rdp;
+	/* The FastPath Synchronization eventFlags has identical values as SlowPath,
+	 * but the field is only 5 bits wide. Drop everything else, a value with
+	 * undefined bits set may have been received from a peer (proxy) */
+	const UINT32 mask =
+	    KBD_SYNC_SCROLL_LOCK | KBD_SYNC_NUM_LOCK | KBD_SYNC_CAPS_LOCK | KBD_SYNC_KANA_LOCK;
+	if (flags & ~mask)
+		WLog_WARN(TAG,
+		          "Problematic [MS-RDPBCGR] 2.2.8.1.2.2.5 Fast-Path Synchronize Event "
+		          "(TS_FP_SYNC_EVENT) flags=0x%08" PRIx32 ", ignoring undefined bits.",
+		          flags);
+	rdpRdp* rdp = input->context->rdp;
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
 		return FALSE;
 
 	/* The FastPath Synchronization eventFlags has identical values as SlowPath */
-	s = fastpath_input_pdu_init(rdp->fastpath, (BYTE)flags, FASTPATH_INPUT_EVENT_SYNC, &sec_flags);
+	UINT16 sec_flags = 0;
+	wStream* s =
+	    fastpath_input_pdu_init(rdp->fastpath, (BYTE)flags, FASTPATH_INPUT_EVENT_SYNC, &sec_flags);
 
 	if (!s)
 		return FALSE;
