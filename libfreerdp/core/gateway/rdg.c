@@ -1383,83 +1383,21 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
 WINPR_ATTR_NODISCARD
 static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, UINT32 timeout)
 {
-	long status = 0;
-	BIO* layerBio = nullptr;
-	BIO* bufferedBio = nullptr;
-	rdpTransportLayer* layer = nullptr;
+	WINPR_ASSERT(rdg);
+	WINPR_ASSERT(rdg->context);
+	WINPR_ASSERT(tls);
 	rdpSettings* settings = rdg->context->settings;
-	rdpTransport* transport = freerdp_get_transport(rdg->context);
-	const char* peerHostname = settings->GatewayHostname;
-	UINT16 peerPort = (UINT16)settings->GatewayPort;
-	const char* proxyUsername = nullptr;
-	const char* proxyPassword = nullptr;
-	BOOL isProxyConnection =
-	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
-	if (settings->GatewayPort > UINT16_MAX)
+	const char* peerHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	const UINT32 peerPort = freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
+	if (peerPort > UINT16_MAX)
 		return FALSE;
 
-	layer = transport_connect_layer(transport, peerAddress ? peerAddress : peerHostname, peerPort,
-	                                timeout);
-
-	if (!layer)
-	{
-		return FALSE;
-	}
-
-	layerBio = BIO_new(BIO_s_transport_layer());
-	if (!layerBio)
-	{
-		transport_layer_free(layer);
-		return FALSE;
-	}
-	BIO_set_data(layerBio, layer);
-
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-	if (!bufferedBio)
-	{
-		BIO_free_all(layerBio);
-		return FALSE;
-	}
-
-	bufferedBio = BIO_push(bufferedBio, layerBio);
-	status = BIO_set_nonblock(bufferedBio, TRUE);
-
-	if (isProxyConnection)
-	{
-		if (!proxy_connect(rdg->context, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
-		{
-			BIO_free_all(bufferedBio);
-			return FALSE;
-		}
-	}
-
-	if (!status)
-	{
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
-
-	tls->hostname = settings->GatewayHostname;
-	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
+	tls->hostname = peerHostname;
+	tls->port = WINPR_ASSERTING_INT_CAST(UINT16, peerPort);
 	tls->isGatewayTransport = TRUE;
-	status = freerdp_tls_connect(tls, bufferedBio);
-	if (status < 1)
-	{
-		rdpContext* context = rdg->context;
-		if (status < 0)
-		{
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-	return (status >= 1);
+	return utils_tls_connect(rdg->context, tls, rdg->log, peerAddress ? peerAddress : peerHostname,
+	                         tls->port, TRUE, timeout);
 }
 
 WINPR_ATTR_NODISCARD

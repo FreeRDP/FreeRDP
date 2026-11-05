@@ -229,81 +229,14 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, UINT32 timeout)
 {
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(tls);
-	int sockfd = 0;
-	long status = 0;
-	BIO* socketBio = nullptr;
-	BIO* bufferedBio = nullptr;
-	rdpSettings* settings = wst->context->settings;
+
 	const char* peerHostname = wst->gwhostname;
 	UINT16 peerPort = wst->gwport;
-	const char* proxyUsername = nullptr;
-	const char* proxyPassword = nullptr;
-	BOOL isProxyConnection =
-	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
-
-	sockfd = freerdp_tcp_connect(wst->context, peerHostname, peerPort, timeout);
-
-	WLog_Print(wst->log, WLOG_DEBUG, "connecting to %s %d", peerHostname, peerPort);
-	if (sockfd < 0)
-	{
-		return FALSE;
-	}
-
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
-	{
-		closesocket((SOCKET)sockfd);
-		return FALSE;
-	}
-
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
-	if (!bufferedBio)
-	{
-		BIO_free_all(socketBio);
-		return FALSE;
-	}
-
-	bufferedBio = BIO_push(bufferedBio, socketBio);
-	status = BIO_set_nonblock(bufferedBio, TRUE);
-
-	if (isProxyConnection)
-	{
-		if (!proxy_connect(wst->context, bufferedBio, proxyUsername, proxyPassword, wst->gwhostname,
-		                   wst->gwport))
-		{
-			BIO_free_all(bufferedBio);
-			return FALSE;
-		}
-	}
-
-	if (!status)
-	{
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
 
 	tls->hostname = wst->gwhostname;
-	tls->port = MIN(UINT16_MAX, wst->gwport);
+	tls->port = peerPort;
 	tls->isGatewayTransport = TRUE;
-	status = freerdp_tls_connect(tls, bufferedBio);
-	if (status < 1)
-	{
-		rdpContext* context = wst->context;
-		if (status < 0)
-		{
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-	return (status >= 1);
+	return utils_tls_connect(wst->context, tls, wst->log, peerHostname, peerPort, FALSE, timeout);
 }
 
 static wStream* wst_build_http_request(rdpWst* wst)
