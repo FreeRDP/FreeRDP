@@ -90,9 +90,6 @@ static const char* const cntGfxCodecNames[] = { RDPGFX_STATS_CODEC_IDS(RDPGFX_ST
 static const char* const bytesGfxCodecNames[] = { RDPGFX_STATS_CODEC_IDS(
 	RDPGFX_STATS_CODEC_BYTES_NAME) };
 
-WINPR_STATIC_ASSERT(ARRAYSIZE(cntGfxCodecNames) == RDPGFX_CODECID_MAX);
-WINPR_STATIC_ASSERT(ARRAYSIZE(bytesGfxCodecNames) == RDPGFX_CODECID_MAX);
-
 static const UINT32 MAX_SURFACE_SIZE = 32766;
 static const UINT32 MAX_MONITOR_COUNT = 16;
 
@@ -103,6 +100,10 @@ size_t rdpgfx_stats_max_index(void)
 
 const char* rdpgfx_stats_name_for_index(size_t index)
 {
+	/* in a function: without C11 this is an assert(), which a file scope does not take */
+	WINPR_STATIC_ASSERT(ARRAYSIZE(cntGfxCodecNames) == RDPGFX_CODECID_MAX);
+	WINPR_STATIC_ASSERT(ARRAYSIZE(bytesGfxCodecNames) == RDPGFX_CODECID_MAX);
+
 	if (index < RDPGFX_CODECID_MAX)
 		return cntGfxCodecNames[index];
 
