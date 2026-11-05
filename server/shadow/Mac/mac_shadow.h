@@ -57,6 +57,8 @@ struct mac_shadow_subsystem
 	macCapture *capture;
 	macCaptureConfig config;
 	HANDLE lostEvent;
+	/* when the displays were last looked at */
+	UINT64 displaysChecked;
 	HANDLE thread;
 	HANDLE stopEvent;
 
