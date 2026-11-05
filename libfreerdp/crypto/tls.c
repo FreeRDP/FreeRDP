@@ -187,6 +187,47 @@ static void bio_rdp_tls_write_account(BIO_RDP_TLS* tls, int count)
 }
 #endif
 
+/* Say what a failed SSL_read or SSL_write means for the caller, with tls->lock held.
+ *
+ * BIO_should_retry() reads a flag the reading and the writing thread share, and the caller looks
+ * at it after leaving the lock. So only a failure that cannot be retried may clear it: if a call
+ * cleared it on the way in, the other thread would take its own retry for a broken connection. */
+static void bio_rdp_tls_set_retry(BIO* bio, int error)
+{
+	switch (error)
+	{
+		case SSL_ERROR_WANT_READ:
+			BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
+			break;
+
+		case SSL_ERROR_WANT_WRITE:
+			BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
+			break;
+
+		case SSL_ERROR_WANT_X509_LOOKUP:
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+			BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
+			break;
+
+		case SSL_ERROR_WANT_ACCEPT:
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+			BIO_set_retry_reason(bio, BIO_RR_ACCEPT);
+			break;
+
+		case SSL_ERROR_WANT_CONNECT:
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+			BIO_set_retry_reason(bio, BIO_RR_CONNECT);
+			break;
+
+		default:
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			break;
+	}
+}
+
 WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
@@ -205,54 +246,18 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 	}
 #endif
 
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
-	BIO_clear_retry_flags(bio);
 	EnterCriticalSection(&tls->lock);
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 	status = SSL_write(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
 #ifdef WITH_TLS_DATA_LIMIT
 	if (status > 0)
 		bio_rdp_tls_write_account(tls, status);
 #endif
-	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
-	{
-		switch (error)
-		{
-			case SSL_ERROR_NONE:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_WANT_X509_LOOKUP:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
-				break;
-
-			case SSL_ERROR_WANT_CONNECT:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_CONNECT);
-				break;
-
-			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_SSL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-			default:
-				break;
-		}
-	}
+		bio_rdp_tls_set_retry(bio, error);
+	LeaveCriticalSection(&tls->lock);
 
 	return status;
 }
@@ -275,64 +280,18 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 	}
 #endif
 
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
-	BIO_clear_retry_flags(bio);
 	EnterCriticalSection(&tls->lock);
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 	status = SSL_read(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
 #ifdef WITH_TLS_DATA_LIMIT
 	if (status > 0)
 		bio_rdp_tls_read_account(tls, status);
 #endif
-	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
-	{
-
-		switch (error)
-		{
-			case SSL_ERROR_NONE:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_WANT_X509_LOOKUP:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
-				break;
-
-			case SSL_ERROR_WANT_ACCEPT:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_ACCEPT);
-				break;
-
-			case SSL_ERROR_WANT_CONNECT:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_CONNECT);
-				break;
-
-			case SSL_ERROR_SSL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_ZERO_RETURN:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-
-			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				break;
-			default:
-				break;
-		}
-	}
+		bio_rdp_tls_set_retry(bio, error);
+	LeaveCriticalSection(&tls->lock);
 
 #ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 
@@ -464,15 +423,14 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_CTRL_FLUSH:
-			BIO_clear_retry_flags(bio);
 			/* A flush writes out the BIO below, just like SSL_write and SSL_read do,
 			 * so it must be serialized with them by the same lock. */
 			EnterCriticalSection(&tls->lock);
 			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			BIO_copy_next_retry(bio);
 			LeaveCriticalSection(&tls->lock);
 			if (status != 1)
 				WLog_DBG(TAG, "BIO_ctrl returned %ld", status);
-			BIO_copy_next_retry(bio);
 			status = 1;
 			break;
 
