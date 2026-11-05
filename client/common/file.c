@@ -2577,6 +2577,15 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook))
 			return FALSE;
+
+		/* clients only read GrabKeyboard, 2 (full screen only) keeps its default */
+		if ((file->KeyboardHook == KEYBOARD_HOOK_LOCAL) ||
+		    (file->KeyboardHook == KEYBOARD_HOOK_REMOTE))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard,
+			                               file->KeyboardHook == KEYBOARD_HOOK_REMOTE))
+				return FALSE;
+		}
 	}
 
 	if (~(size_t)file->SelectedMonitors)
