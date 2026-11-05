@@ -90,6 +90,28 @@ static int get_line(BIO* bio, char* buffer, size_t size)
 #endif
 }
 
+WINPR_ATTR_NODISCARD
+static int get_line_context(rdpContext* context, BIO* bio, char* buffer, size_t size)
+{
+	while (TRUE)
+	{
+		/* session terminated, abort */
+		if (freerdp_shall_disconnect_context(context))
+			return -1;
+
+		const int rc = get_line(bio, buffer, size);
+		if (rc <= 0)
+		{
+			if (BIO_should_retry(bio))
+			{
+				BIO_wait(bio, 10, 10);
+				continue;
+			}
+		}
+		return rc;
+	}
+}
+
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL freerdp_http_request(const char* url, const char* body, long* status_code, BYTE** response,
                           size_t* response_length)
@@ -417,7 +439,7 @@ BOOL freerdp_http_request_context(rdpContext* context, const char* url, const ch
 	}
 
 	BIO* bio = tls->bio;
-	status = get_line(bio, buffer, sizeof(buffer));
+	status = get_line_context(context, bio, buffer, sizeof(buffer));
 	if (status <= 0)
 	{
 		log_errors(log, "could not read response");
@@ -443,7 +465,7 @@ BOOL freerdp_http_request_context(rdpContext* context, const char* url, const ch
 
 	do
 	{
-		status = get_line(bio, buffer, sizeof(buffer));
+		status = get_line_context(context, bio, buffer, sizeof(buffer));
 		if (status <= 0)
 		{
 			log_errors(log, "could not read response");
