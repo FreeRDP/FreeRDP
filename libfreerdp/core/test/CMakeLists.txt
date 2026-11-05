@@ -32,6 +32,10 @@ if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
 endif()
 
+if(WITH_RDPEUDP)
+  list(APPEND FUZZERS TestFuzzRdpUdpServer.c)
+endif()
+
 # Test not compatible with package tests, disable
 if(WITH_SAMPLE AND WITH_SERVER AND NOT WIN32 AND BUILD_TESTING_INTERNAL)
   add_compile_definitions(CMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
