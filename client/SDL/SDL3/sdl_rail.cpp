@@ -1143,6 +1143,34 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	completeLocalMoveIfPending();
 }
 
+/* The WM may end a resize short of the pointer, so the release reaches none of our windows. */
+static constexpr Uint32 kReleasePollMs = 100;
+
+static Uint32 releasePollTimer(void* userdata, [[maybe_unused]] SDL_TimerID timerID,
+                               [[maybe_unused]] Uint32 interval)
+{
+	if (!SDL_RunOnMainThread([](void* rail) { static_cast<SdlRail*>(rail)->pollDragRelease(); },
+	                         userdata, false))
+		WLog_WARN(TAG, "could not queue the drag release check: %s", SDL_GetError());
+	return 0;
+}
+
+void SdlRail::pollDragRelease()
+{
+	{
+		std::unique_lock lock(_windowsLock);
+		if ((_localMove.id == 0) || compositorDrag())
+			return;
+	}
+	if (SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK)
+	{
+		if (SDL_AddTimer(kReleasePollMs, releasePollTimer, this) == 0)
+			WLog_WARN(TAG, "drag release timer failed: %s", SDL_GetError());
+		return;
+	}
+	completeLocalMoveIfPending();
+}
+
 SDL_Window* SdlRail::beginLocalMove(uint32_t windowId, uint16_t moveType)
 {
 	const RailDragModel model = railPlatformCaps().drag;
@@ -1172,6 +1200,11 @@ SDL_Window* SdlRail::beginLocalMove(uint32_t windowId, uint16_t moveType)
 			_localMove.pointer = _lastPointerServer;
 			/* Clear prior loop-end state on new drag. */
 			appWindow->clearLoopEnd();
+			/* Not for keyboard moves: no button is held. */
+			if ((model == RailDragModel::WmMoveResize) &&
+			    (SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK) &&
+			    (SDL_AddTimer(kReleasePollMs, releasePollTimer, this) == 0))
+				WLog_WARN(TAG, "drag release timer failed: %s", SDL_GetError());
 		}
 		appWindow->setLocalMoveActive(true);
 		if (!isMove)

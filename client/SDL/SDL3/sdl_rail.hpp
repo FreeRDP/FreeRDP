@@ -132,6 +132,8 @@ class SdlRail
 	/* Wayland: the compositor runs the interactive resize (mouse leave or configure). */
 	void noteResizeGrab(SDL_WindowID id);
 	void settleWaylandResize();
+	/* X11: end a WM drag once the button is up. */
+	void pollDragRelease();
 
   private:
 	/* Latch a local move/resize; returns the window for a native modal loop. */
