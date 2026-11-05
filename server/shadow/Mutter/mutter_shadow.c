@@ -37,7 +37,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <poll.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -107,6 +109,17 @@
 #define MUTTER_NAME_TIMEOUT_MS 10000
 #define MUTTER_STREAM_TIMEOUT_MS 5000
 #define MUTTER_FORMAT_TIMEOUT_MS 5000
+
+/* the messages of the clipboard, to the subsystem thread and its data thread */
+#define MUTTER_MSG_CLIPBOARD_OFFER 0x10001
+#define MUTTER_MSG_CLIPBOARD_READ 0x10002
+#define MUTTER_MSG_CLIPBOARD_PROVIDE 0x10003
+#define MUTTER_MSG_CLIPBOARD_WRITE_DONE 0x10004
+/* a transfer gives up when its application stays silent for this long */
+#define MUTTER_CLIPBOARD_STALL_MS 5000
+#define MUTTER_CLIPBOARD_CALL_USEC (2 * 1000 * 1000)
+/* the mime types of a selection that the session offers */
+#define MUTTER_CLIPBOARD_MAX_MIMES 64
 
 /* What the clients hear: 48 kHz, 2 channels, 16 bits; PipeWire converts what
  * the sink plays to it. The build may have no resampler, so every format
@@ -589,6 +602,8 @@ static void mutter_read_stream_parameters(mutterShadowSubsystem* mutter)
 	sd_bus_message_unref(reply);
 }
 
+static void mutter_clipboard_enable(mutterShadowSubsystem* mutter);
+
 WINPR_ATTR_NODISCARD
 static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* connector)
 {
@@ -713,6 +728,8 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 		else
 			close(fd);
 	}
+
+	mutter_clipboard_enable(mutter);
 
 	rc = TRUE;
 out:
@@ -1852,6 +1869,537 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 	LeaveCriticalSection(&surface->lock);
 }
 
+/* ------------------------------------------------------------------------- */
+/* Clipboard: the session's side of shadow_cliprdr.c, through the selection    */
+/* calls of RemoteDesktop.Session. Mutter hands out a pipe for each transfer.  */
+/* ------------------------------------------------------------------------- */
+
+typedef struct
+{
+	char** mimes; /* nullptr terminated */
+	char* mime;
+	UINT32 serial;
+	BYTE* data;
+	size_t size;
+	BOOL ok;
+	int fd;
+} mutterClipboardJob;
+
+WINPR_ATTR_NODISCARD
+static mutterClipboardJob* mutter_clipboard_job_new(void)
+{
+	mutterClipboardJob* job = calloc(1, sizeof(mutterClipboardJob));
+	if (job)
+		job->fd = -1;
+	return job;
+}
+
+static void mutter_clipboard_job_free(mutterClipboardJob* job)
+{
+	if (!job)
+		return;
+	if (job->mimes)
+	{
+		for (char** mime = job->mimes; *mime; mime++)
+			free(*mime);
+	}
+	free((void*)job->mimes);
+	free(job->mime);
+	free(job->data);
+	if (job->fd >= 0)
+		(void)close(job->fd);
+	free(job);
+}
+
+static void mutter_clipboard_message_free(wMessage* message)
+{
+	WINPR_ASSERT(message);
+	mutter_clipboard_job_free(message->context);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL mutter_clipboard_post(wMessageQueue* queue, UINT32 id, mutterClipboardJob* job)
+{
+	WINPR_ASSERT(queue);
+	WINPR_ASSERT(job);
+
+	wMessage message = WINPR_C_ARRAY_INIT;
+	message.context = job;
+	message.id = id;
+	message.Free = mutter_clipboard_message_free;
+	if (MessageQueue_Dispatch(queue, &message))
+		return TRUE;
+	mutter_clipboard_job_free(job);
+	return FALSE;
+}
+
+/* The hooks of shadow_cliprdr.c: any thread, so the work goes to the subsystem's */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_clipboard_offer(rdpShadowSubsystem* subsystem, const char* const* mimeTypes,
+                                   size_t count)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(subsystem->MsgPipe);
+
+	mutterClipboardJob* job = mutter_clipboard_job_new();
+	if (!job)
+		return FALSE;
+
+	job->mimes = (char**)calloc(count + 1, sizeof(char*));
+	if (!job->mimes)
+		goto fail;
+	for (size_t x = 0; x < count; x++)
+	{
+		job->mimes[x] = _strdup(mimeTypes[x]);
+		if (!job->mimes[x])
+			goto fail;
+	}
+	return mutter_clipboard_post(subsystem->MsgPipe->In, MUTTER_MSG_CLIPBOARD_OFFER, job);
+
+fail:
+	mutter_clipboard_job_free(job);
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL mutter_clipboard_read(rdpShadowSubsystem* subsystem, const char* mimeType)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(subsystem->MsgPipe);
+	WINPR_ASSERT(mimeType);
+
+	mutterClipboardJob* job = mutter_clipboard_job_new();
+	if (!job)
+		return FALSE;
+
+	job->mime = _strdup(mimeType);
+	if (!job->mime)
+	{
+		mutter_clipboard_job_free(job);
+		return FALSE;
+	}
+	return mutter_clipboard_post(subsystem->MsgPipe->In, MUTTER_MSG_CLIPBOARD_READ, job);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL mutter_clipboard_provide(rdpShadowSubsystem* subsystem, UINT32 request,
+                                     const BYTE* data, size_t size)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(subsystem->MsgPipe);
+
+	mutterClipboardJob* job = mutter_clipboard_job_new();
+	if (!job)
+		return FALSE;
+
+	job->serial = request;
+	if (data)
+	{
+		job->data = malloc(size);
+		if (!job->data)
+		{
+			mutter_clipboard_job_free(job);
+			return FALSE;
+		}
+		memcpy(job->data, data, size);
+		job->size = size;
+		job->ok = TRUE;
+	}
+	return mutter_clipboard_post(subsystem->MsgPipe->In, MUTTER_MSG_CLIPBOARD_PROVIDE, job);
+}
+
+/* @return the pipe Mutter answers with, ours to close, or -1 */
+WINPR_ATTR_NODISCARD
+static int mutter_clipboard_call_for_fd(mutterShadowSubsystem* mutter, const char* method,
+                                        const char* types, ...)
+{
+	WINPR_ASSERT(mutter);
+
+	sd_bus_error err = SD_BUS_ERROR_NULL;
+	sd_bus_message* call = nullptr;
+	sd_bus_message* reply = nullptr;
+	int fd = -1;
+
+	if (sd_bus_message_new_method_call(mutter->bus, &call, RD_NAME, mutter->rdSessionPath,
+	                                   RD_SESSION_IFACE, method) < 0)
+		return -1;
+
+	va_list ap = WINPR_C_ARRAY_INIT;
+	va_start(ap, types);
+	const int appended = sd_bus_message_appendv(call, types, ap);
+	va_end(ap);
+
+	if ((appended >= 0) &&
+	    (sd_bus_call(mutter->bus, call, MUTTER_CLIPBOARD_CALL_USEC, &err, &reply) >= 0) &&
+	    (sd_bus_message_read(reply, "h", &fd) >= 0))
+		fd = fcntl(fd, F_DUPFD_CLOEXEC, 3); /* the reply owns the fd */
+	else
+	{
+		WLog_WARN(TAG, "clipboard: %s failed: %s", method, err.message ? err.message : "bad reply");
+		fd = -1;
+	}
+
+	sd_bus_error_free(&err);
+	sd_bus_message_unref(reply);
+	sd_bus_message_unref(call);
+	return fd;
+}
+
+static void mutter_clipboard_write_done(mutterShadowSubsystem* mutter, UINT32 serial, BOOL ok)
+{
+	WINPR_ASSERT(mutter);
+
+	const int rc =
+	    sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE,
+	                       "SelectionWriteDone", nullptr, nullptr, "ub", serial, ok ? 1 : 0);
+	if (rc < 0)
+		WLog_WARN(TAG, "clipboard: SelectionWriteDone failed: %s", strerror(-rc));
+}
+
+/* subsystem thread: a client's clipboard becomes the session's selection */
+static void mutter_clipboard_set_selection(mutterShadowSubsystem* mutter,
+                                           const mutterClipboardJob* job)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(job);
+	WINPR_ASSERT(job->mimes);
+
+	sd_bus_error err = SD_BUS_ERROR_NULL;
+	sd_bus_message* call = nullptr;
+
+	/* without mime types, Mutter ends the session's ownership */
+	int rc = sd_bus_message_new_method_call(mutter->bus, &call, RD_NAME, mutter->rdSessionPath,
+	                                        RD_SESSION_IFACE, "SetSelection");
+	if (rc >= 0)
+		rc = sd_bus_message_open_container(call, 'a', "{sv}");
+	if ((rc >= 0) && job->mimes[0])
+	{
+		rc = sd_bus_message_open_container(call, 'e', "sv");
+		if (rc >= 0)
+			rc = sd_bus_message_append(call, "s", "mime-types");
+		if (rc >= 0)
+			rc = sd_bus_message_open_container(call, 'v', "as");
+		if (rc >= 0)
+			rc = sd_bus_message_append_strv(call, job->mimes);
+		if (rc >= 0)
+			rc = sd_bus_message_close_container(call);
+		if (rc >= 0)
+			rc = sd_bus_message_close_container(call);
+	}
+	if (rc >= 0)
+		rc = sd_bus_message_close_container(call);
+	if (rc >= 0)
+		rc = sd_bus_call(mutter->bus, call, MUTTER_CLIPBOARD_CALL_USEC, &err, nullptr);
+	if (rc < 0)
+		WLog_WARN(TAG, "clipboard: SetSelection failed: %s",
+		          err.message ? err.message : strerror(-rc));
+
+	sd_bus_error_free(&err);
+	sd_bus_message_unref(call);
+}
+
+/* subsystem thread: a client pastes */
+static void mutter_clipboard_start_read(mutterShadowSubsystem* mutter, wMessage* message)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(message);
+
+	mutterClipboardJob* job = message->context;
+	WINPR_ASSERT(job);
+
+	job->fd = mutter_clipboard_call_for_fd(mutter, "SelectionRead", "s", job->mime);
+	if ((job->fd >= 0) && mutter->clipboardJobs)
+	{
+		message->Free = nullptr; /* the data thread has it now */
+		if (mutter_clipboard_post(mutter->clipboardJobs, MUTTER_MSG_CLIPBOARD_READ, job))
+			return;
+	}
+	if (!shadow_clipboard_session_data(mutter->common.server, nullptr, 0))
+		WLog_DBG(TAG, "clipboard: no read was waiting");
+}
+
+/* subsystem thread: the session pastes, here is the client's data */
+static void mutter_clipboard_start_write(mutterShadowSubsystem* mutter, wMessage* message)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(message);
+
+	mutterClipboardJob* job = message->context;
+	WINPR_ASSERT(job);
+
+	if (job->ok)
+	{
+		job->fd = mutter_clipboard_call_for_fd(mutter, "SelectionWrite", "u", job->serial);
+		if ((job->fd >= 0) && mutter->clipboardJobs)
+		{
+			const UINT32 serial = job->serial;
+			message->Free = nullptr; /* the data thread has it now */
+			if (mutter_clipboard_post(mutter->clipboardJobs, MUTTER_MSG_CLIPBOARD_PROVIDE, job))
+				return;
+			mutter_clipboard_write_done(mutter, serial, FALSE);
+			return;
+		}
+	}
+	mutter_clipboard_write_done(mutter, job->serial, FALSE);
+}
+
+/* @return the revents of fd, 0 on a stall or a stop */
+WINPR_ATTR_NODISCARD
+static short mutter_clipboard_wait(mutterShadowSubsystem* mutter, int fd, short events)
+{
+	WINPR_ASSERT(mutter);
+
+	struct pollfd fds[2] = { { fd, events, 0 },
+		                     { GetEventFileDescriptor(mutter->stopEvent), POLLIN, 0 } };
+	int ready = 0;
+	do
+	{
+		ready = poll(fds, ARRAYSIZE(fds), MUTTER_CLIPBOARD_STALL_MS);
+	} while ((ready < 0) && (errno == EINTR));
+
+	if ((ready <= 0) || (fds[1].revents != 0))
+		return 0;
+	return fds[0].revents;
+}
+
+/* data thread: everything the session's application writes to the pipe */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_clipboard_read_all(mutterShadowSubsystem* mutter, mutterClipboardJob* job)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(job);
+
+	if (fcntl(job->fd, F_SETFL, fcntl(job->fd, F_GETFL) | O_NONBLOCK) < 0)
+		return FALSE;
+
+	size_t capacity = 0;
+	while (1)
+	{
+		if (job->size + 4096 > capacity)
+		{
+			const size_t wanted = capacity ? capacity * 2 : 64 * 1024;
+			if (wanted > SHADOW_CLIPBOARD_MAX_SIZE)
+			{
+				WLog_WARN(TAG, "clipboard: the selection is too large");
+				return FALSE;
+			}
+			BYTE* grown = realloc(job->data, wanted);
+			if (!grown)
+				return FALSE;
+			job->data = grown;
+			capacity = wanted;
+		}
+
+		if (mutter_clipboard_wait(mutter, job->fd, POLLIN) == 0)
+			return FALSE;
+
+		const ssize_t got = read(job->fd, &job->data[job->size], capacity - job->size);
+		if (got == 0)
+			return TRUE;
+		if (got > 0)
+			job->size += (size_t)got;
+		else if ((errno != EAGAIN) && (errno != EINTR))
+			return FALSE;
+	}
+}
+
+/* data thread: all of the client's data into the pipe to the session's application */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_clipboard_write_all(mutterShadowSubsystem* mutter, mutterClipboardJob* job)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(job);
+
+	if (fcntl(job->fd, F_SETFL, fcntl(job->fd, F_GETFL) | O_NONBLOCK) < 0)
+		return FALSE;
+
+	size_t done = 0;
+	while (done < job->size)
+	{
+		if (mutter_clipboard_wait(mutter, job->fd, POLLOUT) == 0)
+			return FALSE;
+
+		const ssize_t put = write(job->fd, &job->data[done], job->size - done); /* SIGPIPE: off */
+		if (put > 0)
+			done += (size_t)put;
+		else if ((errno != EAGAIN) && (errno != EINTR))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD WINAPI mutter_clipboard_thread(LPVOID arg)
+{
+	mutterShadowSubsystem* mutter = arg;
+	WINPR_ASSERT(mutter);
+
+	while (MessageQueue_Wait(mutter->clipboardJobs))
+	{
+		wMessage message = WINPR_C_ARRAY_INIT;
+		if (!MessageQueue_Peek(mutter->clipboardJobs, &message, TRUE))
+			continue;
+		if (message.id == WMQ_QUIT)
+			break;
+
+		mutterClipboardJob* job = message.context;
+		WINPR_ASSERT(job);
+
+		if (message.id == MUTTER_MSG_CLIPBOARD_READ)
+		{
+			const BOOL ok = mutter_clipboard_read_all(mutter, job);
+			if (!ok)
+				WLog_WARN(TAG, "clipboard: reading %s failed", job->mime);
+			if (!shadow_clipboard_session_data(mutter->common.server, ok ? job->data : nullptr,
+			                                   job->size))
+				WLog_DBG(TAG, "clipboard: no read was waiting");
+			mutter_clipboard_job_free(job);
+		}
+		else
+		{
+			job->ok = mutter_clipboard_write_all(mutter, job);
+			if (!job->ok)
+				WLog_WARN(TAG, "clipboard: writing to the session failed");
+			(void)close(job->fd); /* the end of the data to the application */
+			job->fd = -1;
+			if (!mutter_clipboard_post(mutter->common.MsgPipe->In, MUTTER_MSG_CLIPBOARD_WRITE_DONE,
+			                           job))
+				WLog_WARN(TAG, "clipboard: cannot finish a transfer");
+		}
+	}
+
+	ExitThread(0);
+	return 0;
+}
+
+/* The mime types are documented as "as"; GNOME Shell 50 sends "(as)". */
+WINPR_ATTR_NODISCARD
+static size_t mutter_clipboard_read_mimes(sd_bus_message* msg,
+                                          const char* mimes[MUTTER_CLIPBOARD_MAX_MIMES])
+{
+	WINPR_ASSERT(msg);
+
+	const char* contents = nullptr;
+	char type = 0;
+	if ((sd_bus_message_peek_type(msg, &type, &contents) <= 0) || !contents)
+		return 0;
+
+	const BOOL inStruct = contents[0] == '(';
+	if ((strcmp(contents, "as") != 0) && (strcmp(contents, "(as)") != 0))
+	{
+		(void)sd_bus_message_skip(msg, "v");
+		return 0;
+	}
+
+	size_t count = 0;
+	if (sd_bus_message_enter_container(msg, 'v', contents) <= 0)
+		return 0;
+	if (inStruct && (sd_bus_message_enter_container(msg, 'r', "as") <= 0))
+		return 0;
+	if (sd_bus_message_enter_container(msg, 'a', "s") > 0)
+	{
+		const char* mime = nullptr;
+		while (sd_bus_message_read(msg, "s", &mime) > 0)
+		{
+			if (count < MUTTER_CLIPBOARD_MAX_MIMES)
+				mimes[count++] = mime;
+		}
+		(void)sd_bus_message_exit_container(msg);
+	}
+	if (inStruct)
+		(void)sd_bus_message_exit_container(msg);
+	(void)sd_bus_message_exit_container(msg);
+	return count;
+}
+
+WINPR_ATTR_NODISCARD
+static int mutter_on_selection_owner_changed(sd_bus_message* msg, void* data,
+                                             WINPR_ATTR_UNUSED sd_bus_error* err)
+{
+	mutterShadowSubsystem* mutter = data;
+	WINPR_ASSERT(mutter);
+
+	const char* mimes[MUTTER_CLIPBOARD_MAX_MIMES] = WINPR_C_ARRAY_INIT;
+	size_t count = 0;
+	int sessionIsOwner = 0;
+
+	if (sd_bus_message_enter_container(msg, 'a', "{sv}") <= 0)
+		return 0;
+	while (sd_bus_message_enter_container(msg, 'e', "sv") > 0)
+	{
+		const char* key = nullptr;
+		if (sd_bus_message_read(msg, "s", &key) < 0)
+			break;
+
+		if (strcmp(key, "mime-types") == 0)
+			count = mutter_clipboard_read_mimes(msg, mimes);
+		else if (strcmp(key, "session-is-owner") == 0)
+			(void)sd_bus_message_read(msg, "v", "b", &sessionIsOwner);
+		else
+			(void)sd_bus_message_skip(msg, "v");
+		(void)sd_bus_message_exit_container(msg);
+	}
+
+	/* that is what a client copied, coming back */
+	if (sessionIsOwner)
+		return 0;
+
+	WLog_DBG(TAG, "clipboard: the session offers %" PRIuz " mime types", count);
+	if (!shadow_clipboard_session_changed(mutter->common.server, mimes, count))
+		WLog_WARN(TAG, "clipboard: cannot announce the session's clipboard");
+	return 0;
+}
+
+WINPR_ATTR_NODISCARD
+static int mutter_on_selection_transfer(sd_bus_message* msg, void* data,
+                                        WINPR_ATTR_UNUSED sd_bus_error* err)
+{
+	mutterShadowSubsystem* mutter = data;
+	WINPR_ASSERT(mutter);
+
+	const char* mime = nullptr;
+	uint32_t serial = 0;
+	if (sd_bus_message_read(msg, "su", &mime, &serial) < 0)
+		return 0;
+
+	if (!shadow_clipboard_session_request(mutter->common.server, serial, mime))
+		mutter_clipboard_write_done(mutter, serial, FALSE);
+	return 0;
+}
+
+/* Without it the rest works: the clients simply get no clipboard channel. */
+static void mutter_clipboard_enable(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	sd_bus_error err = SD_BUS_ERROR_NULL;
+	if ((sd_bus_match_signal(mutter->bus, &mutter->selectionOwnerSlot, RD_NAME,
+	                         mutter->rdSessionPath, RD_SESSION_IFACE, "SelectionOwnerChanged",
+	                         mutter_on_selection_owner_changed, mutter) < 0) ||
+	    (sd_bus_match_signal(mutter->bus, &mutter->selectionTransferSlot, RD_NAME,
+	                         mutter->rdSessionPath, RD_SESSION_IFACE, "SelectionTransfer",
+	                         mutter_on_selection_transfer, mutter) < 0))
+		WLog_WARN(TAG, "cannot watch the session's clipboard: no clipboard");
+	else
+	{
+		/* Mutter answers with a SelectionOwnerChanged for what the session holds now */
+		const int enabled =
+		    sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE,
+		                       "EnableClipboard", &err, nullptr, "a{sv}", 0);
+		if (enabled < 0)
+			WLog_WARN(TAG, "EnableClipboard failed: %s: no clipboard",
+			          err.message ? err.message : strerror(-enabled));
+		else
+		{
+			mutter->clipboardEnabled = TRUE;
+			mutter->common.ClipboardOffer = mutter_clipboard_offer;
+			mutter->common.ClipboardRead = mutter_clipboard_read;
+			mutter->common.ClipboardProvide = mutter_clipboard_provide;
+		}
+	}
+	sd_bus_error_free(&err);
+}
+
 static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessage* message)
 {
 	WINPR_ASSERT(mutter);
@@ -1862,6 +2410,26 @@ static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessag
 		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
 			mutter_shadow_refresh(mutter);
 			break;
+
+		case MUTTER_MSG_CLIPBOARD_OFFER:
+			mutter_clipboard_set_selection(mutter, message->context);
+			break;
+
+		case MUTTER_MSG_CLIPBOARD_READ:
+			mutter_clipboard_start_read(mutter, message);
+			break;
+
+		case MUTTER_MSG_CLIPBOARD_PROVIDE:
+			mutter_clipboard_start_write(mutter, message);
+			break;
+
+		case MUTTER_MSG_CLIPBOARD_WRITE_DONE:
+		{
+			const mutterClipboardJob* job = message->context;
+			WINPR_ASSERT(job);
+			mutter_clipboard_write_done(mutter, job->serial, job->ok);
+		}
+		break;
 
 		default:
 			WLog_ERR(TAG, "Unknown message id: %" PRIu32 "", message->id);
@@ -2077,6 +2645,8 @@ static int mutter_shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 		mutter->streamAddedSlot = sd_bus_slot_unref(mutter->streamAddedSlot);
 		mutter->closedSlot = sd_bus_slot_unref(mutter->closedSlot);
 		mutter->ownerSlot = sd_bus_slot_unref(mutter->ownerSlot);
+		mutter->selectionOwnerSlot = sd_bus_slot_unref(mutter->selectionOwnerSlot);
+		mutter->selectionTransferSlot = sd_bus_slot_unref(mutter->selectionTransferSlot);
 		mutter->bus = sd_bus_flush_close_unref(mutter->bus);
 	}
 	mutter->started = FALSE;
@@ -2100,6 +2670,19 @@ static int mutter_shadow_subsystem_start(rdpShadowSubsystem* subsystem)
 		return -1;
 
 	(void)ResetEvent(mutter->stopEvent);
+	if (mutter->clipboardEnabled)
+	{
+		mutter->clipboardJobs = MessageQueue_New(nullptr);
+		if (mutter->clipboardJobs)
+			mutter->clipboardThread =
+			    CreateThread(nullptr, 0, mutter_clipboard_thread, mutter, 0, nullptr);
+		if (!mutter->clipboardThread)
+		{
+			WLog_ERR(TAG, "Failed to create the clipboard thread");
+			return -1;
+		}
+	}
+
 	mutter->thread = CreateThread(nullptr, 0, mutter_shadow_subsystem_thread, mutter, 0, nullptr);
 	if (!mutter->thread)
 	{
@@ -2123,6 +2706,18 @@ static int mutter_shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 		(void)CloseHandle(mutter->thread);
 		mutter->thread = nullptr;
 	}
+
+	if (mutter->clipboardThread)
+	{
+		(void)SetEvent(mutter->stopEvent); /* a transfer ends at once */
+		if (!MessageQueue_PostQuit(mutter->clipboardJobs, 0))
+			WLog_WARN(TAG, "cannot stop the clipboard thread");
+		(void)WaitForSingleObject(mutter->clipboardThread, INFINITE);
+		(void)CloseHandle(mutter->clipboardThread);
+		mutter->clipboardThread = nullptr;
+	}
+	MessageQueue_Free(mutter->clipboardJobs);
+	mutter->clipboardJobs = nullptr;
 	return 1;
 }
 
