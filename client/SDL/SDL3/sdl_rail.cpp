@@ -1774,16 +1774,33 @@ SdlRailIcon* SdlRail::iconCacheLookup(uint32_t cacheId, uint32_t cacheEntry)
 /* ICON_INFO (1/4/8/16/24/32 bpp + AND mask) -> BGRA32, like xf convert_rail_icon. */
 static bool convertRailIcon(const ICON_INFO* info, SdlRailIcon& icon)
 {
+	/* width, height and cbBitsColor come straight from the wire. Every format accepted by
+	 * freerdp_image_copy_from_icon_data needs at least one byte of bitsColor per pixel, so an
+	 * icon claiming more pixels than that is rejected before the BGRA buffer is allocated
+	 * (4 * 65535 * 65535 bytes otherwise). A failed decode leaves the cache slot empty so a
+	 * later WindowCachedIcon does not pick up a half-initialized icon. */
+	const size_t pixels = 1ULL * info->width * info->height;
+	if (pixels > info->cbBitsColor)
+	{
+		icon = {};
+		return false;
+	}
+
 	icon.w = info->width;
 	icon.h = info->height;
-	icon.bgra.assign(4ULL * info->width * info->height, 0);
-	return freerdp_image_copy_from_icon_data(
-	           icon.bgra.data(), PIXEL_FORMAT_BGRA32, 0, 0, 0,
-	           WINPR_ASSERTING_INT_CAST(UINT16, info->width),
-	           WINPR_ASSERTING_INT_CAST(UINT16, info->height), info->bitsColor,
-	           WINPR_ASSERTING_INT_CAST(UINT16, info->cbBitsColor), info->bitsMask,
-	           WINPR_ASSERTING_INT_CAST(UINT16, info->cbBitsMask), info->colorTable,
-	           WINPR_ASSERTING_INT_CAST(UINT16, info->cbColorTable), info->bpp) == TRUE;
+	icon.bgra.assign(4ULL * pixels, 0);
+	if (freerdp_image_copy_from_icon_data(
+	        icon.bgra.data(), PIXEL_FORMAT_BGRA32, 0, 0, 0,
+	        WINPR_ASSERTING_INT_CAST(UINT16, info->width),
+	        WINPR_ASSERTING_INT_CAST(UINT16, info->height), info->bitsColor,
+	        WINPR_ASSERTING_INT_CAST(UINT16, info->cbBitsColor), info->bitsMask,
+	        WINPR_ASSERTING_INT_CAST(UINT16, info->cbBitsMask), info->colorTable,
+	        WINPR_ASSERTING_INT_CAST(UINT16, info->cbColorTable), info->bpp) != TRUE)
+	{
+		icon = {};
+		return false;
+	}
+	return true;
 }
 
 BOOL SdlRail::window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
