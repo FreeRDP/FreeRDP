@@ -1915,6 +1915,20 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 			return FALSE;
 		}
 
+		/* The name must uniquely identify the channel: the server side looks static channels up
+		 * by name (case insensitive, see wts_get_joined_channel_by_name) */
+		for (UINT32 j = 0; j < i; j++)
+		{
+			const rdpMcsChannel* other = &mcs->channels[j];
+			if (_strnicmp(other->Name, channel->Name, CHANNEL_NAME_LEN + 1) == 0)
+			{
+				WLog_Print(mcs->log, WLOG_ERROR,
+				           "protocol violation: received duplicate static channel name '%s'",
+				           channel->Name);
+				return FALSE;
+			}
+		}
+
 		Stream_Read_UINT32(s, channel->options); /* options (4 bytes) */
 		channel->ChannelId = mcs->baseChannelId++;
 	}

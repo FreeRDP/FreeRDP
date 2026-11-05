@@ -1886,6 +1886,16 @@ BOOL pf_channel_rdpdr_server_new(pServerContext* ps)
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->interceptContextMap);
 
+	/* WTSVirtualChannelOpenEx returns the same handle for every open of a static channel and
+	 * pf_channel_rdpdr_server_context_free closes it, so replacing an existing context in
+	 * interceptContextMap would leave the new one with a dangling handle. */
+	if (HashTable_Contains(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME))
+	{
+		WLog_Print(WLog_Get(RTAG), WLOG_ERROR, "Channel %s already set up in interceptContextMap",
+		           RDPDR_SVC_CHANNEL_NAME);
+		return FALSE;
+	}
+
 	rdpdr = calloc(1, sizeof(pf_channel_server_context));
 	if (!rdpdr)
 		return FALSE;
