@@ -328,7 +328,8 @@ static void clipfiles_push(ClipFile** list, UINT32* n, UINT32* cap, const WCHAR*
 		if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 		    (!wcscmp(fd.cFileName, L".") || !wcscmp(fd.cFileName, L"..")))
 			continue;
-		WCHAR sub[MAX_PATH], srel[MAX_PATH];
+		WCHAR sub[MAX_PATH] = { 0 };
+		WCHAR srel[MAX_PATH] = { 0 };
 		_snwprintf_s(sub, MAX_PATH, _TRUNCATE, L"%s\\%s", full, fd.cFileName);
 		_snwprintf_s(srel, MAX_PATH, _TRUNCATE, L"%s\\%s", rel, fd.cFileName);
 		clipfiles_push(list, n, cap, sub, srel);

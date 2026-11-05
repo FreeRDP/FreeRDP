@@ -789,6 +789,7 @@ static void win_shadow_client_disconnect(rdpShadowSubsystem* subsystem, rdpShado
 #if defined(CHANNEL_CLIPRDR_SERVER)
 	win_shadow_cliprdr_uninit(client);
 #endif
+}
 
 static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 {
