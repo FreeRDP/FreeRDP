@@ -287,6 +287,10 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
 	                                 freerdp_settings_get_uint32(srvSettings, FreeRDP_ColorDepth)))
 		return FALSE;
+	if (!freerdp_settings_set_uint32(
+	        settings, FreeRDP_MultitransportFlags,
+	        freerdp_settings_get_uint32(srvSettings, FreeRDP_MultitransportFlags)))
+		return FALSE;
 	NSCodec = freerdp_settings_get_bool(srvSettings, FreeRDP_NSCodec);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec))
 		return FALSE;
