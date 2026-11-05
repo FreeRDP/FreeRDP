@@ -25,6 +25,7 @@
 
 #include <winpr/assert.h>
 #include <winpr/cast.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -38,6 +39,29 @@
 /* Maximum number of rectangles kept in gdiGfxSurface::invalidRegion before it is replaced by its
  * bounding box. */
 #define GDI_GFX_MAX_INVALID_RECTS 256
+
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_H264)
+/* A decoder's verdict for the channel's statistics, the time includes the colour conversion */
+static void gdi_report_decode(RdpgfxClientContext* context, UINT32 codecId, UINT64 startNS,
+                              const gdiGfxSurface* surface)
+{
+	const UINT64 decodeNS = winpr_GetTickCount64NS() - startNS;
+	FREERDP_DECODE_RESULT result = WINPR_C_ARRAY_INIT;
+	BOOL valid = FALSE;
+#if defined(WITH_GFX_AV1)
+	if (codecId == RDPGFX_CODECID_AV1)
+		valid = freerdp_av1_context_get_last_decode(surface->av1, &result);
+#endif
+#if defined(WITH_GFX_H264)
+	if ((codecId == RDPGFX_CODECID_AVC420) || (codecId == RDPGFX_CODECID_AVC444) ||
+	    (codecId == RDPGFX_CODECID_AVC444v2))
+		valid = h264_context_get_last_decode(surface->h264, &result);
+#endif
+	if (valid)
+		IFCALL(context->DecodeResult, context, WINPR_ASSERTING_INT_CAST(UINT16, codecId), &result,
+		       decodeNS);
+}
+#endif
 
 WINPR_ATTR_NODISCARD
 static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
@@ -540,9 +564,12 @@ static UINT gdi_SurfaceCommand_AV1(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 
 	meta = &(bs->meta);
+	const UINT64 startNS = winpr_GetTickCount64NS();
 	rc = freerdp_av1_decompress(surface->av1, bs->data, bs->length, surface->data, surface->format,
 	                            surface->scanline, surface->width, surface->height,
 	                            meta->regionRects, meta->numRegionRects);
+
+	gdi_report_decode(context, cmd->codecId, startNS, surface);
 
 	if (rc < 0)
 	{
@@ -887,9 +914,12 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 
 	meta = &(bs->meta);
+	const UINT64 startNS = winpr_GetTickCount64NS();
 	rc = avc420_decompress(surface->h264, bs->data, bs->length, surface->data, surface->format,
 	                       surface->scanline, surface->width, surface->height, meta->regionRects,
 	                       meta->numRegionRects);
+
+	gdi_report_decode(context, cmd->codecId, startNS, surface);
 
 	if (rc < 0)
 	{
@@ -983,10 +1013,13 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	avc2 = &bs->bitstream[1];
 	meta1 = &avc1->meta;
 	meta2 = &avc2->meta;
+	const UINT64 startNS = winpr_GetTickCount64NS();
 	rc = avc444_decompress(surface->h264, bs->LC, meta1->regionRects, meta1->numRegionRects,
 	                       avc1->data, avc1->length, meta2->regionRects, meta2->numRegionRects,
 	                       avc2->data, avc2->length, surface->data, surface->format,
 	                       surface->scanline, surface->width, surface->height, cmd->codecId);
+
+	gdi_report_decode(context, cmd->codecId, startNS, surface);
 
 	if (rc < 0)
 	{
