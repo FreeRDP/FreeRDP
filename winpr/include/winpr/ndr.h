@@ -838,6 +838,9 @@ extern "C"
 
 	/** @brief reads a WCHAR, aligned on 2 bytes
 	 *
+	 *  The character is stored in UTF-16LE like all the WinPR WCHAR strings, whatever the byte
+	 *  order of the host.
+	 *
 	 *  @param context the decoder
 	 *  @param s the stream to read from
 	 *  @param ptr receives the character
@@ -846,6 +849,36 @@ extern "C"
 	 */
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_ndr_decoder_read_wchar(WinPrNdrDecoder* context, wStream* s, WCHAR* ptr);
+
+	/** @brief writes a WCHAR stored in UTF-16LE, aligned on 2 bytes
+	 *
+	 *  @param context the encoder
+	 *  @param s the stream to write to
+	 *  @param ptr the character
+	 *  @return \b TRUE on success, \b FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL winpr_ndr_encoder_write_wchar(WinPrNdrEncoder* context, wStream* s,
+	                                             const WCHAR* ptr);
+
+	/** @brief a WCHAR, stored in UTF-16LE in memory
+	 *  @since version 3.34.0
+	 */
+	WINPR_API extern const WinPrNdrMessageDescr winpr_ndr_wchar_descr_s;
+
+	/** @brief the message type of winpr_ndr_wchar_descr_s
+	 *  @return the message type
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API WinPrNdrMessageType winpr_ndr_wchar_descr(void);
+
+	/** @brief the arrays of WCHAR, stored in UTF-16LE in memory: use them for strings
+	 *  instead of the uint16 arrays, which store the items in host byte order
+	 *  @since version 3.34.0
+	 */
+	WINPR_NDR_ARRAY_OF_TYPE_DECL(winpr_ndr, wchar, WCHAR);
 
 	/** @brief reads the referent of a unique pointer
 	 *

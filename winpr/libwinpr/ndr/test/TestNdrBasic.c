@@ -459,6 +459,83 @@ static int TestNdrSignedTypes(void)
 	return 0;
 }
 
+/* ===================================== WCHAR ============================================= */
+
+/* WinPR WCHAR strings are UTF-16LE in memory whatever the host byte order, "a€" */
+static const BYTE wcharMemory[] = { 'a', 0x00, 0xac, 0x20 };
+
+static const BYTE wcharArrayLE[] = { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	                                 0x02, 0x00, 0x00, 0x00, 'a',  0x00, 0xac, 0x20 };
+static const BYTE wcharArrayBE[] = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00,
+	                                 0x00, 0x00, 0x00, 0x02, 0x00, 'a',  0x20, 0xac };
+
+static int TestNdrWchar(void)
+{
+	for (int bigEndian = 0; bigEndian < 2; bigEndian++)
+	{
+		const BYTE* expected = bigEndian ? wcharArrayBE : wcharArrayLE;
+		WCHAR str[ARRAYSIZE(wcharMemory) / sizeof(WCHAR) + 1] = WINPR_C_ARRAY_INIT;
+		WCHAR* decodedStr = nullptr;
+		WCHAR decoded[ARRAYSIZE(str)] = WINPR_C_ARRAY_INIT;
+		memcpy(str, wcharMemory, sizeof(wcharMemory));
+
+		int retCode = -2;
+		WinPrNdrDecoder* decoder = nullptr;
+		WinPrNdrEncoder* encoder = winpr_ndr_encoder_new(bigEndian != 0, 1);
+		wStream* s = Stream_New(nullptr, 64);
+		if (!encoder || !s)
+			goto out;
+
+		/* the encoder hints are item counts */
+		retCode = -3;
+		const WinPrNdrVaryingArrayHints countHints = { 2, 2 };
+		if (!winpr_ndr_wcharVaryingArray_descr()->writeFn(encoder, s, &countHints, str) ||
+		    (Stream_GetPosition(s) != sizeof(wcharArrayLE)) ||
+		    (memcmp(Stream_Buffer(s), expected, sizeof(wcharArrayLE)) != 0))
+			goto out;
+
+		/* the decoder hints are byte lengths, like the ones of a RPC_UNICODE_STRING */
+		retCode = -4;
+		Stream_SealLength(s);
+		Stream_SetPosition(s, 0);
+		decoder = winpr_ndr_decoder_new(bigEndian != 0, 1);
+		const WinPrNdrVaryingArrayHints byteHints = { sizeof(wcharMemory), sizeof(wcharMemory) };
+		if (!decoder ||
+		    !winpr_ndr_wcharVaryingArray_descr()->readFn(decoder, s, &byteHints, decoded) ||
+		    (Stream_GetRemainingLength(s) != 0) ||
+		    (memcmp(decoded, wcharMemory, sizeof(wcharMemory)) != 0))
+			goto out;
+
+		/* [string] wchar_t*: the same characters and a terminating null */
+		retCode = -5;
+		const WCHAR* pstr = str;
+		Stream_SetPosition(s, 0);
+		if (!winpr_ndr_wstring_varying_descr()->writeFn(encoder, s, nullptr, (const void*)&pstr))
+			goto out;
+
+		retCode = -6;
+		Stream_SealLength(s);
+		Stream_SetPosition(s, 0);
+		winpr_ndr_decoder_destroy(&decoder);
+		decoder = winpr_ndr_decoder_new(bigEndian != 0, 1);
+		if (!decoder ||
+		    !winpr_ndr_wstring_varying_descr()->readFn(decoder, s, nullptr, (void*)&decodedStr) ||
+		    !decodedStr || (memcmp(decodedStr, wcharMemory, sizeof(wcharMemory)) != 0) ||
+		    (decodedStr[ARRAYSIZE(str) - 1] != 0))
+			goto out;
+
+		retCode = 0;
+	out:
+		winpr_ndr_pointer_release(decodedStr);
+		winpr_ndr_decoder_destroy(&decoder);
+		winpr_ndr_encoder_destroy(&encoder);
+		Stream_Free(s, TRUE);
+		if (retCode)
+			return retCode - (bigEndian * 10);
+	}
+	return 0;
+}
+
 /* ================================== full pointers ======================================== */
 
 static BOOL decode_payload(const WinPrNdrStructDescr* descr, const BYTE* payload, size_t len,
@@ -760,6 +837,7 @@ int TestNdrBasic(int argc, char* argv[])
 		                           TestNdrDeferredOrderRead,
 		                           TestNdrObject,
 		                           TestNdrSignedTypes,
+		                           TestNdrWchar,
 		                           TestNdrFullPointerAlias,
 		                           TestNdrFullPointerConfusion,
 		                           TestNdrUnionWrite,
