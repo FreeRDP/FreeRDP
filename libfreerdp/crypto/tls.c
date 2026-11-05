@@ -222,7 +222,16 @@ static void bio_rdp_tls_set_retry(BIO* bio, int error)
 			BIO_set_retry_reason(bio, BIO_RR_CONNECT);
 			break;
 
+		case SSL_ERROR_NONE:
+		case SSL_ERROR_SSL:
+		case SSL_ERROR_SYSCALL:
+		case SSL_ERROR_ZERO_RETURN:
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			break;
+
 		default:
+			/* nothing says this one can be retried */
+			WLog_WARN(TAG, "unexpected SSL error %d: not retrying", error);
 			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 			break;
 	}
