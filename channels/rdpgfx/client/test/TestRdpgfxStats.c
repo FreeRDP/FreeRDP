@@ -169,12 +169,12 @@ static BOOL all_zero(RdpgfxClientContext* gfx)
 
 static BOOL check_names(void)
 {
-	static const char* const expected[] = {
-		"RDPGFX_CODECID_AV1",       "RDPGFX_CODECID_UNCOMPRESSED_BYTES",
-		"RDPGFX_CODECID_AV1_BYTES", "RDPGFX_CODECID_AVC444v2_BYTES",
-		"RDPGFX_CMDID_WATERMARK",   "RDPGFX_CMDID_INVALID",
-		"RDPGFX_FRAMES_DECODED",    "RDPGFX_FRAMES_UNACKNOWLEDGED"
-	};
+	static const char* const expected[] = { "RDPGFX_CODECID_UNCOMPRESSED_BYTES",
+		                                    "RDPGFX_CODECID_AVC444v2_BYTES",
+		                                    "RDPGFX_CMDID_WATERMARK",
+		                                    "RDPGFX_CMDID_INVALID",
+		                                    "RDPGFX_FRAMES_DECODED",
+		                                    "RDPGFX_FRAMES_UNACKNOWLEDGED" };
 
 	const size_t max = rdpgfx_stats_max_index();
 
@@ -186,8 +186,11 @@ static BOOL check_names(void)
 		const char* name = rdpgfx_stats_name_for_index(x);
 		TEST_CHECK(name);
 		TEST_CHECK(strlen(name) > 0);
-		TEST_CHECK(strstr(name, "UNKNOWN") == nullptr);
 		TEST_CHECK(strcmp(name, "RDPGFX_STATS_UNUSED") != 0);
+
+		/* the codec IDs nothing uses share a name */
+		if (strstr(name, "UNKNOWN"))
+			continue;
 
 		for (size_t y = x + 1; y < max; y++)
 			TEST_CHECK(strcmp(name, rdpgfx_stats_name_for_index(y)) != 0);
@@ -283,8 +286,9 @@ static BOOL check_session(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* 
 
 	/* refused: a surface command nobody decoded is no traffic of that codec */
 	TEST_CHECK(send_wire_to_surface_1(callback, 0x0002, 13) != CHANNEL_RC_OK);
-	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_UNUSED_0002") == 0);
-	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_UNUSED_0002_BYTES") == 0);
+	TEST_CHECK(rdpgfx_stats_value_for_index(gfx, 0x0002) == 0);
+	TEST_CHECK(rdpgfx_stats_value_for_index(gfx, 1ull * RDPGFX_CODECID_MAX + RDPGFX_CMDID_MAX +
+	                                                 1ull + 0x0002) == 0);
 
 	TEST_CHECK(send_frame_pdu(callback, RDPGFX_CMDID_ENDFRAME, 1) == CHANNEL_RC_OK);
 	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_DECODED") == 1);

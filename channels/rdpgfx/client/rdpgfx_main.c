@@ -63,32 +63,19 @@ typedef struct
 	RdpgfxClientContextStats stats;
 } RdpgfxClientContextInt;
 
-/* One entry per stats slot, in codec id order. The ids nothing uses have a slot as well, and all
- * names are independent of the build configuration, so an index means the same in every build. */
-#define RDPGFX_STATS_CODEC_IDS(X)      \
-	X(RDPGFX_CODECID_UNCOMPRESSED)     \
-	X(RDPGFX_CODECID_AV1)              \
-	X(RDPGFX_CODECID_UNUSED_0002)      \
-	X(RDPGFX_CODECID_CAVIDEO)          \
-	X(RDPGFX_CODECID_UNUSED_0004)      \
-	X(RDPGFX_CODECID_UNUSED_0005)      \
-	X(RDPGFX_CODECID_UNUSED_0006)      \
-	X(RDPGFX_CODECID_UNUSED_0007)      \
-	X(RDPGFX_CODECID_CLEARCODEC)       \
-	X(RDPGFX_CODECID_CAPROGRESSIVE)    \
-	X(RDPGFX_CODECID_PLANAR)           \
-	X(RDPGFX_CODECID_AVC420)           \
-	X(RDPGFX_CODECID_ALPHA)            \
-	X(RDPGFX_CODECID_CAPROGRESSIVE_V2) \
-	X(RDPGFX_CODECID_AVC444)           \
-	X(RDPGFX_CODECID_AVC444v2)
+/* The name of a byte counter is the name of its codec ID with _BYTES added */
+static char bytesGfxCodecNames[RDPGFX_CODECID_MAX][64];
+static INIT_ONCE bytesGfxCodecNamesOnce = INIT_ONCE_STATIC_INIT;
 
-#define RDPGFX_STATS_CODEC_NAME(id) #id,
-#define RDPGFX_STATS_CODEC_BYTES_NAME(id) #id "_BYTES",
-
-static const char* const cntGfxCodecNames[] = { RDPGFX_STATS_CODEC_IDS(RDPGFX_STATS_CODEC_NAME) };
-static const char* const bytesGfxCodecNames[] = { RDPGFX_STATS_CODEC_IDS(
-	RDPGFX_STATS_CODEC_BYTES_NAME) };
+static BOOL CALLBACK rdpgfx_stats_init_names(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                             WINPR_ATTR_UNUSED PVOID param,
+                                             WINPR_ATTR_UNUSED PVOID* context)
+{
+	for (UINT16 x = 0; x < RDPGFX_CODECID_MAX; x++)
+		(void)_snprintf(bytesGfxCodecNames[x], sizeof(bytesGfxCodecNames[x]), "%s_BYTES",
+		                rdpgfx_get_codec_id_string(x));
+	return TRUE;
+}
 
 static const UINT32 MAX_SURFACE_SIZE = 32766;
 static const UINT32 MAX_MONITOR_COUNT = 16;
@@ -100,12 +87,8 @@ size_t rdpgfx_stats_max_index(void)
 
 const char* rdpgfx_stats_name_for_index(size_t index)
 {
-	/* in a function: without C11 this is an assert(), which a file scope does not take */
-	WINPR_STATIC_ASSERT(ARRAYSIZE(cntGfxCodecNames) == RDPGFX_CODECID_MAX);
-	WINPR_STATIC_ASSERT(ARRAYSIZE(bytesGfxCodecNames) == RDPGFX_CODECID_MAX);
-
 	if (index < RDPGFX_CODECID_MAX)
-		return cntGfxCodecNames[index];
+		return rdpgfx_get_codec_id_string(WINPR_ASSERTING_INT_CAST(UINT16, index));
 
 	index -= RDPGFX_CODECID_MAX;
 	if (index < RDPGFX_CMDID_MAX)
@@ -115,7 +98,12 @@ const char* rdpgfx_stats_name_for_index(size_t index)
 
 	index -= RDPGFX_CMDID_MAX + 1;
 	if (index < RDPGFX_CODECID_MAX)
+	{
+		if (!InitOnceExecuteOnce(&bytesGfxCodecNamesOnce, rdpgfx_stats_init_names, nullptr,
+		                         nullptr))
+			return "RDPGFX_STATS_UNUSED";
 		return bytesGfxCodecNames[index];
+	}
 
 	index -= RDPGFX_CODECID_MAX;
 	if (index == 0)

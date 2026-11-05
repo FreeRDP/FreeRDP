@@ -188,9 +188,10 @@ extern "C"
 	 *  one more slot for invalid command IDs, encoded bytes per codec ID (the name of the codec's
 	 *  slot with _BYTES added), frames the server ended and frames not yet acknowledged. The
 	 *  frames counted as ended are the ones reported as decoded in the frame acknowledge PDU,
-	 *  whatever the decoders made of them. All of them start at 0 when the channel opens and are
-	 *  still readable after it closed. New stats are added at the end, an index never changes
-	 *  its meaning. Use the name to find one.
+	 *  whatever the decoders made of them. Codec IDs nothing uses read RDPGFX_CODECID_UNKNOWN.
+	 *  All of them start at 0 when the channel opens and are still readable after it closed.
+	 *  New stats are added at the end, an index never changes its meaning. Use the name to find
+	 *  one.
 	 *
 	 *  @return The number of GFX stats indices that will return a value
 	 *  @since version 3.27.0
