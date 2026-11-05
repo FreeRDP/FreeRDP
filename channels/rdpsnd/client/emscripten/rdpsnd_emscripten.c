@@ -56,7 +56,7 @@ typedef struct
 
 /*
  * The format the server sends on the wire, for the web page's Info panel:
- * [0] wFormatTag (0 = no audio yet), [1] nSamplesPerSec, [2] nChannels.
+ * [0] wFormatTag (WAVE_FORMAT_UNKNOWN = no audio yet), [1] nSamplesPerSec, [2] nChannels.
  *
  * Open() only sees the PCM format the device plays: for Opus, AAC or ADPCM rdpsnd opens the
  * device with a PCM copy of the wire format and decodes with freerdp_dsp. The wire format is
@@ -104,6 +104,7 @@ static void play_on_main(void* arg)
 	free(job);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pcm_playable(const AUDIO_FORMAT* format)
 {
 	WINPR_ASSERT(format);
@@ -113,6 +114,7 @@ static BOOL pcm_playable(const AUDIO_FORMAT* format)
 	       (format->nChannels >= 1) && (format->nChannels <= 2) && (format->nSamplesPerSec > 0);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_emscripten_format_supported(rdpsndDevicePlugin* device,
                                                const AUDIO_FORMAT* format)
 {
@@ -137,7 +139,8 @@ static BOOL rdpsnd_emscripten_open(rdpsndDevicePlugin* device, const AUDIO_FORMA
 	p->rate = format->nSamplesPerSec;
 
 	const AUDIO_FORMAT* wire = format;
-	if ((p->asked.wFormatTag != 0) && (p->asked.nSamplesPerSec == format->nSamplesPerSec) &&
+	if ((p->asked.wFormatTag != WAVE_FORMAT_UNKNOWN) &&
+	    (p->asked.nSamplesPerSec == format->nSamplesPerSec) &&
 	    (p->asked.nChannels == format->nChannels))
 		wire = &p->asked;
 	web_audio_format_set(wire->wFormatTag, wire->nSamplesPerSec, wire->nChannels);
@@ -225,7 +228,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE emscripten_freerdp_rdpsnd_client_subsystem_en
 		return CHANNEL_RC_NO_MEMORY;
 
 	p->volume = UINT32_MAX;
-	web_audio_format_set(0, 0, 0); /* a new session: no audio yet */
+	web_audio_format_set(WAVE_FORMAT_UNKNOWN, 0, 0); /* a new session: no audio yet */
 	p->device.Open = rdpsnd_emscripten_open;
 	p->device.FormatSupported = rdpsnd_emscripten_format_supported;
 	p->device.GetVolume = rdpsnd_emscripten_get_volume;
