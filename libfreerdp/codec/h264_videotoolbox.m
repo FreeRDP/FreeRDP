@@ -383,6 +383,10 @@ static BOOL videotoolbox_ensure_session(H264_CONTEXT *h264, UINT32 ppsId)
 		if (status == noErr)
 		{
 			h264->hwAccel = (hardware == kCFBooleanTrue);
+			/* the session starts inside a decode, so this one counts as well */
+			h264->decoderHardware =
+			    h264->hwAccel ? FREERDP_DECODE_HARDWARE_YES : FREERDP_DECODE_HARDWARE_NO;
+			h264->lastDecode.hardware = h264->decoderHardware;
 			WLog_Print(h264->log, WLOG_DEBUG, "VideoToolbox H.264 decoder: %s",
 			           h264->hwAccel ? "hardware" : "software");
 		}

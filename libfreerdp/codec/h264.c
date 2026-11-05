@@ -175,6 +175,55 @@ static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSi
 	return status;
 }
 
+/* The first slice decides, what comes before it (SPS, PPS, SEI) is short, so this costs little.
+ * A recovery point SEI makes a random access point as well, but no key frame. */
+WINPR_ATTR_NODISCARD
+static BOOL h264_is_key_frame(const BYTE* data, size_t size)
+{
+	if (!data)
+		return FALSE;
+
+	size_t pos = 0;
+	while (pos + 3 < size)
+	{
+		if (data[pos + 2] > 1)
+			pos += 3; /* no start code can begin at any of these three bytes */
+		else if ((data[pos] == 0) && (data[pos + 1] == 0) && (data[pos + 2] == 1))
+		{
+			const BYTE type = data[pos + 3] & 0x1f;
+			if (type == 5)
+				return TRUE;
+			if ((type >= 1) && (type <= 4))
+				return FALSE;
+			pos += 3;
+		}
+		else
+			pos++;
+	}
+	return FALSE;
+}
+
+/* A failure is what remains unless the decode gets to its end */
+static void h264_last_decode_begin(H264_CONTEXT* h264, BOOL keyFrame)
+{
+	WINPR_ASSERT(h264);
+	const FREERDP_DECODE_RESULT result = { .status = FREERDP_DECODE_FAILED,
+		                                   .keyFrame = keyFrame,
+		                                   .fellBack = FALSE,
+		                                   .hardware = h264->decoderHardware,
+		                                   .backend =
+		                                       h264->subsystem ? h264->subsystem->name : nullptr };
+	h264->lastDecode = result;
+}
+
+BOOL h264_context_get_last_decode(const H264_CONTEXT* h264, FREERDP_DECODE_RESULT* result)
+{
+	if (!h264 || !result)
+		return FALSE;
+	*result = h264->lastDecode;
+	return TRUE;
+}
+
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
                         DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
                         WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
@@ -183,7 +232,12 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 	int status = 0;
 	const BYTE* pYUVData[3];
 
-	if (!h264 || h264->Compressor)
+	if (!h264)
+		return -1001;
+
+	h264_last_decode_begin(h264, h264_is_key_frame(pSrcData, SrcSize));
+
+	if (h264->Compressor)
 		return -1001;
 
 	if (!areRectsValid(h264->log, nDstWidth, nDstHeight, regionRects, numRegionRects))
@@ -192,7 +246,10 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 	status = log_decompress(h264, pSrcData, SrcSize, regionRects, numRegionRects);
 
 	if (status == 0)
+	{
+		h264->lastDecode.status = FREERDP_DECODE_NO_PICTURE;
 		return 1;
+	}
 
 	if (status < 0)
 		return status;
@@ -204,6 +261,7 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 	                           pDstData, nDstStep, regionRects, numRegionRects))
 		return -1002;
 
+	h264->lastDecode.status = FREERDP_DECODE_PICTURE;
 	return 1;
 }
 
@@ -721,7 +779,8 @@ WINPR_ATTR_NODISCARD
 static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                                  BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
                                  WINPR_ATTR_UNUSED UINT32 nDstWidth, UINT32 nDstHeight,
-                                 const RECTANGLE_16* rects, UINT32 nrRects, avc444_frame_type type)
+                                 const RECTANGLE_16* rects, UINT32 nrRects, avc444_frame_type type,
+                                 BOOL* picture)
 {
 	const BYTE* pYUVData[3] = WINPR_C_ARRAY_INIT;
 	BYTE* pYUVDstData[3] = WINPR_C_ARRAY_INIT;
@@ -744,9 +803,13 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	pYUVDstData[0] = ppYUVDstData[0];
 	pYUVDstData[1] = ppYUVDstData[1];
 	pYUVDstData[2] = ppYUVDstData[2];
-	return (yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->YUVHeight,
-	                              pYUVDstData, piDstStride, DstFormat, pDstData, nDstStep, rects,
-	                              nrRects));
+	if (!yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->YUVHeight,
+	                           pYUVDstData, piDstStride, DstFormat, pDstData, nDstStep, rects,
+	                           nrRects))
+		return FALSE;
+
+	*picture = TRUE;
+	return TRUE;
 }
 
 #if defined(AVC444_FRAME_STAT)
@@ -772,10 +835,18 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
                         UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight, UINT32 codecId)
 {
 	INT32 status = -1;
+	BOOL picture = FALSE;
 	avc444_frame_type chroma =
 	    (codecId == RDPGFX_CODECID_AVC444) ? AVC444_CHROMAv1 : AVC444_CHROMAv2;
 
-	if (!h264 || !regionRects || !pSrcData || !pDstData || h264->Compressor)
+	if (!h264)
+		return -1001;
+
+	/* only op 0 has a second stream */
+	h264_last_decode_begin(h264, h264_is_key_frame(pSrcData, SrcSize) ||
+	                                 ((op == 0) && h264_is_key_frame(pAuxSrcData, AuxSrcSize)));
+
+	if (!regionRects || !pSrcData || !pDstData || h264->Compressor)
 		return -1001;
 
 	if (!areRectsValid(h264->log, nDstWidth, nDstHeight, regionRects, numRegionRects))
@@ -789,11 +860,11 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 		         * Chroma420 in stream 2 */
 			if (!avc444_process_rects(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
 			                          nDstWidth, nDstHeight, regionRects, numRegionRects,
-			                          AVC444_LUMA))
+			                          AVC444_LUMA, &picture))
 				status = -1;
 			else if (!avc444_process_rects(h264, pAuxSrcData, AuxSrcSize, pDstData, DstFormat,
 			                               nDstStep, nDstWidth, nDstHeight, auxRegionRects,
-			                               numAuxRegionRect, chroma))
+			                               numAuxRegionRect, chroma, &picture))
 				status = -1;
 			else
 				status = 0;
@@ -802,7 +873,8 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 
 		case 2: /* Chroma420 in stream 1 */
 			if (!avc444_process_rects(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
-			                          nDstWidth, nDstHeight, regionRects, numRegionRects, chroma))
+			                          nDstWidth, nDstHeight, regionRects, numRegionRects, chroma,
+			                          &picture))
 				status = -1;
 			else
 				status = 0;
@@ -812,7 +884,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 		case 1: /* YUV420 in stream 1 */
 			if (!avc444_process_rects(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
 			                          nDstWidth, nDstHeight, regionRects, numRegionRects,
-			                          AVC444_LUMA))
+			                          AVC444_LUMA, &picture))
 				status = -1;
 			else
 				status = 0;
@@ -822,6 +894,9 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 		default: /* WTF? */
 			break;
 	}
+
+	if (status == 0)
+		h264->lastDecode.status = picture ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 
 #if defined(AVC444_FRAME_STAT)
 
@@ -908,6 +983,7 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 		return FALSE;
 
 	h264->subsystem = nullptr;
+	h264->decoderHardware = FREERDP_DECODE_HARDWARE_UNKNOWN;
 	if (!InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, nullptr, nullptr))
 		return FALSE;
 
