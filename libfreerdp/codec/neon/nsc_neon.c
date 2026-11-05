@@ -29,14 +29,10 @@
 
 #include "../../core/simd.h"
 
-#if defined(NEON_INTRINSICS_ENABLED)
-#define TAG FREERDP_TAG("codec.nsc.neon")
-#endif
-
 void nsc_init_neon_int(WINPR_ATTR_UNUSED NSC_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
-	WLog_WARN(TAG, "TODO: Implement neon optimized version of this function");
+	WLog_VRB(PRIM_TAG, "no NEON optimizations for NSC, using the generic code");
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or NEON intrinsics not available");
 #endif
