@@ -92,6 +92,8 @@
 /* "0" turns off the check for changes Mutter left out of its damage */
 #define MUTTER_DAMAGE_CHECK_ENV "FREERDP_SHADOW_MUTTER_DAMAGE_CHECK"
 #define MUTTER_CHECK_TILE 64
+#define SCREEN_SAVER_NAME "org.gnome.ScreenSaver"
+#define SCREEN_SAVER_PATH "/org/gnome/ScreenSaver"
 
 /* FREERDP_SHADOW_MUTTER_VIRTUAL=<w>x<h>: TRUE and the size when set and valid */
 WINPR_ATTR_NODISCARD
@@ -177,6 +179,7 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 #define MUTTER_AUDIO_LOG_MS 5000u
 /* a message to the subsystem thread: the virtual monitor takes a client's size */
 #define MUTTER_MSG_VIRTUAL_SIZE 0x10005
+#define MUTTER_MSG_UNLOCK 0x10006
 
 /* How long a client waits for the virtual monitor to take its size */
 #define MUTTER_VIRTUAL_SIZE_WAIT_MS 1000
@@ -2808,6 +2811,38 @@ static void mutter_clipboard_enable(mutterShadowSubsystem* mutter)
 	sd_bus_error_free(&err);
 }
 
+/* subsystem thread. A client gets here with the user's password, and a session with a
+ * monitor of its own has no real screen anyone could be sitting at: a lock screen would
+ * only ask for the same password again. A real screen stays locked. */
+static void mutter_unlock_screen(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	sd_bus_error err = SD_BUS_ERROR_NULL;
+	sd_bus_message* reply = nullptr;
+	int locked = 0;
+	int rc = sd_bus_call_method(mutter->bus, SCREEN_SAVER_NAME, SCREEN_SAVER_PATH,
+	                            SCREEN_SAVER_NAME, "GetActive", &err, &reply, "");
+	if (rc >= 0)
+		rc = sd_bus_message_read(reply, "b", &locked);
+	sd_bus_message_unref(reply);
+
+	if ((rc >= 0) && locked)
+	{
+		rc = sd_bus_call_method(mutter->bus, SCREEN_SAVER_NAME, SCREEN_SAVER_PATH,
+		                        SCREEN_SAVER_NAME, "SetActive", &err, nullptr, "b", 0);
+		if (rc >= 0)
+			WLog_INFO(TAG, "the login unlocked the session");
+	}
+	if (rc < 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "the screen stays as it is: %s",
+		          err.message ? err.message : winpr_strerror(-rc, buffer, sizeof(buffer)));
+	}
+	sd_bus_error_free(&err);
+}
+
 static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessage* message)
 {
 	WINPR_ASSERT(mutter);
@@ -2842,6 +2877,10 @@ static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessag
 		case MUTTER_MSG_VIRTUAL_SIZE:
 			mutter_virtual_resize(mutter, (UINT32)(size_t)message->wParam,
 			                      (UINT32)(size_t)message->lParam);
+			break;
+
+		case MUTTER_MSG_UNLOCK:
+			mutter_unlock_screen(mutter);
 			break;
 
 		default:
@@ -3347,7 +3386,13 @@ static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShado
 	if (mutter->virtualMonitor)
 		mutter_virtual_follow_client(mutter, client);
 	if (client->mayInteract)
+	{
 		mutter_wake_screen(mutter);
+		if (mutter->virtualMonitor && mutter->common.server->authentication &&
+		    !MessageQueue_Post(mutter->common.MsgPipe->In, nullptr, MUTTER_MSG_UNLOCK, nullptr,
+		                       nullptr))
+			WLog_WARN(TAG, "cannot ask for the session to unlock");
+	}
 	return TRUE;
 }
 
