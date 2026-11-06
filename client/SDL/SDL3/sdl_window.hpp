@@ -88,6 +88,8 @@ class SdlWindow
 	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
 
 	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
+	[[nodiscard]] bool upload(SDL_Surface* surface, const SDL_Rect& src);
+	[[nodiscard]] bool render(const SDL_Rect& src, const SDL_Rect& dst);
 	/* Render interactive resize feedback overlay. */
 	bool paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
 	                      const SDL_Rect& inset = { 0, 0, 0, 0 }, bool fillRevealed = true,
