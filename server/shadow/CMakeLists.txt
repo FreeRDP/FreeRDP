@@ -50,6 +50,8 @@ set(SRCS
     shadow_audin.h
     shadow_cliprdr.c
     shadow_cliprdr.h
+    shadow_disp.c
+    shadow_disp.h
     shadow_rdpgfx.c
     shadow_rdpgfx.h
     shadow_subsystem.c

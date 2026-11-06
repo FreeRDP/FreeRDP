@@ -3036,6 +3036,10 @@ out:
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                        UINT32 width, UINT32 height);
+
+WINPR_ATTR_NODISCARD
 static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
@@ -3070,6 +3074,7 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	}
 	if (mutter->virtualMonitor)
 	{
+		mutter->common.ClientResize = mutter_shadow_client_resize;
 		/* one monitor, this server's own */
 		subsystem->monitors[0] = (MONITOR_DEF){ 0, 0, (INT32)mutter->virtualWidth - 1,
 			                                    (INT32)mutter->virtualHeight - 1, 1 };
@@ -3246,24 +3251,36 @@ static int mutter_shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 /* A virtual monitor is nobody else's: it takes the size the client asked for, before
  * the client is activated, so it does not get a window of the old size first. On a
  * timeout the client is resized when Mutter answers, or stays with the size it has. */
+/* even sizes: the 4:2:0 encoders need them */
+static UINT32 mutter_virtual_side(UINT32 side, UINT32 least)
+{
+	return MIN(MAX(side, least), 8192) & ~1u;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL mutter_virtual_request(mutterShadowSubsystem* mutter, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(mutter->common.MsgPipe);
+	return MessageQueue_Post(mutter->common.MsgPipe->In, nullptr, MUTTER_MSG_VIRTUAL_SIZE,
+	                         (void*)(size_t)width, (void*)(size_t)height);
+}
+
 static void mutter_virtual_follow_client(mutterShadowSubsystem* mutter, rdpShadowClient* client)
 {
 	WINPR_ASSERT(mutter);
 	WINPR_ASSERT(client);
 
 	const rdpSettings* settings = client->context.settings;
-	/* even sizes: the 4:2:0 encoders need them */
 	const UINT32 width =
-	    MIN(MAX(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth), 320), 8192) & ~1u;
+	    mutter_virtual_side(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth), 320);
 	const UINT32 height =
-	    MIN(MAX(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), 200), 8192) & ~1u;
+	    mutter_virtual_side(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), 200);
 
 	if ((width == mutter->width) && (height == mutter->height))
 		return;
 
-	WINPR_ASSERT(mutter->common.MsgPipe);
-	if (!MessageQueue_Post(mutter->common.MsgPipe->In, nullptr, MUTTER_MSG_VIRTUAL_SIZE,
-	                       (void*)(size_t)width, (void*)(size_t)height))
+	if (!mutter_virtual_request(mutter, width, height))
 		return;
 
 	const UINT64 end = GetTickCount64() + MUTTER_VIRTUAL_SIZE_WAIT_MS;
@@ -3272,6 +3289,23 @@ static void mutter_virtual_follow_client(mutterShadowSubsystem* mutter, rdpShado
 	WLog_INFO(TAG,
 	          "the virtual monitor for a %" PRIu32 "x%" PRIu32 " client is %" PRIu32 "x%" PRIu32,
 	          width, height, mutter->width, mutter->height);
+}
+
+/* A second client watches: the desktop stays at the first one's size, as on connect */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem,
+                                        WINPR_ATTR_UNUSED rdpShadowClient* client, UINT32 width,
+                                        UINT32 height)
+{
+	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
+	WINPR_ASSERT(mutter);
+
+	if (mutter->clients != 1)
+		return TRUE;
+
+	WLog_INFO(TAG, "the client asks for %" PRIu32 "x%" PRIu32, width, height);
+	return mutter_virtual_request(mutter, mutter_virtual_side(width, 320),
+	                              mutter_virtual_side(height, 200));
 }
 
 WINPR_ATTR_NODISCARD

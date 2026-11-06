@@ -57,11 +57,15 @@ UINT shadow_client_channels_post_connect(rdpShadowClient* client)
 	if (shadow_client_rdpgfx_init(client) < 0)
 		return ERROR_NOT_READY;
 
+	if (!shadow_client_disp_init(client))
+		return ERROR_NOT_READY;
+
 	return CHANNEL_RC_OK;
 }
 
 void shadow_client_channels_free(rdpShadowClient* client)
 {
+	shadow_client_disp_uninit(client);
 	shadow_client_rdpgfx_uninit(client);
 	shadow_client_cliprdr_uninit(client);
 	shadow_client_audin_uninit(client);
