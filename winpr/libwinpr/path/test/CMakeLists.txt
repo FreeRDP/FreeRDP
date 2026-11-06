@@ -7,6 +7,10 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS TestPathShell.c TestPathMakePath.c)
 
+if(NOT WIN32)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestPathRemoveDirectoryRecursive.c)
+endif()
+
 if(NOT WITHOUT_WINPR_3x_DEPRECATED)
   list(
     APPEND
