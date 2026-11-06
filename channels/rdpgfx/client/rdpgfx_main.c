@@ -514,37 +514,38 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		/* The following capabilities expect support for image scaling.
 		 * Disable these for builds that do not have support for that.
 		 */
-#if defined(WITH_CAIRO) || defined(WITH_SWSCALE)
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_105))
+		if (freerdp_image_scaling_supported())
 		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_105;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
-		}
+			if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_105))
+			{
+				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+				if (!capsSet)
+					return ERROR_BAD_CONFIGURATION;
+				capsSet->version = RDPGFX_CAPVERSION_105;
+				capsSet->length = 0x4;
+				capsSet->flags = caps10Flags;
+			}
 
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_106;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
-		}
+			if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106))
+			{
+				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+				if (!capsSet)
+					return ERROR_BAD_CONFIGURATION;
+				capsSet->version = RDPGFX_CAPVERSION_106;
+				capsSet->length = 0x4;
+				capsSet->flags = caps10Flags;
+			}
 
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106_ERR))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_106_ERR;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
+			if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106_ERR))
+			{
+				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+				if (!capsSet)
+					return ERROR_BAD_CONFIGURATION;
+				capsSet->version = RDPGFX_CAPVERSION_106_ERR;
+				capsSet->length = 0x4;
+				capsSet->flags = caps10Flags;
+			}
 		}
-#endif
 
 		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_107))
 		{
@@ -554,9 +555,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->version = RDPGFX_CAPVERSION_107;
 			capsSet->length = 0x4;
 			capsSet->flags = caps10Flags;
-#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-#endif
+			if (!freerdp_image_scaling_supported())
+				capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 		}
 
 #if defined(WITH_GFX_AZURE)
@@ -574,9 +574,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 				capsSet->version = cap;
 				capsSet->length = 0x4;
 				capsSet->flags = caps10Flags;
-#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-#endif
+				if (!freerdp_image_scaling_supported())
+					capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 			}
 		}
 #endif
@@ -599,9 +598,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			if (profile == 0)
 				capsSet->flags |= RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
 
-#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-#endif
+			if (!freerdp_image_scaling_supported())
+				capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 		}
 	}
 #endif
