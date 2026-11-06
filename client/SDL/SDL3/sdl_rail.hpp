@@ -90,6 +90,7 @@ class SdlRail
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
 	void handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display);
+	void noteUsableBoundsChanged(SDL_DisplayID display);
 	void updateCoordinates();
 	/* Activate window on server if not already active. */
 	void ensureActive(SDL_WindowID id);
@@ -106,6 +107,11 @@ class SdlRail
 	void noteServerPointer(float x, float y)
 	{
 		_lastPointerServer = { static_cast<int>(x), static_cast<int>(y) };
+	}
+	/* Changes when the client moves a server window. */
+	[[nodiscard]] uint32_t pointerEpoch() const
+	{
+		return _pointerEpoch;
 	}
 	/* Local move/resize under the WM grab: server input is suppressed meanwhile. */
 	bool dragActive(SDL_WindowID id);
@@ -126,6 +132,8 @@ class SdlRail
 	/* Wayland: the compositor runs the interactive resize (mouse leave or configure). */
 	void noteResizeGrab(SDL_WindowID id);
 	void settleWaylandResize();
+	/* X11: end a WM drag once the button is up. */
+	void pollDragRelease();
 
   private:
 	/* Latch a local move/resize; returns the window for a native modal loop. */
@@ -201,7 +209,9 @@ class SdlRail
 	/* Send ClientWindowMove to server. */
 	void sendClientWindowMove(SdlRailWindow* appWindow, const SDL_Rect& serverRect);
 	/* Caller holds _windowsLock. */
+	void followDisplay(SdlRailWindow* appWindow, bool now);
 	void moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display);
+	[[nodiscard]] bool monitorRect(SDL_DisplayID display, SDL_Rect& rect) const;
 
 	/* MS-RDPERP icon cache slot for cacheId:cacheEntry; nullptr if out of range. cacheId 0xFF =
 	 * "do not cache" scratch slot (the spec says 0xFFFF but the field is one byte). */
@@ -216,6 +226,7 @@ class SdlRail
 	RailClientContext* _rail = nullptr;
 	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
 	std::atomic<bool> _enabled = false;
+	std::atomic<uint32_t> _pointerEpoch = 0;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
 	std::atomic<bool> _appStarted = false;
 	/* The desktop window may show: RAIL started, a logon prompt, or the hold ran out. */

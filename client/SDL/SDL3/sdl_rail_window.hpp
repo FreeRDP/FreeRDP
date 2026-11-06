@@ -122,6 +122,10 @@ class SdlRailWindow
 	void setFrameMargins(const SDL_Rect& m);
 	[[nodiscard]] SDL_Rect frameMargins() const;
 	[[nodiscard]] bool takeUnconfirmedReport(SDL_Rect& rect);
+	void noteDisplayChange();
+	[[nodiscard]] bool takeDisplayChange(bool now);
+	[[nodiscard]] bool deferMaximizeUntilEcho();
+	[[nodiscard]] bool takeMaximizeAfterEcho();
 
 	/* Owning window id (WINDOW_ORDER_FIELD_OWNER); popups position relative to it. */
 	void setOwner(uint64_t ownerId);
@@ -323,6 +327,8 @@ class SdlRailWindow
 	bool _geomApplyPending = false; /* a client-issued geometry/state apply is still settling */
 	std::vector<SDL_Rect> _reported; /* rects sent to the server and not echoed yet */
 	uint64_t _reportCheckAt = 0;     /* when to resend */
+	uint64_t _displayCheckAt = 0;    /* when to follow the display */
+	bool _maximizeAfterEcho = false; /* SC_MAXIMIZE once _reported is answered */
 	bool _wmRefused = false;        /* WM refused resize; adopt its geometry (takeWmOverride) */
 	SDL_Rect _wmRefusedOuter = { 0, 0, 0, 0 };
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */

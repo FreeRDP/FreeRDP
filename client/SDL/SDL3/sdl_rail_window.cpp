@@ -51,6 +51,9 @@ static void armDeadline(uint64_t& until, uint64_t ms)
 		WLog_WARN(TAG, "SDL_AddTimer failed: %s", SDL_GetError());
 }
 
+/* SDL reports several displays in a row while a window maps or spans monitors. */
+static constexpr uint64_t kDisplaySettleMs = 500;
+
 /* A Wayland popup moved again within this time is still being dragged by its app. */
 static constexpr uint64_t kMoveActiveMs = 250;
 
@@ -396,6 +399,39 @@ bool SdlRailWindow::takeUnconfirmedReport(SDL_Rect& rect)
 		return false;
 	rect = _reported.back();
 	_reported.clear();
+	return true;
+}
+
+void SdlRailWindow::noteDisplayChange()
+{
+	std::unique_lock lock(_gfxLock);
+	armDeadline(_displayCheckAt, kDisplaySettleMs);
+}
+
+bool SdlRailWindow::takeDisplayChange(bool now)
+{
+	std::unique_lock lock(_gfxLock);
+	if ((_displayCheckAt == 0) || (!now && (SDL_GetTicks() < _displayCheckAt)))
+		return false;
+	_displayCheckAt = 0;
+	return true;
+}
+
+bool SdlRailWindow::deferMaximizeUntilEcho()
+{
+	std::unique_lock lock(_gfxLock);
+	if (_reported.empty())
+		return false;
+	_maximizeAfterEcho = true;
+	return true;
+}
+
+bool SdlRailWindow::takeMaximizeAfterEcho()
+{
+	std::unique_lock lock(_gfxLock);
+	if (!_maximizeAfterEcho || !_reported.empty())
+		return false;
+	_maximizeAfterEcho = false;
 	return true;
 }
 
