@@ -66,7 +66,7 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 {
 	switch (codecId)
 	{
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
 			return "RDPGFX_CODECID_AV1";
 #endif
@@ -118,6 +118,9 @@ const char* rdpgfx_caps_version_str(UINT32 capsVersion)
 #if defined(WITH_GFX_AV1)
 		EVCASE(RDPGFX_CAPVERSION_FRDP_1);
 #endif
+#if defined(WITH_GFX_AV2)
+		EVCASE(RDPGFX_CAPVERSION_FRDP_2);
+#endif
 		EVCASE(RDPGFX_CAPVERSION_8);
 		EVCASE(RDPGFX_CAPVERSION_81);
 		EVCASE(RDPGFX_CAPVERSION_10);
@@ -159,7 +162,7 @@ static const char* rdpgfx_caps_flag_str_int(UINT32 flag)
 #if defined(WITH_GFX_AZURE)
 		EVCASE(RDPGFX_CAPS_FLAG_SCP_DISABLE);
 #endif
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		EVCASE(RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED);
 		EVCASE(RDPGFX_CAPS_FLAG_AV1_I444_DISABLED);
 #endif

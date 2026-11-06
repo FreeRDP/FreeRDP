@@ -1,0 +1,52 @@
+# - Try to find the dav2d library
+# Once done this will define
+#
+#  DAV2D_ROOT - A list of search hints
+#
+#  DAV2D_FOUND - system has dav2d
+#  DAV2D_INCLUDE_DIRS - the dav2d include directory
+#  DAV2D_LIBRARIES - dav2d library
+
+if(UNIX AND NOT ANDROID)
+  find_package(PkgConfig QUIET)
+  pkg_check_modules(PC_DAV2D QUIET IMPORTED_TARGET GLOBAL dav2d)
+endif(UNIX AND NOT ANDROID)
+
+if(PC_DAV2D_FOUND)
+  set(DAV2D_FOUND ${PC_DAV2D_FOUND})
+  set(DAV2D_INCLUDE_DIRS ${PC_DAV2D_INCLUDE_DIRS})
+  set(DAV2D_LIBRARIES ${PC_DAV2D_LIBRARIES})
+  add_library(dav2d ALIAS PkgConfig::PC_DAV2D)
+else()
+  if(DAV2D_INCLUDE_DIR AND DAV2D_LIBRARY)
+    set(DAV2D_FIND_QUIETLY TRUE)
+  endif(DAV2D_INCLUDE_DIR AND DAV2D_LIBRARY)
+
+  find_path(DAV2D_INCLUDE_DIR NAMES dav2d/dav2d.h PATH_SUFFIXES include HINTS ${DAV2D_ROOT} ${PC_DAV2D_INCLUDE_DIRS})
+  find_library(DAV2D_LIBRARY NAMES dav2d PATH_SUFFIXES lib HINTS ${DAV2D_ROOT} ${PC_DAV2D_LIBRARY_DIRS})
+
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(DAV2D DEFAULT_MSG DAV2D_LIBRARY DAV2D_INCLUDE_DIR)
+
+  if(DAV2D_INCLUDE_DIR AND DAV2D_LIBRARY)
+    set(DAV2D_FOUND ON CACHE BOOL "DAV2D")
+    set(DAV2D_LIBRARIES ${DAV2D_LIBRARY} CACHE STRING "DAV2D")
+    set(DAV2D_INCLUDE_DIRS ${DAV2D_INCLUDE_DIR} CACHE STRING "DAV2D")
+  endif(DAV2D_INCLUDE_DIR AND DAV2D_LIBRARY)
+
+  if(DAV2D_FOUND)
+    if(NOT DAV2D_FIND_QUIETLY)
+      message(STATUS "Found DAV2D: ${DAV2D_LIBRARIES}")
+    endif(NOT DAV2D_FIND_QUIETLY)
+    add_library(dav2d INTERFACE IMPORTED GLOBAL)
+    set_target_properties(
+      dav2d PROPERTIES INTERFACE_LINK_LIBRARIES "${DAV2D_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${DAV2D_INCLUDE_DIR}"
+    )
+  else(DAV2D_FOUND)
+    if(DAV2D_FIND_REQUIRED)
+      message(FATAL_ERROR "DAV2D was not found")
+    endif(DAV2D_FIND_REQUIRED)
+  endif(DAV2D_FOUND)
+endif(PC_DAV2D_FOUND)
+
+mark_as_advanced(DAV2D_INCLUDE_DIRS DAV2D_LIBRARIES DAV2D_FOUND)

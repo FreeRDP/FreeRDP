@@ -54,6 +54,9 @@ struct rdp_shadow_encoder
 #if defined(WITH_GFX_AV1)
 	FREERDP_AV1_CONTEXT* av1;
 #endif
+#if defined(WITH_GFX_AV2)
+	FREERDP_AV2_CONTEXT* av2;
+#endif
 	UINT32 fps;
 	UINT32 maxFps;
 	BOOL frameAck;

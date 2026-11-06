@@ -2657,6 +2657,40 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 					}
 				}
 #endif
+#if defined(WITH_GFX_AV2)
+				else if (option_starts_with("AV2", val))
+				{
+					uint32_t profile = 1;
+					BOOL enabled = FALSE;
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("av2:i420", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 0;
+						}
+						else if (_stricmp("av2:i444", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 1;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else
+						enabled = bval != PARSE_OFF; /* a bare AV2 turns it on */
+
+					if (enabled || (bval != PARSE_FAIL))
+					{
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
+							rc = COMMAND_LINE_ERROR;
+						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile,
+						                                      profile))
+							rc = COMMAND_LINE_ERROR;
+					}
+				}
+#endif
 				else
 					rc = COMMAND_LINE_ERROR;
 			}

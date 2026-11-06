@@ -349,6 +349,14 @@ set(DAV1D_FEATURE_TYPE "OPTIONAL")
 set(DAV1D_FEATURE_PURPOSE "codec")
 set(DAV1D_FEATURE_DESCRIPTION "dav1d AV1 decoder library")
 
+set(AVM_FEATURE_TYPE "OPTIONAL")
+set(AVM_FEATURE_PURPOSE "codec")
+set(AVM_FEATURE_DESCRIPTION "AVM AV2 reference encoder/decoder library")
+
+set(DAV2D_FEATURE_TYPE "OPTIONAL")
+set(DAV2D_FEATURE_PURPOSE "codec")
+set(DAV2D_FEATURE_DESCRIPTION "dav2d AV2 decoder library")
+
 set(YUV_FEATURE_TYPE "OPTIONAL")
 set(YUV_FEATURE_PURPOSE "codec")
 set(YUV_FEATURE_DESCRIPTION "YUV encoder/decoder library")
@@ -412,6 +420,14 @@ find_feature(FAAC ${FAAC_FEATURE_TYPE} ${FAAC_FEATURE_PURPOSE} ${FAAC_FEATURE_DE
 find_feature(soxr ${SOXR_FEATURE_TYPE} ${SOXR_FEATURE_PURPOSE} ${SOXR_FEATURE_DESCRIPTION})
 find_feature(aom ${AOM_FEATURE_TYPE} ${AOM_FEATURE_PURPOSE} ${AOM_FEATURE_DESCRIPTION})
 find_feature(dav1d ${DAV1D_FEATURE_TYPE} ${DAV1D_FEATURE_PURPOSE} ${DAV1D_FEATURE_DESCRIPTION})
+if(WITH_GFX_AV2)
+  find_feature(avm ${AVM_FEATURE_TYPE} ${AVM_FEATURE_PURPOSE} ${AVM_FEATURE_DESCRIPTION})
+  find_feature(dav2d ${DAV2D_FEATURE_TYPE} ${DAV2D_FEATURE_PURPOSE} ${DAV2D_FEATURE_DESCRIPTION})
+  # libavm decodes 4:4:4; dav2d does not support AV2 4:4:4 (profile 4) yet
+  if(WITH_AVM AND AVM_FOUND)
+    set(WITH_GFX_AV2_I444 ON)
+  endif()
+endif()
 find_feature(yuv ${YUV_FEATURE_TYPE} ${YUV_FEATURE_PURPOSE} ${YUV_FEATURE_DESCRIPTION})
 
 option(WITH_OPENCL "[experimental] enable OpenCL support for primitives" OFF)
