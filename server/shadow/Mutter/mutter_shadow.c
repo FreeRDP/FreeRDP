@@ -175,6 +175,11 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 #define MUTTER_AUDIO_MESSAGE_FRAMES (MUTTER_AUDIO_RATE / 50u)
 /* how often the sound statistics are logged (debug level) */
 #define MUTTER_AUDIO_LOG_MS 5000u
+/* a message to the subsystem thread: the virtual monitor takes a client's size */
+#define MUTTER_MSG_VIRTUAL_SIZE 0x10005
+
+/* How long a client waits for the virtual monitor to take its size */
+#define MUTTER_VIRTUAL_SIZE_WAIT_MS 1000
 
 /* xkbcommon's core modifiers: Lock is Caps Lock, Mod2 is Num Lock in every
  * stock keymap */
@@ -1477,6 +1482,35 @@ static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 	return TRUE;
 }
 
+/* The format the stream asks for, size being what a virtual monitor takes */
+WINPR_ATTR_NODISCARD
+static const struct spa_pod* mutter_stream_format(struct spa_pod_builder* b,
+                                                  const struct spa_rectangle* size)
+{
+	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
+	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
+	const struct spa_fraction rate = SPA_FRACTION(0, 1);
+	const struct spa_fraction maxRate = SPA_FRACTION(60, 1);
+	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
+
+	/* no modifiers offered: Mutter sends frames in shared memory */
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
+	return spa_pod_builder_add_object(
+	    b, SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat, SPA_FORMAT_mediaType,
+	    SPA_POD_Id(SPA_MEDIA_TYPE_video), SPA_FORMAT_mediaSubtype,
+	    SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw), SPA_FORMAT_VIDEO_format,
+	    SPA_POD_CHOICE_ENUM_Id(3, SPA_VIDEO_FORMAT_BGRx, SPA_VIDEO_FORMAT_BGRx,
+	                           SPA_VIDEO_FORMAT_BGRA),
+	    SPA_FORMAT_VIDEO_size, SPA_POD_CHOICE_RANGE_Rectangle(size, &minSize, &maxSize),
+	    SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&rate), SPA_FORMAT_VIDEO_maxFramerate,
+	    SPA_POD_CHOICE_RANGE_Fraction(&maxRate, &minRate, &maxRate));
+	WINPR_PRAGMA_DIAG_POP
+}
+
 /* A new stream, connected to Mutter's node mutter->nodeId. Each node gets a
  * stream of its own: a stream connected again keeps its first target. */
 WINPR_ATTR_NODISCARD
@@ -1501,25 +1535,7 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 	const struct spa_rectangle size =
 	    mutter->virtualMonitor ? SPA_RECTANGLE(mutter->virtualWidth, mutter->virtualHeight)
 	                           : SPA_RECTANGLE(1920, 1080);
-	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
-	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
-	const struct spa_fraction rate = SPA_FRACTION(0, 1);
-	const struct spa_fraction maxRate = SPA_FRACTION(60, 1);
-	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
-
-	/* no modifiers offered: Mutter sends frames in shared memory */
-	WINPR_PRAGMA_DIAG_PUSH
-	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
-	const struct spa_pod* params[] = { spa_pod_builder_add_object(
-		&b, SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat, SPA_FORMAT_mediaType,
-		SPA_POD_Id(SPA_MEDIA_TYPE_video), SPA_FORMAT_mediaSubtype,
-		SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw), SPA_FORMAT_VIDEO_format,
-		SPA_POD_CHOICE_ENUM_Id(3, SPA_VIDEO_FORMAT_BGRx, SPA_VIDEO_FORMAT_BGRx,
-		                       SPA_VIDEO_FORMAT_BGRA),
-		SPA_FORMAT_VIDEO_size, SPA_POD_CHOICE_RANGE_Rectangle(&size, &minSize, &maxSize),
-		SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&rate), SPA_FORMAT_VIDEO_maxFramerate,
-		SPA_POD_CHOICE_RANGE_Fraction(&maxRate, &minRate, &maxRate)) };
-	WINPR_PRAGMA_DIAG_POP
+	const struct spa_pod* params[] = { mutter_stream_format(&b, &size) };
 
 	if (pw_stream_connect(
 	        mutter->stream, PW_DIRECTION_INPUT, mutter->nodeId,
@@ -1530,6 +1546,26 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 		return FALSE;
 	}
 	return TRUE;
+}
+
+/* Subsystem thread: ask for another size, Mutter resizes the virtual monitor and
+ * mutter_stream_param_changed takes it from there */
+static void mutter_virtual_resize(mutterShadowSubsystem* mutter, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(mutter);
+
+	if (!mutter->stream)
+		return;
+
+	mutter->virtualWidth = width;
+	mutter->virtualHeight = height;
+
+	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
+	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
+	const struct spa_rectangle size = SPA_RECTANGLE(width, height);
+	const struct spa_pod* params[] = { mutter_stream_format(&b, &size) };
+	if (pw_stream_update_params(mutter->stream, params, ARRAYSIZE(params)) < 0)
+		WLog_WARN(TAG, "cannot ask for %" PRIu32 "x%" PRIu32, width, height);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2803,6 +2839,11 @@ static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessag
 		}
 		break;
 
+		case MUTTER_MSG_VIRTUAL_SIZE:
+			mutter_virtual_resize(mutter, (UINT32)(size_t)message->wParam,
+			                      (UINT32)(size_t)message->lParam);
+			break;
+
 		default:
 			WLog_ERR(TAG, "Unknown message id: %" PRIu32 "", message->id);
 			break;
@@ -3202,17 +3243,49 @@ static int mutter_shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 	return 1;
 }
 
+/* A virtual monitor is nobody else's: it takes the size the client asked for, before
+ * the client is activated, so it does not get a window of the old size first. On a
+ * timeout the client is resized when Mutter answers, or stays with the size it has. */
+static void mutter_virtual_follow_client(mutterShadowSubsystem* mutter, rdpShadowClient* client)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(client);
+
+	const rdpSettings* settings = client->context.settings;
+	/* even sizes: the 4:2:0 encoders need them */
+	const UINT32 width =
+	    MIN(MAX(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth), 320), 8192) & ~1u;
+	const UINT32 height =
+	    MIN(MAX(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), 200), 8192) & ~1u;
+
+	if ((width == mutter->width) && (height == mutter->height))
+		return;
+
+	WINPR_ASSERT(mutter->common.MsgPipe);
+	if (!MessageQueue_Post(mutter->common.MsgPipe->In, nullptr, MUTTER_MSG_VIRTUAL_SIZE,
+	                       (void*)(size_t)width, (void*)(size_t)height))
+		return;
+
+	const UINT64 end = GetTickCount64() + MUTTER_VIRTUAL_SIZE_WAIT_MS;
+	while ((GetTickCount64() < end) && ((mutter->width != width) || (mutter->height != height)))
+		Sleep(10);
+	WLog_INFO(TAG,
+	          "the virtual monitor for a %" PRIu32 "x%" PRIu32 " client is %" PRIu32 "x%" PRIu32,
+	          width, height, mutter->width, mutter->height);
+}
+
 WINPR_ATTR_NODISCARD
-static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem,
-                                         WINPR_ATTR_UNUSED rdpShadowClient* client)
+static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
 	WINPR_ASSERT(mutter);
 
 	/* a new client gets the cursor shape with the next one seen */
 	mutter->cursorResend = TRUE;
-	(void)InterlockedIncrement(&mutter->clients);
+	const LONG clients = InterlockedIncrement(&mutter->clients);
 	(void)SetEvent(mutter->clientsEvent);
+	if (mutter->virtualMonitor && (clients == 1))
+		mutter_virtual_follow_client(mutter, client);
 	return TRUE;
 }
 
