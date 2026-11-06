@@ -88,6 +88,9 @@ extern "C"
 
 		UINT32 YUVWidth;
 		UINT32 YUVHeight;
+
+		FREERDP_DECODE_HARDWARE decoderHardware; /* set by the subsystem that says */
+		FREERDP_DECODE_RESULT lastDecode;
 	};
 
 	WINPR_ATTR_NODISCARD

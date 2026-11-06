@@ -1104,6 +1104,9 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 		           "Hardware decoder does not support %dx%d, falling back to software",
 		           ctx->coded_width, ctx->coded_height);
 		sys->useHwDecoder = FALSE;
+		h264->decoderHardware = FREERDP_DECODE_HARDWARE_NO;
+		h264->lastDecode.hardware = FREERDP_DECODE_HARDWARE_NO;
+		h264->lastDecode.fellBack = TRUE;
 		av_buffer_unref(&ctx->hw_device_ctx);
 		for (const enum AVPixelFormat* p = fmts; *p != AV_PIX_FMT_NONE; p++)
 		{
@@ -1509,6 +1512,11 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 #endif
 	sys->videoFrame->pts = 0;
+	h264->decoderHardware = FREERDP_DECODE_HARDWARE_NO;
+#if defined(WITH_FFMPEG_HWACCEL)
+	if (sys->useHwDecoder && sys->hwctx)
+		h264->decoderHardware = FREERDP_DECODE_HARDWARE_YES;
+#endif
 	return TRUE;
 EXCEPTION:
 	libavcodec_uninit(h264);

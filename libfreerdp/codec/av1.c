@@ -89,7 +89,21 @@ struct S_FREERDP_AV1_CONTEXT
 	UINT32 yuvWidth;
 	UINT32 yuvStride[3];
 	UINT32 yuvHeight;
+	FREERDP_DECODE_RESULT lastDecode;
 };
+
+#if defined(WITH_DAV1D)
+#define AV1_SOFTWARE_DECODER "dav1d"
+#elif defined(WITH_LIBAOM)
+#define AV1_SOFTWARE_DECODER "libaom"
+#else
+#define AV1_SOFTWARE_DECODER nullptr
+#endif
+
+/* The values of obu_type this looks at */
+#define AV1_OBU_SEQUENCE_HEADER 1
+#define AV1_OBU_FRAME_HEADER 3
+#define AV1_OBU_FRAME 6
 
 #if defined(WITH_LIBAOM)
 static void av1_aom_destroy(FREERDP_AV1_CONTEXT* av1)
@@ -686,12 +700,86 @@ static INT32 av1_dav1d_drain_one(FREERDP_AV1_CONTEXT* av1, BYTE* pDstData, DWORD
 }
 #endif
 
+/* Walks the OBUs of a temporal unit up to its first frame. A frame shown again from the reference
+ * frames (show_existing_frame) decodes nothing, so it is no key frame here. */
+WINPR_ATTR_NODISCARD
+static BOOL av1_is_key_frame(const BYTE* data, size_t size)
+{
+	if (!data)
+		return FALSE;
+
+	BOOL reducedStillPicture = FALSE;
+	size_t pos = 0;
+	while (pos < size)
+	{
+		const BYTE header = data[pos];
+		const BYTE type = (header >> 3) & 0x0f;
+		pos += 1u + ((header >> 2) & 1u); /* obu_extension_flag */
+		if (pos >= size)
+			return FALSE;
+
+		size_t length = size - pos; /* without obu_has_size_field it fills the rest */
+		if (header & 0x02)
+		{
+			UINT64 value = 0;
+			BOOL more = TRUE;
+			for (size_t x = 0; more && (x < 8); x++)
+			{
+				if (pos >= size)
+					return FALSE;
+				const BYTE b = data[pos++];
+				value |= (UINT64)(b & 0x7f) << (7 * x);
+				more = (b & 0x80) != 0;
+			}
+			if (more || (pos >= size) || (value > SIZE_MAX))
+				return FALSE;
+			length = (size_t)value;
+		}
+
+		/* the first bytes tell, a frame cut short later on is still the frame it was sent as */
+		if ((type == AV1_OBU_SEQUENCE_HEADER) && (length > 0))
+			reducedStillPicture = (data[pos] & 0x08) != 0;
+		else if ((type == AV1_OBU_FRAME_HEADER) || (type == AV1_OBU_FRAME))
+		{
+			if (length == 0)
+				return FALSE;
+			if (reducedStillPicture)
+				return TRUE;
+			/* show_existing_frame f(1), frame_type f(2), KEY_FRAME is 0 */
+			return (data[pos] & 0xe0) == 0;
+		}
+
+		if (length > size - pos)
+			return FALSE;
+		pos += length;
+	}
+	return FALSE;
+}
+
+BOOL freerdp_av1_context_get_last_decode(const FREERDP_AV1_CONTEXT* av1,
+                                         FREERDP_DECODE_RESULT* result)
+{
+	if (!av1 || !result)
+		return FALSE;
+	*result = av1->lastDecode;
+	return TRUE;
+}
+
 INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UINT32 SrcSize,
                              BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
                              UINT32 nDstHeight, const RECTANGLE_16* regionRects,
                              UINT32 numRegionRect)
 {
 	WINPR_ASSERT(av1);
+
+	/* A failure is what remains unless the decode gets to its end */
+	const FREERDP_DECODE_RESULT start = { .status = FREERDP_DECODE_FAILED,
+		                                  .keyFrame = av1_is_key_frame(pSrcData, SrcSize),
+		                                  .fellBack = FALSE,
+		                                  .hardware = FREERDP_DECODE_HARDWARE_NO,
+		                                  .backend = AV1_SOFTWARE_DECODER };
+	av1->lastDecode = start;
+
 	if (av1->encoder)
 	{
 		WLog_Print(av1->log, WLOG_ERROR, "av1->encoder: %d", av1->encoder);
@@ -707,7 +795,13 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 		const INT32 wrc = av1_wc_decode(av1->webcodecs, pSrcData, SrcSize, pDstData, DstFormat,
 		                                nDstStep, nDstWidth, nDstHeight);
 		if (wrc >= 0)
+		{
+			av1->lastDecode.hardware = FREERDP_DECODE_HARDWARE_UNKNOWN;
+			av1->lastDecode.backend = "WebCodecs";
+			av1->lastDecode.status = (wrc > 0) ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 			return TRUE;
+		}
+		av1->lastDecode.fellBack = TRUE;
 		/* fall back to the software decoder for the rest of the session */
 		if (wrc == AV1_WC_UNSUPPORTED)
 			WLog_Print(av1->log, WLOG_DEBUG, "surface format needs dav1d instead of WebCodecs");
@@ -720,6 +814,7 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 #endif
 
 #if defined(WITH_DAV1D)
+	BOOL picture = FALSE;
 	Dav1dData data = WINPR_C_ARRAY_INIT;
 	const int wrc = dav1d_data_wrap(&data, pSrcData, SrcSize, av1_dav1d_data_free, nullptr);
 	if (wrc < 0)
@@ -745,6 +840,8 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			dav1d_data_unref(&data);
 			return rc;
 		}
+		if (rc == TRUE)
+			picture = TRUE;
 	}
 
 	/* Drain any picture the decoder buffered internally before it consumed the last input. */
@@ -756,10 +853,13 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			break;
 		if (rc != TRUE)
 			return rc;
+		picture = TRUE;
 	}
 
+	av1->lastDecode.status = picture ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 	return TRUE;
 #elif defined(WITH_LIBAOM)
+	BOOL picture = FALSE;
 	const aom_codec_err_t rc = aom_codec_decode(&av1->ctx, pSrcData, SrcSize, nullptr);
 	if (rc != AOM_CODEC_OK)
 	{
@@ -838,8 +938,10 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
 			return -1;
 		}
+		picture = TRUE;
 	}
 
+	av1->lastDecode.status = picture ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 	return TRUE;
 #endif
 }

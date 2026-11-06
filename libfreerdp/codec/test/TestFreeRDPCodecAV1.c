@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
@@ -69,6 +70,135 @@ fail:
 	freerdp_av1_context_free(enc);
 	freerdp_av1_context_free(dec);
 	free_h264_metablock(&meta);
+	free(src);
+	free(out);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL checkLastDecode(FREERDP_AV1_CONTEXT* dec, FREERDP_DECODE_STATUS status, BOOL keyFrame)
+{
+	FREERDP_DECODE_RESULT result = WINPR_C_ARRAY_INIT;
+	if (!freerdp_av1_context_get_last_decode(dec, &result))
+		return FALSE;
+#if defined(WITH_DAV1D)
+	const char* backend = "dav1d";
+#else
+	const char* backend = "libaom";
+#endif
+	if ((result.status != status) || (result.keyFrame != keyFrame) || result.fellBack ||
+	    (result.hardware != FREERDP_DECODE_HARDWARE_NO) || !result.backend ||
+	    (strcmp(result.backend, backend) != 0))
+	{
+		(void)fprintf(stderr,
+		              "[%s] got status %d keyFrame %d fellBack %d hardware %d backend %s, "
+		              "expected status %d keyFrame %d\n",
+		              __func__, result.status, result.keyFrame, result.fellBack, result.hardware,
+		              result.backend, status, keyFrame);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/* The return value says nothing about pictures, the last decode must: what was decoded, what was
+ * only taken and what was refused. */
+WINPR_ATTR_NODISCARD
+static BOOL testLastDecode(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 format = PIXEL_FORMAT_BGRA32;
+	const UINT32 width = 64;
+	const UINT32 height = 64;
+	void* src = nullptr;
+	void* out = nullptr;
+	RDPGFX_H264_METABLOCK meta = WINPR_C_ARRAY_INIT;
+	RDPGFX_H264_METABLOCK meta2 = WINPR_C_ARRAY_INIT;
+	FREERDP_AV1_CONTEXT* enc = freerdp_av1_context_new(TRUE);
+	FREERDP_AV1_CONTEXT* dec = freerdp_av1_context_new(FALSE);
+	if (!enc || !dec || !freerdp_av1_context_reset(enc, width, height) ||
+	    !freerdp_av1_context_reset(dec, width, height))
+		goto fail;
+
+	FREERDP_DECODE_RESULT none = WINPR_C_ARRAY_INIT;
+	if (!freerdp_av1_context_get_last_decode(dec, &none) || (none.status != FREERDP_DECODE_NONE))
+		goto fail;
+	if (freerdp_av1_context_get_last_decode(dec, nullptr) ||
+	    freerdp_av1_context_get_last_decode(nullptr, &none))
+		goto fail;
+
+	uint32_t stride = 0;
+	uint32_t ostride = 0;
+	src = allocRGB(format, width, height, &stride);
+	out = allocRGB(format, width, height, &ostride);
+	if (!src || !out || (stride != ostride))
+		goto fail;
+
+	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
+	uint8_t* dst = nullptr;
+	uint32_t dstsize = 0;
+
+	if (freerdp_av1_compress(enc, src, format, stride, width, height, &rect, &dst, &dstsize,
+	                         &meta) < 0)
+		goto fail;
+	if (!dst || (dstsize < 4))
+		goto fail;
+
+	/* The stream starts with a temporal delimiter and the sequence header, no picture in them.
+	 * dav1d takes that, libaom refuses a temporal unit without a frame. */
+	const size_t headers = 4ull + dst[3];
+	if ((dst[0] != 0x12) || (dst[1] != 0) || (dst[2] != 0x0a) || (dst[3] >= 0x80) ||
+	    (headers >= dstsize))
+		goto fail;
+	const INT32 res = freerdp_av1_decompress(dec, dst, (UINT32)headers, out, format, stride, width,
+	                                         height, &rect, 1);
+#if defined(WITH_DAV1D)
+	if ((res < 0) || !checkLastDecode(dec, FREERDP_DECODE_NO_PICTURE, FALSE))
+		goto fail;
+#else
+	if ((res >= 0) || !checkLastDecode(dec, FREERDP_DECODE_FAILED, FALSE))
+		goto fail;
+#endif
+
+	/* cut inside of the frame, the size of its OBU says more: refused, but still the key frame
+	 * it was sent as */
+	if (freerdp_av1_decompress(dec, dst, dstsize / 2, out, format, stride, width, height, &rect,
+	                           1) >= 0)
+		goto fail;
+	if (!checkLastDecode(dec, FREERDP_DECODE_FAILED, TRUE))
+		goto fail;
+
+	/* cut right after the first header byte */
+	if (freerdp_av1_decompress(dec, dst, 1, out, format, stride, width, height, &rect, 1) >= 0)
+		goto fail;
+	if (!checkLastDecode(dec, FREERDP_DECODE_FAILED, FALSE))
+		goto fail;
+
+	if (freerdp_av1_decompress(dec, dst, dstsize, out, format, stride, width, height, &rect, 1) < 0)
+		goto fail;
+	if (!checkLastDecode(dec, FREERDP_DECODE_PICTURE, TRUE))
+		goto fail;
+
+	/* the next frame is predicted from the first one */
+	if (winpr_RAND(src, 64) < 0)
+		goto fail;
+	if (freerdp_av1_compress(enc, src, format, stride, width, height, &rect, &dst, &dstsize,
+	                         &meta2) < 0)
+		goto fail;
+	if (!dst || (dstsize == 0))
+		goto fail;
+	if (freerdp_av1_decompress(dec, dst, dstsize, out, format, stride, width, height, &rect, 1) < 0)
+		goto fail;
+	if (!checkLastDecode(dec, FREERDP_DECODE_PICTURE, FALSE))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] failed\n", __func__);
+	freerdp_av1_context_free(enc);
+	freerdp_av1_context_free(dec);
+	free_h264_metablock(&meta);
+	free_h264_metablock(&meta2);
 	free(src);
 	free(out);
 	return rc;
@@ -176,6 +306,9 @@ int TestFreeRDPCodecAV1(int argc, char* argv[])
 	}
 
 	if (!testYUV444Colours(64, 64))
+		return -1;
+
+	if (!testLastDecode())
 		return -1;
 
 	return 0;

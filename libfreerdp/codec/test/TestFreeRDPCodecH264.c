@@ -502,6 +502,205 @@ fail:
 	return rc;
 }
 
+/* OpenH264 comes after the backends of the platforms and before libavcodec */
+#if defined(WITH_OPENH264) && !defined(WITH_APPLE_VIDEOTOOLBOX) && !defined(WITH_MEDIACODEC) && \
+    !(defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION))
+#define TEST_OPENH264_DECODES
+#endif
+
+WINPR_ATTR_NODISCARD
+static BOOL checkLastDecode(H264_CONTEXT* h264, FREERDP_DECODE_STATUS status, BOOL keyFrame)
+{
+	FREERDP_DECODE_RESULT result = WINPR_C_ARRAY_INIT;
+	if (!h264_context_get_last_decode(h264, &result))
+		return FALSE;
+	if ((result.status != status) || (result.keyFrame != keyFrame) || result.fellBack ||
+	    !result.backend)
+	{
+		(void)fprintf(stderr,
+		              "[%s] got status %d keyFrame %d fellBack %d backend %s, "
+		              "expected status %d keyFrame %d\n",
+		              __func__, result.status, result.keyFrame, result.fellBack, result.backend,
+		              status, keyFrame);
+		return FALSE;
+	}
+#if defined(TEST_OPENH264_DECODES)
+	if ((strcmp(result.backend, "OpenH264") != 0) ||
+	    (result.hardware != FREERDP_DECODE_HARDWARE_NO))
+	{
+		(void)fprintf(stderr, "[%s] got backend %s hardware %d\n", __func__, result.backend,
+		              result.hardware);
+		return FALSE;
+	}
+#endif
+	return TRUE;
+}
+
+typedef struct
+{
+	const BYTE* data;
+	UINT32 size;
+	BOOL keyFrame;
+} KEY_FRAME_SCAN;
+
+static const KEY_FRAME_SCAN keyFrameScans[] = {
+	{ (const BYTE*)"\x00\x00\x01\x65\x88", 5, TRUE },
+	/* a four byte start code */
+	{ (const BYTE*)"\x00\x00\x00\x01\x65\x88", 6, TRUE },
+	/* the start code at each offset of a step */
+	{ (const BYTE*)"\xff\x00\x00\x01\x65\x88", 6, TRUE },
+	{ (const BYTE*)"\xff\xff\x00\x00\x01\x65\x88", 7, TRUE },
+	{ (const BYTE*)"\xff\xff\xff\x00\x00\x01\x65\x88", 8, TRUE },
+	{ (const BYTE*)"\x00\x00\x02\x00\x00\x01\x65\x88", 8, TRUE },
+	/* after a parameter set */
+	{ (const BYTE*)"\x00\x00\x01\x67\x00\x00\x01\x65\x88", 9, TRUE },
+	/* the first slice decides */
+	{ (const BYTE*)"\x00\x00\x01\x41\x00\x00\x01\x65\x88", 9, FALSE },
+	/* no slice, cut short, no start code */
+	{ (const BYTE*)"\x00\x00\x01\x67\x88", 5, FALSE },
+	{ (const BYTE*)"\x00\x00\x01", 3, FALSE },
+	{ (const BYTE*)"\xff\xff\xff\xff\xff\xff\xff\xff", 8, FALSE }
+};
+
+/* The return value says nothing about pictures, the last decode must: what was decoded, what was
+ * only taken and what was refused. */
+WINPR_ATTR_NODISCARD
+static BOOL testLastDecode(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 64;
+	const UINT32 height = 64;
+	const UINT32 format = PIXEL_FORMAT_BGRX32;
+	const UINT32 stride = width * 4;
+	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
+	const RECTANGLE_16 outside = { .left = 0, .top = 0, .right = 2 * width, .bottom = height };
+	BYTE corrupt[sizeof(solid_idr_64x64)] = WINPR_C_ARRAY_INIT;
+	H264_CONTEXT* h264 = h264_context_new(FALSE);
+	BYTE* dst = calloc(stride, height);
+
+	if (!h264 || !dst || !h264_context_reset(h264, width, height))
+		goto fail;
+
+	FREERDP_DECODE_RESULT none = WINPR_C_ARRAY_INIT;
+	if (!h264_context_get_last_decode(h264, &none) || (none.status != FREERDP_DECODE_NONE))
+		goto fail;
+	if (h264_context_get_last_decode(h264, nullptr) || h264_context_get_last_decode(nullptr, &none))
+		goto fail;
+
+	/* Only the parameter sets, no picture in them. OpenH264 takes them, libavcodec refuses a
+	 * packet without a slice. */
+	const INT32 parameters =
+	    avc420_decompress(h264, solid_idr_64x64, 36, dst, format, stride, width, height, &rect, 1);
+#if defined(TEST_OPENH264_DECODES)
+	if (parameters < 0)
+		goto fail;
+#endif
+	if (!checkLastDecode(h264, (parameters < 0) ? FREERDP_DECODE_FAILED : FREERDP_DECODE_NO_PICTURE,
+	                     FALSE))
+		goto fail;
+
+	/* an IDR slice whose bits are nonsense: no decoder makes a picture of that without a reset */
+	memcpy(corrupt, solid_idr_64x64, sizeof(corrupt));
+	memset(&corrupt[40], 0xff, sizeof(corrupt) - 40);
+	const INT32 res = avc420_decompress(h264, corrupt, sizeof(corrupt), dst, format, stride, width,
+	                                    height, &rect, 1);
+	if (!checkLastDecode(h264, (res < 0) ? FREERDP_DECODE_FAILED : FREERDP_DECODE_NO_PICTURE, TRUE))
+		goto fail;
+
+	/* a rectangle outside of the destination never reaches the decoder */
+	if (avc420_decompress(h264, solid_idr_64x64, sizeof(solid_idr_64x64), dst, format, stride,
+	                      width, height, &outside, 1) >= 0)
+		goto fail;
+	if (!checkLastDecode(h264, FREERDP_DECODE_FAILED, TRUE))
+		goto fail;
+
+	/* the same way out, for the scan for the first slice: what starts a stream, and where */
+	for (size_t x = 0; x < ARRAYSIZE(keyFrameScans); x++)
+	{
+		const KEY_FRAME_SCAN* scan = &keyFrameScans[x];
+		if (avc420_decompress(h264, scan->data, scan->size, dst, format, stride, width, height,
+		                      &outside, 1) >= 0)
+			goto fail;
+		if (!checkLastDecode(h264, FREERDP_DECODE_FAILED, scan->keyFrame))
+		{
+			(void)fprintf(stderr, "[%s] scan %" PRIuz " failed\n", __func__, x);
+			goto fail;
+		}
+	}
+
+	H264_CONTEXT* fresh = h264_context_new(FALSE);
+	if (!fresh)
+		goto fail;
+	const BOOL picture = h264_context_reset(fresh, width, height) &&
+	                     (avc420_decompress(fresh, solid_idr_64x64, sizeof(solid_idr_64x64), dst,
+	                                        format, stride, width, height, &rect, 1) >= 0) &&
+	                     checkLastDecode(fresh, FREERDP_DECODE_PICTURE, TRUE);
+	h264_context_free(fresh);
+	if (!picture)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] failed\n", __func__);
+	h264_context_free(h264);
+	free(dst);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL testLastDecodeAvc444(UINT32 codec)
+{
+	BOOL rc = FALSE;
+	const RECTANGLE_16 full = { 0, 0, 64, 64 };
+	const UINT32 stride = 64 * 4;
+	const UINT32 format = PIXEL_FORMAT_BGRX32;
+	BYTE dst[64 * 64 * 4] = WINPR_C_ARRAY_INIT;
+	H264_CONTEXT* h264 = h264_context_new(FALSE);
+
+	if (!h264 || !h264_context_reset(h264, 64, 64))
+		goto fail;
+
+	/* a key frame, and the frame that follows it */
+	if (avc444_decompress(h264, 1, &full, 1, avc444_idr, sizeof(avc444_idr), nullptr, 0, nullptr, 0,
+	                      dst, format, stride, 64, 64, codec) != 0)
+		goto fail;
+	if (!checkLastDecode(h264, FREERDP_DECODE_PICTURE, TRUE))
+		goto fail;
+
+	if (avc444_decompress(h264, 2, &full, 1, avc444_p, sizeof(avc444_p), nullptr, 0, nullptr, 0,
+	                      dst, format, stride, 64, 64, codec) != 0)
+		goto fail;
+	if (!checkLastDecode(h264, FREERDP_DECODE_PICTURE, FALSE))
+		goto fail;
+
+	/* the auxiliary stream counts in an update of both */
+	if (!h264_context_reset(h264, 64, 64))
+		goto fail;
+	if (avc444_decompress(h264, 0, &full, 1, avc444_p, sizeof(avc444_p), &full, 1, avc444_idr,
+	                      sizeof(avc444_idr), dst, format, stride, 64, 64, codec) >= 0)
+	{
+		if (!checkLastDecode(h264, FREERDP_DECODE_PICTURE, TRUE))
+			goto fail;
+	}
+	else if (!checkLastDecode(h264, FREERDP_DECODE_FAILED, TRUE))
+		goto fail;
+
+	/* an op that does not exist */
+	if (avc444_decompress(h264, 3, &full, 1, avc444_p, sizeof(avc444_p), nullptr, 0, nullptr, 0,
+	                      dst, format, stride, 64, 64, codec) >= 0)
+		goto fail;
+	if (!checkLastDecode(h264, FREERDP_DECODE_FAILED, FALSE))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] codec 0x%04" PRIX32 " failed\n", __func__, codec);
+	h264_context_free(h264);
+	return rc;
+}
+
 #if defined(WITH_APPLE_VIDEOTOOLBOX)
 /* VideoToolbox writes SPS/PPS first, each with a four-byte Annex B start code. */
 WINPR_ATTR_NODISCARD
@@ -697,6 +896,10 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 		return -1;
 #endif
 	/* Both AVC444 packing formats must support combined and separate updates. */
+	if (!testLastDecode() || !testLastDecodeAvc444(RDPGFX_CODECID_AVC444) ||
+	    !testLastDecodeAvc444(RDPGFX_CODECID_AVC444v2))
+		return -1;
+
 	if (!testDecodeAvc444(RDPGFX_CODECID_AVC444) || !testDecodeAvc444(RDPGFX_CODECID_AVC444v2))
 		return -1;
 

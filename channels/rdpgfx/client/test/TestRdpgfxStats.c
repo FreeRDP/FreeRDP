@@ -19,6 +19,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/config.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -32,6 +34,8 @@
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/codec/zgfx.h>
 #include <freerdp/dvc.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/gfx.h>
 
 #define INVALID_CMDID 0x7FFF
 
@@ -174,12 +178,17 @@ static BOOL check_names(void)
 		                                    "RDPGFX_CMDID_WATERMARK",
 		                                    "RDPGFX_CMDID_INVALID",
 		                                    "RDPGFX_FRAMES_DECODED",
-		                                    "RDPGFX_FRAMES_UNACKNOWLEDGED" };
+		                                    "RDPGFX_FRAMES_UNACKNOWLEDGED",
+		                                    "RDPGFX_DECODER_AV1_PICTURES",
+		                                    "RDPGFX_DECODER_AVC420_FAILED",
+		                                    "RDPGFX_DECODER_AVC444_NO_PICTURE",
+		                                    "RDPGFX_DECODER_AVC444v2_FALLBACKS" };
 
 	const size_t max = rdpgfx_stats_max_index();
 
 	/* codec IDs, command IDs and the invalid command, bytes per codec ID, the two frame stats */
-	TEST_CHECK(max == 2ull * RDPGFX_CODECID_MAX + RDPGFX_CMDID_MAX + 1ull + 2ull);
+	/* and nine stats for each of the four decoders */
+	TEST_CHECK(max == 2ull * RDPGFX_CODECID_MAX + RDPGFX_CMDID_MAX + 1ull + 2ull + 4ull * 9ull);
 
 	for (size_t x = 0; x < max; x++)
 	{
@@ -210,6 +219,75 @@ static BOOL check_names(void)
 		size_t index = 0;
 		TEST_CHECK(find_stat(expected[x], &index));
 	}
+	return TRUE;
+}
+
+/* Everything goes to the slots of the codec it was reported for, and each stat to its own */
+static BOOL check_decode_results(RdpgfxClientContext* gfx)
+{
+	TEST_CHECK(gfx->DecodeResult);
+	TEST_CHECK(rdpgfx_stats_decoder_backend(gfx, RDPGFX_CODECID_AVC420) == nullptr);
+	TEST_CHECK(rdpgfx_stats_decoder_backend(gfx, RDPGFX_CODECID_CLEARCODEC) == nullptr);
+	TEST_CHECK(rdpgfx_stats_decoder_backend(nullptr, RDPGFX_CODECID_AVC420) == nullptr);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_LAST_PICTURE_AGE_NS") == 0);
+
+	FREERDP_DECODE_RESULT result = { .status = FREERDP_DECODE_PICTURE,
+		                             .keyFrame = TRUE,
+		                             .fellBack = FALSE,
+		                             .hardware = FREERDP_DECODE_HARDWARE_NO,
+		                             .backend = "first" };
+	gfx->DecodeResult(gfx, RDPGFX_CODECID_AVC420, &result, 300);
+
+	result.status = FREERDP_DECODE_PICTURE;
+	result.keyFrame = FALSE;
+	gfx->DecodeResult(gfx, RDPGFX_CODECID_AVC420, &result, 200);
+
+	result.status = FREERDP_DECODE_FAILED;
+	result.fellBack = TRUE;
+	result.hardware = FREERDP_DECODE_HARDWARE_YES;
+	result.backend = "second";
+	gfx->DecodeResult(gfx, RDPGFX_CODECID_AVC420, &result, 500);
+
+	result.status = FREERDP_DECODE_NO_PICTURE;
+	result.fellBack = FALSE;
+	gfx->DecodeResult(gfx, RDPGFX_CODECID_AVC420, &result, 100);
+
+	/* nothing happened, and nothing for a codec without decoder stats */
+	result.status = FREERDP_DECODE_NONE;
+	gfx->DecodeResult(gfx, RDPGFX_CODECID_AVC420, &result, 10000);
+	result.status = FREERDP_DECODE_PICTURE;
+	gfx->DecodeResult(gfx, RDPGFX_CODECID_CLEARCODEC, &result, 10000);
+
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_PICTURES") == 2);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_FAILED") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_NO_PICTURE") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_KEY_FRAMES") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_DECODE_NS_SUM") == 1100);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_DECODE_NS_MAX") == 500);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_FALLBACKS") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_HARDWARE") == FREERDP_DECODE_HARDWARE_YES);
+
+	const uint64_t age = stat_value(gfx, "RDPGFX_DECODER_AVC420_LAST_PICTURE_AGE_NS");
+	TEST_CHECK(age > 0);
+	TEST_CHECK(age < 60ull * 1000ull * 1000ull * 1000ull);
+
+	const char* backend = rdpgfx_stats_decoder_backend(gfx, RDPGFX_CODECID_AVC420);
+	TEST_CHECK(backend && (strcmp(backend, "second") == 0));
+
+	/* the slots of the other codecs are their own */
+	static const struct
+	{
+		UINT16 codecId;
+		const char* pictures;
+	} others[] = { { RDPGFX_CODECID_AVC444, "RDPGFX_DECODER_AVC444_PICTURES" },
+		           { RDPGFX_CODECID_AVC444v2, "RDPGFX_DECODER_AVC444v2_PICTURES" } };
+	for (size_t x = 0; x < ARRAYSIZE(others); x++)
+	{
+		TEST_CHECK(stat_value(gfx, others[x].pictures) == 0);
+		gfx->DecodeResult(gfx, others[x].codecId, &result, 1);
+		TEST_CHECK(stat_value(gfx, others[x].pictures) == 1);
+	}
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_PICTURES") == 2);
 	return TRUE;
 }
 
@@ -269,6 +347,7 @@ static UINT send_wire_to_surface_1(IWTSVirtualChannelCallback* callback, UINT16 
 static BOOL check_session(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* callback)
 {
 	TEST_CHECK(all_zero(gfx));
+	TEST_CHECK(check_decode_results(gfx));
 
 	TEST_CHECK(send_frame_pdu(callback, RDPGFX_CMDID_STARTFRAME, 1) == CHANNEL_RC_OK);
 	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_UNACKNOWLEDGED") == 1);
@@ -319,7 +398,160 @@ static BOOL open_channel(test_channel_manager* mgr, IWTSVirtualChannel* channel,
 	return TRUE;
 }
 
-static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_H264)
+#define TEST_SIZE 64
+#define TEST_SURFACE 1
+#define TEST_METABLOCK_SIZE (4ull + 8ull + 2ull)
+
+static void write_metablock(wStream* s)
+{
+	Stream_Write_UINT32(s, 1); /* numRegionRects */
+	Stream_Write_UINT16(s, 0);
+	Stream_Write_UINT16(s, 0);
+	Stream_Write_UINT16(s, TEST_SIZE);
+	Stream_Write_UINT16(s, TEST_SIZE);
+	Stream_Write_UINT8(s, 22);  /* qpVal */
+	Stream_Write_UINT8(s, 100); /* qualityVal */
+}
+
+#if defined(WITH_GFX_AV1)
+/* AV1 is only accepted on a connection that agreed on the capability version with it */
+static UINT send_caps_confirm(IWTSVirtualChannelCallback* callback)
+{
+	wStream* s = new_pdu(RDPGFX_CMDID_CAPSCONFIRM, 12);
+	if (!s)
+		return CHANNEL_RC_NO_MEMORY;
+	Stream_Write_UINT32(s, RDPGFX_CAPVERSION_FRDP_1);
+	Stream_Write_UINT32(s, 4); /* capsDataLength */
+	Stream_Write_UINT32(s, 0); /* capsData */
+	return send_pdu(callback, s);
+}
+#endif
+
+static UINT send_create_surface(IWTSVirtualChannelCallback* callback)
+{
+	wStream* s = new_pdu(RDPGFX_CMDID_CREATESURFACE, 7);
+	if (!s)
+		return CHANNEL_RC_NO_MEMORY;
+	Stream_Write_UINT16(s, TEST_SURFACE);
+	Stream_Write_UINT16(s, TEST_SIZE);
+	Stream_Write_UINT16(s, TEST_SIZE);
+	Stream_Write_UINT8(s, GFX_PIXEL_FORMAT_XRGB_8888);
+	return send_pdu(callback, s);
+}
+
+/* A surface command with a real bitstream. avc444 is the prefix of an AVC444 command: the LC
+ * value in the bits on top of the size of the first stream, the one stream this test sends. */
+static UINT send_bitstream(IWTSVirtualChannelCallback* callback, UINT16 codecId, const BYTE* data,
+                           size_t length, BOOL avc444)
+{
+	const size_t bitmap = (avc444 ? 4ull : 0ull) + TEST_METABLOCK_SIZE + length;
+	wStream* s = new_pdu(RDPGFX_CMDID_WIRETOSURFACE_1, RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + bitmap);
+	if (!s)
+		return CHANNEL_RC_NO_MEMORY;
+	Stream_Write_UINT16(s, TEST_SURFACE);
+	Stream_Write_UINT16(s, codecId);
+	Stream_Write_UINT8(s, GFX_PIXEL_FORMAT_XRGB_8888);
+	Stream_Write_UINT16(s, 0);
+	Stream_Write_UINT16(s, 0);
+	Stream_Write_UINT16(s, TEST_SIZE);
+	Stream_Write_UINT16(s, TEST_SIZE);
+	Stream_Write_UINT32(s, (UINT32)bitmap);
+	if (avc444)
+		Stream_Write_UINT32(s, (UINT32)((1u << 30) | (TEST_METABLOCK_SIZE + length)));
+	write_metablock(s);
+	Stream_Write(s, data, length);
+	return send_pdu(callback, s);
+}
+
+/* What the decoders behind the renderer report reaches the stats of their codec */
+static BOOL check_decoders(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* callback)
+{
+	TEST_CHECK(send_create_surface(callback) == CHANNEL_RC_OK);
+
+#if defined(WITH_GFX_AV1)
+	TEST_CHECK(send_caps_confirm(callback) == CHANNEL_RC_OK);
+
+	/* A temporal delimiter alone: dav1d takes it, libaom refuses a temporal unit without a
+	 * frame. Then an OBU cut off inside of its header, which no decoder takes. */
+	static const BYTE av1NoFrame[] = { 0x12, 0x00 };
+	static const BYTE av1Cut[] = { 0x12 };
+
+	TEST_CHECK(send_bitstream(callback, RDPGFX_CODECID_AV1, av1NoFrame, sizeof(av1NoFrame),
+	                          FALSE) == CHANNEL_RC_OK);
+	const char* backend = rdpgfx_stats_decoder_backend(gfx, RDPGFX_CODECID_AV1);
+	TEST_CHECK(backend);
+	const uint64_t taken = (strcmp(backend, "dav1d") == 0) ? 1 : 0;
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_NO_PICTURE") == taken);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_FAILED") == 1 - taken);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_PICTURES") == 0);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_DECODE_NS_SUM") > 0);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_HARDWARE") == FREERDP_DECODE_HARDWARE_NO);
+
+	/* the channel carries on: a decoder's failure is no failure of the channel */
+	TEST_CHECK(send_bitstream(callback, RDPGFX_CODECID_AV1, av1Cut, sizeof(av1Cut), FALSE) ==
+	           CHANNEL_RC_OK);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_FAILED") == 2 - taken);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AV1_PICTURES") == 0);
+#endif
+
+#if defined(WITH_GFX_H264)
+	/* 64x64 solid colour, the key frame of TestFreeRDPCodecH264 */
+	static const BYTE idr[] = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0, 0x0a, 0xd9, 0x04,
+		                        0x26, 0xc0, 0x44, 0x00, 0x00, 0x03, 0x00, 0x04, 0x00, 0x00,
+		                        0x03, 0x00, 0xc8, 0x3c, 0x48, 0x99, 0x20, 0x00, 0x00, 0x00,
+		                        0x01, 0x68, 0xcb, 0x83, 0xcb, 0x20, 0x00, 0x00, 0x01, 0x65,
+		                        0x88, 0x84, 0x0a, 0xf1, 0x18, 0xa0, 0x00, 0x22, 0x4b, 0x1c,
+		                        0x00, 0x04, 0x53, 0xa3, 0x80, 0x00, 0x85, 0x8c, 0x9c, 0x9c,
+		                        0x9d, 0x75, 0xd7, 0x5d, 0x75, 0xd7, 0x5d, 0x75, 0xd7, 0x5e };
+
+	TEST_CHECK(send_bitstream(callback, RDPGFX_CODECID_AVC420, idr, sizeof(idr), FALSE) ==
+	           CHANNEL_RC_OK);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_PICTURES") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_KEY_FRAMES") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_FAILED") == 0);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_LAST_PICTURE_AGE_NS") > 0);
+	TEST_CHECK(rdpgfx_stats_decoder_backend(gfx, RDPGFX_CODECID_AVC420));
+
+	TEST_CHECK(send_bitstream(callback, RDPGFX_CODECID_AVC444, idr, sizeof(idr), TRUE) ==
+	           CHANNEL_RC_OK);
+	TEST_CHECK(send_bitstream(callback, RDPGFX_CODECID_AVC444v2, idr, sizeof(idr), TRUE) ==
+	           CHANNEL_RC_OK);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC444_PICTURES") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC444v2_PICTURES") == 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_DECODER_AVC420_PICTURES") == 1);
+#endif
+	return TRUE;
+}
+
+static BOOL check_renderer(rdpContext* context, IWTSPlugin* plugin, test_channel_manager* mgr,
+                           IWTSVirtualChannel* channel)
+{
+	RdpgfxClientContext* gfx = (RdpgfxClientContext*)plugin->pInterface;
+	TEST_CHECK(gfx);
+
+	/* Decoding needs nothing of the desktop: the surface stays unmapped */
+	rdpGdi gdi = WINPR_C_ARRAY_INIT;
+	gdi.context = context;
+	gdi.log = WLog_Get("com.freerdp.test.rdpgfx");
+	TEST_CHECK(freerdp_settings_set_uint32(context->settings, FreeRDP_DesktopWidth, TEST_SIZE));
+	TEST_CHECK(freerdp_settings_set_uint32(context->settings, FreeRDP_DesktopHeight, TEST_SIZE));
+	BOOL rc = gdi_graphics_pipeline_init(&gdi, gfx);
+
+	IWTSVirtualChannelCallback* callback = nullptr;
+	rc = rc && open_channel(mgr, channel, &callback);
+	if (rc)
+	{
+		rc = check_decoders(gfx, callback);
+		(void)callback->OnClose(callback);
+	}
+
+	gdi_graphics_pipeline_uninit(&gdi, gfx);
+	return rc;
+}
+#endif
+
+static BOOL check_channel(rdpContext* context, IWTSPlugin* plugin, test_channel_manager* mgr)
 {
 	IWTSVirtualChannel channel = WINPR_C_ARRAY_INIT;
 	channel.Write = test_channel_write;
@@ -346,9 +578,16 @@ static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr)
 
 	/* the next channel starts from zero */
 	TEST_CHECK(open_channel(mgr, &channel, &callback));
-	const BOOL zero = all_zero(gfx);
+	const BOOL zero =
+	    all_zero(gfx) && (rdpgfx_stats_decoder_backend(gfx, RDPGFX_CODECID_AVC420) == nullptr);
 	(void)callback->OnClose(callback);
 	TEST_CHECK(zero);
+
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_H264)
+	TEST_CHECK(check_renderer(context, plugin, mgr, &channel));
+#else
+	WINPR_UNUSED(context);
+#endif
 	return TRUE;
 }
 
@@ -378,7 +617,7 @@ static BOOL check_plugin(rdpContext* context)
 	mgr.iface.GetChannelName = test_get_channel_name;
 	mgr.iface.FindChannelById = test_find_channel_by_id;
 
-	const BOOL rc = check_channel(ep.plugin, &mgr);
+	const BOOL rc = check_channel(context, ep.plugin, &mgr);
 
 	/* frees the plugin */
 	(void)ep.plugin->Terminated(ep.plugin);

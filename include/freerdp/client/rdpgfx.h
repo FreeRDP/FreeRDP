@@ -26,6 +26,7 @@
 #include <freerdp/types.h>
 
 #include <freerdp/codecs.h>
+#include <freerdp/codec/decode_result.h>
 
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/utils/profiler.h>
@@ -119,6 +120,17 @@ extern "C"
 	                                            UINT64 windowID);
 	typedef UINT (*pcRdpgfxUnmapWindowForSurface)(RdpgfxClientContext* context, UINT64 windowID);
 
+	/** @brief Tell the channel's statistics what a decoder made of a surface command
+	 *
+	 *  @param context The channel context
+	 *  @param codecId The RDPGFX_CODECID_* of the surface command
+	 *  @param result What the decoder reported for it
+	 *  @param decodeNS The time the decode took in nanoseconds
+	 *  @since version 3.34.0
+	 */
+	typedef void (*pcRdpgfxDecodeResult)(RdpgfxClientContext* context, UINT16 codecId,
+	                                     const FREERDP_DECODE_RESULT* result, UINT64 decodeNS);
+
 	struct s_rdpgfx_client_context
 	{
 		void* handle;
@@ -175,6 +187,9 @@ extern "C"
 		CRITICAL_SECTION mux;
 		rdpCodecs* codecs;
 		PROFILER_DEFINE(SurfaceProfiler)
+
+		/* Set by the channel, the renderer calls it. @since version 3.34.0 */
+		pcRdpgfxDecodeResult DecodeResult;
 	};
 
 	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
@@ -192,6 +207,15 @@ extern "C"
 	 *  All of them start at 0 when the channel opens and are still readable after it closed.
 	 *  New stats are added at the end, an index never changes its meaning. Use the name to find
 	 *  one.
+	 *
+	 *  Then, for each of AV1, AVC420, AVC444 and AVC444v2 and named RDPGFX_DECODER_<codec>_*:
+	 *  surface commands that gave a picture (_PICTURES), that the decoder refused (_FAILED), that
+	 *  it took without a picture to show (_NO_PICTURE), that carried a key frame whatever became
+	 *  of them (_KEY_FRAMES), the nanoseconds all decodes took (_DECODE_NS_SUM), the longest one
+	 *  (_DECODE_NS_MAX), the nanoseconds since the last picture, 0 before the first one
+	 *  (_LAST_PICTURE_AGE_NS), the last FREERDP_DECODE_HARDWARE value (_HARDWARE) and the
+	 *  decoders given up on (_FALLBACKS). A renderer that reports no decode results leaves
+	 *  them at 0.
 	 *
 	 *  @return The number of GFX stats indices that will return a value
 	 *  @since version 3.27.0
@@ -217,6 +241,18 @@ extern "C"
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API uint64_t rdpgfx_stats_value_for_index(RdpgfxClientContext* context, size_t index);
+
+	/** @brief Get the name of the decoder backend that decoded a codec last.
+	 *
+	 *  @param context The channel context
+	 *  @param codecId One of RDPGFX_CODECID_AV1, _AVC420, _AVC444 or _AVC444v2
+	 *
+	 *  @return The name, valid for the lifetime of the process, or \b nullptr if there is none
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* rdpgfx_stats_decoder_backend(RdpgfxClientContext* context,
+	                                                     UINT16 codecId);
 
 #ifdef __cplusplus
 }
