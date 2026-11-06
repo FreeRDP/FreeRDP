@@ -356,6 +356,34 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 	priv = context->priv;
 	WINPR_ASSERT(priv);
 
+	/* Wait for the client to take the channel. It says nothing on it until it has
+	 * the caps, so the channel event would not fire. */
+	while (!priv->isReady)
+	{
+		void* buffer = nullptr;
+		DWORD BytesReturned = 0;
+
+		if (WaitForSingleObject(priv->stopEvent, 100) == WAIT_OBJECT_0)
+			goto out;
+
+		if (!WTSVirtualChannelQuery(priv->disp_channel, WTSVirtualChannelReady, &buffer,
+		                            &BytesReturned))
+		{
+			WLog_INFO(TAG, "the client did not take the channel");
+			goto out;
+		}
+
+		priv->isReady = *((BOOL*)buffer);
+		WTSFreeMemory(buffer);
+	}
+
+	error = context->DisplayControlCaps(context);
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "DisplayControlCaps failed with error %" PRIu32 "", error);
+		goto out;
+	}
+
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 
@@ -382,6 +410,7 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 		}
 	}
 
+out:
 	ExitThread(error);
 	return error;
 }
