@@ -35,6 +35,10 @@
 
 #define TAG FREERDP_TAG("gdi")
 
+/* Maximum number of rectangles kept in gdiGfxSurface::invalidRegion before it is replaced by its
+ * bounding box. */
+#define GDI_GFX_MAX_INVALID_RECTS 256
+
 WINPR_ATTR_NODISCARD
 static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
 {
@@ -75,6 +79,34 @@ static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE
 		return FALSE;
 
 	return TRUE;
+}
+
+/**
+ * Add a rectangle to the invalid region of a surface.
+ *
+ * region16_union_rect rebuilds the whole region on every call, so its cost grows with the number
+ * of rectangles the region already holds. Both that number and the number of calls are under
+ * control of the server, so bound the former: the invalid region only tells which parts of the
+ * surface still have to be copied to the output, replacing a too fragmented one by its extents
+ * is always safe.
+ *
+ * @return TRUE on success, FALSE otherwise
+ */
+WINPR_ATTR_NODISCARD
+static BOOL gdi_surface_invalidate_rect(gdiGfxSurface* surface, const RECTANGLE_16* rect)
+{
+	WINPR_ASSERT(surface);
+
+	REGION16* region = &surface->invalidRegion;
+	if (!region16_union_rect(region, region, rect))
+		return FALSE;
+
+	if (region16_n_rects(region) <= GDI_GFX_MAX_INVALID_RECTS)
+		return TRUE;
+
+	const RECTANGLE_16 extents = *region16_extents(region);
+	region16_clear(region);
+	return region16_union_rect(region, region, &extents);
 }
 
 WINPR_ATTR_NODISCARD
@@ -418,7 +450,7 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 	invalidRect.top = (UINT16)MIN(UINT16_MAX, cmd->top);
 	invalidRect.right = (UINT16)MIN(UINT16_MAX, cmd->right);
 	invalidRect.bottom = (UINT16)MIN(UINT16_MAX, cmd->bottom);
-	if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect))
+	if (!gdi_surface_invalidate_rect(surface, &invalidRect))
 		goto fail;
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId, 1,
 	                      &invalidRect);
@@ -494,8 +526,7 @@ static UINT gdi_SurfaceCommand_AV1(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	for (UINT32 i = 0; i < meta->numRegionRects; i++)
 	{
-		if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                         &(meta->regionRects[i])))
+		if (!gdi_surface_invalidate_rect(surface, &(meta->regionRects[i])))
 			goto fail;
 	}
 
@@ -564,7 +595,7 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 
 	for (UINT32 x = 0; x < nrRects; x++)
 	{
-		if (!region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &rects[x]))
+		if (!gdi_surface_invalidate_rect(surface, &rects[x]))
 			goto fail;
 	}
 
@@ -620,7 +651,7 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* cont
 	invalidRect.top = (UINT16)MIN(UINT16_MAX, cmd->top);
 	invalidRect.right = (UINT16)MIN(UINT16_MAX, cmd->right);
 	invalidRect.bottom = (UINT16)MIN(UINT16_MAX, cmd->bottom);
-	if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect))
+	if (!gdi_surface_invalidate_rect(surface, &invalidRect))
 		goto fail;
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId, 1,
 	                      &invalidRect);
@@ -676,7 +707,7 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 	invalidRect.top = (UINT16)MIN(UINT16_MAX, cmd->top);
 	invalidRect.right = (UINT16)MIN(UINT16_MAX, cmd->right);
 	invalidRect.bottom = (UINT16)MIN(UINT16_MAX, cmd->bottom);
-	if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect))
+	if (!gdi_surface_invalidate_rect(surface, &invalidRect))
 		goto fail;
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId, 1,
 	                      &invalidRect);
@@ -762,8 +793,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	for (UINT32 i = 0; i < meta->numRegionRects; i++)
 	{
-		if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                         &(meta->regionRects[i])))
+		if (!gdi_surface_invalidate_rect(surface, &(meta->regionRects[i])))
 			goto fail;
 	}
 
@@ -860,8 +890,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	for (UINT32 i = 0; i < meta1->numRegionRects; i++)
 	{
-		if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                         &(meta1->regionRects[i])))
+		if (!gdi_surface_invalidate_rect(surface, &(meta1->regionRects[i])))
 			goto fail;
 	}
 
@@ -873,8 +902,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	for (UINT32 i = 0; i < meta2->numRegionRects; i++)
 	{
-		if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                         &(meta2->regionRects[i])))
+		if (!gdi_surface_invalidate_rect(surface, &(meta2->regionRects[i])))
 			goto fail;
 	}
 
@@ -1049,7 +1077,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	invalidRect.top = (UINT16)MIN(UINT16_MAX, cmd->top);
 	invalidRect.right = (UINT16)MIN(UINT16_MAX, cmd->right);
 	invalidRect.bottom = (UINT16)MIN(UINT16_MAX, cmd->bottom);
-	if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect))
+	if (!gdi_surface_invalidate_rect(surface, &invalidRect))
 		goto fail;
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId, 1,
 	                      &invalidRect);
@@ -1166,7 +1194,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	status = ERROR_INTERNAL_ERROR;
 	for (UINT32 x = 0; x < nrRects; x++)
 	{
-		if (!region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &rects[x]))
+		if (!gdi_surface_invalidate_rect(surface, &rects[x]))
 			goto fail;
 	}
 
@@ -1487,8 +1515,7 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_
 			                        invalidRect.left, invalidRect.top, nWidth, nHeight, color))
 				goto fail;
 
-			if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-			                         &invalidRect))
+			if (!gdi_surface_invalidate_rect(surface, &invalidRect))
 				goto fail;
 		}
 	}
@@ -1564,8 +1591,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 				goto fail;
 
 			invalidRect = rect;
-			if (!region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion,
-			                         &invalidRect))
+			if (!gdi_surface_invalidate_rect(surfaceDst, &invalidRect))
 				goto fail;
 			status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context,
 			                      surfaceDst->surfaceId, 1, &invalidRect);
@@ -1724,7 +1750,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 			goto fail;
 
 		invalidRect = rect;
-		if (!region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect))
+		if (!gdi_surface_invalidate_rect(surface, &invalidRect))
 			goto fail;
 		status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context,
 		                      surface->surfaceId, 1, &invalidRect);
