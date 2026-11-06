@@ -22,6 +22,11 @@ UINT rail_send_client_status(RailClientContext* context)
 		clientStatus.flags &= ~TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
 	return context->ClientInformation(context, &clientStatus);
 }
+static BOOL utils_str_is_empty(const char* str)
+{
+	return !str || (str[0] == '\0');
+}
+
 UINT client_rail_server_start_cmd(RailClientContext* context)
 {
 	WINPR_ASSERT(context);
@@ -68,6 +73,11 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	if (status != CHANNEL_RC_OK)
 		return status;
 
+	const char* RemoteApplicationProgram =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	if (utils_str_is_empty(RemoteApplicationProgram))
+		return CHANNEL_RC_OK;
+
 	const char* RemoteApplicationFile =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationFile);
 	const char* RemoteApplicationCmdLine =
@@ -85,8 +95,7 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 		exec.RemoteApplicationArguments = RemoteApplicationFile;
 	else
 		exec.RemoteApplicationArguments = RemoteApplicationCmdLine;
-	exec.RemoteApplicationProgram =
-	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	exec.RemoteApplicationProgram = RemoteApplicationProgram;
 	exec.RemoteApplicationWorkingDir =
 	    freerdp_settings_get_string(settings, FreeRDP_ShellWorkingDirectory);
 	return context->ClientExecute(context, &exec);
