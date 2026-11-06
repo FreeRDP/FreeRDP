@@ -141,10 +141,12 @@ static void write_remote_text(ShadowClip* clip, const BYTE* utf16, UINT32 len)
 	WINPR_ASSERT(clip);
 	WINPR_ASSERT(utf16);
 
-	HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE, len + 2);
+	HANDLE hMem = nullptr;
+	hMem = GlobalAlloc(GMEM_MOVEABLE, len + 2);
 	if (!hMem)
 		return;
-	void* p = GlobalLock(hMem);
+	void* p = nullptr;
+	p = GlobalLock(hMem);
 	if (p)
 	{
 		CopyMemory(p, utf16, len);
@@ -177,7 +179,8 @@ static void write_remote_hdrop(ShadowClip* clip)
 	WINPR_ASSERT(clip);
 
 	UINT32 n = 0;
-	SIZE_T bytes = sizeof(DROPFILES) + sizeof(WCHAR);
+	SIZE_T bytes = 0;
+	bytes = sizeof(DROPFILES) + sizeof(WCHAR);
 	WLog_INFO(TAG, "write_remote_hdrop: enter inCount=%u", clip->inCount);
 	EnterCriticalSection(&clip->lock);
 	/* Only top-level entries go into DROPFILES: a top-level directory was
@@ -198,7 +201,8 @@ static void write_remote_hdrop(ShadowClip* clip)
 	if (!n)
 		return;
 
-	HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, bytes);
+	HANDLE hMem = nullptr;
+	hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, bytes);
 	if (!hMem)
 		return;
 	DROPFILES* df = (DROPFILES*)GlobalLock(hMem);
@@ -209,7 +213,8 @@ static void write_remote_hdrop(ShadowClip* clip)
 	}
 	df->pFiles = sizeof(DROPFILES);
 	df->fWide = TRUE;
-	WCHAR* dst = (WCHAR*)((BYTE*)df + sizeof(DROPFILES));
+	WCHAR* dst = nullptr;
+	dst = (WCHAR*)((BYTE*)df + sizeof(DROPFILES));
 	SIZE_T remain = bytes; /* includes the trailing NUL; shrinks per item */
 	EnterCriticalSection(&clip->lock);
 	for (UINT32 i = 0; i < clip->inCount; ++i)
@@ -229,11 +234,14 @@ static void write_remote_hdrop(ShadowClip* clip)
 	GlobalUnlock(hMem);
 
 	/* PreferredDropEffect=COPY: Explorer treats the drop as a copy, not a move */
-	const UINT cfDrop = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
-	HANDLE hEff = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+	UINT cfDrop = 0;
+	cfDrop = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
+	HANDLE hEff = nullptr;
+	hEff = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
 	if (hEff)
 	{
-		DWORD* e = (DWORD*)GlobalLock(hEff);
+		DWORD* e = nullptr;
+		e = (DWORD*)GlobalLock(hEff);
 		if (e)
 			*e = DROPEFFECT_COPY;
 		GlobalUnlock(hEff);
@@ -341,13 +349,16 @@ static void snapshot_remote_files(ShadowClip* clip)
 {
 	WINPR_ASSERT(clip);
 
-	HANDLE h = GetClipboardData(CF_HDROP); /* OpenClipboard already held by caller */
+	HANDLE h = nullptr; /* OpenClipboard already held by caller */
+	h = GetClipboardData(CF_HDROP);
 	if (!h)
 		return;
 	HDROP drop = (HDROP)h;
-	UINT cnt = DragQueryFileW(drop, 0xFFFFFFFF, nullptr, 0);
+	UINT cnt = 0;
+	cnt = DragQueryFileW(drop, 0xFFFFFFFF, nullptr, 0);
 	ClipFile* list = nullptr;
-	UINT32 real = 0, cap = 0;
+	UINT32 real = 0;
+	UINT32 cap = 0;
 	for (UINT i = 0; i < cnt && real < CLIP_MAX_FILES; ++i)
 	{
 		WCHAR path[MAX_PATH];
@@ -371,9 +382,10 @@ static void announce_local(ShadowClip* clip)
 
 	if (!open_clipboard_retry())
 		return;
-	const BOOL hasText =
-	    IsClipboardFormatAvailable(CF_UNICODETEXT) || IsClipboardFormatAvailable(CF_TEXT);
-	const BOOL hasFiles = IsClipboardFormatAvailable(CF_HDROP);
+	BOOL hasText = FALSE;
+	BOOL hasFiles = FALSE;
+	hasText = IsClipboardFormatAvailable(CF_UNICODETEXT) || IsClipboardFormatAvailable(CF_TEXT);
+	hasFiles = IsClipboardFormatAvailable(CF_HDROP);
 	if (hasFiles)
 		snapshot_remote_files(clip);
 	CloseClipboard();
@@ -770,10 +782,12 @@ static UINT srv_client_format_data_request(CliprdrServerContext* ctx,
 	{
 		if (open_clipboard_retry())
 		{
-			HANDLE h = GetClipboardData(CF_UNICODETEXT);
+			HANDLE h = nullptr;
+			h = GetClipboardData(CF_UNICODETEXT);
 			if (h)
 			{
-				const WCHAR* s = (const WCHAR*)GlobalLock(h);
+				const WCHAR* s = nullptr;
+				s = (const WCHAR*)GlobalLock(h);
 				if (s)
 				{
 					const SIZE_T len = (wcslen(s) + 1) * sizeof(WCHAR);
@@ -937,7 +951,8 @@ static LRESULT CALLBACK clip_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	if (m == WM_CLIPBOARDUPDATE)
 	{
-		ShadowClip* clip = (ShadowClip*)GetWindowLongPtrW(h, GWLP_USERDATA);
+		ShadowClip* clip = nullptr;
+		clip = (ShadowClip*)GetWindowLongPtrW(h, GWLP_USERDATA);
 		if (clip)
 		{
 			if (InterlockedDecrement(&clip->suppress) >= 0)
@@ -1034,7 +1049,8 @@ static BOOL clip_client_is_local(rdpShadowClient* client)
 		adapters = (PIP_ADAPTER_ADDRESSES)malloc(size);
 		if (!adapters)
 			return FALSE;
-		const ULONG rc = GetAdaptersAddresses(
+		ULONG rc = 0;
+		rc = GetAdaptersAddresses(
 		    AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER,
 		    nullptr, adapters, &size);
 		if (rc == ERROR_SUCCESS)
@@ -1124,7 +1140,8 @@ int win_shadow_cliprdr_init(rdpShadowClient* client)
 	 * created explicitly, CreateDirectoryW does not fill in intermediates.
 	 * The directory is per-process: with several concurrent viewers pulls
 	 * race for it (deliberate last-writer-wins, see #13891). */
-	DWORD tl = GetTempPathW(MAX_PATH, clip->stageDir);
+	DWORD tl = 0;
+	tl = GetTempPathW(MAX_PATH, clip->stageDir);
 	if (tl && tl < MAX_PATH - 32)
 	{
 		WCHAR parent[MAX_PATH];
