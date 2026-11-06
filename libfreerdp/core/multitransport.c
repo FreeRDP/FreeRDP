@@ -26,9 +26,6 @@
 #if !defined(_WIN32)
 #include <netdb.h>
 #include <sys/socket.h>
-#if defined(WITH_RDPEUDP)
-#include <netinet/in.h>
-#endif
 #endif
 #include <freerdp/log.h>
 #include <freerdp/multitransport.h>
@@ -39,74 +36,7 @@
 #include "transport.h"
 #include "rdpemt.h"
 #include "multitransport.h"
-#if defined(WITH_RDPEUDP)
-#include "../crypto/certificate.h"
-#include "../crypto/privatekey.h"
-#endif
-
-typedef enum
-{
-	MT_EVENT_READY,
-	MT_EVENT_FAILED,
-	MT_EVENT_DATA,
-	MT_EVENT_AUTODETECT_REQUEST
-} MT_EVENT_TYPE;
-
-/* Tunnel events travel from the tunnel thread to the thread that runs the main loop, which is
- * where the Initiate Multitransport Response goes out and where the dynamic channel code is
- * called. */
-typedef struct
-{
-	MT_EVENT_TYPE type;
-	wStream* s; /* sealed, at position 0 */
-	size_t length;
-} mt_event;
-
-struct rdp_multitransport
-{
-	rdpRdp* rdp;
-
-	MultiTransportRequestCb MtRequest;
-	MultiTransportResponseCb MtResponse;
-
-	/* server-side data */
-	UINT32 reliableReqId;
-
-	BYTE reliableCookie[RDPUDP_COOKIE_LEN];
-	BYTE reliableCookieHash[RDPUDP_COOKIE_HASHLEN];
-#if defined(WITH_RDPEUDP)
-
-	/* [MS-RDPEDYC] 3.1.5.3: the tunnel carries channel data once the client accepted it over
-	 * UDP (Tunnel Create Request) and over TCP (Initiate Multitransport Response), in either
-	 * order. Guarded by lock. */
-	BOOL serverTunnelUp;
-	BOOL serverResponseOk;
-	BOOL serverTunnelOffered;
-	BOOL serverResponsePending;
-#endif
-
-	/* client-side data */
-	CRITICAL_SECTION lock;
-	HANDLE event;
-	wQueue* events;
-	rdpEmt* reliable;
-	FreeRDP_MultitransportTunnelState reliableState;
-	BOOL reliableResponseSent;
-
-	/* Written on the thread that runs the main loop, which reads them there without locking:
-	 * receiving tunnel data must not wait for a sender, which holds lock while it writes to the
-	 * tunnel. The tunnel thread reads them only while it hands data on directly, see
-	 * multitransport_direct. */
-	FreeRDP_MultitransportDvcCallbacks callbacks;
-	void* custom;
-
-	/* Main loop thread only: the connection was ended because its tunnel broke down. */
-	BOOL endedConnection;
-
-	/* Set by the tunnel thread when it could not queue an event, received data that was
-	 * acknowledged to the server already among them. Accessed with Interlocked functions. */
-	LONG tunnelEventLost;
-};
+#include "multitransport_internal.h"
 
 enum
 {
@@ -187,100 +117,6 @@ static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, 
 	return rdp_send_message_channel_pdu(multi->rdp, s, sec_flags | SEC_TRANSPORT_REQ);
 }
 
-#if defined(WITH_RDPEUDP)
-static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT event,
-                                        const BYTE* data, size_t length);
-
-/* Server: the tunnel end for the request about to go out, with the main connection's
- * certificate and key, which the client checks the tunnel's TLS session against. */
-WINPR_ATTR_NODISCARD
-static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
-{
-	WINPR_ASSERT(multi);
-	WINPR_ASSERT(multi->rdp);
-	rdpSettings* settings = multi->rdp->settings;
-	WINPR_ASSERT(settings);
-
-	if (!rdpemt_is_supported())
-		return FALSE;
-
-	rdpCertificate* cert =
-	    freerdp_settings_get_pointer_writable(settings, FreeRDP_RdpServerCertificate);
-	const rdpPrivateKey* key = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
-	if (!cert || !key)
-	{
-		WLog_INFO(TAG, "not offering UDP, the server has no TLS certificate");
-		return FALSE;
-	}
-
-	/* [MS-RDPEMT] 1.3: the client sends its UDP datagrams to the address and port its TCP
-	 * connection went to */
-	struct sockaddr_storage local = WINPR_C_ARRAY_INIT;
-	size_t localLength = 0;
-	if (!transport_get_local_address(multi->rdp->transport, &local, &localLength))
-	{
-		WLog_INFO(TAG, "not offering UDP, the main connection is not on a TCP socket");
-		return FALSE;
-	}
-	UINT16 port = 0;
-	if ((local.ss_family == AF_INET) && (localLength >= sizeof(struct sockaddr_in)))
-		port = ntohs(((const struct sockaddr_in*)&local)->sin_port);
-	else if ((local.ss_family == AF_INET6) && (localLength >= sizeof(struct sockaddr_in6)))
-		port = ntohs(((const struct sockaddr_in6*)&local)->sin6_port);
-	if (port == 0)
-	{
-		WLog_INFO(TAG, "not offering UDP, the main connection is not over TCP/IP");
-		return FALSE;
-	}
-
-	X509* x509 = freerdp_certificate_get_x509(cert);
-	if (!x509)
-	{
-		WLog_INFO(TAG, "not offering UDP, the server certificate has no X.509 form");
-		return FALSE;
-	}
-	EVP_PKEY* evp = freerdp_key_get_evp_pkey(key);
-	if (!evp)
-		return FALSE;
-	rdpEmt* emt = rdpemt_new_server(WLog_Get(TAG), port, multi->reliableReqId, multi->reliableCookie,
-	                                x509, evp, multitransport_tunnel_event, multi);
-	EVP_PKEY_free(evp);
-	if (!emt)
-	{
-		WLog_WARN(TAG, "cannot wait for a UDP tunnel, not offering one");
-		return FALSE;
-	}
-
-	EnterCriticalSection(&multi->lock);
-	/* one request per connection; an earlier tunnel would otherwise be leaked */
-	rdpEmt* old = multi->reliable;
-	multi->reliable = emt;
-	multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_PENDING;
-	multi->serverTunnelUp = FALSE;
-	multi->serverResponseOk = FALSE;
-	LeaveCriticalSection(&multi->lock);
-	rdpemt_free(old);
-	WLog_INFO(TAG, "offering a reliable UDP tunnel, request %" PRIu32, multi->reliableReqId);
-	return TRUE;
-}
-
-/* Server: the tunnel is ready for channel data once both acceptances are in. */
-WINPR_ATTR_NODISCARD
-static BOOL multitransport_server_check_ready(rdpMultitransport* multi);
-
-/* Soft-Sync on both sides, the only way this server moves channels onto a tunnel. A server only
- * advertises it when it was asked to offer one. */
-WINPR_ATTR_NODISCARD
-static BOOL multitransport_server_has_tunnel(const rdpMultitransport* multi)
-{
-	WINPR_ASSERT(multi);
-	WINPR_ASSERT(multi->rdp);
-	const UINT32 flags =
-	    freerdp_settings_get_uint32(multi->rdp->settings, FreeRDP_MultitransportFlags);
-	return rdpemt_is_supported() && ((flags & SOFTSYNC_TCP_TO_UDP) != 0);
-}
-
-#endif
 state_run_t multitransport_server_request(rdpMultitransport* multi, UINT16 reqProto)
 {
 	WINPR_ASSERT(multi);
@@ -294,34 +130,16 @@ state_run_t multitransport_server_request(rdpMultitransport* multi, UINT16 reqPr
 		if (winpr_RAND(multi->reliableCookie, sizeof(multi->reliableCookie)) < 0)
 			return STATE_RUN_FAILED;
 
-#if defined(WITH_RDPEUDP)
-		/* A server that does not do Soft-Sync has no tunnel behind its request: the client's
-		 * attempt fails, and its response continues the connection sequence. */
-		if (!multitransport_server_has_tunnel(multi))
-			return multitransport_request_send(multi, multi->reliableReqId, reqProto,
-			                                   multi->reliableCookie)
-			           ? STATE_RUN_SUCCESS
-			           : STATE_RUN_FAILED;
-
-		/* The tunnel waits on the UDP listener for the client that brings this cookie. Without
-		 * it the request is not sent, and the connection carries on over TCP. */
-		if (!multitransport_server_start_tunnel(multi))
+		const MT_OFFER offer = multitransport_server_offer(multi);
+		if (offer == MT_OFFER_NONE)
 			return STATE_RUN_CONTINUE;
 
-		/* The connection sequence goes on right away, as on a Windows server: [MS-RDPBCGR]
-		 * 1.3.1.1, the response can come in any later state. */
-		multi->serverTunnelOffered = TRUE;
-		multi->serverResponsePending = TRUE;
+		const state_run_t sent =
+		    (offer == MT_OFFER_TUNNEL) ? STATE_RUN_CONTINUE : STATE_RUN_SUCCESS;
 		return multitransport_request_send(multi, multi->reliableReqId, reqProto,
 		                                   multi->reliableCookie)
-		           ? STATE_RUN_CONTINUE
-		           : STATE_RUN_FAILED;
-#else
-		return multitransport_request_send(multi, multi->reliableReqId, reqProto,
-		                                   multi->reliableCookie)
-		           ? STATE_RUN_SUCCESS
-		           : STATE_RUN_FAILED;
-#endif
+		           ? sent
+				   : STATE_RUN_FAILED;
 	}
 
 	WLog_ERR(TAG, "only reliable transport is supported");
@@ -417,9 +235,8 @@ static BOOL multitransport_direct_data(void* custom, wStream* s)
 	return multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, s);
 }
 
-/* Runs on the tunnel thread. */
-static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT event,
-                                        const BYTE* data, size_t length)
+MT_SHARED void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT event,
+                                           const BYTE* data, size_t length)
 {
 	rdpMultitransport* multi = custom;
 	WINPR_ASSERT(multi);
@@ -437,11 +254,10 @@ static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT 
 		case RDPEMT_EVENT_FAILED:
 			ev->type = MT_EVENT_FAILED;
 			break;
-		case RDPEMT_EVENT_AUTODETECT_REQUEST:
+		case RDPEMT_EVENT_AUTODETECT:
 		case RDPEMT_EVENT_DATA:
 		default:
-			ev->type = (event == RDPEMT_EVENT_AUTODETECT_REQUEST) ? MT_EVENT_AUTODETECT_REQUEST
-			                                                      : MT_EVENT_DATA;
+			ev->type = (event == RDPEMT_EVENT_AUTODETECT) ? MT_EVENT_AUTODETECT : MT_EVENT_DATA;
 			if (length == 0)
 				break; /* nothing to hand up, malloc(0) may return nullptr */
 			WINPR_ASSERT(data);
@@ -628,8 +444,8 @@ static BOOL multitransport_callback_failed(rdpMultitransport* multi, const char*
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL multitransport_notify_state(rdpMultitransport* multi,
-                                        FreeRDP_MultitransportTunnelState state)
+MT_SHARED BOOL multitransport_notify_state(rdpMultitransport* multi,
+                                           FreeRDP_MultitransportTunnelState state)
 {
 	WINPR_ASSERT(multi);
 
@@ -674,6 +490,11 @@ static BOOL multitransport_deliver_autodetect(rdpMultitransport* multi, const mt
 
 	if (!ev->s)
 		return TRUE;
+#if defined(WITH_RDPEUDP)
+	if (multitransport_is_server(multi))
+		return !state_run_failed(
+		    autodetect_recv_tunnel_response(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, ev->s));
+#endif
 	return !state_run_failed(
 	    autodetect_recv_tunnel_request(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, ev->s));
 }
@@ -685,16 +506,9 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
 	WINPR_ASSERT(ev);
 
 #if defined(WITH_RDPEUDP)
-	WINPR_ASSERT(multi->rdp);
-	const BOOL server = freerdp_settings_get_bool(multi->rdp->settings, FreeRDP_ServerMode);
-	if (server && (ev->type == MT_EVENT_READY))
-	{
-		EnterCriticalSection(&multi->lock);
-		if (multi->reliable)
-			multi->serverTunnelUp = TRUE;
-		LeaveCriticalSection(&multi->lock);
-		return multitransport_server_check_ready(multi);
-	}
+	BOOL rc = TRUE;
+	if ((ev->type == MT_EVENT_READY) && multitransport_server_tunnel_ready(multi, &rc))
+		return rc;
 
 #endif
 	switch (ev->type)
@@ -739,6 +553,9 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
 
 			const UINT32 reqId = rdpemt_get_request_id(emt);
 			rdpemt_free(emt);
+#if defined(WITH_RDPEUDP)
+			multitransport_server_tunnel_gone(multi);
+#endif
 
 			/* Soft-Sync only moves channels from TCP to UDP ([MS-RDPEDYC] 3.1.5.3), there is no
 			 * way back. What was in flight on the tunnel is lost in both directions, so the
@@ -753,7 +570,7 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
 				return FALSE;
 			}
 #if defined(WITH_RDPEUDP)
-			if (!responseSent && !server)
+			if (!responseSent && !multitransport_is_server(multi))
 #else
 			if (!responseSent)
 #endif
@@ -766,7 +583,7 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
 		}
 		break;
 
-		case MT_EVENT_AUTODETECT_REQUEST:
+		case MT_EVENT_AUTODETECT:
 			return multitransport_deliver_autodetect(multi, ev);
 
 		case MT_EVENT_DATA:
@@ -803,17 +620,9 @@ BOOL multitransport_check(rdpMultitransport* multi)
 		return FALSE;
 	}
 #if defined(WITH_RDPEUDP)
-	/* [MS-RDPBCGR] 3.2.5.17: tunnel data that went to the channels directly counts as the main
-	 * loop gets here, like the data it hands on below */
-	if (multi->reliable)
-	{
-		const UINT32 direct = rdpemt_take_direct_bytes(multi->reliable);
-		rdpAutoDetect* autodetect = multi->rdp->autodetect;
-		if (autodetect && autodetect->bandwidthMeasureStarted)
-			autodetect->bandwidthMeasureByteCount += direct;
-	}
-#endif
+	multitransport_tunnel_check(multi);
 
+#endif
 	BOOL handled = FALSE;
 	while (Queue_Count(multi->events) > 0)
 	{
@@ -883,91 +692,17 @@ void multitransport_reset(rdpMultitransport* multi)
 		(void)ResetEvent(multi->event);
 }
 
-#if defined(WITH_RDPEUDP)
 WINPR_ATTR_NODISCARD
-static BOOL multitransport_server_check_ready(rdpMultitransport* multi)
-{
-	WINPR_ASSERT(multi);
-
-	EnterCriticalSection(&multi->lock);
-	const BOOL ready = multi->reliable && multi->serverTunnelUp && multi->serverResponseOk &&
-	                   (multi->reliableState != FREERDP_MULTITRANSPORT_TUNNEL_READY);
-	if (ready)
-		multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_READY;
-	LeaveCriticalSection(&multi->lock);
-
-	if (!ready)
-		return TRUE;
-	WLog_INFO(TAG, "the client accepted the reliable UDP tunnel");
-	return multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_READY);
-}
-
-WINPR_ATTR_NODISCARD
-static state_run_t multitransport_server_tunnel_response(rdpMultitransport* multi, UINT32 reqId,
-                                                         UINT32 hrResponse)
-{
-	WINPR_ASSERT(multi);
-
-	/* The connection sequence did not wait for this PDU, so it can come in any state. The message
-	 * channel stays open for the whole session: only one answer per request is taken, and it never
-	 * changes the connection state. */
-	if (!multi->serverResponsePending)
-	{
-		WLog_WARN(TAG, "unsolicited multi-transport response for request %" PRIu32, reqId);
-		return STATE_RUN_FAILED;
-	}
-
-	if (reqId != multi->reliableReqId)
-	{
-		WLog_WARN(
-		    TAG, "multi-transport response for request %" PRIu32 ", expected %" PRIu32 ", ignoring",
-		    reqId, multi->reliableReqId);
-		return STATE_RUN_SUCCESS;
-	}
-	multi->serverResponsePending = FALSE;
-
-	EnterCriticalSection(&multi->lock);
-	rdpEmt* emt = multi->reliable;
-	const BOOL ok = emt && SUCCEEDED((HRESULT)hrResponse);
-	if (ok)
-		multi->serverResponseOk = TRUE;
-	else
-	{
-		multi->reliable = nullptr;
-		multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_NONE;
-	}
-	LeaveCriticalSection(&multi->lock);
-
-	if (!ok)
-	{
-		WLog_INFO(TAG, "the client declined the UDP tunnel, hrResponse 0x%08" PRIx32, hrResponse);
-		rdpemt_free(emt);
-	}
-	else if (!multitransport_server_check_ready(multi))
-		return STATE_RUN_FAILED;
-
-	return STATE_RUN_SUCCESS;
-}
-
-#endif
-WINPR_ATTR_NODISCARD
-#if defined(WITH_RDPEUDP)
-static state_run_t multitransport_server_handle_response(rdpMultitransport* multi, UINT32 reqId,
-                                                         UINT32 hrResponse)
-#else
 static state_run_t multitransport_server_handle_response(rdpMultitransport* multi,
                                                          WINPR_ATTR_UNUSED UINT32 reqId,
                                                          WINPR_ATTR_UNUSED UINT32 hrResponse)
-#endif
 {
 	WINPR_ASSERT(multi);
 	rdpRdp* rdp = multi->rdp;
 
-#if defined(WITH_RDPEUDP)
-	if (multi->serverTunnelOffered)
+	if (multitransport_server_tunnel_offered(multi))
 		return multitransport_server_tunnel_response(multi, reqId, hrResponse);
 
-#endif
 	/* Only the answer to the request sent in MULTITRANSPORT_BOOTSTRAPPING_REQUEST continues the
 	 * connection sequence. The message channel stays open for the whole session, a response in
 	 * any other state must not restart the capability exchange. */
@@ -1109,18 +844,3 @@ BOOL freerdp_multitransport_send_dvc(rdpContext* context, UINT32 tunnelType, con
 	LeaveCriticalSection(&multi->lock);
 	return rc;
 }
-#if defined(WITH_RDPEUDP)
-
-BOOL multitransport_flush_dvc(rdpMultitransport* multi)
-{
-	if (!multi)
-		return FALSE;
-
-	BOOL rc = FALSE;
-	EnterCriticalSection(&multi->lock);
-	if (multi->reliable && (multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY))
-		rc = rdpemt_flush(multi->reliable);
-	LeaveCriticalSection(&multi->lock);
-	return rc;
-}
-#endif

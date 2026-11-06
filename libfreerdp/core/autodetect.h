@@ -42,6 +42,14 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect,
                                                          RDP_TRANSPORT_TYPE transport, wStream* s);
 
+#if defined(WITH_RDPEUDP)
+/** An auto-detect response in an [MS-RDPEMT] 2.2.1.1.1 RDP_TUNNEL_SUBHEADER. The subheader is the
+ *  whole PDU. The function ignores all PDUs that are not bandwidth results. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL state_run_t autodetect_recv_tunnel_response(rdpAutoDetect* autodetect,
+                                                          RDP_TRANSPORT_TYPE transport, wStream* s);
+
+#endif
 /** An auto-detect request in an [MS-RDPEMT] 2.2.1.1.1 RDP_TUNNEL_SUBHEADER, which is the whole
  * subheader. */
 WINPR_ATTR_NODISCARD

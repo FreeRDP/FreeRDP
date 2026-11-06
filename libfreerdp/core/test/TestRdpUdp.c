@@ -833,7 +833,6 @@ fail:
 
 typedef struct
 {
-	SOCKET sink; /* the server sends to this socket */
 	BOOL hasAck;
 	UINT16 ack;
 	BOOL hasVector;
@@ -846,28 +845,23 @@ static BOOL server_on_receive(WINPR_ATTR_UNUSED void* custom, WINPR_ATTR_UNUSED 
 	return TRUE;
 }
 
-static void server_read_sent(ServerSent* sent)
+static BOOL server_on_send(void* custom, const BYTE* data, size_t length)
 {
-	BYTE wire[1500] = WINPR_C_ARRAY_INIT;
-	for (;;)
+	ServerSent* sent = custom;
+	V3Packet packet = WINPR_C_ARRAY_INIT;
+	if (!parse_v3(data, length, &packet))
+		return TRUE;
+	if (packet.flags & V3_ACK)
 	{
-		const int length = _recv(sent->sink, (char*)wire, sizeof(wire), 0);
-		if (length <= 0)
-			return;
-		V3Packet packet = WINPR_C_ARRAY_INIT;
-		if (!parse_v3(wire, (size_t)length, &packet))
-			continue;
-		if (packet.flags & V3_ACK)
-		{
-			sent->hasAck = TRUE;
-			sent->ack = packet.ack;
-		}
-		if (packet.flags & V3_ACKVEC)
-		{
-			sent->hasVector = TRUE;
-			sent->vectorBase = packet.vecBase;
-		}
+		sent->hasAck = TRUE;
+		sent->ack = packet.ack;
 	}
+	if (packet.flags & V3_ACKVEC)
+	{
+		sent->hasVector = TRUE;
+		sent->vectorBase = packet.vecBase;
+	}
+	return TRUE;
 }
 
 static BOOL server_input_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
@@ -888,14 +882,13 @@ static BOOL server_input_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
 	return rdpudp_input(udp, wire, length);
 }
 
-static BOOL server_run_timers(rdpUdp* udp, ServerSent* sent, UINT32 waitMs)
+static BOOL server_run_timers(rdpUdp* udp, UINT32 waitMs)
 {
 	for (UINT32 x = 0; x < waitMs; x += 5)
 	{
 		Sleep(5);
 		if (!rdpudp_check(udp))
 			return FALSE;
-		server_read_sent(sent);
 	}
 	return TRUE;
 }
@@ -905,23 +898,9 @@ static BOOL server_does_not_report_a_packet_behind_its_window(void)
 {
 	BOOL rc = FALSE;
 	ServerSent sent = WINPR_C_ARRAY_INIT;
-	struct sockaddr_in addr = WINPR_C_ARRAY_INIT;
-	socklen_t addrLength = sizeof(addr);
-	u_long nonBlocking = 1;
-
-	sent.sink = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sent.sink == INVALID_SOCKET)
-		return FALSE;
 	rdpUdp* udp = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, nullptr);
 	if (!udp)
-		goto out;
-
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	if ((_bind(sent.sink, (const struct sockaddr*)&addr, sizeof(addr)) != 0) ||
-	    (_getsockname(sent.sink, (struct sockaddr*)&addr, &addrLength) != 0) ||
-	    (_ioctlsocket(sent.sink, FIONBIO, &nonBlocking) != 0))
-		goto out;
+		return FALSE;
 
 	BYTE syn[1232] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
@@ -934,8 +913,7 @@ static BOOL server_does_not_report_a_packet_behind_its_window(void)
 	Stream_Write_UINT16_BE(s, sizeof(syn));     /* uDownStreamMtu */
 	Stream_Write_UINT16_BE(s, 0x0001);          /* RDPUDP_VERSION_INFO_VALID */
 	Stream_Write_UINT16_BE(s, RDPUDP_PROTOCOL_VERSION_3);
-	if (!rdpudp_accept(udp, sent.sink, (const struct sockaddr*)&addr, sizeof(addr), syn,
-	                   sizeof(syn)))
+	if (!rdpudp_accept(udp, server_on_send, &sent, syn, sizeof(syn)))
 		goto out;
 
 	for (UINT16 x = 0; x < 3; x++)
@@ -943,22 +921,21 @@ static BOOL server_does_not_report_a_packet_behind_its_window(void)
 		if (!server_input_data(udp, (UINT16)(100 + x), (UINT16)(1 + x)))
 			goto out;
 	}
-	if (!server_run_timers(udp, &sent, 100) || !sent.hasAck || (sent.ack != 102) || sent.hasVector)
+	if (!server_run_timers(udp, 100) || !sent.hasAck || (sent.ack != 102) || sent.hasVector)
 		goto out;
 
 	/* the same packet again, the cumulative ACK already covers it */
-	if (!server_input_data(udp, 100, 1) || !server_run_timers(udp, &sent, 100) || sent.hasVector)
+	if (!server_input_data(udp, 100, 1) || !server_run_timers(udp, 100) || sent.hasVector)
 		goto out;
 
 	/* a real hole still gets a report */
-	if (!server_input_data(udp, 104, 5) || !server_run_timers(udp, &sent, 100) || !sent.hasVector ||
+	if (!server_input_data(udp, 104, 5) || !server_run_timers(udp, 100) || !sent.hasVector ||
 	    (sent.vectorBase != 103))
 		goto out;
 
 	rc = TRUE;
 out:
 	rdpudp_free(udp);
-	closesocket(sent.sink);
 	return rc;
 }
 

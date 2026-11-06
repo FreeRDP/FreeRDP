@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-/* What a client can send to the server's shared UDP port, before and after it is accepted:
- *
+/* What a client can send to the shared UDP port of the server, before and after the server accepts
+ * it:
  * - the whole input as a SYN, for rdpudp_get_syn_cookie_hash() and rdpudp_accept()
- * - a valid version 3 SYN, then the input as datagrams for rdpudp_input(), each prefixed with a
- *   16 bit big endian length, with the timers run in between
+ * - a valid version 3 SYN, then the input as datagrams for rdpudp_input(). A 16 bit big endian
+ * length comes before each datagram. The timers run between the datagrams.
  *
- * The server sends its answers to a loopback socket that is emptied after every input. */
+ * A server connection has no socket, so what it sends goes nowhere. */
 
 #include <stdint.h>
 #include <string.h>
@@ -29,14 +29,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/winsock.h>
 #include <winpr/wlog.h>
-
-#if !defined(_WIN32)
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif
 
 #include "../rdpudp.h"
 
@@ -45,9 +38,6 @@
 typedef struct
 {
 	BOOL ready;
-	SOCKET server;
-	SOCKET client;
-	struct sockaddr_in clientAddr;
 	wLog* log;
 } FuzzCtx;
 
@@ -59,25 +49,10 @@ static BOOL on_receive(WINPR_ATTR_UNUSED void* custom, WINPR_ATTR_UNUSED const B
 	return TRUE;
 }
 
-static SOCKET open_loopback(struct sockaddr_in* bound)
+static BOOL on_send(WINPR_ATTR_UNUSED void* custom, WINPR_ATTR_UNUSED const BYTE* data,
+                    WINPR_ATTR_UNUSED size_t length)
 {
-	SOCKET sockfd = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sockfd == INVALID_SOCKET)
-		return INVALID_SOCKET;
-
-	struct sockaddr_in addr = { 0 };
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	socklen_t length = sizeof(addr);
-	u_long arg = 1;
-	if ((_bind(sockfd, (const struct sockaddr*)&addr, sizeof(addr)) != 0) ||
-	    (_getsockname(sockfd, (struct sockaddr*)bound, &length) != 0) ||
-	    (_ioctlsocket(sockfd, FIONBIO, &arg) != 0))
-	{
-		closesocket(sockfd);
-		return INVALID_SOCKET;
-	}
-	return sockfd;
+	return TRUE;
 }
 
 static BOOL fuzz_init(void)
@@ -87,33 +62,18 @@ static BOOL fuzz_init(void)
 
 	WLog_SetLogLevel(WLog_GetRoot(), WLOG_OFF);
 	g_ctx.log = WLog_Get("com.freerdp.core.test.fuzz.rdpudp");
-
-	struct sockaddr_in unused = { 0 };
-	g_ctx.server = open_loopback(&unused);
-	g_ctx.client = open_loopback(&g_ctx.clientAddr);
-	if ((g_ctx.server == INVALID_SOCKET) || (g_ctx.client == INVALID_SOCKET))
-		return FALSE;
 	g_ctx.ready = TRUE;
 	return TRUE;
 }
 
-/* what the server sent: nobody reads it, but a full socket buffer would fail its sends */
-static void drain_client(void)
-{
-	char buffer[2048];
-	while (_recv(g_ctx.client, buffer, sizeof(buffer), 0) > 0)
-	{
-	}
-}
-
-/* [MS-RDPEUDP] 2.2.2.1, 2.2.2.5 and 2.2.2.6: a version 3 SYN, zero padded to the MTU */
+/* [MS-RDPEUDP] 2.2.2.1, 2.2.2.5 and 2.2.2.6: a version 3 SYN, with zero padding to the MTU */
 static void make_syn(BYTE syn[SYN_LENGTH])
 {
 	memset(syn, 0, SYN_LENGTH);
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, syn, SYN_LENGTH);
-	Stream_Write_UINT32_BE(s, 0xFFFFFFFF); /* snSourceAck */
-	Stream_Write_UINT16_BE(s, 64);         /* uReceiveWindowSize */
+	Stream_Write_UINT32_BE(s, 0xFFFFFFFF);      /* snSourceAck */
+	Stream_Write_UINT16_BE(s, 64);              /* uReceiveWindowSize */
 	Stream_Write_UINT16_BE(s, 0x0001 | 0x1000); /* RDPUDP_FLAG_SYN | RDPUDP_FLAG_SYNEX */
 	Stream_Write_UINT32_BE(s, 1000);            /* snInitialSequenceNumber */
 	Stream_Write_UINT16_BE(s, SYN_LENGTH);      /* uUpStreamMtu */
@@ -131,8 +91,7 @@ static void fuzz_syn(const uint8_t* data, size_t size)
 	rdpUdp* udp = rdpudp_new(g_ctx.log, nullptr, on_receive, nullptr);
 	if (!udp)
 		return;
-	(void)rdpudp_accept(udp, g_ctx.server, (const struct sockaddr*)&g_ctx.clientAddr,
-	                    sizeof(g_ctx.clientAddr), data, size);
+	(void)rdpudp_accept(udp, on_send, nullptr, data, size);
 	rdpudp_free(udp);
 }
 
@@ -144,8 +103,7 @@ static void fuzz_datagrams(const uint8_t* data, size_t size)
 
 	BYTE syn[SYN_LENGTH];
 	make_syn(syn);
-	if (!rdpudp_accept(udp, g_ctx.server, (const struct sockaddr*)&g_ctx.clientAddr,
-	                   sizeof(g_ctx.clientAddr), syn, sizeof(syn)))
+	if (!rdpudp_accept(udp, on_send, nullptr, syn, sizeof(syn)))
 		goto out;
 
 	size_t offset = 0;
@@ -156,7 +114,7 @@ static void fuzz_datagrams(const uint8_t* data, size_t size)
 		offset += 2;
 		if (length > size - offset)
 			break;
-		/* rdpudp_input works in place, like on the listener's receive buffer */
+		/* rdpudp_input works in place */
 		BYTE datagram[0x10000];
 		memcpy(datagram, &data[offset], length);
 		if (!rdpudp_input(udp, datagram, length))
@@ -166,13 +124,11 @@ static void fuzz_datagrams(const uint8_t* data, size_t size)
 		{
 			if (!rdpudp_check(udp))
 				break;
-			drain_client();
 		}
 	}
 
 out:
 	rdpudp_free(udp);
-	drain_client();
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size);

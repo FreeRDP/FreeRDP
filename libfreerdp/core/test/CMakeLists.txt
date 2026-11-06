@@ -21,7 +21,7 @@ if(BUILD_TESTING_INTERNAL)
     TestUpdateBitmap.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c)
+    list(APPEND TESTS TestRdpUdp.c TestUdpListener.c)
   endif()
 endif()
 
@@ -33,7 +33,7 @@ if(NOT WIN32 AND WITH_WINPR_TOOLS)
 endif()
 
 if(WITH_RDPEUDP)
-  list(APPEND FUZZERS TestFuzzRdpUdpServer.c)
+  list(APPEND FUZZERS TestFuzzRdpUdpServer.c TestFuzzRdpUdpTunnel.c)
 endif()
 
 # Test not compatible with package tests, disable

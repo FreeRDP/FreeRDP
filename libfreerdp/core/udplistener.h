@@ -22,30 +22,37 @@
 #include <winpr/winsock.h>
 
 #include <freerdp/api.h>
+#include <freerdp/server/udp.h>
 
-/** @brief The UDP side of a server's listening port.
+/** @brief The library's side of include/freerdp/server/udp.h.
  *
- * Clients send their RDP-UDP SYN to the address and port their TCP connection went to
- * ([MS-RDPEMT] 1.3). One socket per address family on that port takes every session's datagrams.
- * A version 3 SYN carries the SHA-256 hash of the security cookie its Initiate Multitransport
- * Request handed out, which says what session it is for; after that the client's address does.
- *
- * The sockets of a port open with the first session that waits on it. Everything closes, and the
- * listener's thread ends, when the last session is gone.
- */
+ * Clients send their RDP-UDP SYN to the address and port that their TCP connection went to
+ * ([MS-RDPEMT] 1.3). A listener only sorts: it reads a datagram, finds its flow and copies the
+ * datagram there. Its thread does no protocol work, so a slow client does not delay other clients.
+ * The tunnel of the flow gets the datagram on its own thread. */
 
-/** Called on the listener's thread with one datagram from the client of a registered session.
- *  The first one is the client's SYN. data is the listener's receive buffer, which the callback
- *  may change. Returning FALSE drops the session's registration. */
-typedef BOOL (*udpListenerInputFn)(void* custom, SOCKET sockfd, const struct sockaddr* addr,
-                                   size_t addrlen, BYTE* data, size_t length);
+/** The largest datagram that a flow takes. RDPUDP_MAX_CHUNK sets the limit of what a client can
+ *  use, plus the headers of the datagram around it. */
+#define UDPFLOW_MAX_DATAGRAM 2304
 
-/** Waits on UDP port for the client whose SYN carries cookieHash. */
+/** Takes the oldest datagram of a flow.
+ *  @param data room for UDPFLOW_MAX_DATAGRAM bytes
+ *  @return FALSE when none waits */
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL udplistener_register(UINT16 port, const BYTE cookieHash[32],
-                                        udpListenerInputFn input, void* custom);
+FREERDP_LOCAL BOOL udpflow_read(rdpUdpFlow* flow, BYTE* data, size_t* length);
 
-/** Removes a registration. Once it returns, input is not called for custom any more. */
-FREERDP_LOCAL void udplistener_unregister(void* custom);
+/** Wakes who waits on freerdp_udp_flow_get_event(). */
+FREERDP_LOCAL void udpflow_wake(rdpUdpFlow* flow);
+
+/** What freerdp_udp_flow_check() and freerdp_udp_flow_get_timeout() run. */
+FREERDP_LOCAL void udpflow_set_worker(rdpUdpFlow* flow, BOOL (*check)(void* custom),
+                                      UINT32 (*timeout)(void* custom), void* custom);
+
+/** The default of a server: a process wide listener with a thread of its own. It waits on the
+ *  address and port of the TCP connection. Its sockets open with the first flow that waits on them.
+ *  Everything closes when the last flow is gone. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL udplistener_expect_on_address(const struct sockaddr* addr, size_t addrlen,
+                                                 rdpUdpFlow* flow);
 
 #endif /* FREERDP_LIB_CORE_UDPLISTENER_H */

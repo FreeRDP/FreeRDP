@@ -144,7 +144,7 @@ FREERDP_LOCAL BOOL transport_get_peer_address(rdpTransport* transport,
                                               struct sockaddr_storage* address, size_t* length);
 
 #if defined(WITH_RDPEUDP)
-/** This end's address of the main connection, when it runs directly over TCP. */
+/** The address of this end of the main connection, when it runs directly over TCP. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_get_local_address(rdpTransport* transport,
                                                struct sockaddr_storage* address, size_t* length);
