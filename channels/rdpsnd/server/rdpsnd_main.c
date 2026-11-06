@@ -209,28 +209,30 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Read_UINT32(s, context->initialVolume);      /* dwVolume */
 	Stream_Read_UINT32(s, context->initialPitch);       /* dwPitch */
 	Stream_Read_UINT16(s, context->udpPort);            /* wDGramPort */
-	Stream_Read_UINT16(s, context->num_client_formats); /* wNumberOfFormats */
+	const UINT16 wNumberOfFormats = Stream_Get_UINT16(s); /* wNumberOfFormats */
 	Stream_Read_UINT8(s, context->lastblock);           /* cLastBlockConfirmed */
 	Stream_Read_UINT16(s, context->clientVersion);      /* wVersion */
 	Stream_Seek_UINT8(s);                               /* bPad */
 
 	/* this check is only a guess as cbSize can influence the size of a format record */
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, context->num_client_formats, 18ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, wNumberOfFormats, 18ull))
 		return ERROR_INVALID_DATA;
 
-	if (!context->num_client_formats)
+	if (wNumberOfFormats == 0)
 	{
 		WLog_ERR(TAG, "client doesn't support any format!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	context->client_formats = audio_formats_new(context->num_client_formats);
+	context->client_formats = audio_formats_new(wNumberOfFormats);
 
 	if (!context->client_formats)
 	{
 		WLog_ERR(TAG, "calloc failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	context->num_client_formats = wNumberOfFormats;
 
 	for (UINT16 i = 0; i < context->num_client_formats; i++)
 	{
