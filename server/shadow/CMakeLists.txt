@@ -110,8 +110,13 @@ set(SRCS shadow_subsystem_builtin.c)
 
 option(WITH_SHADOW_SUBSYSTEM "Build actual shadow platform subsystem implementation" ON)
 if(WITH_SHADOW_SUBSYSTEM)
+  # GNOME on Wayland: Mutter's ScreenCast and RemoteDesktop APIs instead of X11
+  # (one subsystem per build for now)
+  option(WITH_SHADOW_MUTTER "Linux: share a GNOME session through Mutter instead of X11" OFF)
   if(WIN32)
     add_subdirectory(Win)
+  elseif(NOT APPLE AND WITH_SHADOW_MUTTER)
+    add_subdirectory(Mutter)
   elseif(NOT APPLE)
     add_subdirectory(X11)
   elseif(APPLE AND NOT IOS)
