@@ -97,6 +97,11 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP_RECEIVE_SLOTS 32768
 #define RDPUDP_RECEIVE_REACH 32767
 
+/* The most a server takes in one chunk, which bounds what a client can keep in the slots to 64 MB.
+ * The MTU is no limit: acknowledgements ride on top of a full chunk, and datagrams of Windows and
+ * mstsc have been seen up to 28 bytes past it. */
+#define RDPUDP_MAX_CHUNK 2048
+
 /* Datagrams of ours that may be unacknowledged at once: the most a server's congestion window
  * grows to, and what a client uses at most. */
 #define RDPUDP_MAX_IN_FLIGHT 512
@@ -1823,6 +1828,12 @@ static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 channelSeq, const BYTE* 
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data || (length == 0));
+	if (udp->server && (length > RDPUDP_MAX_CHUNK))
+	{
+		WLog_Print(udp->log, WLOG_DEBUG, "dropping a chunk of %" PRIuz " bytes", length);
+		return TRUE;
+	}
+
 	/* A retransmission travels under a new data sequence number with its original channel
 	 * sequence, so the channel sequence alone says where a chunk belongs and whether it has
 	 * been handed up already. */
