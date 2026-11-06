@@ -510,15 +510,16 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ListReaderGroupsW_Call(scard_call_con
 	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (cchGroups == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
+	/* cchGroups is only valid if the call succeeded */
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
 	ret.msz = (BYTE*)mszGroups;
 
 	WINPR_ASSERT(cchGroups < SCARD_AUTOALLOCATE / sizeof(WCHAR));
 	const size_t blen = sizeof(WCHAR) * cchGroups;
 	WINPR_ASSERT(blen <= UINT32_MAX);
 	ret.cBytes = (UINT32)blen;
-
-	if (status != SCARD_S_SUCCESS)
-		return status;
 
 	status = smartcard_pack_list_reader_groups_return(out, &ret, TRUE);
 
