@@ -73,6 +73,8 @@ int main(int argc, char** argv)
 		  "hide mouse cursor in RDP client." },
 		{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", nullptr, nullptr, -1, nullptr,
 		  "Select or list monitors" },
+		{ "subsystem", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<name>...]", nullptr, nullptr, -1,
+		  nullptr, "Subsystems to try, in this order, or list them" },
 		{ "max-connections", COMMAND_LINE_VALUE_REQUIRED, "<number>", nullptr, nullptr, -1, nullptr,
 		  "maximum connections allowed to server, 0 to deactivate" },
 		{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, nullptr, nullptr, nullptr, -1, nullptr,

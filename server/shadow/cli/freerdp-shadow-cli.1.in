@@ -10,6 +10,7 @@
 [\fB/port:\fP\fI<port number>\fP]
 [\fB/ipc-socket:\fP\fI<ipc-socket>\fP]
 [\fB/monitors:\fP\fI<0,1,2,...>\fP]
+[\fB/subsystem:\fP\fI<name>[,<name>...]\fP]
 [\fB/rect:\fP\fI<x,y,w,h>\fP]
 [\fB+auth\fP]
 [\fB-may-view\fP]
@@ -35,6 +36,11 @@ Set the port to use. Default is 3389.
 This option is ignored if ipc-socket is used.
 .IP /monitors:<1,2,3,...>
 Select the monitor(s) to share.
+.IP /subsystem:<name>[,<name>...]
+Try only these subsystems, in this order (the default is all that are built in, in
+the order of the build). The first one that finds a monitor is used, so this
+selects one, e.g. /subsystem:X11. Without a value the subsystems are listed with
+the monitors each finds; * marks the one that would be used.
 .IP /rect:<x,y,w,h>      
 Select rectangle within monitor to share.
 .IP -auth

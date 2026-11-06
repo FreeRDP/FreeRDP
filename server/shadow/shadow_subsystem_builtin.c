@@ -19,6 +19,9 @@
 #include <freerdp/config.h>
 
 #include <freerdp/server/shadow.h>
+#include <freerdp/log.h>
+
+#define TAG SERVER_TAG("shadow")
 
 typedef struct
 {
@@ -26,12 +29,26 @@ typedef struct
 	pfnShadowSubsystemEntry entry;
 } RDP_SHADOW_SUBSYSTEM;
 
+#if defined(WITH_SHADOW_MUTTER)
+extern int MutterShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+extern const char* MutterShadowSubsystemName(void);
+#endif
+
+#if defined(WITH_SHADOW_PLATFORM)
+/* The platform's own: Win, Mac, X11 or Sample */
 extern int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 extern const char* ShadowSubsystemName(void);
+#endif
 
+/* In the order they are tried. Mutter comes first: inside a GNOME session on
+ * Wayland, X11 would only see Xwayland, and outside GNOME Mutter finds nothing. */
 static const RDP_SHADOW_SUBSYSTEM g_Subsystems[] = {
-
-	{ ShadowSubsystemName, ShadowSubsystemEntry }
+#if defined(WITH_SHADOW_MUTTER)
+	{ MutterShadowSubsystemName, MutterShadowSubsystemEntry },
+#endif
+#if defined(WITH_SHADOW_PLATFORM)
+	{ ShadowSubsystemName, ShadowSubsystemEntry },
+#endif
 };
 
 static const size_t g_SubsystemCount = ARRAYSIZE(g_Subsystems);
@@ -39,18 +56,7 @@ static const size_t g_SubsystemCount = ARRAYSIZE(g_Subsystems);
 WINPR_ATTR_NODISCARD
 static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* name)
 {
-	if (!name)
-	{
-		if (g_SubsystemCount > 0)
-		{
-			const RDP_SHADOW_SUBSYSTEM* cur = &g_Subsystems[0];
-			WINPR_ASSERT(cur->entry);
-
-			return cur->entry;
-		}
-
-		return nullptr;
-	}
+	WINPR_ASSERT(name);
 
 	for (size_t index = 0; index < g_SubsystemCount; index++)
 	{
@@ -67,6 +73,18 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 
 void shadow_subsystem_set_entry_builtin(const char* name)
 {
+	if (!name)
+	{
+		/* all of them: the server picks one when it starts (see /subsystem) */
+		for (size_t index = 0; index < g_SubsystemCount; index++)
+		{
+			const RDP_SHADOW_SUBSYSTEM* cur = &g_Subsystems[index];
+			if (!shadow_subsystem_add_entry(cur->name(), cur->entry))
+				WLog_ERR(TAG, "cannot add the %s subsystem", cur->name());
+		}
+		return;
+	}
+
 	pfnShadowSubsystemEntry entry = shadow_subsystem_load_static_entry(name);
 
 	if (entry)
