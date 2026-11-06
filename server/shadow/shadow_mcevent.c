@@ -271,7 +271,11 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 				 * server to continue.
 				 */
 				(void)ResetEvent(event->barrierEvent);
-				(void)SetEvent(event->doneEvent);
+
+				/* a round dropped while we waited may be followed by a new one already:
+				 * its own last client tells the server */
+				if (event->consuming == 0)
+					(void)SetEvent(event->doneEvent);
 			}
 		}
 	}
