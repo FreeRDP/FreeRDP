@@ -77,9 +77,11 @@
 
 #include <freerdp/channels/rdpewa.h>
 
+/* The AVD cloud table is part of libfreerdp regardless of WITH_AAD. */
+#include <freerdp/utils/aad.h>
+
 #ifdef WITH_AAD
 #include <freerdp/utils/http.h>
-#include <freerdp/utils/aad.h>
 #include <freerdp/client/aad_helper.h>
 #endif
 
@@ -578,6 +580,72 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int arg
 out:
 	freerdp_assistance_file_free(file);
 	return ret;
+}
+
+BOOL freerdp_client_settings_apply_avd_cloud(rdpSettings* settings)
+{
+	if (!settings)
+		return FALSE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
+		return TRUE;
+
+	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	const FreeRDP_AadCloud* cloud = freerdp_utils_aad_cloud_for_gateway(hostname);
+	if (!cloud)
+		return TRUE;
+
+	const FreeRDP_AadCloud* commercial = freerdp_utils_aad_cloud_by_name("commercial");
+	WINPR_ASSERT(commercial);
+
+	const char* cloudAuthority = freerdp_utils_aad_cloud_get_authority(cloud);
+	const char* commercialAuthority = freerdp_utils_aad_cloud_get_authority(commercial);
+	const char* authority =
+	    freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
+
+	/* already applied by an earlier connect */
+	if (authority && (_stricmp(cloudAuthority, commercialAuthority) != 0) &&
+	    (_stricmp(authority, cloudAuthority) == 0))
+		return TRUE;
+
+	if (!authority || (_stricmp(authority, commercialAuthority) != 0))
+	{
+		WLog_DBG(TAG, "skipped AVD cloud '%s': the AAD authority is customized",
+		         freerdp_utils_aad_cloud_get_name(cloud));
+		return TRUE;
+	}
+
+	const char* scope = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdScope);
+	const char* redirect = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessAadFormat);
+	const BOOL applyScope =
+	    scope && (_stricmp(scope, freerdp_utils_aad_cloud_get_avd_scope(commercial)) == 0);
+	const BOOL applyRedirect =
+	    redirect &&
+	    (_stricmp(redirect, freerdp_utils_aad_cloud_get_avd_redirect_format(commercial)) == 0);
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAzureActiveDirectory,
+	                                 freerdp_utils_aad_cloud_get_authority(cloud)))
+		return FALSE;
+	if (applyScope && !freerdp_settings_set_string(settings, FreeRDP_GatewayAvdScope,
+	                                               freerdp_utils_aad_cloud_get_avd_scope(cloud)))
+		return FALSE;
+	if (applyRedirect &&
+	    !freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAccessAadFormat,
+	                                 freerdp_utils_aad_cloud_get_avd_redirect_format(cloud)))
+		return FALSE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid))
+	{
+		const char* tenant = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
+		const BOOL useTenant = tenant && (_stricmp(tenant, "common") != 0);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid, useTenant))
+			return FALSE;
+	}
+
+	WLog_DBG(TAG, "applied AVD cloud '%s'%s%s", freerdp_utils_aad_cloud_get_name(cloud),
+	         applyScope ? "" : ", kept the customized AVD scope",
+	         applyRedirect ? "" : ", kept the customized AVD redirect format");
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -1750,7 +1818,10 @@ static BOOL commonPreConnect(freerdp* instance)
 
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 
-	return IFCALLRESULT(TRUE, cctx->PreConnect, instance);
+	if (!IFCALLRESULT(TRUE, cctx->PreConnect, instance))
+		return FALSE;
+
+	return freerdp_client_settings_apply_avd_cloud(instance->context->settings);
 }
 
 static BOOL commonPostConnect(freerdp* instance)
