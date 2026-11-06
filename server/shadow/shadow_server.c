@@ -41,6 +41,7 @@
 #endif
 
 #include "shadow.h"
+#include "shadow_cliprdr.h"
 
 #define TAG SERVER_TAG("shadow")
 
@@ -1119,6 +1120,8 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*)server;
 	server->listener->CheckPeerAcceptRestrictions = shadow_server_check_peer_restrictions;
 	server->listener->PeerAccepted = shadow_client_accepted;
+	server->clipboard = shadow_clipboard_new(server);
+
 	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
@@ -1145,6 +1148,8 @@ int shadow_server_uninit(rdpShadowServer* server)
 	shadow_subsystem_uninit(server->subsystem);
 	shadow_subsystem_free(server->subsystem);
 	server->subsystem = nullptr;
+	shadow_clipboard_free(server->clipboard);
+	server->clipboard = nullptr;
 	freerdp_listener_free(server->listener);
 	server->listener = nullptr;
 	free(server->CertificateFile);
