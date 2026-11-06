@@ -492,6 +492,25 @@ public class KeyboardMapper
 					isWinComboUsed = true;
 
 				boolean modifierActive = isModifierPressed();
+
+				// Text from the on-screen keyboard reaches us as key events Android builds from
+				// its virtual key character map, so their key codes encode US key positions, not
+				// what the user typed. Send the character instead, which the server's keyboard
+				// layout cannot change; a modifier still takes the virtual-key path below, so
+				// shortcuts keep working.
+				if (event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD && !modifierActive &&
+				    !isWinKeyDown &&
+				    (event.getMetaState() &
+				     (KeyEvent.META_CTRL_ON | KeyEvent.META_ALT_ON | KeyEvent.META_META_ON)) == 0)
+				{
+					int unicode = event.getUnicodeChar();
+					if (unicode != 0 && !Character.isISOControl(unicode))
+					{
+						listener.processUnicodeKey(unicode);
+						return true;
+					}
+				}
+
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
 				// key. At the end we will reset all modifiers and notify our listener.
