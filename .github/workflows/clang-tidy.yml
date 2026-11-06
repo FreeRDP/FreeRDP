@@ -17,7 +17,7 @@ jobs:
         split_workflow: true
         clang_tidy_checks: ''
         apt_packages: devscripts,equivs
-        install_commands: 'ln -s packaging/deb/freerdp-nightly debian; mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"'
+        install_commands: 'ln -s packaging/deb/freerdp-nightly debian; mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"; apt-get install --no-install-recommends -y libei-dev'
 
         # CMake command to run in order to generate compile_commands.json
         build_dir: tidy
