@@ -1512,7 +1512,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 
 			/* cspData [1] TSCspDataDetail */
 			WinPrAsn1Decoder cspDetails = WinPrAsn1Decoder_init();
-			if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &error, &cspDetails) && error)
+			if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &error, &cspDetails) || error)
 				return FALSE;
 			if (!nla_read_TSCspDataDetail(&cspDetails, settings))
 				return FALSE;

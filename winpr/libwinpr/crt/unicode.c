@@ -699,17 +699,30 @@ static INT32 escapeToNumber(char* str, char** next)
 
 SSIZE_T winpr_utfEscapedStringToUtf8(char* str, size_t len)
 {
+	/* A decoded escape is never longer than the escape itself, so decode in place with separate
+	 * read and write positions. Every byte is moved at most once, otherwise a string made of
+	 * escapes costs time quadratic in its length. */
+	char* const end = &str[strnlen(str, len)];
 	char* cur = str;
-	size_t clen = len;
-	while ((cur = winpr_strnstr(cur, "\\u", clen)))
+	char* dst = str;
+	while (cur < end)
 	{
+		const char* esc = winpr_strnstr(cur, "\\u", (size_t)(end - cur));
+		const size_t plain = (size_t)((esc ? esc : end) - cur);
+		memmove(dst, cur, plain);
+		dst += plain;
+		cur += plain;
+		if (!esc)
+			break;
+
 		char* next = nullptr;
 		const INT32 code = escapeToNumber(cur, &next);
 		if (code < 0)
 		{
 			/* Not a \uXXXX escape (e.g. "C:\users"): keep it as literal text */
+			memmove(dst, cur, 2);
+			dst += 2;
 			cur += 2;
-			clen = len - (size_t)(cur - str);
 			continue;
 		}
 
@@ -735,20 +748,15 @@ SSIZE_T winpr_utfEscapedStringToUtf8(char* str, size_t len)
 		if (rc < 0)
 			return -1;
 
-		strncpy(cur, utf8, (size_t)rc);
-
-		const size_t diff = (size_t)(next - cur);
-		if (diff > (size_t)rc)
-		{
-			const size_t rlen = strnlen(next, len);
-			memmove(&cur[(size_t)rc], next, rlen + 1);
-		}
-
-		/* Continue after the decoded bytes, so they are never decoded again */
-		cur += rc;
-		clen = len - (size_t)(cur - str);
+		/* Continue after the escape, so the decoded bytes are never decoded again */
+		memcpy(dst, utf8, (size_t)rc);
+		dst += rc;
+		cur = next;
 	}
-	return (SSIZE_T)strnlen(str, len);
+
+	if (dst < end)
+		*dst = '\0';
+	return (SSIZE_T)(dst - str);
 }
 
 char* winpr_utf8ToUtfEscapedString(char* str, size_t len, size_t* pDstLen)

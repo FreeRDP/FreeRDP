@@ -817,7 +817,8 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 	WINPR_ASSERT(gdi->drawing);
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
+	HGDI_PEN originalPen = gdi->drawing->hdc->pen;
+	gdi->drawing->hdc->pen = hPen;
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, lineTo->bRop2));
 	if (!gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, nullptr))
 		goto fail;
@@ -826,6 +827,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 	rc = TRUE;
 fail:
+	gdi->drawing->hdc->pen = originalPen;
 	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return rc;
 }
@@ -851,7 +853,8 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	if (!hPen)
 		return FALSE;
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
+	HGDI_PEN originalPen = gdi->drawing->hdc->pen;
+	gdi->drawing->hdc->pen = hPen;
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, polyline->bRop2));
 	INT32 x = polyline->xStart;
 	INT32 y = polyline->yStart;
@@ -871,6 +874,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 
 	rc = TRUE;
 fail:
+	gdi->drawing->hdc->pen = originalPen;
 	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return rc;
 }

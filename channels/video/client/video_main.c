@@ -67,6 +67,11 @@ typedef struct
 
 #define XF_VIDEO_UNLIMITED_RATE 31
 
+/* Upper limit for the reassembled packets of one sample (a single H264 access unit).
+ * The server controls CurrentPacketIndex/PacketsInSample, without a limit it can make
+ * the client collect an arbitrarily large sample. */
+#define VIDEO_MAX_SAMPLE_SIZE (32ul * 1024ul * 1024ul)
+
 static const BYTE MFVideoFormat_H264[] = { 'H',  '2',  '6',  '4',  0x00, 0x00, 0x10, 0x00,
 	                                       0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 };
 
@@ -369,14 +374,25 @@ void VideoClientContextPriv_free(VideoClientContextPriv* priv)
 WINPR_ATTR_NODISCARD
 static UINT video_channel_write(VIDEO_PLUGIN* video, const BYTE* data, UINT32 length)
 {
-	WINPR_ASSERT(video);
+	UINT rc = ERROR_BAD_CONFIGURATION;
 
-	if (!video->control_callback || !video->control_callback->channel_callback)
-		return ERROR_BAD_CONFIGURATION;
-	IWTSVirtualChannel* channel = video->control_callback->channel_callback->channel;
-	if (!channel || !channel->Write)
-		return ERROR_BAD_CONFIGURATION;
-	return channel->Write(channel, length, data, nullptr);
+	WINPR_ASSERT(video);
+	WINPR_ASSERT(video->context);
+
+	VideoClientContextPriv* priv = video->context->priv;
+	WINPR_ASSERT(priv);
+
+	/* video_timer writes from the main loop thread while the drdynvc thread may close (and then
+	 * free) the control channel: hold the lock so video_control_on_close waits for the write. */
+	EnterCriticalSection(&priv->framesLock);
+	if (video->control_callback && video->control_callback->channel_callback)
+	{
+		IWTSVirtualChannel* channel = video->control_callback->channel_callback->channel;
+		if (channel && channel->Write)
+			rc = channel->Write(channel, length, data, nullptr);
+	}
+	LeaveCriticalSection(&priv->framesLock);
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
@@ -897,6 +913,16 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		goto out;
 	}
 
+	const size_t collected = Stream_GetPosition(presentation->currentSample);
+	if ((collected > VIDEO_MAX_SAMPLE_SIZE) || (data->cbSample > VIDEO_MAX_SAMPLE_SIZE - collected))
+	{
+		WLog_ERR(TAG, "sample %" PRIu32 " too large: %" PRIuz " + %" PRIu32 " bytes exceed %lu",
+		         data->SampleNumber, collected, data->cbSample, VIDEO_MAX_SAMPLE_SIZE);
+		Stream_ResetPosition(presentation->currentSample);
+		res = ERROR_INVALID_DATA;
+		goto out;
+	}
+
 	if (!Stream_EnsureRemainingCapacity(presentation->currentSample, data->cbSample))
 	{
 		WLog_ERR(TAG, "unable to expand the current packet");
@@ -912,13 +938,17 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		H264_CONTEXT* h264 = presentation->h264;
 		const UINT64 startTime = winpr_GetTickCount64NS();
 		MAPPED_GEOMETRY* geom = presentation->geometry;
+
+		/* the sample is complete, the next one starts at the beginning of the buffer
+		 * regardless of whether this one can be decoded */
+		Stream_SealLength(presentation->currentSample);
+		Stream_ResetPosition(presentation->currentSample);
+
 		if (!geom)
 			goto out;
 
 		const RECTANGLE_16 rect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedWidth),
 			                        WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedHeight) };
-		Stream_SealLength(presentation->currentSample);
-		Stream_ResetPosition(presentation->currentSample);
 
 		if (data->SampleNumber == 1)
 		{
@@ -1042,12 +1072,21 @@ static UINT video_control_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	{
 		GENERIC_CHANNEL_CALLBACK* listener_callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 		VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)listener_callback->plugin;
-		if (video && video->control_callback)
-		{
-			video->control_callback->channel_callback = nullptr;
-		}
 		if (video)
+		{
+			WINPR_ASSERT(video->context);
+
+			VideoClientContextPriv* priv = video->context->priv;
+			WINPR_ASSERT(priv);
+
+			/* The callback is freed below and the channel by the caller: wait for a write that
+			 * is still using them, see video_channel_write */
+			EnterCriticalSection(&priv->framesLock);
+			if (video->control_callback)
+				video->control_callback->channel_callback = nullptr;
 			video->connected = FALSE;
+			LeaveCriticalSection(&priv->framesLock);
+		}
 	}
 	free(pChannelCallback);
 	return CHANNEL_RC_OK;
@@ -1111,7 +1150,12 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = channel;
+
+	WINPR_ASSERT(video->context);
+	WINPR_ASSERT(video->context->priv);
+	EnterCriticalSection(&video->context->priv->framesLock);
 	listener_callback->channel_callback = callback;
+	LeaveCriticalSection(&video->context->priv->framesLock);
 
 	*ppCallback = &callback->iface;
 	video->connected = TRUE;

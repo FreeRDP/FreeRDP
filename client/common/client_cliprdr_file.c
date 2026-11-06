@@ -1346,29 +1346,32 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		DEBUG_CLIPRDR(file_context->log, "Received file range for file \"%s\" with stream id %u",
 		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 	}
+
+	/* request_table is only accessed under the inode_table lock and owns fuse_request, so
+	 * keep what the reply needs and remove the request before releasing the lock */
+	const FuseLowlevelOperationType operation_type = fuse_request->operation_type;
+	fuse_req_t fuse_req = fuse_request->fuse_req;
+	HashTable_Remove(file_context->request_table,
+	                 (void*)(uintptr_t)file_contents_response->streamId);
 	HashTable_Unlock(file_context->inode_table);
 
-	switch (fuse_request->operation_type)
+	switch (operation_type)
 	{
 		case FUSE_LL_OPERATION_NONE:
 			break;
 		case FUSE_LL_OPERATION_LOOKUP:
-			fuse_reply_entry(fuse_request->fuse_req, &entry);
+			fuse_reply_entry(fuse_req, &entry);
 			break;
 		case FUSE_LL_OPERATION_GETATTR:
-			fuse_reply_attr(fuse_request->fuse_req, &entry.attr, entry.attr_timeout);
+			fuse_reply_attr(fuse_req, &entry.attr, entry.attr_timeout);
 			break;
 		case FUSE_LL_OPERATION_READ:
-			fuse_reply_buf(fuse_request->fuse_req,
-			               (const char*)file_contents_response->requestedData,
+			fuse_reply_buf(fuse_req, (const char*)file_contents_response->requestedData,
 			               file_contents_response->cbRequested);
 			break;
 		default:
 			break;
 	}
-
-	HashTable_Remove(file_context->request_table,
-	                 (void*)(uintptr_t)file_contents_response->streamId);
 
 	return CHANNEL_RC_OK;
 }

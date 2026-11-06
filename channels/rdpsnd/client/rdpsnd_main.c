@@ -297,17 +297,18 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	Stream_Read_UINT8(s, rdpsnd->cBlockNo);  /* cLastBlockConfirmed */
 	Stream_Read_UINT16(s, rdpsnd->wVersion); /* wVersion */
 	Stream_Seek_UINT8(s);                    /* bPad */
-	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, wNumberOfFormats, 14ull))
 		return ERROR_BAD_LENGTH;
 
-	if (rdpsnd->NumberOfServerFormats > 0)
+	if (wNumberOfFormats > 0)
 	{
 		rdpsnd->ServerFormats = audio_formats_new(wNumberOfFormats);
 
 		if (!rdpsnd->ServerFormats)
 			return CHANNEL_RC_NO_MEMORY;
+
+		rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
 		for (UINT16 index = 0; index < wNumberOfFormats; index++)
 		{

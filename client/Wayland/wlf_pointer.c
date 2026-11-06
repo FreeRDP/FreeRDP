@@ -51,6 +51,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	        pointer->lengthAndMask, pointer->xorBpp, &context->gdi->palette))
 	{
 		winpr_aligned_free(ptr->data);
+		ptr->data = nullptr;
 		return FALSE;
 	}
 

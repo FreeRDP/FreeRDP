@@ -105,6 +105,13 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	if (!sys->pDecoder)
 		return -2001;
 
+	/* DecodeFrame2 takes the size as int */
+	if (SrcSize > INT32_MAX)
+	{
+		WLog_Print(h264->log, WLOG_WARN, "SrcSize %" PRIu32 " exceeds INT32_MAX", SrcSize);
+		return -2007;
+	}
+
 	/*
 	 * Decompress the image.  The RDP host only seems to send I420 format.
 	 */
