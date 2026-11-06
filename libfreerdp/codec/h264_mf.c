@@ -720,12 +720,8 @@ static BOOL mf_encoder_rate_control(H264_CONTEXT* h264, H264_CONTEXT_MF* sys, UI
 	if (!mf_encoder_check_value(h264, sys, &sCODECAPI_AVLowLatencyMode, "AVLowLatencyMode", hr))
 		return FALSE;
 
-	/* the encoder's default is a keyframe every second (30 frames); over RDP's reliable
-	 * transport a new encoder starts with one and that is enough, as with OpenH264, so ask for
-	 * a long interval (65535 frames, 36 minutes at 30 fps); an encoder without the property
-	 * keeps its own */
 	if (!mf_encoder_set_optional(h264, sys, &sCODECAPI_AVEncMPVGOPSize, "AVEncMPVGOPSize", VT_UI4,
-	                             UINT16_MAX))
+	                             30))
 		return FALSE;
 
 	switch (h264->RateControlMode)
