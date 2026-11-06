@@ -102,6 +102,49 @@ typedef struct
 	UCHAR EncryptedCreds[1];
 } MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL, *PMSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL;
 
+/* LSA authentication package client API, mirroring <ntsecapi.h>. On non-Windows
+ * it is backed by the per-user lsa4posix daemon (winpr/libwinpr/sspicli/lsa.c). */
+
+typedef struct
+{
+	USHORT Length;
+	USHORT MaximumLength;
+	PCHAR Buffer;
+} LSA_STRING, *PLSA_STRING;
+
+typedef LONG LSA_OPERATIONAL_MODE, *PLSA_OPERATIONAL_MODE;
+
+#include <winpr/winpr.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	WINPR_API NTSTATUS LsaConnectUntrusted(PHANDLE LsaHandle);
+
+	WINPR_API NTSTATUS LsaLookupAuthenticationPackage(HANDLE LsaHandle, PLSA_STRING PackageName,
+	                                                  PULONG AuthenticationPackage);
+
+	WINPR_API NTSTATUS LsaCallAuthenticationPackage(HANDLE LsaHandle, ULONG AuthenticationPackage,
+	                                                PVOID ProtocolSubmitBuffer,
+	                                                ULONG SubmitBufferLength,
+	                                                PVOID* ProtocolReturnBuffer,
+	                                                PULONG ReturnBufferLength,
+	                                                PNTSTATUS ProtocolStatus);
+
+	WINPR_API NTSTATUS LsaFreeReturnBuffer(PVOID Buffer);
+
+	WINPR_API NTSTATUS LsaDeregisterLogonProcess(HANDLE LsaHandle);
+
+	/* The parameter is unnamed: Xlib's <X11/Xlib.h> typedefs 'Status', which collides with a
+	 * parameter named Status when this header is pulled into an X11 translation unit. */
+	WINPR_API ULONG LsaNtStatusToWinError(NTSTATUS);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _WIN32 */
 
 #ifndef KERB_LOGON_FLAG_REDIRECTED

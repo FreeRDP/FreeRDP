@@ -162,7 +162,9 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 		if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)) != 0)
 			break;
 
-		krb5_get_init_creds_opt_set_forwardable(gic_opt, 0);
+		/* forwardable is left to the krb5 profile ([libdefaults] forwardable), as kinit does:
+		 * Remote Credential Guard forwards the TGT and the logon fails when it is not forwardable.
+		 */
 		krb5_get_init_creds_opt_set_proxiable(gic_opt, 0);
 
 		if (krb_settings)

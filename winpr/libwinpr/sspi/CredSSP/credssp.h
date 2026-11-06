@@ -24,9 +24,42 @@
 
 #include "../sspi.h"
 
+typedef enum
+{
+	CREDSSP_STATE_NEGO = 0, /* exchanging the inner Negotiate (Kerberos/NTLM) tokens */
+	CREDSSP_STATE_PUBKEY,   /* sent pubKeyAuth, waiting for the server's response */
+	CREDSSP_STATE_DONE      /* sent the encrypted TSCredentials */
+} CREDSSP_STATE;
+
+typedef struct
+{
+	PSecurityFunctionTableW nego; /* the WinPR Negotiate package */
+	CredHandle negoCred;
+	BOOL haveNegoCred;
+	DWORD flags; /* CREDSSP_FLAG_REDIRECT for Remote Credential Guard */
+	SEC_WINNT_AUTH_IDENTITY_W identity;
+	BOOL haveIdentity;
+} CREDSSP_CREDENTIALS;
+
 typedef struct
 {
 	BOOL server;
+	PSecurityFunctionTableW nego;
+	CtxtHandle negoCtx;
+	BOOL haveNegoCtx;
+	SecPkgContext_Sizes sizes;
+	BOOL haveSizes;
+	SEC_WCHAR* targetName;
+	CREDSSP_STATE state;
+	DWORD flags;
+	UINT32 version;     /* CredSSP version we negotiate (6) */
+	UINT32 peerVersion; /* 0 until the first server TSRequest */
+	ULONG sendSeqNum;
+	ULONG recvSeqNum;
+	SecBuffer publicKey;   /* the server SubjectPublicKey, from the input READONLY|TOKEN buffer */
+	SecBuffer clientNonce; /* 32 random bytes, sent in clientNonce[5] */
+	SEC_WINNT_AUTH_IDENTITY_W identity;
+	BOOL haveIdentity;
 } CREDSSP_CONTEXT;
 
 CREDSSP_CONTEXT* credssp_ContextNew(void);
