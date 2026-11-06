@@ -3309,6 +3309,26 @@ static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem, rdpShadow
 	                              mutter_virtual_side(height, 200));
 }
 
+/* A desktop that went idle shows a black screen until someone touches it, and a client
+ * can only take that for a broken picture: a move to where the pointer already is counts
+ * as a touch. Runs after the login. */
+static void mutter_wake_screen(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	if ((mutter->width == 0) || (mutter->height == 0))
+		return;
+
+	/* the client that just connected may have made the desktop smaller */
+	const UINT32 x = MIN(mutter->common.pointerX, MIN(mutter->width, UINT16_MAX + 1u) - 1u);
+	const UINT32 y = MIN(mutter->common.pointerY, MIN(mutter->height, UINT16_MAX + 1u) - 1u);
+
+	EnterCriticalSection(&mutter->eiLock);
+	if (mutter->ei && mutter->pointer && mutter->pointerReady)
+		mutter_pointer_move(mutter, (UINT16)x, (UINT16)y);
+	LeaveCriticalSection(&mutter->eiLock);
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
 {
@@ -3326,6 +3346,8 @@ static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShado
 	} while (InterlockedCompareExchangePointer(&mutter->sizeClient, client, older) != older);
 	if (mutter->virtualMonitor)
 		mutter_virtual_follow_client(mutter, client);
+	if (client->mayInteract)
+		mutter_wake_screen(mutter);
 	return TRUE;
 }
 
