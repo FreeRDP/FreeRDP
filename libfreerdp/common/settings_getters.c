@@ -474,6 +474,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_RemoteApplicationMode:
 			return settings->RemoteApplicationMode;
 
+		case FreeRDP_RemoteApplicationMultiExec:
+			return settings->RemoteApplicationMultiExec;
+
 		case FreeRDP_RemoteAssistanceMode:
 			return settings->RemoteAssistanceMode;
 
@@ -1228,6 +1231,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RemoteApplicationMode:
 			settings->RemoteApplicationMode = cnv.c;
+			break;
+
+		case FreeRDP_RemoteApplicationMultiExec:
+			settings->RemoteApplicationMultiExec = cnv.c;
 			break;
 
 		case FreeRDP_RemoteAssistanceMode:
