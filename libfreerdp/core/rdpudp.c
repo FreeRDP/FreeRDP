@@ -107,6 +107,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP_MAX_IN_FLIGHT 512
 #define RDPUDP_CLIENT_MAX_IN_FLIGHT 64
 
+/* A server's chunks that may wait behind the congestion window, about 38 MB. At 20 Mbit/s that is
+ * some 15 s of backlog and RDPUDP2_PEER_TIMEOUT_MS covers a dead peer, so this only stops a live
+ * peer that does not acknowledge. The connection is a byte stream, a dropped chunk would break
+ * it, so past this the connection fails. */
+#define RDPUDP_MAX_SEND_QUEUE 32768
+
 /* Server only: RDP-UDP2 congestion control ([MS-RDPEUDP2] 3.1.5.1.1 leaves the algorithm to the
  * sender), the retransmit timeout from the round trip and resends on a reported loss.
  * A window of datagrams grows by one per acknowledgement up to the slow start threshold, then by
@@ -198,6 +204,15 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * seconds without a datagram mean the peer is gone. The retransmit limit is left to the sender,
  * the peer timeout already bounds how long a dead connection goes unnoticed. */
 #define RDPUDP2_MAX_RETRANSMITS 10
+
+/* Resends for a reported loss do not count towards that limit, so on a server a few bytes of ACK
+ * vector must not buy much. A chunk goes out again for a report at most once per round trip since
+ * it was last sent, and a round trip allows cwnd / 4 such resends, at least
+ * RDPUDP2_REPORT_MIN_BUDGET. Both use the smoothed round trip, at least
+ * RDPUDP2_REPORT_MIN_ROUND_MS. */
+#define RDPUDP2_REPORT_MIN_ROUND_MS 20
+#define RDPUDP2_REPORT_MIN_BUDGET 16
+
 #define RDPUDP2_KEEPALIVE_MS 4000
 #define RDPUDP2_PEER_TIMEOUT_MS 16000
 
@@ -220,11 +235,15 @@ typedef struct
 	BYTE* payload;
 	size_t length;
 	UINT64 sent;
+	UINT64 lastSent; /* server: when it last went out, sent stays at the first time */
 	UINT64 due;
 	UINT32 rto;
 	UINT32 retransmits;
 	UINT32 timeouts; /* resends because the timer ran out, the only ones the limit counts */
 	BOOL lost; /* an ACK vector reported it missing, it goes out again without waiting for due */
+	/* server: reported missing less than a round trip after it went out. run_timers acts on the
+	 * report when that round trip is over, the peer may have nothing more to report. */
+	BOOL reportHeld;
 } rdpudp_pending;
 
 typedef struct
@@ -285,6 +304,10 @@ struct rdp_udp
 	UINT32 rttMin;     /* lowest round trip sample of the last window, UINT32_MAX for none */
 	UINT32 rttMinNext; /* lowest sample of the window being collected */
 	UINT64 rttMinStart;
+	/* the round trip the budget for reported losses counts, see report_allowed. It goes by time
+	 * alone, not by what the peer sends as ccRoundStart does */
+	UINT64 reportRoundStart;
+	UINT32 reportRoundUsed;
 	UINT32 peerWindow;
 	wQueue* sendQueue;
 	UINT32 initialSequence;
@@ -1185,6 +1208,8 @@ static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 
 	const UINT64 now = now_ms();
 	p->sent = now;
+	if (udp->server)
+		p->lastSent = now;
 	p->rto = rto_initial(udp);
 	p->due = now + p->rto;
 	p->retransmits = 0;
@@ -1234,6 +1259,11 @@ BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length)
 		return FALSE;
 	if ((udp->state != RDPUDP_STATE_ESTABLISHED) && (udp->state != RDPUDP_STATE_SYN_SENT))
 		return FALSE;
+	if (udp->server && (Queue_Count(udp->sendQueue) >= RDPUDP_MAX_SEND_QUEUE))
+	{
+		rdpudp_fail(udp, "the send queue is full, the peer does not acknowledge");
+		return FALSE;
+	}
 
 	rdpudp_chunk* chunk = calloc(1, sizeof(rdpudp_chunk));
 	if (!chunk)
@@ -1376,6 +1406,39 @@ static void cc_on_loss(rdpUdp* udp)
 	WINPR_ASSERT(udp);
 	udp->ccRoundLost++;
 	cc_round(udp);
+}
+
+/* Server: how long a chunk stays clear of a report after it went out, and how long a budget of
+ * resends for reports lasts. */
+WINPR_ATTR_NODISCARD
+static UINT64 report_round(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	return (udp->srtt > RDPUDP2_REPORT_MIN_ROUND_MS) ? udp->srtt : RDPUDP2_REPORT_MIN_ROUND_MS;
+}
+
+/* Server: marks a chunk lost for a report, within the budget of the round trip. Past it the chunk
+ * stays pending, and the next vector or its timer picks it up. Only marking counts for cc_on_loss,
+ * so a loss still counts once per resend; a chunk held back counts when it is acted on, and a
+ * report repeated meanwhile counts for nothing. */
+static void act_on_report(rdpUdp* udp, rdpudp_pending* p)
+{
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
+	const UINT64 now = now_ms();
+	if (now - udp->reportRoundStart >= report_round(udp))
+	{
+		udp->reportRoundStart = now;
+		udp->reportRoundUsed = 0;
+	}
+	const UINT32 share = udp->cwnd / 4;
+	const UINT32 budget = (share > RDPUDP2_REPORT_MIN_BUDGET) ? share : RDPUDP2_REPORT_MIN_BUDGET;
+	p->reportHeld = FALSE;
+	if (udp->reportRoundUsed >= budget)
+		return;
+	udp->reportRoundUsed++;
+	p->lost = TRUE;
+	cc_on_loss(udp);
 }
 
 static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
@@ -1747,8 +1810,10 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 		else if (udp->server && (highest > offset + udp->reorderThreshold) && !p->lost)
 		{
 			/* missing while later ones arrived: lost, resent by run_timers right away */
-			p->lost = TRUE;
-			cc_on_loss(udp);
+			if (now_ms() - p->lastSent >= report_round(udp))
+				act_on_report(udp, p);
+			else
+				p->reportHeld = TRUE;
 		}
 	}
 
@@ -2280,6 +2345,8 @@ static BOOL run_timers(rdpUdp* udp)
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
 	{
 		rdpudp_pending* p = &udp->pending[x];
+		if (p->reportHeld && (now - p->lastSent >= report_round(udp)))
+			act_on_report(udp, p);
 		if (!p->used || ((now < p->due) && !p->lost))
 			continue;
 		const BOOL reported = p->lost;
@@ -2308,6 +2375,11 @@ static BOOL run_timers(rdpUdp* udp)
 		}
 		p->retransmits++;
 		p->due = now + p->rto;
+		if (udp->server)
+		{
+			p->lastSent = now;
+			p->reportHeld = FALSE;
+		}
 		if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 		{
 			/* [MS-RDPEUDP2] 3.1.5.1.3: a lost packet is resent under a new data sequence
@@ -2685,6 +2757,14 @@ UINT32 rdpudp_get_timeout(const rdpUdp* udp)
 			return 0;
 		if (p->due - now < timeout)
 			timeout = p->due - now;
+		if (p->reportHeld)
+		{
+			const UINT64 at = p->lastSent + report_round(udp);
+			if (at <= now)
+				return 0;
+			if (at - now < timeout)
+				timeout = at - now;
+		}
 	}
 
 	/* an acknowledgement that waits, see ack_when_due */
