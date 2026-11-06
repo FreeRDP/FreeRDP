@@ -626,8 +626,53 @@ SIMPLE_TYPE_IMPL(winpr_ndr, INT64, int64)
 		return &winpr_ndr_##TYPE##VaryingArray_descr_s;                                          \
 	}
 
+/* WinPR WCHAR strings are UTF-16LE whatever the byte order of the host, the characters are
+ * stored that way and not as host UINT16 */
+BOOL winpr_ndr_decoder_read_wchar(WinPrNdrDecoder* context, wStream* s, WCHAR* ptr)
+{
+	WINPR_ASSERT(ptr);
+
+	UINT16 v = 0;
+	if (!winpr_ndr_decoder_read_uint16(context, s, &v))
+		return FALSE;
+
+	winpr_Data_Write_UINT16(ptr, v);
+	return TRUE;
+}
+
+BOOL winpr_ndr_encoder_write_wchar(WinPrNdrEncoder* context, wStream* s, const WCHAR* ptr)
+{
+	WINPR_ASSERT(ptr);
+	return winpr_ndr_encoder_write_uint16(context, s, winpr_Data_Get_UINT16(ptr));
+}
+
+static BOOL ndr_decoder_read_wchar_(WinPrNdrDecoder* context, wStream* s, const void* hints,
+                                    void* v)
+{
+	WINPR_UNUSED(hints);
+	return winpr_ndr_decoder_read_wchar(context, s, (WCHAR*)v);
+}
+
+static BOOL ndr_encoder_write_wchar_(WinPrNdrEncoder* context, wStream* s, const void* hints,
+                                     const void* v)
+{
+	WINPR_UNUSED(hints);
+	return winpr_ndr_encoder_write_wchar(context, s, (const WCHAR*)v);
+}
+
+const WinPrNdrMessageDescr winpr_ndr_wchar_descr_s = {
+	WINPR_NDR_ARITY_SIMPLE,   sizeof(WCHAR), ndr_decoder_read_wchar_,
+	ndr_encoder_write_wchar_, nullptr,       nullptr
+};
+
+WinPrNdrMessageType winpr_ndr_wchar_descr(void)
+{
+	return &winpr_ndr_wchar_descr_s;
+}
+
 ARRAY_OF_TYPE_IMPL(uint8, BYTE)
 ARRAY_OF_TYPE_IMPL(uint16, UINT16)
+ARRAY_OF_TYPE_IMPL(wchar, WCHAR)
 
 static BOOL winpr_ndr_decoder_read_string_conformant(WinPrNdrDecoder* context, wStream* s,
                                                      const void* hints, void* v)
@@ -839,7 +884,7 @@ static BOOL ndr_encoder_write_wstring_varying(WinPrNdrEncoder* context, wStream*
 
 	for (size_t i = 0; i < l; i++)
 	{
-		if (!winpr_ndr_encoder_write_uint16(context, s, str[i]))
+		if (!winpr_ndr_encoder_write_wchar(context, s, &str[i]))
 			return FALSE;
 	}
 	return TRUE;
@@ -1212,11 +1257,6 @@ BOOL winpr_ndr_decoder_read_int8_(WinPrNdrDecoder* context, wStream* s, const vo
 {
 	WINPR_UNUSED(hints);
 	return winpr_ndr_decoder_read_int8(context, s, (INT8*)v);
-}
-
-BOOL winpr_ndr_decoder_read_wchar(WinPrNdrDecoder* context, wStream* s, WCHAR* ptr)
-{
-	return winpr_ndr_decoder_read_uint16(context, s, (UINT16*)ptr);
 }
 
 /** @brief reads the items of an array, their deferred pointers are treated after the array */
