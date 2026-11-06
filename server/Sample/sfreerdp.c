@@ -28,10 +28,14 @@
 #include <winpr/crt.h>
 #include <winpr/cast.h>
 #include <winpr/assert.h>
+#if defined(WITH_RDPEUDP)
 #include <winpr/interlocked.h>
+#endif
 #include <winpr/ssl.h>
 #include <winpr/synch.h>
+#if defined(WITH_RDPEUDP)
 #include <winpr/sysinfo.h>
+#endif
 #include <winpr/file.h>
 #include <winpr/string.h>
 #include <winpr/path.h>
@@ -74,7 +78,9 @@ struct server_info
 	const char* replay_dump;
 	const char* cert;
 	const char* key;
+#if defined(WITH_RDPEUDP)
 	BOOL udp;
+#endif
 };
 
 static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
@@ -104,6 +110,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 
 		sf_peer_audin_uninit(context);
 
+#if defined(WITH_RDPEUDP)
 		if (context->echo)
 		{
 			if (context->echo->Close(context->echo) != CHANNEL_RC_OK)
@@ -111,6 +118,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 			echo_server_context_free(context->echo);
 		}
 
+#endif
 #if defined(CHANNEL_AINPUT_SERVER)
 		sf_peer_ainput_uninit(context);
 #endif
@@ -694,6 +702,7 @@ fail:
 	return 0;
 }
 
+#if defined(WITH_RDPEUDP)
 WINPR_ATTR_NODISCARD
 static UINT sf_peer_echo_open_result(echo_server_context* echo, ECHO_SERVER_OPEN_RESULT result)
 {
@@ -748,6 +757,7 @@ static void sf_peer_echo(testPeerContext* context)
 		WLog_WARN(TAG, "echo request failed");
 }
 
+#endif
 WINPR_ATTR_NODISCARD
 static BOOL tf_peer_post_connect(freerdp_peer* client)
 {
@@ -1269,11 +1279,13 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, TRUE))
 		goto fail;
 
+#if defined(WITH_RDPEUDP)
 	/* UDP multitransport: a reliable tunnel, onto which Soft-Sync moves the dynamic channels */
 	if (info->udp && !freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
 	                                              TRANSPORT_TYPE_UDP_FECR | SOFTSYNC_TCP_TO_UDP))
 		goto fail;
 
+#endif
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
 
@@ -1338,7 +1350,11 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 		HANDLE channelHandle = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 		handles[count++] = channelHandle;
+#if defined(WITH_RDPEUDP)
 		status = WaitForMultipleObjects(count, handles, FALSE, info->udp ? 1000 : INFINITE);
+#else
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+#endif
 
 		if (status == WAIT_FAILED)
 		{
@@ -1350,10 +1366,14 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 
+#if defined(WITH_RDPEUDP)
 		/* drdynvc opens once, so with a tunnel to move it to not before the client joined its
 		 * channels: like the shadow server, wait for the activation */
 		if (WTSVirtualChannelManagerCheckFileDescriptorEx(context->vcm,
 		                                                  !info->udp || context->activated) != TRUE)
+#else
+		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+#endif
 			break;
 
 		/* Handle dynamic virtual channel initializations */
@@ -1388,8 +1408,10 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 					}
 #endif
 
+#if defined(WITH_RDPEUDP)
 					if (info->udp)
 						sf_peer_echo(context);
+#endif
 					break;
 
 				case DRDYNVC_STATE_FAILED:
@@ -1475,14 +1497,20 @@ static const struct
 	const char slocal_only[13];
 	const char scert[7];
 	const char skey[6];
+#if defined(WITH_RDPEUDP)
 	const char sudp[5];
+#endif
 } options = { { '-', '-', 'p', 'c', 'a', 'p', '=' },
 	          { '-', '-', 'f', 'a', 's', 't' },
 	          { '-', '-', 'p', 'o', 'r', 't', '=' },
 	          { '-', '-', 'l', 'o', 'c', 'a', 'l', '-', 'o', 'n', 'l', 'y' },
 	          { '-', '-', 'c', 'e', 'r', 't', '=' },
+#if defined(WITH_RDPEUDP)
 	          { '-', '-', 'k', 'e', 'y', '=' },
 	          { '-', '-', 'u', 'd', 'p' } };
+#else
+	          { '-', '-', 'k', 'e', 'y', '=' } };
+#endif
 
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
@@ -1509,7 +1537,9 @@ static int usage(const char* app, const char* invalid)
 	print_entry(fp, "\t%s\n", options.sfast, sizeof(options.sfast));
 	print_entry(fp, "\t%s<port>\n", options.sport, sizeof(options.sport));
 	print_entry(fp, "\t%s\n", options.slocal_only, sizeof(options.slocal_only));
+#if defined(WITH_RDPEUDP)
 	print_entry(fp, "\t%s\n", options.sudp, sizeof(options.sudp));
+#endif
 	return -1;
 }
 
@@ -1560,8 +1590,10 @@ int main(int argc, char* argv[])
 		}
 		else if (strncmp(arg, options.slocal_only, sizeof(options.slocal_only)) == 0)
 			localOnly = TRUE;
+#if defined(WITH_RDPEUDP)
 		else if (strncmp(arg, options.sudp, sizeof(options.sudp)) == 0)
 			info.udp = TRUE;
+#endif
 		else if (strncmp(arg, options.spcap, sizeof(options.spcap)) == 0)
 		{
 			info.test_pcap_file = &arg[sizeof(options.spcap)];

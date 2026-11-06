@@ -33,7 +33,9 @@
 #endif
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/encomsp.h>
+#if defined(WITH_RDPEUDP)
 #include <freerdp/server/echo.h>
+#endif
 #include <freerdp/transport_io.h>
 
 #include <winpr/crt.h>
@@ -69,12 +71,14 @@ struct test_peer_context
 	RdpsndServerContext* rdpsnd;
 	EncomspServerContext* encomsp;
 
+#if defined(WITH_RDPEUDP)
 	/* an echo every second, which shows the round trip of a dynamic channel: over the UDP
 	 * tunnel once Soft-Sync moved it there */
 	echo_server_context* echo;
 	LONG echo_open; /* set on the echo channel's thread; Interlocked functions only */
 	UINT64 echo_sent;
 
+#endif
 	rdpTransportIo io;
 	wImage* image;
 };

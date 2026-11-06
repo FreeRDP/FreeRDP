@@ -1340,9 +1340,8 @@ static BOOL transport_default_get_public_key(rdpTransport* transport, const BYTE
 	return TRUE;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL transport_get_address(rdpTransport* transport, BOOL local,
-                                  struct sockaddr_storage* address, size_t* length)
+BOOL transport_get_peer_address(rdpTransport* transport, struct sockaddr_storage* address,
+                                size_t* length)
 {
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(address);
@@ -1358,32 +1357,47 @@ static BOOL transport_get_address(rdpTransport* transport, BOOL local,
 		(void)BIO_get_fd(transport->tls->underlying, &sockfd);
 	if (sockfd < 0)
 	{
-		WLog_Print(transport->log, WLOG_DEBUG, "no socket found for the %s address",
-		           local ? "local" : "peer");
+		WLog_Print(transport->log, WLOG_DEBUG, "no socket found for the peer address");
+		return FALSE;
+	}
+
+	socklen_t len = sizeof(*address);
+	if (getpeername(sockfd, (struct sockaddr*)address, &len) != 0)
+		return FALSE;
+	*length = len;
+	return TRUE;
+}
+
+#if defined(WITH_RDPEUDP)
+BOOL transport_get_local_address(rdpTransport* transport, struct sockaddr_storage* address,
+                                 size_t* length)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(address);
+	WINPR_ASSERT(length);
+
+	if (transport->GatewayEnabled)
+		return FALSE;
+
+	int sockfd = -1;
+	if (transport->frontBio)
+		(void)BIO_get_fd(transport->frontBio, &sockfd);
+	if ((sockfd < 0) && transport->tls && transport->tls->underlying)
+		(void)BIO_get_fd(transport->tls->underlying, &sockfd);
+	if (sockfd < 0)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "no socket found for the local address");
 		return FALSE;
 	}
 
 	socklen_t len = WINPR_ASSERTING_INT_CAST(socklen_t, sizeof(*address));
-	const int rc = local ? getsockname(sockfd, (struct sockaddr*)address, &len)
-	                     : getpeername(sockfd, (struct sockaddr*)address, &len);
-	if (rc != 0)
+	if (getsockname(sockfd, (struct sockaddr*)address, &len) != 0)
 		return FALSE;
 	*length = WINPR_ASSERTING_INT_CAST(size_t, len);
 	return TRUE;
 }
 
-BOOL transport_get_peer_address(rdpTransport* transport, struct sockaddr_storage* address,
-                                size_t* length)
-{
-	return transport_get_address(transport, FALSE, address, length);
-}
-
-BOOL transport_get_local_address(rdpTransport* transport, struct sockaddr_storage* address,
-                                 size_t* length)
-{
-	return transport_get_address(transport, TRUE, address, length);
-}
-
+#endif
 DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0; /* always the reread Event */

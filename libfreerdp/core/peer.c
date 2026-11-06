@@ -310,6 +310,7 @@ static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
+#if defined(WITH_RDPEUDP)
 	const DWORD nCount = transport_get_event_handles(client->context->rdp->transport, events, count);
 	if ((nCount == 0) || (nCount >= count))
 		return nCount;
@@ -321,6 +322,9 @@ static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events
 		return nCount;
 	events[nCount] = multitransport_get_event_handle(client->context->rdp->multitransport);
 	return nCount + 1;
+#else
+	return transport_get_event_handles(client->context->rdp->transport, events, count);
+#endif
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)

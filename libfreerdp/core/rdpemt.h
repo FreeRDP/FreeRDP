@@ -147,19 +147,6 @@ rdpemt_new(WINPR_ATTR_UNUSED wLog* log, WINPR_ATTR_UNUSED UINT32 requestId,
 }
 
 WINPR_ATTR_NODISCARD
-static inline rdpEmt* rdpemt_new_server(WINPR_ATTR_UNUSED wLog* log,
-                                        WINPR_ATTR_UNUSED UINT16 port,
-                                        WINPR_ATTR_UNUSED UINT32 requestId,
-                                        WINPR_ATTR_UNUSED const BYTE* cookie,
-                                        WINPR_ATTR_UNUSED struct x509_st* cert,
-                                        WINPR_ATTR_UNUSED struct evp_pkey_st* key,
-                                        WINPR_ATTR_UNUSED rdpEmtEventFn callback,
-                                        WINPR_ATTR_UNUSED void* custom)
-{
-	return nullptr;
-}
-
-WINPR_ATTR_NODISCARD
 static inline BOOL rdpemt_start(WINPR_ATTR_UNUSED rdpEmt* emt,
                                 WINPR_ATTR_UNUSED const struct sockaddr* addr,
                                 WINPR_ATTR_UNUSED size_t addrlen)
@@ -179,12 +166,6 @@ WINPR_ATTR_NODISCARD
 static inline BOOL rdpemt_send_subheader(WINPR_ATTR_UNUSED rdpEmt* emt,
                                          WINPR_ATTR_UNUSED const BYTE* subHeader,
                                          WINPR_ATTR_UNUSED size_t length)
-{
-	return FALSE;
-}
-
-WINPR_ATTR_NODISCARD
-static inline BOOL rdpemt_flush(WINPR_ATTR_UNUSED rdpEmt* emt)
 {
 	return FALSE;
 }
