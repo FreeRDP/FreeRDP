@@ -226,8 +226,8 @@ static BOOL aad_get_nonce(rdpAad* aad)
 		return FALSE;
 	}
 
-	if (!freerdp_http_request(url, "grant_type=srv_challenge", &resp_code, &response,
-	                          &response_length))
+	if (!freerdp_http_request_context(aad->rdpcontext, url, "grant_type=srv_challenge", &resp_code,
+	                                  &response, &response_length))
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "nonce request failed");
 		goto fail;
@@ -911,7 +911,7 @@ BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 	const char* tenantid = "common";
 	if (useTenant)
 		tenantid = freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdAadtenantid);
-	rdp->wellknown = freerdp_utils_aad_get_wellknown(log, base, tenantid);
+	rdp->wellknown = freerdp_utils_aad_get_wellknown_context(context, log, base, tenantid);
 	return rdp->wellknown != nullptr;
 }
 
@@ -1008,9 +1008,53 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 	return WINPR_JSON_GetObjectItemCaseSensitive(context->rdp->wellknown, which);
 }
 
-WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-WINPR_ATTR_NODISCARD
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
+{
+	WINPR_ASSERT(base);
+	WINPR_ASSERT(tenantid);
+
+	WLog_Print(log, WLOG_ERROR,
+	           "This function is deprecated, use freerdp_utils_aad_get_wellknown_context instead. "
+	           "Certificate checks are not properly performed when using this function");
+	char* str = nullptr;
+	size_t len = 0;
+	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", base,
+	               tenantid);
+
+	if (!str)
+	{
+		WLog_Print(log, WLOG_ERROR, "failed to create request URL for tenantid='%s'", tenantid);
+		return nullptr;
+	}
+
+	BYTE* response = nullptr;
+	long resp_code = 0;
+	size_t response_length = 0;
+	const BOOL rc = freerdp_http_request(str, nullptr, &resp_code, &response, &response_length);
+	if (!rc || (resp_code != HTTP_STATUS_OK))
+	{
+		WLog_Print(log, WLOG_ERROR, "request for '%s' failed with: %s", str,
+		           freerdp_http_status_string(resp_code));
+		free(str);
+		free(response);
+		return nullptr;
+	}
+	free(str);
+
+	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
+	free(response);
+
+	if (!json)
+		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON: %s",
+		           WINPR_JSON_GetErrorPtr());
+
+	return json;
+}
+#endif
+
+WINPR_JSON* freerdp_utils_aad_get_wellknown_context(rdpContext* context, wLog* log,
+                                                    const char* base, const char* tenantid)
 {
 	WINPR_ASSERT(base);
 	WINPR_ASSERT(tenantid);
@@ -1029,7 +1073,8 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const c
 	BYTE* response = nullptr;
 	long resp_code = 0;
 	size_t response_length = 0;
-	const BOOL rc = freerdp_http_request(str, nullptr, &resp_code, &response, &response_length);
+	const BOOL rc = freerdp_http_request_context(context, str, nullptr, &resp_code, &response,
+	                                             &response_length);
 	if (!rc || (resp_code != HTTP_STATUS_OK))
 	{
 		WLog_Print(log, WLOG_ERROR, "request for '%s' failed with: %s", str,

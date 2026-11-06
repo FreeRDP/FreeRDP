@@ -1387,7 +1387,8 @@ BOOL client_common_get_access_token(WINPR_ATTR_UNUSED freerdp* instance,
 
 	const char* token_ep =
 	    freerdp_utils_aad_get_wellknown_string(instance->context, AAD_WELLKNOWN_token_endpoint);
-	if (!freerdp_http_request(token_ep, request, &resp_code, &response, &response_length))
+	if (!freerdp_http_request_context(instance->context, token_ep, request, &resp_code, &response,
+	                                  &response_length))
 	{
 		WLog_ERR(TAG, "access token request failed");
 		return FALSE;

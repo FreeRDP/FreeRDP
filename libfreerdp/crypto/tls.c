@@ -1097,9 +1097,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 		if (tls->isClientMode)
 		{
-			WINPR_ASSERT(tls->port <= UINT16_MAX);
-			verify_status =
-			    tls_verify_certificate(tls, cert, tls_get_server_name(tls), (UINT16)tls->port);
+			verify_status = tls_verify_certificate(tls, cert, tls_get_server_name(tls), tls->port);
 
 			if (verify_status < 1)
 			{
@@ -1387,8 +1385,9 @@ BOOL freerdp_tls_send_alert(rdpTls* tls)
 	return TRUE;
 }
 
-int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length)
+int freerdp_tls_write_all(rdpTls* tls, const void* data, size_t length)
 {
+	const BYTE* bdata = data;
 	WINPR_ASSERT(tls);
 	size_t offset = 0;
 	BIO* bio = tls->bio;
@@ -1399,7 +1398,7 @@ int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length)
 	while (offset < length)
 	{
 		ERR_clear_error();
-		const int status = BIO_write(bio, &data[offset], (int)(length - offset));
+		const int status = BIO_write(bio, &bdata[offset], (int)(length - offset));
 
 		if (status > 0)
 			offset += (size_t)status;
@@ -1789,6 +1788,9 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 
 	if (tls->isGatewayTransport)
 		flags |= VERIFY_CERT_FLAG_GATEWAY;
+
+	if (tls->isHttpRequest)
+		flags |= VERIFY_CERT_FLAG_HTTP;
 
 	if (is_redirected(tls))
 		flags |= VERIFY_CERT_FLAG_REDIRECT;

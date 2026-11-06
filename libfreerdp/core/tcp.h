@@ -104,10 +104,10 @@ static inline long BIO_wait_write(BIO* b, long c)
 }
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BIO_METHOD* BIO_s_simple_socket(void);
+FREERDP_LOCAL const BIO_METHOD* BIO_s_simple_socket(void);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BIO_METHOD* BIO_s_buffered_socket(void);
+FREERDP_LOCAL const BIO_METHOD* BIO_s_buffered_socket(void);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd);
