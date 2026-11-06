@@ -44,6 +44,10 @@
 #define FLOATBAR_COLOR_BORDER "RGB:75/9a/c8"
 #define FLOATBAR_COLOR_FOREGROUND "RGB:FF/FF/FF"
 
+#define XF_FLOATBAR_FLAG_POSITION_MASK 0x00C0
+#define XF_FLOATBAR_FLAG_POSITION_LEFT 0x0040
+#define XF_FLOATBAR_FLAG_POSITION_RIGHT 0x0080
+
 #define XF_FLOATBAR_MODE_NONE 0
 #define XF_FLOATBAR_MODE_DRAGGING 1
 #define XF_FLOATBAR_MODE_RESIZE_LEFT 2
@@ -190,7 +194,25 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	if (status != 1)
 		return FALSE;
 
-	floatbar->x = attr.x + attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
+	switch (floatbar->flags & XF_FLOATBAR_FLAG_POSITION_MASK)
+	{
+		case XF_FLOATBAR_FLAG_POSITION_LEFT:
+			floatbar->x = attr.x;
+			break;
+
+		case XF_FLOATBAR_FLAG_POSITION_RIGHT:
+			floatbar->x = attr.x + attr.width - FLOATBAR_DEFAULT_WIDTH;
+			break;
+
+		default:
+			floatbar->x = attr.x + attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
+			break;
+	}
+
+	/* never start off screen, e.g. if the window is narrower than the floatbar */
+	if (floatbar->x < 0)
+		floatbar->x = 0;
+
 	floatbar->y = 0;
 
 	if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)

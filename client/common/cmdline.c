@@ -3797,7 +3797,7 @@ static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	/* Defaults are enabled, visible, sticky, fullscreen */
+	/* Defaults are enabled, visible, sticky, fullscreen, centered */
 	UINT32 Floatbar = 0x0017;
 
 	if (arg->Value)
@@ -3860,6 +3860,21 @@ static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 					Floatbar |= 0x10u;
 				else if (option_equals("window", val))
 					Floatbar |= 0x20u;
+				else
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+			/* position:[left|center|right] */
+			else if (option_starts_with("position:", cur))
+			{
+				const char* val = cur + 9;
+				Floatbar &= ~0xC0u;
+
+				if (option_equals("left", val))
+					Floatbar |= 0x40u;
+				else if (option_equals("right", val))
+					Floatbar |= 0x80u;
+				else if (option_equals("center", val))
+					Floatbar &= ~0xC0u;
 				else
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
