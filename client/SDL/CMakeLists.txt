@@ -42,6 +42,11 @@ option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
 option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
+# Avoid a second SDL copy in the process.
+if(WITH_SDL_AUDIO AND NOT WITH_SDL_LINK_SHARED)
+  message(FATAL_ERROR "-DWITH_SDL_AUDIO=ON requires -DWITH_SDL_LINK_SHARED=ON")
+endif()
+
 if(WITH_WIN_CONSOLE)
   add_compile_definitions("WITH_WIN_CONSOLE")
   set(WIN32_GUI_FLAG "TRUE")
