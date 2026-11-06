@@ -556,6 +556,12 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 	for (size_t x = 0; x < total; x++)
 	{
 		rdpPeerChannel* channel = HashTable_GetItemValue(vcm->dynamicVirtualChannels, (void*)keys[x]);
+		/* one the client has not answered yet would stay on TCP for good: its answer tries again */
+		if (channel && (channel->dvc_open_state == DVC_OPEN_STATE_NONE))
+		{
+			rc = TRUE;
+			goto out;
+		}
 		if (channel && (channel->dvc_open_state == DVC_OPEN_STATE_SUCCEEDED))
 			channels[count++] = channel;
 	}
