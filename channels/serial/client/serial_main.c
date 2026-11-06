@@ -723,6 +723,11 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 
 	{
 		const BOOL added = ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread);
+
+		/* Start the thread before the list is unlocked: IRP_MJ_CLOSE terminates and closes every
+		 * thread it finds in the list, which must not happen to a thread not yet started. */
+		if (added)
+			ResumeThread(irpThread);
 		ListDictionary_Unlock(serial->IrpThreads);
 
 		if (!added)
@@ -731,8 +736,6 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 			goto error_handle;
 		}
 	}
-
-	ResumeThread(irpThread);
 
 	return;
 error_handle:
