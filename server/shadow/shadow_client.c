@@ -39,6 +39,8 @@
 
 #define TAG CLIENT_TAG("shadow")
 
+#define SHADOW_CLIENT_MAX_INVALID_RECTS 256
+
 typedef struct
 {
 	BOOL gfxOpened;
@@ -357,6 +359,35 @@ fail:
 	return FALSE;
 }
 
+/**
+ * Function description
+ * Union a rectangle into the client invalid region. client->lock must be held.
+ *
+ * region16_union_rect copies the whole region on every call, so its cost grows
+ * with the number of rectangles already in it. The rectangles come from the
+ * peer (Refresh Rect, Suppress Output) and pile up while the peer receives no
+ * graphics updates, so limit their number: the invalid region only tells what
+ * has to be sent again, replacing a too fragmented one by its extents is safe.
+ *
+ * @return TRUE on success
+ */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_invalidate_rect(rdpShadowClient* client, const RECTANGLE_16* rect)
+{
+	WINPR_ASSERT(client);
+
+	REGION16* region = &(client->invalidRegion);
+	if (!region16_union_rect(region, region, rect))
+		return FALSE;
+
+	if (region16_n_rects(region) <= SHADOW_CLIENT_MAX_INVALID_RECTS)
+		return TRUE;
+
+	const RECTANGLE_16 extents = *region16_extents(region);
+	region16_clear(region);
+	return region16_union_rect(region, region, &extents);
+}
+
 static inline void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 numRects,
                                               const RECTANGLE_16* rects)
 {
@@ -373,8 +404,7 @@ static inline void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
 	{
 		for (UINT32 index = 0; index < numRects; index++)
 		{
-			if (!region16_union_rect(&(client->invalidRegion), &(client->invalidRegion),
-			                         &rects[index]))
+			if (!shadow_client_invalidate_rect(client, &rects[index]))
 				goto fail;
 		}
 	}
@@ -385,7 +415,7 @@ static inline void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
 		WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) <= UINT16_MAX);
 		screenRegion.right = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 		screenRegion.bottom = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-		if (!region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &screenRegion))
+		if (!shadow_client_invalidate_rect(client, &screenRegion))
 			goto fail;
 	}
 fail:
