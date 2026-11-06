@@ -186,8 +186,9 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		/* The server takes the scale of a single monitor from the core data only, so put the
 		 * display scale there too. Otherwise the session starts at 100% and is redone once the
 		 * display channel sends the layout. */
-		if ((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
-		     FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0)
+		if (((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
+		      FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
+		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			UINT32 scale = 0;
 			for (UINT32 x = 0; x < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); x++)

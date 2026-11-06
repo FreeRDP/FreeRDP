@@ -165,7 +165,7 @@ if(WITH_YUV AND YUV_FOUND)
 endif()
 
 if(WITH_APPLE_VIDEOTOOLBOX)
-  list(APPEND CODEC_SRCS h264_videotoolbox.c)
+  list(APPEND CODEC_SRCS h264_videotoolbox.m)
   find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
   find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
   find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
