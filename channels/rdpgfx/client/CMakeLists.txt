@@ -26,6 +26,6 @@ include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
-if(BUILD_FUZZERS)
+if(BUILD_FUZZERS OR BUILD_TESTING)
   add_subdirectory(test)
 endif()
