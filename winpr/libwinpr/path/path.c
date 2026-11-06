@@ -30,6 +30,10 @@
 #include "../utils.h"
 #include "path.h"
 
+#if !defined(_WIN32)
+#include <sys/stat.h>
+#endif
+
 #if defined(WITH_CWALK)
 #include <cwalk.h>
 #endif
@@ -1292,12 +1296,43 @@ static char* concat(const char* path, size_t pathlen, const char* name, size_t n
 	return str;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL path_is_link(const char* path)
+{
+#if defined(_WIN32)
+	const DWORD attributes = GetFileAttributesA(path);
+	return (attributes != INVALID_FILE_ATTRIBUTES) &&
+	       ((attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
+#else
+	struct stat st = WINPR_C_ARRAY_INIT;
+	return (lstat(path, &st) == 0) && S_ISLNK(st.st_mode);
+#endif
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL path_remove_link(const char* path)
+{
+#if defined(_WIN32)
+	const DWORD attributes = GetFileAttributesA(path);
+	if ((attributes != INVALID_FILE_ATTRIBUTES) && ((attributes & FILE_ATTRIBUTE_DIRECTORY) != 0))
+		return winpr_RemoveDirectory(path);
+#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL
+	return winpr_DeleteFile(path);
+	WINPR_PRAGMA_DIAG_POP
+}
+
 BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 {
 	BOOL ret = FALSE;
 
 	if (!lpPathName)
 		return FALSE;
+
+	/* a link goes, what it points to is not part of this directory */
+	if (path_is_link(lpPathName))
+		return path_remove_link(lpPathName);
 
 	const size_t pathnamelen = strlen(lpPathName);
 	const size_t path_slash_len = pathnamelen + 3;
@@ -1320,7 +1355,7 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 			goto fail;
 
 		ret = TRUE;
-		path_slash[path_slash_len - 1] = '\0'; /* remove trailing '*' */
+		path_slash[strlen(path_slash) - 1] = '\0'; /* remove trailing '*' */
 		do
 		{
 			const size_t len = strnlen(findFileData.cFileName, ARRAYSIZE(findFileData.cFileName));
@@ -1335,7 +1370,9 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 			if (!fullpath)
 				goto fail;
 
-			if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			if (path_is_link(fullpath))
+				ret = path_remove_link(fullpath);
+			else if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 				ret = winpr_RemoveDirectory_RecursiveA(fullpath);
 			else
 			{
