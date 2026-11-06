@@ -643,6 +643,13 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 /* write size bytes of data, or of silence if data is nullptr; called with the mainloop locked */
 static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_t size)
 {
+	const size_t frame_size = pa_frame_size(&pulse->sample_spec);
+	if (frame_size == 0)
+		return FALSE;
+
+	/* pa_stream_write only accepts whole frames, drop an incomplete one at the end */
+	size -= size % frame_size;
+
 	while (size > 0)
 	{
 		size_t length = size;
@@ -650,6 +657,11 @@ static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_
 
 		if (pa_stream_begin_write(pulse->stream, &pa_data, &length) < 0)
 			return FALSE;
+
+		/* The returned length is the size of the buffer handed out, which is
+		 * not bound by what was asked for; never copy more than we have. */
+		if (length > size)
+			length = size;
 
 		/* A suspended or migrating stream (e.g. the default device just
 		 * changed) can hand out an empty buffer; treating it as progress
@@ -669,8 +681,14 @@ static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_
 		else
 			memset(pa_data, (pulse->sample_spec.format == PA_SAMPLE_U8) ? 0x80 : 0, length);
 
+		/* A buffer that is neither written nor cancelled stays attached to the
+		 * stream and is handed out again, with its own size, by the next
+		 * pa_stream_begin_write. */
 		if (pa_stream_write(pulse->stream, pa_data, length, nullptr, 0LL, PA_SEEK_RELATIVE) < 0)
+		{
+			pa_stream_cancel_write(pulse->stream);
 			return FALSE;
+		}
 
 		if (data)
 			data += length;
