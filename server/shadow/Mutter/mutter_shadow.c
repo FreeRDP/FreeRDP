@@ -3291,16 +3291,17 @@ static void mutter_virtual_follow_client(mutterShadowSubsystem* mutter, rdpShado
 	          width, height, mutter->width, mutter->height);
 }
 
-/* A second client watches: the desktop stays at the first one's size, as on connect */
+/* The newest connection decides: an older one may be a laptop that was closed, and
+ * nothing tells the server for a while yet */
 WINPR_ATTR_NODISCARD
-static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem,
-                                        WINPR_ATTR_UNUSED rdpShadowClient* client, UINT32 width,
-                                        UINT32 height)
+static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                        UINT32 width, UINT32 height)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
 	WINPR_ASSERT(mutter);
 
-	if (mutter->clients != 1)
+	const void* newest = InterlockedCompareExchangePointer(&mutter->sizeClient, nullptr, nullptr);
+	if (newest && (newest != client))
 		return TRUE;
 
 	WLog_INFO(TAG, "the client asks for %" PRIu32 "x%" PRIu32, width, height);
@@ -3316,19 +3317,24 @@ static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShado
 
 	/* a new client gets the cursor shape with the next one seen */
 	mutter->cursorResend = TRUE;
-	const LONG clients = InterlockedIncrement(&mutter->clients);
+	(void)InterlockedIncrement(&mutter->clients);
 	(void)SetEvent(mutter->clientsEvent);
-	if (mutter->virtualMonitor && (clients == 1))
+	void* older = nullptr;
+	do
+	{
+		older = mutter->sizeClient;
+	} while (InterlockedCompareExchangePointer(&mutter->sizeClient, client, older) != older);
+	if (mutter->virtualMonitor)
 		mutter_virtual_follow_client(mutter, client);
 	return TRUE;
 }
 
-static void mutter_shadow_client_disconnect(rdpShadowSubsystem* subsystem,
-                                            WINPR_ATTR_UNUSED rdpShadowClient* client)
+static void mutter_shadow_client_disconnect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
 	WINPR_ASSERT(mutter);
 
+	(void)InterlockedCompareExchangePointer(&mutter->sizeClient, nullptr, client);
 	(void)InterlockedDecrement(&mutter->clients);
 	(void)SetEvent(mutter->clientsEvent);
 }
