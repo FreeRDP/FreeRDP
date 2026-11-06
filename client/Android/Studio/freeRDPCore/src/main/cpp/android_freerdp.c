@@ -1146,6 +1146,33 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1even
 	return JNI_TRUE;
 }
 
+/* Leaves the choice between the character and the key's scancode to
+ * freerdp_client_send_key_as_unicode, as the X11 and SDL clients do. */
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1as_1unicode_1event(
+    JNIEnv* env, jclass cls, jlong instance, jint keycode, jint unicode, jint modmask,
+    jboolean down)
+{
+	freerdp* inst = (freerdp*)instance;
+	const DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode((DWORD)keycode, 4);
+	const UINT16 flags = (down == JNI_TRUE) ? 0 : KBD_FLAGS_RELEASE;
+	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_key_as_unicode_new(
+	    flags, scancode, (UINT32)unicode, (UINT32)modmask);
+
+	if (!event)
+		return JNI_FALSE;
+
+	if (!android_push_event(inst, event))
+	{
+		android_event_free(event);
+		return JNI_FALSE;
+	}
+
+	WLog_DBG(TAG, "send_key_as_unicode_event: %" PRIu32 ", U+%04" PRIX32 ", %d", scancode,
+	         (UINT32)unicode, flags);
+	return JNI_TRUE;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1is_1unicode_1input_1supported(
     JNIEnv* env, jclass cls, jlong instance)

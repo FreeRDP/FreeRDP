@@ -15,6 +15,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client.h>
 #include <freerdp/input.h>
 #include <freerdp/log.h>
 
@@ -168,6 +169,16 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			}
 			break;
 
+			case EVENT_TYPE_KEY_AS_UNICODE:
+			{
+				ANDROID_EVENT_KEY_AS_UNICODE* key_event = (ANDROID_EVENT_KEY_AS_UNICODE*)event;
+
+				rc = freerdp_client_send_key_as_unicode(&afc->common, key_event->flags,
+				                                        key_event->str, key_event->scancode,
+				                                        (FREERDP_CLIENT_KBD_MOD)key_event->modmask);
+			}
+			break;
+
 			case EVENT_TYPE_CURSOR:
 			{
 				ANDROID_EVENT_CURSOR* cursor_event = (ANDROID_EVENT_CURSOR*)event;
@@ -279,6 +290,56 @@ ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key)
 }
 
 static void android_event_unicodekey_free(ANDROID_EVENT_KEY* event)
+{
+	free(event);
+}
+
+ANDROID_EVENT_KEY_AS_UNICODE* android_event_key_as_unicode_new(UINT16 flags, UINT32 scancode,
+                                                               UINT32 codepoint, UINT32 modmask)
+{
+	ANDROID_EVENT_KEY_AS_UNICODE* event =
+	    (ANDROID_EVENT_KEY_AS_UNICODE*)calloc(1, sizeof(ANDROID_EVENT_KEY_AS_UNICODE));
+
+	if (!event)
+		return nullptr;
+
+	event->type = EVENT_TYPE_KEY_AS_UNICODE;
+	event->flags = flags;
+	event->scancode = scancode;
+	event->modmask = modmask;
+
+	/* UTF-8 by hand: a single code point, and 0 leaves the string empty, which tells
+	 * freerdp_client_send_key_as_unicode to send the scancode. */
+	char* s = event->str;
+	const BOOL valid = (codepoint != 0) && ((codepoint < 0xD800) || (codepoint > 0xDFFF)) &&
+	                   (codepoint <= 0x10FFFF);
+	if (!valid)
+		return event;
+
+	if (codepoint < 0x80)
+		s[0] = (char)codepoint;
+	else if (codepoint < 0x800)
+	{
+		s[0] = (char)(0xC0 | (codepoint >> 6));
+		s[1] = (char)(0x80 | (codepoint & 0x3F));
+	}
+	else if (codepoint < 0x10000)
+	{
+		s[0] = (char)(0xE0 | (codepoint >> 12));
+		s[1] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+		s[2] = (char)(0x80 | (codepoint & 0x3F));
+	}
+	else
+	{
+		s[0] = (char)(0xF0 | (codepoint >> 18));
+		s[1] = (char)(0x80 | ((codepoint >> 12) & 0x3F));
+		s[2] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+		s[3] = (char)(0x80 | (codepoint & 0x3F));
+	}
+	return event;
+}
+
+static void android_event_key_as_unicode_free(ANDROID_EVENT_KEY_AS_UNICODE* event)
 {
 	free(event);
 }
@@ -465,6 +526,10 @@ void android_event_free(ANDROID_EVENT* event)
 
 		case EVENT_TYPE_KEY_UNICODE:
 			android_event_unicodekey_free((ANDROID_EVENT_KEY*)event);
+			break;
+
+		case EVENT_TYPE_KEY_AS_UNICODE:
+			android_event_key_as_unicode_free((ANDROID_EVENT_KEY_AS_UNICODE*)event);
 			break;
 
 		case EVENT_TYPE_CURSOR:

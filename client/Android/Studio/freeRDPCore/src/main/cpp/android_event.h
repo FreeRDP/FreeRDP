@@ -20,6 +20,7 @@
 #define EVENT_TYPE_DISCONNECT 3
 #define EVENT_TYPE_KEY_UNICODE 4
 #define EVENT_TYPE_CLIPBOARD 5
+#define EVENT_TYPE_KEY_AS_UNICODE 6
 
 typedef struct
 {
@@ -32,6 +33,15 @@ typedef struct
 	int flags;
 	UINT16 scancode;
 } ANDROID_EVENT_KEY;
+
+typedef struct
+{
+	int type;
+	UINT16 flags;
+	UINT32 scancode;
+	UINT32 modmask;
+	char str[5];
+} ANDROID_EVENT_KEY_AS_UNICODE;
 
 typedef struct
 {
@@ -65,6 +75,8 @@ FREERDP_LOCAL BOOL android_check_handle(freerdp* inst);
 
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode);
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);
+FREERDP_LOCAL ANDROID_EVENT_KEY_AS_UNICODE*
+android_event_key_as_unicode_new(UINT16 flags, UINT32 scancode, UINT32 codepoint, UINT32 modmask);
 FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_LOCAL ANDROID_EVENT* android_event_disconnect_new(void);
 FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD*

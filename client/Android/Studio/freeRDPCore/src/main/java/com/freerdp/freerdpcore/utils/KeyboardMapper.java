@@ -493,20 +493,30 @@ public class KeyboardMapper
 
 				boolean modifierActive = isModifierPressed();
 
-				// Text from the on-screen keyboard reaches us as key events Android builds from
-				// its virtual key character map, so their key codes encode US key positions, not
-				// what the user typed. Send the character instead, which the server's keyboard
-				// layout cannot change; a modifier still takes the virtual-key path below, so
-				// shortcuts keep working.
-				if (event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD && !modifierActive &&
-				    !isWinKeyDown &&
-				    (event.getMetaState() &
-				     (KeyEvent.META_CTRL_ON | KeyEvent.META_ALT_ON | KeyEvent.META_META_ON)) == 0)
+				// The library chooses between the character and the key's scancode
+				// (freerdp_client_send_key_as_unicode), as it does for the X11 and SDL clients.
+				// Modifiers held on the Android side have not reached the server, so their
+				// combinations take the virtual-key path below, which wraps the key in them;
+				// aFreeRDP's own toggles are already down on the server and go in the mask.
+				if (sendsKeyAsUnicode(event))
 				{
-					int unicode = event.getUnicodeChar();
-					if (unicode != 0 && !Character.isISOControl(unicode))
+					int vk = getVirtualKeyCode(event.getKeyCode());
+					int metaState = event.getMetaState();
+					if (shiftPressed)
+						metaState |= KeyEvent.META_SHIFT_ON;
+					int unicode = event.getUnicodeChar(metaState);
+					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
+						unicode = 0;
+					boolean androidModifier =
+					    isWinKeyDown ||
+					    (event.getMetaState() & (KeyEvent.META_CTRL_ON | KeyEvent.META_ALT_ON |
+					                             KeyEvent.META_META_ON)) != 0 ||
+					    (unicode == 0 && event.isShiftPressed());
+					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !androidModifier)
 					{
-						listener.processUnicodeKey(unicode);
+						listener.processKeyAsUnicode(vk, unicode, getModifierMask());
+						if (modifierActive)
+							resetModifierKeysAfterInput(false);
 						return true;
 					}
 				}
@@ -656,6 +666,30 @@ public class KeyboardMapper
 		listener.processVirtualKey(VK_F4, true);
 		listener.processVirtualKey(VK_F4, false);
 		listener.processVirtualKey(VK_LMENU, false);
+	}
+
+	// Text from the on-screen keyboard reaches us as key events Android builds from its virtual
+	// key character map, so their key codes encode US key positions, not what the user typed.
+	// A physical keyboard's positions are what the server's layout is meant to read.
+	private static boolean sendsKeyAsUnicode(KeyEvent event)
+	{
+		return event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
+	}
+
+	// FREERDP_CLIENT_KBD_MOD in include/freerdp/client.h, for the modifiers the toggles hold
+	// down on the server.
+	private int getModifierMask()
+	{
+		int mask = 0;
+		if (shiftPressed)
+			mask |= 0x01; // FREERDP_CLIENT_KBD_MOD_LSHIFT
+		if (altPressed)
+			mask |= 0x04; // FREERDP_CLIENT_KBD_MOD_LMENU
+		if (ctrlPressed)
+			mask |= 0x10; // FREERDP_CLIENT_KBD_MOD_LCONTROL
+		if (winPressed)
+			mask |= 0x40; // FREERDP_CLIENT_KBD_MOD_LWIN
+		return mask;
 	}
 
 	private boolean isModifierPressed()
@@ -816,6 +850,8 @@ public class KeyboardMapper
 		void processVirtualKey(int virtualKeyCode, boolean down);
 
 		void processUnicodeKey(int unicodeKey);
+
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modifiers);
 
 		void switchKeyboard(int keyboardType);
 
