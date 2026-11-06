@@ -6611,6 +6611,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		                                              settings))
 			return FALSE;
 
+#if defined(CHANNEL_RDPSND_CLIENT)
 		if (!freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME) &&
 		    !freerdp_dynamic_channel_collection_find(settings, RDPSND_CHANNEL_NAME))
 		{
@@ -6622,6 +6623,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(params), params))
 				return FALSE;
 		}
+#endif
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards))
