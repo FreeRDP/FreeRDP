@@ -2261,9 +2261,15 @@ static BOOL test_all(void)
 	if (!test_string_len(settings))
 		goto fail;
 
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMultiExec) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMultiExec, TRUE))
+		goto fail;
+
 	cloned = freerdp_settings_clone(settings);
 
 	if (!cloned)
+		goto fail;
+	if (!freerdp_settings_get_bool(cloned, FreeRDP_RemoteApplicationMultiExec))
 		goto fail;
 
 	if (!test_bool_list(settings, cloned))

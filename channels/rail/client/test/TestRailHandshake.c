@@ -33,6 +33,7 @@ static UINT32 g_build = 0;
 static BOOL g_failHandshake = FALSE;
 static BOOL g_failStatus = FALSE;
 static size_t g_execCount = 0;
+static size_t g_sysparamCount = 0;
 
 static UINT VCAPITYPE test_init_ex(LPVOID userParam, LPVOID clientContext,
                                    WINPR_ATTR_UNUSED LPVOID initHandle,
@@ -70,6 +71,7 @@ static UINT test_status(WINPR_ATTR_UNUSED RailClientContext* context,
 static UINT test_sysparam(WINPR_ATTR_UNUSED RailClientContext* context,
                           WINPR_ATTR_UNUSED const RAIL_SYSPARAM_ORDER* sysparam)
 {
+	g_sysparamCount++;
 	return CHANNEL_RC_OK;
 }
 
@@ -162,21 +164,28 @@ int TestRailHandshake(int argc, char* argv[])
 			}
 		}
 	}
-	if (!freerdp_settings_set_bool(context->settings, FreeRDP_RemoteAppLanguageBarSupported,
-	                               FALSE) ||
-	    !freerdp_settings_set_string(context->settings, FreeRDP_RemoteApplicationProgram, "||test"))
+	if (!freerdp_settings_set_bool(context->settings, FreeRDP_RemoteAppLanguageBarSupported, FALSE))
 		goto terminate;
 	/* Callback-override clients still initialize status through the launch helper. */
-	for (size_t failure = 0; failure < 2; failure++)
+	const char* programs[] = { "||test", "", nullptr };
+	for (size_t i = 0; i < ARRAYSIZE(programs); i++)
 	{
-		g_eventCount = 0;
-		g_execCount = 0;
-		g_failStatus = failure != 0;
-		const UINT result = client_rail_server_start_cmd(g_rail);
-		if ((result != (g_failStatus ? ERROR_INTERNAL_ERROR : CHANNEL_RC_OK)) ||
-		    (g_eventCount != 1) || (g_events[0] != TS_RAIL_ORDER_CLIENTSTATUS) ||
-		    (g_execCount != (g_failStatus ? 0 : 1)))
+		if (!freerdp_settings_set_string(context->settings, FreeRDP_RemoteApplicationProgram,
+		                                 programs[i]))
 			goto terminate;
+		for (size_t failure = 0; failure < 2; failure++)
+		{
+			g_eventCount = 0;
+			g_execCount = 0;
+			g_sysparamCount = 0;
+			g_failStatus = failure != 0;
+			const UINT result = client_rail_server_start_cmd(g_rail);
+			if ((result != (g_failStatus ? ERROR_INTERNAL_ERROR : CHANNEL_RC_OK)) ||
+			    (g_eventCount != 1) || (g_events[0] != TS_RAIL_ORDER_CLIENTSTATUS) ||
+			    (g_sysparamCount != (g_failStatus ? 0 : 1)) ||
+			    (g_execCount != ((!g_failStatus && (i == 0)) ? 1 : 0)))
+				goto terminate;
+		}
 	}
 	rc = 0;
 terminate:

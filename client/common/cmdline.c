@@ -4039,15 +4039,12 @@ static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 }
 
 WINPR_ATTR_NODISCARD
-static int parse_app_option_program(rdpSettings* settings, const char* cmd)
+static int enable_remote_app(rdpSettings* settings)
 {
 	const FreeRDP_Settings_Keys_Bool ids[] = { FreeRDP_RemoteApplicationMode,
 		                                       FreeRDP_RemoteAppLanguageBarSupported,
 		                                       FreeRDP_Workarea, FreeRDP_DisableWallpaper,
 		                                       FreeRDP_DisableFullWindowDrag };
-
-	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram, cmd))
-		return COMMAND_LINE_ERROR_MEMORY;
 
 	for (size_t y = 0; y < ARRAYSIZE(ids); y++)
 	{
@@ -4055,6 +4052,14 @@ static int parse_app_option_program(rdpSettings* settings, const char* cmd)
 			return COMMAND_LINE_ERROR;
 	}
 	return CHANNEL_RC_OK;
+}
+
+WINPR_ATTR_NODISCARD
+static int parse_app_option_program(rdpSettings* settings, const char* cmd)
+{
+	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram, cmd))
+		return COMMAND_LINE_ERROR_MEMORY;
+	return enable_remote_app(settings);
 }
 
 WINPR_ATTR_NODISCARD
@@ -4174,6 +4179,23 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		{
 			BOOL handled = FALSE;
 			const char* val = ptr[x];
+
+			if (option_equals("multi-exec", val) || option_starts_with("multi-exec:", val))
+			{
+				const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+				if ((bval == PARSE_FAIL) ||
+				    !freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMultiExec,
+				                               bval != PARSE_OFF))
+				{
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					break;
+				}
+				if (bval != PARSE_OFF)
+					rc = enable_remote_app(settings);
+				if (rc != CHANNEL_RC_OK)
+					break;
+				continue;
+			}
 
 			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
 			{

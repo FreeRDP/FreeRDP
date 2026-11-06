@@ -126,6 +126,7 @@
 		"FreeRDP_GatewayIgnoreRedirectionPolicy": false,
 		"FreeRDP_GatewayAvdUseTenantid": false,
 		"FreeRDP_RemoteApplicationMode": false,
+		"FreeRDP_RemoteApplicationMultiExec": false,
 		"FreeRDP_DisableRemoteAppCapsCheck": false,
 		"FreeRDP_RemoteAppLanguageBarSupported": false,
 		"FreeRDP_RefreshRect": true,
