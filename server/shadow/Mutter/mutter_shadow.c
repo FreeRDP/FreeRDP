@@ -872,6 +872,8 @@ static void mutter_cursor_send_shape(mutterShadowSubsystem* mutter, const BYTE* 
 	WINPR_ASSERT(pixels);
 
 	const UINT32 hash = mutter_cursor_hash(pixels, width, height, xHot, yHot);
+	WLog_DBG(TAG, "pointer shape %" PRIu32 "x%" PRIu32 ", resend %d", width, height,
+	         mutter->cursorResend);
 	if (mutter->cursorKnown && !mutter->cursorResend && (hash == mutter->cursorHash))
 		return;
 
@@ -939,6 +941,58 @@ static void mutter_cursor_send_position(mutterShadowSubsystem* mutter, INT32 x, 
 		WLog_DBG(TAG, "the pointer position was not sent");
 }
 
+/* Mutter sends a shape only when it changes, so a client that connects later would
+ * have no pointer until something else changed it */
+static void mutter_cursor_remember(mutterShadowSubsystem* mutter, const BYTE* pixels, UINT32 width,
+                                   UINT32 height, UINT32 xHot, UINT32 yHot)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(pixels);
+
+	const size_t size = 4ull * width * height;
+	BYTE* copy = malloc(size);
+	if (!copy)
+		return;
+	memcpy(copy, pixels, size);
+
+	free(mutter->cursorPixels);
+	mutter->cursorPixels = copy;
+	mutter->cursorWidth = width;
+	mutter->cursorHeight = height;
+	mutter->cursorXHot = xHot;
+	mutter->cursorYHot = yHot;
+}
+
+/* Until Mutter has sent a shape, which it may not do for long: an arrow, so a client is
+ * never left with no pointer */
+static void mutter_cursor_send_default(mutterShadowSubsystem* mutter)
+{
+	static const char* const arrow[] = { "X          ", "XX         ", "X.X        ", "X..X       ",
+		                                 "X...X      ", "X....X     ", "X.....X    ", "X......X   ",
+		                                 "X.......X  ", "X........X ", "X.....XXXXX", "X..X..X    ",
+		                                 "X.X X..X   ", "XX  X..X   ", "X    X..X  ", "     X..X  ",
+		                                 "      XX   " };
+	enum
+	{
+		ARROW_WIDTH = 11,
+		ARROW_HEIGHT = ARRAYSIZE(arrow)
+	};
+	BYTE pixels[4ull * ARROW_WIDTH * ARROW_HEIGHT] = WINPR_C_ARRAY_INIT;
+	for (size_t y = 0; y < ARROW_HEIGHT; y++)
+	{
+		for (size_t x = 0; x < ARROW_WIDTH; x++)
+		{
+			BYTE* pixel = &pixels[4ull * (y * ARROW_WIDTH + x)];
+			if (arrow[y][x] == ' ')
+				continue;
+			const BYTE value = (arrow[y][x] == '.') ? 0xff : 0x00;
+			pixel[0] = pixel[1] = pixel[2] = value;
+			pixel[3] = 0xff;
+		}
+	}
+	mutter_cursor_send_shape(mutter, pixels, ARROW_WIDTH, ARROW_HEIGHT, 0, 0);
+}
+
 /* The cursor in a buffer's metadata: its position, and its shape when it changed */
 static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffer* buf)
 {
@@ -965,6 +1019,7 @@ static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffe
 		{
 			/* Mutter sends an empty bitmap for a hidden pointer */
 			const BYTE transparent[4] = WINPR_C_ARRAY_INIT;
+			mutter_cursor_remember(mutter, transparent, 1, 1, 0, 0);
 			mutter_cursor_send_shape(mutter, transparent, 1, 1, 0, 0);
 		}
 		else
@@ -1003,6 +1058,7 @@ static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffe
 					    MIN((UINT32)MAX(mc->hotspot.x, 0) * scaled / side, outW - 1);
 					const UINT32 yHot =
 					    MIN((UINT32)MAX(mc->hotspot.y, 0) * scaled / side, outH - 1);
+					mutter_cursor_remember(mutter, pixels, outW, outH, xHot, yHot);
 					mutter_cursor_send_shape(mutter, pixels, outW, outH, xHot, yHot);
 					free(pixels);
 				}
@@ -2029,6 +2085,11 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 		static const BYTE clear[4] = { 0 };
 		mutter_cursor_send_shape(mutter, clear, 1, 1, 0, 0);
 	}
+	else if (mutter->cursorPixels)
+		mutter_cursor_send_shape(mutter, mutter->cursorPixels, mutter->cursorWidth,
+		                         mutter->cursorHeight, mutter->cursorXHot, mutter->cursorYHot);
+	else
+		mutter_cursor_send_default(mutter);
 
 	rdpShadowServer* server = mutter->common.server;
 	rdpShadowSurface* surface = server ? server->surface : nullptr;
@@ -2461,6 +2522,7 @@ static void mutter_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 		(void)CloseHandle(mutter->stopEvent);
 	if (mutter->clientsEvent)
 		(void)CloseHandle(mutter->clientsEvent);
+	free(mutter->cursorPixels);
 	free(mutter);
 }
 

@@ -105,6 +105,11 @@ struct mutter_shadow_subsystem
 	UINT32 cursorHash;
 	BOOL cursorKnown;
 	BOOL cursorResend;
+	BYTE* cursorPixels; /* the last shape, RGBA: Mutter only sends a shape when it changes */
+	UINT32 cursorWidth;
+	UINT32 cursorHeight;
+	UINT32 cursorXHot;
+	UINT32 cursorYHot;
 	INT32 cursorX;
 	INT32 cursorY;
 
