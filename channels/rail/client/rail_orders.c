@@ -512,6 +512,14 @@ static UINT rail_recv_exec_result_order(railPlugin* rail, wStream* s)
 		goto fail;
 	}
 
+	if ((execResult.execResult != RAIL_EXEC_S_OK) &&
+	    freerdp_settings_get_bool(rail->rdpcontext->settings, FreeRDP_RemoteApplicationMultiExec))
+	{
+		WLog_Print(rail->log, WLOG_ERROR,
+		           "RAIL exec error: execResult=0x%04" PRIx16 " NtError=0x%08" PRIx32,
+		           execResult.execResult, execResult.rawResult);
+		goto fail;
+	}
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerExecuteResult, error, context, &execResult);

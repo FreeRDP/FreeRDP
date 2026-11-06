@@ -119,6 +119,56 @@ static BOOL check_settings_gateway_response_timeout_custom(rdpSettings* settings
 	return check_settings_gateway_response_timeout(settings, 120000);
 }
 
+static BOOL check_settings_multi_exec_enabled(rdpSettings* settings)
+{
+	return freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMultiExec) &&
+	       freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
+	       freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLanguageBarSupported) &&
+	       freerdp_settings_get_bool(settings, FreeRDP_Workarea) &&
+	       freerdp_settings_get_bool(settings, FreeRDP_DisableWallpaper) &&
+	       freerdp_settings_get_bool(settings, FreeRDP_DisableFullWindowDrag);
+}
+
+static BOOL check_settings_multi_exec_no_program(rdpSettings* settings)
+{
+	return check_settings_multi_exec_enabled(settings) &&
+	       !freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+}
+
+static BOOL check_settings_multi_exec_program(rdpSettings* settings)
+{
+	const char* program = freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	return check_settings_multi_exec_enabled(settings) && program &&
+	       (strcmp(program, "||test") == 0);
+}
+
+static BOOL check_settings_multi_exec_empty_program(rdpSettings* settings)
+{
+	const char* program = freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	return check_settings_multi_exec_enabled(settings) && program && (program[0] == '\0');
+}
+
+static BOOL check_settings_multi_exec_disabled(rdpSettings* settings)
+{
+	return !freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMultiExec) &&
+	       !freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode);
+}
+
+static BOOL check_settings_multi_exec_disabled_remoteapp(rdpSettings* settings)
+{
+	return !freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMultiExec) &&
+	       freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode);
+}
+
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+static BOOL check_settings_multi_exec_legacy_program(rdpSettings* settings)
+{
+	const char* program = freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	return check_settings_multi_exec_disabled_remoteapp(settings) && program &&
+	       (strcmp(program, "multi-exec.exe") == 0);
+}
+#endif
+
 static const char test_aad_user_agent[] = "TestAgent/1.0 (KHTML, like Gecko)";
 
 static BOOL check_settings_aad_user_agent(rdpSettings* settings)
@@ -372,6 +422,52 @@ typedef struct
 
 // NOLINTBEGIN(bugprone-suspicious-missing-comma)
 static const test tests[] = {
+	{ 0,
+	  check_settings_multi_exec_disabled,
+	  { "testfreerdp", "/v:localhost", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_no_program,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_no_program,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec:on", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_disabled,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec:off", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_program,
+	  { "testfreerdp", "/v:localhost", "/app:program:||test,multi-exec", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_program,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec,program:||test", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_empty_program,
+	  { "testfreerdp", "/v:localhost", "/app:program:,multi-exec", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multi_exec_disabled_remoteapp,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec:on,multi-exec:off", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec:", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec:invalid", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ 0,
+	  check_settings_multi_exec_legacy_program,
+	  { "testfreerdp", "/v:localhost", "/app:multi-exec.exe", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
 	{ COMMAND_LINE_STATUS_PRINT_HELP,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "--help", nullptr },

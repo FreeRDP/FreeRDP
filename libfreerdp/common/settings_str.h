@@ -198,6 +198,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RemoteAppLanguageBarSupported, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_RemoteAppLanguageBarSupported" },
 	{ FreeRDP_RemoteApplicationMode, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteApplicationMode" },
+	{ FreeRDP_RemoteApplicationMultiExec, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_RemoteApplicationMultiExec" },
 	{ FreeRDP_RemoteAssistanceMode, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteAssistanceMode" },
 	{ FreeRDP_RemoteAssistanceRequestControl, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_RemoteAssistanceRequestControl" },

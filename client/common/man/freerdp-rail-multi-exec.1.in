@@ -1,0 +1,34 @@
+.SH "REMOTEAPP LAUNCH FIFO"
+.PP
+\fB/app:multi\-exec[:on|off]\fR
+.RS 4
+Enable or disable a primary-side FIFO for launching additional RemoteApps on this connection. Disabled by default; the bare option enables it and selects RemoteApp mode. The FIFO is active only in RemoteApp mode, excluding authentication-only connections.
+.PP
+The initial command-line application is optional. Start without one, then submit the first application through the FIFO:
+.nf
+@MANPAGE_NAME@ /v:server /app:multi\-exec
+.fi
+.PP
+Supported clients are X11 and SDL3 on Unix. Enabling the option on Windows, browser (Emscripten), or no-RAIL builds fails during connection setup. The Azure ARM gateway requires a program, so \fB/app:multi\-exec\fR alone fails there with an error. Other clients using the common code may expose the option and open a FIFO, but launches require client readiness integration.
+.PP
+The FIFO is created with mode 0600 below \fBXDG_RUNTIME_DIR\fR. Its exact path is written to the client log. If another opted-in primary already owns the same session key, this client exits before opening a competing RDP connection.
+.PP
+Writers must supply valid UTF-8. Malformed input may be replaced or rejected depending on the conversion backend; a program may run with altered arguments.
+.PP
+Session identifiers use the exact hashed connection settings, without normalizing spellings. Different values may open another connection. Per-launch arguments are excluded from the session identifier.
+.PP
+Write a labelled UTF-8 record terminated by an empty line. Lines must end with LF; CRLF is not accepted. Only \fBprogram\fR is required; \fBworking-directory\fR and \fBarguments\fR default to empty, and \fBflags\fR defaults to zero. Flags are an integer in decimal, 0x hexadecimal, or leading-zero octal form.
+.nf
+program=||notepad
+working-directory=
+arguments=
+flags=0
+
+.fi
+.PP
+Submit each complete record, including its empty-line terminator, in one write of at most 4096 bytes and no more than the FIFO's \fBPIPE_BUF\fR limit. The writer is responsible for atomic writes, so concurrent writers do not interleave records.
+.PP
+This interface is primary-only and fire-and-forget. A successful write does not report whether the server launched the application.
+.PP
+If the server rejects a launch, including the initial application, the failure is logged and the multi-exec connection remains open for later records. With the option off, a rejected launch remains fatal.
+.RE

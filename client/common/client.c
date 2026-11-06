@@ -89,6 +89,8 @@
 
 #include "oauth2.h"
 
+#include "rail_ipc.h"
+
 #include <freerdp/log.h>
 
 WINPR_ATTR_NODISCARD
@@ -218,12 +220,21 @@ static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 	if (requireRdpClientContext(context))
 	{
 		rdpClientContext* cctx = (rdpClientContext*)context;
+
+		rail_ipc_free(cctx);
 		freerdp_oauth2_free(cctx->oauth2);
 		cctx->oauth2 = nullptr;
 	}
 }
 
 /* Common API */
+
+BOOL freerdp_client_rail_multi_exec_set_ready(rdpClientContext* cctx, BOOL ready)
+{
+	if (!cctx || !requireRdpClientContext(&cctx->context))
+		return FALSE;
+	return rail_ipc_set_ready(cctx, ready);
+}
 
 rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
@@ -1750,6 +1761,8 @@ static BOOL commonPreConnect(freerdp* instance)
 
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 
+	if (!rail_ipc_start(cctx))
+		return FALSE;
 	return IFCALLRESULT(TRUE, cctx->PreConnect, instance);
 }
 
@@ -1795,6 +1808,7 @@ static void commonPostDisconnect(freerdp* instance)
 	}
 #endif
 
+	rail_ipc_detach(cctx);
 	IFCALL(cctx->PostDisconnect, instance);
 
 	// TODO
@@ -1809,7 +1823,7 @@ static void commonPostFinalDisconnect(freerdp* instance)
 
 	IFCALL(cctx->PostFinalDisconnect, instance);
 
-	// TODO
+	rail_ipc_stop(cctx);
 }
 
 BOOL freerdp_client_common_pre_connect(rdpContext* context)

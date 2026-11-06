@@ -40,8 +40,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "desktop composition" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED,
 	  "program:[<path>|<||alias>],cmd:<command>,file:<filename>,guid:<guid>,icon:<filename>,name:<"
-	  "name>,workdir:<directory>,hidef:[on|off]",
-	  nullptr, nullptr, -1, nullptr, "Remote application program" },
+	  "name>,workdir:<directory>,hidef:[on|off],multi-exec[:on|off]",
+	  nullptr, nullptr, -1, nullptr,
+	  "Remote application program. multi-exec enables a launch FIFO (default: off; X11 and SDL3 "
+	  "on supported Unix builds). The initial program is optional with multi-exec." },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", nullptr, nullptr, -1, nullptr,
 	  "[DEPRECATED, use /app:cmd:<command>] Remote application command-line parameters" },
