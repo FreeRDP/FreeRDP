@@ -837,6 +837,9 @@ typedef struct
 	UINT16 ack;
 	BOOL hasVector;
 	UINT16 vectorBase;
+	UINT16 lastChannel;
+	UINT16 watchedChannel;
+	UINT32 watchedSends;
 } ServerSent;
 
 static BOOL server_on_receive(WINPR_ATTR_UNUSED void* custom, WINPR_ATTR_UNUSED const BYTE* data,
@@ -860,6 +863,12 @@ static BOOL server_on_send(void* custom, const BYTE* data, size_t length)
 	{
 		sent->hasVector = TRUE;
 		sent->vectorBase = packet.vecBase;
+	}
+	if (packet.hasData)
+	{
+		sent->lastChannel = packet.channelSeq;
+		if (packet.channelSeq == sent->watchedChannel)
+			sent->watchedSends++;
 	}
 	return TRUE;
 }
@@ -934,6 +943,50 @@ static BOOL server_does_not_report_a_packet_behind_its_window(void)
 		goto out;
 
 	rc = TRUE;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A burst of timeouts doubled the timeout one time per datagram, up to 64 times its length. After
+ * that, the tunnel stayed silent for seconds. */
+static BOOL server_backs_off_once_for_many_timeouts(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, nullptr);
+	if (!udp)
+		return FALSE;
+
+	BYTE syn[1232] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, syn, sizeof(syn));
+	Stream_Write_UINT32_BE(s, 0xFFFFFFFF);      /* snSourceAck */
+	Stream_Write_UINT16_BE(s, 64);              /* uReceiveWindowSize */
+	Stream_Write_UINT16_BE(s, 0x0001 | 0x1000); /* RDPUDP_FLAG_SYN | RDPUDP_FLAG_SYNEX */
+	Stream_Write_UINT32_BE(s, 1000);            /* snInitialSequenceNumber */
+	Stream_Write_UINT16_BE(s, sizeof(syn));     /* uUpStreamMtu */
+	Stream_Write_UINT16_BE(s, sizeof(syn));     /* uDownStreamMtu */
+	Stream_Write_UINT16_BE(s, 0x0001);          /* RDPUDP_VERSION_INFO_VALID */
+	Stream_Write_UINT16_BE(s, RDPUDP_PROTOCOL_VERSION_3);
+	if (!rdpudp_accept(udp, server_on_send, &sent, syn, sizeof(syn)))
+		goto out;
+
+	/* eight datagrams that nobody acknowledges time out together */
+	for (size_t x = 0; x < 8; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 250))
+		goto out;
+
+	/* one doubling: the next datagram is sent again after a few hundred milliseconds */
+	sent.watchedChannel = (UINT16)(sent.lastChannel + 1);
+	sent.watchedSends = 0;
+	if (!rdpudp_send(udp, (const BYTE*)"efgh", 4) || !server_run_timers(udp, 700))
+		goto out;
+	rc = sent.watchedSends >= 2;
 out:
 	rdpudp_free(udp);
 	return rc;
@@ -1376,6 +1429,7 @@ static const TestCase cases[] = {
 	  ack_of_acks_past_its_own_packet_gets_no_ack_vector },
 	{ "ack_of_acks_far_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_far_past_its_own_packet_keeps_the_chunk },
+	{ "server_backs_off_once_for_many_timeouts", server_backs_off_once_for_many_timeouts },
 	{ "server_does_not_report_a_packet_behind_its_window",
 	  server_does_not_report_a_packet_behind_its_window },
 	{ "late_packet_behind_the_window_fills_the_hole",

@@ -2358,6 +2358,10 @@ static BOOL run_timers(rdpUdp* udp)
 		return FALSE;
 	}
 
+	/* [RFC6298] 5.5 doubles the timeout one time when the timer runs out. Many datagrams can time
+	 * out together. If each one counted, one burst of loss would set the maximum, and the sender
+	 * would then wait seconds for the next timeout. */
+	BOOL backedOff = FALSE;
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
 	{
 		rdpudp_pending* p = &udp->pending[x];
@@ -2384,8 +2388,9 @@ static BOOL run_timers(rdpUdp* udp)
 			p->rto = (p->rto * 2 > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : p->rto * 2;
 			if (udp->server)
 			{
-				if (udp->rtoBackoff < RDPUDP2_MAX_RTO_BACKOFF)
+				if (!backedOff && (udp->rtoBackoff < RDPUDP2_MAX_RTO_BACKOFF))
 					udp->rtoBackoff++;
+				backedOff = TRUE;
 				cc_on_loss(udp);
 			}
 		}
