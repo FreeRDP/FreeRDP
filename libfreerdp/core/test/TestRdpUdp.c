@@ -831,6 +831,137 @@ fail:
 	return rc;
 }
 
+typedef struct
+{
+	SOCKET sink; /* the server sends to this socket */
+	BOOL hasAck;
+	UINT16 ack;
+	BOOL hasVector;
+	UINT16 vectorBase;
+} ServerSent;
+
+static BOOL server_on_receive(WINPR_ATTR_UNUSED void* custom, WINPR_ATTR_UNUSED const BYTE* data,
+                              WINPR_ATTR_UNUSED size_t length)
+{
+	return TRUE;
+}
+
+static void server_read_sent(ServerSent* sent)
+{
+	BYTE wire[1500] = WINPR_C_ARRAY_INIT;
+	for (;;)
+	{
+		const int length = _recv(sent->sink, (char*)wire, sizeof(wire), 0);
+		if (length <= 0)
+			return;
+		V3Packet packet = WINPR_C_ARRAY_INIT;
+		if (!parse_v3(wire, (size_t)length, &packet))
+			continue;
+		if (packet.flags & V3_ACK)
+		{
+			sent->hasAck = TRUE;
+			sent->ack = packet.ack;
+		}
+		if (packet.flags & V3_ACKVEC)
+		{
+			sent->hasVector = TRUE;
+			sent->vectorBase = packet.vecBase;
+		}
+	}
+}
+
+static BOOL server_input_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
+{
+	BYTE wire[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* the prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_DATA | (15u << 12)));
+	Stream_Write_UINT16(s, dataSeq);
+	Stream_Write_UINT16(s, channelSeq);
+	Stream_Write(s, "abcd", 4);
+	const size_t length = Stream_GetPosition(s);
+	wire[0] = (BYTE)((7 << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	return rdpudp_input(udp, wire, length);
+}
+
+static BOOL server_run_timers(rdpUdp* udp, ServerSent* sent, UINT32 waitMs)
+{
+	for (UINT32 x = 0; x < waitMs; x += 5)
+	{
+		Sleep(5);
+		if (!rdpudp_check(udp))
+			return FALSE;
+		server_read_sent(sent);
+	}
+	return TRUE;
+}
+
+/* mstsc ended the tunnel on an ACK vector for a repeated old packet. */
+static BOOL server_does_not_report_a_packet_behind_its_window(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	struct sockaddr_in addr = WINPR_C_ARRAY_INIT;
+	socklen_t addrLength = sizeof(addr);
+	u_long nonBlocking = 1;
+
+	sent.sink = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sent.sink == INVALID_SOCKET)
+		return FALSE;
+	rdpUdp* udp = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, nullptr);
+	if (!udp)
+		goto out;
+
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	if ((_bind(sent.sink, (const struct sockaddr*)&addr, sizeof(addr)) != 0) ||
+	    (_getsockname(sent.sink, (struct sockaddr*)&addr, &addrLength) != 0) ||
+	    (_ioctlsocket(sent.sink, FIONBIO, &nonBlocking) != 0))
+		goto out;
+
+	BYTE syn[1232] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, syn, sizeof(syn));
+	Stream_Write_UINT32_BE(s, 0xFFFFFFFF);      /* snSourceAck */
+	Stream_Write_UINT16_BE(s, 64);              /* uReceiveWindowSize */
+	Stream_Write_UINT16_BE(s, 0x0001 | 0x1000); /* RDPUDP_FLAG_SYN | RDPUDP_FLAG_SYNEX */
+	Stream_Write_UINT32_BE(s, 1000);            /* snInitialSequenceNumber */
+	Stream_Write_UINT16_BE(s, sizeof(syn));     /* uUpStreamMtu */
+	Stream_Write_UINT16_BE(s, sizeof(syn));     /* uDownStreamMtu */
+	Stream_Write_UINT16_BE(s, 0x0001);          /* RDPUDP_VERSION_INFO_VALID */
+	Stream_Write_UINT16_BE(s, RDPUDP_PROTOCOL_VERSION_3);
+	if (!rdpudp_accept(udp, sent.sink, (const struct sockaddr*)&addr, sizeof(addr), syn,
+	                   sizeof(syn)))
+		goto out;
+
+	for (UINT16 x = 0; x < 3; x++)
+	{
+		if (!server_input_data(udp, (UINT16)(100 + x), (UINT16)(1 + x)))
+			goto out;
+	}
+	if (!server_run_timers(udp, &sent, 100) || !sent.hasAck || (sent.ack != 102) || sent.hasVector)
+		goto out;
+
+	/* the same packet again, the cumulative ACK already covers it */
+	if (!server_input_data(udp, 100, 1) || !server_run_timers(udp, &sent, 100) || sent.hasVector)
+		goto out;
+
+	/* a real hole still gets a report */
+	if (!server_input_data(udp, 104, 5) || !server_run_timers(udp, &sent, 100) || !sent.hasVector ||
+	    (sent.vectorBase != 103))
+		goto out;
+
+	rc = TRUE;
+out:
+	rdpudp_free(udp);
+	closesocket(sent.sink);
+	return rc;
+}
+
 /* A data packet of ours carries a cumulative ACK when one is pending. While a packet behind the
  * window waits for its ACK vector, that ACK would take the vector's place, and nothing would send
  * the vector until the next standalone ACK. */
@@ -1268,6 +1399,8 @@ static const TestCase cases[] = {
 	  ack_of_acks_past_its_own_packet_gets_no_ack_vector },
 	{ "ack_of_acks_far_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_far_past_its_own_packet_keeps_the_chunk },
+	{ "server_does_not_report_a_packet_behind_its_window",
+	  server_does_not_report_a_packet_behind_its_window },
 	{ "late_packet_behind_the_window_fills_the_hole",
 	  late_packet_behind_the_window_fills_the_hole },
 	{ "retransmitted_packets_are_acknowledged_again",

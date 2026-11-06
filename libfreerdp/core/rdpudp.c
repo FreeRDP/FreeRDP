@@ -2057,7 +2057,21 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	 * packet itself. The peer has the acknowledgments for everything below its AckOfAcks, the
 	 * receiver does not report those again (2.2.1.2.4), and Windows ends the connection on an ACK
 	 * vector for such a packet. Only its chunk counts. */
-	const BOOL acknowledged = haveAoA && seq16_after(aoa, dataSeq);
+	BOOL acknowledged = haveAoA && seq16_after(aoa, dataSeq);
+
+	/* mstsc at times repeats an old data packet, and it ends the tunnel on an ACK vector for a
+	 * packet that has a cumulative ACK. A server does not report a packet behind its window: the
+	 * cumulative ACK covers it. After a silence the position of the server can be incorrect, so
+	 * this does not apply until the next AckOfAcks. */
+	if (udp->server && behind && !udp->v3Resync)
+	{
+		WLog_Print(udp->log, WLOG_DEBUG,
+		           "data packet 0x%04" PRIx16 " is behind the window at 0x%04" PRIx16
+		           ", no ACK vector",
+		           dataSeq, udp->v3Expected);
+		acknowledged = TRUE;
+	}
+
 	if (behind && !acknowledged)
 	{
 		/* a run of consecutive ones goes in one ACK vector, see v3_send_ack */
