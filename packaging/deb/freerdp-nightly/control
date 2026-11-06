@@ -53,6 +53,7 @@ Build-Depends:
  libsdl3-image-dev | libsdl2-image-dev,
  libsystemd-dev,
  libpipewire-0.3-dev,
+ libei-dev | libevdev-dev,
  libwebkitgtk-6.0-dev | libwebkit2gtk-4.1-dev | libwebkit2gtk-4.0-dev,
  liburiparser-dev,
  libopus-dev,
