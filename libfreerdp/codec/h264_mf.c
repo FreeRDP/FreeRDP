@@ -1649,6 +1649,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 		}
 	}
 
+	/* the decoder writes and the encoder reads I420, not the NV12 YUV buffers of HW_ACCEL */
+	h264->hwAccel = FALSE; /* not supported */
 	return TRUE;
 error:
 	WLog_Print(h264->log, WLOG_ERROR, "mf_init failure");
