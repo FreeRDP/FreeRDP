@@ -593,6 +593,12 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 		if (authStatus < 0)
 		{
 			WLog_ERR(TAG, "client authentication failure: %d", authStatus);
+			/* Say why before the connection goes, or the client takes it for a network
+			 * failure and keeps reconnecting with the same wrong password. */
+			freerdp_set_error_info(peer->context->rdp, ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES);
+			WINPR_ASSERT(peer->Close);
+			if (!peer->Close(peer))
+				WLog_WARN(TAG, "failed to send the disconnect sequence to the client");
 			return FALSE;
 		}
 	}
