@@ -32,9 +32,6 @@ void xf_event_action_script_free(xfContext* xfc);
 
 BOOL xf_event_process(freerdp* instance, const XEvent* event);
 
-WINPR_ATTR_NODISCARD
-BOOL xf_event_check_local_move(xfContext* xfc);
-
 /* Also exercised by the headless RAIL lifecycle regression tests. */
 BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEvent* event);
 

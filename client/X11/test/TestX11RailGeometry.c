@@ -1,6 +1,9 @@
 /* FreeRDP: Licensed under the Apache License, Version 2.0. */
 #include <freerdp/config.h>
 #include <stdio.h>
+#if defined(__linux__)
+#include <sys/resource.h>
+#endif
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
 #ifdef WITH_XEXT
@@ -1114,7 +1117,7 @@ static BOOL test_pointer_activation(xfContext* xfc)
 	                                                           &desktop));
 	CHECK(xf_generic_ButtonEvent(xfc, 10, 10, Button1, appWindow.handle, TRUE, TRUE));
 	CHECK(activations == 2);
-	xfc->railActiveWindowId = 0;
+	xfc->xfRail->activeWindowId = 0;
 	appWindow.is_transient = TRUE;
 	CHECK(xf_generic_ButtonEvent(xfc, 10, 10, Button1, appWindow.handle, TRUE, TRUE));
 	CHECK(activations == 2);
@@ -1146,7 +1149,7 @@ static void* inspect_repaint_lock(RdpgfxClientContext* gfx, UINT16 surfaceId)
 	WINPR_UNUSED(surfaceId);
 	repaintRequests++;
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
-	repaintWhileLocked |= repaintContext->isRailWindowsLocked;
+	repaintWhileLocked |= repaintContext->xfRail->windowsLocked;
 #endif
 	return nullptr;
 }
@@ -1258,9 +1261,9 @@ static BOOL test_connection_move_owner(xfContext* xfc)
 	appWindow.windowWidth = 400;
 	appWindow.height = currentHeight = 300;
 	appWindow.windowHeight = 300;
-	xfc->railLocalMoveWindowId = appWindow.windowId;
+	xfc->xfRail->localMoveWindowId = appWindow.windowId;
 	pointerMask = Button1Mask;
-	CHECK(HashTable_Insert(xfc->railWindows, &other.windowId, &other));
+	CHECK(HashTable_Insert(xfc->xfRail->windows, &other.windowId, &other));
 	inserted = TRUE;
 	const unsigned inputsBefore = inputSequence;
 	const unsigned before = releases;
@@ -1290,7 +1293,7 @@ static BOOL test_connection_move_owner(xfContext* xfc)
 	CHECK(xf_event_process(&instance, &up));
 	CHECK(releases == before + 1);
 	CHECK(complete_server_move(xfc, &end) == CHANNEL_RC_OK);
-	CHECK(!xfc->railLocalMoveWindowId);
+	CHECK(!xfc->xfRail->localMoveWindowId);
 
 	/* A release on another window retains its event coordinates while a
 	 * changing geometry snapshot is retried, including a tiled mouse move. */
@@ -1299,7 +1302,7 @@ static BOOL test_connection_move_owner(xfContext* xfc)
 		                                  .window_width = 400,
 		                                  .window_height = 300 };
 	appWindow.windowMovePending = FALSE;
-	xfc->railLocalMoveWindowId = appWindow.windowId;
+	xfc->xfRail->localMoveWindowId = appWindow.windowId;
 	currentWidth = 500;
 	changingAttributes = TRUE;
 	XEvent deferred = up;
@@ -1332,19 +1335,19 @@ static BOOL test_connection_move_owner(xfContext* xfc)
 		                                  .window_y = 90,
 		                                  .window_width = 400,
 		                                  .window_height = 300 };
-	xfc->railLocalMoveWindowId = appWindow.windowId;
-	CHECK(xf_event_check_local_move(xfc));
+	xfc->xfRail->localMoveWindowId = appWindow.windowId;
+	CHECK(xf_rail_check_local_move(xfc));
 	CHECK(appWindow.local_move.reconcileOnEnd && moves == movesBefore + 1);
 	CHECK(complete_server_move(xfc, &end) == CHANNEL_RC_OK);
 	CHECK(appWindow.width == 700 && appWindow.height == 500);
-	CHECK(!xfc->railLocalMoveWindowId);
+	CHECK(!xfc->xfRail->localMoveWindowId);
 
 	/* XI2's common button path resolves the connection owner too. */
 	appWindow.local_move =
 	    (xfLocalMove){ .state = LMS_ACTIVE, .direction = NET_WM_MOVERESIZE_MOVE };
 	currentWidth = 700;
 	currentHeight = 500;
-	xfc->railLocalMoveWindowId = appWindow.windowId;
+	xfc->xfRail->localMoveWindowId = appWindow.windowId;
 	CHECK(xf_generic_ButtonEvent(xfc, 10, 10, Button1, other.handle, TRUE, FALSE));
 	CHECK(releases == before + 4 && appWindow.local_move.state == LMS_TERMINATING);
 	CHECK(complete_server_move(xfc, &end) == CHANNEL_RC_OK);
@@ -1353,7 +1356,7 @@ static BOOL test_connection_move_owner(xfContext* xfc)
 	 * the current pointer, not the older coordinates in that motion event. */
 	appWindow.local_move =
 	    (xfLocalMove){ .state = LMS_ACTIVE, .direction = NET_WM_MOVERESIZE_MOVE };
-	xfc->railLocalMoveWindowId = appWindow.windowId;
+	xfc->xfRail->localMoveWindowId = appWindow.windowId;
 	const XEvent motion = {
 		.xmotion = { .type = MotionNotify, .window = other.handle, .x_root = 1, .y_root = 2 }
 	};
@@ -1371,21 +1374,21 @@ static BOOL test_connection_move_owner(xfContext* xfc)
 			                                  .direction = NET_WM_MOVERESIZE_MOVE,
 			                                  .window_width = 400,
 			                                  .window_height = 300 };
-		xfc->railLocalMoveWindowId = appWindow.windowId;
+		xfc->xfRail->localMoveWindowId = appWindow.windowId;
 		CHECK(xf_event_process(&instance, &up));
 		CHECK(moves == movesBefore + 1);
 		CHECK(complete_server_move(xfc, &end) == CHANNEL_RC_OK);
 	}
-	HashTable_ValueObject(xfc->railWindows)->fnObjectFree = nullptr;
-	HashTable_Remove(xfc->railWindows, &other.windowId);
+	HashTable_ValueObject(xfc->xfRail->windows)->fnObjectFree = nullptr;
+	HashTable_Remove(xfc->xfRail->windows, &other.windowId);
 	return TRUE;
 out:
 	changingAttributes = FALSE;
 	pointerMask = 0;
 	if (inserted)
 	{
-		HashTable_ValueObject(xfc->railWindows)->fnObjectFree = nullptr;
-		HashTable_Remove(xfc->railWindows, &other.windowId);
+		HashTable_ValueObject(xfc->xfRail->windows)->fnObjectFree = nullptr;
+		HashTable_Remove(xfc->xfRail->windows, &other.windowId);
 	}
 	return FALSE;
 }
@@ -1829,7 +1832,7 @@ static BOOL test_state_transition_deadline(xfContext* xfc)
 	xf_rail_cancel_geometry(xfc, &appWindow);
 	xf_rail_begin_state_transition(xfc, &appWindow);
 	CHECK(appWindow.stateGeometryPending);
-	CHECK(WaitForSingleObject(xfc->railGeometryTimer, 1000) == WAIT_OBJECT_0);
+	CHECK(WaitForSingleObject(xfc->xfRail->geometryTimer, 1000) == WAIT_OBJECT_0);
 	xf_rail_flush_configure_geometry(xfc);
 	CHECK(!appWindow.stateGeometryPending && moves == before + 1);
 	CHECK(appWindow.x == rootX && appWindow.width == currentWidth);
@@ -2297,14 +2300,14 @@ static BOOL test_owned_geometry_deadline(xfContext* xfc)
 	CHECK(moves == before + 1 && appWindow.localMoveGeometryTime == 0);
 	xf_rail_schedule_geometry(xfc, &appWindow, 20);
 	xf_rail_cancel_geometry(xfc, &appWindow);
-	CHECK(xf_rail_geometry_event(xfc) == xfc->railGeometryTimer);
+	CHECK(xf_rail_geometry_event(xfc) == xfc->xfRail->geometryTimer);
 	/* Cancel may leave an already signalled timer readable. It must not
 	 * resurrect cancelled work, even if the loop receives that stale wake. */
-	const DWORD cancelled = WaitForSingleObject(xfc->railGeometryTimer, 60);
+	const DWORD cancelled = WaitForSingleObject(xfc->xfRail->geometryTimer, 60);
 	CHECK(cancelled == WAIT_TIMEOUT || cancelled == WAIT_OBJECT_0);
 	xf_rail_flush_configure_geometry(xfc);
 	CHECK(moves == before + 1);
-	CHECK(!xfc->railGeometryPending && !appWindow.geometryQueued);
+	CHECK(!xfc->xfRail->geometryPending && !appWindow.geometryQueued);
 	result = TRUE;
 out:
 	if (thread)
@@ -2314,6 +2317,71 @@ out:
 	}
 	if (idle)
 		CloseHandle(idle);
+	return result;
+}
+
+static BOOL test_context_lifecycle(xfContext* xfc)
+{
+	BOOL result = FALSE;
+	BOOL handled = TRUE;
+	xfContext other = WINPR_C_ARRAY_INIT;
+	rdpWindowUpdate windows = WINPR_C_ARRAY_INIT;
+	rdpUpdate update = { .window = &windows };
+	RailClientContext rail = WINPR_C_ARRAY_INIT;
+	RailClientContext duplicate = WINPR_C_ARRAY_INIT;
+	xfAppWindow pending = WINPR_C_ARRAY_INIT;
+	other.log = xfc->log;
+	other.UseXThreads = TRUE;
+	other.remote_app = TRUE;
+	other.common.context.update = &update;
+	other.common.context.settings = xfc->common.context.settings;
+	CHECK(xf_rail_init(nullptr, &rail) == 0);
+	CHECK(xf_rail_init(&other, nullptr) == 0);
+	CHECK(!other.xfRail && !other.rail && !rail.custom);
+	CHECK(xf_rail_geometry_event(&other) == nullptr);
+	CHECK(xf_rail_handle_local_move(&other, ButtonRelease, Button1, TRUE, 0, 0, &handled));
+	CHECK(!handled && xf_rail_check_local_move(&other));
+#if defined(__linux__)
+	/* timerfd is allocated by the first arm. Exhaust descriptors only for
+	 * initialization, then restore the limit before checking failure cleanup. */
+	struct rlimit original = WINPR_C_ARRAY_INIT;
+	CHECK(getrlimit(RLIMIT_NOFILE, &original) == 0);
+	struct rlimit exhausted = original;
+	exhausted.rlim_cur = 0;
+	CHECK(setrlimit(RLIMIT_NOFILE, &exhausted) == 0);
+	const int initialized = xf_rail_init(&other, &rail);
+	const int restored = setrlimit(RLIMIT_NOFILE, &original);
+	CHECK(restored == 0);
+	CHECK(!initialized && !other.xfRail && !other.rail && !rail.custom);
+#endif
+	for (size_t attempt = 0; attempt < 2; attempt++)
+	{
+		CHECK(xf_rail_init(&other, &rail));
+		CHECK(other.xfRail && other.xfRail != xfc->xfRail);
+		CHECK(other.rail == &rail && rail.custom == &other);
+		CHECK(other.xfRail->windows && other.xfRail->iconCache);
+		CHECK(!other.xfRail->inputWatches && !other.xfRail->geometryPending);
+		CHECK(!other.xfRail->activeWindowId && !other.xfRail->localMoveWindowId);
+		CHECK(!other.xfRail->geometryGeneration);
+		xfRailContext* context = other.xfRail;
+		CHECK(!xf_rail_init(&other, &duplicate));
+		CHECK(other.xfRail == context && other.rail == &rail && !duplicate.custom);
+		pending.xfc = &other;
+		xf_rail_schedule_geometry(&other, &pending, 1000);
+		CHECK(other.xfRail->geometryPending == &pending && pending.geometryQueued);
+		CHECK(xfc->xfRail->geometryPending != &pending);
+		xf_rail_cancel_geometry(&other, &pending);
+		CHECK(!other.xfRail->geometryPending && !pending.geometryQueued);
+		CHECK(xf_rail_uninit(&other, &rail));
+		CHECK(!other.xfRail && !other.rail && !rail.custom && !other.appWindow);
+		CHECK(xf_rail_geometry_event(&other) == nullptr);
+		CHECK(xf_rail_check_local_move(&other));
+		xf_rail_flush_configure_geometry(&other);
+		CHECK(xf_rail_uninit(&other, &rail));
+	}
+	result = TRUE;
+out:
+	xf_rail_uninit(&other, &rail);
 	return result;
 }
 
@@ -2338,11 +2406,11 @@ int main(int argc, char* argv[])
 	CHECK(xf_rail_init(&xfc, &rail));
 	railInitialized = TRUE;
 	/* The initial one-shot makes the Unix descriptor valid before an idle wait. */
-	CHECK(WaitForSingleObject(xfc.railGeometryTimer, 1000) == WAIT_OBJECT_0);
+	CHECK(WaitForSingleObject(xfc.xfRail->geometryTimer, 1000) == WAIT_OBJECT_0);
 	appWindow.windowId = 0x300d0;
 	appWindow.xfc = &xfc;
 	appWindow.surfaceId = UINT32_MAX;
-	CHECK(HashTable_Insert(xfc.railWindows, &appWindow.windowId, &appWindow));
+	CHECK(HashTable_Insert(xfc.xfRail->windows, &appWindow.windowId, &appWindow));
 	appWindow.is_mapped = TRUE;
 	appWindow.windowOffsetX = 48;
 	appWindow.windowWidth = 395;
@@ -2356,6 +2424,7 @@ int main(int argc, char* argv[])
 			const char* name;
 			BOOL (*run)(xfContext*);
 		} cases[] = {
+			{ "context-lifecycle", test_context_lifecycle },
 			{ "pending-size", test_replace_pending_size },
 			{ "same-size-snap", test_same_size_tile },
 			{ "reply-before-tile", test_reply_before_tile },
@@ -2416,12 +2485,13 @@ int main(int argc, char* argv[])
 	CHECK(test_owned_geometry_deadline(&xfc));
 	CHECK(test_unknown_move_type(&xfc));
 	CHECK(test_mouse_modifier_balance(&xfc));
+	CHECK(test_context_lifecycle(&xfc));
 	result = 0;
 out:
 	if (railInitialized)
 	{
 		/* The window is owned by the test, not by the RAIL window table. */
-		HashTable_ValueObject(xfc.railWindows)->fnObjectFree = nullptr;
+		HashTable_ValueObject(xfc.xfRail->windows)->fnObjectFree = nullptr;
 		xf_rail_uninit(&xfc, &rail);
 	}
 	appWindow.xfc = nullptr;

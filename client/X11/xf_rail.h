@@ -21,6 +21,7 @@
 #define FREERDP_CLIENT_X11_RAIL_H
 
 #include <freerdp/client/rail.h>
+#include <winpr/collections.h>
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -186,6 +187,27 @@ struct xf_app_window
 typedef struct xf_app_window xfAppWindow;
 typedef struct xf_rail_icon_cache xfRailIconCache;
 
+/* X11-owned RAIL resources share the channel lifetime. Per-window geometry
+ * remains in xfAppWindow; the channel's public context stays backend-neutral. */
+typedef struct
+{
+	wHashTable* windows;
+	xfRailIconCache* iconCache;
+	struct xf_input_watch* inputWatches;
+	UINT64 geometryGeneration;
+	HANDLE geometryTimer;
+	BOOL geometryTimerReady;
+	xfAppWindow* geometryPending;
+	UINT32 activeWindowId;
+	UINT64 localMoveWindowId;
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
+	BOOL windowsLocked;
+	const char* whereFkt;
+	const char* whereFile;
+	size_t whereLine;
+#endif
+} xfRailContext;
+
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
 
@@ -219,6 +241,13 @@ BOOL xf_rail_update_configure_geometry(xfContext* xfc, xfAppWindow* appWindow,
                                        const XConfigureEvent* event);
 
 BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow);
+
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_handle_local_move(xfContext* xfc, int type, int button, BOOL positioned, int rootX,
+                               int rootY, BOOL* handled);
+
+WINPR_ATTR_NODISCARD
+BOOL xf_rail_check_local_move(xfContext* xfc);
 
 HANDLE xf_rail_geometry_event(xfContext* xfc);
 void xf_rail_begin_state_transition(xfContext* xfc, xfAppWindow* appWindow);
@@ -254,6 +283,7 @@ xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocke
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
 
+WINPR_ATTR_NODISCARD
 int xf_rail_init(xfContext* xfc, RailClientContext* rail);
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);

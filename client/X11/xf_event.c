@@ -406,89 +406,6 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, const XVisibilityEvent* ev
 	return TRUE;
 }
 
-static BOOL xf_event_local_move_pointer(xfContext* xfc, int type, int button, BOOL positioned,
-                                        int rootX, int rootY, BOOL* handled)
-{
-	*handled = FALSE;
-	if (!xfc->remote_app || !xfc->railLocalMoveWindowId)
-		return TRUE;
-	xfAppWindow* owner = xf_rail_get_window(xfc, xfc->railLocalMoveWindowId, FALSE);
-	if (!owner)
-	{
-		xfc->railLocalMoveWindowId = 0;
-		return TRUE;
-	}
-	BOOL rc = TRUE;
-	if (owner->local_move.state == LMS_TERMINATING)
-	{
-		/* A WM ungrab and the selected input path may report the same release.
-		 * A new press starts a different physical gesture and must pass. */
-		*handled = (type == ButtonRelease) && (button == Button1);
-		if (type == ButtonPress)
-			xfc->railLocalMoveWindowId = 0;
-		goto out;
-	}
-	if (owner->local_move.state == LMS_NOT_ACTIVE)
-	{
-		xfc->railLocalMoveWindowId = 0;
-		goto out;
-	}
-	*handled = (type == MotionNotify) || (type == ButtonPress) || (type == ButtonRelease) ||
-	           (type == FocusIn) || (type == FocusOut);
-	if ((owner->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
-	    (owner->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
-		goto out;
-	BOOL release = (type == ButtonRelease) && (button == Button1);
-	if ((type == 0) || (type == MotionNotify) || (type == FocusIn) || (type == FocusOut) ||
-	    (release && !positioned))
-	{
-		Window root = None;
-		Window child = None;
-		int x = 0;
-		int y = 0;
-		int childX = 0;
-		int childY = 0;
-		unsigned int mask = 0;
-		if (!XQueryPointer(xfc->display, owner->handle, &root, &child, &x, &y, &childX, &childY,
-		                   &mask))
-			goto out;
-		/* Queued motion can precede the consumed release. Only an actual
-		 * ButtonRelease provides an authoritative event-position snapshot. */
-		if (!positioned || (type == MotionNotify))
-		{
-			rootX = x;
-			rootY = y;
-		}
-		release = release || !(mask & Button1Mask);
-	}
-	if (release)
-	{
-		WLog_Print(xfc->log, WLOG_DEBUG,
-		           "[rail-geometry] pointer completion owner=0x%08" PRIx64
-		           " state=%d event=%d release=%d,%d",
-		           owner->windowId, owner->local_move.state, type, rootX, rootY);
-		if (!owner->local_move.completionPending)
-		{
-			owner->local_move.release_x = rootX;
-			owner->local_move.release_y = rootY;
-			owner->local_move.completionPending = TRUE;
-			owner->local_move.completionTime = winpr_GetTickCount64NS();
-			/* The WM can finish before its last ConfigureNotify is dispatched. */
-			owner->configureGeometryPending = TRUE;
-		}
-		rc = xf_rail_end_local_move(xfc, owner);
-	}
-out:
-	xf_rail_return_window(owner, FALSE);
-	return rc;
-}
-
-BOOL xf_event_check_local_move(xfContext* xfc)
-{
-	BOOL handled = FALSE;
-	return xf_event_local_move_pointer(xfc, 0, 0, FALSE, 0, 0, &handled);
-}
-
 BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
                               const char* file, const char* fkt, size_t line)
 {
@@ -505,7 +422,7 @@ BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL 
 	if (app)
 	{
 		BOOL handled = FALSE;
-		if (!xf_event_local_move_pointer(xfc, MotionNotify, 0, FALSE, 0, 0, &handled))
+		if (!xf_rail_handle_local_move(xfc, MotionNotify, 0, FALSE, 0, 0, &handled))
 			return FALSE;
 		if (handled)
 			return TRUE;
@@ -587,8 +504,8 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 	if (app)
 	{
 		BOOL handled = FALSE;
-		if (!xf_event_local_move_pointer(xfc, down ? ButtonPress : ButtonRelease, button, FALSE, 0,
-		                                 0, &handled))
+		if (!xf_rail_handle_local_move(xfc, down ? ButtonPress : ButtonRelease, button, FALSE, 0, 0,
+		                               &handled))
 			return FALSE;
 		if (handled)
 			return TRUE;
@@ -1351,8 +1268,8 @@ BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEve
 		appWindow->serverMoveActive = FALSE;
 		appWindow->localMoveGeometryTime = 0;
 		appWindow->visibilityShapeDeferred = FALSE;
-		if (xfc->railLocalMoveWindowId == appWindow->windowId)
-			xfc->railLocalMoveWindowId = 0;
+		if (xfc->xfRail->localMoveWindowId == appWindow->windowId)
+			xfc->xfRail->localMoveWindowId = 0;
 		if (event->type == UnmapNotify)
 			xf_UpdateWindowVisibilityRects(xfc, appWindow);
 		return FALSE;
@@ -1494,32 +1411,32 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (xfc->remote_app && xfc->railWindows && xf_WindowInputAncestorEvent(xfc, event))
+	if (xfc->remote_app && xfc->xfRail && xfc->xfRail->windows &&
+	    xf_WindowInputAncestorEvent(xfc, event))
 		return TRUE;
-	if (xfc->remote_app && xfc->railLocalMoveWindowId)
+	if (xfc->remote_app && xfc->xfRail && xfc->xfRail->localMoveWindowId)
 	{
 		BOOL handled = FALSE;
 		BOOL rc = TRUE;
 		WLog_Print(xfc->log, WLOG_TRACE,
 		           "[rail-geometry] local move event owner=0x%08" PRIx64 " target=0x%08lX type=%d",
-		           xfc->railLocalMoveWindowId, event->xany.window, event->type);
+		           xfc->xfRail->localMoveWindowId, event->xany.window, event->type);
 		if (!xfc->xi_event && !xfc->xi_rawevent &&
 		    ((event->type == ButtonPress) || (event->type == ButtonRelease)))
-			rc =
-			    xf_event_local_move_pointer(xfc, event->type, (int)event->xbutton.button, TRUE,
-			                                event->xbutton.x_root, event->xbutton.y_root, &handled);
+			rc = xf_rail_handle_local_move(xfc, event->type, (int)event->xbutton.button, TRUE,
+			                               event->xbutton.x_root, event->xbutton.y_root, &handled);
 		else if (!xfc->xi_event && !xfc->xi_rawevent && (event->type == MotionNotify))
-			rc = xf_event_local_move_pointer(xfc, MotionNotify, 0, TRUE, event->xmotion.x_root,
-			                                 event->xmotion.y_root, &handled);
+			rc = xf_rail_handle_local_move(xfc, MotionNotify, 0, TRUE, event->xmotion.x_root,
+			                               event->xmotion.y_root, &handled);
 		else if (((event->type == EnterNotify) || (event->type == LeaveNotify)) &&
 		         (event->xcrossing.mode == NotifyUngrab))
-			rc = xf_event_local_move_pointer(xfc, 0, 0, TRUE, event->xcrossing.x_root,
-			                                 event->xcrossing.y_root, &handled);
+			rc = xf_rail_handle_local_move(xfc, 0, 0, TRUE, event->xcrossing.x_root,
+			                               event->xcrossing.y_root, &handled);
 		else if ((event->type == FocusIn) || (event->type == FocusOut))
 		{
 			if (event->type == FocusIn)
 				xf_keyboard_reconcile(xfc);
-			rc = xf_event_local_move_pointer(xfc, event->type, 0, FALSE, 0, 0, &handled);
+			rc = xf_rail_handle_local_move(xfc, event->type, 0, FALSE, 0, 0, &handled);
 		}
 		if (!rc || handled)
 			return rc;

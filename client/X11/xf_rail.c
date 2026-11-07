@@ -249,7 +249,7 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	                (appWindow->rail_state == WINDOW_SHOW_MINIMIZED) ||
 	                (appWindow->dwExStyle & WS_EX_NOACTIVATE) ||
 	                (appWindow->dwStyle & (WS_DISABLED | WS_MINIMIZE)) ||
-	                (xfc->railActiveWindowId == appWindow->windowId)))
+	                (xfc->xfRail->activeWindowId == appWindow->windowId)))
 	{
 		xf_rail_return_window(appWindow, FALSE);
 		return TRUE;
@@ -429,22 +429,22 @@ BOOL xf_rail_sync_configure_geometry(xfContext* xfc, xfAppWindow* appWindow)
  * or RAIL locks. This also avoids inversion with the core timer-entry lock. */
 static void xf_rail_rearm_geometry_timer(xfContext* xfc)
 {
-	if (!xfc->railGeometryTimer)
+	if (!xfc->xfRail || !xfc->xfRail->geometryTimer)
 		return;
 	UINT64 earliest = UINT64_MAX;
-	for (xfAppWindow* w = xfc->railGeometryPending; w; w = w->geometryNext)
+	for (xfAppWindow* w = xfc->xfRail->geometryPending; w; w = w->geometryNext)
 		earliest = MIN(earliest, w->geometryDeadline);
 	if (earliest == UINT64_MAX)
 	{
-		(void)CancelWaitableTimer(xfc->railGeometryTimer);
+		(void)CancelWaitableTimer(xfc->xfRail->geometryTimer);
 		return;
 	}
 	const UINT64 now = winpr_GetTickCount64NS();
 	const UINT64 ticks = earliest > now ? (earliest - now + 99) / 100 : 1;
 	const LARGE_INTEGER due = { .QuadPart = -(INT64)ticks };
-	xfc->railGeometryTimerReady =
-	    SetWaitableTimer(xfc->railGeometryTimer, &due, 0, nullptr, nullptr, FALSE);
-	if (!xfc->railGeometryTimerReady)
+	xfc->xfRail->geometryTimerReady =
+	    SetWaitableTimer(xfc->xfRail->geometryTimer, &due, 0, nullptr, nullptr, FALSE);
+	if (!xfc->xfRail->geometryTimerReady)
 	{
 		WLog_Print(xfc->log, WLOG_ERROR, "Failed to schedule pending window geometry");
 		if (xfc->common.context.rdp)
@@ -457,7 +457,8 @@ HANDLE xf_rail_geometry_event(xfContext* xfc)
 	/* Keep the initialized timer in the wait set even while idle. A channel
 	 * thread can enqueue work after the client has constructed that set. */
 	xf_lock_x11(xfc);
-	HANDLE event = xfc->railGeometryTimerReady ? xfc->railGeometryTimer : nullptr;
+	HANDLE event =
+	    (xfc->xfRail && xfc->xfRail->geometryTimerReady) ? xfc->xfRail->geometryTimer : nullptr;
 	xf_unlock_x11(xfc);
 	return event;
 }
@@ -471,16 +472,19 @@ void xf_rail_begin_state_transition(xfContext* xfc, xfAppWindow* appWindow)
 
 void xf_rail_schedule_geometry(xfContext* xfc, xfAppWindow* appWindow, UINT32 delayMs)
 {
-	if (!xfc->railGeometryTimer)
-		return;
 	xf_lock_x11(xfc);
+	if (!xfc->xfRail || !xfc->xfRail->geometryTimer)
+	{
+		xf_unlock_x11(xfc);
+		return;
+	}
 	const UINT64 deadline = winpr_GetTickCount64NS() + (UINT64)delayMs * 1000000ULL;
 	if (!appWindow->geometryQueued)
 	{
 		appWindow->geometryDeadline = deadline;
-		appWindow->geometryGeneration = ++xfc->railGeometryGeneration;
-		appWindow->geometryNext = xfc->railGeometryPending;
-		xfc->railGeometryPending = appWindow;
+		appWindow->geometryGeneration = ++xfc->xfRail->geometryGeneration;
+		appWindow->geometryNext = xfc->xfRail->geometryPending;
+		xfc->xfRail->geometryPending = appWindow;
 		appWindow->geometryQueued = TRUE;
 	}
 	else
@@ -492,7 +496,12 @@ void xf_rail_schedule_geometry(xfContext* xfc, xfAppWindow* appWindow, UINT32 de
 void xf_rail_cancel_geometry(xfContext* xfc, xfAppWindow* appWindow)
 {
 	xf_lock_x11(xfc);
-	for (xfAppWindow** p = &xfc->railGeometryPending; *p; p = &(*p)->geometryNext)
+	if (!xfc->xfRail)
+	{
+		xf_unlock_x11(xfc);
+		return;
+	}
+	for (xfAppWindow** p = &xfc->xfRail->geometryPending; *p; p = &(*p)->geometryNext)
 	{
 		if (*p != appWindow)
 			continue;
@@ -509,12 +518,15 @@ void xf_rail_cancel_geometry(xfContext* xfc, xfAppWindow* appWindow)
 void xf_rail_flush_configure_geometry(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
-	if (!xfc->railWindows)
-		return;
 	xf_lock_x11(xfc);
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		xf_unlock_x11(xfc);
+		return;
+	}
 	const UINT64 now = winpr_GetTickCount64NS();
 	size_t count = 0;
-	for (xfAppWindow* w = xfc->railGeometryPending; w; w = w->geometryNext)
+	for (xfAppWindow* w = xfc->xfRail->geometryPending; w; w = w->geometryNext)
 		count += w->geometryDeadline <= now;
 	if (!count)
 	{
@@ -536,7 +548,7 @@ void xf_rail_flush_configure_geometry(xfContext* xfc)
 		return;
 	}
 	size_t index = 0;
-	for (xfAppWindow** p = &xfc->railGeometryPending; *p;)
+	for (xfAppWindow** p = &xfc->xfRail->geometryPending; *p;)
 	{
 		xfAppWindow* w = *p;
 		if (w->geometryDeadline > now)
@@ -893,6 +905,89 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow, BOOL* redra
 	return TRUE;
 }
 
+BOOL xf_rail_handle_local_move(xfContext* xfc, int type, int button, BOOL positioned, int rootX,
+                               int rootY, BOOL* handled)
+{
+	*handled = FALSE;
+	if (!xfc->remote_app || !xfc->xfRail || !xfc->xfRail->localMoveWindowId)
+		return TRUE;
+	xfAppWindow* owner = xf_rail_get_window(xfc, xfc->xfRail->localMoveWindowId, FALSE);
+	if (!owner)
+	{
+		xfc->xfRail->localMoveWindowId = 0;
+		return TRUE;
+	}
+	BOOL rc = TRUE;
+	if (owner->local_move.state == LMS_TERMINATING)
+	{
+		/* A WM ungrab and the selected input path may report the same release.
+		 * A new press starts a different physical gesture and must pass. */
+		*handled = (type == ButtonRelease) && (button == Button1);
+		if (type == ButtonPress)
+			xfc->xfRail->localMoveWindowId = 0;
+		goto out;
+	}
+	if (owner->local_move.state == LMS_NOT_ACTIVE)
+	{
+		xfc->xfRail->localMoveWindowId = 0;
+		goto out;
+	}
+	*handled = (type == MotionNotify) || (type == ButtonPress) || (type == ButtonRelease) ||
+	           (type == FocusIn) || (type == FocusOut);
+	if ((owner->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
+	    (owner->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+		goto out;
+	BOOL release = (type == ButtonRelease) && (button == Button1);
+	if ((type == 0) || (type == MotionNotify) || (type == FocusIn) || (type == FocusOut) ||
+	    (release && !positioned))
+	{
+		Window root = None;
+		Window child = None;
+		int x = 0;
+		int y = 0;
+		int childX = 0;
+		int childY = 0;
+		unsigned int mask = 0;
+		if (!XQueryPointer(xfc->display, owner->handle, &root, &child, &x, &y, &childX, &childY,
+		                   &mask))
+			goto out;
+		/* Queued motion can precede the consumed release. Only an actual
+		 * ButtonRelease provides an authoritative event-position snapshot. */
+		if (!positioned || (type == MotionNotify))
+		{
+			rootX = x;
+			rootY = y;
+		}
+		release = release || !(mask & Button1Mask);
+	}
+	if (release)
+	{
+		WLog_Print(xfc->log, WLOG_DEBUG,
+		           "[rail-geometry] pointer completion owner=0x%08" PRIx64
+		           " state=%d event=%d release=%d,%d",
+		           owner->windowId, owner->local_move.state, type, rootX, rootY);
+		if (!owner->local_move.completionPending)
+		{
+			owner->local_move.release_x = rootX;
+			owner->local_move.release_y = rootY;
+			owner->local_move.completionPending = TRUE;
+			owner->local_move.completionTime = winpr_GetTickCount64NS();
+			/* The WM can finish before its last ConfigureNotify is dispatched. */
+			owner->configureGeometryPending = TRUE;
+		}
+		rc = xf_rail_end_local_move(xfc, owner);
+	}
+out:
+	xf_rail_return_window(owner, FALSE);
+	return rc;
+}
+
+BOOL xf_rail_check_local_move(xfContext* xfc)
+{
+	BOOL handled = FALSE;
+	return xf_rail_handle_local_move(xfc, 0, 0, FALSE, 0, 0, &handled);
+}
+
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 {
 	int x = 0;
@@ -1070,10 +1165,10 @@ BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(rect);
 
-	if (!xfc->railWindows)
+	if (!xfc->xfRail || !xfc->xfRail->windows)
 		return TRUE;
 
-	return HashTable_Foreach(xfc->railWindows, rail_paint_fn, &arg);
+	return HashTable_Foreach(xfc->xfRail->windows, rail_paint_fn, &arg);
 }
 
 #define window_state_log_style(log, windowState) \
@@ -1613,7 +1708,7 @@ static BOOL xf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	WINPR_ASSERT(windowIcon);
 	WINPR_ASSERT(windowIcon->iconInfo);
 	xfRailIcon* icon = RailIconCache_Lookup(
-	    xfc->railIconCache, WINPR_ASSERTING_INT_CAST(UINT8, windowIcon->iconInfo->cacheId),
+	    xfc->xfRail->iconCache, WINPR_ASSERTING_INT_CAST(UINT8, windowIcon->iconInfo->cacheId),
 	    WINPR_ASSERTING_INT_CAST(UINT16, windowIcon->iconInfo->cacheEntry));
 
 	if (!icon)
@@ -1653,7 +1748,8 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
 	WINPR_ASSERT(windowCachedIcon);
 
 	xfRailIcon* icon = RailIconCache_Lookup(
-	    xfc->railIconCache, WINPR_ASSERTING_INT_CAST(UINT8, windowCachedIcon->cachedIcon.cacheId),
+	    xfc->xfRail->iconCache,
+	    WINPR_ASSERTING_INT_CAST(UINT8, windowCachedIcon->cachedIcon.cacheId),
 	    WINPR_ASSERTING_INT_CAST(UINT16, windowCachedIcon->cachedIcon.cacheEntry));
 
 	if (!icon)
@@ -1789,7 +1885,7 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
 		/* Cache only server-confirmed activation, not an optimistic client echo. */
-		xfc->railActiveWindowId = monitoredDesktop->activeWindowId;
+		xfc->xfRail->activeWindowId = monitoredDesktop->activeWindowId;
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
@@ -2149,15 +2245,39 @@ static void rail_window_free(void* value)
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 {
-	rdpContext* context = (rdpContext*)xfc;
-
-	if (!xfc || !rail)
+	if (!xfc || !rail || xfc->xfRail)
 		return 0;
 
+	xfRailContext* context = calloc(1, sizeof(*context));
+	if (!context)
+		return 0;
+	context->windows = HashTable_New(TRUE);
+	if (!context->windows)
+		goto fail;
+	context->geometryTimer = CreateWaitableTimer(nullptr, FALSE, nullptr);
+	if (!context->geometryTimer)
+		goto fail;
+	/* WinPR/Unix creates the descriptor lazily on the first arm. Initialize
+	 * it before the client loop can add the timer to its wait set. */
+	const LARGE_INTEGER initialDue = { .QuadPart = -1 };
+	context->geometryTimerReady =
+	    SetWaitableTimer(context->geometryTimer, &initialDue, 0, nullptr, nullptr, FALSE);
+	if (!context->geometryTimerReady)
+		goto fail;
+
+	if (!HashTable_SetHashFunction(context->windows, rail_window_key_hash))
+		goto fail;
+	HashTable_KeyObject(context->windows)->fnObjectEquals = rail_window_key_equals;
+	HashTable_ValueObject(context->windows)->fnObjectFree = rail_window_free;
+	context->iconCache = RailIconCache_New(xfc->log, xfc->common.context.settings);
+	if (!context->iconCache)
+		goto fail;
+
+	/* Publish only initialized resources. Channel callbacks keep their existing
+	 * xfContext binding; backend state belongs to the private RAIL context. */
+	xfc->xfRail = context;
 	xfc->rail = rail;
-	xfc->railActiveWindowId = 0;
-	xfc->railLocalMoveWindowId = 0;
-	xf_rail_register_update_callbacks(context->update);
+	xf_rail_register_update_callbacks(xfc->common.context.update);
 	rail->custom = (void*)xfc;
 	rail->ServerExecuteResult = xf_rail_server_execute_result;
 	rail->ServerSystemParam = xf_rail_server_system_param;
@@ -2165,60 +2285,37 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	rail->ServerMinMaxInfo = xf_rail_server_min_max_info;
 	rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;
 	rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
-	xfc->railWindows = HashTable_New(TRUE);
-
-	if (!xfc->railWindows)
-		return 0;
-	xfc->railGeometryTimer = CreateWaitableTimer(nullptr, FALSE, nullptr);
-	if (!xfc->railGeometryTimer)
-		goto fail;
-	/* WinPR/Unix creates the descriptor lazily on the first arm. This harmless
-	 * one-shot initializes it before the main loop can enter an idle wait. */
-	const LARGE_INTEGER initialDue = { .QuadPart = -1 };
-	xfc->railGeometryTimerReady =
-	    SetWaitableTimer(xfc->railGeometryTimer, &initialDue, 0, nullptr, nullptr, FALSE);
-	if (!xfc->railGeometryTimerReady)
-		goto fail;
-
-	if (!HashTable_SetHashFunction(xfc->railWindows, rail_window_key_hash))
-		goto fail;
-	{
-		wObject* obj = HashTable_KeyObject(xfc->railWindows);
-		obj->fnObjectEquals = rail_window_key_equals;
-	}
-	{
-		wObject* obj = HashTable_ValueObject(xfc->railWindows);
-		obj->fnObjectFree = rail_window_free;
-	}
-	xfc->railIconCache = RailIconCache_New(xfc->log, xfc->common.context.settings);
-
-	if (!xfc->railIconCache)
-	{
-	}
-
 	return 1;
 fail:
-	if (xfc->railGeometryTimer)
-		CloseHandle(xfc->railGeometryTimer);
-	xfc->railGeometryTimer = nullptr;
-	xfc->railGeometryTimerReady = FALSE;
-	HashTable_Free(xfc->railWindows);
-	xf_ClearWindowInputWatches(xfc);
-	xfc->railWindows = nullptr;
+	if (context->geometryTimer)
+		CloseHandle(context->geometryTimer);
+	HashTable_Free(context->windows);
+	RailIconCache_Free(context->iconCache);
+	free(context);
 	return 0;
 }
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
 	WINPR_UNUSED(rail);
-	xfc->railLocalMoveWindowId = 0;
-	xfc->railGeometryPending = nullptr;
-	if (xfc->railGeometryTimer)
+	if (!xfc)
+		return 1;
+	xf_lock_x11(xfc);
+	if (!xfc->xfRail)
 	{
-		(void)CancelWaitableTimer(xfc->railGeometryTimer);
-		CloseHandle(xfc->railGeometryTimer);
-		xfc->railGeometryTimer = nullptr;
-		xfc->railGeometryTimerReady = FALSE;
+		xf_unlock_x11(xfc);
+		return 1;
+	}
+
+	xfRailContext* context = xfc->xfRail;
+	context->localMoveWindowId = 0;
+	context->geometryPending = nullptr;
+	if (context->geometryTimer)
+	{
+		(void)CancelWaitableTimer(context->geometryTimer);
+		CloseHandle(context->geometryTimer);
+		context->geometryTimer = nullptr;
+		context->geometryTimerReady = FALSE;
 	}
 
 	if (xfc->rail)
@@ -2227,26 +2324,23 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 		xfc->rail = nullptr;
 	}
 
-	if (xfc->railWindows)
-	{
-		HashTable_Free(xfc->railWindows);
-		xf_ClearWindowInputWatches(xfc);
-		xfc->railWindows = nullptr;
-	}
-
-	if (xfc->railIconCache)
-	{
-		RailIconCache_Free(xfc->railIconCache);
-		xfc->railIconCache = nullptr;
-	}
-
+	/* Window destructors still use the context to cancel queued work and
+	 * release shared ancestor watches. Free it only after their cleanup. */
+	HashTable_Free(context->windows);
+	context->windows = nullptr;
+	xf_ClearWindowInputWatches(xfc);
+	RailIconCache_Free(context->iconCache);
+	xfc->appWindow = nullptr;
+	xfc->xfRail = nullptr;
+	free(context);
+	xf_unlock_x11(xfc);
 	return 1;
 }
 
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId)
 {
-	if (!xfc)
+	if (!xfc || !xfc->xfRail)
 		return nullptr;
 
 	xfAppWindow* appWindow = (xfAppWindow*)calloc(1, sizeof(xfAppWindow));
@@ -2267,10 +2361,16 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
 	appWindow->windowHeight = height;
 
 	xf_AppWindowsLock(xfc);
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		free(appWindow);
+		xf_AppWindowsUnlock(xfc);
+		return nullptr;
+	}
 	if (!xf_AppWindowCreate(xfc, appWindow))
 		goto fail;
 
-	if (!HashTable_Insert(xfc->railWindows, &appWindow->windowId, (void*)appWindow))
+	if (!HashTable_Insert(xfc->xfRail->windows, &appWindow->windowId, (void*)appWindow))
 		goto fail;
 	return appWindow;
 fail:
@@ -2284,15 +2384,17 @@ BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)
 	if (!xfc)
 		return FALSE;
 
-	if (!xfc->railWindows)
-		return FALSE;
-
 	xf_lock_x11(xfc);
-	const BOOL res = HashTable_Remove(xfc->railWindows, &id);
-	if (res && xfc->railActiveWindowId == id)
-		xfc->railActiveWindowId = 0;
-	if (res && xfc->railLocalMoveWindowId == id)
-		xfc->railLocalMoveWindowId = 0;
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		xf_unlock_x11(xfc);
+		return FALSE;
+	}
+	const BOOL res = HashTable_Remove(xfc->xfRail->windows, &id);
+	if (res && xfc->xfRail->activeWindowId == id)
+		xfc->xfRail->activeWindowId = 0;
+	if (res && xfc->xfRail->localMoveWindowId == id)
+		xfc->xfRail->localMoveWindowId = 0;
 	xf_unlock_x11(xfc);
 	return res;
 }

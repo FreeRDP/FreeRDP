@@ -296,31 +296,16 @@ struct xf_context
 	xfDispContext* xfDisp;
 
 	RailClientContext* rail;
-	wHashTable* railWindows;
-	struct xf_input_watch* railInputWatches;
-	Time lastInputTime;
-	UINT64 railGeometryGeneration;
-	HANDLE railGeometryTimer;
-	BOOL railGeometryTimerReady;
-	xfAppWindow* railGeometryPending;
-	UINT32 railActiveWindowId;
-	UINT64 railLocalMoveWindowId;
-	xfRailIconCache* railIconCache;
+	xfRailContext* xfRail;
 	/* gdi's DeleteSurface, wrapped with software GDI to detach RemoteApp windows */
 	pcRdpgfxDeleteSurface gdiDeleteSurface;
-
-#if defined(WITH_VERBOSE_WINPR_ASSERT)
-	BOOL isRailWindowsLocked;
-	const char* whereFkt;
-	const char* whereFile;
-	size_t whereLine;
-#endif
 
 	BOOL xkbAvailable;
 	BOOL xrenderAvailable;
 
 	/* value to be sent over wire for each logical client mouse button */
 	button_map button_map[NUM_BUTTONS_MAPPED];
+	Time lastInputTime;
 	BYTE savedMaximizedState;
 	UINT32 locked;
 	BOOL wasRightCtrlAlreadyPressed;

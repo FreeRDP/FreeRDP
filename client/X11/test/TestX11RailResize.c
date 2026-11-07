@@ -394,11 +394,11 @@ static BOOL wm_owned_resize(xfContext* xfc, xfAppWindow* window, Display* wm)
 	CHECK(window->local_move.state == LMS_TERMINATING && moves == beforeMoves + 1);
 	CHECK(lastMove.right - lastMove.left == 600);
 	CHECK(lastMove.bottom - lastMove.top == 500);
-	CHECK(xf_event_check_local_move(xfc));
+	CHECK(xf_rail_check_local_move(xfc));
 	CHECK(releases == before + 1);
 	const RAIL_LOCALMOVESIZE_ORDER end = { .windowId = (UINT32)window->windowId };
 	CHECK(xfc->rail->ServerLocalMoveSize(xfc->rail, &end) == CHANNEL_RC_OK);
-	CHECK(!xfc->railLocalMoveWindowId);
+	CHECK(!xfc->xfRail->localMoveWindowId);
 	return TRUE;
 out:
 	if (grabbed)
@@ -887,7 +887,7 @@ static BOOL transparent_resize_margins(xfContext* xfc, xfAppWindow* window, Disp
 	 * edge must activate the owner and preserve root coordinates. */
 	xfc->button_map[0].button = Button1;
 	xfc->button_map[0].flags = PTR_FLAGS_BUTTON1;
-	xfc->railActiveWindowId = 0;
+	xfc->xfRail->activeWindowId = 0;
 	const unsigned before = presses;
 	XTestFakeMotionEvent(injector, -1, 602, 350, CurrentTime);
 	XTestFakeButtonEvent(injector, Button1, True, CurrentTime);
@@ -1017,7 +1017,7 @@ static BOOL deleted_margin_owner(xfContext* xfc)
 	window->handle = XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display), 10, 10, 100,
 	                                     100, 0, 0, 0);
 	CHECK(window->handle);
-	CHECK(HashTable_Insert(xfc->railWindows, &window->windowId, window));
+	CHECK(HashTable_Insert(xfc->xfRail->windows, &window->windowId, window));
 	inserted = TRUE;
 	XMapWindow(xfc->display, window->handle);
 	XSync(xfc->display, False);
@@ -1101,7 +1101,7 @@ int main(int argc, char* argv[])
 	window.height = 300;
 	window.windowHeight = 300;
 	window.resizeMarginXKnown = window.resizeMarginYKnown = TRUE;
-	CHECK(HashTable_Insert(xfc.railWindows, &window.windowId, &window));
+	CHECK(HashTable_Insert(xfc.xfRail->windows, &window.windowId, &window));
 	XSelectInput(display, window.handle, ButtonPressMask | ButtonReleaseMask);
 	XMapWindow(display, window.handle);
 	XMapWindow(display, frame);
@@ -1127,7 +1127,7 @@ int main(int argc, char* argv[])
 out:
 	if (initialized)
 	{
-		HashTable_ValueObject(xfc.railWindows)->fnObjectFree = nullptr;
+		HashTable_ValueObject(xfc.xfRail->windows)->fnObjectFree = nullptr;
 		xf_rail_uninit(&xfc, &rail);
 	}
 	free(window.visibilityRects);

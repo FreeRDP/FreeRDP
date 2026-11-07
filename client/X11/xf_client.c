@@ -557,7 +557,7 @@ static BOOL xf_process_x_events(freerdp* instance)
 			/* A reparenting WM need not send a synthetic event after resizing.
 			 * Resolve real-only batches, then drain events read by the X queries. */
 			xf_rail_flush_configure_geometry(xfc);
-			status = xf_event_check_local_move(xfc);
+			status = xf_rail_check_local_move(xfc);
 			pending_status = XPending(xfc->display);
 		}
 		xf_unlock_x11(xfc);

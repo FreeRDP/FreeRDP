@@ -11,3 +11,4 @@ show-transition
 idle-deadline
 mouse-modifiers
 invalid-mode
+context-lifecycle

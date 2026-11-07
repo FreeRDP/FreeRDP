@@ -1224,10 +1224,12 @@ typedef struct xf_input_watch
 
 void xf_ClearWindowInputWatches(xfContext* xfc)
 {
-	while (xfc->railInputWatches)
+	if (!xfc->xfRail)
+		return;
+	while (xfc->xfRail->inputWatches)
 	{
-		xfInputWatch* watch = xfc->railInputWatches;
-		xfc->railInputWatches = watch->next;
+		xfInputWatch* watch = xfc->xfRail->inputWatches;
+		xfc->xfRail->inputWatches = watch->next;
 		if (!watch->destroyed)
 			XSelectInput(xfc->display, watch->handle, watch->originalMask);
 		free(watch);
@@ -1238,7 +1240,7 @@ static void xf_ReleaseInputAncestors(xfContext* xfc, xfAppWindow* appWindow)
 {
 	for (size_t i = 0; i < appWindow->inputAncestorCount; i++)
 	{
-		for (xfInputWatch** p = &xfc->railInputWatches; *p; p = &(*p)->next)
+		for (xfInputWatch** p = &xfc->xfRail->inputWatches; *p; p = &(*p)->next)
 		{
 			xfInputWatch* watch = *p;
 			if (watch->handle != appWindow->inputAncestors[i])
@@ -1264,7 +1266,7 @@ static BOOL xf_WatchInputAncestors(xfContext* xfc, xfAppWindow* appWindow, const
 	xf_ReleaseInputAncestors(xfc, appWindow);
 	for (size_t i = 0; i < count; i++)
 	{
-		xfInputWatch* watch = xfc->railInputWatches;
+		xfInputWatch* watch = xfc->xfRail->inputWatches;
 		for (; watch && watch->handle != ancestors[i]; watch = watch->next)
 		{
 		}
@@ -1278,8 +1280,8 @@ static BOOL xf_WatchInputAncestors(xfContext* xfc, xfAppWindow* appWindow, const
 				goto fail;
 			watch->handle = ancestors[i];
 			watch->originalMask = attrs.your_event_mask;
-			watch->next = xfc->railInputWatches;
-			xfc->railInputWatches = watch;
+			watch->next = xfc->xfRail->inputWatches;
+			xfc->xfRail->inputWatches = watch;
 			XSelectInput(xfc->display, watch->handle,
 			             attrs.your_event_mask | StructureNotifyMask | VisibilityChangeMask);
 		}
@@ -1294,6 +1296,8 @@ fail:
 
 BOOL xf_WindowInputAncestorEvent(xfContext* xfc, const XEvent* event)
 {
+	if (!xfc->xfRail)
+		return FALSE;
 	Window target = None;
 	switch (event->type)
 	{
@@ -1319,7 +1323,7 @@ BOOL xf_WindowInputAncestorEvent(xfContext* xfc, const XEvent* event)
 			return FALSE;
 	}
 	xf_lock_x11(xfc);
-	xfInputWatch* watch = xfc->railInputWatches;
+	xfInputWatch* watch = xfc->xfRail->inputWatches;
 	for (; watch && watch->handle != target; watch = watch->next)
 	{
 	}
@@ -1333,7 +1337,7 @@ BOOL xf_WindowInputAncestorEvent(xfContext* xfc, const XEvent* event)
 	/* Frame events are not client geometry. Refresh only their owners, never
 	 * interpreting frame-local coordinates as application root coordinates. */
 	ULONG_PTR* keys = nullptr;
-	const size_t count = HashTable_GetKeys(xfc->railWindows, &keys);
+	const size_t count = HashTable_GetKeys(xfc->xfRail->windows, &keys);
 	for (size_t k = 0; k < count; k++)
 	{
 		xfAppWindow* owner = xf_rail_get_window(xfc, *(UINT64*)keys[k], FALSE);
@@ -1481,7 +1485,7 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 {
 	if (appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return;
-	if (xfc->railLocalMoveWindowId && (xfc->railLocalMoveWindowId != appWindow->windowId))
+	if (xfc->xfRail->localMoveWindowId && (xfc->xfRail->localMoveWindowId != appWindow->windowId))
 	{
 		WLog_Print(xfc->log, WLOG_WARN, "[rail-geometry] overlapping local move rejected");
 		return;
@@ -1504,7 +1508,7 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	appWindow->stateGeometryPending = FALSE;
 	appWindow->windowGeometryPending = FALSE;
 	appWindow->serverConfigure = FALSE;
-	xfc->railLocalMoveWindowId = appWindow->windowId;
+	xfc->xfRail->localMoveWindowId = appWindow->windowId;
 	appWindow->local_move.state = LMS_STARTING;
 	appWindow->local_move.completionPending = FALSE;
 	appWindow->local_move.completionTime = 0;
@@ -1572,8 +1576,8 @@ BOOL xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->serverGeometryPending = FALSE;
 	appWindow->local_move.window_width = appWindow->local_move.window_height = 0;
 	appWindow->local_move.reconcileOnEnd = FALSE;
-	if (xfc->railLocalMoveWindowId == appWindow->windowId)
-		xfc->railLocalMoveWindowId = 0;
+	if (xfc->xfRail->localMoveWindowId == appWindow->windowId)
+		xfc->xfRail->localMoveWindowId = 0;
 	xf_UpdateWindowVisibilityRects(xfc, appWindow);
 	xf_UpdateWindowInputRegion(xfc, appWindow);
 	return redraw;
@@ -1952,7 +1956,7 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 static xfAppWindow* get_windowUnlocked(xfContext* xfc, UINT64 id)
 {
 	WINPR_ASSERT(xfc);
-	return HashTable_GetItemValue(xfc->railWindows, &id);
+	return HashTable_GetItemValue(xfc->xfRail->windows, &id);
 }
 
 xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
@@ -1961,11 +1965,14 @@ xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocke
 	if (!xfc)
 		return nullptr;
 
-	if (!xfc->railWindows)
-		return nullptr;
-
 	if (!alreadyLocked)
 		xfAppWindowsLockFrom(xfc, file, fkt, line);
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		if (!alreadyLocked)
+			xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+		return nullptr;
+	}
 
 	xfAppWindow* window = get_windowUnlocked(xfc, id);
 
@@ -1981,11 +1988,13 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 	ULONG_PTR* pKeys = nullptr;
 
 	WINPR_ASSERT(xfc);
-	if (!xfc->railWindows)
-		return nullptr;
-
 	xfAppWindowsLockFrom(xfc, file, fkt, line);
-	size_t count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+		return nullptr;
+	}
+	size_t count = HashTable_GetKeys(xfc->xfRail->windows, &pKeys);
 
 	for (size_t index = 0; index < count; index++)
 	{
@@ -2362,15 +2371,18 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 #endif
 
 	xf_lock_x11(xfc);
-	if (xfc->railWindows)
-		HashTable_Lock(xfc->railWindows);
+	if (xfc->xfRail && xfc->xfRail->windows)
+		HashTable_Lock(xfc->xfRail->windows);
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
-	WINPR_ASSERT(!xfc->isRailWindowsLocked);
-	xfc->isRailWindowsLocked = TRUE;
-	xfc->whereFile = file;
-	xfc->whereFkt = fkt;
-	xfc->whereLine = line;
+	if (xfc->xfRail)
+	{
+		WINPR_ASSERT(!xfc->xfRail->windowsLocked);
+		xfc->xfRail->windowsLocked = TRUE;
+		xfc->xfRail->whereFile = file;
+		xfc->xfRail->whereFkt = fkt;
+		xfc->xfRail->whereLine = line;
+	}
 #endif
 }
 
@@ -2384,11 +2396,14 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 	if (WLog_IsLevelActive(xfc->log, level))
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] unocking [%s]", fkt);
 
-	WINPR_ASSERT(xfc->isRailWindowsLocked);
-	xfc->isRailWindowsLocked = FALSE;
+	if (xfc->xfRail)
+	{
+		WINPR_ASSERT(xfc->xfRail->windowsLocked);
+		xfc->xfRail->windowsLocked = FALSE;
+	}
 #endif
 
-	if (xfc->railWindows)
-		HashTable_Unlock(xfc->railWindows);
+	if (xfc->xfRail && xfc->xfRail->windows)
+		HashTable_Unlock(xfc->xfRail->windows);
 	xf_unlock_x11(xfc);
 }
