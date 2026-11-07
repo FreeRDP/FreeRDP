@@ -494,29 +494,30 @@ public class KeyboardMapper
 				boolean modifierActive = isModifierPressed();
 
 				// The library chooses between the character and the key's scancode
-				// (freerdp_client_send_key_as_unicode), as it does for the X11 and SDL clients.
-				// Modifiers held on the Android side have not reached the server, so their
-				// combinations take the virtual-key path below, which wraps the key in them;
-				// aFreeRDP's own toggles are already down on the server and go in the mask.
-				if (sendsKeyAsUnicode(event))
+				// (freerdp_client_send_key_as_unicode). Key combinations keep the virtual-key
+				// path below: aFreeRDP's toggles mean the user is building one on the server, and
+				// Ctrl, Alt, Meta or Win held on the Android side have not reached the server, so
+				// that path wraps the key in them. Shift alone is wrapped here, so Shift+Space or
+				// Shift+Tab keep it. A server without unicode input keeps the virtual-key path,
+				// since the library would drop the character.
+				if (sendsKeyAsUnicode(event) && !modifierActive && !isWinKeyDown)
 				{
 					int vk = getVirtualKeyCode(event.getKeyCode());
-					int metaState = event.getMetaState();
-					if (shiftPressed)
-						metaState |= KeyEvent.META_SHIFT_ON;
-					int unicode = event.getUnicodeChar(metaState);
+					int unicode = event.getUnicodeChar();
 					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
 						unicode = 0;
-					boolean androidModifier =
-					    isWinKeyDown ||
+					boolean combination =
 					    (event.getMetaState() & (KeyEvent.META_CTRL_ON | KeyEvent.META_ALT_ON |
-					                             KeyEvent.META_META_ON)) != 0 ||
-					    (unicode == 0 && event.isShiftPressed());
-					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !androidModifier)
+					                             KeyEvent.META_META_ON)) != 0;
+					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !combination &&
+					    (unicode == 0 || listener.isUnicodeInputSupported()))
 					{
-						listener.processKeyAsUnicode(vk, unicode, getModifierMask());
-						if (modifierActive)
-							resetModifierKeysAfterInput(false);
+						boolean shift = event.isShiftPressed();
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, true);
+						listener.processKeyAsUnicode(vk, unicode);
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, false);
 						return true;
 					}
 				}
@@ -674,22 +675,6 @@ public class KeyboardMapper
 	private static boolean sendsKeyAsUnicode(KeyEvent event)
 	{
 		return event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
-	}
-
-	// FREERDP_CLIENT_KBD_MOD in include/freerdp/client.h, for the modifiers the toggles hold
-	// down on the server.
-	private int getModifierMask()
-	{
-		int mask = 0;
-		if (shiftPressed)
-			mask |= 0x01; // FREERDP_CLIENT_KBD_MOD_LSHIFT
-		if (altPressed)
-			mask |= 0x04; // FREERDP_CLIENT_KBD_MOD_LMENU
-		if (ctrlPressed)
-			mask |= 0x10; // FREERDP_CLIENT_KBD_MOD_LCONTROL
-		if (winPressed)
-			mask |= 0x40; // FREERDP_CLIENT_KBD_MOD_LWIN
-		return mask;
 	}
 
 	private boolean isModifierPressed()
@@ -851,7 +836,9 @@ public class KeyboardMapper
 
 		void processUnicodeKey(int unicodeKey);
 
-		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modifiers);
+		boolean isUnicodeInputSupported();
+
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey);
 
 		void switchKeyboard(int keyboardType);
 

@@ -168,8 +168,7 @@ public class LibFreeRDP
 	                                                            boolean down);
 
 	private static native boolean freerdp_send_key_as_unicode_event(long inst, int keycode,
-	                                                                int unicode, int modmask,
-	                                                                boolean down);
+	                                                                int unicode, boolean down);
 
 	private static native boolean freerdp_is_unicode_input_supported(long inst);
 
@@ -586,10 +585,9 @@ public class LibFreeRDP
 		return freerdp_send_unicodekey_event(inst, keycode, down);
 	}
 
-	public static boolean sendKeyAsUnicodeEvent(long inst, int keycode, int unicode, int modmask,
-	                                            boolean down)
+	public static boolean sendKeyAsUnicodeEvent(long inst, int keycode, int unicode, boolean down)
 	{
-		return freerdp_send_key_as_unicode_event(inst, keycode, unicode, modmask, down);
+		return freerdp_send_key_as_unicode_event(inst, keycode, unicode, down);
 	}
 
 	public static boolean isUnicodeInputSupported(long inst)
