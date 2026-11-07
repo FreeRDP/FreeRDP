@@ -75,6 +75,46 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	return fp;
 }
 
+BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length)
+{
+	WINPR_ASSERT(xcert);
+	WINPR_ASSERT(length);
+
+	/* RFC 5929 section 4.1 leaves tls-server-end-point undefined when the certificate's
+	 * signatureAlgorithm uses no hash (Ed25519, Ed448, ML-DSA, SLH-DSA). Use the hash
+	 * X509_digest_sig() picks for these: SHA-512 for Ed25519 (the RFC 8419 default), SHA-256
+	 * for ML-DSA and SLH-DSA. Ed448 (SHAKE256) gives no result with OpenSSL 3.5, which needs an
+	 * output length for it. RSA-PSS and the algorithms with a hash are not handled here. */
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L) && !defined(LIBRESSL_VERSION_NUMBER)
+	const int nid = X509_get_signature_nid(xcert);
+	int md_nid = NID_undef;
+	int pk_nid = NID_undef;
+	if ((nid == NID_rsassaPss) || (OBJ_find_sigid_algs(nid, &md_nid, &pk_nid) != 1) ||
+	    (md_nid != NID_undef) || (pk_nid == NID_undef))
+		return nullptr;
+
+	int fallback = 0;
+	BYTE* hash = nullptr;
+	ASN1_OCTET_STRING* digest = X509_digest_sig(xcert, nullptr, &fallback);
+	const int len = digest ? ASN1_STRING_length(digest) : 0;
+	if (fallback && (len > 0))
+	{
+		hash = calloc((size_t)len + 1, sizeof(BYTE));
+		if (hash)
+		{
+			memcpy(hash, ASN1_STRING_get0_data(digest), (size_t)len);
+			*length = (size_t)len;
+		}
+	}
+	ASN1_OCTET_STRING_free(digest);
+	return hash;
+#else
+	WINPR_UNUSED(xcert);
+	WINPR_UNUSED(length);
+	return nullptr;
+#endif
+}
+
 WINPR_ATTR_NODISCARD
 static char* crypto_print_name(const X509_NAME* name)
 {

@@ -40,6 +40,9 @@ extern "C"
 	FREERDP_LOCAL BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_LOCAL BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_LOCAL BYTE* x509_utils_to_pem(const X509* xcert, const STACK_OF(X509) * chain,
 	                                      size_t* length);
 

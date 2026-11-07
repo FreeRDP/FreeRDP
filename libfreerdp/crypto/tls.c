@@ -43,6 +43,7 @@
 
 #include <freerdp/log.h>
 #include "../crypto/tls.h"
+#include "../crypto/x509_utils.h"
 #include "../core/tcp.h"
 
 #include "opensslcompat.h"
@@ -764,22 +765,34 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(const rdpCertificate* ce
 
 	/* See https://www.rfc-editor.org/rfc/rfc5929 for details about hashes */
 	WINPR_MD_TYPE alg = freerdp_certificate_get_signature_alg(cert);
-	const char* hash = nullptr;
-	switch (alg)
+	char* CertificateHash = nullptr;
+	if (alg == WINPR_MD_NONE)
 	{
-
-		case WINPR_MD_MD5:
-		case WINPR_MD_SHA1:
-			hash = winpr_md_type_to_string(WINPR_MD_SHA256);
-			break;
-		default:
-			hash = winpr_md_type_to_string(alg);
-			break;
+		/* Ed25519, Ed448, ML-DSA, SLH-DSA: no hash in the signature algorithm */
+		const X509* x509 =
+		    freerdp_certificate_get_x509(WINPR_CAST_CONST_PTR_AWAY(cert, rdpCertificate*));
+		CertificateHash =
+		    (char*)x509_utils_get_hashless_signature_hash(x509, &CertificateHashLength);
 	}
-	if (!hash)
-		return nullptr;
+	else
+	{
+		const char* hash = nullptr;
+		switch (alg)
+		{
 
-	char* CertificateHash = freerdp_certificate_get_hash(cert, hash, &CertificateHashLength);
+			case WINPR_MD_MD5:
+			case WINPR_MD_SHA1:
+				hash = winpr_md_type_to_string(WINPR_MD_SHA256);
+				break;
+			default:
+				hash = winpr_md_type_to_string(alg);
+				break;
+		}
+		if (!hash)
+			return nullptr;
+
+		CertificateHash = freerdp_certificate_get_hash(cert, hash, &CertificateHashLength);
+	}
 	if (!CertificateHash)
 		return nullptr;
 
