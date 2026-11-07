@@ -79,6 +79,10 @@ struct rdp_multitransport
 	 * Use Interlocked functions to access these fields. */
 	LONG serverClaimed;
 	LONG serverWritable;
+
+	/* The bytes of tunnel data that the tunnel thread queued after the main loop last started to
+	 * read events. Use Interlocked functions to access this field. */
+	LONG serverQueuedBytes;
 #endif
 
 	/* client-side data */

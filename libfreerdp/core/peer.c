@@ -1263,6 +1263,7 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 
+	multitransport_server_disconnect(client->context);
 	transport = freerdp_get_transport(client->context);
 	transport_disconnect(transport);
 }

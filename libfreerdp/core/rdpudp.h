@@ -45,6 +45,9 @@ typedef enum
 #define RDPUDP_PROTOCOL_VERSION_2 0x0002
 #define RDPUDP_PROTOCOL_VERSION_3 0x0101
 
+/** Gives the time in nanoseconds. Only the differences between two values have a meaning. */
+typedef UINT64 (*rdpUdpClockFn)(void* custom);
+
 /** Receives one in-order chunk of the peer's stream. Returning FALSE fails the connection. */
 typedef BOOL (*rdpUdpReceiveFn)(void* custom, const BYTE* data, size_t length);
 
@@ -112,7 +115,8 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpudp_get_timeout(const rdpUdp* udp);
 
 /** Gets the cookieHash from a version 3 SYN of a client. The cookieHash tells which connection the
- *  SYN is for.
+ *  SYN is for. A SYN shorter than the smallest MTU does not count, because a SYN has padding to
+ *  its MTU.
  *  @return FALSE for anything else */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_get_syn_cookie_hash(const BYTE* data, size_t length, BYTE hash[32]);
@@ -125,5 +129,18 @@ FREERDP_LOCAL BOOL rdpudp_check(rdpUdp* udp);
 /** Queues one chunk of the stream for reliable delivery. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length);
+
+/** Server: the client proved that it has the cookie. Before this, a connection keeps only a small
+ *  number of chunks that arrive after a hole. */
+FREERDP_LOCAL void rdpudp_set_peer_proven(rdpUdp* udp);
+
+/** Replaces the clock of the system for this connection. A test uses this to move the time
+ *  forward without a wait.
+ *  @param clock the clock, or nullptr for the clock of the system */
+FREERDP_LOCAL void rdpudp_set_clock(rdpUdp* udp, rdpUdpClockFn clock, void* custom);
+
+/** The time of the connection in milliseconds, for the timers of its owner. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT64 rdpudp_get_time(const rdpUdp* udp);
 
 #endif /* FREERDP_LIB_CORE_RDPUDP_H */

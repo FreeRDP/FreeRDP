@@ -552,10 +552,11 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
 				return TRUE;
 
 			const UINT32 reqId = rdpemt_get_request_id(emt);
-			rdpemt_free(emt);
 #if defined(WITH_RDPEUDP)
+			/* the application stops to use the flow before the flow is freed */
 			multitransport_server_tunnel_gone(multi);
 #endif
+			rdpemt_free(emt);
 
 			/* Soft-Sync only moves channels from TCP to UDP ([MS-RDPEDYC] 3.1.5.3), there is no
 			 * way back. What was in flight on the tunnel is lost in both directions, so the

@@ -39,6 +39,12 @@
 
 #define TAG FREERDP_TAG("core.multitransport")
 
+/* The tunnel data that waits for the main loop, at most. A client sends mostly input and
+ * acknowledgements, so this is much more than it needs. The client cannot send its data again, so
+ * past this limit the connection ends. Without the limit, a client could fill the memory of the
+ * server while the main loop waits, for example for a write. */
+#define MULTITRANSPORT_SERVER_QUEUE_LIMIT (32 * 1024 * 1024)
+
 /* [MS-RDPBCGR] 2.2.14.3 headerTypeId of a request */
 #define TYPE_ID_AUTODETECT_REQUEST 0x00
 
@@ -70,6 +76,37 @@ static void multitransport_server_tunnel_event(void* custom, rdpEmt* emt, RDPEMT
 				WLog_DBG(TAG, "the main loop has not seen the last room yet");
 			(void)SetEvent(multi->event);
 			break;
+		case RDPEMT_EVENT_DATA:
+		case RDPEMT_EVENT_AUTODETECT:
+		{
+			const LONG add = (length > (size_t)MULTITRANSPORT_SERVER_QUEUE_LIMIT)
+			                     ? MULTITRANSPORT_SERVER_QUEUE_LIMIT + 1
+			                     : (LONG)length;
+			/* add only what fits, so that the count cannot grow past the limit */
+			BOOL fits = TRUE;
+			LONG queued = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0);
+			while (fits)
+			{
+				fits = (add <= MULTITRANSPORT_SERVER_QUEUE_LIMIT - queued);
+				if (!fits)
+					break;
+				const LONG seen =
+				    InterlockedCompareExchange(&multi->serverQueuedBytes, queued + add, queued);
+				if (seen == queued)
+					break;
+				queued = seen;
+			}
+			if (!fits)
+			{
+				/* the main loop ends the connection, because data is lost */
+				if (InterlockedCompareExchange(&multi->tunnelEventLost, 1, 0) == 0)
+					WLog_ERR(TAG, "the client sends more tunnel data than the server takes");
+				(void)SetEvent(multi->event);
+				break;
+			}
+			multitransport_tunnel_event(custom, emt, event, data, length);
+			break;
+		}
 		default:
 			multitransport_tunnel_event(custom, emt, event, data, length);
 			break;
@@ -301,8 +338,9 @@ state_run_t multitransport_server_tunnel_response(rdpMultitransport* multi, UINT
 	if (!ok)
 	{
 		WLog_INFO(TAG, "the client declined the UDP tunnel, hrResponse 0x%08" PRIx32, hrResponse);
-		rdpemt_free(emt);
+		/* the application stops to use the flow before the flow is freed */
 		multitransport_server_link(multi, FREERDP_UDP_LINK_NONE);
+		rdpemt_free(emt);
 	}
 	else if (!multitransport_server_check_ready(multi))
 		return STATE_RUN_FAILED;
@@ -325,11 +363,40 @@ void multitransport_tunnel_check(rdpMultitransport* multi)
 			autodetect->bandwidthMeasureByteCount += direct;
 	}
 
+	/* the main loop reads all queued events after this, so their bytes no longer count */
+	LONG queued = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0);
+	while (queued != 0)
+	{
+		const LONG seen = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, queued);
+		if (seen == queued)
+			break;
+		queued = seen;
+	}
+
 	if (InterlockedCompareExchange(&multi->serverClaimed, 0, 1) != 0)
 		multitransport_server_link(multi, FREERDP_UDP_LINK_CLAIMED);
 	if ((InterlockedCompareExchange(&multi->serverWritable, 0, 1) != 0) &&
 	    multi->udpCallbacks.WriteUnblocked)
 		multi->udpCallbacks.WriteUnblocked(multi->udpCustom);
+}
+
+void multitransport_server_disconnect(rdpContext* context)
+{
+	if (!context || !context->rdp)
+		return;
+	rdpMultitransport* multi = context->rdp->multitransport;
+	if (!multi || !multitransport_is_server(multi))
+		return;
+
+	EnterCriticalSection(&multi->lock);
+	const BOOL tunnel = (multi->reliable != nullptr);
+	LeaveCriticalSection(&multi->lock);
+	if (!tunnel)
+		return;
+
+	/* the application stops to use the flow before the flow is freed */
+	multitransport_server_link(multi, FREERDP_UDP_LINK_NONE);
+	multitransport_reset(multi);
 }
 
 BOOL multitransport_flush_dvc(rdpMultitransport* multi)

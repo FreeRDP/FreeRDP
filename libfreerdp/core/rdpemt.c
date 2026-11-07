@@ -64,6 +64,16 @@
 /* Time allowed from the first SYN until the server accepts the tunnel. */
 #define RDPEMT_SETUP_TIMEOUT_MS 20000
 
+/* Server: time allowed from the offer until the client proves its cookie. A client that accepts the
+ * offer sends its SYN immediately, and the TLS handshake needs only some round trips. A tunnel that
+ * waits for a client keeps a flow, a thread and memory. Thus this time is short. */
+#define RDPEMT_SERVER_SETUP_TIMEOUT_MS 7000
+
+/* Server: the datagrams that the tunnel processes in one pass. Then it runs its timers and sends
+ * what waits, and other threads can lock it. Thus a client that sends without a stop cannot keep
+ * the tunnel busy and the timeouts away. */
+#define RDPEMT_INPUT_BUDGET 256
+
 /* TLS record header: type, version, length */
 #define TLS_RECORD_HEADER_LENGTH 5
 
@@ -630,6 +640,8 @@ static BOOL emt_accept_create_request(rdpEmt* emt, wStream* s, size_t payloadLen
 	}
 	if (!emt->ready)
 	{
+		/* the client has the cookie: it can now use all of the receive window */
+		rdpudp_set_peer_proven(emt->udp);
 		WLog_Print(emt->log, WLOG_INFO,
 		           "UDP multitransport tunnel ready (RDP-UDP version 0x%04" PRIx16 ")",
 		           rdpudp_get_version(emt->udp));
@@ -956,13 +968,26 @@ static BOOL emt_start_tls(rdpEmt* emt)
 		return FALSE;
 	}
 	SSL_CTX_set_options(emt->ctx, SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION);
+#if defined(SSL_OP_NO_RENEGOTIATION)
+	/* Each renegotiation costs the server an operation with its private key. The tunnel does not
+	 * need renegotiation. */
+	if (emt->server)
+		SSL_CTX_set_options(emt->ctx, SSL_OP_NO_RENEGOTIATION);
+#endif
 	/* the certificate is checked against the main connection's in emt_verify_peer */
 	SSL_CTX_set_verify(emt->ctx, SSL_VERIFY_NONE, nullptr);
-	if (!SSL_CTX_set_cipher_list(emt->ctx, "ECDHE-RSA-AES256-GCM-SHA384:"
-	                                       "ECDHE-RSA-AES128-GCM-SHA256:"
-	                                       "ECDHE-ECDSA-AES256-GCM-SHA384:"
-	                                       "ECDHE-ECDSA-AES128-GCM-SHA256:"
-	                                       "AES256-GCM-SHA384:AES128-GCM-SHA256"))
+	/* A server accepts only ECDHE. With RSA key exchange, the tunnel has no forward secrecy, and
+	 * each client can use the private key of the server for decryption. */
+	const char* ciphers = emt->server ? "ECDHE-RSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-RSA-AES128-GCM-SHA256:"
+	                                    "ECDHE-ECDSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-ECDSA-AES128-GCM-SHA256"
+	                                  : "ECDHE-RSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-RSA-AES128-GCM-SHA256:"
+	                                    "ECDHE-ECDSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-ECDSA-AES128-GCM-SHA256:"
+	                                    "AES256-GCM-SHA384:AES128-GCM-SHA256";
+	if (!SSL_CTX_set_cipher_list(emt->ctx, ciphers))
 	{
 		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set_cipher_list failed");
 		return FALSE;
@@ -1039,7 +1064,10 @@ static BOOL emt_server_input(rdpEmt* emt)
 
 	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
 	size_t length = 0;
-	while (!emt->failed && udpflow_read(emt->flow, data, &length))
+	/* the event of the flow stays set while datagrams wait, so the next pass comes immediately */
+	for (size_t count = 0;
+	     (count < RDPEMT_INPUT_BUDGET) && !emt->failed && udpflow_read(emt->flow, data, &length);
+	     count++)
 	{
 		if (rdpudp_get_state(emt->udp) == RDPUDP_STATE_CLOSED)
 		{
@@ -1067,6 +1095,15 @@ static BOOL emt_server_input(rdpEmt* emt)
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL emt_setup_timed_out(const rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	if (emt->server)
+		return rdpudp_get_time(emt->udp) - emt->started > RDPEMT_SERVER_SETUP_TIMEOUT_MS;
+	return GetTickCount64() - emt->started > RDPEMT_SETUP_TIMEOUT_MS;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL emt_poll(rdpEmt* emt)
 {
 	WINPR_ASSERT(emt);
@@ -1079,7 +1116,7 @@ static BOOL emt_poll(rdpEmt* emt)
 
 	if (emt->server && (rdpudp_get_state(emt->udp) == RDPUDP_STATE_CLOSED))
 	{
-		if (GetTickCount64() - emt->started > RDPEMT_SETUP_TIMEOUT_MS)
+		if (emt_setup_timed_out(emt))
 		{
 			emt_fail(emt, "no SYN from the client");
 			return FALSE;
@@ -1103,7 +1140,7 @@ static BOOL emt_poll(rdpEmt* emt)
 		}
 	}
 
-	if (!emt->ready && (GetTickCount64() - emt->started > RDPEMT_SETUP_TIMEOUT_MS))
+	if (!emt->ready && emt_setup_timed_out(emt))
 	{
 		emt_fail(emt, "timed out");
 		return FALSE;
@@ -1351,7 +1388,7 @@ rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, X509*
 	emt->sendLimit = RDPEMT_SEND_LIMIT;
 	udpflow_set_worker(emt->flow, emt_worker_check, emt_worker_timeout, emt);
 
-	emt->started = GetTickCount64();
+	emt->started = rdpudp_get_time(emt->udp);
 	if (!manual)
 	{
 		emt->thread = CreateThread(nullptr, 0, emt_thread, emt, 0, nullptr);

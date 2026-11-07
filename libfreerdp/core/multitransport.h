@@ -96,6 +96,10 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL DWORD multitransport_server_add_event(rdpMultitransport* multi, HANDLE* events,
                                                     DWORD used, DWORD count);
 
+/** A server peer disconnects: its tunnel stops. LinkChanged reports FREERDP_UDP_LINK_NONE first,
+ *  while the context of the application is still there. */
+FREERDP_LOCAL void multitransport_server_disconnect(rdpContext* context);
+
 #else
 
 WINPR_ATTR_NODISCARD
@@ -119,6 +123,10 @@ static inline DWORD multitransport_server_add_event(WINPR_ATTR_UNUSED rdpMultitr
                                                     WINPR_ATTR_UNUSED DWORD count)
 {
 	return used;
+}
+
+static inline void multitransport_server_disconnect(WINPR_ATTR_UNUSED rdpContext* context)
+{
 }
 
 #endif
