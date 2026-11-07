@@ -19,6 +19,7 @@ if(BUILD_TESTING_INTERNAL)
     TestDisconnect.c
     TestMcs.c
     TestUpdateBitmap.c
+    TestRdpPacketLengths.c
   )
   if(WITH_RDPEUDP)
     list(APPEND TESTS TestRdpUdp.c)
