@@ -87,6 +87,9 @@
 #define MUTTER_CURSOR_MODE_EMBEDDED 1u
 #define MUTTER_CURSOR_MODE_METADATA 2u
 #define MUTTER_VIRTUAL_ENV "FREERDP_SHADOW_MUTTER_VIRTUAL"
+/* "0" turns off the check for changes Mutter left out of its damage */
+#define MUTTER_DAMAGE_CHECK_ENV "FREERDP_SHADOW_MUTTER_DAMAGE_CHECK"
+#define MUTTER_CHECK_TILE 64
 
 /* FREERDP_SHADOW_MUTTER_VIRTUAL=<w>x<h>: TRUE and the size when set and valid */
 WINPR_ATTR_NODISCARD
@@ -1193,6 +1196,82 @@ static void mutter_copy_rect(mutterShadowSubsystem* mutter, rdpShadowSurface* su
 		WLog_ERR(TAG, "cannot mark the changed region");
 }
 
+/* Mutter's damage metadata now and then leaves out a change: a window that opens or closes, the
+ * clock in the top bar. Nothing repaints it later, so the client kept the old picture there.
+ * Compare the buffer with the surface in tiles after the damage was copied, and copy the tiles that
+ * still differ. When the damage was right, every tile is equal and nothing is copied. Returns the
+ * tiles copied. */
+static UINT32 mutter_repair_missed_damage(mutterShadowSubsystem* mutter, rdpShadowSurface* surface,
+                                          const BYTE* src, UINT32 stride)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(src);
+
+	const UINT32 width = MIN(mutter->width, surface->width);
+	const UINT32 height = MIN(mutter->height, surface->height);
+	/* the same format is copied byte for byte; otherwise compare the colour (alpha is undefined
+	 * in BGRx) */
+	const BOOL sameFormat = (mutter->format == surface->format);
+	UINT32 tiles = 0;
+
+	for (UINT32 ty = 0; ty < height; ty += MUTTER_CHECK_TILE)
+	{
+		const UINT32 th = MIN(MUTTER_CHECK_TILE, height - ty);
+		for (UINT32 tx = 0; tx < width; tx += MUTTER_CHECK_TILE)
+		{
+			const UINT32 tw = MIN(MUTTER_CHECK_TILE, width - tx);
+			BOOL dirty = FALSE;
+			for (UINT32 y = ty; (y < ty + th) && !dirty; y++)
+			{
+				const BYTE* a = &src[1ull * y * stride + 4ull * tx];
+				const BYTE* b = &surface->data[1ull * y * surface->scanline + 4ull * tx];
+				if (sameFormat)
+					dirty = (memcmp(a, b, 4ull * tw) != 0);
+				else
+				{
+					for (UINT32 x = 0; (x < tw) && !dirty; x++)
+						dirty = (memcmp(&a[4ull * x], &b[4ull * x], 3) != 0);
+				}
+			}
+			if (dirty)
+			{
+				mutter_copy_rect(mutter, surface, src, stride, (INT32)tx, (INT32)ty, (INT32)tw,
+				                 (INT32)th);
+				tiles++;
+			}
+		}
+	}
+	return tiles;
+}
+
+/* counts and logs what mutter_repair_missed_damage found */
+static void mutter_damage_stats(mutterShadowSubsystem* mutter, UINT32 tiles)
+{
+	WINPR_ASSERT(mutter);
+
+	mutter->damageFrames++;
+	mutter->damageTiles += tiles;
+	if ((tiles > 0) && !mutter->damageMissSeen)
+	{
+		mutter->damageMissSeen = TRUE;
+		WLog_INFO(TAG,
+		          "Mutter left changes out of its damage: %" PRIu32
+		          " tile(s) copied, the check stays on (" MUTTER_DAMAGE_CHECK_ENV
+		          "=0 turns it off)",
+		          tiles);
+	}
+	const UINT64 now = GetTickCount64();
+	if (now - mutter->damageLogged >= 5000)
+	{
+		WLog_DBG(TAG, "damage check: %" PRIu64 " tile(s) Mutter left out, in %" PRIu64 " frame(s)",
+		         mutter->damageTiles, mutter->damageFrames);
+		mutter->damageTiles = 0;
+		mutter->damageFrames = 0;
+		mutter->damageLogged = now;
+	}
+}
+
 static void mutter_on_process(void* data)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
@@ -1246,6 +1325,9 @@ static void mutter_on_process(void* data)
 				                 r->region.position.y, (INT32)r->region.size.width,
 				                 (INT32)r->region.size.height);
 			}
+			if (mutter->damageCheck)
+				mutter_damage_stats(mutter,
+				                    mutter_repair_missed_damage(mutter, surface, src, stride));
 		}
 		LeaveCriticalSection(&surface->lock);
 		painted = TRUE;
@@ -2335,6 +2417,14 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 
 	UINT32 count = 0;
 	mutter->virtualMonitor = mutter_virtual_size(&mutter->virtualWidth, &mutter->virtualHeight);
+	{
+		/* on unless "0" */
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		const char* check = getenv(MUTTER_DAMAGE_CHECK_ENV);
+		mutter->damageCheck = !check || (strcmp(check, "0") != 0);
+		if (!mutter->damageCheck)
+			WLog_INFO(TAG, "the check for changes Mutter left out of its damage is off");
+	}
 	if (mutter->virtualMonitor)
 	{
 		/* one monitor, this server's own */

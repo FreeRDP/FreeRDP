@@ -88,6 +88,13 @@ struct mutter_shadow_subsystem
 	BOOL started;
 	BOOL fullPaint;
 
+	/* the check for changes Mutter left out of its damage (mutter_repair_missed_damage) */
+	BOOL damageCheck;
+	BOOL damageMissSeen;
+	UINT64 damageFrames;
+	UINT64 damageTiles;
+	UINT64 damageLogged;
+
 	/* libei, under eiLock: the client threads post input, the subsystem
 	 * thread reads its events */
 	CRITICAL_SECTION eiLock;
