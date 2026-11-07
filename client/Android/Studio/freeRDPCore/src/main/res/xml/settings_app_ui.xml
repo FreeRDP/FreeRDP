@@ -38,4 +38,10 @@
         android:summary="@string/pref_summary_keyboard_accessibility">
         <intent android:action="android.settings.ACCESSIBILITY_SETTINGS" />
     </Preference>
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/preference_key_ui_physical_keyboard_device_layout"
+        android:title="@string/settings_ui_physical_keyboard_device_layout"
+        android:summaryOff="@string/settings_ui_physical_keyboard_device_layout_summary_off"
+        android:summaryOn="@string/settings_ui_physical_keyboard_device_layout_summary_on" />
 </PreferenceScreen>

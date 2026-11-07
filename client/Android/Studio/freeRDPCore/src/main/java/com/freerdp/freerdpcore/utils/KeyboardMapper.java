@@ -225,6 +225,10 @@ public class KeyboardMapper
 	private boolean isWinLocked = false;
 	private boolean isWinKeyDown = false;
 	private boolean isWinComboUsed = false;
+	private boolean physicalKeyboardDeviceLayout = false;
+	// Accent of a dead key waiting for the next character, and the virtual key that typed it.
+	private int pendingAccent = 0;
+	private int pendingAccentVk = 0;
 
 	public void init(Context context)
 	{
@@ -445,7 +449,14 @@ public class KeyboardMapper
 		winPressed = false;
 		isWinKeyDown = false;
 		isWinComboUsed = false;
+		pendingAccent = 0;
 		setKeyProcessingListener(listener);
+	}
+
+	// Whether physical keyboards follow this device's layout rather than the server's.
+	public void setPhysicalKeyboardDeviceLayout(boolean enabled)
+	{
+		physicalKeyboardDeviceLayout = enabled;
 	}
 
 	public void setKeyProcessingListener(KeyProcessingListener listener)
@@ -492,6 +503,55 @@ public class KeyboardMapper
 					isWinComboUsed = true;
 
 				boolean modifierActive = isModifierPressed();
+
+				// The library chooses between the character and the key's scancode
+				// (freerdp_client_send_key_as_unicode). Key combinations keep the virtual-key
+				// path below: aFreeRDP's toggles mean the user is building one on the server, and
+				// Ctrl, Alt, Meta or Win held on the Android side have not reached the server, so
+				// that path wraps the key in them. Shift alone is wrapped here, so Shift+Space or
+				// Shift+Tab keep it. A server without unicode input keeps the virtual-key path,
+				// since the library would drop the character.
+				if (sendsKeyAsUnicode(event) && !modifierActive && !isWinKeyDown)
+				{
+					int vk = getVirtualKeyCode(event.getKeyCode());
+					int unicode = event.getUnicodeChar();
+					boolean deadKey = (unicode & KeyCharacterMap.COMBINING_ACCENT) != 0;
+					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
+						unicode = 0;
+					// Right Alt that yields a character is AltGr, part of the layout: send the
+					// character.
+					int meta = event.getMetaState();
+					boolean altGr = (unicode != 0 || deadKey) &&
+					                (meta & KeyEvent.META_ALT_RIGHT_ON) != 0 &&
+					                (meta & KeyEvent.META_ALT_LEFT_ON) == 0;
+					boolean combination =
+					    (meta & (KeyEvent.META_CTRL_ON | KeyEvent.META_META_ON)) != 0 ||
+					    ((meta & KeyEvent.META_ALT_ON) != 0 && !altGr);
+					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !combination &&
+					    (unicode == 0 || listener.isUnicodeInputSupported()))
+					{
+						boolean shift = event.isShiftPressed();
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, true);
+						if (deadKey && listener.isUnicodeInputSupported())
+							processDeadKey(event, vk);
+						else if (pendingAccent != 0 && unicode != 0)
+							processAccentedKey(vk, unicode);
+						else
+						{
+							if (!KeyEvent.isModifierKey(event.getKeyCode()))
+								pendingAccent = 0;
+							listener.processKeyAsUnicode(vk, unicode);
+						}
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, false);
+						return true;
+					}
+				}
+
+				if (!KeyEvent.isModifierKey(event.getKeyCode()))
+					pendingAccent = 0;
+
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
 				// key. At the end we will reset all modifiers and notify our listener.
@@ -637,6 +697,56 @@ public class KeyboardMapper
 		listener.processVirtualKey(VK_F4, true);
 		listener.processVirtualKey(VK_F4, false);
 		listener.processVirtualKey(VK_LMENU, false);
+	}
+
+	// Text from the on-screen keyboard reaches us as key events Android builds from its virtual
+	// key character map, so their key codes encode US key positions, not what the user typed.
+	// A physical keyboard's positions are what the server's layout is meant to read, unless the
+	// user chose this device's layout for it.
+	private boolean sendsKeyAsUnicode(KeyEvent event)
+	{
+		return physicalKeyboardDeviceLayout ||
+		    event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
+	}
+
+	// Android reports a dead key as its accent, flagged COMBINING_ACCENT, and leaves composing it
+	// with the next character to the text field. Compose it here, as Android's own text fields
+	// do, so the server receives the accented character instead of reading the dead key's
+	// position in its own layout. Composed characters go with the dead key's virtual key: the
+	// library sends some keys, Space among them, as scancodes whatever their character.
+	private void processDeadKey(KeyEvent event, int vk)
+	{
+		if (event.getRepeatCount() > 0)
+			return;
+		int accent = event.getUnicodeChar() & KeyCharacterMap.COMBINING_ACCENT_MASK;
+		if (pendingAccent != 0)
+		{
+			// The same dead key twice types the accent; two different ones, the first accent.
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent);
+			boolean same = accent == pendingAccent;
+			pendingAccent = 0;
+			if (same)
+				return;
+		}
+		pendingAccent = accent;
+		pendingAccentVk = vk;
+	}
+
+	// A character after a dead key: the composed character, or the accent and then the character
+	// when they do not compose. Space types the accent itself: getDeadChar returned an apostrophe
+	// for the acute accent and Space on a Pixel 9 Pro running Android 17.
+	private void processAccentedKey(int vk, int unicode)
+	{
+		int composed =
+		    unicode == ' ' ? pendingAccent : KeyEvent.getDeadChar(pendingAccent, unicode);
+		if (composed != 0)
+			listener.processKeyAsUnicode(pendingAccentVk, composed);
+		else
+		{
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent);
+			listener.processKeyAsUnicode(vk, unicode);
+		}
+		pendingAccent = 0;
 	}
 
 	private boolean isModifierPressed()
@@ -797,6 +907,10 @@ public class KeyboardMapper
 		void processVirtualKey(int virtualKeyCode, boolean down);
 
 		void processUnicodeKey(int unicodeKey);
+
+		boolean isUnicodeInputSupported();
+
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey);
 
 		void switchKeyboard(int keyboardType);
 
