@@ -27,6 +27,10 @@
 
 #include <freerdp/server/shadow.h>
 
+/* GFX frames a client may have unacknowledged before it gets no new one, like xrdp's
+ * XRDP_GFX_FRAMES_IN_FLIGHT=8; FREERDP_SHADOW_GFX_FRAMES_IN_FLIGHT overrides it */
+#define SHADOW_GFX_FRAMES_IN_FLIGHT 8
+
 struct rdp_shadow_encoder
 {
 	rdpShadowClient* client;
@@ -60,6 +64,17 @@ struct rdp_shadow_encoder
 	UINT32 frameId;
 	UINT32 lastAckframeId;
 	UINT32 queueDepth;
+
+	/* GFX flow control (shadow_client.c): no new frame while maxInFlight frames are not
+	 * acknowledged (0: no limit). gfxHeld: a round's damage waits in the client's region. */
+	UINT32 maxInFlight;
+	UINT64 lastAckTick;
+	BOOL gfxHeld;
+	BOOL everAcked; /* the client acknowledged a frame at least once */
+	BOOL warnedNoAck;
+	UINT32 statsMaxInFlight;
+	UINT64 statsHeld;
+	UINT64 statsLogged;
 
 	/* GFX RFX dirty tile skipping (shadow_rfx_dirty.c): snapshot of the last
 	 * encoded content (BGRX copy sharing the surface geometry) plus per tile
