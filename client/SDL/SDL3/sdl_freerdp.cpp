@@ -652,7 +652,7 @@ int main(int argc, char* argv[])
 		                                                          sdl->args());
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 		{
-			if (!sdl_list_monitors(sdl))
+			if (sdl_list_monitors(sdl) != 0)
 				return -1;
 		}
 		else
