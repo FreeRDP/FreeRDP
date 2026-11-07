@@ -571,9 +571,7 @@ static BOOL emt_process_subheaders(rdpEmt* emt, const BYTE* data, size_t length)
 		}
 
 		const BYTE subHeaderType = data[1];
-		/* The server asks and the client answers. Each end gets only what the other end sends. */
-		if (subHeaderType == (emt->server ? RDPTUNNEL_SUBHEADER_AUTODETECT_RESPONSE
-		                                  : RDPTUNNEL_SUBHEADER_AUTODETECT_REQUEST))
+		if (subHeaderType == RDPTUNNEL_SUBHEADER_AUTODETECT_REQUEST)
 			emt->callback(emt->custom, emt, RDPEMT_EVENT_AUTODETECT, data, subHeaderLength);
 		else
 			WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel subheader of type 0x%02" PRIx8,
@@ -593,8 +591,8 @@ static BOOL emt_accept_create_request(rdpEmt* emt, wStream* s, size_t payloadLen
 	WINPR_ASSERT(emt);
 	WINPR_ASSERT(s);
 
-	/* emt_process_pdus examined if the payload is present. This code examines that again before it
-	 * reads the payload. */
+	/* emt_process_server_pdus examined if the payload is present. This code examines that again
+	 * before it reads the payload. */
 	if ((payloadLength < 8 + sizeof(emt->cookie)) ||
 	    !Stream_CheckAndLogRequiredLengthWLog(emt->log, s, payloadLength))
 	{
@@ -675,13 +673,6 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 				return FALSE;
 			break;
 		}
-		/* nothing from a client counts before its cookie */
-		if (emt->server && !emt->ready && (headerLength > RDPTUNNEL_HEADER_LENGTH))
-		{
-			emt_fail(emt, "tunnel subheaders before the Tunnel Create Request");
-			return FALSE;
-		}
-
 		/* the subheaders go up ahead of the payload of their PDU */
 		if (!emt_process_subheaders(emt, Stream_ConstPointer(s),
 		                            headerLength - RDPTUNNEL_HEADER_LENGTH))
@@ -692,14 +683,6 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 		{
 			case RDPTUNNEL_ACTION_CREATERESPONSE:
 			{
-				/* Only a server answers. If the server accepts this from a client, the tunnel
-				 * becomes ready without the cookie. */
-				if (emt->server)
-				{
-					emt_fail(emt, "a Tunnel Create Response from the client");
-					return FALSE;
-				}
-
 				/* [MS-RDPEMT] 2.2.2.2 RDP_TUNNEL_CREATERESPONSE */
 				if (payloadLength < 4)
 				{
@@ -726,19 +709,114 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 			}
 			break;
 
+			case RDPTUNNEL_ACTION_DATA:
+				/* [MS-RDPEMT] 2.2.2.3 RDP_TUNNEL_DATA, HigherLayerData is a DVC PDU */
+				if (payloadLength > 0)
+					emt_hand_up(emt, Stream_ConstPointer(s), payloadLength);
+				Stream_Seek(s, payloadLength);
+				break;
+
+			default:
+				WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel PDU with action %" PRIu8, action);
+				Stream_Seek(s, payloadLength);
+				break;
+		}
+
+		if (emt->failed)
+			return FALSE;
+	}
+
+	return stream_consume(emt->in, Stream_GetPosition(s));
+}
+
+/* Server: a client answers auto-detect requests, so only responses go up. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_process_server_subheaders(rdpEmt* emt, const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(data || (length == 0));
+
+	while (length > 0)
+	{
+		const size_t subHeaderLength = data[0];
+		if ((length < 2) || (subHeaderLength < 2) || (subHeaderLength > length))
+		{
+			emt_fail(emt, "invalid tunnel subheader");
+			return FALSE;
+		}
+
+		const BYTE subHeaderType = data[1];
+		if (subHeaderType == RDPTUNNEL_SUBHEADER_AUTODETECT_RESPONSE)
+			emt->callback(emt->custom, emt, RDPEMT_EVENT_AUTODETECT, data, subHeaderLength);
+		else
+			WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel subheader of type 0x%02" PRIx8,
+			           subHeaderType);
+		data += subHeaderLength;
+		length -= subHeaderLength;
+	}
+	return TRUE;
+}
+
+/* Server: the PDUs of a client. The cookie in the Tunnel Create Request is the proof of the client,
+ * so nothing else counts before it. A client sends only that request and data. All other actions
+ * end the tunnel, also a Tunnel Create Response, which must not make the tunnel ready. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_process_server_pdus(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s =
+	    Stream_StaticConstInit(&sbuffer, Stream_Buffer(emt->in), Stream_GetPosition(emt->in));
+
+	while (Stream_GetRemainingLength(s) >= RDPTUNNEL_HEADER_LENGTH)
+	{
+		/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
+		const size_t start = Stream_GetPosition(s);
+		const BYTE action = Stream_Get_UINT8(s) & 0x0F;
+		const size_t payloadLength = Stream_Get_UINT16(s);
+		const size_t headerLength = Stream_Get_UINT8(s);
+		if (headerLength < RDPTUNNEL_HEADER_LENGTH)
+		{
+			emt_fail(emt, "invalid tunnel PDU header");
+			return FALSE;
+		}
+
+		/* HeaderLength includes any subheaders, PayloadLength does not. Both are bounded by
+		 * their wire types (UINT8, UINT16), the sum cannot overflow. */
+		WINPR_ASSERT(payloadLength <= UINT16_MAX);
+		WINPR_ASSERT(headerLength <= UINT8_MAX);
+		const size_t rest = headerLength - RDPTUNNEL_HEADER_LENGTH + payloadLength;
+		if (Stream_GetRemainingLength(s) < rest)
+		{
+			/* not all here yet */
+			if (!Stream_SetPosition(s, start))
+				return FALSE;
+			break;
+		}
+
+		if (!emt->ready && (headerLength > RDPTUNNEL_HEADER_LENGTH))
+		{
+			emt_fail(emt, "tunnel subheaders before the Tunnel Create Request");
+			return FALSE;
+		}
+
+		/* the subheaders go up ahead of the payload of their PDU */
+		if (!emt_process_server_subheaders(emt, Stream_ConstPointer(s),
+		                                   headerLength - RDPTUNNEL_HEADER_LENGTH))
+			return FALSE;
+		Stream_Seek(s, headerLength - RDPTUNNEL_HEADER_LENGTH);
+
+		switch (action)
+		{
 			case RDPTUNNEL_ACTION_CREATEREQUEST:
-				if (!emt->server)
-				{
-					Stream_Seek(s, payloadLength);
-					break;
-				}
 				if (!emt_accept_create_request(emt, s, payloadLength))
 					return FALSE;
 				break;
 
 			case RDPTUNNEL_ACTION_DATA:
 				/* [MS-RDPEMT] 2.2.2.3 RDP_TUNNEL_DATA, HigherLayerData is a DVC PDU */
-				if (emt->server && !emt->ready)
+				if (!emt->ready)
 				{
 					emt_fail(emt, "tunnel data before the Tunnel Create Request");
 					return FALSE;
@@ -749,9 +827,10 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 				break;
 
 			default:
-				WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel PDU with action %" PRIu8, action);
-				Stream_Seek(s, payloadLength);
-				break;
+				WLog_Print(emt->log, WLOG_WARN, "tunnel PDU with action %" PRIu8 " from a client",
+				           action);
+				emt_fail(emt, "a tunnel PDU that a client must not send");
+				return FALSE;
 		}
 
 		if (emt->failed)
@@ -827,7 +906,7 @@ static BOOL emt_run_tls(rdpEmt* emt)
 	if (!emt_flush_tls(emt))
 		return FALSE;
 
-	return emt_process_pdus(emt);
+	return emt->server ? emt_process_server_pdus(emt) : emt_process_pdus(emt);
 }
 
 WINPR_ATTR_NODISCARD
