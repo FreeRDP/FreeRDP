@@ -246,7 +246,8 @@ void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, const ch
 #define xf_rail_get_window(xfc, id, alreadyLocked) \
 	xf_rail_get_windowFrom((xfc), (id), (alreadyLocked), __FILE__, __func__, __LINE__)
 
-WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
+/* The table owns the returned window; the caller releases only its lock. */
+WINPR_ATTR_NODISCARD
 xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
                                     const char* fkt, size_t line);
 

@@ -147,7 +147,8 @@ BOOL xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 
 #define xf_AppWindowFromX11Window(xfc, wnd) \
 	xf_AppWindowFromX11WindowFrom((xfc), (wnd), __FILE__, __func__, __LINE__)
-WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
+/* The table owns the returned window; the caller releases only its lock. */
+WINPR_ATTR_NODISCARD
 xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const char* file,
                                            const char* fkt, size_t line);
 

@@ -849,6 +849,10 @@ static BOOL transparent_resize_margins(xfContext* xfc, xfAppWindow* window, Disp
 	const BOOL ownerMatches = found == window;
 	xf_rail_return_window(found, FALSE);
 	CHECK(ownerMatches);
+	found = xf_rail_get_window(xfc, window->windowId, FALSE);
+	const BOOL idMatches = found == window;
+	xf_rail_return_window(found, FALSE);
+	CHECK(idMatches);
 	freerdp notificationInstance = { .context = &xfc->common.context };
 	const XEvent auxiliaryConfigure = { .xconfigure = { .type = ConfigureNotify,
 		                                                .event = root,
