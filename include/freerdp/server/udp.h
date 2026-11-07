@@ -98,7 +98,8 @@ extern "C"
 		 *  process only. \b flow belongs to the peer and stays valid until LinkChanged reports
 		 *  FREERDP_UDP_LINK_NONE and returns. The peer frees the flow after this. When the peer
 		 *  disconnects, LinkChanged also reports FREERDP_UDP_LINK_NONE. Thus call Disconnect of
-		 *  the peer before you free its context.
+		 *  the peer before you free its context, and on the thread that runs the check of the
+		 *  peer.
 		 *  @return \b FALSE to stay on TCP */
 		WINPR_ATTR_NODISCARD BOOL (*OfferTunnel)(void* custom, rdpUdpFlow* flow,
 		                                         const BYTE cookieHash[32]);
@@ -197,7 +198,10 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_flow_send(rdpUdpFlow* flow, const BYTE* data, size_t length);
 
-	/** This event stays set while datagrams wait for freerdp_udp_flow_check().
+	/** This event stays set while datagrams wait for freerdp_udp_flow_check(). For a flow with a
+	 *  socket from freerdp_udp_flow_set_socket(), it is the event of that socket, and it changes
+	 *  when the other end closes. Thus get the event again before each wait, and do not set or
+	 *  reset it: outside Windows, that writes to the socket or reads from it.
 	 *  @since version 3.33.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API HANDLE freerdp_udp_flow_get_event(rdpUdpFlow* flow);
@@ -276,13 +280,25 @@ extern "C"
 	 *  other datagram. The relay takes ownership of fd. It ends when the other end is freed, or
 	 *  closes. Thread safe. The listener cannot examine cookieHash, because the cookie is in the
 	 *  other process. Thus give cookieHash only from a process that you trust to serve this
-	 *  client. The first relay or flow for a cookie hash keeps it.
-	 *  @param fd from freerdp_udp_socket_pair(), freerdp_udp_flow_set_socket() has the other end
-	 *  @return \b FALSE if the listener already expects cookieHash. The caller then keeps fd.
+	 *  client. The first relay or flow for a cookie hash keeps it. The other process can send
+	 *  datagrams from the port of the listener to the address that sent the SYN, which can be a
+	 *  spoofed address. A listener serves at most 256 relays. Allow one relay for each
+	 *  connection, and end it with freerdp_udp_listener_end_relay() when the connection ends.
+	 *  @param fd from freerdp_udp_socket_pair(), freerdp_udp_flow_set_socket() has the other end.
+	 *  It must be of type SOCK_SEQPACKET or SOCK_DGRAM.
+	 *  @return \b FALSE if the listener already expects cookieHash, or serves too many relays.
+	 *  The caller then keeps fd.
 	 *  @since version 3.33.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_relay(freerdp_udp_listener* listener,
 	                                            const BYTE cookieHash[32], int fd);
+
+	/** Ends the relay for cookieHash, for example when its connection ends. The relay thread
+	 *  closes the socket of the relay soon after this. Thread safe.
+	 *  @return \b FALSE if no relay has cookieHash
+	 *  @since version 3.33.0 */
+	FREERDP_API BOOL freerdp_udp_listener_end_relay(freerdp_udp_listener* listener,
+	                                                const BYTE cookieHash[32]);
 
 	/** After this returns, the listener does not touch flow again. Thread safe. When you free a
 	 *  flow, it also does this.

@@ -1211,7 +1211,13 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 
 		/* A server connection has no socket. Its datagrams wake it through the flow. */
 		if (emt->server)
-			(void)WaitForSingleObject(freerdp_udp_flow_get_event(emt->flow), timeout);
+		{
+			/* udpflow_wake() sets the event of the flow, also for a relayed flow */
+			HANDLE events[2] = WINPR_C_ARRAY_INIT;
+			const DWORD count = udpflow_get_events(emt->flow, events);
+			if (WaitForMultipleObjects(count, events, FALSE, timeout) == WAIT_FAILED)
+				WLog_Print(emt->log, WLOG_DEBUG, "waiting for the flow failed");
+		}
 		else
 			emt_wait_readable(sockfd, timeout);
 

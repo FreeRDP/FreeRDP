@@ -41,8 +41,14 @@
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL udpflow_read(rdpUdpFlow* flow, BYTE* data, size_t* length);
 
-/** Wakes who waits on freerdp_udp_flow_get_event(). */
+/** Wakes the worker of a flow, which waits on udpflow_get_events(). */
 FREERDP_LOCAL void udpflow_wake(rdpUdpFlow* flow);
+
+/** The events that the worker of a flow waits on: the event of the flow, and the event of its
+ *  relay socket if it has one.
+ *  @return the number of events, 1 or 2 */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL DWORD udpflow_get_events(rdpUdpFlow* flow, HANDLE events[2]);
 
 /** What freerdp_udp_flow_check() and freerdp_udp_flow_get_timeout() run. */
 FREERDP_LOCAL void udpflow_set_worker(rdpUdpFlow* flow, BOOL (*check)(void* custom),

@@ -355,13 +355,15 @@ void multitransport_tunnel_check(rdpMultitransport* multi)
 
 	/* [MS-RDPBCGR] 3.2.5.17: tunnel data that went directly to the channels counts when the main
 	 * loop gets here. This is the same for the data that the main loop sends from the queue. */
+	/* the lock keeps the tunnel while the check uses it, see multitransport_server_disconnect */
+	UINT32 direct = 0;
+	EnterCriticalSection(&multi->lock);
 	if (multi->reliable)
-	{
-		const UINT32 direct = rdpemt_take_direct_bytes(multi->reliable);
-		rdpAutoDetect* autodetect = multi->rdp->autodetect;
-		if (autodetect && autodetect->bandwidthMeasureStarted)
-			autodetect->bandwidthMeasureByteCount += direct;
-	}
+		direct = rdpemt_take_direct_bytes(multi->reliable);
+	LeaveCriticalSection(&multi->lock);
+	rdpAutoDetect* autodetect = multi->rdp->autodetect;
+	if (autodetect && autodetect->bandwidthMeasureStarted)
+		autodetect->bandwidthMeasureByteCount += direct;
 
 	/* the main loop reads all queued events after this, so their bytes no longer count */
 	LONG queued = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0);

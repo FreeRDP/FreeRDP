@@ -621,6 +621,128 @@ static BOOL many_clients_get_to_their_flows(void)
 	return TRUE;
 }
 
+/* Waits until the listener takes a new relay for hash, which shows that the old relay ended. */
+static BOOL relay_hash_is_free(freerdp_udp_listener* listener, const BYTE hash[32])
+{
+	for (size_t x = 0; x < 200; x++)
+	{
+		int next[2] = { -1, -1 };
+		if (!freerdp_udp_socket_pair(next))
+			return FALSE;
+		const BOOL taken = freerdp_udp_listener_relay(listener, hash, next[1]);
+		if (!taken)
+			closesocket((SOCKET)next[1]);
+		closesocket((SOCKET)next[0]);
+		if (taken)
+			return TRUE;
+		Sleep(5);
+	}
+	return FALSE;
+}
+
+/* The process with the port ends a relay when its connection ends. A datagram that is too large for
+ * a flow does not get to the flow. */
+static BOOL a_relay_ends_on_request(void)
+{
+	const BYTE hash[32] = { 60 };
+	const BYTE unknown[32] = { 61 };
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open_from_socket(listener, (int)server));
+	TEST(freerdp_udp_listener_start(listener));
+
+	int pair[2] = { -1, -1 };
+	TEST(freerdp_udp_socket_pair(pair));
+	rdpUdpFlow* flow = freerdp_udp_flow_new(hash);
+	TEST(flow);
+	TEST(freerdp_udp_flow_set_socket(flow, pair[0]));
+	TEST(freerdp_udp_listener_relay(listener, hash, pair[1]));
+
+	const SOCKET client = open_client(port);
+	TEST(client != INVALID_SOCKET);
+	make_syn(syn, hash);
+	TEST(_send(client, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(WaitForSingleObject(freerdp_udp_flow_get_event(flow), 2000) == WAIT_OBJECT_0);
+	TEST(pump(nullptr, flow, data, &length));
+
+	static BYTE large[UDPFLOW_MAX_DATAGRAM + 1];
+	TEST(_send(client, (const char*)large, sizeof(large), 0) == sizeof(large));
+	TEST(_send(client, "small", 5, 0) == 5);
+	TEST(WaitForSingleObject(freerdp_udp_flow_get_event(flow), 2000) == WAIT_OBJECT_0);
+	TEST(pump(nullptr, flow, data, &length));
+	TEST((length == 5) && (memcmp(data, "small", 5) == 0));
+
+	/* the worker of a relayed flow wakes, and nothing goes to the client */
+	udpflow_wake(flow);
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
+	const DWORD count = udpflow_get_events(flow, events);
+	TEST(count == 2);
+	TEST(WaitForMultipleObjects(count, events, FALSE, 1000) == WAIT_OBJECT_0);
+#if !defined(_WIN32)
+	Sleep(100);
+	char junk[16] = WINPR_C_ARRAY_INIT;
+	TEST(recv((int)client, junk, sizeof(junk), MSG_DONTWAIT) < 0);
+#endif
+
+#if !defined(_WIN32)
+	/* a stream socket does not keep datagrams apart */
+	int stream[2] = { -1, -1 };
+	TEST(socketpair(AF_UNIX, SOCK_STREAM, 0, stream) == 0);
+	TEST(!freerdp_udp_listener_relay(listener, unknown, stream[1]));
+	close(stream[0]);
+	close(stream[1]);
+#endif
+
+	TEST(!freerdp_udp_listener_end_relay(listener, unknown));
+	TEST(freerdp_udp_listener_end_relay(listener, hash));
+	TEST(relay_hash_is_free(listener, hash));
+
+	freerdp_udp_listener_free(listener);
+	freerdp_udp_flow_free(flow);
+	closesocket(client);
+	return TRUE;
+}
+
+#if !defined(_WIN32)
+/* A pair of SOCK_DGRAM sockets shows no end when one end closes. The relay ends when a send to the
+ * closed end fails. */
+static BOOL a_datagram_relay_ends_when_its_peer_is_gone(void)
+{
+	const BYTE hash[32] = { 62 };
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open_from_socket(listener, (int)server));
+	TEST(freerdp_udp_listener_start(listener));
+
+	int pair[2] = { -1, -1 };
+	TEST(socketpair(AF_UNIX, SOCK_DGRAM, 0, pair) == 0);
+	TEST(freerdp_udp_listener_relay(listener, hash, pair[1]));
+	close(pair[0]); /* the other process is gone without the empty message */
+
+	const SOCKET client = open_client(port);
+	TEST(client != INVALID_SOCKET);
+	make_syn(syn, hash);
+	TEST(_send(client, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(relay_hash_is_free(listener, hash));
+
+	freerdp_udp_listener_free(listener);
+	closesocket(client);
+	return TRUE;
+}
+#endif
+
 /* The relay thread serves more than one relay at a time. */
 static BOOL relays_share_one_thread(void)
 {
@@ -867,6 +989,12 @@ int TestUdpListener(int argc, char* argv[])
 		goto out;
 	if (!many_clients_get_to_their_flows())
 		goto out;
+	if (!a_relay_ends_on_request())
+		goto out;
+#if !defined(_WIN32)
+	if (!a_datagram_relay_ends_when_its_peer_is_gone())
+		goto out;
+#endif
 	if (!relays_share_one_thread())
 		goto out;
 #if defined(__linux__)

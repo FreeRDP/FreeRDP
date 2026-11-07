@@ -23,6 +23,7 @@
 #define __APPLE_USE_RFC_3542 // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #endif
 
+#include <errno.h>
 #include <string.h>
 
 #include <winpr/assert.h>
@@ -34,6 +35,11 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/winsock.h>
+
+/* from mstcpip.h, which does not compile with NONAMELESSUNION */
+#if defined(_WIN32) && !defined(SIO_UDP_CONNRESET)
+#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
+#endif
 
 #if !defined(_WIN32)
 #include <netdb.h>
@@ -89,6 +95,11 @@
 /* The first datagram of a flow makes room for this number of datagrams. The room doubles when it
  * is full, up to UDPFLOW_SLOTS. Thus a flow uses memory only for the datagrams that wait. */
 #define UDPFLOW_FIRST_SLOTS 8
+
+/* Relays that one listener serves at most. Each relay keeps a socket of the listener's process. A
+ * process that asks for relays without a stop must not use up the sockets of that process, and
+ * the usual limit of open files is 1024. */
+#define UDPLISTENER_MAX_RELAYS 256
 
 /* The address that a client sent its datagrams to */
 typedef struct
@@ -157,8 +168,10 @@ typedef struct
 typedef struct s_udp_listener_relay
 {
 	struct s_udp_listener_relay* next;
+	freerdp_udp_listener* listener;
 	rdpUdpFlow* flow;
 	SOCKET sockfd;
+	LONG ending; /* the relay thread ends this relay. Use Interlocked functions */
 } udpListenerRelay;
 
 #if defined(_WIN32)
@@ -181,8 +194,10 @@ struct rdp_udp_listener
 
 	/* one thread serves all relays */
 	udpListenerRelay* relays;
+	size_t relayCount;
 	HANDLE relayThread;
 	LONG relayStop;
+	LONG relayFailed;    /* the relay thread stopped on an error. Use Interlocked functions */
 	SOCKET relayWake[2]; /* write to 0 to wake the thread, which waits on 1 */
 
 	HANDLE thread;
@@ -198,16 +213,16 @@ static freerdp_udp_listener* g_listener;
 static CRITICAL_SECTION g_listenerLock;
 static INIT_ONCE g_listenerOnce = INIT_ONCE_STATIC_INIT;
 
-/* A random value for the hash of addresses. Thus a client cannot select addresses that go into
- * the same bucket. */
-static UINT32 g_addressSeed;
+/* A random value for the hashes of the tables. Thus nobody can select keys that go into the same
+ * bucket. */
+static UINT32 g_hashSeed;
 
 WINPR_ATTR_NODISCARD
 static BOOL CALLBACK udplistener_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
                                       WINPR_ATTR_UNUSED PVOID param,
                                       WINPR_ATTR_UNUSED PVOID* context)
 {
-	if (winpr_RAND(&g_addressSeed, sizeof(g_addressSeed)) < 0)
+	if (winpr_RAND(&g_hashSeed, sizeof(g_hashSeed)) < 0)
 		return FALSE;
 	return InitializeCriticalSectionAndSpinCount(&g_listenerLock, 4000);
 }
@@ -236,6 +251,19 @@ static BOOL sockaddr_equal(const struct sockaddr_storage* a, const struct sockad
 	return FALSE;
 }
 
+/* The last step of the hashes of the tables. FNV-1a alone puts keys whose bytes have the same low
+ * bits into the same bucket, whatever the seed is. This step moves all bits into the low bits. */
+WINPR_ATTR_NODISCARD
+static UINT32 udplistener_hash_finish(UINT32 hash)
+{
+	hash ^= hash >> 16;
+	hash *= 0x85ebca6bu;
+	hash ^= hash >> 13;
+	hash *= 0xc2b2ae35u;
+	hash ^= hash >> 16;
+	return hash;
+}
+
 /* The keys of entriesByAddress are struct sockaddr_storage. */
 WINPR_ATTR_NODISCARD
 static UINT32 udplistener_address_hash(const void* key)
@@ -262,7 +290,7 @@ static UINT32 udplistener_address_hash(const void* key)
 	}
 
 	/* FNV-1a, which starts from the random seed */
-	UINT32 hash = 2166136261u ^ g_addressSeed;
+	UINT32 hash = 2166136261u ^ g_hashSeed;
 	for (size_t x = 0; x < length; x++)
 	{
 		hash ^= bytes[x];
@@ -272,7 +300,7 @@ static UINT32 udplistener_address_hash(const void* key)
 	hash *= 16777619u;
 	hash ^= (UINT32)(port >> 8);
 	hash *= 16777619u;
-	return hash;
+	return udplistener_hash_finish(hash);
 }
 
 WINPR_ATTR_NODISCARD
@@ -281,15 +309,23 @@ static BOOL udplistener_address_equal(const void* a, const void* b)
 	return sockaddr_equal(a, b, sizeof(struct sockaddr_storage));
 }
 
-/* The keys of entriesByHash are cookie hashes. A cookie hash is a SHA-256 value. Thus its first
- * bytes are sufficient as the hash. */
+/* The keys of entriesByHash are cookie hashes. For a relay, the process that serves the client
+ * gives the cookie hash, and that process can select all of its bytes. Thus the hash starts from
+ * the random seed, as for addresses. */
 WINPR_ATTR_NODISCARD
 static UINT32 udplistener_cookie_hash_hash(const void* key)
 {
-	WINPR_ASSERT(key);
-	UINT32 hash = 0;
-	memcpy(&hash, key, sizeof(hash));
-	return hash;
+	const BYTE* bytes = key;
+	WINPR_ASSERT(bytes);
+
+	/* FNV-1a, which starts from the random seed */
+	UINT32 hash = 2166136261u ^ g_hashSeed;
+	for (size_t x = 0; x < 32; x++)
+	{
+		hash ^= bytes[x];
+		hash *= 16777619u;
+	}
+	return udplistener_hash_finish(hash);
 }
 
 WINPR_ATTR_NODISCARD
@@ -694,7 +730,23 @@ BOOL udpflow_read(rdpUdpFlow* flow, BYTE* data, size_t* length)
 void udpflow_wake(rdpUdpFlow* flow)
 {
 	WINPR_ASSERT(flow);
+	/* Not the event of a relay socket: outside Windows, WinPR then writes to the socket itself.
+	 * The worker waits on both events, see udpflow_get_events(). */
 	(void)SetEvent(flow->event);
+}
+
+DWORD udpflow_get_events(rdpUdpFlow* flow, HANDLE events[2])
+{
+	WINPR_ASSERT(flow);
+	WINPR_ASSERT(events);
+
+	DWORD count = 0;
+	EnterCriticalSection(&flow->lock);
+	events[count++] = flow->event;
+	if ((flow->relay != INVALID_SOCKET) && !flow->relayClosed)
+		events[count++] = flow->relayEvent;
+	LeaveCriticalSection(&flow->lock);
+	return count;
 }
 
 void udpflow_set_worker(rdpUdpFlow* flow, BOOL (*check)(void* custom),
@@ -799,6 +851,12 @@ static void udplistener_dispatch(freerdp_udp_listener* listener, const udpListen
 		WLog_DBG(TAG, "dropping an empty datagram");
 		return;
 	}
+	/* larger than all that a client sends, and larger than a relay can carry whole */
+	if (length > UDPFLOW_MAX_DATAGRAM)
+	{
+		WLog_DBG(TAG, "dropping a datagram of %" PRIuz " bytes", length);
+		return;
+	}
 
 	udpListenerEntry* entry = HashTable_GetItemValue(listener->entriesByAddress, addr);
 
@@ -870,7 +928,12 @@ BOOL freerdp_udp_listener_check(freerdp_udp_listener* listener)
 			const int rc = udplistener_receive(sock, listener->buffer, sizeof(listener->buffer),
 			                                   &addr, &addrlen, &local);
 			if (rc < 0)
-				break; /* nothing left, or an ICMP error for an earlier datagram */
+			{
+				/* An ICMP error for an earlier reply only tells that one client is gone */
+				if (WSAGetLastError() == WSAECONNRESET)
+					continue;
+				break; /* nothing left */
+			}
 			udplistener_dispatch(listener, sock, &addr, WINPR_ASSERTING_INT_CAST(size_t, addrlen),
 			                     &local, listener->buffer, WINPR_ASSERTING_INT_CAST(size_t, rc));
 		}
@@ -940,6 +1003,14 @@ static BOOL udplistener_add_socket(freerdp_udp_listener* listener, SOCKET sockfd
 	sock->sockfd = sockfd;
 	sock->event = event;
 	udplistener_enable_local_address(sock);
+#if defined(_WIN32)
+	/* Without this, Windows reports an ICMP port unreachable for a reply on the next receive */
+	BOOL report = FALSE;
+	DWORD bytes = 0;
+	if (WSAIoctl(sockfd, SIO_UDP_CONNRESET, &report, sizeof(report), nullptr, 0, &bytes, nullptr,
+	             nullptr) != 0)
+		WLog_DBG(TAG, "cannot turn off SIO_UDP_CONNRESET");
+#endif
 	(void)SetEvent(listener->wake); /* the thread must wait on it */
 	return TRUE;
 }
@@ -977,8 +1048,14 @@ static BOOL udplistener_open_socket(freerdp_udp_listener* listener, const struct
 	if (_setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&rcvbuf, sizeof(rcvbuf)) != 0)
 		WLog_WARN(TAG, "setsockopt() SO_RCVBUF failed");
 
-	if ((_bind(sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen)) != 0) ||
-	    !udplistener_add_socket(listener, sockfd))
+	if (_bind(sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen)) != 0)
+	{
+		/* for example another process uses the port: clients then stay on TCP */
+		WLog_WARN(TAG, "cannot bind a UDP socket for RDP-UDP, error %d", WSAGetLastError());
+		closesocket(sockfd);
+		return FALSE;
+	}
+	if (!udplistener_add_socket(listener, sockfd))
 	{
 		closesocket(sockfd);
 		return FALSE;
@@ -1179,6 +1256,7 @@ static void udplistener_stop_relays(freerdp_udp_listener* listener)
 	EnterCriticalSection(&listener->lock);
 	udpListenerRelay* relays = listener->relays;
 	listener->relays = nullptr;
+	listener->relayCount = 0;
 	LeaveCriticalSection(&listener->lock);
 	while (relays)
 	{
@@ -1283,6 +1361,20 @@ BOOL freerdp_udp_socket_pair(int fds[2])
 		if (_connect(pair[x], (const struct sockaddr*)&addr[1 - x], sizeof(addr[1 - x])) != 0)
 			goto fail;
 	}
+	/* Before connect, another process could send to the ports. Drop what came in that time. */
+	for (size_t x = 0; x < 2; x++)
+	{
+		u_long nonBlocking = 1;
+		if (_ioctlsocket(pair[x], FIONBIO, &nonBlocking) != 0)
+			goto fail;
+		char drop[64] = WINPR_C_ARRAY_INIT;
+		while ((_recv(pair[x], drop, sizeof(drop), 0) >= 0) || (WSAGetLastError() == WSAEMSGSIZE))
+		{
+		}
+		nonBlocking = 0;
+		if (_ioctlsocket(pair[x], FIONBIO, &nonBlocking) != 0)
+			goto fail;
+	}
 #else
 	/* Some systems, for example macOS, have no SOCK_SEQPACKET for AF_UNIX. A pair of SOCK_DGRAM
 	 * sockets also keeps the datagrams apart. It shows no end when the other end closes, but both
@@ -1317,14 +1409,36 @@ fail:
 #endif
 }
 
+static void udplistener_wake_relays(freerdp_udp_listener* listener)
+{
+	WINPR_ASSERT(listener);
+	if (_send(listener->relayWake[0], "", 0, MSG_NOSIGNAL) < 0)
+		WLog_DBG(TAG, "cannot wake the relay thread");
+}
+
 /* Runs with the listener locked, see FreeRDP_UdpFlowReceiveFn. */
 WINPR_ATTR_NODISCARD
 static BOOL udplistener_relay_receive(void* custom, const BYTE* data, size_t length)
 {
-	const udpListenerRelay* relay = custom;
+	udpListenerRelay* relay = custom;
 	WINPR_ASSERT(relay);
-	return _send(relay->sockfd, (const char*)data, WINPR_ASSERTING_INT_CAST(int, length),
-	             MSG_DONTWAIT | MSG_NOSIGNAL) >= 0;
+	if (_send(relay->sockfd, (const char*)data, WINPR_ASSERTING_INT_CAST(int, length),
+	          MSG_DONTWAIT | MSG_NOSIGNAL) >= 0)
+		return TRUE;
+
+	/* A SOCK_DGRAM pair shows no end when the other end closes. Only the send fails. */
+#if defined(_WIN32)
+	const int error = WSAGetLastError();
+	const BOOL gone =
+	    (error == WSAECONNRESET) || (error == WSAECONNREFUSED) || (error == WSAENOTCONN);
+#else
+	const int error = errno;
+	const BOOL gone =
+	    (error == ECONNREFUSED) || (error == ENOTCONN) || (error == EPIPE) || (error == ECONNRESET);
+#endif
+	if (gone && (InterlockedCompareExchange(&relay->ending, 1, 0) == 0))
+		udplistener_wake_relays(relay->listener);
+	return FALSE;
 }
 
 /* Sends to the client what waits on the socket of a relay.
@@ -1365,7 +1479,10 @@ static void udplistener_end_relay(freerdp_udp_listener* listener, udpListenerRel
 	while (*link && (*link != relay))
 		link = &(*link)->next;
 	if (*link)
+	{
 		*link = relay->next;
+		listener->relayCount--;
+	}
 	LeaveCriticalSection(&listener->lock);
 	udplistener_free_relay(listener, relay);
 }
@@ -1420,6 +1537,8 @@ static DWORD WINAPI udplistener_relay_thread(LPVOID arg)
 				polled = newPolled;
 			if (!newFds || !newPolled)
 			{
+				/* under the lock, see freerdp_udp_listener_relay() */
+				InterlockedIncrement(&listener->relayFailed);
 				LeaveCriticalSection(&listener->lock);
 				WLog_ERR(TAG, "the relays stop: no memory");
 				break;
@@ -1441,6 +1560,10 @@ static DWORD WINAPI udplistener_relay_thread(LPVOID arg)
 			if (WSAGetLastError() == WSAEINTR)
 				continue;
 			WLog_ERR(TAG, "the relays stop: poll failed");
+			/* under the lock, see freerdp_udp_listener_relay() */
+			EnterCriticalSection(&listener->lock);
+			InterlockedIncrement(&listener->relayFailed);
+			LeaveCriticalSection(&listener->lock);
 			break;
 		}
 
@@ -1453,8 +1576,25 @@ static DWORD WINAPI udplistener_relay_thread(LPVOID arg)
 		}
 		for (size_t x = 1; x < used; x++)
 		{
-			if ((fds[x].revents != 0) && !udplistener_relay_forward(polled[x]))
-				udplistener_end_relay(listener, polled[x]);
+			udpListenerRelay* relay = polled[x];
+			const BOOL ending = (InterlockedCompareExchange(&relay->ending, 0, 0) != 0);
+			if (ending || ((fds[x].revents != 0) && !udplistener_relay_forward(relay)))
+				udplistener_end_relay(listener, relay);
+		}
+	}
+
+	/* After an error, nothing serves the relays any more. End them, so that their sockets close
+	 * and the other processes see the end. */
+	if (InterlockedCompareExchange(&listener->relayFailed, 0, 0) != 0)
+	{
+		while (TRUE)
+		{
+			EnterCriticalSection(&listener->lock);
+			udpListenerRelay* relay = listener->relays;
+			LeaveCriticalSection(&listener->lock);
+			if (!relay)
+				break;
+			udplistener_end_relay(listener, relay);
 		}
 	}
 
@@ -1505,16 +1645,17 @@ BOOL freerdp_udp_listener_relay(freerdp_udp_listener* listener, const BYTE cooki
 	udpListenerRelay* relay = calloc(1, sizeof(udpListenerRelay));
 	if (!relay)
 		return FALSE;
+	relay->listener = listener;
 	relay->sockfd = (SOCKET)fd;
 	relay->flow = freerdp_udp_flow_new(cookieHash);
 	if (!relay->flow)
 		goto fail;
 
-	/* one datagram per message, for all types of fd, because fd can come from another process */
+	/* one datagram per message, also for an fd from another process */
 	int type = 0;
 	int typeLength = sizeof(type);
 	if ((_getsockopt(relay->sockfd, SOL_SOCKET, SO_TYPE, (char*)&type, &typeLength) != 0) ||
-	    (type == SOCK_STREAM))
+	    ((type != SOCK_SEQPACKET) && (type != SOCK_DGRAM)))
 		goto fail;
 
 	/* the relay thread reads all sockets that have data, and does not wait on one */
@@ -1523,23 +1664,50 @@ BOOL freerdp_udp_listener_relay(freerdp_udp_listener* listener, const BYTE cooki
 		goto fail;
 
 	freerdp_udp_flow_set_receive(relay->flow, udplistener_relay_receive, relay);
-	if (!udplistener_expect(listener, relay->flow, INVALID_SOCKET))
-		goto fail;
 
+	/* The place of the relay and its thread come before the hash is known to the listener.
+	 * Thus no datagram goes to fd when this function fails. */
 	EnterCriticalSection(&listener->lock);
-	const BOOL started = udplistener_start_relays(listener);
-	if (started)
+	const BOOL reserved = (listener->relayCount < UDPLISTENER_MAX_RELAYS) &&
+	                      (InterlockedCompareExchange(&listener->relayFailed, 0, 0) == 0) &&
+	                      udplistener_start_relays(listener);
+	if (reserved)
+		listener->relayCount++;
+	LeaveCriticalSection(&listener->lock);
+	if (!reserved)
+	{
+		if (InterlockedCompareExchange(&listener->relayFailed, 0, 0) != 0)
+			WLog_ERR(TAG, "the relay thread stopped on an error, no more relays");
+		else
+			WLog_WARN(TAG, "cannot serve one more relay");
+		goto fail;
+	}
+
+	if (!udplistener_expect(listener, relay->flow, INVALID_SOCKET))
+	{
+		EnterCriticalSection(&listener->lock);
+		listener->relayCount--;
+		LeaveCriticalSection(&listener->lock);
+		goto fail;
+	}
+
+	/* The relay thread sets relayFailed and then ends all relays, both under the lock. A relay
+	 * that is linked before relayFailed ends with the others, and no relay is linked after it. */
+	EnterCriticalSection(&listener->lock);
+	const BOOL linked = (InterlockedCompareExchange(&listener->relayFailed, 0, 0) == 0);
+	if (linked)
 	{
 		relay->next = listener->relays;
 		listener->relays = relay;
 	}
+	else
+		listener->relayCount--;
 	LeaveCriticalSection(&listener->lock);
-	if (!started)
+	if (!linked)
 		goto fail;
 
 	/* the relay thread must also wait on this socket */
-	if (_send(listener->relayWake[0], "", 0, MSG_NOSIGNAL) < 0)
-		WLog_DBG(TAG, "cannot wake the relay thread");
+	udplistener_wake_relays(listener);
 	return TRUE;
 
 fail:
@@ -1547,6 +1715,28 @@ fail:
 	freerdp_udp_flow_free(relay->flow);
 	free(relay);
 	return FALSE;
+}
+
+BOOL freerdp_udp_listener_end_relay(freerdp_udp_listener* listener, const BYTE cookieHash[32])
+{
+	WINPR_ASSERT(listener);
+	WINPR_ASSERT(cookieHash);
+
+	BOOL found = FALSE;
+	EnterCriticalSection(&listener->lock);
+	for (udpListenerRelay* relay = listener->relays; relay && !found; relay = relay->next)
+	{
+		if (memcmp(relay->flow->cookieHash, cookieHash, sizeof(relay->flow->cookieHash)) == 0)
+		{
+			/* only the relay thread ends a relay */
+			InterlockedIncrement(&relay->ending);
+			found = TRUE;
+		}
+	}
+	if (found)
+		udplistener_wake_relays(listener);
+	LeaveCriticalSection(&listener->lock);
+	return found;
 }
 
 void freerdp_udp_listener_forget(freerdp_udp_listener* listener, rdpUdpFlow* flow)
