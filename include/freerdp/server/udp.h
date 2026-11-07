@@ -95,19 +95,23 @@ extern "C"
 		 *  carries cookieHash. This hook runs before the peer sends the offer, so no SYN can come
 		 *  first. Because of this, the hook must wait until the thing it asks for is in place.
 		 *  Without this hook the process wide listener does this work, and that listener serves one
-		 *  process only. \b flow belongs to the peer and stays valid until the link is back at
-		 *  FREERDP_UDP_LINK_NONE.
+		 *  process only. \b flow belongs to the peer and stays valid until LinkChanged reports
+		 *  FREERDP_UDP_LINK_NONE and returns. The peer frees the flow after this. When the peer
+		 *  disconnects, LinkChanged also reports FREERDP_UDP_LINK_NONE. Thus call Disconnect of
+		 *  the peer before you free its context.
 		 *  @return \b FALSE to stay on TCP */
 		WINPR_ATTR_NODISCARD BOOL (*OfferTunnel)(void* custom, rdpUdpFlow* flow,
 		                                         const BYTE cookieHash[32]);
-		/** The link reached state. */
+		/** The link reached state. At FREERDP_UDP_LINK_NONE, stop all use of the flow before
+		 *  this hook returns. */
 		void (*LinkChanged)(void* custom, FreeRDP_UdpLinkState state);
 		/** The tunnel has room again after freerdp_peer's IsWriteBlocked reported it had none. */
 		void (*WriteUnblocked)(void* custom);
 		/** \b TRUE: no worker thread for this peer. The application runs the tunnel with
 		 *  freerdp_udp_flow_get_event(), freerdp_udp_flow_get_timeout() and
 		 *  freerdp_udp_flow_check(). It must do this while it waits for all other things, because
-		 *  otherwise nobody acknowledges or resends. */
+		 *  otherwise nobody acknowledges or resends. A thread other than the thread of the peer
+		 *  must stop this before LinkChanged with FREERDP_UDP_LINK_NONE returns. */
 		BOOL ManualWorker;
 	} FreeRDP_UdpPeerCallbacks;
 
@@ -146,6 +150,8 @@ extern "C"
 	typedef BOOL (*FreeRDP_UdpFlowSendFn)(void* custom, const BYTE* data, size_t length);
 
 	/** Frees a flow that freerdp_udp_flow_new() made. A flow of a peer belongs to that peer.
+	 *  Do not free a flow and its listener at the same time on two threads. Free the flows
+	 *  first, or free both on one thread.
 	 *  @since version 3.33.0 */
 	FREERDP_API void freerdp_udp_flow_free(rdpUdpFlow* flow);
 
@@ -218,9 +224,10 @@ extern "C"
 	FREERDP_API freerdp_udp_listener* freerdp_udp_listener_new(void);
 
 	/** Binds a socket per address family.
-	 *  @param address the address to listen on, \b nullptr for any. A server with several addresses
-	 *  must open each address. Replies on an unbound socket leave from the address that the routing
-	 *  table selects. That address can be different from the address that the client sent to.
+	 *  @param address the address to listen on, \b nullptr for any. On any address, the replies to
+	 *  a client go out from the address that the client sent to. This is not available on Windows.
+	 *  There, the routing table selects the address of a reply, thus a server with more than one
+	 *  address must open each address.
 	 *  @since version 3.33.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_open(freerdp_udp_listener* listener, const char* address,
@@ -256,17 +263,20 @@ extern "C"
 	FREERDP_API BOOL freerdp_udp_listener_expect(freerdp_udp_listener* listener, rdpUdpFlow* flow);
 
 	/** Makes a pair of connected datagram sockets for freerdp_udp_flow_set_socket() and
-	 *  freerdp_udp_listener_relay(). This is a socketpair() of type SOCK_SEQPACKET, or on Windows
-	 *  two connected loopback sockets.
+	 *  freerdp_udp_listener_relay(). This is a socketpair() of type SOCK_SEQPACKET, of type
+	 *  SOCK_DGRAM where the system has no SOCK_SEQPACKET (for example macOS), or on Windows two
+	 *  connected loopback sockets.
 	 *  @since version 3.33.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_socket_pair(int fds[2]);
 
-	/** Serves a client through a socket, on a thread of its own per relay. What the client whose
-	 *  SYN carries cookieHash sends goes to fd, and what arrives on fd goes to that client. A
-	 *  datagram that does not fit into the buffer of fd is lost, and resent like any other
-	 *  datagram. The relay takes ownership of fd. It ends when the other end is freed, or closes.
-	 *  Thread safe.
+	/** Serves a client through a socket. One thread of the listener serves all relays. What the
+	 *  client whose SYN carries cookieHash sends goes to fd, and what arrives on fd goes to that
+	 *  client. A datagram that does not fit into the buffer of fd is lost, and resent like any
+	 *  other datagram. The relay takes ownership of fd. It ends when the other end is freed, or
+	 *  closes. Thread safe. The listener cannot examine cookieHash, because the cookie is in the
+	 *  other process. Thus give cookieHash only from a process that you trust to serve this
+	 *  client. The first relay or flow for a cookie hash keeps it.
 	 *  @param fd from freerdp_udp_socket_pair(), freerdp_udp_flow_set_socket() has the other end
 	 *  @return \b FALSE if the listener already expects cookieHash. The caller then keeps fd.
 	 *  @since version 3.33.0 */

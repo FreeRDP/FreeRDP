@@ -186,6 +186,90 @@ static BOOL sorts_by_cookie_hash_then_address(void)
 	return TRUE;
 }
 
+/* To forget a flow on a listener that does not have it changes nothing. The flow stays with its
+ * own listener until it is freed, and then it is gone from that listener. */
+static BOOL forget_on_another_listener_changes_nothing(void)
+{
+	const BYTE hash[32] = { 50 };
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* a = freerdp_udp_listener_new();
+	freerdp_udp_listener* b = freerdp_udp_listener_new();
+	TEST(a && b);
+	TEST(freerdp_udp_listener_open_from_socket(a, (int)server));
+	rdpUdpFlow* flow = freerdp_udp_flow_new(hash);
+	TEST(flow);
+	TEST(freerdp_udp_listener_expect(a, flow));
+
+	const SOCKET client = open_client(port);
+	TEST(client != INVALID_SOCKET);
+	make_syn(syn, hash);
+	TEST(_send(client, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(pump(a, flow, data, &length));
+
+	freerdp_udp_listener_forget(b, flow);
+	TEST(!freerdp_udp_listener_expect(b, flow)); /* the flow is still the flow of a */
+	TEST(_send(client, "abc", 3, 0) == 3);
+	TEST(pump(a, flow, data, &length));
+	TEST((length == 3) && (memcmp(data, "abc", 3) == 0));
+
+	/* freed, the flow is gone from a: its hash can wait again, and its client gets nowhere */
+	freerdp_udp_flow_free(flow);
+	TEST(_send(client, "def", 3, 0) == 3);
+	Sleep(20);
+	TEST(freerdp_udp_listener_check(a));
+	rdpUdpFlow* again = freerdp_udp_flow_new(hash);
+	TEST(again);
+	TEST(freerdp_udp_listener_expect(a, again));
+
+	freerdp_udp_flow_free(again);
+	freerdp_udp_listener_free(a);
+	freerdp_udp_listener_free(b);
+	closesocket(client);
+	return TRUE;
+}
+
+/* A SYN has padding to its MTU. A short SYN with a known hash claims nothing, so the client of the
+ * hash still gets its flow. */
+static BOOL a_short_syn_claims_nothing(void)
+{
+	const BYTE hash[32] = { 40 };
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open_from_socket(listener, (int)server));
+	rdpUdpFlow* flow = freerdp_udp_flow_new(hash);
+	TEST(flow);
+	TEST(freerdp_udp_listener_expect(listener, flow));
+
+	const SOCKET spoofer = open_client(port);
+	const SOCKET client = open_client(port);
+	TEST((spoofer != INVALID_SOCKET) && (client != INVALID_SOCKET));
+	make_syn(syn, hash);
+	TEST(_send(spoofer, (const char*)syn, 64, 0) == 64);
+	TEST(_send(client, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(pump(listener, flow, data, &length));
+	TEST(length == sizeof(syn));
+	TEST(!udpflow_read(flow, data, &length));
+
+	freerdp_udp_flow_free(flow);
+	freerdp_udp_listener_free(listener);
+	closesocket(spoofer);
+	closesocket(client);
+	return TRUE;
+}
+
 static BOOL a_bound_address_does_not_take_another_hash(void)
 {
 	BYTE hashA[32] = { 1 };
@@ -470,6 +554,192 @@ static BOOL a_relay_carries_a_client_both_ways(void)
 	return TRUE;
 }
 
+/* Many clients at a time: each one gets to its own flow, by its hash and then by its address. */
+static BOOL many_clients_get_to_their_flows(void)
+{
+	enum
+	{
+		CLIENTS = 64
+	};
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+	rdpUdpFlow* flows[CLIENTS] = WINPR_C_ARRAY_INIT;
+	SOCKET clients[CLIENTS] = WINPR_C_ARRAY_INIT;
+
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open_from_socket(listener, (int)server));
+
+	for (size_t x = 0; x < CLIENTS; x++)
+	{
+		BYTE hash[32] = { 0x40, (BYTE)x };
+		flows[x] = freerdp_udp_flow_new(hash);
+		TEST(flows[x]);
+		TEST(freerdp_udp_listener_expect(listener, flows[x]));
+		clients[x] = open_client(port);
+		TEST(clients[x] != INVALID_SOCKET);
+	}
+
+	/* the SYNs in the opposite sequence, then one datagram from each client */
+	for (size_t x = CLIENTS; x > 0; x--)
+	{
+		const BYTE hash[32] = { 0x40, (BYTE)(x - 1) };
+		make_syn(syn, hash);
+		TEST(_send(clients[x - 1], (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+		TEST(pump(listener, flows[x - 1], data, &length));
+		TEST(length == sizeof(syn));
+	}
+	for (size_t x = 0; x < CLIENTS; x++)
+	{
+		const BYTE id = (BYTE)x;
+		TEST(_send(clients[x], (const char*)&id, 1, 0) == 1);
+	}
+	for (size_t x = 0; x < CLIENTS; x++)
+	{
+		TEST(pump(listener, flows[x], data, &length));
+		TEST((length == 1) && (data[0] == (BYTE)x));
+	}
+
+	/* a flow that goes away takes its address with it */
+	freerdp_udp_flow_free(flows[0]);
+	flows[0] = nullptr;
+	TEST(_send(clients[0], "x", 1, 0) == 1);
+	TEST(_send(clients[1], "y", 1, 0) == 1);
+	TEST(pump(listener, flows[1], data, &length));
+	TEST((length == 1) && (data[0] == 'y'));
+
+	freerdp_udp_listener_free(listener);
+	for (size_t x = 0; x < CLIENTS; x++)
+	{
+		freerdp_udp_flow_free(flows[x]);
+		closesocket(clients[x]);
+	}
+	return TRUE;
+}
+
+/* The relay thread serves more than one relay at a time. */
+static BOOL relays_share_one_thread(void)
+{
+	const BYTE hashA[32] = { 20 };
+	const BYTE hashB[32] = { 21 };
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open_from_socket(listener, (int)server));
+	TEST(freerdp_udp_listener_start(listener));
+
+	int pairA[2] = { -1, -1 };
+	int pairB[2] = { -1, -1 };
+	TEST(freerdp_udp_socket_pair(pairA));
+	TEST(freerdp_udp_socket_pair(pairB));
+	rdpUdpFlow* a = freerdp_udp_flow_new(hashA);
+	rdpUdpFlow* b = freerdp_udp_flow_new(hashB);
+	TEST(a && b);
+	TEST(freerdp_udp_flow_set_socket(a, pairA[0]));
+	TEST(freerdp_udp_flow_set_socket(b, pairB[0]));
+	TEST(freerdp_udp_listener_relay(listener, hashA, pairA[1]));
+	TEST(freerdp_udp_listener_relay(listener, hashB, pairB[1]));
+
+	const SOCKET clientA = open_client(port);
+	const SOCKET clientB = open_client(port);
+	TEST((clientA != INVALID_SOCKET) && (clientB != INVALID_SOCKET));
+	make_syn(syn, hashA);
+	TEST(_send(clientA, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	make_syn(syn, hashB);
+	TEST(_send(clientB, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(WaitForSingleObject(freerdp_udp_flow_get_event(a), 2000) == WAIT_OBJECT_0);
+	TEST(pump(nullptr, a, data, &length));
+	TEST(WaitForSingleObject(freerdp_udp_flow_get_event(b), 2000) == WAIT_OBJECT_0);
+	TEST(pump(nullptr, b, data, &length));
+
+	/* An empty datagram looks like the end of the relay. It must not get through. */
+	TEST(_send(clientA, "", 0, 0) == 0);
+	TEST(_send(clientA, "after", 5, 0) == 5);
+	TEST(WaitForSingleObject(freerdp_udp_flow_get_event(a), 2000) == WAIT_OBJECT_0);
+	TEST(pump(nullptr, a, data, &length));
+	TEST((length == 5) && (memcmp(data, "after", 5) == 0));
+
+	TEST(freerdp_udp_flow_send(b, (const BYTE*)"to b", 4));
+	TEST(freerdp_udp_flow_send(a, (const BYTE*)"to a", 4));
+	char reply[8] = WINPR_C_ARRAY_INIT;
+	TEST(_recv(clientA, reply, sizeof(reply), 0) == 4);
+	TEST(memcmp(reply, "to a", 4) == 0);
+	TEST(_recv(clientB, reply, sizeof(reply), 0) == 4);
+	TEST(memcmp(reply, "to b", 4) == 0);
+
+	/* one relay ends, the other one continues */
+	freerdp_udp_flow_free(a);
+	Sleep(50);
+	TEST(freerdp_udp_flow_send(b, (const BYTE*)"more", 4));
+	TEST(_recv(clientB, reply, sizeof(reply), 0) == 4);
+	TEST(memcmp(reply, "more", 4) == 0);
+
+	freerdp_udp_listener_free(listener);
+	freerdp_udp_flow_free(b);
+	closesocket(clientA);
+	closesocket(clientB);
+	return TRUE;
+}
+
+#if defined(__linux__)
+/* On any address, the reply goes out from the address that the client sent to. All of 127.0.0.0/8
+ * is local on Linux, but the route to the client selects 127.0.0.1. */
+static BOOL a_reply_comes_from_the_address_of_the_request(void)
+{
+	const BYTE hash[32] = { 30 };
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+
+	/* a free port on any address */
+	UINT16 port = 0;
+	const SOCKET probe = open_server(&port);
+	TEST(probe != INVALID_SOCKET);
+	closesocket(probe);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open(listener, "0.0.0.0", port));
+
+	rdpUdpFlow* flow = freerdp_udp_flow_new(hash);
+	TEST(flow);
+	TEST(freerdp_udp_listener_expect(listener, flow));
+
+	const SOCKET client = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	TEST(client != INVALID_SOCKET);
+	struct sockaddr_in server = { 0 };
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = htonl(INADDR_LOOPBACK + 1);
+	server.sin_port = htons(port);
+	make_syn(syn, hash);
+	TEST(_sendto(client, (const char*)syn, sizeof(syn), 0, (const struct sockaddr*)&server,
+	             sizeof(server)) == sizeof(syn));
+	TEST(pump(listener, flow, data, &length));
+
+	TEST(freerdp_udp_flow_send(flow, (const BYTE*)"reply", 5));
+	char reply[8] = WINPR_C_ARRAY_INIT;
+	struct sockaddr_in from = { 0 };
+	socklen_t fromLength = sizeof(from);
+	TEST(_recvfrom(client, reply, sizeof(reply), 0, (struct sockaddr*)&from, &fromLength) == 5);
+	TEST(from.sin_addr.s_addr == htonl(INADDR_LOOPBACK + 1));
+	TEST(from.sin_port == htons(port));
+
+	freerdp_udp_flow_free(flow);
+	freerdp_udp_listener_free(listener);
+	closesocket(client);
+	return TRUE;
+}
+#endif
+
 #if !defined(_WIN32)
 /* The other process of a server that serves its clients outside the process with the port. It has a
  * flow on one end of the pair, as OfferTunnel configures it. */
@@ -504,7 +774,7 @@ static BOOL another_process_serves_a_client_through_a_relay(void)
 	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	int pair[2] = { -1, -1 };
-	TEST(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, pair) == 0);
+	TEST(freerdp_udp_socket_pair(pair));
 	const pid_t child = fork();
 	TEST(child >= 0);
 	if (child == 0)
@@ -525,7 +795,7 @@ static BOOL another_process_serves_a_client_through_a_relay(void)
 
 	/* a second process cannot take the client of the first, and keeps its socket */
 	int other[2] = { -1, -1 };
-	TEST(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, other) == 0);
+	TEST(freerdp_udp_socket_pair(other));
 	TEST(!freerdp_udp_listener_relay(listener, hash, other[0]));
 	TEST(freerdp_udp_listener_relay(listener, otherHash, other[0]));
 
@@ -549,7 +819,7 @@ static BOOL another_process_serves_a_client_through_a_relay(void)
 	for (size_t x = 0; !free_again && (x < 200); x++)
 	{
 		int next[2] = { -1, -1 };
-		TEST(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, next) == 0);
+		TEST(freerdp_udp_socket_pair(next));
 		free_again = freerdp_udp_listener_relay(listener, hash, next[0]);
 		if (!free_again)
 		{
@@ -581,6 +851,10 @@ int TestUdpListener(int argc, char* argv[])
 		goto out;
 	if (!a_bound_address_does_not_take_another_hash())
 		goto out;
+	if (!forget_on_another_listener_changes_nothing())
+		goto out;
+	if (!a_short_syn_claims_nothing())
+		goto out;
 	if (!a_full_flow_loses_datagrams_only())
 		goto out;
 	if (!a_flow_can_send_any_way())
@@ -591,6 +865,14 @@ int TestUdpListener(int argc, char* argv[])
 		goto out;
 	if (!a_relay_carries_a_client_both_ways())
 		goto out;
+	if (!many_clients_get_to_their_flows())
+		goto out;
+	if (!relays_share_one_thread())
+		goto out;
+#if defined(__linux__)
+	if (!a_reply_comes_from_the_address_of_the_request())
+		goto out;
+#endif
 #if !defined(_WIN32)
 	if (!another_process_serves_a_client_through_a_relay())
 		goto out;

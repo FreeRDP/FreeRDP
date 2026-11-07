@@ -22,6 +22,14 @@
  * come before each datagram. A SYN can claim a flow.
  * - a Soft-Sync Response, and tunnel data before and after it */
 
+/* udplistener.c needs these before the first system header */
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#endif
+#if defined(__APPLE__) && !defined(__APPLE_USE_RFC_3542)
+#define __APPLE_USE_RFC_3542 // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#endif
+
 #include <stdint.h>
 #include <string.h>
 
@@ -158,15 +166,16 @@ static void fuzz_listener(const uint8_t* data, size_t size)
 	size_t offset = 0;
 	while (size - offset >= 3)
 	{
-		struct sockaddr_in addr = { 0 };
-		addr.sin_family = AF_INET;
-		addr.sin_port = (u_short)(data[offset] % 3);
+		struct sockaddr_storage addr = WINPR_C_ARRAY_INIT;
+		struct sockaddr_in* in = (struct sockaddr_in*)&addr;
+		in->sin_family = AF_INET;
+		in->sin_port = (u_short)(data[offset] % 3);
+		const udpLocalAddress local = WINPR_C_ARRAY_INIT;
 		const size_t length = ((size_t)data[offset + 1] << 8) | data[offset + 2];
 		offset += 3;
 		if (length > size - offset)
 			break;
-		udplistener_dispatch(listener, &sock, (const struct sockaddr*)&addr, sizeof(addr),
-		                     &data[offset], length);
+		udplistener_dispatch(listener, &sock, &addr, sizeof(*in), &local, &data[offset], length);
 		offset += length;
 
 		BYTE datagram[UDPFLOW_MAX_DATAGRAM];
