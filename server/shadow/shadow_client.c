@@ -2794,6 +2794,7 @@ static DWORD WINAPI shadow_client_sound_thread(LPVOID arg)
 	wMessageQueue* queue = client->SoundQueue;
 	WINPR_ASSERT(queue);
 	BOOL warned = FALSE;
+	BOOL broken = FALSE;
 
 	while (MessageQueue_Wait(queue))
 	{
@@ -2809,6 +2810,13 @@ static DWORD WINAPI shadow_client_sound_thread(LPVOID arg)
 				break;
 			}
 
+			/* the connection is gone: drop the sound, the client thread ends the client */
+			if (broken)
+			{
+				shadow_client_free_queued_message(&message);
+				continue;
+			}
+
 			/* frees the message */
 			const int rc = shadow_client_subsystem_process_message(client, &message);
 			if ((rc < 0) && !warned)
@@ -2819,8 +2827,14 @@ static DWORD WINAPI shadow_client_sound_thread(LPVOID arg)
 			queued = TRUE;
 		}
 
-		if (queued && !shadow_client_drain_channels(client, FALSE))
-			WLog_DBG(TAG, "sound: the channel data was not sent");
+		/* A failed drain means the connection is gone. Draining on held the channel lock and
+		 * wrote every chunk again into the dead transport, and the client thread waited for
+		 * the lock instead of ending the client. */
+		if (queued && !broken && !shadow_client_drain_channels(client, FALSE))
+		{
+			broken = TRUE;
+			WLog_DBG(TAG, "sound: the channel data was not sent, no more sound for this client");
+		}
 
 		if (quit)
 			break;
