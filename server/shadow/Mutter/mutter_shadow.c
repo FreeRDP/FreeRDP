@@ -1199,10 +1199,12 @@ static void mutter_on_process(void* data)
 	if (!painted)
 		return;
 
-	ArrayList_Lock(server->clients);
+	/* Not under the clients list lock: the frame update waits until every client has encoded
+	 * the frame (an AV2 frame takes 40 to 120 ms, a key frame up to 800 ms), and the sound
+	 * thread needs the lock for each chunk it hands to the clients; it stalled, and PipeWire
+	 * dropped the sound. The update has a subscriber list of its own (see win_shadow.c). */
 	if (ArrayList_Count(server->clients) > 0)
 		shadow_subsystem_frame_update(&mutter->common);
-	ArrayList_Unlock(server->clients);
 
 	EnterCriticalSection(&surface->lock);
 	region16_clear(&surface->invalidRegion);
@@ -2039,10 +2041,9 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 		WLog_ERR(TAG, "cannot mark the screen changed");
 	LeaveCriticalSection(&surface->lock);
 
-	ArrayList_Lock(server->clients);
+	/* not under the clients list lock, as in mutter_on_process */
 	if (ArrayList_Count(server->clients) > 0)
 		shadow_subsystem_frame_update(&mutter->common);
-	ArrayList_Unlock(server->clients);
 
 	EnterCriticalSection(&surface->lock);
 	region16_clear(&surface->invalidRegion);
