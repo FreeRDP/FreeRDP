@@ -24,6 +24,7 @@
 #include <winpr/assert.h>
 #include <winpr/platform.h>
 #include <winpr/cast.h>
+#include <winpr/string.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
@@ -844,6 +845,7 @@ bool SdlRail::init(RailClientContext* rail)
 
 	rail->custom = this;
 	rail->ServerExecuteResult = SdlRail::server_execute_result;
+	rail->ServerGetAppIdResponse = SdlRail::server_app_id;
 	/* ServerSystemParam not implemented: the server only sends screensaver state here. */
 	rail->ServerLocalMoveSize = SdlRail::server_local_move_size;
 	rail->ServerMinMaxInfo = SdlRail::server_min_max_info;
@@ -923,6 +925,27 @@ void SdlRail::registerUpdateCallbacks(rdpUpdate* update)
 }
 
 /* --- server callbacks --- */
+
+UINT SdlRail::server_app_id(RailClientContext* context, const RAIL_GET_APPID_RESP_ORDER* response)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(response);
+	auto rail = static_cast<SdlRail*>(context->custom);
+	if (!rail)
+		return CHANNEL_RC_OK; /* late order after disconnect */
+
+	char* appId = ConvertWCharToUtf8Alloc(response->applicationId, nullptr);
+	if (!appId)
+		return CHANNEL_RC_NO_MEMORY;
+	{
+		std::unique_lock lock(rail->_windowsLock);
+		if (auto window = rail->getWindow(response->windowId))
+			window->setAppId(appId);
+	}
+	free(appId);
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+	return CHANNEL_RC_OK;
+}
 
 UINT SdlRail::server_execute_result(RailClientContext* context,
                                     const RAIL_EXEC_RESULT_ORDER* execResult)
@@ -1695,6 +1718,15 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		if (marginsSet(sm))
 			appWindow->setResizeMargins(sm.x, sm.y, sm.w, sm.h);
 		/* The SDL window is created lazily on the main thread (reconcile), as SDL requires. */
+
+		/* Ask for the application ID, the answer is used as the window's app_id. */
+		if (rail->_rail && rail->_rail->ClientGetAppIdRequest)
+		{
+			const RAIL_GET_APPID_REQ_ORDER request = { orderInfo->windowId };
+			if (rail->_rail->ClientGetAppIdRequest(rail->_rail, &request) != CHANNEL_RC_OK)
+				WLog_WARN(TAG, "Get AppID request failed for window 0x%08" PRIx32,
+				          orderInfo->windowId);
+		}
 	}
 
 	if (!appWindow)

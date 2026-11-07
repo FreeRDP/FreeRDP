@@ -30,3 +30,6 @@ bool sdl_wayland_begin_move(SDL_Window* window);
 
 /* Begin a compositor-interactive resize; `xdgEdge` is an XDG_TOPLEVEL_RESIZE_EDGE_* value. */
 bool sdl_wayland_begin_resize(SDL_Window* window, uint32_t xdgEdge);
+
+/* Set the xdg_toplevel app_id, so compositors can tell apart the applications of a RemoteApp. */
+bool sdl_wayland_set_app_id(SDL_Window* window, const char* appId);
