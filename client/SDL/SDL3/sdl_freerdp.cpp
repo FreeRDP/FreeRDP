@@ -573,7 +573,10 @@ static void SDLCALL rdp_file_cb(void* userdata, const char* const* filelist,
 
 	bool running = true;
 	if (!SDL_Init(flags))
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init failed: %s", SDL_GetError());
 		return {};
+	}
 
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING,
@@ -702,7 +705,10 @@ int main(int argc, char* argv[])
 
 	/* Basic SDL initialization */
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
 		return -1;
+	}
 
 #if defined(__APPLE__)
 	/* macOS has no num lock state, SDL_KMOD_NUM always starts off and we would turn num lock

@@ -57,9 +57,14 @@ typedef struct
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
 
-int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
+int sdl_list_monitors(SdlContext* sdl)
 {
-	SDL_Init(SDL_INIT_VIDEO);
+	WINPR_ASSERT(sdl);
+	if (!SDL_Init(SDL_INIT_VIDEO))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
+		return -1;
+	}
 
 	int nmonitors = 0;
 	auto ids = SDL_GetDisplays(&nmonitors);
