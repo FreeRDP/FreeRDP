@@ -62,7 +62,11 @@ void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
-		xf_rail_init(xfc, (RailClientContext*)e->pInterface);
+		if (!xf_rail_init(xfc, (RailClientContext*)e->pInterface))
+		{
+			WLog_Print(xfc->log, WLOG_ERROR, "Failed to initialize X11 RAIL resources");
+			(void)freerdp_abort_connect_context(&xfc->common.context);
+		}
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{

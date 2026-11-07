@@ -1,0 +1,14 @@
+pending-size
+same-size-snap
+reply-before-tile
+late-reply-before-tile
+late-tile-delivery
+completed-server-move
+keyboard-completion-error
+retry-recovery
+refused-release
+show-transition
+idle-deadline
+mouse-modifiers
+invalid-mode
+context-lifecycle

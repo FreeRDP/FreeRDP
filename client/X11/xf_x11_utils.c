@@ -155,3 +155,8 @@ const char* request_code_2_str(int code)
 			return "UNKNOWN";
 	}
 }
+
+int xf_is_create_pixmap_request(int code)
+{
+	return code == X_CreatePixmap;
+}

@@ -1093,6 +1093,28 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 	xf_keyboard_send_key(xfc, FALSE, last, event);
 }
 
+void xf_keyboard_reconcile(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	if (!xfc->display || !xfc->common.context.input)
+		return;
+	char physical[32] = WINPR_C_ARRAY_INIT;
+	XQueryKeymap(xfc->display, physical);
+	for (size_t code = 0; code < ARRAYSIZE(xfc->KeyboardState); code++)
+	{
+		if (!xfc->KeyboardState[code] || (physical[code / 8] & (1U << (code % 8))))
+			continue;
+		XKeyEvent event = { .type = KeyRelease,
+			                .display = xfc->display,
+			                .keycode = WINPR_ASSERTING_INT_CAST(unsigned int, code) };
+		const KeySym keysym = XLookupKeysym(&event, 0);
+		/* A WM-consumed, unsent Alt press must not turn into a remote tap. */
+		if (xfc->deferAlt)
+			xfc->deferredAlt.pending &= ~xf_keyboard_alt_mask(xfc, (KeyCode)code);
+		xf_keyboard_key_release(xfc, &event, keysym);
+	}
+}
+
 static DWORD get_rdp_scancode_from_x11_keycode(xfContext* xfc, DWORD keycode)
 {
 	WINPR_ASSERT(xfc);

@@ -39,6 +39,7 @@
 #include <winpr/thread.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/rail.h>
 #include <freerdp/log.h>
@@ -883,6 +884,8 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 {
 	Atom window_type = 0;
 	BOOL redirect = FALSE;
+	const BOOL wasTransient = appWindow->is_transient;
+	appWindow->is_transient = FALSE;
 
 	window_type = xfc->NET_WM_WINDOW_TYPE_NORMAL;
 
@@ -916,6 +919,10 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 			xf_SetWindowUnlisted(xfc, appWindow->handle);
 		}
 	}
+
+	if (wasTransient && !appWindow->is_transient)
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4, NET_WM_STATE_REMOVE,
+		                   xfc->NET_WM_STATE_SKIP_PAGER, xfc->NET_WM_STATE_SKIP_TASKBAR, 0);
 
 	if (!(style == 0 && ex_style == 0))
 	{
@@ -968,7 +975,7 @@ void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
 	if (!(appWindow->dwStyle & WS_MINIMIZEBOX))
 		allowed_actions[1] = 0;
 
-	if (!(appWindow->dwStyle & WS_SIZEBOX))
+	if (!xf_rail_window_can_resize(appWindow))
 		allowed_actions[3] = 0;
 
 	if (!(appWindow->dwStyle & WS_MAXIMIZEBOX))
@@ -1049,6 +1056,7 @@ BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow, BOOL hidden)
 
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
 	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
+	xf_UpdateWindowSizeHints(xfc, appWindow);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
 	LogDynAndXClearWindow(xfc->log, xfc->display, appWindow->handle);
 
@@ -1101,7 +1109,6 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
 	appWindow->rail_fullscreen_normalizing = FALSE;
-	appWindow->lastWndSizeUpdate = 0;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(
@@ -1166,27 +1173,323 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_U
                             WINPR_ATTR_UNUSED int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight)
 {
-	XSizeHints* size_hints = nullptr;
-	size_hints = XAllocSizeHints();
+	appWindow->minMaxInfo.minTrackWidth = WINPR_ASSERTING_INT_CAST(INT16, minTrackWidth);
+	appWindow->minMaxInfo.minTrackHeight = WINPR_ASSERTING_INT_CAST(INT16, minTrackHeight);
+	appWindow->minMaxInfo.maxTrackWidth = WINPR_ASSERTING_INT_CAST(INT16, maxTrackWidth);
+	appWindow->minMaxInfo.maxTrackHeight = WINPR_ASSERTING_INT_CAST(INT16, maxTrackHeight);
+	appWindow->minMaxInfoKnown = TRUE;
+	xf_UpdateWindowSizeHints(xfc, appWindow);
+}
 
-	if (size_hints)
+void xf_UpdateWindowSizeHints(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	if ((!appWindow->windowStyleKnown && !appWindow->minMaxInfoKnown) ||
+	    (appWindow->dwStyle & WS_MINIMIZE) ||
+	    ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) &&
+	     (appWindow->showState != WINDOW_SHOW) && (appWindow->showState != WINDOW_SHOW_MAXIMIZED)))
+		return;
+	XSizeHints hints = { .flags = PResizeInc, .width_inc = 1, .height_inc = 1 };
+	if (!xf_rail_window_can_resize(appWindow))
 	{
-		size_hints->flags = PMinSize | PMaxSize | PResizeInc;
-		size_hints->min_width = minTrackWidth;
-		size_hints->min_height = minTrackHeight;
-		size_hints->max_width = maxTrackWidth;
-		size_hints->max_height = maxTrackHeight;
-		/* to speedup window drawing we need to select optimal value for sizing step. */
-		size_hints->width_inc = size_hints->height_inc = 1;
-		XSetWMNormalHints(xfc->display, appWindow->handle, size_hints);
-		XFree(size_hints);
+		if (!appWindow->windowWidth || !appWindow->windowHeight)
+			return;
+		/* RAIL min/max ranges alone do not grant resize permission. Publish
+		 * the current server size, including later programmatic size changes. */
+		hints.flags |= PMinSize | PMaxSize;
+		hints.min_width = hints.max_width = WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth);
+		hints.min_height = hints.max_height =
+		    WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight);
 	}
+	else if (appWindow->minMaxInfoKnown)
+	{
+		hints.flags |= PMinSize | PMaxSize;
+		hints.min_width = appWindow->minMaxInfo.minTrackWidth;
+		hints.min_height = appWindow->minMaxInfo.minTrackHeight;
+		hints.max_width = appWindow->minMaxInfo.maxTrackWidth;
+		hints.max_height = appWindow->minMaxInfo.maxTrackHeight;
+	}
+	XSetWMNormalHints(xfc->display, appWindow->handle, &hints);
+}
+
+typedef struct xf_input_watch
+{
+	Window handle;
+	long originalMask;
+	size_t references;
+	BOOL destroyed;
+	struct xf_input_watch* next;
+} xfInputWatch;
+
+void xf_ClearWindowInputWatches(xfContext* xfc)
+{
+	if (!xfc->xfRail)
+		return;
+	while (xfc->xfRail->inputWatches)
+	{
+		xfInputWatch* watch = xfc->xfRail->inputWatches;
+		xfc->xfRail->inputWatches = watch->next;
+		if (!watch->destroyed)
+			XSelectInput(xfc->display, watch->handle, watch->originalMask);
+		free(watch);
+	}
+}
+
+static void xf_ReleaseInputAncestors(xfContext* xfc, xfAppWindow* appWindow)
+{
+	for (size_t i = 0; i < appWindow->inputAncestorCount; i++)
+	{
+		for (xfInputWatch** p = &xfc->xfRail->inputWatches; *p; p = &(*p)->next)
+		{
+			xfInputWatch* watch = *p;
+			if (watch->handle != appWindow->inputAncestors[i])
+				continue;
+			if (--watch->references)
+				break;
+			if (!watch->destroyed)
+				XSelectInput(xfc->display, watch->handle, watch->originalMask);
+			*p = watch->next;
+			free(watch);
+			break;
+		}
+	}
+	appWindow->inputAncestorCount = 0;
+}
+
+static BOOL xf_WatchInputAncestors(xfContext* xfc, xfAppWindow* appWindow, const Window* ancestors,
+                                   size_t count)
+{
+	if (count == appWindow->inputAncestorCount &&
+	    memcmp(ancestors, appWindow->inputAncestors, count * sizeof(Window)) == 0)
+		return TRUE;
+	xf_ReleaseInputAncestors(xfc, appWindow);
+	for (size_t i = 0; i < count; i++)
+	{
+		xfInputWatch* watch = xfc->xfRail->inputWatches;
+		for (; watch && watch->handle != ancestors[i]; watch = watch->next)
+		{
+		}
+		if (!watch)
+		{
+			XWindowAttributes attrs = WINPR_C_ARRAY_INIT;
+			if (!XGetWindowAttributes(xfc->display, ancestors[i], &attrs))
+				goto fail;
+			watch = calloc(1, sizeof(*watch));
+			if (!watch)
+				goto fail;
+			watch->handle = ancestors[i];
+			watch->originalMask = attrs.your_event_mask;
+			watch->next = xfc->xfRail->inputWatches;
+			xfc->xfRail->inputWatches = watch;
+			XSelectInput(xfc->display, watch->handle,
+			             attrs.your_event_mask | StructureNotifyMask | VisibilityChangeMask);
+		}
+		watch->references++;
+		appWindow->inputAncestors[appWindow->inputAncestorCount++] = ancestors[i];
+	}
+	return TRUE;
+fail:
+	xf_ReleaseInputAncestors(xfc, appWindow);
+	return FALSE;
+}
+
+BOOL xf_WindowInputAncestorEvent(xfContext* xfc, const XEvent* event)
+{
+	if (!xfc->xfRail)
+		return FALSE;
+	Window target = None;
+	switch (event->type)
+	{
+		case ConfigureNotify:
+			target = event->xconfigure.window;
+			break;
+		case MapNotify:
+			target = event->xmap.window;
+			break;
+		case UnmapNotify:
+			target = event->xunmap.window;
+			break;
+		case ReparentNotify:
+			target = event->xreparent.window;
+			break;
+		case DestroyNotify:
+			target = event->xdestroywindow.window;
+			break;
+		case VisibilityNotify:
+			target = event->xvisibility.window;
+			break;
+		default:
+			return FALSE;
+	}
+	xf_lock_x11(xfc);
+	xfInputWatch* watch = xfc->xfRail->inputWatches;
+	for (; watch && watch->handle != target; watch = watch->next)
+	{
+	}
+	if (!watch)
+	{
+		xf_unlock_x11(xfc);
+		return FALSE;
+	}
+	if (event->type == DestroyNotify)
+		watch->destroyed = TRUE;
+	/* Frame events are not client geometry. Refresh only their owners, never
+	 * interpreting frame-local coordinates as application root coordinates. */
+	ULONG_PTR* keys = nullptr;
+	const size_t count = HashTable_GetKeys(xfc->xfRail->windows, &keys);
+	for (size_t k = 0; k < count; k++)
+	{
+		xfAppWindow* owner = xf_rail_get_window(xfc, *(UINT64*)keys[k], FALSE);
+		if (!owner)
+			continue;
+		for (size_t i = 0; i < owner->inputAncestorCount; i++)
+		{
+			if (owner->inputAncestors[i] != target)
+				continue;
+			if (event->type == DestroyNotify)
+			{
+				if (owner->inputMapped)
+					XUnmapWindow(xfc->display, owner->inputHandle);
+				owner->inputMapped = FALSE;
+				xf_ReleaseInputAncestors(xfc, owner);
+			}
+			else
+				xf_UpdateWindowInputRegion(xfc, owner);
+			break;
+		}
+		xf_rail_return_window(owner, FALSE);
+	}
+	free(keys);
+	xf_unlock_x11(xfc);
+	return TRUE;
+}
+
+void xf_UpdateWindowInputRegion(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+#ifdef WITH_XEXT
+	if (!xfc->display)
+		return;
+	if (!appWindow->is_mapped || appWindow->is_transient || appWindow->decorations ||
+	    appWindow->configureGeometryPending || !xf_rail_window_can_resize(appWindow) ||
+	    !xf_rail_has_resize_margins(appWindow) ||
+	    (appWindow->dwStyle & (WS_CHILD | WS_DISABLED | WS_MINIMIZE | WS_MAXIMIZE)) ||
+	    (appWindow->dwExStyle & WS_EX_NOACTIVATE) ||
+	    (appWindow->rail_state == WINDOW_SHOW_MINIMIZED) ||
+	    (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED))
+		goto hide;
+	const INT64 left = appWindow->resizeMarginLeft;
+	const INT64 top = appWindow->resizeMarginTop;
+	const INT64 right = appWindow->resizeMarginRight;
+	const INT64 bottom = appWindow->resizeMarginBottom;
+	const INT64 width = (INT64)appWindow->width + left + right;
+	const INT64 height = (INT64)appWindow->height + top + bottom;
+	const INT64 x = (INT64)appWindow->x - left;
+	const INT64 y = (INT64)appWindow->y - top;
+	if (!(left || top || right || bottom) || (appWindow->width <= 0) || (appWindow->height <= 0) ||
+	    (width > INT16_MAX) || (height > INT16_MAX) || (x < INT16_MIN) || (x > INT16_MAX) ||
+	    (y < INT16_MIN) || (y > INT16_MAX))
+		goto hide;
+
+	/* Follow the owner's WM frame in the root stacking order. Placing a
+	 * shaped input-only sibling immediately above that frame covers its
+	 * margins without occluding the owner's content or foreground windows. */
+	Window sibling = appWindow->handle;
+	Window root = None;
+	Window ancestors[64] = WINPR_C_ARRAY_INIT;
+	size_t ancestorCount = 0;
+	for (size_t level = 0; level < 64; level++)
+	{
+		Window parent = None;
+		Window* children = nullptr;
+		unsigned int count = 0;
+		const Status rc = XQueryTree(xfc->display, sibling, &root, &parent, &children, &count);
+		if (children)
+			XFree(children);
+		if (!rc || !parent)
+			goto hide;
+		if (parent == root)
+			break;
+		ancestors[ancestorCount++] = parent;
+		sibling = parent;
+		if (level == 63)
+			goto hide;
+	}
+	if (!xf_WatchInputAncestors(xfc, appWindow, ancestors, ancestorCount))
+		goto hide;
+	XWindowAttributes attributes = WINPR_C_ARRAY_INIT;
+	if (!XGetWindowAttributes(xfc->display, appWindow->handle, &attributes) ||
+	    (attributes.map_state != IsViewable))
+		goto hide;
+	if (!appWindow->inputHandle)
+	{
+		int eventBase = 0;
+		int errorBase = 0;
+		if (!XShapeQueryExtension(xfc->display, &eventBase, &errorBase))
+			return;
+		XSetWindowAttributes attrs = { .override_redirect = True,
+			                           .event_mask = ButtonPressMask | ButtonReleaseMask |
+			                                         PointerMotionMask | EnterWindowMask |
+			                                         LeaveWindowMask };
+		appWindow->inputHandle =
+		    XCreateWindow(xfc->display, root, (int)x, (int)y, (unsigned)width, (unsigned)height, 0,
+		                  0, InputOnly, CopyFromParent, CWOverrideRedirect | CWEventMask, &attrs);
+		if (!appWindow->inputHandle)
+			return;
+	}
+	XRectangle rects[4] = WINPR_C_ARRAY_INIT;
+	int count = 0;
+	if (top)
+		rects[count++] = (XRectangle){ 0, 0, (unsigned short)width, (unsigned short)top };
+	if (left)
+		rects[count++] =
+		    (XRectangle){ 0, (short)top, (unsigned short)left, (unsigned short)appWindow->height };
+	if (right)
+		rects[count++] = (XRectangle){ (short)(left + appWindow->width), (short)top,
+			                           (unsigned short)right, (unsigned short)appWindow->height };
+	if (bottom)
+		rects[count++] = (XRectangle){ 0, (short)(top + appWindow->height), (unsigned short)width,
+			                           (unsigned short)bottom };
+	XShapeCombineRectangles(xfc->display, appWindow->inputHandle, ShapeBounding, 0, 0, rects, count,
+	                        ShapeSet, Unsorted);
+	XWindowChanges changes = { .x = (int)x,
+		                       .y = (int)y,
+		                       .width = (int)width,
+		                       .height = (int)height,
+		                       .sibling = sibling,
+		                       .stack_mode = Above };
+	XConfigureWindow(xfc->display, appWindow->inputHandle,
+	                 CWX | CWY | CWWidth | CWHeight | CWSibling | CWStackMode, &changes);
+#ifdef WITH_XCURSOR
+	if (xfc->appWindow == appWindow && xfc->pointer)
+		XDefineCursor(xfc->display, appWindow->inputHandle, xfc->pointer->cursor);
+#endif
+	if (!appWindow->inputMapped)
+	{
+		XMapWindow(xfc->display, appWindow->inputHandle);
+		appWindow->inputMapped = TRUE;
+	}
+	return;
+hide:
+	if (appWindow->inputMapped)
+	{
+		XUnmapWindow(xfc->display, appWindow->inputHandle);
+		appWindow->inputMapped = FALSE;
+	}
+#endif
 }
 
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y)
 {
 	if (appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return;
+	if (xfc->xfRail->localMoveWindowId && (xfc->xfRail->localMoveWindowId != appWindow->windowId))
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "[rail-geometry] overlapping local move rejected");
+		return;
+	}
 
 	/*
 	 * Save original mouse location relative to root.  This will be needed
@@ -1194,8 +1497,30 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	 */
 	appWindow->local_move.root_x = x;
 	appWindow->local_move.root_y = y;
+	appWindow->local_move.window_x = appWindow->x;
+	appWindow->local_move.window_y = appWindow->y;
+	appWindow->local_move.window_width = appWindow->width;
+	appWindow->local_move.window_height = appWindow->height;
+	appWindow->local_move.positionGeneration = appWindow->serverPositionGeneration;
+	appWindow->local_move.sizeGeneration = appWindow->serverSizeGeneration;
+	appWindow->local_move.reconcileOnEnd = FALSE;
+	/* A new server-driven gesture supersedes any older show transition. */
+	appWindow->stateGeometryPending = FALSE;
+	appWindow->windowGeometryPending = FALSE;
+	appWindow->serverConfigure = FALSE;
+	xfc->xfRail->localMoveWindowId = appWindow->windowId;
 	appWindow->local_move.state = LMS_STARTING;
+	appWindow->local_move.completionPending = FALSE;
+	appWindow->local_move.completionTime = 0;
+	appWindow->localMoveGeometryTime = 0;
 	appWindow->local_move.direction = direction;
+	appWindow->serverGeometryPending = FALSE;
+	xf_UpdateWindowVisibilityRects(xfc, appWindow);
+	WLog_Print(xfc->log, WLOG_DEBUG,
+	           "[rail-geometry] local move start windowId=0x%08" PRIx64
+	           " direction=%d pointer=%d,%d geometry=%d,%d %dx%d",
+	           appWindow->windowId, direction, x, y, appWindow->x, appWindow->y, appWindow->width,
+	           appWindow->height);
 
 	xf_ungrab(xfc);
 
@@ -1210,10 +1535,12 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 	    1);                     /* 1 == application request per extended ICCM */
 }
 
-void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 {
+	BOOL redraw = FALSE;
 	if (appWindow->local_move.state == LMS_NOT_ACTIVE)
-		return;
+		return FALSE;
+	const BOOL completedLocally = appWindow->local_move.state == LMS_TERMINATING;
 
 	if (appWindow->local_move.state == LMS_STARTING)
 	{
@@ -1235,39 +1562,69 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	}
 
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
+	appWindow->local_move.completionPending = FALSE;
+	/* Window Information and move-end arrive on different channels. After
+	 * local completion, pending bounds may still describe the start of the
+	 * gesture. Updates received while terminating are already applied; later
+	 * updates will apply normally. Replaying the cache here produces an X11
+	 * configure that can undo the completed move through ClientWindowMove.
+	 * Reconcile deferred bounds on cancellation or when the WM never changed
+	 * the local rectangle and Windows completed the operation instead. */
+	if ((!completedLocally || appWindow->local_move.reconcileOnEnd) &&
+	    appWindow->serverGeometryPending)
+		redraw = xf_rail_reconcile_window(xfc, appWindow);
+	appWindow->serverGeometryPending = FALSE;
+	appWindow->local_move.window_width = appWindow->local_move.window_height = 0;
+	appWindow->local_move.reconcileOnEnd = FALSE;
+	if (xfc->xfRail->localMoveWindowId == appWindow->windowId)
+		xfc->xfRail->localMoveWindowId = 0;
+	xf_UpdateWindowVisibilityRects(xfc, appWindow);
+	xf_UpdateWindowInputRegion(xfc, appWindow);
+	return redraw;
 }
 
 BOOL xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
-	BOOL resize = FALSE;
-
-	if ((width * height) < 1)
+	if ((width <= 0) || (height <= 0))
 		return FALSE;
-
-	if ((appWindow->width != width) || (appWindow->height != height))
-		resize = TRUE;
 
 	if (appWindow->local_move.state == LMS_STARTING || appWindow->local_move.state == LMS_ACTIVE)
 		return FALSE;
 
-	appWindow->x = x;
-	appWindow->y = y;
-	appWindow->width = width;
-	appWindow->height = height;
+	if (!appWindow->windowGeometryPending && (appWindow->x == x) && (appWindow->y == y) &&
+	    (appWindow->width == width) && (appWindow->height == height))
+		return FALSE;
 
+	const UINT64 now = winpr_GetTickCount64NS();
+	const xfWindowGeometry* last = &appWindow->requestedGeometry;
+	if (appWindow->windowGeometryPending && appWindow->lastGeometryRequest &&
+	    (now - appWindow->lastGeometryRequest < 500ULL * 1000000ULL) && (last->x == x) &&
+	    (last->y == y) && (last->width == width) && (last->height == height))
+		return FALSE;
+	/* A position-only request cannot replace a size still queued at the WM,
+	 * even when the new dimensions equal the last observed dimensions. */
+	const BOOL resize =
+	    (appWindow->width != width) || (appWindow->height != height) ||
+	    (appWindow->windowGeometryPending && ((last->width != width) || (last->height != height)));
+	appWindow->requestedGeometry =
+	    (xfWindowGeometry){ .x = x, .y = y, .width = width, .height = height };
+	appWindow->lastGeometryRequest = now;
+	appWindow->geometryRequestSerial = XNextRequest(xfc->display);
+	appWindow->windowGeometryPending = TRUE;
+	appWindow->serverConfigure = TRUE;
+	appWindow->configureGeometryPending = TRUE;
+	xf_rail_schedule_geometry(xfc, appWindow, 50);
+	/* Commit observed bounds and allocate their backing only after a complete
+	 * ConfigureNotify or current WM query. Rejection/clamping remains observable. */
 	if (resize)
-	{
-		if (!xf_AppWindowResize(xfc, appWindow))
-			return FALSE;
-
 		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle, x, y,
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, width),
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, height));
-	}
 	else
 		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, x, y);
 
-	return xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
+	xf_UpdateWindowInputRegion(xfc, appWindow);
+	return FALSE;
 }
 
 BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
@@ -1275,6 +1632,9 @@ BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 	BOOL redraw = FALSE;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
+	if ((appWindow->rail_state == WINDOW_SHOW_MINIMIZED) &&
+	    ((state == WINDOW_SHOW) || (state == WINDOW_SHOW_MAXIMIZED)))
+		xf_rail_begin_state_transition(xfc, appWindow);
 
 	switch (state)
 	{
@@ -1286,6 +1646,7 @@ BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			break;
 
 		case WINDOW_SHOW_MINIMIZED:
+			appWindow->stateGeometryPending = FALSE;
 			appWindow->minimized = TRUE;
 			XIconifyWindow(xfc->display, appWindow->handle, xfc->screen_number);
 			break;
@@ -1411,9 +1772,62 @@ void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 #ifdef WITH_XEXT
-	/* Drop the bounding shape so the whole window is visible. */
+	/* An unrestricted region must grow automatically during native resizing. */
 	XShapeCombineMask(xfc->display, appWindow->handle, ShapeBounding, 0, 0, None, ShapeSet);
 #endif
+}
+
+static void xf_SetWindowFullShape(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+#ifdef WITH_XEXT
+	/* Publish the full current bounds explicitly. Clearing an already absent
+	 * shape need not invalidate a compositor's previous size-dependent clip. */
+	if ((appWindow->width > 0) && (appWindow->height > 0) && (appWindow->width <= UINT16_MAX) &&
+	    (appWindow->height <= UINT16_MAX))
+	{
+		XRectangle rect = { .width = (unsigned short)appWindow->width,
+			                .height = (unsigned short)appWindow->height };
+		XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, &rect, 1,
+		                        ShapeSet, Unsorted);
+	}
+	else
+		XShapeCombineMask(xfc->display, appWindow->handle, ShapeBounding, 0, 0, None, ShapeSet);
+#endif
+}
+
+void xf_UpdateWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+	/* A server visibility shape can lag behind a WM resize. It also clips
+	 * input, so a release in the enlarged area would miss the client window.
+	 * Keep it rectangular through the gesture and until server bounds agree. */
+	if ((appWindow->local_move.state != LMS_NOT_ACTIVE) ||
+	    (appWindow->visibilityShapeDeferred &&
+	     ((appWindow->localMoveGeometryTime != 0) ||
+	      (appWindow->width != (INT64)appWindow->windowWidth) ||
+	      (appWindow->height != (INT64)appWindow->windowHeight))))
+	{
+		appWindow->visibilityShapeDeferred = TRUE;
+		xf_ClearWindowVisibilityRects(xfc, appWindow);
+		return;
+	}
+	appWindow->visibilityShapeDeferred = FALSE;
+	if ((appWindow->rail_state == WINDOW_SHOW_MAXIMIZED) || (appWindow->dwStyle & WS_MAXIMIZE))
+	{
+		/* Maximized frame insets must not clip the work area. */
+		xf_SetWindowFullShape(xfc, appWindow);
+		return;
+	}
+	const INT32 x =
+	    appWindow->visibleOffsetX - (appWindow->clientOffsetX - appWindow->windowClientDeltaX);
+	const INT32 y =
+	    appWindow->visibleOffsetY - (appWindow->clientOffsetY - appWindow->windowClientDeltaY);
+	xf_SetWindowVisibilityRects(xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, x),
+	                            WINPR_ASSERTING_INT_CAST(uint32_t, y), appWindow->visibilityRects,
+	                            WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
 }
 
 BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
@@ -1429,6 +1843,12 @@ BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	WINPR_ASSERT(settings);
 
 	if (appWindow == nullptr)
+		return FALSE;
+
+	/* A failed replacement leaves the old backing owned but smaller than
+	 * the observed window. Never copy beyond it while its retry is pending. */
+	if (appWindow->pixmapWidth != (UINT32)appWindow->width ||
+	    appWindow->pixmapHeight != (UINT32)appWindow->height)
 		return FALSE;
 
 	if (appWindow->surfaceId < UINT16_MAX)
@@ -1509,8 +1929,11 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 
 	xf_AppWindowDestroyImage(appWindow);
 
+	xf_ReleaseInputAncestors(xfc, appWindow);
 	if (appWindow->handle)
 	{
+		if (appWindow->inputHandle)
+			XDestroyWindow(xfc->display, appWindow->inputHandle);
 		LogDynAndXUnmapWindow(xfc->log, xfc->display, appWindow->handle);
 		LogDynAndXDestroyWindow(xfc->log, xfc->display, appWindow->handle);
 	}
@@ -1533,7 +1956,7 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 static xfAppWindow* get_windowUnlocked(xfContext* xfc, UINT64 id)
 {
 	WINPR_ASSERT(xfc);
-	return HashTable_GetItemValue(xfc->railWindows, &id);
+	return HashTable_GetItemValue(xfc->xfRail->windows, &id);
 }
 
 xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
@@ -1542,11 +1965,14 @@ xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocke
 	if (!xfc)
 		return nullptr;
 
-	if (!xfc->railWindows)
-		return nullptr;
-
 	if (!alreadyLocked)
 		xfAppWindowsLockFrom(xfc, file, fkt, line);
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		if (!alreadyLocked)
+			xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+		return nullptr;
+	}
 
 	xfAppWindow* window = get_windowUnlocked(xfc, id);
 
@@ -1562,11 +1988,13 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 	ULONG_PTR* pKeys = nullptr;
 
 	WINPR_ASSERT(xfc);
-	if (!xfc->railWindows)
-		return nullptr;
-
 	xfAppWindowsLockFrom(xfc, file, fkt, line);
-	size_t count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+	if (!xfc->xfRail || !xfc->xfRail->windows)
+	{
+		xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+		return nullptr;
+	}
+	size_t count = HashTable_GetKeys(xfc->xfRail->windows, &pKeys);
 
 	for (size_t index = 0; index < count; index++)
 	{
@@ -1579,7 +2007,7 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 			return nullptr;
 		}
 
-		if (appWindow->handle == wnd)
+		if ((appWindow->handle == wnd) || (appWindow->inputHandle && appWindow->inputHandle == wnd))
 		{
 			free(pKeys);
 			return appWindow;
@@ -1625,6 +2053,16 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		return CHANNEL_RC_OK;
 	}
 
+	if (appWindow->pixmapWidth != (UINT32)appWindow->width ||
+	    appWindow->pixmapHeight != (UINT32)appWindow->height)
+	{
+		appWindow->surfaceStale = TRUE;
+		appWindow->configureGeometryPending = TRUE;
+		xf_rail_schedule_geometry(xfc, appWindow, 50);
+		region16_clear(&surface->invalidRegion);
+		xf_rail_return_window(appWindow, FALSE);
+		return CHANNEL_RC_OK;
+	}
 	if (appWindow->surfaceStale)
 	{
 		appWindow->surfaceStale = FALSE;
@@ -1760,6 +2198,10 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 	if (!TryEnterCriticalSection(&gfx->mux))
 	{
 		WLog_VRB(TAG, "gfx mux busy, deferring repaint of window 0x%08" PRIx64, windowId);
+		xfAppWindow* window = xf_rail_get_window(xfc, windowId, FALSE);
+		if (window && window->is_mapped)
+			xf_rail_schedule_geometry(xfc, window, 500);
+		xf_rail_return_window(window, FALSE);
 		return TRUE;
 	}
 
@@ -1768,6 +2210,81 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 		rc = xf_AppUpdateWindowFromSurface(xfc, surface);
 	LeaveCriticalSection(&gfx->mux);
 	return rc == CHANNEL_RC_OK;
+}
+
+typedef struct xf_pixmap_request
+{
+	Display* display;
+	unsigned long serial;
+	BYTE error;
+	struct xf_pixmap_request* next;
+} xfPixmapRequest;
+
+static INIT_ONCE pixmapRequestInit = INIT_ONCE_STATIC_INIT;
+static CRITICAL_SECTION pixmapRequestLock;
+static xfPixmapRequest* pixmapRequests;
+
+static BOOL CALLBACK xf_InitPixmapRequests(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                           WINPR_ATTR_UNUSED PVOID parameter,
+                                           WINPR_ATTR_UNUSED PVOID* context)
+{
+	return InitializeCriticalSectionAndSpinCount(&pixmapRequestLock, 0);
+}
+
+BOOL xf_AppWindowPixmapError(Display* display, const XErrorEvent* error)
+{
+	if (!xf_is_create_pixmap_request(error->request_code) ||
+	    !InitOnceExecuteOnce(&pixmapRequestInit, xf_InitPixmapRequests, nullptr, nullptr))
+		return FALSE;
+	BOOL owned = FALSE;
+	EnterCriticalSection(&pixmapRequestLock);
+	for (xfPixmapRequest* request = pixmapRequests; request; request = request->next)
+	{
+		if (request->display == display && request->serial == error->serial)
+		{
+			request->error = error->error_code;
+			owned = TRUE;
+			break;
+		}
+	}
+	LeaveCriticalSection(&pixmapRequestLock);
+	return owned;
+}
+
+static Pixmap xf_CreateWindowPixmap(xfContext* xfc, UINT32 width, UINT32 height)
+{
+	if (!InitOnceExecuteOnce(&pixmapRequestInit, xf_InitPixmapRequests, nullptr, nullptr))
+		return None;
+	/* Serialize the request serial through XSync. The process-wide X error
+	 * handler records only this display/serial; unrelated errors retain their
+	 * normal handling, and no registry lock is held across an Xlib call. */
+	xf_lock_x11(xfc);
+	xfPixmapRequest request = { .display = xfc->display, .serial = XNextRequest(xfc->display) };
+	EnterCriticalSection(&pixmapRequestLock);
+	request.next = pixmapRequests;
+	pixmapRequests = &request;
+	LeaveCriticalSection(&pixmapRequestLock);
+	const Pixmap pixmap =
+	    LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, width, height,
+	                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	XSync(xfc->display, False);
+	EnterCriticalSection(&pixmapRequestLock);
+	for (xfPixmapRequest** p = &pixmapRequests; *p; p = &(*p)->next)
+	{
+		if (*p != &request)
+			continue;
+		*p = request.next;
+		break;
+	}
+	LeaveCriticalSection(&pixmapRequestLock);
+	xf_unlock_x11(xfc);
+	if (request.error)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "Backing pixmap allocation failed: X11 error %u",
+		           request.error);
+		return None;
+	}
+	return pixmap;
 }
 
 BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
@@ -1782,14 +2299,35 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	 * when the size did not change, it is what an Expose is repainted from. */
 	if ((appWindow->pixmap != 0) && (appWindow->pixmapWidth == width) &&
 	    (appWindow->pixmapHeight == height))
+	{
+		appWindow->backingRetryTime = 0;
+		appWindow->backingRetryDelay = 0;
 		return TRUE;
-
-	if (appWindow->pixmap != 0)
-		LogDynAndXFreePixmap(xfc->log, xfc->display, appWindow->pixmap);
+	}
 
 	WINPR_ASSERT(xfc->depth != 0);
-	appWindow->pixmap = LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, width, height,
-	                                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	const UINT64 now = winpr_GetTickCount64NS();
+	if (now < appWindow->backingRetryTime)
+	{
+		appWindow->configureGeometryPending = TRUE;
+		const UINT32 delay = (UINT32)((appWindow->backingRetryTime - now + 999999) / 1000000);
+		xf_rail_schedule_geometry(xfc, appWindow, delay);
+		return FALSE;
+	}
+	const Pixmap pixmap = xf_CreateWindowPixmap(xfc, width, height);
+	if (!pixmap)
+	{
+		appWindow->configureGeometryPending = TRUE;
+		appWindow->backingRetryDelay = MIN(1000, MAX(50, appWindow->backingRetryDelay * 2));
+		appWindow->backingRetryTime = now + (UINT64)appWindow->backingRetryDelay * 1000000;
+		xf_rail_schedule_geometry(xfc, appWindow, appWindow->backingRetryDelay);
+		return FALSE;
+	}
+	appWindow->backingRetryTime = 0;
+	appWindow->backingRetryDelay = 0;
+	if (appWindow->pixmap != 0)
+		LogDynAndXFreePixmap(xfc->log, xfc->display, appWindow->pixmap);
+	appWindow->pixmap = pixmap;
 	appWindow->pixmapWidth = width;
 	appWindow->pixmapHeight = height;
 	xf_AppWindowDestroyImage(appWindow);
@@ -1797,7 +2335,10 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	/* The new pixmap has undefined content, the next paint from the surface has to cover the
 	 * whole window. */
 	if (appWindow->surfaceId < UINT16_MAX)
+	{
 		appWindow->surfaceStale = TRUE;
+		xf_rail_schedule_geometry(xfc, appWindow, 0);
+	}
 
 	return appWindow->pixmap != 0;
 }
@@ -1830,15 +2371,18 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 #endif
 
 	xf_lock_x11(xfc);
-	if (xfc->railWindows)
-		HashTable_Lock(xfc->railWindows);
+	if (xfc->xfRail && xfc->xfRail->windows)
+		HashTable_Lock(xfc->xfRail->windows);
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
-	WINPR_ASSERT(!xfc->isRailWindowsLocked);
-	xfc->isRailWindowsLocked = TRUE;
-	xfc->whereFile = file;
-	xfc->whereFkt = fkt;
-	xfc->whereLine = line;
+	if (xfc->xfRail)
+	{
+		WINPR_ASSERT(!xfc->xfRail->windowsLocked);
+		xfc->xfRail->windowsLocked = TRUE;
+		xfc->xfRail->whereFile = file;
+		xfc->xfRail->whereFkt = fkt;
+		xfc->xfRail->whereLine = line;
+	}
 #endif
 }
 
@@ -1852,11 +2396,14 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 	if (WLog_IsLevelActive(xfc->log, level))
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] unocking [%s]", fkt);
 
-	WINPR_ASSERT(xfc->isRailWindowsLocked);
-	xfc->isRailWindowsLocked = FALSE;
+	if (xfc->xfRail)
+	{
+		WINPR_ASSERT(xfc->xfRail->windowsLocked);
+		xfc->xfRail->windowsLocked = FALSE;
+	}
 #endif
 
-	if (xfc->railWindows)
-		HashTable_Unlock(xfc->railWindows);
+	if (xfc->xfRail && xfc->xfRail->windows)
+		HashTable_Unlock(xfc->xfRail->windows);
 	xf_unlock_x11(xfc);
 }

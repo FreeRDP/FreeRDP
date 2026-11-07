@@ -270,6 +270,20 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 	}
 }
 
+#ifdef WITH_XCURSOR
+static void xf_Pointer_set_cursor(xfContext* xfc, Window handle, Cursor cursor)
+{
+	XDefineCursor(xfc->display, handle, cursor);
+	if (xfc->remote_app)
+	{
+		xfAppWindow* window = xf_AppWindowFromX11Window(xfc, handle);
+		if (window && window->inputHandle)
+			XDefineCursor(xfc->display, window->inputHandle, cursor);
+		xf_rail_return_window(window, FALSE);
+	}
+}
+#endif
+
 BOOL xf_pointer_update_scale(xfContext* xfc)
 {
 	xfPointer* pointer = nullptr;
@@ -370,7 +384,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		if (!xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
 			return FALSE;
 		xf_lock_x11(xfc);
-		XDefineCursor(xfc->display, handle, xfc->pointer->cursor);
+		xf_Pointer_set_cursor(xfc, handle, xfc->pointer->cursor);
 		xf_unlock_x11(xfc);
 	}
 	else
@@ -407,7 +421,7 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 	xfc->pointer = nullptr;
 
 	if ((handle) && (nullcursor != None))
-		XDefineCursor(xfc->display, handle, nullcursor);
+		xf_Pointer_set_cursor(xfc, handle, nullcursor);
 
 	xf_unlock_x11(xfc);
 	xfc->isCursorHidden = true;
@@ -425,7 +439,7 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 	xfc->pointer = nullptr;
 
 	if (handle)
-		XUndefineCursor(xfc->display, handle);
+		xf_Pointer_set_cursor(xfc, handle, None);
 
 	xf_unlock_x11(xfc);
 	xfc->isCursorHidden = false;

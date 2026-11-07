@@ -761,6 +761,7 @@ int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDev
 	{
 		case XI_ButtonPress:
 		case XI_ButtonRelease:
+			xfc->lastInputTime = event->time;
 			xfc->xi_event = !xfc->common.mouse_grabbed || !xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_event)

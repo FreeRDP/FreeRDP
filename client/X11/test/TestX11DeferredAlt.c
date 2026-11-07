@@ -146,6 +146,17 @@ int XFreeModifiermap(XModifierKeymap* modmap)
 	return 1;
 }
 
+KeySym XLookupKeysym(XKeyEvent* event, int index)
+{
+	WINPR_UNUSED(index);
+	for (size_t i = 0; i < ARRAYSIZE(keys); i++)
+	{
+		if (keys[i].code == event->keycode)
+			return keys[i].sym;
+	}
+	return NoSymbol;
+}
+
 int XQueryKeymap(Display* display, char map[32])
 {
 	WINPR_UNUSED(display);
@@ -573,6 +584,51 @@ out:
 	return rc;
 }
 
+static BOOL test_move_modifiers(xfContext* xfc)
+{
+	xfAppWindow app = WINPR_C_ARRAY_INIT;
+	app.local_move.state = LMS_ACTIVE;
+	app.local_move.direction = NET_WM_MOVERESIZE_MOVE;
+	xfc->remote_app = TRUE;
+	xfc->deferAlt = FALSE;
+	const KeySym symbols[] = { XK_Shift_L, XK_Control_L, XK_Alt_L };
+	for (size_t i = 0; i < ARRAYSIZE(symbols); i++)
+	{
+		memset(xfc->KeyboardState, 0, sizeof(xfc->KeyboardState));
+		memset(physical, 0, sizeof(physical));
+		used = 0;
+		trace[0] = '\0';
+		key(xfc, symbols[i], TRUE);
+		if (used != 2 || trace[1] != '+')
+			return FALSE;
+		/* Reconciliation during a WM grab must leave physically held keys down. */
+		xf_keyboard_reconcile(xfc);
+		if (used != 2)
+			return FALSE;
+		XEvent event = { .xkey = { .type = KeyRelease } };
+		if (xf_event_suppress_events(xfc, &app, &event))
+			return FALSE;
+		key(xfc, symbols[i], FALSE);
+		if (used != 4 || trace[0] != trace[2] || trace[3] != '-')
+			return FALSE;
+		key(xfc, XK_f, TRUE);
+		key(xfc, XK_f, FALSE);
+		if (strcmp(trace + 4, "F+F-"))
+			return FALSE;
+		/* Recover a release consumed by the WM exactly once. */
+		used = 0;
+		trace[0] = '\0';
+		key(xfc, symbols[i], TRUE);
+		memset(physical, 0, sizeof(physical));
+		xf_keyboard_reconcile(xfc);
+		xf_keyboard_reconcile(xfc);
+		if (used != 4 || trace[0] != trace[2] || trace[3] != '-')
+			return FALSE;
+	}
+	xfc->remote_app = FALSE;
+	return TRUE;
+}
+
 int main(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -661,6 +717,26 @@ int main(int argc, char* argv[])
 			goto out;
 		}
 	}
+	/* A WM keyboard grab can consume releases without a core KeyRelease.
+	 * Reconcile only physically released keys, leaving held modifiers down. */
+	memset(xfc.KeyboardState, 0, sizeof(xfc.KeyboardState));
+	memset(&xfc.deferredAlt, 0, sizeof(xfc.deferredAlt));
+	memset(physical, 0, sizeof(physical));
+	used = 0;
+	trace[0] = '\0';
+	failAlt = FALSE;
+	xfc.deferAlt = TRUE;
+	xfc.KeyboardState[37] = TRUE;
+	xfc.KeyboardState[50] = TRUE;
+	physical[50 / 8] |= 1U << (50 % 8);
+	xf_keyboard_reconcile(&xfc);
+	if (strcmp(trace, "C-") || xfc.KeyboardState[37] || !xfc.KeyboardState[50])
+		goto out;
+	xf_keyboard_reconcile(&xfc);
+	if (strcmp(trace, "C-"))
+		goto out;
+	if (!test_move_modifiers(&xfc))
+		goto out;
 	rc = 0;
 out:
 	PubSub_Free(pubSub);

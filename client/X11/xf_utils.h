@@ -313,3 +313,5 @@ char* getConfigOption(BOOL system, const char* option);
 
 WINPR_ATTR_NODISCARD
 const char* request_code_2_str(int code);
+WINPR_ATTR_NODISCARD
+int xf_is_create_pixmap_request(int code);
