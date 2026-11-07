@@ -166,6 +166,8 @@ class SdlRail
 	SDL_Point _inputOrigin = { 0, 0 };  /* top left of the remote desktop */
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
+	static UINT server_app_id(RailClientContext* context,
+	                          const RAIL_GET_APPID_RESP_ORDER* response);
 	static UINT server_execute_result(RailClientContext* context,
 	                                  const RAIL_EXEC_RESULT_ORDER* execResult);
 	static UINT server_local_move_size(RailClientContext* context,
