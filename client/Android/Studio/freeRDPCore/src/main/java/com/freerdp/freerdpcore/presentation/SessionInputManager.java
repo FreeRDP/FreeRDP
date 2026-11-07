@@ -225,6 +225,9 @@ public class SessionInputManager
 	{
 		if (instance == 0)
 			return false;
+		// Read on every key, so a change in the settings applies without reconnecting.
+		keyboardMapper.setPhysicalKeyboardDeviceLayout(
+		    ApplicationSettingsActivity.getPhysicalKeyboardDeviceLayout(context));
 		return keyboardMapper.processAndroidKeyEvent(event);
 	}
 

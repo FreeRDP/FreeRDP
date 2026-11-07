@@ -225,6 +225,7 @@ public class KeyboardMapper
 	private boolean isWinLocked = false;
 	private boolean isWinKeyDown = false;
 	private boolean isWinComboUsed = false;
+	private boolean physicalKeyboardDeviceLayout = false;
 
 	public void init(Context context)
 	{
@@ -448,6 +449,12 @@ public class KeyboardMapper
 		setKeyProcessingListener(listener);
 	}
 
+	// Whether physical keyboards follow this device's layout rather than the server's.
+	public void setPhysicalKeyboardDeviceLayout(boolean enabled)
+	{
+		physicalKeyboardDeviceLayout = enabled;
+	}
+
 	public void setKeyProcessingListener(KeyProcessingListener listener)
 	{
 		this.listener = listener;
@@ -506,9 +513,14 @@ public class KeyboardMapper
 					int unicode = event.getUnicodeChar();
 					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
 						unicode = 0;
+					// Right Alt that yields a character is AltGr, part of the layout: send the
+					// character.
+					int meta = event.getMetaState();
+					boolean altGr = unicode != 0 && (meta & KeyEvent.META_ALT_RIGHT_ON) != 0 &&
+					                (meta & KeyEvent.META_ALT_LEFT_ON) == 0;
 					boolean combination =
-					    (event.getMetaState() & (KeyEvent.META_CTRL_ON | KeyEvent.META_ALT_ON |
-					                             KeyEvent.META_META_ON)) != 0;
+					    (meta & (KeyEvent.META_CTRL_ON | KeyEvent.META_META_ON)) != 0 ||
+					    ((meta & KeyEvent.META_ALT_ON) != 0 && !altGr);
 					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !combination &&
 					    (unicode == 0 || listener.isUnicodeInputSupported()))
 					{
@@ -671,10 +683,12 @@ public class KeyboardMapper
 
 	// Text from the on-screen keyboard reaches us as key events Android builds from its virtual
 	// key character map, so their key codes encode US key positions, not what the user typed.
-	// A physical keyboard's positions are what the server's layout is meant to read.
-	private static boolean sendsKeyAsUnicode(KeyEvent event)
+	// A physical keyboard's positions are what the server's layout is meant to read, unless the
+	// user chose this device's layout for it.
+	private boolean sendsKeyAsUnicode(KeyEvent event)
 	{
-		return event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
+		return physicalKeyboardDeviceLayout ||
+		    event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
 	}
 
 	private boolean isModifierPressed()
