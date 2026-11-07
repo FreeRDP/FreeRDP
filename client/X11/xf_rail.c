@@ -288,6 +288,10 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return FALSE;
 
+	/* Only the server places override-redirect windows. */
+	if (appWindow->override_redirect)
+		return TRUE;
+
 	/* NOTE: this geometry report is required - if it is dropped the server no
 	 * longer knows where the window manager placed the window and all mouse
 	 * events are routed to the wrong coordinates (buttons stop responding).

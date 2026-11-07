@@ -99,6 +99,7 @@ struct xf_app_window
 	BOOL decorations;
 	BOOL is_mapped;
 	BOOL is_transient;
+	BOOL override_redirect;
 	xfLocalMove local_move;
 	BYTE rail_state;
 	BOOL maxVert;

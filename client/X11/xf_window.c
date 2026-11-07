@@ -904,8 +904,9 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 
 	if (style & WS_POPUP)
 	{
-		window_type = xfc->NET_WM_WINDOW_TYPE_DIALOG;
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
+		if (!redirect)
+			window_type = xfc->NET_WM_WINDOW_TYPE_DIALOG;
 
 		if (!((ex_style & WS_EX_DLGMODALFRAME) || (ex_style & WS_EX_LAYERED) ||
 		      (style & WS_SYSMENU)))
@@ -934,6 +935,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		 */
 		XSetWindowAttributes attrs = WINPR_C_ARRAY_INIT;
 		attrs.override_redirect = redirect ? True : False;
+		appWindow->override_redirect = redirect;
 		LogDynAndXChangeWindowAttributes(xfc->log, xfc->display, appWindow->handle,
 		                                 CWOverrideRedirect, &attrs);
 	}
@@ -1095,6 +1097,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
 	appWindow->is_mapped = FALSE;
 	appWindow->is_transient = FALSE;
+	appWindow->override_redirect = FALSE;
 	appWindow->rail_state = 0;
 	appWindow->maxVert = FALSE;
 	appWindow->maxHorz = FALSE;
