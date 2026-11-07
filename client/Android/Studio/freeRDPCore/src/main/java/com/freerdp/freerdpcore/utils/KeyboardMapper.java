@@ -492,6 +492,36 @@ public class KeyboardMapper
 					isWinComboUsed = true;
 
 				boolean modifierActive = isModifierPressed();
+
+				// The library chooses between the character and the key's scancode
+				// (freerdp_client_send_key_as_unicode). Key combinations keep the virtual-key
+				// path below: aFreeRDP's toggles mean the user is building one on the server, and
+				// Ctrl, Alt, Meta or Win held on the Android side have not reached the server, so
+				// that path wraps the key in them. Shift alone is wrapped here, so Shift+Space or
+				// Shift+Tab keep it. A server without unicode input keeps the virtual-key path,
+				// since the library would drop the character.
+				if (sendsKeyAsUnicode(event) && !modifierActive && !isWinKeyDown)
+				{
+					int vk = getVirtualKeyCode(event.getKeyCode());
+					int unicode = event.getUnicodeChar();
+					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
+						unicode = 0;
+					boolean combination =
+					    (event.getMetaState() & (KeyEvent.META_CTRL_ON | KeyEvent.META_ALT_ON |
+					                             KeyEvent.META_META_ON)) != 0;
+					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !combination &&
+					    (unicode == 0 || listener.isUnicodeInputSupported()))
+					{
+						boolean shift = event.isShiftPressed();
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, true);
+						listener.processKeyAsUnicode(vk, unicode);
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, false);
+						return true;
+					}
+				}
+
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
 				// key. At the end we will reset all modifiers and notify our listener.
@@ -637,6 +667,14 @@ public class KeyboardMapper
 		listener.processVirtualKey(VK_F4, true);
 		listener.processVirtualKey(VK_F4, false);
 		listener.processVirtualKey(VK_LMENU, false);
+	}
+
+	// Text from the on-screen keyboard reaches us as key events Android builds from its virtual
+	// key character map, so their key codes encode US key positions, not what the user typed.
+	// A physical keyboard's positions are what the server's layout is meant to read.
+	private static boolean sendsKeyAsUnicode(KeyEvent event)
+	{
+		return event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
 	}
 
 	private boolean isModifierPressed()
@@ -797,6 +835,10 @@ public class KeyboardMapper
 		void processVirtualKey(int virtualKeyCode, boolean down);
 
 		void processUnicodeKey(int unicodeKey);
+
+		boolean isUnicodeInputSupported();
+
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey);
 
 		void switchKeyboard(int keyboardType);
 

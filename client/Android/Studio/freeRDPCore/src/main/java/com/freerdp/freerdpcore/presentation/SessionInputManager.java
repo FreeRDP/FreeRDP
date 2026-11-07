@@ -481,6 +481,19 @@ public class SessionInputManager
 			keyboardMapper.processUnicodeFallback(unicodeKey);
 	}
 
+	@Override public boolean isUnicodeInputSupported()
+	{
+		return instance != 0 && LibFreeRDP.isUnicodeInputSupported(instance);
+	}
+
+	@Override public void processKeyAsUnicode(int virtualKeyCode, int unicodeKey)
+	{
+		if (instance == 0)
+			return;
+		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, true);
+		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, false);
+	}
+
 	@Override public void switchKeyboard(int keyboardType)
 	{
 		switch (keyboardType)
