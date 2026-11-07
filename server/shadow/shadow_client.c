@@ -33,6 +33,9 @@
 #include <freerdp/log.h>
 #include <freerdp/utils/gfx.h>
 #include <freerdp/channels/drdynvc.h>
+#if defined(WITH_RDPEUDP)
+#include <freerdp/server/udp.h>
+#endif
 
 #include "shadow.h"
 #include "shadow_rfx_dirty.h"
@@ -289,6 +292,12 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
 	                                 freerdp_settings_get_uint32(srvSettings, FreeRDP_ColorDepth)))
 		return FALSE;
+#if defined(WITH_RDPEUDP)
+	if (!freerdp_settings_set_uint32(
+	        settings, FreeRDP_MultitransportFlags,
+	        freerdp_settings_get_uint32(srvSettings, FreeRDP_MultitransportFlags)))
+		return FALSE;
+#endif
 	NSCodec = freerdp_settings_get_bool(srvSettings, FreeRDP_NSCodec);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec))
 		return FALSE;
@@ -2361,6 +2370,25 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 
 	if (!surface)
 		return FALSE;
+
+#if defined(WITH_RDPEUDP)
+	/* The link accepts less than we send. Keep what changed for a later frame. Do not queue
+	 * pictures, because they are out of date when they arrive. */
+	FreeRDP_UdpSendState sendState = WINPR_C_ARRAY_INIT;
+	if (freerdp_peer_get_udp_send_state(context->peer, &sendState) && sendState.writeBlocked)
+	{
+		BOOL kept = TRUE;
+		EnterCriticalSection(&surface->lock);
+		EnterCriticalSection(&(client->lock));
+		rects = region16_rects(&(surface->invalidRegion), &numRects);
+		for (UINT32 index = 0; kept && (index < numRects); index++)
+			kept = region16_union_rect(&(client->invalidRegion), &(client->invalidRegion),
+			                           &rects[index]);
+		LeaveCriticalSection(&(client->lock));
+		LeaveCriticalSection(&surface->lock);
+		return kept;
+	}
+#endif
 
 	{
 		EnterCriticalSection(&(client->lock));

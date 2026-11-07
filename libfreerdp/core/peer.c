@@ -310,7 +310,10 @@ static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
-	return transport_get_event_handles(client->context->rdp->transport, events, count);
+	rdpRdp* rdp = client->context->rdp;
+	return multitransport_server_add_event(
+	    rdp->multitransport, events, transport_get_event_handles(rdp->transport, events, count),
+	    count);
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
@@ -1260,6 +1263,7 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 
+	multitransport_server_disconnect(client->context);
 	transport = freerdp_get_transport(client->context);
 	transport_disconnect(transport);
 }
@@ -1313,6 +1317,8 @@ static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 	WINPR_ASSERT(peer->context->rdp);
 	WINPR_ASSERT(peer->context->rdp->transport);
 	transport = peer->context->rdp->transport;
+	if (multitransport_is_write_blocked(peer->context->rdp->multitransport))
+		return TRUE;
 	return transport_is_write_blocked(transport);
 }
 

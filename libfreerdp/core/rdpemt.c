@@ -37,6 +37,7 @@
 #endif
 #endif
 
+#include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
@@ -46,6 +47,7 @@
 
 #include "../crypto/certificate.h"
 #include "rdpudp.h"
+#include "udplistener.h"
 #include "rdpemt.h"
 
 /* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER Action */
@@ -57,15 +59,35 @@
 
 /* [MS-RDPEMT] 2.2.1.1.1 RDP_TUNNEL_SUBHEADER SubHeaderType */
 #define RDPTUNNEL_SUBHEADER_AUTODETECT_REQUEST 0x00
+#define RDPTUNNEL_SUBHEADER_AUTODETECT_RESPONSE 0x01
 
 /* Time allowed from the first SYN until the server accepts the tunnel. */
 #define RDPEMT_SETUP_TIMEOUT_MS 20000
+
+/* Server: time allowed from the offer until the client proves its cookie. A client that accepts the
+ * offer sends its SYN immediately, and the TLS handshake needs only some round trips. A tunnel that
+ * waits for a client keeps a flow, a thread and memory. Thus this time is short. */
+#define RDPEMT_SERVER_SETUP_TIMEOUT_MS 7000
+
+/* Server: the datagrams that the tunnel processes in one pass. Then it runs its timers and sends
+ * what waits, and other threads can lock it. Thus a client that sends without a stop cannot keep
+ * the tunnel busy and the timeouts away. */
+#define RDPEMT_INPUT_BUDGET 256
 
 /* TLS record header: type, version, length */
 #define TLS_RECORD_HEADER_LENGTH 5
 
 /* Room per datagram for the TLS record header, padding and authentication tag. */
 #define TLS_RECORD_OVERHEAD 64
+
+/* The server collects tunnel PDUs into TLS records of up to this much plaintext. */
+#define RDPEMT_SERVER_BATCH 16000
+
+/* The default maximum of data that waits for the link: the data that fits into 32768 datagrams. At
+ * 20 Mbit/s this is approximately 15 s of data. A server that gets to this maximum does not pace
+ * itself. A reliable tunnel cannot drop any of this data, so the tunnel fails above this
+ * maximum. */
+#define RDPEMT_SEND_LIMIT (32768ull * 1232ull)
 
 struct rdp_emt
 {
@@ -89,6 +111,13 @@ struct rdp_emt
 	/* handed to receiver and not yet taken; Interlocked functions only */
 	LONG directBytes;
 
+	/* server side: the certificate and key of the main connection, and the hash of the cookie that
+	 * the SYN of the client contains */
+	BOOL server;
+	X509* cert;
+	EVP_PKEY* key;
+	BYTE cookieHash[32];
+
 	rdpUdp* udp;
 	SSL_CTX* ctx;
 	SSL* ssl;
@@ -105,6 +134,20 @@ struct rdp_emt
 	 * the position of each is how much they hold */
 	wStream* out;
 	wStream* in;
+
+	/* server side: tunnel PDUs that wait to go into one TLS record, full up to its position */
+	wStream* batch;
+
+	/* server side: the source and the destination of datagrams */
+	rdpUdpFlow* flow;
+
+	/* Server side: the data that the link has no room for yet, see EMT_HOLD_DATA. The data waits as
+	 * plaintext so that it goes into full TLS records when there is room, and so that it leaves
+	 * here in order. */
+	wQueue* hold;
+	size_t holdBytes;
+	size_t sendLimit;
+	BOOL writeBlocked; /* reported to the server application until the backlog is gone */
 };
 
 /* Drops the first count bytes of a stream that is filled up to its position. */
@@ -207,6 +250,22 @@ static BOOL emt_flush_tls(rdpEmt* emt)
 	const size_t max = rdpudp_get_max_payload(emt->udp);
 	if (max == 0)
 		return FALSE;
+	if (emt->server)
+	{
+		/* the connection is a byte stream, so the server fills each datagram */
+		const BYTE* bytes = Stream_Buffer(emt->out);
+		const size_t total = Stream_GetPosition(emt->out);
+		size_t offset = 0;
+		while (offset < total)
+		{
+			/* the bytes left, not offset + max, because that sum can wrap */
+			const size_t length = (total - offset > max) ? max : total - offset;
+			if (!rdpudp_send(emt->udp, &bytes[offset], length))
+				return FALSE;
+			offset += length;
+		}
+		return stream_consume(emt->out, total);
+	}
 	const BYTE* data = Stream_Buffer(emt->out);
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, Stream_GetPosition(emt->out));
@@ -291,6 +350,166 @@ static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* subHeader, size_
 	return emt_flush_tls(emt);
 }
 
+/* Writes the collected tunnel PDUs as one TLS record. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_write_batch(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	const size_t length = emt->batch ? Stream_GetPosition(emt->batch) : 0;
+	if (length == 0)
+		return TRUE;
+	if (length > INT32_MAX)
+		return FALSE;
+	const int total = WINPR_ASSERTING_INT_CAST(int, length);
+	const int rc = SSL_write(emt->ssl, Stream_Buffer(emt->batch), total);
+	Stream_ResetPosition(emt->batch);
+	if (rc != total)
+	{
+		log_ssl_errors(emt, "SSL_write");
+		return FALSE;
+	}
+	return emt_flush_tls(emt);
+}
+
+/* Adds a tunnel data PDU to the batch. Writes the batch first if the PDU makes the batch too
+ * large. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_batch_data(rdpEmt* emt, const BYTE* payload, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(payload || (length == 0));
+
+	if (length > UINT16_MAX)
+		return FALSE;
+	if (!emt->batch)
+	{
+		emt->batch = Stream_New(nullptr, RDPEMT_SERVER_BATCH);
+		if (!emt->batch)
+			return FALSE;
+	}
+	/* The room left, not a sum, because a sum can wrap. A PDU that is larger than a batch goes
+	 * alone. */
+	const size_t pdu = RDPTUNNEL_HEADER_LENGTH + length;
+	const size_t used = Stream_GetPosition(emt->batch);
+	if (((used > RDPEMT_SERVER_BATCH) || (RDPEMT_SERVER_BATCH - used < pdu)) &&
+	    !emt_write_batch(emt))
+		return FALSE;
+	if (!Stream_EnsureRemainingCapacity(emt->batch, pdu))
+		return FALSE;
+
+	/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
+	const UINT8 actionByte = RDPTUNNEL_ACTION_DATA;
+	const UINT16 payloadLength = WINPR_ASSERTING_INT_CAST(UINT16, length);
+	Stream_Write_UINT8(emt->batch, actionByte);
+	Stream_Write_UINT16(emt->batch, payloadLength);
+	Stream_Write_UINT8(emt->batch, RDPTUNNEL_HEADER_LENGTH);
+	Stream_Write(emt->batch, payload, length);
+	return TRUE;
+}
+
+/* The types of the items that wait in hold, the first byte of each item. */
+#define EMT_HOLD_DATA 0
+#define EMT_HOLD_SUBHEADER 1
+
+/* A Tunnel Data PDU without HigherLayerData. Windows sends its auto-detect requests like this. The
+ * data that was collected before goes first, because a bandwidth measurement counts the data
+ * between two of these PDUs. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_write_subheader(rdpEmt* emt, const BYTE* subHeader, size_t length)
+{
+	WINPR_ASSERT(emt);
+	return emt_write_batch(emt) &&
+	       emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, subHeader, length, nullptr, 0);
+}
+
+/* The data that waits for the link, in datagrams. */
+WINPR_ATTR_NODISCARD
+static size_t emt_backlog(const rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	const size_t max = rdpudp_get_max_payload(emt->udp);
+	return rdpudp_get_send_backlog(emt->udp) + ((max > 0) ? emt->holdBytes / max : 0);
+}
+
+/* The tunnel is blocked at two windows of backlog and is free again at one window. The backlog
+ * stays at approximately two round trips of data at all link speeds, and there is nothing to
+ * tune. */
+static void emt_update_blocked(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	const size_t window = rdpudp_get_send_window(emt->udp);
+	const size_t backlog = emt_backlog(emt);
+	if (!emt->writeBlocked && (backlog >= 2 * window))
+		emt->writeBlocked = TRUE;
+	else if (emt->writeBlocked && (backlog <= window))
+	{
+		emt->writeBlocked = FALSE;
+		emt->callback(emt->custom, emt, RDPEMT_EVENT_WRITABLE, nullptr, 0);
+	}
+}
+
+/* Keeps the data for a tunnel data PDU until the link has room for it. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_hold(rdpEmt* emt, BYTE kind, const BYTE* payload, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(payload || (length == 0));
+
+	if ((emt->holdBytes > emt->sendLimit) || (length > emt->sendLimit - emt->holdBytes))
+	{
+		WLog_Print(emt->log, WLOG_ERROR,
+		           "%" PRIuz " bytes wait for a link that takes less than the server sends, "
+		           "ending the tunnel: the server does not pace itself",
+		           emt->holdBytes);
+		emt_fail(emt, "the server sends more than the link takes");
+		return FALSE;
+	}
+	wStream* s = Stream_New(nullptr, 1 + length);
+	if (!s)
+		return FALSE;
+	Stream_Write_UINT8(s, kind);
+	Stream_Write(s, payload, length);
+	if (!Queue_Enqueue(emt->hold, s))
+	{
+		Stream_Free(s, TRUE);
+		return FALSE;
+	}
+	emt->holdBytes += length;
+	emt_update_blocked(emt);
+	return TRUE;
+}
+
+/* Moves data out of hold until the link has no more room. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_drain_hold(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	BOOL moved = FALSE;
+	const size_t window = rdpudp_get_send_window(emt->udp);
+	while ((Queue_Count(emt->hold) > 0) && (rdpudp_get_send_backlog(emt->udp) < window))
+	{
+		wStream* s = Queue_Dequeue(emt->hold);
+		if (!s)
+			break;
+		const BYTE* item = Stream_Buffer(s);
+		const size_t length = Stream_GetPosition(s) - 1;
+		emt->holdBytes -= length;
+		const BOOL rc = (item[0] == EMT_HOLD_DATA) ? emt_batch_data(emt, &item[1], length)
+		                                           : emt_write_subheader(emt, &item[1], length);
+		Stream_Free(s, TRUE);
+		if (!rc)
+			return FALSE;
+		moved = TRUE;
+	}
+	if (moved && !emt_write_batch(emt))
+		return FALSE;
+	emt_update_blocked(emt);
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL emt_send_create_request(rdpEmt* emt)
 {
@@ -363,12 +582,71 @@ static BOOL emt_process_subheaders(rdpEmt* emt, const BYTE* data, size_t length)
 
 		const BYTE subHeaderType = data[1];
 		if (subHeaderType == RDPTUNNEL_SUBHEADER_AUTODETECT_REQUEST)
-			emt->callback(emt->custom, emt, RDPEMT_EVENT_AUTODETECT_REQUEST, data, subHeaderLength);
+			emt->callback(emt->custom, emt, RDPEMT_EVENT_AUTODETECT, data, subHeaderLength);
 		else
 			WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel subheader of type 0x%02" PRIx8,
 			           subHeaderType);
 		data += subHeaderLength;
 		length -= subHeaderLength;
+	}
+	return TRUE;
+}
+
+/* Server: [MS-RDPEMT] 2.2.2.1 RDP_TUNNEL_CREATEREQUEST. The answer is 2.2.2.2
+ * RDP_TUNNEL_CREATERESPONSE. The request id and the cookie are those of the Initiate Multitransport
+ * Request for this tunnel. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_accept_create_request(rdpEmt* emt, wStream* s, size_t payloadLength)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(s);
+
+	/* emt_process_server_pdus examined if the payload is present. This code examines that again
+	 * before it reads the payload. */
+	if ((payloadLength < 8 + sizeof(emt->cookie)) ||
+	    !Stream_CheckAndLogRequiredLengthWLog(emt->log, s, payloadLength))
+	{
+		emt_fail(emt, "short Tunnel Create Request");
+		return FALSE;
+	}
+	const UINT32 requestId = Stream_Get_UINT32(s); /* RequestID */
+	Stream_Seek_UINT32(s);                         /* Reserved */
+	const BYTE* cookie = Stream_ConstPointer(s);   /* SecurityCookie */
+	Stream_Seek(s, payloadLength - 8);
+
+	const BOOL valid = (requestId == emt->requestId) &&
+	                   (CRYPTO_memcmp(cookie, emt->cookie, sizeof(emt->cookie)) == 0);
+	BYTE response[4] = WINPR_C_ARRAY_INIT;
+	wStream rbuffer = WINPR_C_ARRAY_INIT;
+	wStream* rs = Stream_StaticInit(&rbuffer, response, sizeof(response));
+	if (!rs)
+	{
+		emt_fail(emt, "failed to build the Tunnel Create Response");
+		return FALSE;
+	}
+	/* HRESULT bit patterns, E_ABORT is negative in an int32 */
+	const UINT32 hr = valid ? (UINT32)S_OK : (UINT32)E_ABORT;
+	Stream_Write_UINT32(rs, hr); /* HrResponse */
+	if (!emt_write_pdu(emt, RDPTUNNEL_ACTION_CREATERESPONSE, nullptr, 0, response,
+	                   sizeof(response)))
+	{
+		emt_fail(emt, "failed to send the Tunnel Create Response");
+		return FALSE;
+	}
+	if (!valid)
+	{
+		emt_fail(emt, "the Tunnel Create Request names another request or cookie");
+		return FALSE;
+	}
+	if (!emt->ready)
+	{
+		/* the client has the cookie: it can now use all of the receive window */
+		rdpudp_set_peer_proven(emt->udp);
+		WLog_Print(emt->log, WLOG_INFO,
+		           "UDP multitransport tunnel ready (RDP-UDP version 0x%04" PRIx16 ")",
+		           rdpudp_get_version(emt->udp));
+		emt->ready = TRUE;
+		emt->callback(emt->custom, emt, RDPEMT_EVENT_READY, nullptr, 0);
 	}
 	return TRUE;
 }
@@ -463,6 +741,117 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 	return stream_consume(emt->in, Stream_GetPosition(s));
 }
 
+/* Server: a client answers auto-detect requests, so only responses go up. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_process_server_subheaders(rdpEmt* emt, const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(data || (length == 0));
+
+	while (length > 0)
+	{
+		const size_t subHeaderLength = data[0];
+		if ((length < 2) || (subHeaderLength < 2) || (subHeaderLength > length))
+		{
+			emt_fail(emt, "invalid tunnel subheader");
+			return FALSE;
+		}
+
+		const BYTE subHeaderType = data[1];
+		if (subHeaderType == RDPTUNNEL_SUBHEADER_AUTODETECT_RESPONSE)
+			emt->callback(emt->custom, emt, RDPEMT_EVENT_AUTODETECT, data, subHeaderLength);
+		else
+			WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel subheader of type 0x%02" PRIx8,
+			           subHeaderType);
+		data += subHeaderLength;
+		length -= subHeaderLength;
+	}
+	return TRUE;
+}
+
+/* Server: the PDUs of a client. The cookie in the Tunnel Create Request is the proof of the client,
+ * so nothing else counts before it. A client sends only that request and data. All other actions
+ * end the tunnel, also a Tunnel Create Response, which must not make the tunnel ready. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_process_server_pdus(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s =
+	    Stream_StaticConstInit(&sbuffer, Stream_Buffer(emt->in), Stream_GetPosition(emt->in));
+
+	while (Stream_GetRemainingLength(s) >= RDPTUNNEL_HEADER_LENGTH)
+	{
+		/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
+		const size_t start = Stream_GetPosition(s);
+		const BYTE action = Stream_Get_UINT8(s) & 0x0F;
+		const size_t payloadLength = Stream_Get_UINT16(s);
+		const size_t headerLength = Stream_Get_UINT8(s);
+		if (headerLength < RDPTUNNEL_HEADER_LENGTH)
+		{
+			emt_fail(emt, "invalid tunnel PDU header");
+			return FALSE;
+		}
+
+		/* HeaderLength includes any subheaders, PayloadLength does not. Both are bounded by
+		 * their wire types (UINT8, UINT16), the sum cannot overflow. */
+		WINPR_ASSERT(payloadLength <= UINT16_MAX);
+		WINPR_ASSERT(headerLength <= UINT8_MAX);
+		const size_t rest = headerLength - RDPTUNNEL_HEADER_LENGTH + payloadLength;
+		if (Stream_GetRemainingLength(s) < rest)
+		{
+			/* not all here yet */
+			if (!Stream_SetPosition(s, start))
+				return FALSE;
+			break;
+		}
+
+		if (!emt->ready && (headerLength > RDPTUNNEL_HEADER_LENGTH))
+		{
+			emt_fail(emt, "tunnel subheaders before the Tunnel Create Request");
+			return FALSE;
+		}
+
+		/* the subheaders go up ahead of the payload of their PDU */
+		if (!emt_process_server_subheaders(emt, Stream_ConstPointer(s),
+		                                   headerLength - RDPTUNNEL_HEADER_LENGTH))
+			return FALSE;
+		Stream_Seek(s, headerLength - RDPTUNNEL_HEADER_LENGTH);
+
+		switch (action)
+		{
+			case RDPTUNNEL_ACTION_CREATEREQUEST:
+				if (!emt_accept_create_request(emt, s, payloadLength))
+					return FALSE;
+				break;
+
+			case RDPTUNNEL_ACTION_DATA:
+				/* [MS-RDPEMT] 2.2.2.3 RDP_TUNNEL_DATA, HigherLayerData is a DVC PDU */
+				if (!emt->ready)
+				{
+					emt_fail(emt, "tunnel data before the Tunnel Create Request");
+					return FALSE;
+				}
+				if (payloadLength > 0)
+					emt_hand_up(emt, Stream_ConstPointer(s), payloadLength);
+				Stream_Seek(s, payloadLength);
+				break;
+
+			default:
+				WLog_Print(emt->log, WLOG_WARN, "tunnel PDU with action %" PRIu8 " from a client",
+				           action);
+				emt_fail(emt, "a tunnel PDU that a client must not send");
+				return FALSE;
+		}
+
+		if (emt->failed)
+			return FALSE;
+	}
+
+	return stream_consume(emt->in, Stream_GetPosition(s));
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL emt_run_tls(rdpEmt* emt)
 {
@@ -487,15 +876,19 @@ static BOOL emt_run_tls(rdpEmt* emt)
 		emt->handshakeDone = TRUE;
 		WLog_Print(emt->log, WLOG_DEBUG, "tunnel TLS session established (%s, %s)",
 		           SSL_get_version(emt->ssl), SSL_get_cipher_name(emt->ssl));
-		if (!emt_verify_peer(emt))
+		/* the server waits for the client's Tunnel Create Request */
+		if (!emt->server)
 		{
-			emt_fail(emt, "certificate mismatch");
-			return FALSE;
-		}
-		if (!emt_send_create_request(emt))
-		{
-			emt_fail(emt, "failed to send the Tunnel Create Request");
-			return FALSE;
+			if (!emt_verify_peer(emt))
+			{
+				emt_fail(emt, "certificate mismatch");
+				return FALSE;
+			}
+			if (!emt_send_create_request(emt))
+			{
+				emt_fail(emt, "failed to send the Tunnel Create Request");
+				return FALSE;
+			}
 		}
 	}
 
@@ -516,7 +909,7 @@ static BOOL emt_run_tls(rdpEmt* emt)
 		if (err == SSL_ERROR_WANT_READ)
 			break;
 		log_ssl_errors(emt, "SSL_read");
-		emt_fail(emt, (err == SSL_ERROR_ZERO_RETURN) ? "the server closed the tunnel"
+		emt_fail(emt, (err == SSL_ERROR_ZERO_RETURN) ? "the peer closed the tunnel"
 		                                             : "TLS error inside the tunnel");
 		return FALSE;
 	}
@@ -525,7 +918,7 @@ static BOOL emt_run_tls(rdpEmt* emt)
 	if (!emt_flush_tls(emt))
 		return FALSE;
 
-	return emt_process_pdus(emt);
+	return emt->server ? emt_process_server_pdus(emt) : emt_process_pdus(emt);
 }
 
 WINPR_ATTR_NODISCARD
@@ -546,13 +939,28 @@ static BOOL emt_receive(void* custom, const BYTE* data, size_t length)
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL emt_flow_send(void* custom, const BYTE* data, size_t length)
+{
+	return freerdp_udp_flow_send(custom, data, length);
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL emt_start_tls(rdpEmt* emt)
 {
 	WINPR_ASSERT(emt);
 
-	emt->ctx = SSL_CTX_new(TLS_client_method());
+	emt->ctx = SSL_CTX_new(emt->server ? TLS_server_method() : TLS_client_method());
 	if (!emt->ctx)
 		return FALSE;
+
+	/* The server shows the certificate of the main connection. The client looks for this
+	 * certificate. */
+	if (emt->server && ((SSL_CTX_use_certificate(emt->ctx, emt->cert) != 1) ||
+	                    (SSL_CTX_use_PrivateKey(emt->ctx, emt->key) != 1)))
+	{
+		WLog_Print(emt->log, WLOG_ERROR, "cannot use the server certificate for the tunnel");
+		return FALSE;
+	}
 
 	if (!SSL_CTX_set_min_proto_version(emt->ctx, TLS1_2_VERSION))
 	{
@@ -560,13 +968,26 @@ static BOOL emt_start_tls(rdpEmt* emt)
 		return FALSE;
 	}
 	SSL_CTX_set_options(emt->ctx, SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION);
+#if defined(SSL_OP_NO_RENEGOTIATION)
+	/* Each renegotiation costs the server an operation with its private key. The tunnel does not
+	 * need renegotiation. */
+	if (emt->server)
+		SSL_CTX_set_options(emt->ctx, SSL_OP_NO_RENEGOTIATION);
+#endif
 	/* the certificate is checked against the main connection's in emt_verify_peer */
 	SSL_CTX_set_verify(emt->ctx, SSL_VERIFY_NONE, nullptr);
-	if (!SSL_CTX_set_cipher_list(emt->ctx, "ECDHE-RSA-AES256-GCM-SHA384:"
-	                                       "ECDHE-RSA-AES128-GCM-SHA256:"
-	                                       "ECDHE-ECDSA-AES256-GCM-SHA384:"
-	                                       "ECDHE-ECDSA-AES128-GCM-SHA256:"
-	                                       "AES256-GCM-SHA384:AES128-GCM-SHA256"))
+	/* A server accepts only ECDHE. With RSA key exchange, the tunnel has no forward secrecy, and
+	 * each client can use the private key of the server for decryption. */
+	const char* ciphers = emt->server ? "ECDHE-RSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-RSA-AES128-GCM-SHA256:"
+	                                    "ECDHE-ECDSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-ECDSA-AES128-GCM-SHA256"
+	                                  : "ECDHE-RSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-RSA-AES128-GCM-SHA256:"
+	                                    "ECDHE-ECDSA-AES256-GCM-SHA384:"
+	                                    "ECDHE-ECDSA-AES128-GCM-SHA256:"
+	                                    "AES256-GCM-SHA384:AES128-GCM-SHA256";
+	if (!SSL_CTX_set_cipher_list(emt->ctx, ciphers))
 	{
 		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set_cipher_list failed");
 		return FALSE;
@@ -609,13 +1030,18 @@ static BOOL emt_start_tls(rdpEmt* emt)
 		return FALSE;
 	}
 	SSL_set_bio(emt->ssl, emt->rbio, emt->wbio);
-	SSL_set_connect_state(emt->ssl);
-	if (emt->hostname)
-		(void)SSL_set_tlsext_host_name(emt->ssl, emt->hostname);
+	if (emt->server)
+		SSL_set_accept_state(emt->ssl);
+	else
+	{
+		SSL_set_connect_state(emt->ssl);
+		if (emt->hostname)
+			(void)SSL_set_tlsext_host_name(emt->ssl, emt->hostname);
+	}
 
-	/* every record fits in one datagram */
+	/* Every record of the client fits in one datagram. The server sends a byte stream. */
 	const size_t max = rdpudp_get_max_payload(emt->udp);
-	if (max > TLS_RECORD_OVERHEAD + 512)
+	if (!emt->server && (max > TLS_RECORD_OVERHEAD + 512))
 	{
 		if (!SSL_set_max_send_fragment(emt->ssl,
 		                               WINPR_ASSERTING_INT_CAST(long, max - TLS_RECORD_OVERHEAD)))
@@ -629,6 +1055,54 @@ static BOOL emt_start_tls(rdpEmt* emt)
 	return emt_run_tls(emt);
 }
 
+/* All data that came from the client. A server connection processes this data here, on the thread
+ * of the tunnel. The listener only sorts. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_server_input(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	BYTE data[UDPFLOW_MAX_DATAGRAM] = WINPR_C_ARRAY_INIT;
+	size_t length = 0;
+	/* the event of the flow stays set while datagrams wait, so the next pass comes immediately */
+	for (size_t count = 0;
+	     (count < RDPEMT_INPUT_BUDGET) && !emt->failed && udpflow_read(emt->flow, data, &length);
+	     count++)
+	{
+		if (rdpudp_get_state(emt->udp) == RDPUDP_STATE_CLOSED)
+		{
+			if (!rdpudp_accept(emt->udp, emt_flow_send, emt->flow, data, length))
+			{
+				emt_fail(emt, "cannot accept the client's SYN");
+				return FALSE;
+			}
+			emt->callback(emt->custom, emt, RDPEMT_EVENT_CLAIMED, nullptr, 0);
+		}
+		else if (!rdpudp_input(emt->udp, data, length))
+		{
+			emt_fail(emt, "the RDP-UDP connection failed");
+			return FALSE;
+		}
+		if (!emt->tlsStarted && (rdpudp_get_state(emt->udp) == RDPUDP_STATE_ESTABLISHED) &&
+		    !emt_start_tls(emt))
+		{
+			log_ssl_errors(emt, "TLS setup");
+			emt_fail(emt, "failed to start TLS");
+			return FALSE;
+		}
+	}
+	return !emt->failed;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL emt_setup_timed_out(const rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	if (emt->server)
+		return rdpudp_get_time(emt->udp) - emt->started > RDPEMT_SERVER_SETUP_TIMEOUT_MS;
+	return GetTickCount64() - emt->started > RDPEMT_SETUP_TIMEOUT_MS;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL emt_poll(rdpEmt* emt)
 {
@@ -636,6 +1110,19 @@ static BOOL emt_poll(rdpEmt* emt)
 
 	if (emt->failed)
 		return FALSE;
+
+	if (emt->server && !emt_server_input(emt))
+		return FALSE;
+
+	if (emt->server && (rdpudp_get_state(emt->udp) == RDPUDP_STATE_CLOSED))
+	{
+		if (emt_setup_timed_out(emt))
+		{
+			emt_fail(emt, "no SYN from the client");
+			return FALSE;
+		}
+		return TRUE;
+	}
 
 	if (!rdpudp_check(emt->udp))
 	{
@@ -653,9 +1140,15 @@ static BOOL emt_poll(rdpEmt* emt)
 		}
 	}
 
-	if (!emt->ready && (GetTickCount64() - emt->started > RDPEMT_SETUP_TIMEOUT_MS))
+	if (!emt->ready && emt_setup_timed_out(emt))
 	{
 		emt_fail(emt, "timed out");
+		return FALSE;
+	}
+
+	if (emt->server && emt->ready && !emt_drain_hold(emt))
+	{
+		emt_fail(emt, "failed to send tunnel data");
 		return FALSE;
 	}
 
@@ -716,7 +1209,17 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 		const SOCKET sockfd = rdpudp_get_socket(emt->udp);
 		LeaveCriticalSection(&emt->lock);
 
-		emt_wait_readable(sockfd, timeout);
+		/* A server connection has no socket. Its datagrams wake it through the flow. */
+		if (emt->server)
+		{
+			/* udpflow_wake() sets the event of the flow, also for a relayed flow */
+			HANDLE events[2] = WINPR_C_ARRAY_INIT;
+			const DWORD count = udpflow_get_events(emt->flow, events);
+			if (WaitForMultipleObjects(count, events, FALSE, timeout) == WAIT_FAILED)
+				WLog_Print(emt->log, WLOG_DEBUG, "waiting for the flow failed");
+		}
+		else
+			emt_wait_readable(sockfd, timeout);
 
 		if (emt_stopping(emt))
 			break;
@@ -730,6 +1233,57 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 
 	ExitThread(0);
 	return 0;
+}
+
+/* The worker of a tunnel without a thread, see freerdp_udp_flow_check(). */
+WINPR_ATTR_NODISCARD
+static BOOL emt_worker_check(void* custom)
+{
+	rdpEmt* emt = custom;
+	WINPR_ASSERT(emt);
+
+	EnterCriticalSection(&emt->lock);
+	const BOOL rc = emt_poll(emt);
+	LeaveCriticalSection(&emt->lock);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT32 emt_worker_timeout(void* custom)
+{
+	rdpEmt* emt = custom;
+	WINPR_ASSERT(emt);
+
+	EnterCriticalSection(&emt->lock);
+	const UINT32 timeout = rdpudp_get_timeout(emt->udp);
+	LeaveCriticalSection(&emt->lock);
+	return timeout;
+}
+
+/* [MS-RDPEUDP] 2.2.2.9: cookieHash is the SHA-256 hash of the securityCookie. It is sent with
+ * each 32 bit word byte swapped, which is what Windows accepts. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_cookie_hash(const BYTE cookie[16], BYTE cookieHash[32])
+{
+	WINPR_ASSERT(cookie);
+	WINPR_ASSERT(cookieHash);
+
+	BYTE digest[32] = WINPR_C_ARRAY_INIT;
+	if (!winpr_Digest(WINPR_MD_SHA256, cookie, 16, digest, sizeof(digest)))
+		return FALSE;
+	wStream dbuffer = WINPR_C_ARRAY_INIT;
+	wStream hbuffer = WINPR_C_ARRAY_INIT;
+	wStream* ds = Stream_StaticConstInit(&dbuffer, digest, sizeof(digest));
+	wStream* hs = Stream_StaticInit(&hbuffer, cookieHash, 32);
+	if (!ds || !hs)
+		return FALSE;
+	for (size_t x = 0; x < 32 / 4; x++)
+	{
+		/* the Stream_Write macros evaluate their value more than once */
+		const UINT32 word = Stream_Get_UINT32_BE(ds);
+		Stream_Write_UINT32(hs, word);
+	}
+	return TRUE;
 }
 
 rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie, const char* hostname,
@@ -769,34 +1323,84 @@ rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie, const char* 
 	memcpy(emt->publicKey, publicKey, publicKeyLength);
 	emt->publicKeyLength = publicKeyLength;
 
-	/* [MS-RDPEUDP] 2.2.2.9: cookieHash is the SHA-256 hash of the securityCookie. It is sent
-	 * with each 32 bit word byte swapped, which is what Windows accepts. */
-	BYTE digest[32] = WINPR_C_ARRAY_INIT;
-	if (!winpr_Digest(WINPR_MD_SHA256, emt->cookie, sizeof(emt->cookie), digest, sizeof(digest)))
+	if (!emt_cookie_hash(emt->cookie, emt->cookieHash))
 		goto fail;
-	BYTE cookieHash[32] = WINPR_C_ARRAY_INIT;
-	{
-		wStream dbuffer = WINPR_C_ARRAY_INIT;
-		wStream hbuffer = WINPR_C_ARRAY_INIT;
-		wStream* ds = Stream_StaticConstInit(&dbuffer, digest, sizeof(digest));
-		wStream* hs = Stream_StaticInit(&hbuffer, cookieHash, sizeof(cookieHash));
-		for (size_t x = 0; x < sizeof(cookieHash) / 4; x++)
-		{
-			/* the Stream_Write macros evaluate their value more than once */
-			const UINT32 word = Stream_Get_UINT32_BE(ds);
-			Stream_Write_UINT32(hs, word);
-		}
-	}
 
 	emt->in = Stream_New(nullptr, 16384);
 	emt->out = Stream_New(nullptr, 4096);
 	if (!emt->in || !emt->out)
 		goto fail;
 
-	emt->udp = rdpudp_new(log, cookieHash, emt_receive, emt);
+	emt->udp = rdpudp_new(log, emt->cookieHash, emt_receive, emt);
 	if (!emt->udp)
 		goto fail;
 
+	return emt;
+fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
+	rdpemt_free(emt);
+	WINPR_PRAGMA_DIAG_POP
+	return nullptr;
+}
+
+rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, X509* cert,
+                          EVP_PKEY* key, BOOL manual, rdpEmtEventFn callback, void* custom)
+{
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(cookie);
+	WINPR_ASSERT(cert);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(callback);
+
+	rdpEmt* emt = calloc(1, sizeof(rdpEmt));
+	if (!emt)
+		return nullptr;
+
+	emt->log = log;
+	emt->server = TRUE;
+	emt->requestId = requestId;
+	memcpy(emt->cookie, cookie, sizeof(emt->cookie));
+	emt->callback = callback;
+	emt->custom = custom;
+	if (!InitializeCriticalSectionAndSpinCount(&emt->lock, 4000))
+	{
+		free(emt);
+		return nullptr;
+	}
+
+	/* The code keeps each reference immediately after it takes the reference, so rdpemt_free drops
+	 * the reference on failure. */
+	if (X509_up_ref(cert) != 1)
+		goto fail;
+	emt->cert = cert;
+	if (EVP_PKEY_up_ref(key) != 1)
+		goto fail;
+	emt->key = key;
+
+	if (!emt_cookie_hash(emt->cookie, emt->cookieHash))
+		goto fail;
+
+	emt->in = Stream_New(nullptr, 16384);
+	emt->out = Stream_New(nullptr, 4096);
+	if (!emt->in || !emt->out)
+		goto fail;
+
+	emt->udp = rdpudp_new(log, nullptr, emt_receive, emt);
+	emt->flow = freerdp_udp_flow_new(emt->cookieHash);
+	emt->hold = Queue_New(FALSE, -1, -1);
+	if (!emt->udp || !emt->flow || !emt->hold)
+		goto fail;
+	emt->sendLimit = RDPEMT_SEND_LIMIT;
+	udpflow_set_worker(emt->flow, emt_worker_check, emt_worker_timeout, emt);
+
+	emt->started = rdpudp_get_time(emt->udp);
+	if (!manual)
+	{
+		emt->thread = CreateThread(nullptr, 0, emt_thread, emt, 0, nullptr);
+		if (!emt->thread)
+			goto fail;
+	}
 	return emt;
 fail:
 	WINPR_PRAGMA_DIAG_PUSH
@@ -826,21 +1430,48 @@ void rdpemt_free(rdpEmt* emt)
 
 	/* not InterlockedExchange: WinPR's reads the old value non-atomically */
 	InterlockedIncrement(&emt->stop);
+	if (emt->flow)
+		udpflow_wake(emt->flow);
 	if (emt->thread)
 	{
 		(void)WaitForSingleObject(emt->thread, INFINITE);
 		(void)CloseHandle(emt->thread);
 	}
 
+	/* The thread is gone, so nothing sends any more. The listener can now release the flow. This
+	 * can close the socket of the flow. */
+	freerdp_udp_flow_free(emt->flow);
+
+	if (emt->hold)
+	{
+		/* Queue_Free() does not free the items of a queue that is exactly full */
+		wStream* s = nullptr;
+		while ((s = Queue_Dequeue(emt->hold)))
+			Stream_Free(s, TRUE);
+		Queue_Free(emt->hold);
+	}
+
 	SSL_free(emt->ssl); /* frees both BIOs */
 	SSL_CTX_free(emt->ctx);
+	X509_free(emt->cert);
+	EVP_PKEY_free(emt->key);
 	rdpudp_free(emt->udp);
 	free(emt->hostname);
 	free(emt->publicKey);
 	Stream_Free(emt->in, TRUE);
 	Stream_Free(emt->out, TRUE);
+	Stream_Free(emt->batch, TRUE);
 	DeleteCriticalSection(&emt->lock);
 	free(emt);
+}
+
+/* The link is full, or the data that waits for the link must go first. */
+WINPR_ATTR_NODISCARD
+static BOOL emt_must_hold(const rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	return (Queue_Count(emt->hold) > 0) ||
+	       (rdpudp_get_send_backlog(emt->udp) >= rdpudp_get_send_window(emt->udp));
 }
 
 BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length)
@@ -852,12 +1483,76 @@ BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length)
 	EnterCriticalSection(&emt->lock);
 	if (emt->ready && !emt->failed)
 	{
-		rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, nullptr, 0, data, length);
+		if (!emt->server)
+			rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, nullptr, 0, data, length);
+		else if (emt_must_hold(emt))
+			rc = emt_hold(emt, EMT_HOLD_DATA, data, length);
+		else
+			rc = emt_batch_data(emt, data, length);
 		if (!rc)
 			emt_fail(emt, "failed to send tunnel data");
 	}
 	LeaveCriticalSection(&emt->lock);
 	return rc;
+}
+
+BOOL rdpemt_flush(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	BOOL rc = TRUE;
+	EnterCriticalSection(&emt->lock);
+	if (emt->ready && !emt->failed)
+	{
+		rc = emt_write_batch(emt) && emt_drain_hold(emt);
+		if (!rc)
+			emt_fail(emt, "failed to send tunnel data");
+	}
+	LeaveCriticalSection(&emt->lock);
+	return rc;
+}
+
+rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	return emt->flow;
+}
+
+void rdpemt_get_send_state(rdpEmt* emt, FreeRDP_UdpSendState* state)
+{
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(state);
+
+	EnterCriticalSection(&emt->lock);
+	const size_t max = (rdpudp_get_state(emt->udp) == RDPUDP_STATE_ESTABLISHED)
+	                       ? rdpudp_get_max_payload(emt->udp)
+	                       : 0;
+	const UINT32 rtt = rdpudp_get_rtt(emt->udp);
+	state->writeBlocked = emt->writeBlocked;
+	state->queuedBytes = emt->holdBytes + rdpudp_get_send_backlog(emt->udp) * max;
+	state->rttMs = rtt;
+	state->rateBytesPerSecond =
+	    (rtt > 0) ? (1000ull * rdpudp_get_send_window(emt->udp) * max) / rtt : 0;
+	LeaveCriticalSection(&emt->lock);
+}
+
+BOOL rdpemt_is_write_blocked(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+
+	EnterCriticalSection(&emt->lock);
+	const BOOL blocked = emt->writeBlocked;
+	LeaveCriticalSection(&emt->lock);
+	return blocked;
+}
+
+void rdpemt_set_send_limit(rdpEmt* emt, size_t limit)
+{
+	WINPR_ASSERT(emt);
+
+	EnterCriticalSection(&emt->lock);
+	emt->sendLimit = (limit > 0) ? limit : RDPEMT_SEND_LIMIT;
+	LeaveCriticalSection(&emt->lock);
 }
 
 BOOL rdpemt_set_receiver(rdpEmt* emt, rdpEmtReceiverFn receiver, void* custom, wQueue* pending)
@@ -924,8 +1619,12 @@ BOOL rdpemt_send_subheader(rdpEmt* emt, const BYTE* subHeader, size_t length)
 	EnterCriticalSection(&emt->lock);
 	if (emt->ready && !emt->failed)
 	{
-		/* a Tunnel Data PDU without HigherLayerData, as Windows sends its auto-detect requests */
-		rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, subHeader, length, nullptr, 0);
+		if (!emt->server)
+			rc = emt_write_pdu(emt, RDPTUNNEL_ACTION_DATA, subHeader, length, nullptr, 0);
+		else if (emt_must_hold(emt))
+			rc = emt_hold(emt, EMT_HOLD_SUBHEADER, subHeader, length);
+		else
+			rc = emt_write_subheader(emt, subHeader, length);
 		if (!rc)
 			emt_fail(emt, "failed to send a tunnel subheader");
 	}

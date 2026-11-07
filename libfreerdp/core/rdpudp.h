@@ -24,18 +24,13 @@
 
 #include <freerdp/api.h>
 
-/** @brief The client side of a reliable (RDP-UDP-R) connection.
- *
- * The SYN / SYN+ACK exchange always uses the [MS-RDPEUDP] datagram format. The version agreed
- * there decides the data phase: versions 1 and 2 keep using [MS-RDPEUDP], version 3 switches to
- * [MS-RDPEUDP2].
- *
- * The connection carries a byte stream (in this case a TLS session). The caller hands it chunks
- * no larger than rdpudp_get_max_payload(), each of which travels in one datagram, and gets the
- * peer's chunks back in order through the receive callback.
- *
- * Nothing in here is thread safe, the owner serializes all calls.
- */
+/** @brief One end of a reliable (RDP-UDP-R) connection.
+ * The SYN / SYN+ACK exchange always uses the [MS-RDPEUDP] datagram format. The version from that
+ * exchange sets the data phase. Versions 1 and 2 continue to use [MS-RDPEUDP], and version 3
+ * changes to [MS-RDPEUDP2]. The connection carries a byte stream (in this case a TLS session). The
+ * caller gives it chunks no larger than rdpudp_get_max_payload(), one per datagram. The caller gets
+ * the chunks of the peer in order through the receive callback. Nothing in here is thread safe, so
+ * the owner serializes all calls. */
 typedef struct rdp_udp rdpUdp;
 
 typedef enum
@@ -50,8 +45,15 @@ typedef enum
 #define RDPUDP_PROTOCOL_VERSION_2 0x0002
 #define RDPUDP_PROTOCOL_VERSION_3 0x0101
 
+/** Gives the time in nanoseconds. Only the differences between two values have a meaning. */
+typedef UINT64 (*rdpUdpClockFn)(void* custom);
+
 /** Receives one in-order chunk of the peer's stream. Returning FALSE fails the connection. */
 typedef BOOL (*rdpUdpReceiveFn)(void* custom, const BYTE* data, size_t length);
+
+/** Sends one datagram of a server connection. A return value of FALSE makes the connection fail. A
+ *  datagram that the network lost is not a failure. */
+typedef BOOL (*rdpUdpSendFn)(void* custom, const BYTE* data, size_t length);
 
 FREERDP_LOCAL void rdpudp_free(rdpUdp* udp);
 
@@ -61,9 +63,23 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUdp* rdpudp_new(wLog* log, const BYTE* cookieHash, rdpUdpReceiveFn receive,
                                  void* custom);
 
-/** Opens the socket and sends the SYN. */
+/** Client: opens the socket and sends the SYN. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen);
+
+/** Server: answers the SYN of a client with a SYN+ACK. A server connection has no socket. It sends
+ *  with send and gets the datagrams of the client through rdpudp_input(). It accepts only version
+ *  3. The caller already matched the cookieHash of the SYN.
+ *  @param udp a connection made with rdpudp_new() and a nullptr cookieHash */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_accept(rdpUdp* udp, rdpUdpSendFn send, void* sendCustom, const BYTE* syn,
+                                 size_t length);
+
+/** Server: processes one datagram from the client, in place. This changes data. rdpudp_check()
+ *  still runs the timers.
+ *  @return FALSE after the connection failed */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_input(rdpUdp* udp, BYTE* data, size_t length);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SOCKET rdpudp_get_socket(const rdpUdp* udp);
@@ -78,17 +94,53 @@ FREERDP_LOCAL UINT16 rdpudp_get_version(const rdpUdp* udp);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL size_t rdpudp_get_max_payload(const rdpUdp* udp);
 
+/** Chunks that rdpudp_send() took and that wait behind the congestion window. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL size_t rdpudp_get_send_backlog(const rdpUdp* udp);
+
+/** The datagrams that can be unacknowledged now. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL size_t rdpudp_get_send_window(const rdpUdp* udp);
+
+/** The smoothed round trip time in milliseconds, 0 before the first sample. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT32 rdpudp_get_rtt(const rdpUdp* udp);
+
+/** Tells if a socket error only means that this datagram is lost. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_socket_error_is_transient(int error);
+
 /** Milliseconds until a timer of this connection is due. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpudp_get_timeout(const rdpUdp* udp);
 
-/** Reads every datagram waiting on the socket and runs the timers.
- *  @return FALSE once the connection has failed */
+/** Gets the cookieHash from a version 3 SYN of a client. The cookieHash tells which connection the
+ *  SYN is for. A SYN shorter than the smallest MTU does not count, because a SYN has padding to
+ *  its MTU.
+ *  @return FALSE for anything else */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpudp_get_syn_cookie_hash(const BYTE* data, size_t length, BYTE hash[32]);
+
+/** Reads all datagrams that wait on the socket (client only) and runs the timers.
+ *  @return FALSE after the connection failed */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_check(rdpUdp* udp);
 
 /** Queues one chunk of the stream for reliable delivery. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length);
+
+/** Server: the client proved that it has the cookie. Before this, a connection keeps only a small
+ *  number of chunks that arrive after a hole. */
+FREERDP_LOCAL void rdpudp_set_peer_proven(rdpUdp* udp);
+
+/** Replaces the clock of the system for this connection. A test uses this to move the time
+ *  forward without a wait.
+ *  @param clock the clock, or nullptr for the clock of the system */
+FREERDP_LOCAL void rdpudp_set_clock(rdpUdp* udp, rdpUdpClockFn clock, void* custom);
+
+/** The time of the connection in milliseconds, for the timers of its owner. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT64 rdpudp_get_time(const rdpUdp* udp);
 
 #endif /* FREERDP_LIB_CORE_RDPUDP_H */

@@ -26,6 +26,9 @@
 
 #include <freerdp/config.h>
 #include <freerdp/api.h>
+#if defined(WITH_RDPEUDP)
+#include <freerdp/server/udp.h>
+#endif
 
 /** @brief A client side multitransport tunnel.
  *
@@ -36,15 +39,18 @@ typedef struct rdp_emt rdpEmt;
 
 typedef enum
 {
-	RDPEMT_EVENT_READY,             /**< the server accepted the Tunnel Create Request */
-	RDPEMT_EVENT_FAILED,            /**< the tunnel could not be set up, or broke down */
-	RDPEMT_EVENT_DATA,              /**< HigherLayerData of one Tunnel Data PDU */
-	RDPEMT_EVENT_AUTODETECT_REQUEST /**< one RDP_TUNNEL_SUBHEADER of type
-	                                     TYPE_ID_AUTODETECT_REQUEST, from SubHeaderLength on */
+	RDPEMT_EVENT_READY,      /**< the server accepted the Tunnel Create Request */
+	RDPEMT_EVENT_FAILED,     /**< the tunnel could not be set up, or broke down */
+	RDPEMT_EVENT_DATA,       /**< HigherLayerData of one Tunnel Data PDU */
+	RDPEMT_EVENT_AUTODETECT, /**< one RDP_TUNNEL_SUBHEADER, from SubHeaderLength on: of type
+	                              TYPE_ID_AUTODETECT_REQUEST on a client, and of type
+	                              TYPE_ID_AUTODETECT_RESPONSE on a server */
+	RDPEMT_EVENT_CLAIMED,    /**< server: a SYN with the hash of the cookie arrived */
+	RDPEMT_EVENT_WRITABLE    /**< server: the tunnel has room again after it had none */
 } RDPEMT_EVENT;
 
-/** Called on the tunnel thread. The data of RDPEMT_EVENT_DATA and
- * RDPEMT_EVENT_AUTODETECT_REQUEST is only valid during the call. */
+/** The tunnel thread calls this. The data of RDPEMT_EVENT_DATA and RDPEMT_EVENT_AUTODETECT is valid
+ * only during the call. */
 typedef void (*rdpEmtEventFn)(void* custom, rdpEmt* emt, RDPEMT_EVENT event, const BYTE* data,
                               size_t length);
 
@@ -76,6 +82,33 @@ FREERDP_LOCAL rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_start(rdpEmt* emt, const struct sockaddr* addr, size_t addrlen);
 
+/** @brief The server end of a reliable tunnel, for one Initiate Multitransport Request.
+ * It waits on its flow, see rdpemt_get_flow(), for the client whose SYN contains the hash of
+ * cookie. It runs TLS with cert and key, those of the main connection. It accepts a Tunnel Create
+ * Request that names requestId and cookie. RDPEMT_EVENT_READY comes after the Tunnel Create
+ * Response.
+ * @param manual no thread of its own, freerdp_udp_flow_check() runs the tunnel */
+WINPR_ATTR_MALLOC(rdpemt_free, 1)
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie,
+                                        struct x509_st* cert, struct evp_pkey_st* key, BOOL manual,
+                                        rdpEmtEventFn callback, void* custom);
+
+/** Server: where the tunnel gets its datagrams from. It belongs to the tunnel. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt);
+
+/** Server: what the tunnel knows about the link. Thread safe. */
+FREERDP_LOCAL void rdpemt_get_send_state(rdpEmt* emt, FreeRDP_UdpSendState* state);
+
+/** Server: tells if more data waits than the link accepts. Thread safe. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpemt_is_write_blocked(rdpEmt* emt);
+
+/** Server: the maximum of data that waits for the link before the tunnel fails. Thread safe.
+ *  @param limit in bytes, 0 for the default */
+FREERDP_LOCAL void rdpemt_set_send_limit(rdpEmt* emt, size_t limit);
+
 /** Sends one Tunnel Data PDU. Thread safe. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length);
@@ -84,6 +117,10 @@ FREERDP_LOCAL BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length
  * HigherLayerData. Thread safe. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_send_subheader(rdpEmt* emt, const BYTE* subHeader, size_t length);
+
+/** Sends the data that rdpemt_send_data collected on the server side. Thread safe. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpemt_flush(rdpEmt* emt);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpemt_get_request_id(const rdpEmt* emt);

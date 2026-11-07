@@ -21,7 +21,7 @@ if(BUILD_TESTING_INTERNAL)
     TestUpdateBitmap.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c)
+    list(APPEND TESTS TestRdpUdp.c TestUdpListener.c)
   endif()
 endif()
 
@@ -30,6 +30,10 @@ set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c Test
 # TestFuzzServer generates a live cert via winpr-tools (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
+endif()
+
+if(WITH_RDPEUDP)
+  list(APPEND FUZZERS TestFuzzRdpUdpServer.c TestFuzzRdpUdpTunnel.c)
 endif()
 
 # Test not compatible with package tests, disable
