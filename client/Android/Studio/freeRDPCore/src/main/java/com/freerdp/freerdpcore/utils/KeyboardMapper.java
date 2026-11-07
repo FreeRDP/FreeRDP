@@ -226,6 +226,9 @@ public class KeyboardMapper
 	private boolean isWinKeyDown = false;
 	private boolean isWinComboUsed = false;
 	private boolean physicalKeyboardDeviceLayout = false;
+	// Accent of a dead key waiting for the next character, and the virtual key that typed it.
+	private int pendingAccent = 0;
+	private int pendingAccentVk = 0;
 
 	public void init(Context context)
 	{
@@ -446,6 +449,7 @@ public class KeyboardMapper
 		winPressed = false;
 		isWinKeyDown = false;
 		isWinComboUsed = false;
+		pendingAccent = 0;
 		setKeyProcessingListener(listener);
 	}
 
@@ -511,12 +515,14 @@ public class KeyboardMapper
 				{
 					int vk = getVirtualKeyCode(event.getKeyCode());
 					int unicode = event.getUnicodeChar();
+					boolean deadKey = (unicode & KeyCharacterMap.COMBINING_ACCENT) != 0;
 					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
 						unicode = 0;
 					// Right Alt that yields a character is AltGr, part of the layout: send the
 					// character.
 					int meta = event.getMetaState();
-					boolean altGr = unicode != 0 && (meta & KeyEvent.META_ALT_RIGHT_ON) != 0 &&
+					boolean altGr = (unicode != 0 || deadKey) &&
+					                (meta & KeyEvent.META_ALT_RIGHT_ON) != 0 &&
 					                (meta & KeyEvent.META_ALT_LEFT_ON) == 0;
 					boolean combination =
 					    (meta & (KeyEvent.META_CTRL_ON | KeyEvent.META_META_ON)) != 0 ||
@@ -527,12 +533,24 @@ public class KeyboardMapper
 						boolean shift = event.isShiftPressed();
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, true);
-						listener.processKeyAsUnicode(vk, unicode);
+						if (deadKey && listener.isUnicodeInputSupported())
+							processDeadKey(event, vk);
+						else if (pendingAccent != 0 && unicode != 0)
+							processAccentedKey(vk, unicode);
+						else
+						{
+							if (!KeyEvent.isModifierKey(event.getKeyCode()))
+								pendingAccent = 0;
+							listener.processKeyAsUnicode(vk, unicode);
+						}
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, false);
 						return true;
 					}
 				}
+
+				if (!KeyEvent.isModifierKey(event.getKeyCode()))
+					pendingAccent = 0;
 
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
@@ -689,6 +707,46 @@ public class KeyboardMapper
 	{
 		return physicalKeyboardDeviceLayout ||
 		    event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
+	}
+
+	// Android reports a dead key as its accent, flagged COMBINING_ACCENT, and leaves composing it
+	// with the next character to the text field. Compose it here, as Android's own text fields
+	// do, so the server receives the accented character instead of reading the dead key's
+	// position in its own layout. Composed characters go with the dead key's virtual key: the
+	// library sends some keys, Space among them, as scancodes whatever their character.
+	private void processDeadKey(KeyEvent event, int vk)
+	{
+		if (event.getRepeatCount() > 0)
+			return;
+		int accent = event.getUnicodeChar() & KeyCharacterMap.COMBINING_ACCENT_MASK;
+		if (pendingAccent != 0)
+		{
+			// The same dead key twice types the accent; two different ones, the first accent.
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent);
+			boolean same = accent == pendingAccent;
+			pendingAccent = 0;
+			if (same)
+				return;
+		}
+		pendingAccent = accent;
+		pendingAccentVk = vk;
+	}
+
+	// A character after a dead key: the composed character, or the accent and then the character
+	// when they do not compose. Space types the accent itself: getDeadChar returned an apostrophe
+	// for the acute accent and Space on a Pixel 9 Pro running Android 17.
+	private void processAccentedKey(int vk, int unicode)
+	{
+		int composed =
+		    unicode == ' ' ? pendingAccent : KeyEvent.getDeadChar(pendingAccent, unicode);
+		if (composed != 0)
+			listener.processKeyAsUnicode(pendingAccentVk, composed);
+		else
+		{
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent);
+			listener.processKeyAsUnicode(vk, unicode);
+		}
+		pendingAccent = 0;
 	}
 
 	private boolean isModifierPressed()

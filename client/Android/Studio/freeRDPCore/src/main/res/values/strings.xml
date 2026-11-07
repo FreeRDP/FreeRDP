@@ -225,7 +225,7 @@
     <string name="settings_ui_use_back_as_altf4">Use \"back\" button as Alt+F4</string>
     <string name="settings_ui_physical_keyboard_device_layout">Use Android keyboard layout</string>
     <string name="settings_ui_physical_keyboard_device_layout_summary_off">Physical keyboard: keys type what the remote computer\'s layout says.</string>
-    <string name="settings_ui_physical_keyboard_device_layout_summary_on">Physical keyboard: keys type what Android\'s layout says. Dead-key accents do not work.</string>
+    <string name="settings_ui_physical_keyboard_device_layout_summary_on">Physical keyboard: keys type what Android\'s layout says.</string>
     <string name="settings_cat_power">Power Saving</string>
     <string name="settings_cat_client">Client</string>
     <string name="settings_power_disconnect_timeout">Close idle Connections</string>
