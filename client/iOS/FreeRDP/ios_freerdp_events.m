@@ -12,6 +12,7 @@
 
 #include "ios_freerdp_events.h"
 #include "ios_cliprdr.h"
+#include "ios_disp.h"
 
 #pragma mark -
 #pragma mark Sending compacted input events (from main thread)
@@ -110,6 +111,10 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 		    (ios_cliprdr_send_client_format_list(afc->cliprdr) != CHANNEL_RC_OK))
 			NSLog(@"%s: failed to send the clipboard format list.", __func__);
 	}
+	else if ([event_type isEqualToString:@"resize"])
+		ios_disp_send_monitor_layout(mfi->context,
+		                             [[event_description objectForKey:@"width"] unsignedIntValue],
+		                             [[event_description objectForKey:@"height"] unsignedIntValue]);
 	else if ([event_type isEqualToString:@"disconnect"])
 		should_continue = FALSE;
 	else

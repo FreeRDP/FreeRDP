@@ -126,6 +126,8 @@ set(SRCS
     Controllers/ScreenSelectionController.m
     FreeRDP/ios_cliprdr.h
     FreeRDP/ios_cliprdr.m
+    FreeRDP/ios_disp.h
+    FreeRDP/ios_disp.m
     FreeRDP/ios_freerdp_events.h
     FreeRDP/ios_freerdp_events.m
     FreeRDP/ios_freerdp.h

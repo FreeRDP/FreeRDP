@@ -16,6 +16,7 @@
 #import "TSXTypes.h"
 #import <winpr/clipboard.h>
 #import <freerdp/client/cliprdr.h>
+#import <freerdp/client/disp.h>
 
 @class RDPSession, RDPSessionView;
 
@@ -38,6 +39,9 @@ typedef struct mf_context
 	CLIPRDR_FORMAT *serverFormats;
 	CliprdrClientContext *cliprdr;
 	UINT32 clipboardCapabilities;
+
+	DispClientContext *disp;
+	BOOL dispActivated;
 } mfContext;
 
 struct mf_info

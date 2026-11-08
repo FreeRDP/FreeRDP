@@ -106,6 +106,9 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 // tell the server whether the local clipboard has text
 - (void)sendClipboardHasText:(BOOL)hasText;
 
+// ask the server to change the desktop size
+- (void)sendMonitorLayoutWithSize:(CGSize)size;
+
 // session needs a refresh of its view
 - (void)setNeedsDisplayInRectAsValue:(NSValue *)rect_value;
 

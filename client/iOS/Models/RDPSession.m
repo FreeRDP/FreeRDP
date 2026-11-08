@@ -215,6 +215,11 @@ static void freeArguments(int argc, char **argv)
 		if (!addArgument(&argc, &argv, "/h:%d", [_params intForKey:@"height"]))
 			goto out_free;
 
+	// only an automatic resolution enabled
+	if ([_params intForKey:@"screen_resolution_type"] == TSXScreenOptionFitScreen)
+		if (!addArgument(&argc, &argv, "/disp"))
+			goto out_free;
+
 	// security
 	switch ([_params intForKey:@"security"])
 	{
@@ -402,6 +407,15 @@ out_free:
 	                [NSDictionary dictionaryWithObjectsAndKeys:@"clipboard", @"type",
 	                                                           [NSNumber numberWithBool:hasText],
 	                                                           @"has_text", nil]);
+}
+
+- (void)sendMonitorLayoutWithSize:(CGSize)size
+{
+	NSNumber *width = [NSNumber numberWithUnsignedInt:(UINT32)size.width];
+	NSNumber *height = [NSNumber numberWithUnsignedInt:(UINT32)size.height];
+	[self sendInputEvent:[NSDictionary dictionaryWithObjectsAndKeys:@"resize", @"type", width,
+	                                                                @"width", height, @"height",
+	                                                                nil]];
 }
 
 #pragma mark -
