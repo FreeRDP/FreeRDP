@@ -489,12 +489,12 @@ public class SessionInputManager
 		return instance != 0 && LibFreeRDP.isUnicodeInputSupported(instance);
 	}
 
-	@Override public void processKeyAsUnicode(int virtualKeyCode, int unicodeKey)
+	@Override public void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modmask)
 	{
 		if (instance == 0)
 			return;
-		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, true);
-		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, false);
+		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, modmask, true);
+		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, modmask, false);
 	}
 
 	@Override public void switchKeyboard(int keyboardType)

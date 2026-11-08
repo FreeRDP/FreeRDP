@@ -15,6 +15,7 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 import com.freerdp.freerdpcore.R;
+import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 public class KeyboardMapper
 {
@@ -533,15 +534,19 @@ public class KeyboardMapper
 						boolean shift = event.isShiftPressed();
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, true);
+						// AltGr produced the character, so it is not a modifier the server should
+						// see: with it in the mask the library would send the scancode.
+						int modmask =
+						    getKeyboardModifiers(altGr ? meta & ~KeyEvent.META_ALT_RIGHT_ON : meta);
 						if (deadKey && listener.isUnicodeInputSupported())
-							processDeadKey(event, vk);
+							processDeadKey(event, vk, modmask);
 						else if (pendingAccent != 0 && unicode != 0)
-							processAccentedKey(vk, unicode);
+							processAccentedKey(vk, unicode, modmask);
 						else
 						{
 							if (!KeyEvent.isModifierKey(event.getKeyCode()))
 								pendingAccent = 0;
-							listener.processKeyAsUnicode(vk, unicode);
+							listener.processKeyAsUnicode(vk, unicode, modmask);
 						}
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, false);
@@ -714,7 +719,7 @@ public class KeyboardMapper
 	// do, so the server receives the accented character instead of reading the dead key's
 	// position in its own layout. Composed characters go with the dead key's virtual key: the
 	// library sends some keys, Space among them, as scancodes whatever their character.
-	private void processDeadKey(KeyEvent event, int vk)
+	private void processDeadKey(KeyEvent event, int vk, int modmask)
 	{
 		if (event.getRepeatCount() > 0)
 			return;
@@ -722,7 +727,7 @@ public class KeyboardMapper
 		if (pendingAccent != 0)
 		{
 			// The same dead key twice types the accent; two different ones, the first accent.
-			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent);
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent, modmask);
 			boolean same = accent == pendingAccent;
 			pendingAccent = 0;
 			if (same)
@@ -735,18 +740,42 @@ public class KeyboardMapper
 	// A character after a dead key: the composed character, or the accent and then the character
 	// when they do not compose. Space types the accent itself: getDeadChar returned an apostrophe
 	// for the acute accent and Space on a Pixel 9 Pro running Android 17.
-	private void processAccentedKey(int vk, int unicode)
+	private void processAccentedKey(int vk, int unicode, int modmask)
 	{
 		int composed =
 		    unicode == ' ' ? pendingAccent : KeyEvent.getDeadChar(pendingAccent, unicode);
 		if (composed != 0)
-			listener.processKeyAsUnicode(pendingAccentVk, composed);
+			listener.processKeyAsUnicode(pendingAccentVk, composed, modmask);
 		else
 		{
-			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent);
-			listener.processKeyAsUnicode(vk, unicode);
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent, modmask);
+			listener.processKeyAsUnicode(vk, unicode, modmask);
 		}
 		pendingAccent = 0;
+	}
+
+	// The modifiers Android reports for the event, as the library's FREERDP_CLIENT_KBD_MOD mask.
+	// Meta is the closest Android has to the Windows key.
+	private static int getKeyboardModifiers(int metaState)
+	{
+		int modmask = 0;
+		if ((metaState & KeyEvent.META_SHIFT_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LSHIFT;
+		if ((metaState & KeyEvent.META_SHIFT_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RSHIFT;
+		if ((metaState & KeyEvent.META_ALT_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LMENU;
+		if ((metaState & KeyEvent.META_ALT_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RMENU;
+		if ((metaState & KeyEvent.META_CTRL_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LCONTROL;
+		if ((metaState & KeyEvent.META_CTRL_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RCONTROL;
+		if ((metaState & KeyEvent.META_META_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LWIN;
+		if ((metaState & KeyEvent.META_META_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RWIN;
+		return modmask;
 	}
 
 	private boolean isModifierPressed()
@@ -910,7 +939,7 @@ public class KeyboardMapper
 
 		boolean isUnicodeInputSupported();
 
-		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey);
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modmask);
 
 		void switchKeyboard(int keyboardType);
 
