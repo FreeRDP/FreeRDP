@@ -1314,6 +1314,53 @@ out:
 	return rc;
 }
 
+/* A client resends a datagram that is never acknowledged at least every 2 seconds. Doubling up
+ * to 120 seconds, a chunk lost five times in a row came back after the server had waited 16
+ * seconds for it and ended the stream; at 20% loss that happened in a few percent of tunnels. */
+static BOOL client_resends_at_least_every_two_seconds(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
+	SynInfo syn = WINPR_C_ARRAY_INIT;
+	CHECK(ctx_start(&ctx, TRUE, &syn));
+	/* the test clock takes over from the system clock without going back */
+	g_serverTime = GetTickCount64() * 1000000ULL;
+	rdpudp_set_clock(ctx.udp, server_clock, nullptr);
+	CHECK(send_syn_ack(&ctx, syn.initialSequence, RDPUDP_PROTOCOL_VERSION_3));
+	for (size_t x = 0; (x < 100) && (rdpudp_get_state(ctx.udp) != RDPUDP_STATE_ESTABLISHED); x++)
+		CHECK(pump(&ctx));
+	CHECK(rdpudp_get_state(ctx.udp) == RDPUDP_STATE_ESTABLISHED);
+
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"x", 1));
+	CHECK(drain(&ctx, 20));
+	CHECK(count_data(&ctx) == 1);
+
+	/* 12 seconds without an acknowledgement, short of the 16 second peer timeout */
+	UINT64 lastSend = g_serverTime;
+	UINT64 longestGap = 0;
+	size_t resends = 0;
+	for (size_t step = 0; step < 1200; step++)
+	{
+		g_serverTime += 10ULL * 1000000ULL;
+		CHECK(rdpudp_check(ctx.udp));
+		CHECK(drain(&ctx, 0));
+		if (count_data(&ctx) == 0)
+			continue;
+		const UINT64 gap = g_serverTime - lastSend;
+		if (gap > longestGap)
+			longestGap = gap;
+		lastSend = g_serverTime;
+		resends++;
+	}
+	CHECK(resends >= 6);
+	CHECK(longestGap <= 2000ULL * 1000000ULL);
+	CHECK(g_serverTime - lastSend <= 2000ULL * 1000000ULL);
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 /* A data packet of ours carries a cumulative ACK when one is pending. While a packet behind the
  * window waits for its ACK vector, that ACK would take the vector's place, and nothing would send
  * the vector until the next standalone ACK. */
@@ -1752,6 +1799,7 @@ static const TestCase cases[] = {
 	{ "ack_of_acks_far_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_far_past_its_own_packet_keeps_the_chunk },
 	{ "server_backs_off_once_for_many_timeouts", server_backs_off_once_for_many_timeouts },
+	{ "client_resends_at_least_every_two_seconds", client_resends_at_least_every_two_seconds },
 	{ "server_limits_buffered_chunks_until_verified",
 	  server_limits_buffered_chunks_until_verified },
 	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
