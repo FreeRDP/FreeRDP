@@ -211,10 +211,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * seconds (note <8>). Below the round trip, every datagram is resent before its acknowledgement
  * can arrive. */
 #define RDPUDP_MAX_RTO_MS 120000
-/* Server: cap on backed-off timeout to prevent the oldest datagram from stalling for
- * seconds after an outage; dead connections are handled by the peer timeout. See
- * rto_server_cap for RTT-based cap increases. */
-#define RDPUDP2_SERVER_MAX_RTO_MS 2000
+/* RDP-UDP2: cap on the backed-off timeout, as in Windows, which clamps it to 2 seconds. A
+ * receiver ends the stream once a chunk has been missing for RDPUDP_STALL_TIMEOUT_MS; with the
+ * timeout doubling to RDPUDP_MAX_RTO_MS, a datagram lost a few times in a row would be resent
+ * too late. Dead connections are handled by the peer timeout. See rto_v3_cap for RTT-based cap
+ * increases. */
+#define RDPUDP2_MAX_RTO_MS 2000
 /* Server: upper bound on the initial RTT sample from the handshake. */
 #define RDPUDP2_HANDSHAKE_RTT_MAX_MS 500
 
@@ -525,14 +527,14 @@ static UINT64 rto_base(const rdpUdp* udp)
 	return rto;
 }
 
-/* Server backoff cap. If RTT exceeds RDPUDP2_SERVER_MAX_RTO_MS, the cap is raised
+/* RDP-UDP2 backoff cap. If RTT exceeds RDPUDP2_MAX_RTO_MS, the cap is raised
  * to ensure datagrams aren't retransmitted before their ACKs can arrive. */
 WINPR_ATTR_NODISCARD
-static UINT64 rto_server_cap(const rdpUdp* udp)
+static UINT64 rto_v3_cap(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
 	const UINT64 base = rto_base(udp);
-	return (base > RDPUDP2_SERVER_MAX_RTO_MS) ? base : RDPUDP2_SERVER_MAX_RTO_MS;
+	return (base > RDPUDP2_MAX_RTO_MS) ? base : RDPUDP2_MAX_RTO_MS;
 }
 
 WINPR_ATTR_NODISCARD
@@ -545,7 +547,7 @@ static UINT32 rto_initial(const rdpUdp* udp)
 		/* srtt and margin are < 2^35; shift will not overflow 64 bits */
 		WINPR_ASSERT(udp->rtoBackoff <= RDPUDP2_MAX_RTO_BACKOFF);
 		rto <<= udp->rtoBackoff;
-		const UINT64 cap = rto_server_cap(udp);
+		const UINT64 cap = rto_v3_cap(udp);
 		if (rto > cap)
 			rto = cap;
 	}
@@ -2644,7 +2646,7 @@ static BOOL run_timers(rdpUdp* udp)
 				return FALSE;
 			}
 			p->timeouts++;
-			UINT64 maxRto = udp->server ? rto_server_cap(udp) : RDPUDP_MAX_RTO_MS;
+			UINT64 maxRto = v3 ? rto_v3_cap(udp) : RDPUDP_MAX_RTO_MS;
 			if (maxRto > RDPUDP_MAX_RTO_MS)
 				maxRto = RDPUDP_MAX_RTO_MS;
 			p->rto =
