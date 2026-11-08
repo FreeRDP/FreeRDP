@@ -110,6 +110,7 @@ set(${MODULE_PREFIX}_SRCS
     heartbeat.h
     multitransport.c
     multitransport.h
+    multitransport_internal.h
     timezone.c
     timezone.h
     childsession.c
@@ -161,7 +162,23 @@ if(WITH_RDPEUDP)
   endif()
   include(WarnExperimental)
   warn_experimental("UDP multitransport" "-DWITH_RDPEUDP=OFF")
-  list(APPEND ${MODULE_PREFIX}_SRCS rdpudp.c rdpudp.h rdpemt.c rdpemt.h)
+  list(
+    APPEND
+    ${MODULE_PREFIX}_SRCS
+    rdpudp.c
+    rdpudp.h
+    rdpemt.c
+    rdpemt.h
+    udplistener.c
+    udplistener.h
+    udplistener_internal.h
+    udplistener_relay.c
+    udpflow.c
+    udpsocket.c
+    multitransport_server.c
+    server_tunnel.c
+    server_tunnel.h
+  )
 endif()
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
