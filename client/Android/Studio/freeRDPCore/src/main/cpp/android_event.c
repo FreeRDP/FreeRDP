@@ -309,34 +309,27 @@ ANDROID_EVENT_KEY_AS_UNICODE* android_event_key_as_unicode_new(UINT16 flags, UIN
 	event->scancode = scancode;
 	event->modmask = modmask;
 
-	/* UTF-8 by hand: a single code point, and 0 leaves the string empty, which tells
-	 * freerdp_client_send_key_as_unicode to send the scancode. */
-	char* s = event->str;
+	/* An empty string tells freerdp_client_send_key_as_unicode to send the scancode, so 0,
+	 * a lone surrogate or anything past U+10FFFF leaves it empty. */
 	const BOOL valid = (codepoint != 0) && ((codepoint < 0xD800) || (codepoint > 0xDFFF)) &&
 	                   (codepoint <= 0x10FFFF);
 	if (!valid)
 		return event;
 
-	if (codepoint < 0x80)
-		s[0] = (char)codepoint;
-	else if (codepoint < 0x800)
+	WCHAR wstr[2] = WINPR_C_ARRAY_INIT;
+	size_t wlen = 1;
+	if (codepoint > 0xFFFF)
 	{
-		s[0] = (char)(0xC0 | (codepoint >> 6));
-		s[1] = (char)(0x80 | (codepoint & 0x3F));
-	}
-	else if (codepoint < 0x10000)
-	{
-		s[0] = (char)(0xE0 | (codepoint >> 12));
-		s[1] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
-		s[2] = (char)(0x80 | (codepoint & 0x3F));
+		const UINT32 offset = codepoint - 0x10000;
+		wstr[0] = (WCHAR)(0xD800 | (offset >> 10));
+		wstr[1] = (WCHAR)(0xDC00 | (offset & 0x3FF));
+		wlen = 2;
 	}
 	else
-	{
-		s[0] = (char)(0xF0 | (codepoint >> 18));
-		s[1] = (char)(0x80 | ((codepoint >> 12) & 0x3F));
-		s[2] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
-		s[3] = (char)(0x80 | (codepoint & 0x3F));
-	}
+		wstr[0] = (WCHAR)codepoint;
+
+	if (ConvertWCharNToUtf8(wstr, wlen, event->str, ARRAYSIZE(event->str)) < 0)
+		memset(event->str, 0, sizeof(event->str));
 	return event;
 }
 
