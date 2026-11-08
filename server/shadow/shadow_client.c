@@ -33,6 +33,9 @@
 #include <freerdp/log.h>
 #include <freerdp/utils/gfx.h>
 #include <freerdp/channels/drdynvc.h>
+#if defined(WITH_RDPEUDP)
+#include <freerdp/server/udp.h>
+#endif
 
 #include "shadow.h"
 #include "shadow_rfx_dirty.h"
@@ -287,6 +290,12 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
 	                                 freerdp_settings_get_uint32(srvSettings, FreeRDP_ColorDepth)))
 		return FALSE;
+#if defined(WITH_RDPEUDP)
+	if (!freerdp_settings_set_uint32(
+	        settings, FreeRDP_MultitransportFlags,
+	        freerdp_settings_get_uint32(srvSettings, FreeRDP_MultitransportFlags)))
+		return FALSE;
+#endif
 	NSCodec = freerdp_settings_get_bool(srvSettings, FreeRDP_NSCodec);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec))
 		return FALSE;
@@ -658,6 +667,18 @@ static BOOL shadow_client_refresh_request(rdpShadowClient* client)
 	message.Free = nullptr;
 	return MessageQueue_Dispatch(MsgPipe->In, &message);
 }
+
+#if defined(WITH_RDPEUDP)
+/* UDP tunnel is unblocked. Skipped updates are sent with the next frame, but since
+ * static screens don't produce frames, we request a refresh. */
+static void shadow_client_udp_write_unblocked(void* custom)
+{
+	rdpShadowClient* client = custom;
+	WINPR_ASSERT(client);
+	if (!shadow_client_refresh_request(client))
+		WLog_WARN(TAG, "unable to request a frame after the UDP tunnel regained capacity");
+}
+#endif
 
 WINPR_ATTR_NODISCARD
 static BOOL shadow_client_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
@@ -2326,6 +2347,25 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	if (!surface)
 		return FALSE;
 
+#if defined(WITH_RDPEUDP)
+	/* Link saturated. Accumulate dirty regions for a later frame to avoid queuing stale images. */
+	FreeRDP_UdpSendState sendState = WINPR_C_ARRAY_INIT;
+	sendState.size = sizeof(sendState);
+	if (freerdp_peer_get_udp_send_state(context->peer, &sendState) && sendState.writeBlocked)
+	{
+		BOOL kept = TRUE;
+		EnterCriticalSection(&surface->lock);
+		EnterCriticalSection(&(client->lock));
+		rects = region16_rects(&(surface->invalidRegion), &numRects);
+		for (UINT32 index = 0; kept && (index < numRects); index++)
+			kept = region16_union_rect(&(client->invalidRegion), &(client->invalidRegion),
+			                           &rects[index]);
+		LeaveCriticalSection(&(client->lock));
+		LeaveCriticalSection(&surface->lock);
+		return kept;
+	}
+#endif
+
 	{
 		EnterCriticalSection(&(client->lock));
 		region16_init(&invalidRegion);
@@ -3125,6 +3165,17 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
+
+#if defined(WITH_RDPEUDP)
+	FreeRDP_UdpPeerCallbacks callbacks = WINPR_C_ARRAY_INIT;
+	callbacks.Size = sizeof(callbacks);
+	callbacks.WriteUnblocked = shadow_client_udp_write_unblocked;
+	if (!freerdp_peer_set_udp_callbacks(peer, &callbacks, client))
+	{
+		freerdp_peer_context_free(peer);
+		return FALSE;
+	}
+#endif
 
 	if (!(client->thread = CreateThread(nullptr, 0, shadow_client_thread, client, 0, nullptr)))
 	{

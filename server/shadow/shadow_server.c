@@ -509,6 +509,15 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			                               arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+#if defined(WITH_RDPEUDP)
+		CommandLineSwitchCase(arg, "multitransport")
+		{
+			if ((arg->Value != nullptr) &&
+			    !freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
+			                                 TRANSPORT_TYPE_UDP_FECR | SOFTSYNC_TCP_TO_UDP))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, arg->Value != nullptr))
