@@ -178,7 +178,7 @@ public class LibFreeRDP
 	                                                            boolean down);
 
 	private static native boolean freerdp_send_key_as_unicode_event(long inst, int keycode,
-	                                                                int unicode, int modmask,
+	                                                                String text, int modmask,
 	                                                                boolean down);
 
 	private static native boolean freerdp_is_unicode_input_supported(long inst);
@@ -599,7 +599,13 @@ public class LibFreeRDP
 	public static boolean sendKeyAsUnicodeEvent(long inst, int keycode, int unicode, int modmask,
 	                                            boolean down)
 	{
-		return freerdp_send_key_as_unicode_event(inst, keycode, unicode, modmask, down);
+		// The character as UTF-16. 0, a lone surrogate or anything past U+10FFFF goes as an empty
+		// string, and the library then sends the key's scancode.
+		String text = "";
+		if (unicode > 0 && Character.isValidCodePoint(unicode) &&
+		    Character.getType(unicode) != Character.SURROGATE)
+			text = new String(Character.toChars(unicode));
+		return freerdp_send_key_as_unicode_event(inst, keycode, text, modmask, down);
 	}
 
 	public static boolean isUnicodeInputSupported(long inst)

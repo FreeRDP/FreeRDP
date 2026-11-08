@@ -173,6 +173,8 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			{
 				ANDROID_EVENT_KEY_AS_UNICODE* key_event = (ANDROID_EVENT_KEY_AS_UNICODE*)event;
 
+				/* The Java side still sends key combinations as virtual keys, so for now no Ctrl,
+				 * Alt or Win is in the mask here. */
 				rc = freerdp_client_send_key_as_unicode(&afc->common, key_event->flags,
 				                                        key_event->str, key_event->scancode,
 				                                        key_event->modmask);
@@ -295,7 +297,7 @@ static void android_event_unicodekey_free(ANDROID_EVENT_KEY* event)
 }
 
 ANDROID_EVENT_KEY_AS_UNICODE* android_event_key_as_unicode_new(UINT16 flags, UINT32 scancode,
-                                                               UINT32 codepoint,
+                                                               const WCHAR* wstr, size_t wlen,
                                                                FREERDP_CLIENT_KBD_MOD modmask)
 {
 	ANDROID_EVENT_KEY_AS_UNICODE* event =
@@ -309,26 +311,10 @@ ANDROID_EVENT_KEY_AS_UNICODE* android_event_key_as_unicode_new(UINT16 flags, UIN
 	event->scancode = scancode;
 	event->modmask = modmask;
 
-	/* An empty string tells freerdp_client_send_key_as_unicode to send the scancode, so 0,
-	 * a lone surrogate or anything past U+10FFFF leaves it empty. */
-	const BOOL valid = (codepoint != 0) && ((codepoint < 0xD800) || (codepoint > 0xDFFF)) &&
-	                   (codepoint <= 0x10FFFF);
-	if (!valid)
-		return event;
-
-	WCHAR wstr[2] = WINPR_C_ARRAY_INIT;
-	size_t wlen = 1;
-	if (codepoint > 0xFFFF)
-	{
-		const UINT32 offset = codepoint - 0x10000;
-		wstr[0] = (WCHAR)(0xD800 | (offset >> 10));
-		wstr[1] = (WCHAR)(0xDC00 | (offset & 0x3FF));
-		wlen = 2;
-	}
-	else
-		wstr[0] = (WCHAR)codepoint;
-
-	if (ConvertWCharNToUtf8(wstr, wlen, event->str, ARRAYSIZE(event->str)) < 0)
+	/* One character, at most a surrogate pair, fits str. Anything else leaves it empty, which
+	 * tells freerdp_client_send_key_as_unicode to send the scancode. */
+	if (wstr && (wlen > 0) && (wlen <= 2) &&
+	    (ConvertWCharNToUtf8(wstr, wlen, event->str, ARRAYSIZE(event->str)) < 0))
 		memset(event->str, 0, sizeof(event->str));
 	return event;
 }

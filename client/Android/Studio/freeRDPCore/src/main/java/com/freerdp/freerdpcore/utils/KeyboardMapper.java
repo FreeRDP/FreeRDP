@@ -755,9 +755,23 @@ public class KeyboardMapper
 	}
 
 	// The modifiers Android reports for the event, as the library's FREERDP_CLIENT_KBD_MOD mask.
-	// Meta is the closest Android has to the Windows key.
+	// Meta is the closest Android has to the Windows key. An event may carry only the generic bit
+	// (META_CTRL_ON without a side), which counts as the left key.
 	private static int getKeyboardModifiers(int metaState)
 	{
+		if ((metaState & KeyEvent.META_SHIFT_ON) != 0 &&
+		    (metaState & (KeyEvent.META_SHIFT_LEFT_ON | KeyEvent.META_SHIFT_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_SHIFT_LEFT_ON;
+		if ((metaState & KeyEvent.META_ALT_ON) != 0 &&
+		    (metaState & (KeyEvent.META_ALT_LEFT_ON | KeyEvent.META_ALT_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_ALT_LEFT_ON;
+		if ((metaState & KeyEvent.META_CTRL_ON) != 0 &&
+		    (metaState & (KeyEvent.META_CTRL_LEFT_ON | KeyEvent.META_CTRL_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_CTRL_LEFT_ON;
+		if ((metaState & KeyEvent.META_META_ON) != 0 &&
+		    (metaState & (KeyEvent.META_META_LEFT_ON | KeyEvent.META_META_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_META_LEFT_ON;
+
 		int modmask = 0;
 		if ((metaState & KeyEvent.META_SHIFT_LEFT_ON) != 0)
 			modmask |= LibFreeRDP.KBD_MOD_LSHIFT;
