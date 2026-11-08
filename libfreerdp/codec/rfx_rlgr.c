@@ -733,6 +733,10 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 				GetNextInput(input);
 			}
 
+			/* GetNextInput consumed the final zero without counting it in the loop. */
+			if (input == 0 && data_size == 0)
+				numZeros++;
+
 			// emit output zeros
 			runmax = 1u << k;
 			while (numZeros >= runmax)
