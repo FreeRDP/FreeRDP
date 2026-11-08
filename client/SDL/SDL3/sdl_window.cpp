@@ -417,8 +417,14 @@ static rdpMonitor makeMonitor(SDL_DisplayID id, const SDL_Rect& r, float factor,
 {
 	const float dpi = std::roundf(factor * 100.0f);
 
-	WINPR_ASSERT(r.w > 0);
-	WINPR_ASSERT(r.h > 0);
+	/* A compositor without an output can report a display of 0x0 (Xwayland in a headless
+	 * mutter), the caller skips such a display. */
+	if ((r.w <= 0) || (r.h <= 0))
+	{
+		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "display %" PRIu32 ": invalid size %dx%d", id, r.w,
+		            r.h);
+		return {};
+	}
 
 	const auto primary = SDL_GetPrimaryDisplay();
 	const auto orientation = SDL_GetCurrentDisplayOrientation(id);

@@ -1121,13 +1121,23 @@ bool SdlContext::detectDisplays()
 	int count = 0;
 	auto display = SDL_GetDisplays(&count);
 	if (!display)
+	{
+		WLog_Print(getWLog(), WLOG_ERROR, "SDL_GetDisplays failed: %s", SDL_GetError());
 		return false;
+	}
 	for (int x = 0; x < count; x++)
 	{
 		const auto id = display[x];
 		addOrUpdateDisplay(id);
 	}
 	SDL_free(display);
+
+	/* The monitor setup needs at least one display. */
+	if (_displays.empty())
+	{
+		WLog_Print(getWLog(), WLOG_ERROR, "none of the %d displays has a usable size", count);
+		return false;
+	}
 	return true;
 }
 
@@ -1516,6 +1526,11 @@ bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
 void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 {
 	auto monitor = SdlWindow::query(id, false);
+	if ((monitor.width <= 0) || (monitor.height <= 0))
+	{
+		WLog_Print(getWLog(), WLOG_WARN, "display %" PRIu32 " has no usable size, skipped", id);
+		return;
+	}
 	_displays.emplace(id, monitor);
 
 	/* Update actual display rectangles:
