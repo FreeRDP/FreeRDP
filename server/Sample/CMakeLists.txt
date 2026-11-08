@@ -33,6 +33,10 @@ if(CHANNEL_AINPUT_SERVER)
   list(APPEND SRCS sf_ainput.c sf_ainput.h)
 endif()
 
+if(WITH_RDPEUDP)
+  list(APPEND SRCS sf_udp.c sf_udp.h)
+endif()
+
 option(SAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR "Use <vendor>/<product> path for resources" OFF)
 set(SAMPLE_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR})
 if(SAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR)

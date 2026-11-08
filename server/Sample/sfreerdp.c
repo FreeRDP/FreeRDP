@@ -57,6 +57,7 @@
 #include "sf_encomsp.h"
 
 #include "sfreerdp.h"
+#include "sf_udp.h"
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("sample")
@@ -72,6 +73,9 @@ struct server_info
 	const char* replay_dump;
 	const char* cert;
 	const char* key;
+#if defined(WITH_RDPEUDP)
+	BOOL udp;
+#endif
 };
 
 static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
@@ -100,6 +104,8 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 			(void)WTSVirtualChannelClose(context->debug_channel);
 
 		sf_peer_audin_uninit(context);
+
+		sf_udp_free(context);
 
 #if defined(CHANNEL_AINPUT_SERVER)
 		sf_peer_ainput_uninit(context);
@@ -1205,6 +1211,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, TRUE))
 		goto fail;
 
+	if (!sf_udp_configure(settings, info->udp))
+		goto fail;
+
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
 
@@ -1269,7 +1278,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 		HANDLE channelHandle = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 		handles[count++] = channelHandle;
-		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count, handles, FALSE, sf_udp_wait_ms(info->udp));
 
 		if (status == WAIT_FAILED)
 		{
@@ -1281,7 +1290,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 
-		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+		if (sf_udp_check_channels(context->vcm, info->udp, context->activated) != TRUE)
 			break;
 
 		/* Handle dynamic virtual channel initializations */
@@ -1316,6 +1325,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 					}
 #endif
 
+					sf_udp_tick(context, info->udp);
 					break;
 
 				case DRDYNVC_STATE_FAILED:
@@ -1433,6 +1443,7 @@ static int usage(const char* app, const char* invalid)
 	print_entry(fp, "\t%s\n", options.sfast, sizeof(options.sfast));
 	print_entry(fp, "\t%s<port>\n", options.sport, sizeof(options.sport));
 	print_entry(fp, "\t%s\n", options.slocal_only, sizeof(options.slocal_only));
+	sf_udp_usage(fp);
 	return -1;
 }
 
@@ -1483,6 +1494,9 @@ int main(int argc, char* argv[])
 		}
 		else if (strncmp(arg, options.slocal_only, sizeof(options.slocal_only)) == 0)
 			localOnly = TRUE;
+		else if (sf_udp_parse_option(arg, &info.udp))
+		{
+		}
 		else if (strncmp(arg, options.spcap, sizeof(options.spcap)) == 0)
 		{
 			info.test_pcap_file = &arg[sizeof(options.spcap)];
