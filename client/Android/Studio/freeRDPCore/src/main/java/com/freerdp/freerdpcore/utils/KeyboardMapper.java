@@ -15,6 +15,7 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 import com.freerdp.freerdpcore.R;
+import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 public class KeyboardMapper
 {
@@ -515,7 +516,8 @@ public class KeyboardMapper
 						boolean shift = event.isShiftPressed();
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, true);
-						listener.processKeyAsUnicode(vk, unicode);
+						listener.processKeyAsUnicode(vk, unicode,
+						                             getKeyboardModifiers(event.getMetaState()));
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, false);
 						return true;
@@ -675,6 +677,30 @@ public class KeyboardMapper
 	private static boolean sendsKeyAsUnicode(KeyEvent event)
 	{
 		return event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
+	}
+
+	// The modifiers Android reports for the event, as the library's FREERDP_CLIENT_KBD_MOD mask.
+	// Meta is the closest Android has to the Windows key.
+	private static int getKeyboardModifiers(int metaState)
+	{
+		int modmask = 0;
+		if ((metaState & KeyEvent.META_SHIFT_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LSHIFT;
+		if ((metaState & KeyEvent.META_SHIFT_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RSHIFT;
+		if ((metaState & KeyEvent.META_ALT_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LMENU;
+		if ((metaState & KeyEvent.META_ALT_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RMENU;
+		if ((metaState & KeyEvent.META_CTRL_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LCONTROL;
+		if ((metaState & KeyEvent.META_CTRL_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RCONTROL;
+		if ((metaState & KeyEvent.META_META_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LWIN;
+		if ((metaState & KeyEvent.META_META_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RWIN;
+		return modmask;
 	}
 
 	private boolean isModifierPressed()
@@ -838,7 +864,7 @@ public class KeyboardMapper
 
 		boolean isUnicodeInputSupported();
 
-		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey);
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modmask);
 
 		void switchKeyboard(int keyboardType);
 
