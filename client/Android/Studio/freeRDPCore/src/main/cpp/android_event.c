@@ -173,6 +173,8 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			{
 				ANDROID_EVENT_KEY_AS_UNICODE* key_event = (ANDROID_EVENT_KEY_AS_UNICODE*)event;
 
+				/* The Java side still sends key combinations as virtual keys, so for now no Ctrl,
+				 * Alt or Win is in the mask here. */
 				rc = freerdp_client_send_key_as_unicode(&afc->common, key_event->flags,
 				                                        key_event->str, key_event->scancode,
 				                                        key_event->modmask);

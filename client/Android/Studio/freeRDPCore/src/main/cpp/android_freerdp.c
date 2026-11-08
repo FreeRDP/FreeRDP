@@ -1153,6 +1153,16 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1as_1unicode
     JNIEnv* env, jclass cls, jlong instance, jint keycode, jstring text, jint modmask,
     jboolean down)
 {
+	/* LibFreeRDP.KBD_MOD_* in Java mirror these values. */
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LSHIFT == 0x01);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RSHIFT == 0x02);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LMENU == 0x04);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RMENU == 0x08);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LCONTROL == 0x10);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RCONTROL == 0x20);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LWIN == 0x40);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RWIN == 0x80);
+
 	freerdp* inst = (freerdp*)instance;
 	const DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode((DWORD)keycode, 4);
 	const UINT16 flags = (down == JNI_TRUE) ? 0 : KBD_FLAGS_RELEASE;
