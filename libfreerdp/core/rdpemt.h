@@ -26,6 +26,9 @@
 
 #include <freerdp/config.h>
 #include <freerdp/api.h>
+#if defined(WITH_RDPEUDP)
+#include <freerdp/server/udp.h>
+#endif
 
 /** @brief A client side multitransport tunnel.
  *
@@ -36,15 +39,23 @@ typedef struct rdp_emt rdpEmt;
 
 typedef enum
 {
-	RDPEMT_EVENT_READY,             /**< the server accepted the Tunnel Create Request */
-	RDPEMT_EVENT_FAILED,            /**< the tunnel could not be set up, or broke down */
-	RDPEMT_EVENT_DATA,              /**< HigherLayerData of one Tunnel Data PDU */
-	RDPEMT_EVENT_AUTODETECT_REQUEST /**< one RDP_TUNNEL_SUBHEADER of type
-	                                     TYPE_ID_AUTODETECT_REQUEST, from SubHeaderLength on */
+	RDPEMT_EVENT_READY,        /**< Server accepted the Tunnel Create Request. */
+	RDPEMT_EVENT_FAILED,       /**< Tunnel setup failed or connection lost. */
+	RDPEMT_EVENT_DATA,         /**< HigherLayerData from a Tunnel Data PDU. */
+	RDPEMT_EVENT_AUTODETECT,   /**< RDP_TUNNEL_SUBHEADER (from SubHeaderLength):
+	 TYPE_ID_AUTODETECT_REQUEST on client,
+	 TYPE_ID_AUTODETECT_RESPONSE on server. */
+	RDPEMT_EVENT_SYN_RECEIVED, /**< Server: SYN with cookie hash received. */
+	RDPEMT_EVENT_WRITABLE,     /**< Server: tunnel send buffer has space. */
+	RDPEMT_EVENT_RESPONSE_DUE  /**< Server: 1s after RDPEMT_SERVER_RESPONSE_TIMEOUT_MS expired. */
 } RDPEMT_EVENT;
 
-/** Called on the tunnel thread. The data of RDPEMT_EVENT_DATA and
- * RDPEMT_EVENT_AUTODETECT_REQUEST is only valid during the call. */
+/** Server: timeout for client to send Initiate Multitransport Response before the
+ *  tunnel is torn down. */
+#define RDPEMT_SERVER_RESPONSE_TIMEOUT_MS 30000
+
+/** Called on the tunnel thread. Data for RDPEMT_EVENT_DATA and RDPEMT_EVENT_AUTODETECT
+ * is valid only for the duration of the call. */
 typedef void (*rdpEmtEventFn)(void* custom, rdpEmt* emt, RDPEMT_EVENT event, const BYTE* data,
                               size_t length);
 
@@ -76,6 +87,38 @@ FREERDP_LOCAL rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_start(rdpEmt* emt, const struct sockaddr* addr, size_t addrlen);
 
+/** @brief Server-side reliable tunnel for an Initiate Multitransport Request.
+ * Waits on its flow (see rdpemt_get_flow()) for a client SYN carrying the cookie hash,
+ * performs TLS using the main connection's cert/key, and accepts a Tunnel Create Request
+ * matching requestId and cookie. RDPEMT_EVENT_READY follows the Tunnel Create Response.
+ * @param manual If TRUE, no internal thread is created; freerdp_udp_flow_check() drives the tunnel.
+ */
+WINPR_ATTR_MALLOC(rdpemt_free, 1)
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie,
+                                        struct x509_st* cert, struct evp_pkey_st* key, BOOL manual,
+                                        rdpEmtEventFn callback, void* custom);
+
+/** Server: applies main connection TLS settings; call before TLS handshake. The tunnel
+ *  requires at least TLS 1.2.
+ *  @param maxVersion 0 for highest supported version.
+ *  @param ciphers Cipher list, or \b nullptr for default ECDHE ciphers.
+ *  @return \b FALSE if maxVersion < TLS 1.2; in this case, do not offer the tunnel. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT16 maxVersion,
+                                           UINT32 secLevel, const char* ciphers);
+
+/** Server: flow from which the tunnel receives datagrams. Owned by the tunnel. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt);
+
+/** Server: tunnel's view of the link. Thread-safe. */
+FREERDP_LOCAL void rdpemt_get_send_state(rdpEmt* emt, FreeRDP_UdpSendState* state);
+
+/** Server: maximum data queued for the link before the tunnel fails. Thread-safe.
+ *  @param limit Limit in bytes; 0 for default. */
+FREERDP_LOCAL void rdpemt_set_send_limit(rdpEmt* emt, size_t limit);
+
 /** Sends one Tunnel Data PDU. Thread safe. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length);
@@ -84,6 +127,10 @@ FREERDP_LOCAL BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length
  * HigherLayerData. Thread safe. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_send_subheader(rdpEmt* emt, const BYTE* subHeader, size_t length);
+
+/** Server: flushes data batched by rdpemt_send_data(). Thread-safe. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpemt_flush(rdpEmt* emt);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpemt_get_request_id(const rdpEmt* emt);
@@ -170,6 +217,12 @@ static inline BOOL rdpemt_set_receiver(WINPR_ATTR_UNUSED rdpEmt* emt,
 
 static inline void rdpemt_clear_receiver(WINPR_ATTR_UNUSED rdpEmt* emt)
 {
+}
+
+WINPR_ATTR_NODISCARD
+static inline BOOL rdpemt_flush(WINPR_ATTR_UNUSED rdpEmt* emt)
+{
+	return FALSE;
 }
 
 #endif

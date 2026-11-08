@@ -43,6 +43,7 @@
 #include "rdp.h"
 
 #include "server.h"
+#include "server_tunnel.h"
 
 #define TAG FREERDP_TAG("core.server")
 #ifdef WITH_DEBUG_DVC
@@ -215,6 +216,7 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 	if (!status)
 		WLog_ERR(TAG, "vcm->dvc_creation_status failed!");
 
+	wts_tunnel_channel_opened(channel->vcm);
 	return status;
 }
 
@@ -391,6 +393,9 @@ static BOOL wts_read_drdynvc_pdu_ready(rdpPeerChannel* channel, wStream* s, UINT
 			return TRUE;
 		}
 	}
+
+	if (wts_tunnel_is_soft_sync_response(Cmd))
+		return wts_tunnel_read_soft_sync_response(channel->vcm, s);
 
 	const BOOL rc = wts_read_drdynvc_pdu_ready_guarded(s, Cmd, Sp, ChannelId, dvc);
 	if (table)
@@ -671,6 +676,9 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 			return FALSE;
 	}
 
+	if (!wts_tunnel_start_soft_sync_if_due(vcm))
+		return FALSE;
+
 	while (MessageQueue_Peek(vcm->queue, &message, TRUE))
 	{
 		BYTE* buffer = nullptr;
@@ -682,7 +690,8 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 
 		WINPR_ASSERT(vcm->client);
 		WINPR_ASSERT(vcm->client->SendChannelData);
-		if (!vcm->client->SendChannelData(vcm->client, channelId, buffer, length))
+		if (!wts_tunnel_send_message(vcm, message.id, buffer, length, &status) &&
+		    !vcm->client->SendChannelData(vcm->client, channelId, buffer, length))
 		{
 			status = FALSE;
 		}
@@ -693,7 +702,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 			break;
 	}
 
-	return status;
+	return wts_tunnel_after_drain(vcm, status);
 }
 
 BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
@@ -1097,6 +1106,8 @@ static void wtsCloseVCM(WTSVirtualChannelManager* vcm, bool closeDrdynvc)
 	{
 		HashTable_Remove(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId);
 
+		wts_tunnel_free(vcm);
+
 		HashTable_Free(vcm->dynamicVirtualChannels);
 
 		if (vcm->drdynvc_channel)
@@ -1161,6 +1172,9 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 		obj->fnObjectEquals = dynChannelMatch;
 	}
 	client->ReceiveChannelData = WTSReceiveChannelData;
+
+	if (!wts_tunnel_new(vcm, context, wts_read_drdynvc_pdu_ready))
+		goto fail;
 	{
 		HashTable_Lock(g_ServerHandles);
 		vcm->SessionId = g_SessionId++;
@@ -1603,6 +1617,10 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	if (!wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName))
 		goto fail;
 
+	BOOL onTunnel = FALSE;
+	if (!wts_tunnel_open_channel(vcm, channel, s, &onTunnel))
+		goto fail;
+	if (!onTunnel)
 	{
 		const size_t pos = Stream_GetPosition(s);
 		WINPR_ASSERT(pos <= UINT32_MAX);
@@ -1672,12 +1690,22 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 
 					const size_t pos = Stream_GetPosition(s);
 					WINPR_ASSERT(pos <= UINT32_MAX);
-					ret = WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_BufferAs(s, char),
-					                             (UINT32)pos, &written);
+					/* Soft-Sync holds this lock while moving the channel to ensure the Close
+					 * Request is sent on the same transport as preceding data. */
+					EnterCriticalSection(&channel->writeLock);
+					if (!wts_tunnel_write(channel, Stream_Buffer(s), pos, &ret))
+						ret = WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_BufferAs(s, char),
+						                             (UINT32)pos, &written);
+					LeaveCriticalSection(&channel->writeLock);
 					Stream_Free(s, TRUE);
 				}
 			}
+			/* Soft-Sync waits for channels lacking a Create Response; removing this
+			 * channel may allow it to proceed. */
+			const BOOL waited = (channel->dvc_open_state == DVC_OPEN_STATE_NONE);
 			HashTable_Remove(vcm->dynamicVirtualChannels, &channel->channelId);
+			if (waited)
+				wts_tunnel_channel_opened(vcm);
 		}
 	}
 
@@ -1812,7 +1840,10 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			Length -= written;
 			Buffer += written;
 			totalWritten += written;
-			if (!wts_queue_send_item(channel->vcm->drdynvc_channel, buffer, (UINT32)length))
+			BOOL queued = FALSE;
+			if (!wts_tunnel_queue_send_item(channel, buffer, (UINT32)length, &queued))
+				queued = wts_queue_send_item(channel->vcm->drdynvc_channel, buffer, (UINT32)length);
+			if (!queued)
 				goto fail;
 		}
 	}
