@@ -76,7 +76,10 @@ static void sig_abort_connect(int signum, const char* signame, void* ctx)
 	WLog_INFO(TAG, "Signal %s [%d], terminating session %p", signame, signum,
 	          WINPR_CXX_COMPAT_CAST(const void*, context));
 	if (context)
+	{
+		freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 		freerdp_abort_connect_context(context);
+	}
 }
 
 /** Creates a new connection based on the settings found in the "instance" parameter
