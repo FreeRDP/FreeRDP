@@ -1950,7 +1950,7 @@ bool SdlContext::isConnected() const
 
 /* Stop requested by the user. Overwrite any earlier error with CONNECT_CANCELLED,
  * otherwise an auto reconnect ignores the stop. */
-bool SdlContext::abortConnect()
+bool SdlContext::abortConnect() const
 {
 	freerdp_set_last_error(context(), FREERDP_ERROR_CONNECT_CANCELLED);
 	return freerdp_abort_connect_context(context());

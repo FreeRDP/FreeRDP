@@ -64,7 +64,7 @@ class SdlContext
 
 	void setConnected(bool val);
 	[[nodiscard]] bool isConnected() const;
-	[[nodiscard]] bool abortConnect();
+	[[nodiscard]] bool abortConnect() const;
 	void cleanup();
 
 	[[nodiscard]] bool resizeable() const;
