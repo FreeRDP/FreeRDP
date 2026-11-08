@@ -535,9 +535,10 @@ public class KeyboardMapper
 						if (shift)
 							listener.processVirtualKey(VK_LSHIFT, true);
 						// AltGr produced the character, so it is not a modifier the server should
-						// see: with it in the mask the library would send the scancode.
-						int modmask =
-						    getKeyboardModifiers(altGr ? meta & ~KeyEvent.META_ALT_RIGHT_ON : meta);
+						// see: with it in the mask the library would send the scancode. The generic
+						// Alt bit goes too, or it would count as the left Alt.
+						int altGrBits = KeyEvent.META_ALT_RIGHT_ON | KeyEvent.META_ALT_ON;
+						int modmask = getKeyboardModifiers(altGr ? meta & ~altGrBits : meta);
 						if (deadKey && listener.isUnicodeInputSupported())
 							processDeadKey(event, vk, modmask);
 						else if (pendingAccent != 0 && unicode != 0)
