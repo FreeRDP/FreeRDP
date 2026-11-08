@@ -155,6 +155,8 @@ class SdlRailWindow
 
 	void setStyle(uint32_t style, uint32_t exStyle);
 	void setTitle(const std::string& title);
+	/* Application ID reported by the server (RAIL Get AppID); used as the window's app_id. */
+	void setAppId(const std::string& appId);
 	void setVisible(bool visible);
 	/* Window icon (WindowIcon/WindowCachedIcon orders); applied in reconcile. */
 	void setIcon(const SdlRailIcon& icon);
@@ -302,6 +304,8 @@ class SdlRailWindow
 	bool _visible = false;
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
+	std::string _appId;
+	bool _appIdDirty = false;
 	bool _topmost = false;
 	bool _topmostDirty = false;
 	bool _styleDirty = false;   /* resizability needs re-applying (style change) */

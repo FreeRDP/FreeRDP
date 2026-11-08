@@ -28,6 +28,7 @@
 #include "sdl_rail_window.hpp"
 #include "sdl_rail_window_style.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail.window")
@@ -246,6 +247,7 @@ void SdlRailWindow::releaseWindow()
 	WLog_DBG(TAG, "release id=0x%08" PRIx32 " %s%s", static_cast<uint32_t>(_id), role(),
 	         _deleted ? "" : " (SDL parent gone, re-created on next pass)");
 	_win.reset();
+	_appIdDirty = !_appId.empty();
 	/* Back to the "never created" state: create() + first frame + map run again. */
 	_mapped = false;
 	_painted = false;
@@ -683,6 +685,13 @@ void SdlRailWindow::setTitle(const std::string& title)
 	_titleDirty = true;
 }
 
+void SdlRailWindow::setAppId(const std::string& appId)
+{
+	std::unique_lock lock(_gfxLock);
+	_appId = appId;
+	_appIdDirty = !appId.empty();
+}
+
 void SdlRailWindow::setVisible(bool visible)
 {
 	std::unique_lock lock(_gfxLock);
@@ -733,8 +742,21 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 			flags |= SDL_WINDOW_TRANSPARENT;
 		if ((_exStyle & WS_EX_NOACTIVATE) != 0)
 			flags |= SDL_WINDOW_NOT_FOCUSABLE;
+		/* SDL takes the app_id from this hint when it creates the window, so the compositor
+		 * sees the right one from the first map. */
+		const char* hint = SDL_GetHint(SDL_HINT_APP_ID);
+		const std::string previous = hint ? hint : "";
+		if (!_appId.empty())
+			SDL_SetHint(SDL_HINT_APP_ID, _appId.c_str());
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::create(SDL_GetPrimaryDisplay(), _title, flags, vis));
+		if (!_appId.empty())
+		{
+			if (hint)
+				SDL_SetHint(SDL_HINT_APP_ID, previous.c_str());
+			else
+				SDL_ResetHint(SDL_HINT_APP_ID);
+		}
 	}
 	if (!_win || !_win->window() || !_win->renderer())
 	{
@@ -802,6 +824,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			{
 				WLog_DBG(TAG, "hide id=0x%08" PRIx32 " %s", static_cast<uint32_t>(_id), role());
 				SDL_HideWindow(_win->window());
+				_appIdDirty = !_appId.empty(); /* SDL destroys the Wayland toplevel on hide */
 			}
 			_mapped = false;
 		}
@@ -990,6 +1013,14 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		if (!_isPopup)
 			SDL_SetWindowTitle(_win->window(), _title.c_str());
 		_titleDirty = false;
+	}
+	if (_appIdDirty)
+	{
+		/* The app_id can arrive after the window was created, and SDL sets its own on every show:
+		 * apply ours again, retrying until the xdg_toplevel exists. */
+		if ((_isPopup && !_fullscreen) || !sdl::utils::isWaylandDriver() ||
+		    sdl_wayland_set_app_id(_win->window(), _appId.c_str()))
+			_appIdDirty = false;
 	}
 	if (_iconDirty)
 	{
