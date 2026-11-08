@@ -21,7 +21,7 @@ if(BUILD_TESTING_INTERNAL)
     TestUpdateBitmap.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c)
+    list(APPEND TESTS TestRdpUdp.c TestUdpListener.c)
   endif()
 endif()
 
@@ -30,6 +30,10 @@ set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c Test
 # TestFuzzServer generates a live cert via winpr-tools (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
+endif()
+
+if(WITH_RDPEUDP)
+  list(APPEND FUZZERS TestFuzzRdpUdpServer.c TestFuzzRdpUdpTunnel.c)
 endif()
 
 # Test not compatible with package tests, disable
@@ -60,6 +64,10 @@ add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 # TestCore does not call winpr-tools APIs. The link was added with
 # TestFuzzServer's on-the-fly cert generation and broke -DWITH_WINPR_TOOLS=OFF.
 target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
+if(WITH_RDPEUDP AND BUILD_TESTING_INTERNAL)
+  # TestUdpListener makes a certificate for a tunnel's TLS session.
+  target_link_libraries(${MODULE_NAME} PRIVATE ${OPENSSL_LIBRARIES})
+endif()
 set(CORE_FUZZER_LIBS freerdp-client ${OPENSSL_LIBRARIES})
 if(WITH_WINPR_TOOLS)
   list(APPEND CORE_FUZZER_LIBS winpr-tools)
