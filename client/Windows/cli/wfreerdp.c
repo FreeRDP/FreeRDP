@@ -27,6 +27,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/streamdump.h>
 
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
@@ -111,6 +112,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	AddDefaultSettings(settings);
+
+	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CREATE_REQUEST, FALSE))
+		goto out;
 
 	if (freerdp_client_start(context) != 0)
 		goto out;
