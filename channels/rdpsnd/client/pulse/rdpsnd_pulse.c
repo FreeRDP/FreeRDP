@@ -773,8 +773,9 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	if (rdpsnd_pulse_ran_dry(pulse, now))
 	{
 		const UINT32 ms = (pulse->latency > 0) ? pulse->latency : PULSE_DEFAULT_LATENCY_MS;
-		(void)rdpsnd_pulse_write(pulse, nullptr,
-		                         pa_usec_to_bytes(1000ULL * ms, &pulse->sample_spec));
+		if (!rdpsnd_pulse_write(pulse, nullptr,
+		                        pa_usec_to_bytes(1000ULL * ms, &pulse->sample_spec)))
+			WLog_WARN(TAG, "rdpsnd_pulse_write failed");
 		pulse->play_end = now + ms;
 	}
 

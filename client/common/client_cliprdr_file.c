@@ -1241,10 +1241,11 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 			}
 			else
 			{
-				(void)InterlockedExchange(&file->fuse_failed, 1);
-				WLog_Print(file->log, WLOG_WARN,
-				           "cannot mount '%s': files from the server cannot be pasted here",
-				           file->path);
+				const LONG old = InterlockedExchange(&file->fuse_failed, 1);
+				WLog_Print(
+				    file->log, WLOG_WARN,
+				    "cannot mount '%s': files from the server cannot be pasted here (%" PRId32 ")",
+				    file->path, old);
 			}
 			freerdp_del_signal_cleanup_handler(file, fuse_abort);
 		}
