@@ -225,6 +225,9 @@ public class SessionInputManager
 	{
 		if (instance == 0)
 			return false;
+		// Read on every key, so a change in the settings applies without reconnecting.
+		keyboardMapper.setPhysicalKeyboardDeviceLayout(
+		    ApplicationSettingsActivity.getPhysicalKeyboardDeviceLayout(context));
 		return keyboardMapper.processAndroidKeyEvent(event);
 	}
 
@@ -479,6 +482,19 @@ public class SessionInputManager
 		}
 		else
 			keyboardMapper.processUnicodeFallback(unicodeKey);
+	}
+
+	@Override public boolean isUnicodeInputSupported()
+	{
+		return instance != 0 && LibFreeRDP.isUnicodeInputSupported(instance);
+	}
+
+	@Override public void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modmask)
+	{
+		if (instance == 0)
+			return;
+		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, modmask, true);
+		LibFreeRDP.sendKeyAsUnicodeEvent(instance, virtualKeyCode, unicodeKey, modmask, false);
 	}
 
 	@Override public void switchKeyboard(int keyboardType)
