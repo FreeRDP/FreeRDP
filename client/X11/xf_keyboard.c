@@ -957,8 +957,10 @@ static void xf_keyboard_sync_pressed_modifiers(xfContext* xfc, UINT32 state, Key
 		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
 			continue;
 
+		WINPR_ASSERT(sizeof(KeyCode) == 1);
+		WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) == 256);
 		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
-		if ((keycode == 0) || (keycode >= ARRAYSIZE(xfc->KeyboardState)))
+		if (keycode == 0)
 			continue;
 
 		const int mask = xf_keyboard_get_keymask(xfc, keysyms[i]);
@@ -982,8 +984,10 @@ static void xf_keyboard_sync_pressed_modifiers(xfContext* xfc, UINT32 state, Key
 		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
 			continue;
 
+		WINPR_ASSERT(sizeof(KeyCode) == 1);
+		WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) == 256);
 		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
-		if ((keycode == 0) || (keycode >= ARRAYSIZE(xfc->KeyboardState)) || (keycode == skip))
+		if ((keycode == 0) || (keycode == skip))
 			continue;
 		if (xfc->KeyboardState[keycode])
 			continue;
