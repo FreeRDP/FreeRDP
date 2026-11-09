@@ -188,7 +188,8 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				if (sdl->getDialog().handleEvent(windowEvent))
 					continue;
 
-				if (sdl->shallAbort(true))
+				/* Still handle a quit, it cancels the session */
+				if (sdl->shallAbort(true) && (windowEvent.type != SDL_EVENT_QUIT))
 					continue;
 
 				if (!sdl->handleEvent(windowEvent))
