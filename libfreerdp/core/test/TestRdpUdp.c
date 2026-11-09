@@ -984,7 +984,10 @@ static BOOL server_does_not_report_a_packet_behind_its_window(void)
 	if (!udp)
 		return FALSE;
 
-	for (UINT16 x = 0; x < 3; x++)
+	/* a client's first data packet carries its AckOfAcks */
+	if (!server_receive_data_aoa(udp, 100, 1))
+		goto out;
+	for (UINT16 x = 1; x < 3; x++)
 	{
 		if (!server_receive_data(udp, (UINT16)(100 + x), (UINT16)(1 + x)))
 			goto out;
@@ -1001,6 +1004,33 @@ static BOOL server_does_not_report_a_packet_behind_its_window(void)
 	    (sent.vectorBase != 103))
 		goto out;
 
+	rc = TRUE;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A FreeRDP client puts an AckOfAcks on its first data packet only. If that packet is lost or late,
+ * a base taken from the next one would put it below the window, and the cumulative ACK would tell
+ * the client it arrived. */
+static BOOL server_takes_its_base_from_an_ackofacks(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* the second packet arrives first: nothing is acknowledged */
+	if (!server_receive_data(udp, 101, 2) || !server_run_timers(udp, 100) || sent.hasAck ||
+	    sent.hasVector)
+		goto out;
+	/* the first one, resent with its AckOfAcks */
+	if (!server_receive_data_aoa(udp, 102, 1) || !server_run_timers(udp, 100))
+		goto out;
+	/* the window starts at 102: packet 101 was ignored, chunk 2 comes again */
+	if (!sent.hasAck || (sent.ack != 102) || (sent.delivered != 1))
+		goto out;
 	rc = TRUE;
 out:
 	rdpudp_free(udp);
@@ -1031,11 +1061,12 @@ static BOOL server_limits_buffered_chunks_until_verified(void)
 		goto out;
 	rdpudp_set_peer_verified(b);
 
-	/* Chunk 129 arrives first (128 ahead of expected), then 1..128 fill the gap. */
-	UINT16 seqA = 100;
-	UINT16 seqB = 100;
-	if (!server_receive_chunks(a, &seqA, 129, 129) || !server_receive_chunks(a, &seqA, 1, 128) ||
-	    !server_receive_chunks(b, &seqB, 129, 129) || !server_receive_chunks(b, &seqB, 1, 128))
+	/* Chunk 129 arrives first (128 ahead of expected), with the client's first AckOfAcks, then
+	 * 1..128 fill the gap. */
+	UINT16 seqA = 101;
+	UINT16 seqB = 101;
+	if (!server_receive_data_aoa(a, 100, 129) || !server_receive_chunks(a, &seqA, 1, 128) ||
+	    !server_receive_data_aoa(b, 100, 129) || !server_receive_chunks(b, &seqB, 1, 128))
 		goto out;
 
 	/* Unverified, chunk 129 is dropped and must be retransmitted. */
@@ -1164,6 +1195,57 @@ out:
 	return rc;
 }
 
+/* A FreeRDP client that lost track of the server's numbers after a silence reports a packet that
+ * only looks behind its window in an ACK vector based on that packet. Its base is no first missing
+ * packet: what lies below it was not received. */
+static BOOL server_keeps_what_lies_below_a_behind_report(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 5) || (sent.dataSends != 3))
+		goto out;
+
+	/* ACK vector with base 101, reporting 101 received: says nothing about 100 */
+	BYTE wire[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* Skip the prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_ACKVEC | (15u << 12)));
+	Stream_Write_UINT16(s, 101);            /* BaseSeqNum */
+	Stream_Write_UINT8(s, 1);               /* no TimeStamp, codedAckVecSize 1 */
+	Stream_Write_UINT8(s, 0x80 | 0x40 | 1); /* run of 1 received */
+	/* 6 bytes after the prefix: the prefix carries the length, the datagram is padded to 8 */
+	const size_t layout = Stream_GetPosition(s) - 1;
+	const size_t length = 8;
+	wire[0] = (BYTE)((layout << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	if (!rdpudp_receive(udp, wire, length))
+		goto out;
+
+	/* chunk 1 went out in 100: still unacknowledged, so it is resent */
+	sent.watchedChannel = 1;
+	sent.watchedSends = 0;
+	if (!server_run_timers(udp, 1500))
+		goto out;
+	rc = (sent.watchedSends >= 1);
+	if (!rc)
+		(void)fprintf(stderr, "the behind report acknowledged datagram 100\n");
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
 /* First datagram after SYN+ACK provides the initial RTT sample. */
 static rdpUdp* server_accept_with_rtt(ServerSent* sent, UINT32 rttMs)
 {
@@ -1195,7 +1277,8 @@ static BOOL server_drops_an_oversized_chunk(void)
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
 	Stream_Seek(s, 1); /* Skip prefix byte */
-	Stream_Write_UINT16(s, (UINT16)(V3_DATA | (15u << 12)));
+	Stream_Write_UINT16(s, (UINT16)(V3_DATA | V3_AOA | (15u << 12)));
+	Stream_Write_UINT16(s, 100); /* AckOfAcks, as on a client's first data packet */
 	Stream_Write_UINT16(s, 100); /* Data sequence number. */
 	Stream_Write_UINT16(s, 1);   /* Write the channel sequence number. */
 	Stream_Seek(s, 2049);
@@ -1207,8 +1290,8 @@ static BOOL server_drops_an_oversized_chunk(void)
 	/* Server may send other ACKs, but none covering the dropped packet. */
 	const BOOL dropped = rdpudp_receive(udp, wire, length) && server_run_timers(udp, 100) &&
 	                     (!sent.hasAck || (sent.ack != 100)) && (sent.delivered == 0);
-	const BOOL resent =
-	    server_receive_data(udp, 100, 1) && server_run_timers(udp, 100) && (sent.delivered == 1);
+	const BOOL resent = server_receive_data_aoa(udp, 100, 1) && server_run_timers(udp, 100) &&
+	                    (sent.delivered == 1);
 	rc = dropped && resent && sent.hasAck && (sent.ack == 100);
 	if (!rc)
 		(void)fprintf(stderr,
@@ -1525,9 +1608,11 @@ fail:
 /* Sending                                                                                   */
 /* ---------------------------------------------------------------------------------------- */
 
-/* AckOfAcks is the lowest of our data sequence numbers still awaiting acknowledgement. It goes
- * out when it changes, sending the sequence being transmitted would make the peer abandon every
- * packet still in flight. */
+/* AckOfAcks is the lowest of our data sequence numbers still awaiting acknowledgement, sending
+ * the sequence being transmitted would make the peer abandon every packet still in flight. Until
+ * the peer acknowledges something it goes in every data packet: the peer takes the start of our
+ * sequence space from it, and from the first packet to arrive otherwise, which acknowledges a
+ * lost first one unseen ([MS-RDPEUDP2] 3.1.5.3). After that it goes out when it changes. */
 static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 {
 	BOOL rc = FALSE;
@@ -1538,10 +1623,11 @@ static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 	const V3Packet* sent = first_data(&ctx);
 	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE));
 
+	/* not acknowledged yet: repeated */
 	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"2", 1));
 	CHECK(drain(&ctx, 20));
 	sent = first_data(&ctx);
-	CHECK(sent && !sent->hasAoA);
+	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE));
 
 	CHECK(send_ack(&ctx, FIRST_SEQUENCE));
 	CHECK(pump(&ctx));
@@ -1549,6 +1635,12 @@ static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 	CHECK(drain(&ctx, 20));
 	sent = first_data(&ctx);
 	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE + 1));
+
+	/* acknowledged and unchanged: left out */
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"4", 1));
+	CHECK(drain(&ctx, 20));
+	sent = first_data(&ctx);
+	CHECK(sent && !sent->hasAoA);
 	rc = TRUE;
 fail:
 	ctx_free(&ctx);
@@ -1810,6 +1902,9 @@ static const TestCase cases[] = {
 	{ "server_ignores_an_ack_past_what_it_sent", server_ignores_an_ack_past_what_it_sent },
 	{ "server_samples_the_rtt_from_the_handshake", server_samples_the_rtt_from_the_handshake },
 	{ "server_drops_an_oversized_chunk", server_drops_an_oversized_chunk },
+	{ "server_takes_its_base_from_an_ackofacks", server_takes_its_base_from_an_ackofacks },
+	{ "server_keeps_what_lies_below_a_behind_report",
+	  server_keeps_what_lies_below_a_behind_report },
 	{ "server_does_not_report_a_packet_behind_its_window",
 	  server_does_not_report_a_packet_behind_its_window },
 	{ "late_packet_behind_the_window_fills_the_hole",

@@ -40,16 +40,23 @@
 #include <winpr/winsock.h>
 #include <winpr/wlog.h>
 
+/* The tunnel's static functions are what the fuzzer drives, so their files are compiled in. */
+// NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../rdpemt.c"
 #undef TAG
+// NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../udpsocket.c"
 #undef TAG
+// NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../udpflow.c"
 #undef TAG
+// NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../udplistener.c"
 #undef TAG
+// NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../udplistener_relay.c"
 #undef TAG
+// NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../server_tunnel.c"
 
 static wLog* g_log;
