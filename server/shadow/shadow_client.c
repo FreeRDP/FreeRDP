@@ -2761,7 +2761,7 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 /* A client that has never acknowledged a frame (and did not suspend the acknowledgements) still
  * gets one frame this often, so it is not frozen. A client that acknowledges is held at the limit:
  * one that stops reading for longer than TcpAckTimeout (9 s) is disconnected by TCP anyway. */
-#define SHADOW_GFX_ACK_STALL_MS 2000
+#define SHADOW_GFX_ACK_STALL_MS 2000u
 
 /* GFX flow control: TRUE when this round's frame must wait. The server sent every damaged frame
  * however far the client was behind, and on a slow link the frames queued up in TCP for seconds:
