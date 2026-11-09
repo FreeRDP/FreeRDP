@@ -1344,6 +1344,125 @@ out:
 	return rc;
 }
 
+typedef struct
+{
+	rdpUdpFlow* flow;
+	HANDLE start;
+} udpFreeArg;
+
+static DWORD WINAPI free_flow_thread(LPVOID arg)
+{
+	udpFreeArg* job = arg;
+	(void)WaitForSingleObject(job->start, INFINITE);
+	freerdp_udp_flow_free(job->flow);
+	return 0;
+}
+
+/* Peers free their flows while the application frees the listener; with the sanitizers this
+ * finds a listener or entry used after it was freed. */
+static BOOL a_listener_and_its_flows_free_on_different_threads(void)
+{
+	for (size_t round = 0; round < 200; round++)
+	{
+		HANDLE start = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		freerdp_udp_listener* listener = freerdp_udp_listener_new();
+		TEST(start && listener);
+
+		udpFreeArg args[4] = WINPR_C_ARRAY_INIT;
+		HANDLE threads[ARRAYSIZE(args)] = WINPR_C_ARRAY_INIT;
+		for (size_t x = 0; x < ARRAYSIZE(args); x++)
+		{
+			const BYTE hash[32] = { (BYTE)(x + 1) };
+			args[x].flow = freerdp_udp_flow_new(hash);
+			args[x].start = start;
+			TEST(args[x].flow && freerdp_udp_listener_add_flow(listener, args[x].flow));
+			threads[x] = CreateThread(nullptr, 0, free_flow_thread, &args[x], 0, nullptr);
+			TEST(threads[x]);
+		}
+		(void)SetEvent(start);
+		freerdp_udp_listener_free(listener);
+		for (size_t x = 0; x < ARRAYSIZE(threads); x++)
+		{
+			(void)WaitForSingleObject(threads[x], INFINITE);
+			(void)CloseHandle(threads[x]);
+		}
+		(void)CloseHandle(start);
+	}
+	return TRUE;
+}
+
+typedef struct
+{
+	LONG inCall;
+	HANDLE entered;
+	rdpUdpFlow* flow;
+} udpSlowCallback;
+
+static BOOL slow_callback(void* custom, WINPR_ATTR_UNUSED const BYTE* data,
+                          WINPR_ATTR_UNUSED size_t length)
+{
+	udpSlowCallback* slow = custom;
+	(void)InterlockedIncrement(&slow->inCall);
+	(void)SetEvent(slow->entered);
+	Sleep(100);
+	(void)InterlockedDecrement(&slow->inCall);
+	return TRUE;
+}
+
+static DWORD WINAPI slow_send_thread(LPVOID arg)
+{
+	udpSlowCallback* slow = arg;
+	if (!freerdp_udp_flow_send(slow->flow, (const BYTE*)"x", 1))
+		(void)printf("the send callback failed\n");
+	return 0;
+}
+
+/* After set_send and set_receive return, the previous callback is no longer running, so its
+ * custom may be freed. */
+static BOOL setting_a_callback_waits_for_a_running_one(void)
+{
+	const BYTE hash[32] = { 60 };
+	udpSlowCallback slow = WINPR_C_ARRAY_INIT;
+	slow.entered = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	slow.flow = freerdp_udp_flow_new(hash);
+	TEST(slow.entered && slow.flow);
+
+	freerdp_udp_flow_set_send(slow.flow, slow_callback, &slow);
+	HANDLE thread = CreateThread(nullptr, 0, slow_send_thread, &slow, 0, nullptr);
+	TEST(thread);
+	TEST(WaitForSingleObject(slow.entered, 5000) == WAIT_OBJECT_0);
+	freerdp_udp_flow_set_send(slow.flow, nullptr, nullptr);
+	TEST(InterlockedCompareExchange(&slow.inCall, 0, 0) == 0);
+	(void)WaitForSingleObject(thread, INFINITE);
+	(void)CloseHandle(thread);
+
+	/* the receive callback runs on the listener's thread */
+	(void)ResetEvent(slow.entered);
+	UINT16 port = 0;
+	const SOCKET server = open_server(&port);
+	TEST(server != INVALID_SOCKET);
+	freerdp_udp_listener* listener = freerdp_udp_listener_new();
+	TEST(listener);
+	TEST(freerdp_udp_listener_open_from_socket(listener, (int)server));
+	TEST(freerdp_udp_listener_add_flow(listener, slow.flow));
+	freerdp_udp_flow_set_receive(slow.flow, slow_callback, &slow);
+	TEST(freerdp_udp_listener_start(listener));
+	const SOCKET client = open_client(port);
+	TEST(client != INVALID_SOCKET);
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	make_syn(syn, hash);
+	TEST(_send(client, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(WaitForSingleObject(slow.entered, 5000) == WAIT_OBJECT_0);
+	freerdp_udp_flow_set_receive(slow.flow, nullptr, nullptr);
+	TEST(InterlockedCompareExchange(&slow.inCall, 0, 0) == 0);
+
+	freerdp_udp_flow_free(slow.flow);
+	freerdp_udp_listener_free(listener);
+	closesocket(client);
+	(void)CloseHandle(slow.entered);
+	return TRUE;
+}
+
 int TestUdpListener(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -1385,6 +1504,10 @@ int TestUdpListener(int argc, char* argv[])
 	if (!peer_udp_settings_without_a_tunnel())
 		goto out;
 	if (!a_manual_tunnel_runs_on_the_application_thread())
+		goto out;
+	if (!a_listener_and_its_flows_free_on_different_threads())
+		goto out;
+	if (!setting_a_callback_waits_for_a_running_one())
 		goto out;
 #if defined(__linux__)
 	if (!a_reply_uses_the_request_destination_address())

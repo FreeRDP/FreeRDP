@@ -298,9 +298,10 @@ BOOL freerdp_udp_flow_send(rdpUdpFlow* flow, const BYTE* data, size_t length)
 			rc = (sent >= 0) || rdpudp_socket_error_is_transient(WSAGetLastError());
 		}
 	}
-	LeaveCriticalSection(&flow->lock);
+	/* The callback runs under the lock, so freerdp_udp_flow_set_send() waits for it. */
 	if (sendFn)
-		return sendFn(custom, data, length);
+		rc = sendFn(custom, data, length);
+	LeaveCriticalSection(&flow->lock);
 	return rc;
 }
 

@@ -158,18 +158,20 @@ extern "C"
 	FREERDP_API BOOL freerdp_peer_set_udp_send_limit(freerdp_peer* peer, size_t limit);
 
 	/** @brief Callback for receiving datagrams; see freerdp_udp_flow_set_receive().
-	 *  Called with the listener lock held; must not block or call listener functions.
+	 *  Called with the listener's and the flow's locks held; must not block or call listener
+	 *  functions.
 	 *  @return \b FALSE to drop the datagram. */
 	typedef BOOL (*FreeRDP_UdpFlowReceiveFn)(void* custom, const BYTE* data, size_t length);
 
-	/** @brief Callback for sending datagrams to a client.
+	/** @brief Callback for sending datagrams to a client; see freerdp_udp_flow_set_send().
+	 *  Called with the flow's lock held; must not wait for a thread that uses the flow.
 	 *  @return \b FALSE on fatal errors. Network loss is not an error as RDP-UDP
 	 *  handles retransmission. */
 	typedef BOOL (*FreeRDP_UdpFlowSendFn)(void* custom, const BYTE* data, size_t length);
 
 	/** Frees a flow created via freerdp_udp_flow_new(); peer-owned flows are
-	 *  managed by the peer. To avoid race conditions, free flows before the listener,
-	 *  or free both on the same thread.
+	 *  managed by the peer. Flows and their listener can be freed in any order, from any
+	 *  thread.
 	 *  @since version 3.34.0 */
 	FREERDP_API void freerdp_udp_flow_free(rdpUdpFlow* flow);
 
@@ -186,13 +188,15 @@ extern "C"
 	FREERDP_API const BYTE* freerdp_udp_flow_get_cookie_hash(const rdpUdpFlow* flow);
 
 	/** Redirects flow datagrams to the receive callback instead of queuing them
-	 *  for a tunnel.
+	 *  for a tunnel. Waits for a call of the previous callback to return, so its \b custom
+	 *  can be freed afterwards.
 	 *  @since version 3.34.0 */
 	FREERDP_API void freerdp_udp_flow_set_receive(rdpUdpFlow* flow,
 	                                              FreeRDP_UdpFlowReceiveFn receive, void* custom);
 
 	/** Redirects flow datagrams to the send callback instead of using the
-	 *  listener's socket.
+	 *  listener's socket. Waits for a call of the previous callback to return, so its
+	 *  \b custom can be freed afterwards.
 	 *  @since version 3.34.0 */
 	FREERDP_API void freerdp_udp_flow_set_send(rdpUdpFlow* flow, FreeRDP_UdpFlowSendFn send,
 	                                           void* custom);
@@ -239,8 +243,9 @@ extern "C"
 	FREERDP_API BOOL freerdp_udp_flow_check(rdpUdpFlow* flow);
 
 	/** Stops the listener thread, terminates relays, and closes sockets. Associated
-	 *  flows remain valid but stop receiving datagrams; they must be freed by their peers.
-	 *  For child processes after fork(), use freerdp_udp_listener_close_after_fork().
+	 *  flows remain valid but stop receiving datagrams; they must be freed by their peers,
+	 *  and the last of them releases the listener's memory. For child processes after fork(),
+	 *  use freerdp_udp_listener_close_after_fork().
 	 *  @since version 3.34.0 */
 	FREERDP_API void freerdp_udp_listener_free(freerdp_udp_listener* listener);
 

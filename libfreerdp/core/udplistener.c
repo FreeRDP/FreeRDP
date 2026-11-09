@@ -240,12 +240,11 @@ static void udplistener_dispatch(freerdp_udp_listener* listener, const udpListen
 	}
 
 	rdpUdpFlow* flow = entry->flow;
+	/* The callback runs under the flow's lock, so freerdp_udp_flow_set_receive() waits for it. */
 	EnterCriticalSection(&flow->lock);
-	const FreeRDP_UdpFlowReceiveFn receive = flow->receive;
-	void* custom = flow->receiveCustom;
+	const BOOL taken = flow->receive ? flow->receive(flow->receiveCustom, data, length)
+	                                 : freerdp_udp_flow_deliver(flow, data, length);
 	LeaveCriticalSection(&flow->lock);
-	const BOOL taken =
-	    receive ? receive(custom, data, length) : freerdp_udp_flow_deliver(flow, data, length);
 	if (!taken)
 		WLog_DBG(TAG, "flow is full, dropping a datagram");
 }
@@ -538,15 +537,15 @@ static void udplistener_close_sockets(freerdp_udp_listener* listener)
 	LeaveCriticalSection(&listener->lock);
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL udplistener_free_entry(WINPR_ATTR_UNUSED const void* key, void* value,
-                                   WINPR_ATTR_UNUSED void* arg)
+/* Releases the memory once the listener was freed and its last flow removed. */
+static void udplistener_release(freerdp_udp_listener* listener)
 {
-	udpListenerEntry* entry = value;
-	WINPR_ASSERT(entry);
-	entry->flow->listener = nullptr;
-	free(entry);
-	return TRUE;
+	WINPR_ASSERT(listener);
+	HashTable_Free(listener->entriesByAddress);
+	HashTable_Free(listener->entriesByHash);
+	(void)CloseHandle(listener->wake);
+	DeleteCriticalSection(&listener->lock);
+	free(listener);
 }
 
 void freerdp_udp_listener_close_after_fork(freerdp_udp_listener* listener)
@@ -586,14 +585,14 @@ void freerdp_udp_listener_free(freerdp_udp_listener* listener)
 	udplistener_stop_relays(listener);
 	udplistener_close_sockets(listener);
 
-	/* entriesByAddress contains the same entries */
-	if (!HashTable_Foreach(listener->entriesByHash, udplistener_free_entry, nullptr))
-		WLog_WARN(TAG, "unable to release all flows");
-	HashTable_Free(listener->entriesByAddress);
-	HashTable_Free(listener->entriesByHash);
-	(void)CloseHandle(listener->wake);
-	DeleteCriticalSection(&listener->lock);
-	free(listener);
+	/* Flows still registered keep their entries and their pointer to the listener, so a peer
+	 * may free its flow at any time; the last one removed releases the listener. */
+	EnterCriticalSection(&listener->lock);
+	listener->freed = TRUE;
+	const BOOL release = (HashTable_Count(listener->entriesByHash) == 0);
+	LeaveCriticalSection(&listener->lock);
+	if (release)
+		udplistener_release(listener);
 }
 
 BOOL udplistener_add_flow(freerdp_udp_listener* listener, rdpUdpFlow* flow, SOCKET sockfd)
@@ -715,8 +714,11 @@ void freerdp_udp_listener_remove_flow(freerdp_udp_listener* listener, rdpUdpFlow
 	if (flow->listener == listener)
 		flow->listener = nullptr;
 	const BOOL shared = listener->shared;
+	const BOOL release = listener->freed && (HashTable_Count(listener->entriesByHash) == 0);
 	LeaveCriticalSection(&listener->lock);
 
+	if (release)
+		udplistener_release(listener);
 	if (!shared)
 		return;
 

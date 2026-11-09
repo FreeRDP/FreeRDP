@@ -187,6 +187,7 @@ struct rdp_udp_listener
 	LONG stop;
 
 	BOOL shared; /* Process-wide listener that closes when the last flow is closed. */
+	BOOL freed;  /* freerdp_udp_listener_free() was called; the last flow removed releases it. */
 
 	BYTE buffer[0x10000];
 };
