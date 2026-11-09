@@ -1693,7 +1693,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 					/* Soft-Sync holds this lock while moving the channel to ensure the Close
 					 * Request is sent on the same transport as preceding data. */
 					EnterCriticalSection(&channel->writeLock);
-					if (!wts_tunnel_write(channel, Stream_Buffer(s), pos, &ret))
+					if (!wts_tunnel_close_request(channel, Stream_Buffer(s), pos, &ret))
 						ret = WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_BufferAs(s, char),
 						                             (UINT32)pos, &written);
 					LeaveCriticalSection(&channel->writeLock);

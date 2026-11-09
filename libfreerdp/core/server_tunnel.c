@@ -217,6 +217,7 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 	BOOL rc = FALSE;
 	ULONG_PTR* keys = nullptr;
 	rdpPeerChannel** channels = nullptr;
+	rdpPeerChannel** moving = nullptr;
 	size_t count = 0;
 	wStream* s = nullptr;
 
@@ -275,17 +276,37 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 		goto out;
 	}
 
+	/* The list is taken while holding the writeLocks: a channel closed meanwhile has posted its
+	 * Close Request on TCP already and is left out (see wts_tunnel_close_request). */
+	for (size_t x = 0; x < count; x++)
+		EnterCriticalSection(&channels[x]->writeLock);
+	moving = (rdpPeerChannel**)calloc(count, sizeof(rdpPeerChannel*));
+	size_t moves = 0;
+	if (moving)
+	{
+		for (size_t x = 0; x < count; x++)
+		{
+			if (!channels[x]->closing)
+				moving[moves++] = channels[x];
+		}
+	}
+	if (!moving || (moves == 0))
+	{
+		rc = (moving != nullptr);
+		goto unlock;
+	}
+
 	/* DYNVC_SOFT_SYNC_REQUEST: The length is calculated starting from the Length field. */
-	const size_t listLength = 4 + 2 + sizeof(UINT32) * count;
+	const size_t listLength = 4 + 2 + sizeof(UINT32) * moves;
 	s = Stream_New(nullptr, 2 + 4 + 2 + 2 + listLength);
 	if (!s)
-		goto out;
+		goto unlock;
 	/* Stream_Write macros may evaluate their arguments multiple times. */
 	const UINT8 header = (UINT8)((UINT32)SOFT_SYNC_REQUEST_PDU << 4u);
 	const UINT16 flags =
 	    (UINT16)((UINT32)SOFT_SYNC_TCP_FLUSHED | (UINT32)SOFT_SYNC_CHANNEL_LIST_PRESENT);
 	const UINT32 length = WINPR_ASSERTING_INT_CAST(UINT32, 4 + 2 + 2 + listLength);
-	const UINT16 dvcs = WINPR_ASSERTING_INT_CAST(UINT16, count);
+	const UINT16 dvcs = WINPR_ASSERTING_INT_CAST(UINT16, moves);
 	Stream_Write_UINT8(s, header);
 	Stream_Write_UINT8(s, 0);                   /* Padding byte */
 	Stream_Write_UINT32(s, length);             /* The length of the PDU */
@@ -293,34 +314,31 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 	Stream_Write_UINT16(s, 1);                  /* Number of tunnels */
 	Stream_Write_UINT32(s, TUNNELTYPE_UDPFECR); /* Specify the tunnel type */
 	Stream_Write_UINT16(s, dvcs);               /* Number of Dynamic Virtual Channels */
-	for (size_t x = 0; x < count; x++)
-		Stream_Write_UINT32(s, channels[x]->channelId);
+	for (size_t x = 0; x < moves; x++)
+		Stream_Write_UINT32(s, moving[x]->channelId);
 
-	for (size_t x = 0; x < count; x++)
-		EnterCriticalSection(&channels[x]->writeLock);
 	rc = wts_queue_drdynvc_pdu(vcm, Stream_Buffer(s), Stream_GetPosition(s), FALSE);
 	if (rc)
 	{
-		for (size_t x = 0; x < count; x++)
-			channels[x]->tunnel = TRUE;
+		for (size_t x = 0; x < moves; x++)
+			moving[x]->tunnel = TRUE;
 		vcm->tunnel->softSyncState = SOFT_SYNC_STATE_SENT;
 		vcm->tunnel->softSyncWaitStart = 0;
-	}
-	for (size_t x = 0; x < count; x++)
-		LeaveCriticalSection(&channels[x]->writeLock);
-
-	if (rc)
-	{
 		WLog_INFO(TAG,
 		          "Soft-Sync Request: %" PRIuz " dynamic channel(s) are moving to the UDP tunnel",
-		          count);
-		for (size_t x = 0; x < count; x++)
-			WLog_DBG(TAG, "  %" PRIu32 " %s", channels[x]->channelId, channels[x]->channelName);
+		          moves);
+		for (size_t x = 0; x < moves; x++)
+			WLog_DBG(TAG, "  %" PRIu32 " %s", moving[x]->channelId, moving[x]->channelName);
 	}
+
+unlock:
+	for (size_t x = 0; x < count; x++)
+		LeaveCriticalSection(&channels[x]->writeLock);
 
 out:
 	HashTable_Unlock(vcm->dynamicVirtualChannels);
 	Stream_Free(s, TRUE);
+	free((void*)moving);
 	free((void*)channels);
 	free(keys);
 	return rc;
@@ -536,11 +554,15 @@ BOOL wts_tunnel_open_channel(WTSVirtualChannelManager* vcm, rdpPeerChannel* chan
 	return rc;
 }
 
-BOOL wts_tunnel_write(rdpPeerChannel* channel, const BYTE* data, size_t length, BOOL* status)
+BOOL wts_tunnel_close_request(rdpPeerChannel* channel, const BYTE* data, size_t length,
+                              BOOL* status)
 {
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(status);
 
+	/* the Close Request goes out now: a Soft-Sync waiting for this writeLock must not list the
+	 * channel ([MS-RDPEDYC] 2.2.5.1 lists the channels the server will send data for) */
+	channel->closing = TRUE;
 	if (!channel->tunnel)
 		return FALSE;
 	*status = wts_queue_drdynvc_pdu(channel->vcm, data, length, TRUE);

@@ -73,12 +73,14 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL wts_tunnel_open_channel(WTSVirtualChannelManager* vcm, rdpPeerChannel* channel,
                                            wStream* s, BOOL* onTunnel);
 
-/** Queue a copy of a channel PDU if the channel is on the tunnel.
+/** Queue a copy of a channel's Close Request if the channel is on the tunnel. Call with the
+ * channel's writeLock held: the channel is marked as closing, so a Soft-Sync from then on leaves
+ * it out.
  * @param status set to FALSE on error
  * @return TRUE if the channel is on the tunnel */
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL wts_tunnel_write(rdpPeerChannel* channel, const BYTE* data, size_t length,
-                                    BOOL* status);
+FREERDP_LOCAL BOOL wts_tunnel_close_request(rdpPeerChannel* channel, const BYTE* data,
+                                            size_t length, BOOL* status);
 
 /** Queue a channel PDU if the channel is on the tunnel; the queue takes ownership of the buffer.
  * @param status set to FALSE on error
@@ -153,9 +155,10 @@ static inline BOOL wts_tunnel_open_channel(WINPR_ATTR_UNUSED WTSVirtualChannelMa
 }
 
 WINPR_ATTR_NODISCARD
-static inline BOOL wts_tunnel_write(WINPR_ATTR_UNUSED rdpPeerChannel* channel,
-                                    WINPR_ATTR_UNUSED const BYTE* data,
-                                    WINPR_ATTR_UNUSED size_t length, WINPR_ATTR_UNUSED BOOL* status)
+static inline BOOL wts_tunnel_close_request(WINPR_ATTR_UNUSED rdpPeerChannel* channel,
+                                            WINPR_ATTR_UNUSED const BYTE* data,
+                                            WINPR_ATTR_UNUSED size_t length,
+                                            WINPR_ATTR_UNUSED BOOL* status)
 {
 	return FALSE;
 }
