@@ -470,6 +470,7 @@ void SdlRail::enableRemoteAppMode(bool enable)
 	_enabled = enable;
 	if (enable)
 		_desktopReleased = true;
+	queueScreenSaverUpdate();
 }
 
 /* Show the desktop anyway after this: not every logon prompt is announced. */
@@ -849,6 +850,7 @@ bool SdlRail::init(RailClientContext* rail)
 	/* ServerSystemParam not implemented: the server only sends screensaver state here. */
 	rail->ServerLocalMoveSize = SdlRail::server_local_move_size;
 	rail->ServerMinMaxInfo = SdlRail::server_min_max_info;
+	rail->ServerPowerDisplayRequest = SdlRail::server_power_display_request;
 	/* Keep default ServerHandshake. */
 
 	WLog_WARN(TAG, "RemoteApp/RAIL support in the SDL client is experimental");
@@ -874,6 +876,22 @@ bool SdlRail::init(RailClientContext* rail)
 	if (!SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1"))
 		WLog_WARN(TAG, "SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH) failed: %s", SDL_GetError());
 	return true;
+}
+
+/* RemoteApp windows are ordinary local windows. */
+void SdlRail::updateScreenSaver()
+{
+	const bool allowed = _context->allowScreenSaver().value_or(_enabled);
+	const bool on = allowed && !_displayRequested;
+	if (!(on ? SDL_EnableScreenSaver() : SDL_DisableScreenSaver()))
+		WLog_WARN(TAG, "changing the screen saver failed: %s", SDL_GetError());
+}
+
+void SdlRail::queueScreenSaverUpdate()
+{
+	if (!SDL_RunOnMainThread([](void* rail) { static_cast<SdlRail*>(rail)->updateScreenSaver(); },
+	                         this, false))
+		WLog_WARN(TAG, "could not queue the screen saver change: %s", SDL_GetError());
 }
 
 bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
@@ -904,6 +922,8 @@ bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 	/* The next connection logs on again: hold its logon desktop back too. */
 	_desktopReleased = false;
 	_desktopHoldUntil = 0;
+	_displayRequested = false;
+	queueScreenSaverUpdate();
 
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return true;
@@ -1574,6 +1594,21 @@ void SdlRail::completeLocalMoveIfPending()
 	}
 
 	railPlatformEndDrag(appWindow->window());
+}
+
+UINT SdlRail::server_power_display_request(RailClientContext* context,
+                                           const RAIL_POWER_DISPLAY_REQUEST* power)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(power);
+	auto rail = static_cast<SdlRail*>(context->custom);
+	if (!rail)
+		return CHANNEL_RC_OK; /* late order after disconnect */
+
+	WLog_DBG(TAG, "power display request %s", power->active ? "on" : "off");
+	rail->_displayRequested = (power->active != 0);
+	rail->queueScreenSaverUpdate();
+	return CHANNEL_RC_OK;
 }
 
 UINT SdlRail::server_min_max_info(RailClientContext* context,
