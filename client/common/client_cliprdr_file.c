@@ -2564,9 +2564,11 @@ static BOOL create_base_path(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 
+	/* Multiple RDP sessions can share a process, so include the clipboard
+	 * context address to keep their FUSE mount points separate. */
 	char base[64] = WINPR_C_ARRAY_INIT;
-	(void)_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32,
-	                GetCurrentProcessId());
+	(void)_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32 ".%p",
+	                GetCurrentProcessId(), (void*)file);
 
 	file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
 	if (!file->path)
