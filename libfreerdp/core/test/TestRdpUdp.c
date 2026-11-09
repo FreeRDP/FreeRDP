@@ -909,15 +909,15 @@ static BOOL server_receive_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
 	return rdpudp_receive(udp, wire, length);
 }
 
-/* Data packet where AckOfAcks equals its own sequence number; client won't resend below it. */
-static BOOL server_receive_data_aoa(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
+/* Data packet with an AckOfAcks. */
+static BOOL server_receive_data_with_aoa(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq, UINT16 aoa)
 {
 	BYTE wire[32] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
 	Stream_Seek(s, 1); /* Skip the prefix byte */
 	Stream_Write_UINT16(s, (UINT16)(V3_DATA | V3_AOA | (15u << 12)));
-	Stream_Write_UINT16(s, dataSeq); /* the AckOfAcks field */
+	Stream_Write_UINT16(s, aoa); /* the AckOfAcks field */
 	Stream_Write_UINT16(s, dataSeq);
 	Stream_Write_UINT16(s, channelSeq);
 	Stream_Write(s, "abcd", 4);
@@ -927,6 +927,12 @@ static BOOL server_receive_data_aoa(rdpUdp* udp, UINT16 dataSeq, UINT16 channelS
 	wire[7] = wire[0];
 	wire[0] = eighth;
 	return rdpudp_receive(udp, wire, length);
+}
+
+/* Data packet where AckOfAcks equals its own sequence number; client won't resend below it. */
+static BOOL server_receive_data_aoa(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
+{
+	return server_receive_data_with_aoa(udp, dataSeq, channelSeq, dataSeq);
 }
 
 /* Advance clock in 5ms steps, running timers after each step. */
@@ -1336,6 +1342,43 @@ static BOOL server_follows_large_ack_of_acks_jumps(void)
 		goto out;
 	rc = (sent.delivered == ARRAYSIZE(seqs)) && sent.hasAck && (sent.ack == 50101) &&
 	     !sent.hasVector;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* Our ACKs were lost in a silence: the client's AckOfAcks afterwards lies behind our window. Its
+ * numbers did not wrap, so the window stays where it is and acknowledging resumes. Moving it back
+ * would report packets a cumulative ACK covered already (mstsc ends the connection on that);
+ * waiting for another AckOfAcks would leave the client without ACKs for good. */
+static BOOL server_keeps_its_window_when_acks_were_lost_in_a_silence(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_receive_data(udp, 101, 2) ||
+	    !server_receive_data(udp, 102, 3) || !server_run_timers(udp, 100) || !sent.hasAck ||
+	    (sent.ack != 102))
+		goto out;
+
+	/* a silence long enough for a resync, short of the peer timeout */
+	if (!server_run_timers(udp, 9000))
+		goto out;
+	sent.hasAck = FALSE;
+	sent.hasVector = FALSE;
+
+	/* the client never got our ACKs: 100 is still its oldest unacknowledged packet */
+	if (!server_receive_data_with_aoa(udp, 103, 4, 100) || !server_run_timers(udp, 100))
+		goto out;
+	rc = sent.hasAck && (sent.ack == 103) && !sent.hasVector && (sent.delivered == 4);
+	if (!rc)
+		(void)fprintf(stderr,
+		              "after the silence: ACK %d of 0x%04" PRIx16 ", vector %d, %" PRIuz
+		              " delivered\n",
+		              sent.hasAck, sent.ack, sent.hasVector, sent.delivered);
 out:
 	rdpudp_free(udp);
 	return rc;
@@ -1895,6 +1938,8 @@ static const TestCase cases[] = {
 	{ "server_limits_buffered_chunks_until_verified",
 	  server_limits_buffered_chunks_until_verified },
 	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
+	{ "server_keeps_its_window_when_acks_were_lost_in_a_silence",
+	  server_keeps_its_window_when_acks_were_lost_in_a_silence },
 	{ "server_refuses_a_short_syn", server_refuses_a_short_syn },
 	{ "server_follows_large_ack_of_acks_jumps", server_follows_large_ack_of_acks_jumps },
 	{ "server_repeats_ack_of_acks_until_the_first_ack",

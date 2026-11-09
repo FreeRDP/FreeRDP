@@ -245,11 +245,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * v3_resync_base. Two keepalive intervals, an idle tunnel never gets there. */
 #define RDPUDP2_RESYNC_MS (2ull * RDPUDP2_KEEPALIVE_MS)
 
-/* Server: how far behind its window an AckOfAcks after a silence is taken as stale, see
- * v3_resync_base: Windows resends at most 8190 past its oldest unacknowledged datagram, plus as
- * much again for datagrams still under way. A real move landing there takes 49152 numbers within
- * the peer timeout, Windows moves at most ~2500 a second; and one ignored only means waiting for
- * the next AckOfAcks. */
+/* Server: how far behind its window an AckOfAcks after a silence leaves the window where it is,
+ * see v3_resync_base: Windows resends at most 8190 past its oldest unacknowledged datagram, plus
+ * as much again for datagrams still under way. A real move landing there takes 49152 numbers
+ * within the peer timeout, Windows moves at most ~2500 a second. */
 #define RDPUDP2_STALE_AOA_REACH 16384
 
 /* Server: the newest data sequence number stays this close to the oldest one in flight, resends
@@ -1866,16 +1865,21 @@ static void v3_advance_window(rdpUdp* udp)
 static void v3_resync_base(rdpUdp* udp, UINT16 base)
 {
 	WINPR_ASSERT(udp);
-	/* Server: a base a little behind ours comes from a datagram older than the silence, a repeat
-	 * or one reordered across it. Taken, it moves the window back below what was acknowledged
-	 * already, and mstsc ends the connection on the ACK vector that follows. A real move cannot
-	 * land there: the peer keeps its numbers within RDPUDP2_STALE_AOA_REACH of its oldest
-	 * unacknowledged one, and the peer timeout ends the connection long before it can move
-	 * almost the whole sequence space on. */
+	udp->v3Resync = FALSE;
+	/* Server: a base a little behind ours means the peer's numbers did not wrap, our position
+	 * still holds. Our acknowledgements were lost in the silence, or the datagram is older than
+	 * it (a repeat, or one reordered across it). Taken, the base moves the window back below what
+	 * was acknowledged already, and mstsc ends the connection on the ACK vector that follows. A
+	 * real move cannot land there: the peer keeps its numbers within RDPUDP2_STALE_AOA_REACH of
+	 * its oldest unacknowledged one, and the peer timeout ends the connection long before it can
+	 * move almost the whole sequence space on. The window stays, and acknowledging resumes. */
 	if (udp->server && seq16_after(udp->v3Expected, base) &&
 	    (seq16_diff(udp->v3Expected, base) <= RDPUDP2_STALE_AOA_REACH))
+	{
+		udp->ackPending = TRUE;
+		udp->v3WindowPending = TRUE;
 		return;
-	udp->v3Resync = FALSE;
+	}
 	if (base == udp->v3Expected)
 		return;
 
