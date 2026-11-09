@@ -1440,12 +1440,25 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_handle_optional_rdp_decryption(rdp, s, &length, nullptr))
 		return STATE_RUN_FAILED;
 
-	if (!rdp_read_share_control_header(rdp, s, nullptr, nullptr, &pduType, &pduSource))
+	UINT16 remainingLength = 0;
+	if (!rdp_read_share_control_header(rdp, s, nullptr, &remainingLength, &pduType, &pduSource))
 		return STATE_RUN_FAILED;
 
 	switch (pduType)
 	{
 		case PDU_TYPE_DEMAND_ACTIVE:
+			/* Demand Active consumes this entire payload. Check its Share Control
+			 * boundary after decryption, when security headers and FIPS padding
+			 * have been removed. Do not apply this to other, potentially batched
+			 * Share Control PDUs. */
+			if (remainingLength != Stream_GetRemainingLength(s))
+			{
+				WLog_Print(rdp->log, WLOG_ERROR,
+				           "Demand Active payload length %" PRIu16
+				           " differs from remaining data %" PRIuz,
+				           remainingLength, Stream_GetRemainingLength(s));
+				return STATE_RUN_FAILED;
+			}
 			if (!rdp_recv_demand_active(rdp, s, pduSource, length))
 				return STATE_RUN_FAILED;
 			return STATE_RUN_ACTIVE;
