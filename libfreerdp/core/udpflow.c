@@ -60,7 +60,9 @@ void freerdp_udp_flow_free(rdpUdpFlow* flow)
 	if (!flow)
 		return;
 
+	/* A registered flow keeps its listener: the last one removed releases a freed listener. */
 	if (flow->listener)
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): see above
 		freerdp_udp_listener_remove_flow(flow->listener, flow);
 
 	if (flow->relay != INVALID_SOCKET)

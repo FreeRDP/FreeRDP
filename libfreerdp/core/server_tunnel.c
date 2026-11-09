@@ -47,8 +47,18 @@
 typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 {
 	WTS_QUEUE_TCP = 0,
-	WTS_QUEUE_TUNNEL = 1
+	WTS_QUEUE_TUNNEL = 1,
+	WTS_QUEUE_WAKE = 2 /* no PDU: wakes the drain to start Soft-Sync */
 } WTS_QUEUE_ID;
+
+/* A message, not just the queue's event: the drain resets the event only when it takes the last
+ * message, so an event set on an empty queue would stay set. */
+static void wts_tunnel_wake_drain(WTSVirtualChannelManager* vcm)
+{
+	WINPR_ASSERT(vcm);
+	if (!MessageQueue_Post(vcm->queue, nullptr, WTS_QUEUE_WAKE, nullptr, nullptr))
+		WLog_WARN(TAG, "unable to wake the channel manager for Soft-Sync");
+}
 
 /* Soft-Sync as described in [MS-RDPEDYC] 3.1.5.3 */
 typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
@@ -224,7 +234,10 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 	/* Both the peer thread and the channel manager drain thread may call this; only one
 	 * should send the request. */
 	HashTable_Lock(vcm->dynamicVirtualChannels);
-	if (vcm->tunnel->softSyncState != SOFT_SYNC_STATE_NONE)
+	/* Read tunnelReady again under the lock: wts_tunnel_state_changed clears it before taking
+	 * the lock to decide whether a lost tunnel ends the connection or leaves it on TCP. */
+	if ((vcm->tunnel->softSyncState != SOFT_SYNC_STATE_NONE) ||
+	    !InterlockedCompareExchange(&vcm->tunnel->tunnelReady, 0, 0))
 	{
 		rc = TRUE;
 		goto out;
@@ -458,8 +471,10 @@ void wts_tunnel_channel_opened(WTSVirtualChannelManager* vcm)
 {
 	WINPR_ASSERT(vcm);
 	WINPR_ASSERT(vcm->tunnel);
-	/* May be called from an application thread via WTSVirtualChannelClose. */
+	/* May be called from an application thread via WTSVirtualChannelClose. Wake the drain, which
+	 * starts Soft-Sync (wts_tunnel_start_soft_sync_if_due). */
 	(void)InterlockedIncrement(&vcm->tunnel->softSyncDue);
+	wts_tunnel_wake_drain(vcm);
 }
 
 BOOL wts_tunnel_is_soft_sync_response(UINT8 Cmd)
@@ -498,6 +513,8 @@ BOOL wts_tunnel_send_message(WTSVirtualChannelManager* vcm, UINT32 id, const BYT
 	WINPR_ASSERT(vcm->tunnel);
 	WINPR_ASSERT(status);
 
+	if (id == WTS_QUEUE_WAKE)
+		return TRUE;
 	if (id != WTS_QUEUE_TUNNEL)
 		return FALSE;
 
@@ -517,6 +534,11 @@ BOOL wts_tunnel_after_drain(WTSVirtualChannelManager* vcm, BOOL status)
 {
 	WINPR_ASSERT(vcm);
 	WINPR_ASSERT(vcm->tunnel);
+
+	/* A channel that answered during this drain may have had its wake message drained before
+	 * Soft-Sync saw the flag: wake the drain again. */
+	if (InterlockedCompareExchange(&vcm->tunnel->softSyncDue, 0, 0) != 0)
+		wts_tunnel_wake_drain(vcm);
 
 	/* the next drain starts clean */
 	const BOOL written = vcm->tunnel->written;

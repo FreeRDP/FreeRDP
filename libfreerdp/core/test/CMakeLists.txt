@@ -23,7 +23,7 @@ if(BUILD_TESTING_INTERNAL)
     TestTransportWriteFail.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c TestUdpListener.c)
+    list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c TestServerTunnel.c TestUdpListener.c)
   endif()
 endif()
 
