@@ -717,8 +717,12 @@ void freerdp_udp_listener_remove_flow(freerdp_udp_listener* listener, rdpUdpFlow
 	const BOOL release = listener->freed && (HashTable_Count(listener->entriesByHash) == 0);
 	LeaveCriticalSection(&listener->lock);
 
+	/* the process-wide listener is never freed, so it does not get here */
 	if (release)
+	{
 		udplistener_release(listener);
+		return;
+	}
 	if (!shared)
 		return;
 

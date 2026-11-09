@@ -21,7 +21,7 @@ if(BUILD_TESTING_INTERNAL)
     TestUpdateBitmap.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c TestUdpListener.c)
+    list(APPEND TESTS TestRdpUdp.c TestServerTunnel.c TestUdpListener.c)
   endif()
 endif()
 
