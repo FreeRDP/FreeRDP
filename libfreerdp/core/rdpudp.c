@@ -369,7 +369,7 @@ struct rdp_udp
 	BOOL cwrPending;
 	UINT32 announcedAoA;
 	BOOL aoaAnnounced;
-	BOOL peerAcked; /* Server: TRUE if the peer has acknowledged at least one data datagram */
+	BOOL peerAcked; /* TRUE if the peer has acknowledged at least one data datagram */
 	UINT16 nextChannelSeq;
 
 	/* receiving side */
@@ -1069,12 +1069,12 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) &&
 	                     (udp->v3BehindCount == 0) && !udp->v3Resync;
 	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
-	/* Include on retransmissions in case the original announcement was lost. Servers also
-	 * repeat this in all data until the peer acknowledges. The peer determines the
-	 * sequence space start from the first AckOfAcks; otherwise, it uses the first
-	 * arriving datagram and assumes preceding packets were received. */
+	/* Include on retransmissions in case the original announcement was lost, and in all data
+	 * until the peer acknowledges ([MS-RDPEUDP2] 3.1.5.3, as Windows does). The peer determines
+	 * the sequence space start from the first AckOfAcks; otherwise, it uses the first arriving
+	 * datagram and assumes preceding packets were received. */
 	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) ||
-	                     (p->retransmits > 0) || (udp->server && !udp->peerAcked);
+	                     (p->retransmits > 0) || !udp->peerAcked;
 
 	/* Windows sets NOACK on every DATA packet without an ACK */
 	UINT16 flags = RDPUDP2_DATA | RDPUDP2_DELAYACKINFO;
@@ -1629,11 +1629,9 @@ static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
 	WINPR_ASSERT(p);
 	sample_rtt(udp, p);
 	pending_remove(udp, p);
+	udp->peerAcked = TRUE;
 	if (udp->server)
-	{
-		udp->peerAcked = TRUE;
 		cc_on_ack(udp);
-	}
 }
 
 static void acknowledge_seq(rdpUdp* udp, UINT32 seq)
@@ -2036,9 +2034,15 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 		}
 	}
 
-	/* All packets below the base have been received. Server: unless the base lies behind
-	 * everything in flight, see v3_process_ack. */
-	const BOOL baseInRange = !udp->server || (udp->inFlight == 0) || v3_from_send_base(udp, base);
+	/* All packets below the base have been received, unless the vector reports its base
+	 * received: the base of an ACK vector is the receiver's first missing packet ([MS-RDPEUDP2]
+	 * 3.1.5.7), one that arrived is a report on a packet behind the receiver's window, which a
+	 * FreeRDP client sends (see v3_process_datagram) and which says nothing about what lies below
+	 * it (4.2.2). After a silence, such a packet may only look behind a stale window. Server: not
+	 * either when the base lies behind everything in flight, see v3_process_ack. */
+	const BOOL baseIsMissing = (covered == 0) || !received[0];
+	const BOOL baseInRange =
+	    baseIsMissing && (!udp->server || (udp->inFlight == 0) || v3_from_send_base(udp, base));
 	while (baseInRange && (udp->inFlight > 0) &&
 	       seq16_after(base, WINPR_ASSERTING_INT_CAST(UINT16, udp->sendBase)))
 		acknowledge(udp, pending_find(udp, udp->sendBase));
@@ -2282,6 +2286,14 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 		v3_advance_base(udp, aoa);
 
 	if (!haveData)
+		return TRUE;
+
+	/* Server: the base comes from an AckOfAcks only. FreeRDP clients before version 3.34 put one
+	 * on their first data packet and on resends, not on the ones after (since then they repeat
+	 * it until acknowledged, see v3_send_data): taken from one of those, a lost or late first
+	 * packet would lie below the base, and the cumulative ACK that follows tells the client it
+	 * arrived. Ignored, the packet is resent with an AckOfAcks. */
+	if (udp->server && !udp->v3BaseKnown && !haveAoA)
 		return TRUE;
 
 	udp->v3LatestArrival = now_ns(udp);
