@@ -101,6 +101,7 @@ class SdlContext
 	[[nodiscard]] std::vector<SDL_Rect> pop();
 
 	void setHasCursor(bool val);
+	[[nodiscard]] std::optional<bool> allowScreenSaver() const;
 	[[nodiscard]] bool hasCursor() const;
 
 	void setMetadata();
@@ -266,6 +267,7 @@ class SdlContext
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::optional<bool> _connectionDialog;
+	std::optional<bool> _allowScreenSaver;
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
 };

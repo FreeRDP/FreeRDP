@@ -128,6 +128,8 @@ class SdlRail
 	void settleWaylandResize();
 
   private:
+	void queueScreenSaverUpdate();
+	void updateScreenSaver(); /* main thread */
 	/* Latch a local move/resize; returns the window for a native modal loop. */
 	[[nodiscard]] SDL_Window* beginLocalMove(uint32_t windowId, uint16_t moveType);
 	/* _windows helpers: callers must hold _windowsLock. */
@@ -174,6 +176,8 @@ class SdlRail
 	                                   const RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
 	static UINT server_min_max_info(RailClientContext* context,
 	                                const RAIL_MINMAXINFO_ORDER* minMaxInfo);
+	static UINT server_power_display_request(RailClientContext* context,
+	                                         const RAIL_POWER_DISPLAY_REQUEST* power);
 
 	/* --- window order callbacks (registered on rdpUpdate::window) --- */
 	void registerUpdateCallbacks(rdpUpdate* update);
@@ -223,6 +227,7 @@ class SdlRail
 	/* The desktop window may show: RAIL started, a logon prompt, or the hold ran out. */
 	std::atomic<bool> _desktopReleased = false;
 	std::atomic<uint64_t> _desktopHoldUntil = 0; /* end of the logon desktop hold (ticks) */
+	std::atomic<bool> _displayRequested = false;
 	uint32_t _sizeMoveRedraws = 0;
 	SDL_WindowID _nativeResizeId = 0; /* window resized on its native frame, 0 = none */
 	/* Last work area reported to the server (server coordinates). */

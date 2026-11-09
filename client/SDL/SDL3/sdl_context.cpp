@@ -66,13 +66,19 @@ SdlContext::SdlContext(rdpContext* context)
 	/* TODO: Client display set up */
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
-	                  nullptr, -1, nullptr, "Allow local screensaver to activate" });
+	                  nullptr, -1, nullptr,
+	                  "Allow local screensaver to activate (default: on for RemoteApp)" });
 	/* BoolValueTrue does not compile in C++, any non null default means on */
 	_args.push_back({ sdl_connection_dialog, COMMAND_LINE_VALUE_BOOL, nullptr, "on", nullptr, -1,
 	                  nullptr, "the connection dialog with progress and errors" });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
+}
+
+std::optional<bool> SdlContext::allowScreenSaver() const
+{
+	return _allowScreenSaver;
 }
 
 void SdlContext::setHasCursor(bool val)
@@ -1768,6 +1774,7 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 	{
 		if (strcmp(arg->Name, sdl_allow_screensaver) == 0)
 		{
+			sdl->_allowScreenSaver = (arg->Value != nullptr);
 			if (arg->Value != nullptr)
 			{
 				if (!SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1"))
