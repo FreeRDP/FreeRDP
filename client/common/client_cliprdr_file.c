@@ -47,6 +47,7 @@
 #include <winpr/clipboard.h>
 #include <winpr/path.h>
 
+#include <freerdp/utils/helpers.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
@@ -2564,11 +2565,19 @@ static BOOL create_base_path(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 
-	char base[64] = WINPR_C_ARRAY_INIT;
-	(void)_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32,
-	                GetCurrentProcessId());
+	const char* details = freerdp_getApplicationDetailsString();
+	WINPR_ASSERT(details);
+
+	/* Multiple RDP sessions can share a process, so include the clipboard
+	 * context address to keep their FUSE mount points separate. */
+	char* base = nullptr;
+	size_t blen = 0;
+	winpr_asprintf(&base, &blen, "%s.%" PRIu32 ".%p", details, GetCurrentProcessId(), (void*)file);
+	if (!base)
+		return FALSE;
 
 	file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
+	winpr_znfree(base, blen);
 	if (!file->path)
 		return FALSE;
 
