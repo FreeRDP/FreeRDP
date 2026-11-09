@@ -342,10 +342,9 @@ fail:
 
 #endif /* WITH_KRB5 */
 
-WINPR_ATTR_NODISCARD
 #ifdef WITH_KRB5
-/** @brief parses the client principal name, as an RFC 6806 enterprise principal (name@domain in
- *  the default realm) if requested and the name has no realm of its own */
+/* parses the client principal name, as an RFC 6806 enterprise principal (name@domain in
+ * the default realm) if requested and the name has no realm of its own */
 WINPR_ATTR_NODISCARD
 static krb5_error_code kerberos_parse_principal(krb5_context ctx, const char* name,
                                                 const char* domain, BOOL enterprise,
@@ -401,6 +400,7 @@ static BOOL kerberos_is_realm_error(krb5_error_code rv)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     WINPR_ATTR_UNUSED SEC_CHAR* pszPrincipal, WINPR_ATTR_UNUSED SEC_CHAR* pszPackage,
     WINPR_ATTR_UNUSED ULONG fCredentialUse, WINPR_ATTR_UNUSED void* pvLogonID,
