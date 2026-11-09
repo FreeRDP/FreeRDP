@@ -916,7 +916,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 
 			/* the function only returns if the ID was found in the list and iteration aborted early
 			 * or not. we can ignore this here. */
-			(void)vgids_read_do(context, fileId, doId);
+			if (!vgids_read_do(context, fileId, doId))
+				WLog_WARN(TAG, "vgids_read_do failed");
 			break;
 		}
 		case 0xA:

@@ -238,8 +238,8 @@ typedef struct
 static const hashless_test_t hashless_tests[] = {
 #if (OPENSSL_VERSION_NUMBER >= 0x30000000L) && !defined(LIBRESSL_VERSION_NUMBER)
 	{ "ed25519_cert.pem", "sha512" },
-	{ "ed448_cert.pem", nullptr },
 #if OPENSSL_VERSION_NUMBER >= 0x30500000L
+	{ "ed448_cert.pem", nullptr },
 	{ "ml_dsa_87_cert.pem", "sha256" },
 #endif
 #endif

@@ -2513,7 +2513,6 @@ fail:
 	return FALSE;
 }
 
-WINPR_ATTR_NODISCARD
 static BOOL tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 {
 	WINPR_ASSERT(tsg);
