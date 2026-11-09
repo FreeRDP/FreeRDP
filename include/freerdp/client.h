@@ -503,7 +503,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_send_key_as_unicode(rdpClientContext* cctx, UINT16 flags,
 	                                                    const char* str, UINT32 scancode,
-	                                                    FREERDP_CLIENT_KBD_MOD modmask);
+	                                                    UINT32 modmask);
 
 #ifdef __cplusplus
 }

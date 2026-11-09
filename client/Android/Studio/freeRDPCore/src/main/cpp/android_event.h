@@ -40,7 +40,7 @@ typedef struct
 	int type;
 	UINT16 flags;
 	UINT32 scancode;
-	FREERDP_CLIENT_KBD_MOD modmask;
+	UINT32 modmask;
 	char str[5];
 } ANDROID_EVENT_KEY_AS_UNICODE;
 
@@ -78,7 +78,7 @@ FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancod
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);
 FREERDP_LOCAL ANDROID_EVENT_KEY_AS_UNICODE*
 android_event_key_as_unicode_new(UINT16 flags, UINT32 scancode, const WCHAR* wstr, size_t wlen,
-                                 FREERDP_CLIENT_KBD_MOD modmask);
+                                 UINT32 modmask);
 FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_LOCAL ANDROID_EVENT* android_event_disconnect_new(void);
 FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD*

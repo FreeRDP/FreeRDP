@@ -3396,7 +3396,7 @@ static BOOL is_scancode_key(UINT32 scancode)
 	}
 }
 BOOL freerdp_client_send_key_as_unicode(rdpClientContext* cctx, UINT16 flags, const char* str,
-                                        UINT32 scancode, FREERDP_CLIENT_KBD_MOD modmask)
+                                        UINT32 scancode, UINT32 modmask)
 {
 	const BOOL asKey = is_scancode_key(scancode);
 	const BOOL modPressed =
