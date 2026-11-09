@@ -759,7 +759,8 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		// Discard this playback request and just attempt to reconnect the stream
 		WLog_DBG(TAG, "reconnecting playback stream");
-		rdpsnd_pulse_open_stream(device);
+		if (!rdpsnd_pulse_open_stream(device))
+			WLog_WARN(TAG, "Failed to (re)open pulse stream, ignoring playback");
 		return 0;
 	}
 
