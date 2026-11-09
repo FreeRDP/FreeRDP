@@ -41,6 +41,7 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/assert.h>
+#include <winpr/interlocked.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
 #include <winpr/clipboard.h>
@@ -167,6 +168,7 @@ struct cliprdr_file_context
 	HANDLE fuse_start_sync;
 	HANDLE fuse_stop_sync;
 	HANDLE fuse_thread;
+	LONG fuse_failed; /* no mount: what the server copies cannot be pasted here */
 	struct fuse_session* fuse_sess;
 #if FUSE_USE_VERSION < 30
 	struct fuse_chan* ch;
@@ -1236,6 +1238,13 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 			{
 				fuse_session_loop(file->fuse_sess);
 				fuse_session_unmount(file->fuse_sess);
+			}
+			else
+			{
+				(void)InterlockedExchange(&file->fuse_failed, 1);
+				WLog_Print(file->log, WLOG_WARN,
+				           "cannot mount '%s': files from the server cannot be pasted here",
+				           file->path);
 			}
 			freerdp_del_signal_cleanup_handler(file, fuse_abort);
 		}
@@ -2421,6 +2430,15 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	if (size > UINT32_MAX)
 		return FALSE;
 
+	/* paths below the mount point would lead nowhere: without a base there are none */
+	if (InterlockedCompareExchange(&file_context->fuse_failed, 0, 0) != 0)
+	{
+		wClipboardDelegate* delegate = ClipboardGetDelegate(clip);
+		WINPR_ASSERT(delegate);
+		delegate->basePath = nullptr;
+		return FALSE;
+	}
+
 	if (cliprdr_parse_file_list(data, (UINT32)size, &files, &n_files))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to parse file list");
@@ -3022,11 +3040,11 @@ UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file)
 
 BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
 {
-	WINPR_UNUSED(file);
-
 #if defined(WITH_FUSE)
-	return TRUE;
+	WINPR_ASSERT(file);
+	return InterlockedCompareExchange(&file->fuse_failed, 0, 0) == 0;
 #else
+	WINPR_UNUSED(file);
 	return FALSE;
 #endif
 }
