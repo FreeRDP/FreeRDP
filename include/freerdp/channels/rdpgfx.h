@@ -109,7 +109,8 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 	RDPGFX_CAPVERSION_FRDP_1 = 0x00010000u, /**< Custom capversion for FreeRDP extensions */
 #endif
 #if defined(WITH_GFX_AV2)
-	RDPGFX_CAPVERSION_FRDP_2 = 0x00020000u, /**< Custom capversion for FreeRDP extensions: AV2 */
+	RDPGFX_CAPVERSION_FRDP_2 = 0x00020000u, /**< Custom capversion for FreeRDP extensions: AV2
+		                                     * @since version 3.34.0 */
 #endif
 	RDPGFX_CAPVERSION_8 = 0x00080004u,   /**< [MS-RDPEGFX] 2.2.3.1 */
 	RDPGFX_CAPVERSION_81 = 0x00080105u,  /**< [MS-RDPEGFX] 2.2.3.2 */

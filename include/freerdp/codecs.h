@@ -56,8 +56,8 @@ typedef enum
 	FREERDP_CODEC_AV1_I444 = 0x00000400u,
 #endif
 #if defined(WITH_GFX_AV2)
-	FREERDP_CODEC_AV2_I420 = 0x00000800u,
-	FREERDP_CODEC_AV2_I444 = 0x00001000u,
+	FREERDP_CODEC_AV2_I420 = 0x00000800u, /* @since version 3.34.0 */
+	FREERDP_CODEC_AV2_I444 = 0x00001000u, /* @since version 3.34.0 */
 #endif
 	FREERDP_CODEC_ALL = 0x7FFFFFFFu /* C enum types are restricted to int */
 } FreeRDP_CodecFlags;

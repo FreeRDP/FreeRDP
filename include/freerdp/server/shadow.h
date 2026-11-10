@@ -149,7 +149,7 @@ extern "C"
 		RDPGFX_CAPSET confirmedCaps; /** @since version 3.25.0 */
 		/** the keys this client pressed and has not released, one bit per scan code with its
 		 *  KBD_FLAGS_EXTENDED (0x100) and KBD_FLAGS_EXTENDED1 (0x200) flags
-		 *  @since version 3.33.0 */
+		 *  @since version 3.34.0 */
 		BYTE keysDown[128];
 	};
 
@@ -289,7 +289,7 @@ extern "C"
 
 	struct S_SHADOW_MSG_OUT
 	{
-		int refCount;
+		LONG refCount; /* InterlockedIncrement() and InterlockedDecrement() take a LONG* */
 		MSG_OUT_FREE_FN Free;
 	};
 

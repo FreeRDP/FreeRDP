@@ -55,7 +55,7 @@ extern "C"
 	    void* reservedAV1;
 #endif
 #if defined(WITH_GFX_AV2)
-		FREERDP_AV2_CONTEXT* av2; /** @since version 3.33.0 */
+		FREERDP_AV2_CONTEXT* av2; /** @since version 3.34.0 */
 #else
 	    void* reservedAV2;
 #endif

@@ -178,7 +178,8 @@ extern "C"
 
 		/** The RDPGFX_CAPVERSION_* the server confirmed, 0 before the caps confirm PDU.
 		 * Tells what RDPGFX_CODECID_AV1 carries: AV1 with RDPGFX_CAPVERSION_FRDP_1, AV2 with
-		 * RDPGFX_CAPVERSION_FRDP_2. @since version 3.33.0 */
+		 * RDPGFX_CAPVERSION_FRDP_2.
+		 * @since version 3.34.0 */
 		UINT32 CapsVersion;
 	};
 
