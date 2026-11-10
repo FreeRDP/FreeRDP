@@ -562,6 +562,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		{
 			const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112,
 				                    RDPGFX_CAPVERSION_113, RDPGFX_CAPVERSION_115 };
+			const BOOL hevc = freerdp_codec_supported(FREERDP_CODEC_HEVC_I420, FALSE);
 
 			for (size_t x = 0; x < ARRAYSIZE(caps); x++)
 			{
@@ -569,6 +570,33 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 
 				if (!rdpgfx_is_capability_filtered(gfx, cap))
 					continue;
+
+				if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecHEVC))
+				{
+					if (!hevc)
+					{
+						WLog_Print(
+						    gfx->base.log, WLOG_WARN,
+						    "HEVC mode enabled, but decoder does not support it. Disabling.");
+					}
+					else
+					{
+						/* caps >= RDPGFX_CAPVERSION_112 support HEVC420 mode, but only if AVC444 is
+						 * disabled */
+						if (cap >= RDPGFX_CAPVERSION_112)
+							caps10Flags |=
+							    RDPGFX_CAPS_FLAG_AVC_DISABLED | RDPGFX_CAPS_FLAG_HEVC_ENABLE;
+
+						/* caps >= RDPGFX_CAPVERSION_115 support HEVC444 mode as well. */
+						if (cap >= RDPGFX_CAPVERSION_115)
+						{
+							if (freerdp_settings_get_bool(gfx->rdpcontext->settings,
+							                              FreeRDP_GfxCodecHEVC444) &&
+							    freerdp_codec_supported(FREERDP_CODEC_HEVC_I444, FALSE))
+								caps10Flags |= RDPGFX_CAPS_FLAG_HEVC_I444;
+						}
+					}
+				}
 
 				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 				if (!capsSet)
@@ -720,6 +748,26 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 #if defined(WITH_GFX_AV2)
 	if (capsSet.version == RDPGFX_CAPVERSION_FRDP_2)
 		gfx->allowedCodecs[RDPGFX_CODECID_AV1] = TRUE;
+#endif
+
+#if defined(WITH_GFX_AZURE)
+	gfx->allowedCodecs[RDPGFX_CODECID_HEVC420] = FALSE;
+	gfx->allowedCodecs[RDPGFX_CODECID_HEVC444] = FALSE;
+
+	if (capsSet.version >= RDPGFX_CAPVERSION_113)
+	{
+		if ((capsSet.flags & RDPGFX_CAPS_FLAG_HEVC_ENABLE) != 0)
+		{
+			WLog_Print(gfx->base.log, WLOG_INFO, "HEVC confirmed by server");
+			gfx->allowedCodecs[RDPGFX_CODECID_HEVC420] = TRUE;
+		}
+
+		if ((capsSet.flags & RDPGFX_CAPS_FLAG_HEVC_I444) != 0)
+		{
+			WLog_Print(gfx->base.log, WLOG_INFO, "HEVC I444 confirmed by server");
+			gfx->allowedCodecs[RDPGFX_CODECID_HEVC444] = TRUE;
+		}
+	}
 #endif
 
 	if (!context)
@@ -1694,6 +1742,10 @@ static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_C
 			return TRUE;
 #if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
+#endif
+#if defined(WITH_GFX_AZURE)
+		case RDPGFX_CODECID_HEVC420:
+		case RDPGFX_CODECID_HEVC444:
 #endif
 			if (!gfx->allowedCodecs[cmd->codecId])
 			{
