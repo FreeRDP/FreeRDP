@@ -235,11 +235,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * the peer timeout already bounds how long a dead connection goes unnoticed. */
 #define RDPUDP2_MAX_RETRANSMITS 10
 
-/* Reported loss retransmits don't count toward the limit to prevent ACK vector-induced
- * flooding. Chunks are retransmitted for reports at most once per RTT since last send,
- * capped at cwnd/4 per RTT (min RDPUDP2_REPORT_MIN_BUDGET). Both use smoothed RTT,
- * minimum RDPUDP2_REPORT_MIN_ROUND_MS. */
-#define RDPUDP2_REPORT_MIN_ROUND_MS 20
+/* To prevent ACK vector-induced flooding, retransmits for reported losses don't count
+ * toward the limit. Chunks are resent at most once per RTT since the last send,
+ * capped at cwnd/4 per RTT (minimum RDPUDP2_REPORT_MIN_BUDGET). Both use smoothed RTT,
+ * which is at least RDPUDP2_REPORT_MIN_ROUND_MS (clock resolution) to prevent
+ * duplicate resends when a round trip is measured as 0 ms. */
+#define RDPUDP2_REPORT_MIN_ROUND_MS 1
 #define RDPUDP2_REPORT_MIN_BUDGET 16
 
 #define RDPUDP2_KEEPALIVE_MS 4000
