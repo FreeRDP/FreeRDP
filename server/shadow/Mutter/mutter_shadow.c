@@ -106,17 +106,17 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 	if (!env)
 		return FALSE;
 
+	/* <width>x<height>, nothing else; the height starts after the 'x' */
+	char* end = nullptr;
 	errno = 0;
-
-	char* next = nullptr;
-	unsigned long w = strtoul(env, &next, 0);
-	if ((errno != 0) || (w < 64) || (w > 8192))
+	const unsigned long w = strtoul(env, &end, 10);
+	if ((errno != 0) || (end == env) || (*end != 'x'))
 		return FALSE;
-	if (!next || (*next != 'x'))
+	const char* rest = end + 1;
+	const unsigned long h = strtoul(rest, &end, 10);
+	if ((errno != 0) || (end == rest) || (*end != '\0'))
 		return FALSE;
-
-	unsigned long h = strtoul(next, nullptr, 0);
-	if ((errno != 0) || (h < 64) || (h > 8192))
+	if ((w < 64) || (h < 64) || (w > 8192) || (h > 8192))
 		return FALSE;
 
 	*width = WINPR_ASSERTING_INT_CAST(UINT32, w);
@@ -126,8 +126,9 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 
 /* cursor metadata: position, hot spot and, when the shape changes, a bitmap;
  * Mutter's bitmaps are up to 384x384 */
-#define MUTTER_CURSOR_META_SIZE(width, height) \
-	(sizeof(struct spa_meta_cursor) + sizeof(struct spa_meta_bitmap) + (width) * (height) * 4)
+#define MUTTER_CURSOR_META_SIZE(width, height)                         \
+	(sizeof(struct spa_meta_cursor) + sizeof(struct spa_meta_bitmap) + \
+	 (size_t)(width) * (size_t)(height) * 4u)
 #define MUTTER_CURSOR_META_MAX 384u
 
 /* the largest pointer sent to the clients */
