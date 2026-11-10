@@ -393,8 +393,12 @@ struct rdp_udp
 	BOOL v3BaseKnown;
 	BOOL v3Resync; /* silent for RDPUDP2_RESYNC_MS: no ACK until an AckOfAcks sets the base */
 	UINT16 v3Expected;
+	UINT64 v3ExpectedFull; /* v3Expected without the 16-bit wrap; it only grows */
 	UINT16 v3Highest;
-	BOOL v3Received[RDPUDP_RECEIVE_SLOTS];
+	/* Per slot, the full sequence number (like v3ExpectedFull) of the data packet that arrived,
+	 * or 0 if empty. Since each slot is stamped with its sequence number, moving the window
+	 * doesn't require clearing for wrap-around; see v3_received. */
+	UINT64 v3Received[RDPUDP_RECEIVE_SLOTS];
 	UINT64 v3Arrival[RDPUDP_RECEIVE_SLOTS]; /* when each data sequence arrived, in ns */
 	UINT64 v3InOrderArrival;                /* when data sequence v3Expected - 1 arrived */
 	BOOL v3InOrderReceived; /* FALSE while v3Expected - 1 is one AckOfAcks gave up on */
@@ -471,6 +475,53 @@ WINPR_ATTR_NODISCARD
 static UINT16 channel_seq_next(UINT16 seq)
 {
 	return (seq == UINT16_MAX) ? 1 : seq16_add(seq, 1);
+}
+
+/* RDP-UDP2 receive slots. A slot stores the full sequence number of the packet that arrived
+ * in it, so a packet 65536 positions later in the same slot is not incorrectly identified
+ * as received. Previously, slots were cleared as the window advanced, and AckOfAcks jumps
+ * of up to 32767 cleared them. */
+
+/* Returns the full sequence number for seq, assuming it lies within half the sequence
+ * space of v3Expected ([MS-RDPEUDP2] 3.1.1.1.3). */
+WINPR_ATTR_NODISCARD
+static UINT64 v3_full(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	const UINT16 ahead = seq16_diff(seq, udp->v3Expected);
+	if (ahead < 0x8000)
+		return udp->v3ExpectedFull + ahead;
+	return udp->v3ExpectedFull - (0x10000u - ahead);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL v3_received(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	return udp->v3Received[seq % RDPUDP_RECEIVE_SLOTS] == v3_full(udp, seq);
+}
+
+/* Returns the arrival time of seq, or 0 if it was not received or the slot was reused. */
+WINPR_ATTR_NODISCARD
+static UINT64 v3_arrival(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	return v3_received(udp, seq) ? udp->v3Arrival[seq % RDPUDP_RECEIVE_SLOTS] : 0;
+}
+
+static void v3_mark_received(rdpUdp* udp, UINT16 seq, UINT64 arrival)
+{
+	WINPR_ASSERT(udp);
+	udp->v3Received[seq % RDPUDP_RECEIVE_SLOTS] = v3_full(udp, seq);
+	udp->v3Arrival[seq % RDPUDP_RECEIVE_SLOTS] = arrival;
+}
+
+/* Advances the lower edge of the receive window to seq; preceding slots do not need clearing. */
+static void v3_set_expected(rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	udp->v3ExpectedFull = v3_full(udp, seq);
+	udp->v3Expected = seq;
 }
 
 /* [MS-RDPEUDP2] has 24 bit little endian fields, wStream has no helper for those */
@@ -729,7 +780,7 @@ static void v3_write_ack(rdpUdp* udp, wStream* s, size_t room)
 		while (count < limit)
 		{
 			const UINT16 previous = seq16_diff(current, 1);
-			const UINT64 previousArrival = udp->v3Arrival[previous % RDPUDP_RECEIVE_SLOTS];
+			const UINT64 previousArrival = v3_arrival(udp, previous);
 			if (previousArrival == 0)
 				break; /* given up on by AckOfAcks, it never arrived */
 			/* packets that overtook each other count as arriving together */
@@ -923,10 +974,10 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	size_t pos = 0;
 	while ((pos < span) && (count < RDPUDP2_MAX_ACKVEC))
 	{
-		const BOOL state = udp->v3Received[seq16_add(base, pos) % RDPUDP_RECEIVE_SLOTS];
+		const BOOL state = v3_received(udp, seq16_add(base, pos));
 		size_t run = 1;
 		while ((pos + run < span) && (run < 63) &&
-		       (udp->v3Received[seq16_add(base, pos + run) % RDPUDP_RECEIVE_SLOTS] == state))
+		       (v3_received(udp, seq16_add(base, pos + run)) == state))
 			run++;
 		if (run >= 7)
 		{
@@ -937,7 +988,7 @@ static BOOL v3_send_ack(rdpUdp* udp)
 		BYTE bits = 0;
 		for (size_t bit = 0; (bit < 7) && (pos + bit < span); bit++)
 		{
-			if (udp->v3Received[seq16_add(base, pos + bit) % RDPUDP_RECEIVE_SLOTS])
+			if (v3_received(udp, seq16_add(base, pos + bit)))
 				bits |= WINPR_ASSERTING_INT_CAST(BYTE, 1 << bit);
 		}
 		vec[count++] = bits; /* state map, bit 0 first */
@@ -945,7 +996,7 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	}
 
 	/* when the highest sequence number received arrived */
-	const UINT64 highest = udp->v3Arrival[udp->v3Highest % RDPUDP_RECEIVE_SLOTS];
+	const UINT64 highest = v3_arrival(udp, udp->v3Highest);
 	return v3_send_ack_vector(udp, base, vec, count, highest);
 }
 
@@ -1851,13 +1902,11 @@ static BOOL v1_process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 static void v3_advance_window(rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	while (udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS])
+	while (v3_received(udp, udp->v3Expected))
 	{
-		const size_t slot = udp->v3Expected % RDPUDP_RECEIVE_SLOTS;
-		udp->v3InOrderArrival = udp->v3Arrival[slot];
+		udp->v3InOrderArrival = v3_arrival(udp, udp->v3Expected);
 		udp->v3InOrderReceived = TRUE;
-		udp->v3Received[slot] = FALSE;
-		udp->v3Expected++;
+		v3_set_expected(udp, seq16_add(udp->v3Expected, 1));
 	}
 }
 
@@ -1890,8 +1939,10 @@ static void v3_resync_base(rdpUdp* udp, UINT16 base)
 	WLog_Print(udp->log, WLOG_DEBUG,
 	           "heard from the peer again, its AckOfAcks 0x%04" PRIx16 " replaces 0x%04" PRIx16,
 	           base, udp->v3Expected);
+	/* Rare (once per silence). The base may move either way, so we reset the slots. */
 	memset(udp->v3Received, 0, sizeof(udp->v3Received));
 	memset(udp->v3Arrival, 0, sizeof(udp->v3Arrival));
+	udp->v3ExpectedFull += 0x10000;
 	udp->v3Expected = base;
 	udp->v3Highest = seq16_diff(base, 1);
 	udp->v3InOrderReceived = FALSE;
@@ -1925,30 +1976,12 @@ static void v3_advance_base(rdpUdp* udp, UINT16 base)
 	if (!seq16_after(base, udp->v3Expected))
 		return;
 
-	/* The peer stopped resending everything below base. This only gives up transport sequence
-	 * numbers: a chunk of the stream sent there comes back under a later one, with its channel
-	 * sequence number unchanged. */
-	if (udp->server)
-	{
-		/* A single client datagram can move the base by up to 32767; clear slots in one or two
-		 * ranges instead of individually. */
-		const size_t count = seq16_diff(base, udp->v3Expected);
-		const size_t first = udp->v3Expected % RDPUDP_RECEIVE_SLOTS;
-		const size_t head =
-		    (count < RDPUDP_RECEIVE_SLOTS - first) ? count : RDPUDP_RECEIVE_SLOTS - first;
-		memset(&udp->v3Received[first], 0, head * sizeof(udp->v3Received[0]));
-		memset(&udp->v3Arrival[first], 0, head * sizeof(udp->v3Arrival[0]));
-		memset(&udp->v3Received[0], 0, (count - head) * sizeof(udp->v3Received[0]));
-		memset(&udp->v3Arrival[0], 0, (count - head) * sizeof(udp->v3Arrival[0]));
-		udp->v3Expected = base;
-	}
-	while (udp->v3Expected != base)
-	{
-		const size_t slot = udp->v3Expected % RDPUDP_RECEIVE_SLOTS;
-		udp->v3Received[slot] = FALSE;
-		udp->v3Arrival[slot] = 0; /* never arrived, no arrival gap to report for it */
-		udp->v3Expected++;
-	}
+	/* The peer has stopped resending all packets below the base. This only discards transport
+	 * sequence numbers; any stream data sent in that range that is resent will use a later
+	 * transport sequence number, while its channel sequence number remains unchanged. Slots
+	 * below the base retain their stamps, but since no number in the current window can
+	 * match them, nothing is explicitly cleared regardless of how far the base moves. */
+	v3_set_expected(udp, base);
 	udp->v3InOrderReceived = FALSE;
 	const UINT16 last = seq16_diff(base, 1);
 	if (seq16_after(last, udp->v3Highest))
@@ -2413,8 +2446,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	{
 		if (seq16_after(dataSeq, udp->v3Highest))
 			udp->v3Highest = dataSeq;
-		udp->v3Received[dataSeq % RDPUDP_RECEIVE_SLOTS] = TRUE;
-		udp->v3Arrival[dataSeq % RDPUDP_RECEIVE_SLOTS] = udp->v3LatestArrival;
+		v3_mark_received(udp, dataSeq, udp->v3LatestArrival);
 		v3_advance_window(udp);
 	}
 
@@ -2811,6 +2843,9 @@ rdpUdp* rdpudp_new(wLog* log, const BYTE* cookieHash, rdpUdpReceiveFn receive, v
 	udp->mtu = RDPUDP_MTU;
 	udp->cwnd = RDPUDP2_INITIAL_CWND;
 	udp->ssthresh = RDPUDP_MAX_IN_FLIGHT;
+	/* Set above half the sequence space to ensure that sequence numbers behind the window never
+	 * reach 0, which is used to mark an empty slot. */
+	udp->v3ExpectedFull = 0x10000;
 	udp->rttMin = UINT32_MAX;
 	udp->rttMinNext = UINT32_MAX;
 	udp->reorderThreshold = RDPUDP2_REORDER_THRESHOLD;

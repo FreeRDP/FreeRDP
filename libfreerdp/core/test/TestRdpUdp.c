@@ -1347,6 +1347,37 @@ out:
 	return rc;
 }
 
+/* A packet arriving ahead of a gap and skipped by an AckOfAcks must remain missing when the
+ * 16-bit sequence number wraps around 65536 later. Receive slots are not cleared as the
+ * window moves; they only track the specific sequence number they were stamped with. */
+static BOOL server_does_not_find_a_skipped_slot_a_wrap_later(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* Base 100; packet 105 arrives ahead of a gap, and an AckOfAcks at 110 skips past it. */
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_receive_data(udp, 105, 2) ||
+	    !server_receive_data_aoa(udp, 110, 3))
+		goto out;
+	/* Wrap the sequence space to 104; the window then waits for 105 again. */
+	if (!server_receive_data_aoa(udp, 30110, 4) || !server_receive_data_aoa(udp, 60110, 5) ||
+	    !server_receive_data_aoa(udp, 104, 6) || !server_run_timers(udp, 100))
+		goto out;
+	sent.hasAck = FALSE;
+	sent.hasVector = FALSE;
+	/* Packet 106 arrives: 105 is missing, so it is reported in an ACK vector and not
+	 * acknowledged. */
+	if (!server_receive_data(udp, 106, 7) || !server_run_timers(udp, 100))
+		goto out;
+	rc = sent.hasVector && (sent.vectorBase == 105) && !(sent.hasAck && (sent.ack == 106));
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
 /* Our ACKs were lost in a silence: the client's AckOfAcks afterwards lies behind our window. Its
  * numbers did not wrap, so the window stays where it is and acknowledging resumes. Moving it back
  * would report packets a cumulative ACK covered already (mstsc ends the connection on that);
@@ -1942,6 +1973,8 @@ static const TestCase cases[] = {
 	  server_keeps_its_window_when_acks_were_lost_in_a_silence },
 	{ "server_refuses_a_short_syn", server_refuses_a_short_syn },
 	{ "server_follows_large_ack_of_acks_jumps", server_follows_large_ack_of_acks_jumps },
+	{ "server_does_not_find_a_skipped_slot_a_wrap_later",
+	  server_does_not_find_a_skipped_slot_a_wrap_later },
 	{ "server_repeats_ack_of_acks_until_the_first_ack",
 	  server_repeats_ack_of_acks_until_the_first_ack },
 	{ "server_ignores_an_ack_past_what_it_sent", server_ignores_an_ack_past_what_it_sent },
