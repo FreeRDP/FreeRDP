@@ -165,10 +165,11 @@ if(NOT WITH_GFX_AZURE)
   set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/hevc\\.h$" EXCLUDE)
 endif()
 
-# Install udp.h only in UDP builds: its presence is how users tell that the server supports UDP.
+# Install udp.h only when UDP support is enabled. Users should check for the
+# WITH_RDPEUDP_SERVER definition in freerdp/config.h before including the header.
 if(NOT WITH_RDPEUDP)
   list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/server/udp.h")
-  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/server/udp\\.h$" EXCLUDE)
+  list(APPEND PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/server/udp\\.h$" EXCLUDE)
 endif()
 
 if(WITH_SERVER)

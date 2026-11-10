@@ -53,16 +53,11 @@ static UINT sf_peer_echo_open_result(echo_server_context* echo, ECHO_SERVER_OPEN
 }
 
 WINPR_ATTR_NODISCARD
-static UINT sf_peer_echo_response(echo_server_context* echo, const BYTE* buffer, UINT32 length)
+static UINT sf_peer_echo_response(echo_server_context* echo, WINPR_ATTR_UNUSED const BYTE* buffer,
+                                  WINPR_ATTR_UNUSED UINT32 length)
 {
 	WINPR_ASSERT(echo);
-	WINPR_ASSERT(buffer || (length == 0));
-	UINT64 sent = 0;
-	if (length == sizeof(sent))
-	{
-		memcpy(&sent, buffer, sizeof(sent));
-		WLog_INFO(TAG, "echo round-trip time %" PRIu64 " ms", GetTickCount64() - sent);
-	}
+	WLog_VRB(TAG, "received echo response");
 	return CHANNEL_RC_OK;
 }
 
