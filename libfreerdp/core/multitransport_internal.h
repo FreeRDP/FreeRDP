@@ -44,7 +44,8 @@ typedef enum
 typedef struct
 {
 	MT_EVENT_TYPE type;
-	wStream* s; /* Sealed stream, starting at position 0 */
+	UINT32 tunnel; /* rdpemt_get_serial() of the tunnel that raised the event */
+	wStream* s;    /* Sealed stream, with the current position set to 0. */
 	size_t length;
 } mt_event;
 
@@ -95,9 +96,11 @@ struct rdp_multitransport
 	FreeRDP_MultitransportTunnelState reliableState;
 	BOOL reliableResponseSent;
 
-	/* Accessed on the main loop thread without locking to avoid blocking tunnel data
-	 * reception. The tunnel thread only reads these during direct delivery; see
-	 * multitransport_direct. */
+	/* Read and invoked on the main loop thread under hooksLock. Updated by
+	 * freerdp_multitransport_set_dvc_callbacks() under the lock, which waits for any
+	 * active hook. The tunnel thread reads these without the lock during direct delivery
+	 * (see multitransport_direct and rdpemt_clear_receiver). */
+	CRITICAL_SECTION hooksLock;
 	FreeRDP_MultitransportDvcCallbacks callbacks;
 	void* custom;
 

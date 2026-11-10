@@ -168,6 +168,10 @@ struct rdp_udp_listener
 
 	udpListenerSocket sockets[UDPLISTENER_MAX_SOCKETS];
 	size_t socketCount;
+	/* Sockets no flow uses, out of the wait set; the listener thread may still wait on their
+	 * events, so it closes them when it next builds its wait set. */
+	udpListenerSocket retired[UDPLISTENER_MAX_SOCKETS];
+	size_t retiredCount;
 
 	/* All entries are owned by entriesByHash; added to entriesByAddress after SYN arrives. */
 	wHashTable* entriesByHash;

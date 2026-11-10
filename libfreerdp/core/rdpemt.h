@@ -135,6 +135,10 @@ FREERDP_LOCAL BOOL rdpemt_flush(rdpEmt* emt);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT32 rdpemt_get_request_id(const rdpEmt* emt);
 
+/** @return A unique identifier for this tunnel within the current process. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT32 rdpemt_get_serial(const rdpEmt* emt);
+
 /** Hands tunnel data to \b receiver from now on, instead of raising RDPEMT_EVENT_DATA. Thread
  * safe.
  * @param pending the queue the events go to. Without a receiver set already, it is only set
@@ -202,6 +206,12 @@ static inline BOOL rdpemt_send_subheader(WINPR_ATTR_UNUSED rdpEmt* emt,
 
 WINPR_ATTR_NODISCARD
 static inline UINT32 rdpemt_get_request_id(WINPR_ATTR_UNUSED const rdpEmt* emt)
+{
+	return 0;
+}
+
+WINPR_ATTR_NODISCARD
+static inline UINT32 rdpemt_get_serial(WINPR_ATTR_UNUSED const rdpEmt* emt)
 {
 	return 0;
 }

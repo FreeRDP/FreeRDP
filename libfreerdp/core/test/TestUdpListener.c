@@ -46,6 +46,7 @@
 #include "../rdpemt.h"
 #include "../rdpudp.h"
 #include "../udplistener.h"
+#include "../udplistener_internal.h"
 #include "../../crypto/certificate.h"
 
 #define SYN_LENGTH 1232
@@ -1344,6 +1345,71 @@ out:
 	return rc;
 }
 
+/* A session on a second local address ends: the shared listener closes that socket without
+ * stopping its thread, so the sessions left keep their reader. */
+static BOOL a_socket_no_session_uses_closes_without_a_restart(void)
+{
+	const BYTE hashA[32] = { 70 };
+	const BYTE hashB[32] = { 71 };
+	UINT16 port = 0;
+	const SOCKET probe = open_server(&port);
+	TEST(probe != INVALID_SOCKET);
+	closesocket(probe);
+
+	struct sockaddr_in addrA = { 0 };
+	addrA.sin_family = AF_INET;
+	addrA.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	addrA.sin_port = htons(port);
+	struct sockaddr_in addrB = addrA;
+	addrB.sin_addr.s_addr = htonl(INADDR_LOOPBACK + 1); /* 127.0.0.2 */
+
+	/* skip where the host does not answer on 127.0.0.2 */
+	SOCKET test = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	TEST(test != INVALID_SOCKET);
+	const BOOL second = (_bind(test, (const struct sockaddr*)&addrB, sizeof(addrB)) == 0);
+	closesocket(test);
+	if (!second)
+		return TRUE;
+
+	rdpUdpFlow* a = freerdp_udp_flow_new(hashA);
+	rdpUdpFlow* b = freerdp_udp_flow_new(hashB);
+	TEST(a && b);
+	TEST(udplistener_add_flow_on_address((const struct sockaddr*)&addrA, sizeof(addrA), a));
+	TEST(udplistener_add_flow_on_address((const struct sockaddr*)&addrB, sizeof(addrB), b));
+	freerdp_udp_listener* listener = a->listener;
+	TEST(listener && (b->listener == listener) && listener->thread);
+	const HANDLE thread = listener->thread;
+
+	freerdp_udp_flow_free(b);
+	TEST(listener->thread == thread);
+
+	/* the thread closes the socket on 127.0.0.2 when it builds its next wait set */
+	BOOL closed = FALSE;
+	for (size_t x = 0; !closed && (x < 200); x++)
+	{
+		test = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		TEST(test != INVALID_SOCKET);
+		closed = (_bind(test, (const struct sockaddr*)&addrB, sizeof(addrB)) == 0);
+		closesocket(test);
+		if (!closed)
+			Sleep(10);
+	}
+	TEST(closed);
+
+	/* the session on 127.0.0.1 still gets its datagrams */
+	BYTE syn[SYN_LENGTH] = WINPR_C_ARRAY_INIT;
+	make_syn(syn, hashA);
+	const SOCKET client = open_client(port);
+	TEST(client != INVALID_SOCKET);
+	TEST(_send(client, (const char*)syn, sizeof(syn), 0) == sizeof(syn));
+	TEST(WaitForSingleObject(freerdp_udp_flow_get_event(a), 2000) == WAIT_OBJECT_0);
+	TEST(listener->thread == thread);
+
+	closesocket(client);
+	freerdp_udp_flow_free(a);
+	return TRUE;
+}
+
 typedef struct
 {
 	rdpUdpFlow* flow;
@@ -1463,6 +1529,59 @@ static BOOL setting_a_callback_waits_for_a_running_one(void)
 	return TRUE;
 }
 
+typedef struct
+{
+	LONG inCall;
+	HANDLE entered;
+	rdpMultitransport* multi;
+} udpSlowHook;
+
+static BOOL slow_state_changed(void* custom, WINPR_ATTR_UNUSED UINT32 tunnelType,
+                               WINPR_ATTR_UNUSED FreeRDP_MultitransportTunnelState state)
+{
+	udpSlowHook* slow = custom;
+	(void)InterlockedIncrement(&slow->inCall);
+	(void)SetEvent(slow->entered);
+	Sleep(100);
+	(void)InterlockedDecrement(&slow->inCall);
+	return TRUE;
+}
+
+static DWORD WINAPI notify_state_thread(LPVOID arg)
+{
+	udpSlowHook* slow = arg;
+	if (!multitransport_notify_state(slow->multi, FREERDP_MULTITRANSPORT_TUNNEL_READY))
+		(void)printf("the tunnel state hook failed\n");
+	return 0;
+}
+
+/* The channel manager may be closed on another thread than the peer's check: clearing the DVC
+ * hooks waits for a hook that is running, so its custom can be freed afterwards. */
+static BOOL clearing_the_dvc_hooks_waits_for_a_running_one(void)
+{
+	freerdp_peer* peer = test_peer_new();
+	TEST(peer);
+	udpSlowHook slow = WINPR_C_ARRAY_INIT;
+	slow.entered = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	slow.multi = peer->context->rdp->multitransport;
+	TEST(slow.entered && slow.multi);
+
+	FreeRDP_MultitransportDvcCallbacks hooks = WINPR_C_ARRAY_INIT;
+	hooks.TunnelStateChanged = slow_state_changed;
+	TEST(freerdp_multitransport_set_dvc_callbacks(peer->context, &hooks, &slow));
+	HANDLE thread = CreateThread(nullptr, 0, notify_state_thread, &slow, 0, nullptr);
+	TEST(thread);
+	TEST(WaitForSingleObject(slow.entered, 5000) == WAIT_OBJECT_0);
+	TEST(freerdp_multitransport_set_dvc_callbacks(peer->context, nullptr, nullptr));
+	TEST(InterlockedCompareExchange(&slow.inCall, 0, 0) == 0);
+	(void)WaitForSingleObject(thread, INFINITE);
+	(void)CloseHandle(thread);
+
+	(void)CloseHandle(slow.entered);
+	test_peer_free(peer);
+	return TRUE;
+}
+
 int TestUdpListener(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -1489,6 +1608,8 @@ int TestUdpListener(int argc, char* argv[])
 		goto out;
 	if (!the_shared_listener_opens_and_closes_with_its_flows())
 		goto out;
+	if (!a_socket_no_session_uses_closes_without_a_restart())
+		goto out;
 	if (!a_relay_forwards_both_directions())
 		goto out;
 	if (!many_clients_reach_their_own_flows())
@@ -1508,6 +1629,8 @@ int TestUdpListener(int argc, char* argv[])
 	if (!a_listener_and_its_flows_free_on_different_threads())
 		goto out;
 	if (!setting_a_callback_waits_for_a_running_one())
+		goto out;
+	if (!clearing_the_dvc_hooks_waits_for_a_running_one())
 		goto out;
 #if defined(__linux__)
 	if (!a_reply_uses_the_request_destination_address())

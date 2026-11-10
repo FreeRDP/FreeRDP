@@ -156,6 +156,8 @@ static BOOL multitransport_server_route_flow(rdpMultitransport* multi, rdpEmt* e
 	return udplistener_add_flow_on_address((const struct sockaddr*)&local, localLength, flow);
 }
 
+static void multitransport_server_drop_pending_events(rdpMultitransport* multi);
+
 /* Creates the server end of the tunnel for the next request. Uses the main
  * connection's certificate and key for the client to verify the tunnel's TLS session. */
 WINPR_ATTR_NODISCARD
@@ -222,7 +224,13 @@ static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
 	multi->serverTunnelUp = FALSE;
 	multi->serverResponseOk = FALSE;
 	LeaveCriticalSection(&multi->lock);
-	rdpemt_free(old);
+	if (old)
+	{
+		/* Ensure the application stops using the old flow before it is freed. */
+		multitransport_server_notify_link_state(multi, FREERDP_UDP_LINK_NONE);
+		rdpemt_free(old);
+		multitransport_server_drop_pending_events(multi);
+	}
 	WLog_INFO(TAG, "proposing a reliable UDP tunnel, request %" PRIu32, multi->reliableReqId);
 	multitransport_server_notify_link_state(multi, FREERDP_UDP_LINK_OFFERED);
 	return TRUE;
@@ -522,13 +530,19 @@ BOOL multitransport_server_send_autodetect(rdpMultitransport* multi, RDP_TRANSPO
 
 	if (transport != RDP_TRANSPORT_UDP_R)
 		return FALSE;
-	/* Send PDU over TCP if the tunnel is not ready */
+	/* Tunnel measurements are not sent over TCP to avoid reporting TCP results or
+	 * obtaining mixed measurements if the tunnel activates between Start and Stop.
+	 * The request fails if the tunnel is not ready. */
 	EnterCriticalSection(&multi->lock);
 	const BOOL ready =
 	    multi->reliable && (multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY);
 	LeaveCriticalSection(&multi->lock);
 	if (!ready)
-		return FALSE;
+	{
+		WLog_DBG(TAG, "no UDP tunnel for the auto-detect request %" PRIu16, sequenceNumber);
+		*rc = FALSE;
+		return TRUE;
+	}
 
 	/* [MS-RDPBCGR] 2.2.14.1: Same PDU as on the main connection, wrapped in a subheader */
 	BYTE request[6] = WINPR_C_ARRAY_INIT;
