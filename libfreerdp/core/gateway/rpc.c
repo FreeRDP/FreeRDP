@@ -723,76 +723,16 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	const char* proxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
-	const char* proxyPassword = freerdp_settings_get_string(settings, FreeRDP_ProxyPassword);
-
-	rdpTransport* transport = freerdp_get_transport(context);
-	rdpTransportLayer* layer =
-	    transport_connect_layer(transport, channel->client->host, channel->client->port, timeout);
-
-	if (!layer)
+	const char* host = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	const UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
+	if (port > UINT16_MAX)
 		return FALSE;
 
-	BIO* layerBio = BIO_new(BIO_s_transport_layer());
-	if (!layerBio)
-	{
-		transport_layer_free(layer);
-		return FALSE;
-	}
-	BIO_set_data(layerBio, layer);
-
-	BIO* bufferedBio = BIO_new(BIO_s_buffered_socket());
-	if (!bufferedBio)
-	{
-		BIO_free_all(layerBio);
-		return FALSE;
-	}
-
-	bufferedBio = BIO_push(bufferedBio, layerBio);
-
-	if (!BIO_set_nonblock(bufferedBio, TRUE))
-	{
-		BIO_free_all(bufferedBio);
-		return FALSE;
-	}
-
-	if (channel->client->isProxy)
-	{
-		WINPR_ASSERT(settings->GatewayPort <= UINT16_MAX);
-		if (!proxy_connect(context, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
-		{
-			BIO_free_all(bufferedBio);
-			return FALSE;
-		}
-	}
-
-	channel->bio = bufferedBio;
-	rdpTls* tls = channel->tls = freerdp_tls_new(context);
-
-	if (!tls)
-		return FALSE;
-
-	tls->hostname = settings->GatewayHostname;
-	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
-	tls->isGatewayTransport = TRUE;
-	int tlsStatus = freerdp_tls_connect(tls, bufferedBio);
-
-	if (tlsStatus < 1)
-	{
-		if (tlsStatus < 0)
-		{
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-
-	return TRUE;
+	channel->tls->hostname = host;
+	channel->tls->port = WINPR_ASSERTING_INT_CAST(UINT16, port);
+	channel->tls->isGatewayTransport = TRUE;
+	return utils_tls_connect(context, channel->tls, channel->rpc->log, channel->client->host,
+	                         channel->client->port, TRUE, timeout);
 }
 
 static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
