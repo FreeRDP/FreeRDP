@@ -282,6 +282,26 @@ BOOL freerdp_udp_listener_check(freerdp_udp_listener* listener)
 	return TRUE;
 }
 
+static void udplistener_close_socket(udpListenerSocket* sock)
+{
+	WINPR_ASSERT(sock);
+	const SOCKET sockfd = sock->sockfd;
+	sock->sockfd = INVALID_SOCKET;
+	closesocket(sockfd);
+	if (!WSACloseEvent(sock->event))
+		WLog_WARN(TAG, "failed to close the socket event");
+}
+
+/* Closes retired sockets. Caller holds the lock, and the listener thread does not wait on
+ * their events: it is the caller, or it is stopped. */
+static void udplistener_close_retired(freerdp_udp_listener* listener)
+{
+	WINPR_ASSERT(listener);
+	for (size_t x = 0; x < listener->retiredCount; x++)
+		udplistener_close_socket(&listener->retired[x]);
+	listener->retiredCount = 0;
+}
+
 WINPR_ATTR_NODISCARD
 static DWORD WINAPI udplistener_thread(LPVOID arg)
 {
@@ -295,6 +315,8 @@ static DWORD WINAPI udplistener_thread(LPVOID arg)
 		events[count++] = listener->wake;
 		EnterCriticalSection(&listener->lock);
 		(void)ResetEvent(listener->wake);
+		/* the last wait set is done with, sockets retired since can go */
+		udplistener_close_retired(listener);
 		for (size_t x = 0; x < listener->socketCount; x++)
 			events[count++] = listener->sockets[x].event;
 		LeaveCriticalSection(&listener->lock);
@@ -526,14 +548,9 @@ static void udplistener_close_sockets(freerdp_udp_listener* listener)
 		WLog_WARN(TAG, "failed to release sockets for all flows");
 	/* Invalidate the entry before closing the socket; see close_after_fork */
 	for (size_t x = 0; x < listener->socketCount; x++)
-	{
-		const SOCKET sockfd = listener->sockets[x].sockfd;
-		listener->sockets[x].sockfd = INVALID_SOCKET;
-		closesocket(sockfd);
-		if (!WSACloseEvent(listener->sockets[x].event))
-			WLog_WARN(TAG, "failed to close the socket event");
-	}
+		udplistener_close_socket(&listener->sockets[x]);
 	listener->socketCount = 0;
+	udplistener_close_retired(listener);
 	LeaveCriticalSection(&listener->lock);
 }
 
@@ -570,6 +587,13 @@ void freerdp_udp_listener_close_after_fork(freerdp_udp_listener* listener)
 	{
 		const SOCKET sockfd = listener->sockets[x].sockfd;
 		listener->sockets[x].sockfd = INVALID_SOCKET;
+		if (sockfd != INVALID_SOCKET)
+			closesocket(sockfd);
+	}
+	for (size_t x = 0; x < listener->retiredCount; x++)
+	{
+		const SOCKET sockfd = listener->retired[x].sockfd;
+		listener->retired[x].sockfd = INVALID_SOCKET;
 		if (sockfd != INVALID_SOCKET)
 			closesocket(sockfd);
 	}
@@ -667,7 +691,9 @@ static BOOL udplistener_find_unused_sockets(const freerdp_udp_listener* listener
 	return unused;
 }
 
-/* Caller must hold the lock. The listener thread must be stopped as it waits on these events. */
+/* Caller must hold the lock. A running listener thread may wait on these events: the sockets
+ * are retired and the thread, woken, closes them when it builds its next wait set. Without a
+ * thread they are closed now. */
 static void udplistener_close_unused_sockets(freerdp_udp_listener* listener,
                                              const udpSocketUse* use)
 {
@@ -681,13 +707,14 @@ static void udplistener_close_unused_sockets(freerdp_udp_listener* listener,
 			listener->sockets[kept++] = listener->sockets[x];
 			continue;
 		}
-		const SOCKET sockfd = listener->sockets[x].sockfd;
-		listener->sockets[x].sockfd = INVALID_SOCKET;
-		closesocket(sockfd);
-		if (!WSACloseEvent(listener->sockets[x].event))
-			WLog_WARN(TAG, "failed to close the socket event");
+		if (listener->thread && (listener->retiredCount < UDPLISTENER_MAX_SOCKETS))
+			listener->retired[listener->retiredCount++] = listener->sockets[x];
+		else
+			udplistener_close_socket(&listener->sockets[x]);
 	}
 	listener->socketCount = kept;
+	if (listener->thread)
+		(void)SetEvent(listener->wake);
 }
 
 void freerdp_udp_listener_remove_flow(freerdp_udp_listener* listener, rdpUdpFlow* flow)
@@ -743,15 +770,12 @@ void freerdp_udp_listener_remove_flow(freerdp_udp_listener* listener, rdpUdpFlow
 	}
 	else if (unused)
 	{
-		udplistener_stop_thread(listener);
+		/* The thread keeps running: stopping and restarting it would leave the sessions on
+		 * UDP without a reader if the restart failed. */
 		EnterCriticalSection(&listener->lock);
-		/* Re-check: a flow may have arrived while the thread was stopping. */
 		if (udplistener_find_unused_sockets(listener, &use))
 			udplistener_close_unused_sockets(listener, &use);
 		LeaveCriticalSection(&listener->lock);
-		if (!freerdp_udp_listener_start(listener))
-			WLog_ERR(TAG,
-			         "unable to restart the UDP listener; new clients will be restricted to TCP");
 	}
 	LeaveCriticalSection(&g_listenerLock);
 }

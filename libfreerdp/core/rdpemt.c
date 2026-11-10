@@ -85,6 +85,9 @@
  * cannot drop data, exceeding this limit indicates a pacing failure and triggers tunnel failure. */
 #define RDPEMT_SEND_LIMIT (32768ull * 1232ull)
 
+/* Assigns unique IDs to tunnels to differentiate events when a tunnel is replaced. */
+static LONG g_emtSerial = 0;
+
 struct rdp_emt
 {
 	wLog* log;
@@ -92,6 +95,7 @@ struct rdp_emt
 	HANDLE thread;
 	LONG stop; /* set by rdpemt_free, read by the thread; Interlocked functions only */
 
+	LONG serial; /* Unique identifier for each tunnel in the process; see rdpemt_get_serial(). */
 	UINT32 requestId;
 	BYTE cookie[16];
 	char* hostname;
@@ -1338,6 +1342,7 @@ rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie, const char* 
 		return nullptr;
 
 	emt->log = log;
+	emt->serial = InterlockedIncrement(&g_emtSerial);
 	emt->requestId = requestId;
 	memcpy(emt->cookie, cookie, sizeof(emt->cookie));
 	emt->callback = callback;
@@ -1425,6 +1430,7 @@ rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, X509*
 
 	emt->log = log;
 	emt->server = TRUE;
+	emt->serial = InterlockedIncrement(&g_emtSerial);
 	emt->requestId = requestId;
 	memcpy(emt->cookie, cookie, sizeof(emt->cookie));
 	emt->callback = callback;
@@ -1697,4 +1703,10 @@ UINT32 rdpemt_get_request_id(const rdpEmt* emt)
 {
 	WINPR_ASSERT(emt);
 	return emt->requestId;
+}
+
+UINT32 rdpemt_get_serial(const rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	return (UINT32)emt->serial;
 }
