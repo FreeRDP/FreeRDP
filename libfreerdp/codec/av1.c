@@ -239,7 +239,7 @@ BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEX
 					           value);
 					return FALSE;
 			}
-			av1->ecfg.rc_end_usage = value;
+			av1->ecfg.rc_end_usage = WINPR_ASSERTING_INT_CAST(enum aom_rc_mode, value);
 			break;
 		case FREERDP_AV1_CONTEXT_OPTION_BITRATE:
 			if (!av1->encoder)
@@ -351,6 +351,14 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	if (!av1->encoder)
 	{
 		WLog_Print(av1->log, WLOG_ERROR, "av1->encoder: %d", av1->encoder);
+		return -1;
+	}
+
+	if ((nSrcWidth == 0) || (nSrcWidth > UINT16_MAX) || (nSrcHeight == 0) ||
+	    (nSrcHeight > UINT16_MAX))
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "%" PRIu32 "x%" PRIu32 " out of range, maximum %dx%d",
+		           nSrcWidth, nSrcHeight, UINT16_MAX, UINT16_MAX);
 		return -1;
 	}
 
@@ -498,9 +506,11 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 		if (pkt->kind != AOM_CODEC_CX_FRAME_PKT)
 			continue;
 
+		if (pkt->data.frame.sz > UINT32_MAX)
+			return -1;
 		*ppDstData = pkt->data.frame.buf;
-		*pDstSize = pkt->data.frame.sz;
-	};
+		*pDstSize = WINPR_ASSERTING_INT_CAST(UINT32, pkt->data.frame.sz);
+	}
 	if (*pDstSize == 0)
 		return 0;
 
@@ -509,8 +519,8 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	RECTANGLE_16* rect = calloc(1, sizeof(RECTANGLE_16));
 	if (rect)
 	{
-		rect->right = nSrcWidth;
-		rect->bottom = nSrcHeight;
+		rect->right = WINPR_ASSERTING_INT_CAST(UINT16, nSrcWidth);
+		rect->bottom = WINPR_ASSERTING_INT_CAST(UINT16, nSrcHeight);
 	}
 	return allocate_h264_metablock(10, rect, meta, 1);
 #else
@@ -651,7 +661,7 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 				rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
 				break;
 			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
+				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported",
 				           pic->p.layout);
 				return -1;
 		}

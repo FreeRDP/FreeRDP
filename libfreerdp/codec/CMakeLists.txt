@@ -61,12 +61,14 @@ if(WITH_GFX_AV1)
     if(WITH_AV1_WEBCODECS)
       add_compile_definitions(WITH_AV1_WEBCODECS)
       list(APPEND CODEC_SRCS av1_webcodecs.c av1_webcodecs.h)
-      # The JavaScript side, for the executable's link: a link item, so that it also reaches the
-      # executable through static libraries (link options of their private dependencies don't).
+      # The JavaScript side, for the executable's link: a link item, so that it
+      # also reaches the executable through static libraries (link options of
+      # their private dependencies don't).
       freerdp_library_add_public(
         "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/av1_webcodecs.js"
       )
-      # so that editing the JavaScript recompiles this file, and so relinks the executables
+      # so that editing the JavaScript recompiles this file, and so relinks the
+      # executables
       set_source_files_properties(
         av1_webcodecs.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/av1_webcodecs.js
       )
@@ -164,15 +166,18 @@ if(WITH_GFX_AV1)
   endif()
 endif()
 
+cmake_dependent_option(
+  WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON "WITH_GFX_AV2;WITH_AVM" OFF
+)
 if(WITH_GFX_AV2)
   if(WITH_AVM AND AVM_FOUND)
     add_compile_definitions(WITH_LIBAVM)
     list(APPEND CODEC_LIBS avm)
     include_directories(SYSTEM ${AVM_INCLUDE_DIRS})
     freerdp_pc_add_requires_private("avm")
-    # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a browser): it has
-    # neither the encoder's headers nor its functions, and AV2 encoding is then unavailable
-    option(WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON)
+    # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a
+    # browser): it has neither the encoder's headers nor its functions, and AV2
+    # encoding is then unavailable
     if(WITH_AVM_ENCODER)
       add_compile_definitions(WITH_LIBAVM_ENCODER)
     endif()
@@ -211,12 +216,14 @@ endif()
 
 if(WITH_H264_WEBCODECS)
   list(APPEND CODEC_SRCS h264_webcodecs.c)
-  # The JavaScript side, for the executable's link: a link item, so that it also reaches the
-  # executable through static libraries (link options of their private dependencies don't).
+  # The JavaScript side, for the executable's link: a link item, so that it also
+  # reaches the executable through static libraries (link options of their
+  # private dependencies don't).
   freerdp_library_add_public(
     "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/h264_webcodecs.js"
   )
-  # so that editing the JavaScript recompiles this file, and so relinks the executables
+  # so that editing the JavaScript recompiles this file, and so relinks the
+  # executables
   set_source_files_properties(h264_webcodecs.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/h264_webcodecs.js)
   if(NOT BUILD_SHARED_LIBS)
     install(FILES h264_webcodecs.js DESTINATION ${FREERDP_PLUGIN_PATH})
