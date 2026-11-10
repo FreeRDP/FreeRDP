@@ -714,10 +714,12 @@ static void udplistener_close_unused_sockets(freerdp_udp_listener* listener,
 			listener->sockets[kept++] = listener->sockets[x];
 			continue;
 		}
-		if (listener->thread && (listener->retiredCount < UDPLISTENER_MAX_SOCKETS))
-			listener->retired[listener->retiredCount++] = listener->sockets[x];
-		else
+		if (!listener->thread)
 			udplistener_close_socket(&listener->sockets[x]);
+		else if (listener->retiredCount < UDPLISTENER_MAX_SOCKETS)
+			listener->retired[listener->retiredCount++] = listener->sockets[x];
+		else /* the thread may wait on it: it stays open, a later removal retires it */
+			listener->sockets[kept++] = listener->sockets[x];
 	}
 	listener->socketCount = kept;
 	if (listener->thread)

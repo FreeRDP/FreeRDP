@@ -48,7 +48,8 @@ typedef struct
 
 static BOOL fixture_read_pdu(WINPR_ATTR_UNUSED rdpPeerChannel* channel,
                              WINPR_ATTR_UNUSED wStream* s, WINPR_ATTR_UNUSED UINT8 Cmd,
-                             WINPR_ATTR_UNUSED UINT8 Sp, WINPR_ATTR_UNUSED UINT8 cbChId)
+                             WINPR_ATTR_UNUSED UINT8 Sp, WINPR_ATTR_UNUSED UINT8 cbChId,
+                             WINPR_ATTR_UNUSED BOOL fromTunnel)
 {
 	return TRUE;
 }

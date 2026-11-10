@@ -86,7 +86,7 @@ static void on_event(WINPR_ATTR_UNUSED void* custom, WINPR_ATTR_UNUSED rdpEmt* e
 
 static BOOL on_read_pdu(WINPR_ATTR_UNUSED rdpPeerChannel* channel, wStream* s,
                         WINPR_ATTR_UNUSED UINT8 Cmd, WINPR_ATTR_UNUSED UINT8 Sp,
-                        WINPR_ATTR_UNUSED UINT8 cbChId)
+                        WINPR_ATTR_UNUSED UINT8 cbChId, WINPR_ATTR_UNUSED BOOL fromTunnel)
 {
 	return Stream_GetRemainingLength(s) < 1000;
 }

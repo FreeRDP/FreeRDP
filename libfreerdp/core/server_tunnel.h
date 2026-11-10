@@ -27,9 +27,10 @@
  * Dynamic channels start on TCP until Soft-Sync moves them to the tunnel ([MS-RDPEDYC] 3.1.5.3);
  * from then on, PDUs are queued under a different message ID. */
 
-/** Read one dynamic channel PDU for an open channel. */
+/** Read one dynamic channel PDU for an open channel.
+ * fromTunnel: TRUE if it arrived via the tunnel. */
 typedef BOOL (*wtsTunnelReadPduFn)(rdpPeerChannel* channel, wStream* s, UINT8 Cmd, UINT8 Sp,
-                                   UINT8 cbChId);
+                                   UINT8 cbChId, BOOL fromTunnel);
 
 #if defined(WITH_RDPEUDP)
 

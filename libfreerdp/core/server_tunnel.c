@@ -151,7 +151,7 @@ static BOOL wts_read_tunnel_pdu(WTSVirtualChannelManager* vcm, const BYTE* data,
 			          drdynvc_get_packet_type(Cmd));
 			return FALSE;
 		default:
-			return vcm->tunnel->readPdu(vcm->drdynvc_channel, s, Cmd, Sp, cbChId);
+			return vcm->tunnel->readPdu(vcm->drdynvc_channel, s, Cmd, Sp, cbChId, TRUE);
 	}
 }
 
@@ -471,10 +471,11 @@ void wts_tunnel_channel_opened(WTSVirtualChannelManager* vcm)
 {
 	WINPR_ASSERT(vcm);
 	WINPR_ASSERT(vcm->tunnel);
-	/* May be called from an application thread via WTSVirtualChannelClose. Wake the drain, which
-	 * starts Soft-Sync (wts_tunnel_start_soft_sync_if_due). */
-	(void)InterlockedIncrement(&vcm->tunnel->softSyncDue);
-	wts_tunnel_wake_drain(vcm);
+	/* May be called from an application thread via WTSVirtualChannelClose. Waking the drain
+	 * triggers Soft-Sync (wts_tunnel_start_soft_sync_if_due). Only the first call in a burst
+	 * posts a message; others are either already queued or re-armed by wts_tunnel_after_drain. */
+	if (InterlockedIncrement(&vcm->tunnel->softSyncDue) == 1)
+		wts_tunnel_wake_drain(vcm);
 }
 
 BOOL wts_tunnel_is_soft_sync_response(UINT8 Cmd)

@@ -354,7 +354,7 @@ static BOOL wts_read_drdynvc_pdu_ready_guarded(wStream* s, UINT8 Cmd, UINT8 Sp, 
 
 WINPR_ATTR_NODISCARD
 static BOOL wts_read_drdynvc_pdu_ready(rdpPeerChannel* channel, wStream* s, UINT8 Cmd, UINT8 Sp,
-                                       UINT8 cbChId)
+                                       UINT8 cbChId, BOOL fromTunnel)
 {
 	WINPR_ASSERT(channel);
 
@@ -392,6 +392,15 @@ static BOOL wts_read_drdynvc_pdu_ready(rdpPeerChannel* channel, wStream* s, UINT
 			HashTable_Unlock(table);
 			return TRUE;
 		}
+		/* [MS-RDPEDYC] 3.2.5.3.2: A channel remains on its assigned transport; the tunnel only
+		 * carries channels that were opened on it or moved via Soft-Sync. */
+		if (fromTunnel && !dvc->tunnel)
+		{
+			WLog_WARN(TAG, "%s for channel %" PRIu32 " on the tunnel, which it does not use",
+			          drdynvc_get_packet_type(Cmd), ChannelId);
+			HashTable_Unlock(table);
+			return FALSE;
+		}
 	}
 
 	if (wts_tunnel_is_soft_sync_response(Cmd))
@@ -425,7 +434,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 		return wts_read_drdynvc_capabilities_response(channel, s);
 
 	if (channel->vcm->drdynvc_state == DRDYNVC_STATE_READY)
-		return wts_read_drdynvc_pdu_ready(channel, s, Cmd, Sp, cbChId);
+		return wts_read_drdynvc_pdu_ready(channel, s, Cmd, Sp, cbChId, FALSE);
 	else
 		WLog_ERR(TAG, "received Cmd %d but channel is not ready.", Cmd);
 
