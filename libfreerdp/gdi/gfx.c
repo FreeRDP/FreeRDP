@@ -258,12 +258,38 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	{
 		const UINT32 nXSrc = rects[i].left;
 		const UINT32 nYSrc = rects[i].top;
-		const UINT32 nXDst = (UINT32)MIN(surfaceX + nXSrc * sx, gdi->width - 1);
-		const UINT32 nYDst = (UINT32)MIN(surfaceY + nYSrc * sy, gdi->height - 1);
-		const UINT32 swidth = rects[i].right - rects[i].left;
-		const UINT32 sheight = rects[i].bottom - rects[i].top;
-		const UINT32 dwidth = MIN((UINT32)(swidth * sx), (UINT32)gdi->width - nXDst);
-		const UINT32 dheight = MIN((UINT32)(sheight * sy), (UINT32)gdi->height - nYDst);
+		const double xDst = surfaceX + nXSrc * sx;
+		const double yDst = surfaceY + nYSrc * sy;
+
+		/* A surface can be larger than the output for a while, e.g. right after the desktop
+		 * shrank and before the server sent surfaces of the new size: a part outside the
+		 * output has nothing to show. */
+		const UINT32 outWidth = (UINT32)MAX(0, gdi->width);
+		const UINT32 outHeight = (UINT32)MAX(0, gdi->height);
+		if ((xDst >= outWidth) || (yDst >= outHeight))
+			continue;
+
+		const UINT32 nXDst = (UINT32)xDst;
+		const UINT32 nYDst = (UINT32)yDst;
+		UINT32 swidth = rects[i].right - rects[i].left;
+		UINT32 sheight = rects[i].bottom - rects[i].top;
+		UINT32 dwidth = (UINT32)(swidth * sx);
+		UINT32 dheight = (UINT32)(sheight * sy);
+
+		/* Clip at the output's edge by cropping the source as well: shrinking only the
+		 * destination would turn the clip into a scale, which squeezes the picture and fails
+		 * outright in a build without a scaler (no swscale, no cairo), and that failure ends
+		 * the graphics channel. */
+		if (dwidth > outWidth - nXDst)
+		{
+			dwidth = outWidth - nXDst;
+			swidth = MAX(1, MIN(swidth, (UINT32)(dwidth / sx)));
+		}
+		if (dheight > outHeight - nYDst)
+		{
+			dheight = outHeight - nYDst;
+			sheight = MAX(1, MIN(sheight, (UINT32)(dheight / sy)));
+		}
 
 		if (!freerdp_image_scale(gdi->primary_buffer, gdi->dstFormat, gdi->stride, nXDst, nYDst,
 		                         dwidth, dheight, surface->data, surface->format, surface->scanline,
