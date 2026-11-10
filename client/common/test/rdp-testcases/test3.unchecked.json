@@ -3,6 +3,8 @@
 		"FreeRDP_ServerMode": false,
 		"FreeRDP_GfxCodecAV1": true,
 		"FreeRDP_GfxCodecAV2": true,
+		"FreeRDP_GfxCodecHEVC": false,
+		"FreeRDP_GfxCodecHEVC444": false,
 		"FreeRDP_WaitForOutputBufferFlush": true,
 		"FreeRDP_NetworkAutoDetect": true,
 		"FreeRDP_SupportAsymetricKeys": false,
