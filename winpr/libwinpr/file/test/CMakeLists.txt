@@ -11,6 +11,7 @@ if(NOT WIN32)
       TestFileDeleteFile.c
       TestFileReadFile.c
       TestSetFileAttributes.c
+      TestFileGetAttributesLink.c
       TestFileWriteFile.c
       TestFilePatternMatch.c
       TestFileFindFirstFile.c

@@ -541,7 +541,15 @@ DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
 	if (lstat(lpFileName, &fileStat) != 0)
 		return INVALID_FILE_ATTRIBUTES;
 
-	return FileAttributesFromStat(lpFileName, &fileStat);
+	DWORD dwFileAttributes = FileAttributesFromStat(lpFileName, &fileStat);
+
+	/* as on Windows, a link to a directory is a directory too (and a reparse point) */
+	struct stat targetStat = WINPR_C_ARRAY_INIT;
+	if (S_ISLNK(fileStat.st_mode) && (stat(lpFileName, &targetStat) == 0) &&
+	    S_ISDIR(targetStat.st_mode))
+		dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+
+	return dwFileAttributes;
 }
 
 DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
