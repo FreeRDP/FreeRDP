@@ -267,7 +267,7 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 
 	switch (cmd->codecId)
 	{
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
 #endif
 		case RDPGFX_CODECID_AVC420:
