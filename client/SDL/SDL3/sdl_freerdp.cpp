@@ -711,6 +711,14 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+#if defined(WITH_SDL_AUDIO)
+	/* Keeps the audio channels from initializing or quitting SDL audio
+	 * while this thread pumps events. */
+	if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
+		WLog_Print(sdl->getWLog(), WLOG_WARN, "SDL_InitSubSystem(SDL_INIT_AUDIO): %s",
+		           SDL_GetError());
+#endif
+
 #if defined(__APPLE__)
 	/* macOS has no num lock state, SDL_KMOD_NUM always starts off and we would turn num lock
 	 * off on the server with every sync. Start with it on, the server LEDs take over from there. */

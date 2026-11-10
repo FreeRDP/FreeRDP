@@ -1122,6 +1122,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 #if defined(__EMSCRIPTEN__)
 		{ "emscripten", "" },
 #endif
+#if defined(WITH_SDL_AUDIO)
+		{ "sdl", "" },
+#endif
 		{ nullptr, nullptr }
 	};
 	struct SubsystemEntry* entry = &entries[0];

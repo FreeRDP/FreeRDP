@@ -180,6 +180,9 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
   option(WITH_SNDIO "use Sndio for sound" ${SNDIO_FOUND})
 endif()
 
+find_package(SDL3 QUIET)
+cmake_dependent_option(WITH_SDL_AUDIO "use SDL3 for sound and microphone redirection" OFF "SDL3_FOUND" OFF)
+
 option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
 
 if(BUILD_FUZZERS)
