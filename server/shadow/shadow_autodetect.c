@@ -192,8 +192,8 @@ static BOOL shadow_autodetect_bandwidth_results(rdpAutoDetect* autodetect,
 	if (!ad || (responseType != RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME))
 		return TRUE;
 
-	/* bits per millisecond are kbit/s; a burst that came in less than a millisecond gives the
-	 * lowest bandwidth it can show */
+	/* bits per millisecond are kbit/s; a burst that came in less than a millisecond is counted
+	 * as 1 ms, so the bandwidth is then at least the value shown (262 Mbit/s for 32 KiB) */
 	const UINT64 kbps = (8ull * byteCount) / MAX(timeDelta, 1);
 	ad->bandwidthKbps = (UINT32)MIN(MAX(kbps, 1), UINT32_MAX);
 	ad->bandwidthDone = TRUE;
@@ -337,13 +337,17 @@ BOOL shadow_client_autodetect_poll(rdpShadowClient* client)
 	if (!ad || (ad->phase != SHADOW_AUTODETECT_PHASE_CONTINUOUS) || !shadow_autodetect_enabled(ad))
 		return TRUE;
 
-	/* not while a resize reactivates the session */
-	if (freerdp_get_state(&client->context) != CONNECTION_STATE_ACTIVE)
-		return TRUE;
-
 	const UINT64 now = GetTickCount64();
 	if (now < ad->nextRttMs)
 		return TRUE;
+
+	/* not while a resize reactivates the session: try again an interval later, so that the
+	 * timeout does not stay 0 and the client thread does not spin until it is active */
+	if (freerdp_get_state(&client->context) != CONNECTION_STATE_ACTIVE)
+	{
+		ad->nextRttMs = now + SHADOW_AUTODETECT_RTT_INTERVAL_MS;
+		return TRUE;
+	}
 
 	if (ad->rttPending && (now - ad->rttSentMs < SHADOW_AUTODETECT_RTT_GIVEUP_MS))
 	{
