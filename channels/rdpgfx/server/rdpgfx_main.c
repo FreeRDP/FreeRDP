@@ -693,7 +693,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_h264_metablock(wLog* log, wStream*
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD static inline UINT
-rdpgfx_write_h264_avc420(wLog* log, wStream* s, RDPGFX_AVC420_BITMAP_STREAM* havc420)
+rdpgfx_write_h264_avc420(wLog* log, wStream* s, const RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	WINPR_ASSERT(havc420);
 	const UINT error = rdpgfx_write_h264_metablock(log, s, &(havc420->meta));

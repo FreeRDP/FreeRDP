@@ -38,6 +38,7 @@
 
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/codec/h264.h>
 
 #include "rdpgfx_common.h"
 #include "rdpgfx_codec.h"
@@ -272,6 +273,8 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 	if (!gfx || !gfx->base.listener_callback)
 		return ERROR_BAD_ARGUMENTS;
 
+	memset(gfx->allowedCodecs, FALSE, sizeof(gfx->allowedCodecs));
+
 	GENERIC_CHANNEL_CALLBACK* callback = gfx->base.listener_callback->channel_callback;
 
 	RDPGFX_HEADER header = { .flags = 0,
@@ -434,12 +437,9 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSmallCache))
 			capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
-#ifdef WITH_GFX_H264
-
-		if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxH264))
+		if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxH264) &&
+		    freerdp_codec_supported(FREERDP_CODEC_AVC420, FALSE))
 			capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
-
-#endif
 	}
 
 	UINT32 caps10Flags = 0;
@@ -449,14 +449,9 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSmallCache))
 			caps10Flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
-#ifdef WITH_GFX_H264
-
-		if (!freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxAVC444))
+		if (!freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxAVC444) ||
+		    !freerdp_codec_supported(FREERDP_CODEC_AVC444, FALSE))
 			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-
-#else
-		caps10Flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
-#endif
 
 		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_10))
 		{
@@ -563,14 +558,18 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		}
 
 #if defined(WITH_GFX_AZURE)
-		const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112, RDPGFX_CAPVERSION_113,
-			                    RDPGFX_CAPVERSION_115 };
-
-		for (size_t x = 0; x < ARRAYSIZE(caps); x++)
+		if (freerdp_image_scaling_supported())
 		{
-			const UINT32 cap = caps[x];
-			if (!rdpgfx_is_capability_filtered(gfx, cap))
+			const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112,
+				                    RDPGFX_CAPVERSION_113, RDPGFX_CAPVERSION_115 };
+
+			for (size_t x = 0; x < ARRAYSIZE(caps); x++)
 			{
+				const UINT32 cap = caps[x];
+
+				if (!rdpgfx_is_capability_filtered(gfx, cap))
+					continue;
+
 				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 				if (!capsSet)
 					return ERROR_BAD_CONFIGURATION;
@@ -587,7 +586,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 #if defined(WITH_GFX_AV1)
 	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV1))
 	{
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_1))
+		if (freerdp_codec_supported(FREERDP_CODEC_AV1_I420, FALSE) &&
+		    !rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_1))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 			if (!capsSet)
@@ -595,7 +595,11 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->version = RDPGFX_CAPVERSION_FRDP_1;
 			capsSet->length = 0x4;
 
-			capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED;
+			if (freerdp_codec_supported(FREERDP_CODEC_AV1_I444, FALSE))
+				capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED;
+			else
+				capsSet->flags |= RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
+
 			const UINT32 profile =
 			    freerdp_settings_get_uint32(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV1Profile);
 			if (profile == 0)
@@ -612,7 +616,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 	 * not know it never confirms it. */
 	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV2))
 	{
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_2))
+		if (freerdp_codec_supported(FREERDP_CODEC_AVC420, FALSE) &&
+		    !rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_2))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 			if (!capsSet)
@@ -620,23 +625,23 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->version = RDPGFX_CAPVERSION_FRDP_2;
 			capsSet->length = 0x4;
 
-			const UINT32 profile =
-			    freerdp_settings_get_uint32(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV2Profile);
-#if defined(WITH_GFX_AV2_I444)
-			capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED;
-			if (profile == 0)
-				capsSet->flags |= RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
-#else
-			/* the decoder (dav2d) has no AV2 4:4:4: always ask for 4:2:0 */
-			capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
-			if (profile != 0)
-				WLog_Print(gfx->base.log, WLOG_DEBUG,
-				           "AV2 4:4:4 needs libavm to decode, asking for 4:2:0");
-#endif
+			if (freerdp_codec_supported(FREERDP_CODEC_AV2_I444, FALSE))
+			{
+				capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED;
 
-#if !defined(WITH_CAIRO) && !defined(WITH_SWSCALE)
-			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-#endif
+				const UINT32 profile = freerdp_settings_get_uint32(gfx->rdpcontext->settings,
+				                                                   FreeRDP_GfxCodecAV2Profile);
+				if (profile == 0)
+					capsSet->flags |= RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
+			}
+			else
+			{
+				/* the decoder (dav2d) has no AV2 4:4:4: always ask for 4:2:0 */
+				capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
+			}
+
+			if (!freerdp_image_scaling_supported())
+				capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 		}
 	}
 #endif
@@ -673,6 +678,49 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: 0x%08" PRIX32 "",
 	           rdpgfx_caps_version_str(capsSet.version), capsSet.version, capsSet.flags);
+
+	memset(gfx->allowedCodecs, TRUE, sizeof(gfx->allowedCodecs));
+
+	gfx->allowedCodecs[RDPGFX_CODECID_AVC420] = FALSE;
+	gfx->allowedCodecs[RDPGFX_CODECID_AVC444] = FALSE;
+	gfx->allowedCodecs[RDPGFX_CODECID_AVC444v2] = FALSE;
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+	gfx->allowedCodecs[RDPGFX_CODECID_AV1] = FALSE;
+#endif
+
+	if (capsSet.version >= RDPGFX_CAPVERSION_10)
+	{
+		if ((capsSet.flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0)
+		{
+			WLog_Print(gfx->base.log, WLOG_INFO, "AVC not disabled by server");
+			gfx->allowedCodecs[RDPGFX_CODECID_AVC420] = TRUE;
+			gfx->allowedCodecs[RDPGFX_CODECID_AVC444] = TRUE;
+		}
+	}
+
+	if (capsSet.version >= RDPGFX_CAPVERSION_103)
+	{
+		if ((capsSet.flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0)
+			gfx->allowedCodecs[RDPGFX_CODECID_AVC444v2] = TRUE;
+	}
+
+	if (capsSet.version == RDPGFX_CAPVERSION_81)
+	{
+		if ((capsSet.flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) != 0)
+		{
+			WLog_Print(gfx->base.log, WLOG_INFO, "AVC420 enabled by server");
+			gfx->allowedCodecs[RDPGFX_CODECID_AVC420] = TRUE;
+		}
+	}
+
+#if defined(WITH_GFX_AV1)
+	if (capsSet.version == RDPGFX_CAPVERSION_FRDP_1)
+		gfx->allowedCodecs[RDPGFX_CODECID_AV1] = TRUE;
+#endif
+#if defined(WITH_GFX_AV2)
+	if (capsSet.version == RDPGFX_CAPVERSION_FRDP_2)
+		gfx->allowedCodecs[RDPGFX_CODECID_AV1] = TRUE;
+#endif
 
 	if (!context)
 		return ERROR_BAD_CONFIGURATION;
@@ -1646,25 +1694,19 @@ static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_C
 			return TRUE;
 #if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
-			/* AV1 with RDPGFX_CAPVERSION_FRDP_1, AV2 with RDPGFX_CAPVERSION_FRDP_2 */
-			switch (gfx->ConnectionCaps.version)
+#endif
+			if (!gfx->allowedCodecs[cmd->codecId])
 			{
-#if defined(WITH_GFX_AV1)
-				case RDPGFX_CAPVERSION_FRDP_1:
-#endif
-#if defined(WITH_GFX_AV2)
-				case RDPGFX_CAPVERSION_FRDP_2:
-#endif
-					return TRUE;
-				default:
-					WLog_Print(gfx->base.log, WLOG_ERROR,
-					           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
-					           " not supported with connection caps %s [0x%08" PRIx32 "]",
-					           cmd->codecId, rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
-					           gfx->ConnectionCaps.version);
-					return FALSE;
+				char buffer[128] = WINPR_C_ARRAY_INIT;
+				WLog_Print(
+				    gfx->base.log, WLOG_ERROR,
+				    "RDPGFX_SURFACE_COMMAND::codecId %s not allowed with %s [%s]",
+				    rdpgfx_get_codec_id_string(cmd->codecId),
+				    rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
+				    rdpgfx_caps_flags_str(gfx->ConnectionCaps.flags, buffer, sizeof(buffer)));
+				return FALSE;
 			}
-#endif
+			return TRUE;
 		default:
 			WLog_Print(gfx->base.log, WLOG_ERROR,
 			           "Unknown RDPGFX_SURFACE_COMMAND::codecId %" PRIu32, cmd->codecId);
