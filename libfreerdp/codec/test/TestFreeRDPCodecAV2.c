@@ -5,12 +5,16 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/av2.h>
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t* pstride)
 {
 	const size_t bpp = FreeRDPGetBytesPerPixel(format);
 	const size_t stride = bpp * width + 32;
 	WINPR_ASSERT(pstride);
 	*pstride = WINPR_ASSERTING_INT_CAST(uint32_t, stride);
+
+	if ((stride == 0) || (height == 0))
+		return nullptr;
 
 	uint8_t* rgb = calloc(stride, height);
 	if (!rgb)
@@ -27,6 +31,7 @@ static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t
 	return rgb;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL testEncodeDecode(uint32_t format, uint32_t width, uint32_t height)
 {
 	BOOL rc = FALSE;
@@ -79,6 +84,7 @@ fail:
  * that treats the first chroma sample of a 2x2 block as the average of the block (as done for
  * AVC444), corrupts the first pixel of each 2x2 block.
  * YUV420 (profile option 0): the colour changes per 8x8 block, which 4:2:0 keeps. */
+WINPR_ATTR_NODISCARD
 static BOOL testColours(uint32_t profile, uint32_t width, uint32_t height)
 {
 	const uint32_t format = PIXEL_FORMAT_BGRX32;
@@ -160,6 +166,7 @@ fail:
 
 /* Encodes a few frames of a moving picture into one stream, so that all but the first are inter
  * frames, and checks the colours of each decoded frame. */
+WINPR_ATTR_NODISCARD
 static BOOL testSequence(uint32_t width, uint32_t height, uint32_t frames)
 {
 	const uint32_t format = PIXEL_FORMAT_BGRX32;
