@@ -22,6 +22,8 @@ set(MODULE_NAME "freerdp-shadow")
 set(SRCS
     shadow_client.c
     shadow_client.h
+    shadow_autodetect.c
+    shadow_autodetect.h
     shadow_lobby.c
     shadow_lobby.h
     shadow_input.c
