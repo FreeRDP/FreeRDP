@@ -663,6 +663,23 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
+	/* Before /monitors: the subsystem decides which monitors there are */
+	arg = CommandLineFindArgumentA(cargs, "subsystem");
+
+	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			if (!shadow_subsystem_set_order(arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+		else
+		{
+			shadow_subsystem_list();
+			status = COMMAND_LINE_STATUS_PRINT;
+		}
+	}
+
 	arg = CommandLineFindArgumentA(cargs, "monitors");
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))

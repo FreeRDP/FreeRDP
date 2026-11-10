@@ -174,11 +174,6 @@ typedef struct
 	char connector[MUTTER_SHADOW_CONNECTOR_SIZE];
 } MUTTER_LOGICAL;
 
-WINPR_ATTR_NODISCARD
-FREERDP_API const char* ShadowSubsystemName(void);
-WINPR_ATTR_NODISCARD
-FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-
 static const AUDIO_FORMAT mutter_audio_offered_formats[] = {
 	{ WAVE_FORMAT_OPUS, MUTTER_AUDIO_CHANNELS, MUTTER_AUDIO_RATE, 12000, 1, 16, 0, nullptr },
 	{ WAVE_FORMAT_PCM, MUTTER_AUDIO_CHANNELS, MUTTER_AUDIO_RATE,
@@ -2658,12 +2653,13 @@ static rdpShadowSubsystem* mutter_shadow_subsystem_new(void)
 	return &mutter->common;
 }
 
-const char* ShadowSubsystemName(void)
+FREERDP_ENTRY_POINT(WINPR_ATTR_NODISCARD const char* MutterShadowSubsystemName(void))
 {
 	return "Mutter";
 }
 
-int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_ENTRY_POINT(
+    WINPR_ATTR_NODISCARD int MutterShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints))
 {
 	WINPR_ASSERT(pEntryPoints);
 

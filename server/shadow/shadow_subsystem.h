@@ -42,6 +42,12 @@ extern "C"
 	WINPR_ATTR_NODISCARD int shadow_subsystem_start(rdpShadowSubsystem* subsystem);
 	int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
 
+	/** @brief Restrict and order the subsystems tried, e.g. "Mutter,X11" */
+	WINPR_ATTR_NODISCARD BOOL shadow_subsystem_set_order(const char* names);
+
+	/** @brief Log the subsystems in the order they are tried, with the monitors each finds */
+	void shadow_subsystem_list(void);
+
 #ifdef __cplusplus
 }
 #endif

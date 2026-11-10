@@ -344,6 +344,22 @@ extern "C"
 	FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
 
+	/** @brief Add a subsystem to the ones the server may use.
+	 *
+	 *  When more than one is added (and none is set with \b shadow_subsystem_set_entry), the
+	 *  server uses the first that finds a monitor, in the order they were added. The command
+	 *  line option \b /subsystem changes that order.
+	 *
+	 *  @param name The name \b /subsystem knows it by
+	 *  @param pEntry The subsystem's entry function
+	 *
+	 *  @return \b TRUE for success, \b FALSE for an invalid argument or too many subsystems
+	 *
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_subsystem_add_entry(const char* name, pfnShadowSubsystemEntry pEntry);
+
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR(
 	    "[since 3.4.0] Use shadow_subsystem_pointer_convert_alpha_pointer_data_to_format instead",
