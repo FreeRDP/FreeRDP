@@ -497,7 +497,8 @@ static BOOL av2_planes_to_8bit(FREERDP_AV2_CONTEXT* av2, av2_planes* planes)
 		const UINT32 h = ((p == 0) || planes->i444) ? planes->height : (planes->height + 1) / 2;
 		for (UINT32 y = 0; y < h; y++)
 		{
-			const UINT16* src = (const UINT16*)&planes->data[p][1ull * y * planes->stride[p]];
+			const UINT16* src = WINPR_PACKED_ALIGN_CAST(
+			    const UINT16*, &planes->data[p][1ull * y * planes->stride[p]]);
 			BYTE* dst = &av2->yuvdata[p][1ull * y * av2->yuvStride[p]];
 			for (UINT32 x = 0; x < w; x++)
 			{
@@ -622,7 +623,7 @@ static INT32 av2_dav2d_drain_one(FREERDP_AV2_CONTEXT* av2, BYTE* pDstData, DWORD
 		}
 		break;
 		default:
-			WLog_Print(av2->log, WLOG_ERROR, "dav2d picture layout %d not supported", pic.p.layout);
+			WLog_Print(av2->log, WLOG_ERROR, "dav2d picture layout %u not supported", pic.p.layout);
 			break;
 	}
 	dav2d_picture_unref(&pic);
