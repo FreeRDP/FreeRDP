@@ -345,6 +345,11 @@ BOOL freerdp_codec_supported(FreeRDP_CodecFlags codec, WINPR_ATTR_UNUSED BOOL en
 #endif
 			return FALSE;
 #endif
+#if defined(WITH_GFX_AZURE)
+		case FREERDP_CODEC_HEVC_I420:
+		case FREERDP_CODEC_HEVC_I444:
+			return TRUE;
+#endif
 		default:
 			return FALSE;
 	}

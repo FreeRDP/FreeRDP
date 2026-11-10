@@ -85,6 +85,12 @@ if(WITH_GFX_AV2)
   list(APPEND CODEC_SRCS av2.c)
 endif()
 
+if(WITH_GFX_AZURE)
+  include(WarnExperimental)
+  warn_experimental("HEVC codec support for GFX channel" "-DWITH_GFX_AZURE=OFF")
+  list(APPEND CODEC_SRCS hevc.c)
+endif()
+
 set(CODEC_SSE3_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
 
 set(CODEC_NEON_SRCS neon/rfx_neon.c neon/rfx_neon.h neon/nsc_neon.c neon/nsc_neon.h)
@@ -166,9 +172,6 @@ if(WITH_GFX_AV1)
   endif()
 endif()
 
-cmake_dependent_option(
-  WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON "WITH_GFX_AV2;WITH_AVM" OFF
-)
 if(WITH_GFX_AV2)
   if(WITH_AVM AND AVM_FOUND)
     add_compile_definitions(WITH_LIBAVM)
@@ -178,6 +181,7 @@ if(WITH_GFX_AV2)
     # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a
     # browser): it has neither the encoder's headers nor its functions, and AV2
     # encoding is then unavailable
+    option(WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON)
     if(WITH_AVM_ENCODER)
       add_compile_definitions(WITH_LIBAVM_ENCODER)
     endif()
