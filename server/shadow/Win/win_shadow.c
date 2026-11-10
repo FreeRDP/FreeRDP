@@ -54,7 +54,13 @@ static BOOL win_shadow_follow_input_desktop(void)
 	HDESK input = OpenInputDesktop(0, FALSE, GENERIC_ALL);
 
 	if (!input)
+	{
+		WLog_WARN(TAG,
+		          "OpenInputDesktop failed (0x%08lX): the thread stays on its desktop and "
+		          "injected input may go elsewhere",
+		          GetLastError());
 		return FALSE;
+	}
 
 	(void)GetUserObjectInformationW(input, UOI_NAME, inputName, sizeof(inputName), nullptr);
 	(void)GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()), UOI_NAME, threadName,
