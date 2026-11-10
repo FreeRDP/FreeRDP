@@ -39,6 +39,39 @@
 
 #define TAG FREERDP_TAG("crypto")
 
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+/* SHAKE256 with 512 bits of output over the DER encoding of the cert */
+static void* ed448_cert_digest(const X509* cert, size_t* pLength)
+{
+	WINPR_ASSERT(pLength);
+
+	*pLength = 0;
+
+	int ok = 0;
+	unsigned char* der = nullptr;
+	const int derlen = i2d_X509(cert, &der);
+	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+	void* out = calloc(32, sizeof(BYTE));
+	if ((derlen <= 0) || !ctx || !out || !der)
+		goto fail;
+
+	ok = EVP_DigestInit_ex(ctx, EVP_shake256(), nullptr) &&
+	     EVP_DigestUpdate(ctx, der, (size_t)derlen) && EVP_DigestFinalXOF(ctx, out, 32);
+
+fail:
+
+	EVP_MD_CTX_free(ctx);
+	OPENSSL_free(der);
+	if (!ok)
+	{
+		free(out);
+		return nullptr;
+	}
+	*pLength = 32;
+	return out;
+}
+#endif
+
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
 	UINT32 fp_len = EVP_MAX_MD_SIZE;
@@ -67,6 +100,13 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	if (X509_digest(xcert, md, fp, &fp_len) != 1)
 	{
 		free(fp);
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+		if (_stricmp("shake256", hash) == 0)
+		{
+			fp = ed448_cert_digest(xcert, length);
+			return fp;
+		}
+#endif
 		WLog_ERR(TAG, "certificate does not have a %s hash!", hash);
 		return nullptr;
 	}
@@ -97,13 +137,22 @@ BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length)
 	BYTE* hash = nullptr;
 	ASN1_OCTET_STRING* digest = X509_digest_sig(xcert, nullptr, &fallback);
 	const int len = digest ? ASN1_STRING_length(digest) : 0;
-	if (fallback && (len > 0))
+	if (fallback)
 	{
-		hash = calloc((size_t)len + 1, sizeof(BYTE));
-		if (hash)
+		if (len > 0)
 		{
-			memcpy(hash, ASN1_STRING_get0_data(digest), (size_t)len);
-			*length = (size_t)len;
+			hash = calloc((size_t)len + 1, sizeof(BYTE));
+			if (hash)
+			{
+				memcpy(hash, ASN1_STRING_get0_data(digest), (size_t)len);
+				*length = (size_t)len;
+			}
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+		}
+		else if (nid == NID_ED448)
+		{
+			hash = x509_utils_get_hash(xcert, "shake256", length);
+#endif
 		}
 	}
 	ASN1_OCTET_STRING_free(digest);
