@@ -918,6 +918,88 @@ fail:
 #endif
 }
 
+#if defined(WITH_GFX_AZURE)
+/* AVC420 and HEVC420 share the bitstream layout (metablock + Annex B), only the codec differs */
+WINPR_ATTR_NODISCARD
+static UINT gdi_SurfaceCommand_HEVC(rdpGdi* gdi, RdpgfxClientContext* context,
+                                    const RDPGFX_SURFACE_COMMAND* cmd)
+{
+	UINT status = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(cmd);
+
+	WINPR_ASSERT(context->GetSurfaceData);
+	gdiGfxSurface* surface =
+	    (gdiGfxSurface*)context->GetSurfaceData(context, (UINT16)MIN(UINT16_MAX, cmd->surfaceId));
+
+	if (!surface)
+	{
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
+		return ERROR_NOT_FOUND;
+	}
+
+	if (!surface->hevc)
+	{
+		surface->hevc = freerdp_hevc_context_new(FALSE);
+
+		if (!surface->hevc)
+		{
+			WLog_ERR(TAG, "unable to create hevc context");
+			return ERROR_NOT_ENOUGH_MEMORY;
+		}
+
+		if (!freerdp_hevc_context_set_option(surface->hevc, FREERDP_HEVC_CONTEXT_OPTION_HW_ACCEL,
+		                                     (UINT32)freerdp_settings_get_bool(
+		                                         gdi->context->settings, FreeRDP_SoftwareGdi) == 0))
+			return ERROR_INTERNAL_ERROR;
+
+		if (!freerdp_hevc_context_reset(surface->hevc, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
+	}
+
+	if (!surface->hevc)
+		return ERROR_NOT_SUPPORTED;
+
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
+
+	const RDPGFX_HEVC_BITMAP_STREAM* bs = (const RDPGFX_HEVC_BITMAP_STREAM*)cmd->extra;
+
+	if (!bs)
+		return ERROR_INTERNAL_ERROR;
+
+	const RDPGFX_H264_METABLOCK* meta = &(bs->meta);
+	const INT32 rc = freerdp_hevc_decompress(
+	    surface->hevc, bs->data, bs->length, surface->data, surface->format, surface->scanline,
+	    surface->width, surface->height, meta->regionRects, meta->numRegionRects);
+
+	if (rc < 0)
+	{
+		WLog_WARN(TAG, "freerdp_hevc_decompress failure: %" PRId32 ", ignoring update.", rc);
+		return CHANNEL_RC_OK;
+	}
+
+	for (UINT32 i = 0; i < meta->numRegionRects; i++)
+	{
+		if (!gdi_surface_invalidate_rect(surface, &(meta->regionRects[i])))
+			goto fail;
+	}
+
+	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId,
+	                      meta->numRegionRects, meta->regionRects);
+
+	if (status != CHANNEL_RC_OK)
+		goto fail;
+
+	status = gdi_interFrameUpdate(gdi, context);
+
+fail:
+	return status;
+}
+#endif
+
 /**
  * Function description
  *
@@ -1394,6 +1476,13 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
 			status = gdi_SurfaceCommand_AVC444(gdi, context, cmd);
 			break;
 
+#if defined(WITH_GFX_AZURE)
+		case RDPGFX_CODECID_HEVC444:
+		case RDPGFX_CODECID_HEVC420:
+			status = gdi_SurfaceCommand_HEVC(gdi, context, cmd);
+			break;
+#endif
+
 		case RDPGFX_CODECID_ALPHA:
 			status = gdi_SurfaceCommand_Alpha(gdi, context, cmd);
 			break;
@@ -1548,6 +1637,9 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->h264);
+#if defined(WITH_GFX_AZURE)
+		freerdp_hevc_context_free(surface->hevc);
+#endif
 #endif
 #if defined(WITH_GFX_AV1)
 		freerdp_av1_context_free(surface->av1);
