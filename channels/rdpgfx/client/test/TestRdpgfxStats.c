@@ -266,6 +266,64 @@ static UINT send_wire_to_surface_1(IWTSVirtualChannelCallback* callback, UINT16 
 	return send_pdu(callback, s);
 }
 
+/* One PDU of a batch: what new_pdu() writes after its two zgfx bytes */
+static BOOL write_wire_to_surface_1(wStream* s, UINT16 codecId, UINT32 length)
+{
+	if (!Stream_EnsureRemainingCapacity(s, RDPGFX_HEADER_SIZE + RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE +
+	                                           length))
+		return FALSE;
+	Stream_Write_UINT16(s, RDPGFX_CMDID_WIRETOSURFACE_1);
+	Stream_Write_UINT16(s, 0); /* flags */
+	Stream_Write_UINT32(s, RDPGFX_HEADER_SIZE + RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + length);
+	Stream_Write_UINT16(s, 1); /* surfaceId */
+	Stream_Write_UINT16(s, codecId);
+	Stream_Write_UINT8(s, GFX_PIXEL_FORMAT_XRGB_8888);
+	Stream_Write_UINT16(s, 0);  /* destRect.left */
+	Stream_Write_UINT16(s, 0);  /* destRect.top */
+	Stream_Write_UINT16(s, 16); /* destRect.right */
+	Stream_Write_UINT16(s, 16); /* destRect.bottom */
+	Stream_Write_UINT32(s, length);
+	Stream_Zero(s, length);
+	return TRUE;
+}
+
+/* A surface command the client cannot decode costs that command only: the PDUs after it in
+ * the same message are still read, the frame still ends and is acknowledged */
+static BOOL check_undecodable_command(RdpgfxClientContext* gfx,
+                                      IWTSVirtualChannelCallback* callback)
+{
+	const uint64_t uncompressed = stat_value(gfx, "RDPGFX_CODECID_UNCOMPRESSED");
+	const uint64_t decoded = stat_value(gfx, "RDPGFX_FRAMES_DECODED");
+	TEST_CHECK(send_frame_pdu(callback, RDPGFX_CMDID_STARTFRAME, 3) == CHANNEL_RC_OK);
+
+	/* one message: an unknown codec, then a good command, then the end of the frame */
+	wStream* s = Stream_New(nullptr, 64);
+	TEST_CHECK(s);
+	Stream_Write_UINT8(s, ZGFX_SEGMENTED_SINGLE);
+	Stream_Write_UINT8(s, ZGFX_PACKET_COMPR_TYPE_RDP8);
+	BOOL ok = write_wire_to_surface_1(s, 0x0007, 3) &&
+	          write_wire_to_surface_1(s, RDPGFX_CODECID_UNCOMPRESSED, 4) &&
+	          Stream_EnsureRemainingCapacity(s, RDPGFX_HEADER_SIZE + RDPGFX_END_FRAME_PDU_SIZE);
+	if (ok)
+	{
+		Stream_Write_UINT16(s, RDPGFX_CMDID_ENDFRAME);
+		Stream_Write_UINT16(s, 0); /* flags */
+		Stream_Write_UINT32(s, RDPGFX_HEADER_SIZE + RDPGFX_END_FRAME_PDU_SIZE);
+		Stream_Write_UINT32(s, 3); /* frameId */
+	}
+	if (!ok)
+	{
+		Stream_Free(s, TRUE);
+		return FALSE;
+	}
+	TEST_CHECK(send_pdu(callback, s) == CHANNEL_RC_OK);
+
+	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_UNCOMPRESSED") == uncompressed + 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_DECODED") == decoded + 1);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_UNACKNOWLEDGED") == 0);
+	return TRUE;
+}
+
 static BOOL check_session(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* callback)
 {
 	TEST_CHECK(all_zero(gfx));
@@ -284,8 +342,9 @@ static BOOL check_session(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* 
 	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_PLANAR_BYTES") == 0);
 	TEST_CHECK(stat_value(gfx, "RDPGFX_CMDID_WIRETOSURFACE_1") == 3);
 
-	/* refused: a surface command nobody decoded is no traffic of that codec */
-	TEST_CHECK(send_wire_to_surface_1(callback, 0x0002, 13) != CHANNEL_RC_OK);
+	/* dropped: a surface command nobody decoded is no traffic of that codec, and no error of
+	 * the channel */
+	TEST_CHECK(send_wire_to_surface_1(callback, 0x0002, 13) == CHANNEL_RC_OK);
 	TEST_CHECK(rdpgfx_stats_value_for_index(gfx, 0x0002) == 0);
 	TEST_CHECK(rdpgfx_stats_value_for_index(gfx, 1ull * RDPGFX_CODECID_MAX + RDPGFX_CMDID_MAX +
 	                                                 1ull + 0x0002) == 0);
@@ -293,6 +352,8 @@ static BOOL check_session(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* 
 	TEST_CHECK(send_frame_pdu(callback, RDPGFX_CMDID_ENDFRAME, 1) == CHANNEL_RC_OK);
 	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_DECODED") == 1);
 	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_UNACKNOWLEDGED") == 0);
+
+	TEST_CHECK(check_undecodable_command(gfx, callback));
 
 	/* the slot past the last command is readable, too */
 	wStream* s = new_pdu(INVALID_CMDID, 0);
@@ -341,8 +402,9 @@ static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr)
 	TEST_CHECK(rc);
 
 	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_UNACKNOWLEDGED") == 1);
-	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_DECODED") == 1);
-	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_UNCOMPRESSED_BYTES") == 12);
+	/* frames 1 and 3 (check_undecodable_command), with 5 + 7 + 4 bytes of uncompressed data */
+	TEST_CHECK(stat_value(gfx, "RDPGFX_FRAMES_DECODED") == 2);
+	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_UNCOMPRESSED_BYTES") == 16);
 
 	/* the next channel starts from zero */
 	TEST_CHECK(open_channel(mgr, &channel, &callback));

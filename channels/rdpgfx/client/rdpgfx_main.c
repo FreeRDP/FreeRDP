@@ -1541,6 +1541,34 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+/* A surface command that was read but could not be decoded (an unknown codec, a broken
+ * bitstream, a surface the server never created) costs that command, not the channel: the
+ * PDU is fully read, so the next one, and the frame's end, still follow. The server is not
+ * told: the frame is still acknowledged, so its flow control goes on, and the area stays as
+ * it was until the server updates it again. Running out of memory still ends the channel. */
+WINPR_ATTR_NODISCARD
+static UINT rdpgfx_surface_command_result(RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_COMMAND* cmd,
+                                          UINT error)
+{
+	WINPR_ASSERT(gfx);
+	WINPR_ASSERT(cmd);
+
+	switch (error)
+	{
+		case CHANNEL_RC_OK:
+		case CHANNEL_RC_NO_MEMORY:
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return error;
+		default:
+			WLog_Print(gfx->base.log, WLOG_WARN,
+			           "dropped a surface command (surface %" PRIu32 ", codec 0x%04" PRIX32
+			           "): error %" PRIu32,
+			           cmd->surfaceId, cmd->codecId, error);
+			return CHANNEL_RC_OK;
+	}
+}
+
 static UINT rdpgfx_recv_wire_to_surface_1_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_COMMAND cmd = WINPR_C_ARRAY_INIT;
@@ -1625,7 +1653,7 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(GENERIC_CHANNEL_CALLBACK* callback
 		WLog_Print(gfx->base.log, WLOG_ERROR, "rdpgfx_decode failed with error %" PRIu32 "!",
 		           error);
 
-	return error;
+	return rdpgfx_surface_command_result(gfx, &cmd, error);
 }
 
 WINPR_ATTR_NODISCARD
@@ -1754,7 +1782,7 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback
 	if (cmd.codecId != RDPGFX_CODECID_CAPROGRESSIVE)
 		return ERROR_INVALID_DATA;
 
-	return logSurfaceCommand(gfx, &cmd);
+	return rdpgfx_surface_command_result(gfx, &cmd, logSurfaceCommand(gfx, &cmd));
 }
 
 /**
