@@ -1064,8 +1064,7 @@ static void mutter_on_process(void* data)
 	while ((pb = pw_stream_dequeue_buffer(mutter->stream)) != nullptr)
 	{
 		struct spa_buffer* buf = pb->buffer;
-		// codespell:ignore-next-line datas
-		struct spa_data* d = &buf->datas[0];
+		struct spa_data* d = &buf->datas[0]; // codespell:ignore datas
 
 		mutter_cursor_update(mutter, buf);
 
@@ -1306,8 +1305,7 @@ static void mutter_on_audio_process(void* data)
 
 	while ((pb = pw_stream_dequeue_buffer(mutter->audio)) != nullptr)
 	{
-		// codespell:ignore-next-line datas
-		const struct spa_data* d = &pb->buffer->datas[0];
+		const struct spa_data* d = &pb->buffer->datas[0]; // codespell:ignore datas
 		if (d->data && d->chunk && (d->chunk->size > 0) &&
 		    ((size_t)d->chunk->offset + d->chunk->size <= d->maxsize))
 		{
