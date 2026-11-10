@@ -133,11 +133,20 @@ static BOOL udplistener_relay_forward(udpListenerRelay* relay)
 {
 	WINPR_ASSERT(relay);
 
+	/* The connection process created this socket and may still hold it: it can make the socket
+	 * blocking again and stall the thread that serves every relay. So the reads below do not rely
+	 * on the socket's mode: MSG_DONTWAIT, and on Windows, where that flag does not exist, the
+	 * mode is set again first. */
+#if defined(_WIN32)
+	u_long nonBlocking = 1;
+	if (_ioctlsocket(relay->sockfd, FIONBIO, &nonBlocking) != 0)
+		return FALSE;
+#endif
 	for (size_t count = 0; count < UDPLISTENER_READ_BUDGET; count++)
 	{
 		/* One spare byte: POSIX truncates to buffer size, so a full message is too large. */
 		BYTE data[UDPFLOW_MAX_DATAGRAM + 1] = WINPR_C_ARRAY_INIT;
-		const int rc = _recv(relay->sockfd, (char*)data, sizeof(data), 0);
+		const int rc = _recv(relay->sockfd, (char*)data, sizeof(data), MSG_DONTWAIT);
 		if (rc < 0)
 		{
 			const int error = WSAGetLastError();
