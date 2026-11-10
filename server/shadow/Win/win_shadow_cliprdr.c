@@ -1014,7 +1014,7 @@ static BOOL clip_client_is_local(rdpShadowClient* client)
 	const rdpSettings* settings = client->context.settings;
 	WINPR_ASSERT(settings);
 
-	const char* addr = settings->ClientAddress;
+	const char* addr = freerdp_settings_get_string(settings, FreeRDP_ClientAddress);
 	if (!addr)
 		return FALSE;
 
@@ -1099,7 +1099,7 @@ int win_shadow_cliprdr_init(rdpShadowClient* client)
 	if (clip_client_is_local(client))
 	{
 		WLog_INFO(TAG, "client %s is local: clipboard bridge deactivated",
-		          client->context.settings->ClientAddress);
+		          freerdp_settings_get_string(client->context.settings, FreeRDP_ClientAddress));
 		return 0;
 	}
 
