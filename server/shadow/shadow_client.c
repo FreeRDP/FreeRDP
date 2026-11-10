@@ -248,11 +248,14 @@ static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 
 	/* Clear queued messages and free resource */
 	MessageQueue_Free(client->MsgQueue);
+	MessageQueue_Free(client->SoundQueue);
 	WTSCloseServer(client->vcm);
 	region16_uninit(&(client->invalidRegion));
+	DeleteCriticalSection(&(client->vcmLock));
 	DeleteCriticalSection(&(client->lock));
 
 	client->MsgQueue = nullptr;
+	client->SoundQueue = nullptr;
 	client->encoder = nullptr;
 	client->vcm = nullptr;
 }
@@ -337,6 +340,9 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!InitializeCriticalSectionAndSpinCount(&(client->lock), 4000))
 		goto fail;
 
+	if (!InitializeCriticalSectionAndSpinCount(&(client->vcmLock), 4000))
+		goto fail;
+
 	region16_init(&(client->invalidRegion));
 	client->vcm = WTSOpenServerA((LPSTR)peer->context);
 
@@ -344,6 +350,9 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 		goto fail;
 
 	if (!(client->MsgQueue = MessageQueue_New(&cb)))
+		goto fail;
+
+	if (!(client->SoundQueue = MessageQueue_New(&cb)))
 		goto fail;
 
 	if (!(client->encoder = shadow_encoder_new(client)))
@@ -2743,7 +2752,10 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 				const UINT error = IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SetVolume,
 				                                client->rdpsnd, msg->left, msg->right);
 				if (CHANNEL_RC_OK != error)
+				{
+					shadow_client_free_queued_message(message);
 					return -1;
+				}
 			}
 
 			break;
@@ -2756,6 +2768,95 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 	shadow_client_free_queued_message(message);
 	return 1;
+}
+
+/* Puts the queued channel data on the wire. The client thread and the sound thread both do it,
+ * one at a time, so that the chunks of a channel keep their order. Only the client thread opens
+ * channels (autoOpen). */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_drain_channels(rdpShadowClient* client, BOOL autoOpen)
+{
+	WINPR_ASSERT(client);
+
+	EnterCriticalSection(&client->vcmLock);
+	const BOOL rc = WTSVirtualChannelManagerCheckFileDescriptorEx(client->vcm, autoOpen);
+	LeaveCriticalSection(&client->vcmLock);
+	return rc;
+}
+
+/* Sends the sound samples and volume as they come. On the client thread they waited for every
+ * frame to be encoded first (40 to 120 ms a frame with AV2, its key frames 500 to 800 ms), and
+ * the client ran dry: the sound crackled. */
+static DWORD WINAPI shadow_client_sound_thread(LPVOID arg)
+{
+	rdpShadowClient* client = (rdpShadowClient*)arg;
+	WINPR_ASSERT(client);
+	wMessageQueue* queue = client->SoundQueue;
+	WINPR_ASSERT(queue);
+	BOOL warned = FALSE;
+	BOOL broken = FALSE;
+
+	while (MessageQueue_Wait(queue))
+	{
+		wMessage message = WINPR_C_ARRAY_INIT;
+		BOOL quit = FALSE;
+		BOOL queued = FALSE;
+
+		while (MessageQueue_Peek(queue, &message, TRUE))
+		{
+			if (message.id == WMQ_QUIT)
+			{
+				quit = TRUE;
+				break;
+			}
+
+			/* the connection is gone: drop the sound, the client thread ends the client */
+			if (broken)
+			{
+				shadow_client_free_queued_message(&message);
+				continue;
+			}
+
+			/* frees the message */
+			const int rc = shadow_client_subsystem_process_message(client, &message);
+			if ((rc < 0) && !warned)
+			{
+				warned = TRUE;
+				WLog_WARN(TAG, "sound: the samples or the volume could not be sent");
+			}
+			queued = TRUE;
+		}
+
+		/* A failed drain means the connection is gone. Draining on held the channel lock and
+		 * wrote every chunk again into the dead transport, and the client thread waited for
+		 * the lock instead of ending the client. */
+		if (queued && !broken && !shadow_client_drain_channels(client, FALSE))
+		{
+			broken = TRUE;
+			WLog_DBG(TAG, "sound: the channel data was not sent, no more sound for this client");
+		}
+
+		if (quit)
+			break;
+	}
+
+	ExitThread(0);
+	return 0;
+}
+
+static void shadow_client_sound_thread_stop(rdpShadowClient* client)
+{
+	WINPR_ASSERT(client);
+
+	if (!client->soundThread)
+		return;
+
+	/* fails only without memory; the thread uses the channels, so it must be gone anyway */
+	if (!MessageQueue_PostQuit(client->SoundQueue, 0))
+		WLog_ERR(TAG, "sound: cannot ask the sound thread to stop");
+	(void)WaitForSingleObject(client->soundThread, INFINITE);
+	(void)CloseHandle(client->soundThread);
+	client->soundThread = nullptr;
 }
 
 /* A client that has never acknowledged a frame (and did not suspend the acknowledgements) still
@@ -2894,6 +2995,14 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	WINPR_ASSERT(rc);
 	rc = freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE);
 	WINPR_ASSERT(rc);
+
+	client->soundThread = CreateThread(nullptr, 0, shadow_client_sound_thread, client, 0, nullptr);
+	if (!client->soundThread)
+	{
+		WLog_ERR(TAG, "Failed to start the sound thread");
+		goto fail;
+	}
+
 	while (1)
 	{
 		HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
@@ -3028,7 +3137,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 				case DRDYNVC_STATE_NONE:
 
 					/* Call this routine to Initialize drdynvc channel */
-					if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
+					if (!shadow_client_drain_channels(client, TRUE))
 					{
 						WLog_ERR(TAG, "Failed to initialize drdynvc channel");
 						goto fail;
@@ -3078,7 +3187,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 
 		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
 		{
-			if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
+			if (!shadow_client_drain_channels(client, TRUE))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				goto fail;
@@ -3189,6 +3298,9 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	}
 
 fail:
+
+	/* The sound thread uses the channels: stop it first */
+	shadow_client_sound_thread_stop(client);
 
 	/* Free channels early because we establish channels in post connect */
 #if defined(CHANNEL_AUDIN_SERVER)
@@ -3311,8 +3423,14 @@ static BOOL shadow_client_dispatch_msg(rdpShadowClient* client, wMessage* messag
 	/* Add reference when it is posted */
 	shadow_msg_out_addref(message);
 
-	WINPR_ASSERT(client->MsgQueue);
-	if (MessageQueue_Dispatch(client->MsgQueue, message))
+	/* the sound has a thread of its own: see shadow_client_sound_thread */
+	wMessageQueue* queue = client->MsgQueue;
+	if ((message->id == SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES_ID) ||
+	    (message->id == SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID))
+		queue = client->SoundQueue;
+
+	WINPR_ASSERT(queue);
+	if (MessageQueue_Dispatch(queue, message))
 		return TRUE;
 	else
 	{

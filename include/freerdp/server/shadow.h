@@ -147,9 +147,16 @@ extern "C"
 		UINT32 resizeHeight;
 		BOOL areGfxCapsReady; /** @since version 3.3.0 */
 		RDPGFX_CAPSET confirmedCaps; /** @since version 3.25.0 */
+		/** sound samples and volume: a thread of their own sends them, so that a frame being
+		 *  encoded does not hold the sound back
+		 *  @since version 3.34.0 */
+		wMessageQueue* SoundQueue;
+		HANDLE soundThread;       /** @since version 3.34.0 */
+		CRITICAL_SECTION vcmLock; /** one drain of the channel queue at a time
+		                           *  @since version 3.34.0 */
 		/** the keys this client pressed and has not released, one bit per scan code with its
 		 *  KBD_FLAGS_EXTENDED (0x100) and KBD_FLAGS_EXTENDED1 (0x200) flags
-		 *  @since version 3.33.0 */
+		 *  @since version 3.34.0 */
 		BYTE keysDown[128];
 	};
 
