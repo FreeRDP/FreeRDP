@@ -81,7 +81,7 @@ FREERDP_LOCAL BOOL multitransport_queue_dvc(rdpMultitransport* multi, const BYTE
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_flush_dvc(rdpMultitransport* multi);
 
-/** Server: sends a Bandwidth Measure Start or Stop over the tunnel if the transport
+/** Server: Sends a Bandwidth Measure Start or Stop over the tunnel if the transport
  *  selects it. These must remain ordered with channel data, as the client measures
  *  the data in between. If the tunnel is not ready, the request fails rather than
  *  falling back to TCP.

@@ -48,11 +48,11 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 {
 	WTS_QUEUE_TCP = 0,
 	WTS_QUEUE_TUNNEL = 1,
-	WTS_QUEUE_WAKE = 2 /* no PDU: wakes the drain to start Soft-Sync */
+	WTS_QUEUE_WAKE = 2 /* No PDU: wakes the drain to initiate Soft-Sync */
 } WTS_QUEUE_ID;
 
-/* A message, not just the queue's event: the drain resets the event only when it takes the last
- * message, so an event set on an empty queue would stay set. */
+/* Post a message instead of just signaling the event. The drain only resets the event after
+ * processing the last message, so signaling an empty queue would leave the event set. */
 static void wts_tunnel_wake_drain(WTSVirtualChannelManager* vcm)
 {
 	WINPR_ASSERT(vcm);
@@ -234,8 +234,8 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 	/* Both the peer thread and the channel manager drain thread may call this; only one
 	 * should send the request. */
 	HashTable_Lock(vcm->dynamicVirtualChannels);
-	/* Read tunnelReady again under the lock: wts_tunnel_state_changed clears it before taking
-	 * the lock to decide whether a lost tunnel ends the connection or leaves it on TCP. */
+	/* Re-verify tunnelReady under the lock: wts_tunnel_state_changed may clear it before
+	 * acquiring the lock to decide if a lost tunnel terminates the connection or stays on TCP. */
 	if ((vcm->tunnel->softSyncState != SOFT_SYNC_STATE_NONE) ||
 	    !InterlockedCompareExchange(&vcm->tunnel->tunnelReady, 0, 0))
 	{
@@ -289,8 +289,8 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 		goto out;
 	}
 
-	/* The list is taken while holding the writeLocks: a channel closed meanwhile has posted its
-	 * Close Request on TCP already and is left out (see wts_tunnel_close_request). */
+	/* The list is processed while holding writeLocks; any channel closed in the meantime has
+	 * already posted its Close Request on TCP and is excluded (see wts_tunnel_close_request). */
 	for (size_t x = 0; x < count; x++)
 		EnterCriticalSection(&channels[x]->writeLock);
 	moving = (rdpPeerChannel**)calloc(count, sizeof(rdpPeerChannel*));
@@ -536,8 +536,8 @@ BOOL wts_tunnel_after_drain(WTSVirtualChannelManager* vcm, BOOL status)
 	WINPR_ASSERT(vcm);
 	WINPR_ASSERT(vcm->tunnel);
 
-	/* A channel that answered during this drain may have had its wake message drained before
-	 * Soft-Sync saw the flag: wake the drain again. */
+	/* If a channel responded during this drain, its wake message might have been processed
+	 * before Soft-Sync saw the flag; trigger the drain again. */
 	if (InterlockedCompareExchange(&vcm->tunnel->softSyncDue, 0, 0) != 0)
 		wts_tunnel_wake_drain(vcm);
 
@@ -583,8 +583,8 @@ BOOL wts_tunnel_close_request(rdpPeerChannel* channel, const BYTE* data, size_t 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(status);
 
-	/* the Close Request goes out now: a Soft-Sync waiting for this writeLock must not list the
-	 * channel ([MS-RDPEDYC] 2.2.5.1 lists the channels the server will send data for) */
+	/* Send the Close Request now. A Soft-Sync waiting for this writeLock must not list the
+	 * channel ([MS-RDPEDYC] 2.2.5.1 lists the channels the server will send data for). */
 	channel->closing = TRUE;
 	if (!channel->tunnel)
 		return FALSE;

@@ -24,7 +24,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-/* The Soft-Sync triggers are static, so the file is compiled in. */
+/* Include the source file directly because Soft-Sync triggers are defined as static. */
 // NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../server_tunnel.c"
 

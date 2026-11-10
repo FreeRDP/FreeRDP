@@ -249,15 +249,16 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * v3_resync_base. Two keepalive intervals, an idle tunnel never gets there. */
 #define RDPUDP2_RESYNC_MS (2ull * RDPUDP2_KEEPALIVE_MS)
 
-/* Server: how far behind its window an AckOfAcks after a silence leaves the window where it is,
- * see v3_resync_base: Windows resends at most 8190 past its oldest unacknowledged datagram, plus
- * as much again for datagrams still under way. A real move landing there takes 49152 numbers
- * within the peer timeout, Windows moves at most ~2500 a second. */
+/* Server: The distance behind the window that an AckOfAcks after silence can be while
+ * keeping the window stationary. See v3_resync_base: Windows resends at most 8190 packets
+ * past the oldest unacknowledged datagram, plus another 8190 for those in flight. A real
+ * sequence move to this point would require 49152 numbers within the peer timeout, but
+ * Windows moves at most ~2500 per second. */
 #define RDPUDP2_STALE_AOA_REACH 16384
 
-/* Server: the newest data sequence number stays this close to the oldest one in flight, resends
- * included. [MS-RDPEUDP2] 3.1.1.1.3 limits the active range to 32767, past half the space serial
- * arithmetic takes the AckOfAcks for a number ahead. */
+/* Server: Limits the distance between the newest data sequence number and the oldest one in
+ * flight, including resends. [MS-RDPEUDP2] 3.1.1.1.3 limits the active range to 32767, as
+ * exceeding half the space causes serial arithmetic to treat AckOfAcks as a number ahead. */
 #define RDPUDP2_MAX_RESEND_SPAN (RDPUDP_RECEIVE_REACH - 1)
 
 /* [MS-RDPEUDP2] 3.1.5.1.3: the peer resends a lost chunk under a new data sequence number, and
@@ -372,7 +373,7 @@ struct rdp_udp
 	BOOL cwrPending;
 	UINT32 announcedAoA;
 	BOOL aoaAnnounced;
-	BOOL peerAcked; /* TRUE if the peer has acknowledged at least one data datagram */
+	BOOL peerAcked; /* Indicates whether the peer has acknowledged at least one data datagram */
 	UINT16 nextChannelSeq;
 
 	/* receiving side */
@@ -1123,10 +1124,10 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) &&
 	                     (udp->v3BehindCount == 0) && !udp->v3Resync;
 	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
-	/* Include on retransmissions in case the original announcement was lost, and in all data
-	 * until the peer acknowledges ([MS-RDPEUDP2] 3.1.5.3, as Windows does). The peer determines
-	 * the sequence space start from the first AckOfAcks; otherwise, it uses the first arriving
-	 * datagram and assumes preceding packets were received. */
+	/* Include AoA on retransmissions if the original announcement was lost, and in all data
+	 * until the peer acknowledges ([MS-RDPEUDP2] 3.1.5.3, matching Windows behavior). The peer
+	 * determines the sequence space start from the first AckOfAcks; otherwise, it uses the
+	 * first arriving datagram and assumes preceding packets were received. */
 	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) ||
 	                     (p->retransmits > 0) || !udp->peerAcked;
 
@@ -1919,13 +1920,14 @@ static void v3_resync_base(rdpUdp* udp, UINT16 base)
 {
 	WINPR_ASSERT(udp);
 	udp->v3Resync = FALSE;
-	/* Server: a base a little behind ours means the peer's numbers did not wrap, our position
-	 * still holds. Our acknowledgements were lost in the silence, or the datagram is older than
-	 * it (a repeat, or one reordered across it). Taken, the base moves the window back below what
-	 * was acknowledged already, and mstsc ends the connection on the ACK vector that follows. A
-	 * real move cannot land there: the peer keeps its numbers within RDPUDP2_STALE_AOA_REACH of
-	 * its oldest unacknowledged one, and the peer timeout ends the connection long before it can
-	 * move almost the whole sequence space on. The window stays, and acknowledging resumes. */
+	/* Server: a base slightly behind ours indicates the peer's sequence numbers haven't wrapped,
+	 * meaning our current position is still valid. The discrepancy likely stems from lost
+	 * ACKs during the silence or a reordered/duplicate packet. Moving the window back to this
+	 * base would place it below what was already acknowledged, which causes mstsc to drop the
+	 * connection upon the next ACK vector. A legitimate move wouldn't land here because the
+	 * peer keeps numbers within RDPUDP2_STALE_AOA_REACH of the oldest unacknowledged one,
+	 * and timeouts occur before the sequence space can wrap. The window remains, and
+	 * acknowledging resumes. */
 	if (udp->server && seq16_after(udp->v3Expected, base) &&
 	    (seq16_diff(udp->v3Expected, base) <= RDPUDP2_STALE_AOA_REACH))
 	{
@@ -2007,8 +2009,9 @@ static BOOL v3_not_sent(const rdpUdp* udp, UINT16 seq)
 	return seq16_after(seq, v3_last_sent(udp));
 }
 
-/* TRUE if seq lies from sendBase up to the next sequence number, with datagrams in flight. Exact
- * where serial arithmetic is not: everything in flight is within RDPUDP2_MAX_RESEND_SPAN. */
+/* Returns TRUE if seq is between sendBase and the next sequence number, with datagrams in
+ * flight. Unlike serial arithmetic this is exact, because everything in flight lies within
+ * RDPUDP2_MAX_RESEND_SPAN. */
 WINPR_ATTR_NODISCARD
 static BOOL v3_from_send_base(const rdpUdp* udp, UINT16 seq)
 {
@@ -2075,12 +2078,13 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 		}
 	}
 
-	/* All packets below the base have been received, unless the vector reports its base
-	 * received: the base of an ACK vector is the receiver's first missing packet ([MS-RDPEUDP2]
-	 * 3.1.5.7), one that arrived is a report on a packet behind the receiver's window, which a
-	 * FreeRDP client sends (see v3_process_datagram) and which says nothing about what lies below
-	 * it (4.2.2). After a silence, such a packet may only look behind a stale window. Server: not
-	 * either when the base lies behind everything in flight, see v3_process_ack. */
+	/* All packets below the base are received, unless the vector reports the base as received.
+	 * The base is typically the receiver's first missing packet ([MS-RDPEUDP2] 3.1.5.7).
+	 * If the base is reported as received, it may be a report on a packet behind the
+	 * receiver's window (sent by FreeRDP clients, see v3_process_datagram and 4.2.2),
+	 * which says nothing about packets below it. After silence, this may refer to a
+	 * stale window. For servers, this doesn't apply if the base is behind all in-flight
+	 * packets (see v3_process_ack). */
 	const BOOL baseIsMissing = (covered == 0) || !received[0];
 	const BOOL baseInRange =
 	    baseIsMissing && (!udp->server || (udp->inFlight == 0) || v3_from_send_base(udp, base));
@@ -2157,9 +2161,9 @@ static void v3_process_ack(rdpUdp* udp, UINT16 ack)
 		           ack, v3_last_sent(udp));
 		return;
 	}
-	/* An ACK behind everything in flight acknowledges nothing. From more than half the sequence
-	 * space back (the peer heard nothing from us for a long time) serial arithmetic would read it
-	 * as ahead of sendBase and acknowledge datagrams the peer never got. */
+	/* ACKs preceding all in-flight packets are ignored. If an ACK is more than half the sequence
+	 * space behind sendBase, wrap-around arithmetic could misinterpret it as being ahead,
+	 * incorrectly acknowledging packets the peer never received. */
 	if (udp->server && (udp->inFlight > 0) && !v3_from_send_base(udp, ack))
 		return;
 	/* cumulative: everything up to and including ack */
@@ -2329,11 +2333,11 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	if (!haveData)
 		return TRUE;
 
-	/* Server: the base comes from an AckOfAcks only. FreeRDP clients before version 3.34 put one
-	 * on their first data packet and on resends, not on the ones after (since then they repeat
-	 * it until acknowledged, see v3_send_data): taken from one of those, a lost or late first
-	 * packet would lie below the base, and the cumulative ACK that follows tells the client it
-	 * arrived. Ignored, the packet is resent with an AckOfAcks. */
+	/* Server: The base is derived only from AckOfAcks. Before version 3.34, FreeRDP clients
+	 * sent AckOfAcks only on the first data packet and resends (now they repeat it until
+	 * acknowledged, see v3_send_data). Using a later packet as the base could cause a lost
+	 * first packet to be below the base, leading to a false cumulative ACK. Ignoring the
+	 * packet ensures it is resent with an AckOfAcks. */
 	if (udp->server && !udp->v3BaseKnown && !haveAoA)
 		return TRUE;
 
@@ -2367,13 +2371,13 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	 * vector for such a packet. Only its chunk counts. */
 	BOOL acknowledged = haveAoA && seq16_after(aoa, dataSeq);
 
-	/* mstsc sometimes repeats old data packets and closes the connection on an ACK vector for a
-	 * packet already covered by a cumulative ACK. To avoid this, the server does not report
-	 * packets behind its window. If the server's position becomes incorrect after a silence,
-	 * it waits for the next AckOfAcks to resync: an ACK vector based on a packet that only looks
-	 * behind a stale window would also tell a peer that takes everything below the base as
-	 * received (as v3_process_ack_vector does) that packets never seen arrived. Unacknowledged,
-	 * the packet comes again with an AckOfAcks. */
+	/* mstsc sometimes resends old data packets and closes the connection if it receives an ACK
+	 * vector for a packet already covered by a cumulative ACK. To avoid this, the server does
+	 * not report packets behind its window. If the server's state becomes incorrect after a
+	 * silence, it waits for the next AckOfAcks to resync. An ACK vector based on a stale
+	 * window could falsely indicate that unseen packets arrived (as v3_process_ack_vector
+	 * treats everything below the base as received). Unacknowledged, the packet will be
+	 * resent with an AckOfAcks. */
 	if (udp->server && behind)
 	{
 		WLog_Print(udp->log, WLOG_DEBUG,
@@ -2724,9 +2728,9 @@ static BOOL run_timers(rdpUdp* udp)
 			nextDue = pending_next_due(udp, p, nextDue);
 			continue;
 		}
-		/* A resend takes a new number. Once the newest is about to get too far from the oldest in
-		 * flight, the oldest goes out again first, which moves sendBase on; the others wait for
-		 * the next scan, which comes right away. */
+		/* Resends use new sequence numbers. If the gap between the newest and oldest in-flight
+		 * packets reaches the limit, the oldest is resent first to advance sendBase; others
+		 * are handled in the next scan, which occurs immediately. */
 		if (udp->server && v3 && (p->seq != udp->sendBase) &&
 		    (seq16_diff(WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded),
 		                WINPR_ASSERTING_INT_CAST(UINT16, udp->sendBase)) >=

@@ -76,8 +76,8 @@ struct rdp_peer_channel
 	 * writable, also hold the writeLock to ensure no messages cross the switch from
 	 * TCP to the tunnel. */
 	BOOL tunnel;
-	/* True once the Close Request is posted, set while holding the writeLock; Soft-Sync leaves
-	 * the channel out from then on. Only the tunnel code sets it. */
+	/* True once the Close Request is posted; set while holding the writeLock. Soft-Sync
+	 * excludes the channel from this point forward. Only the tunnel code sets this. */
 	BOOL closing;
 };
 

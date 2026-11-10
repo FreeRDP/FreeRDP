@@ -74,9 +74,9 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL wts_tunnel_open_channel(WTSVirtualChannelManager* vcm, rdpPeerChannel* channel,
                                            wStream* s, BOOL* onTunnel);
 
-/** Queue a copy of a channel's Close Request if the channel is on the tunnel. Call with the
- * channel's writeLock held: the channel is marked as closing, so a Soft-Sync from then on leaves
- * it out.
+/** Queue a copy of the channel's Close Request if it is on the tunnel. Call with the
+ * channel's writeLock held; the channel is marked as closing, so it is excluded from
+ * subsequent Soft-Sync operations.
  * @param status set to FALSE on error
  * @return TRUE if the channel is on the tunnel */
 WINPR_ATTR_NODISCARD

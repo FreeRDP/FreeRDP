@@ -40,7 +40,7 @@
 #include <winpr/winsock.h>
 #include <winpr/wlog.h>
 
-/* The tunnel's static functions are what the fuzzer drives, so their files are compiled in. */
+/* Include source files directly to allow the fuzzer to target the tunnel's static functions. */
 // NOLINTNEXTLINE(bugprone-suspicious-include)
 #include "../rdpemt.c"
 #undef TAG
