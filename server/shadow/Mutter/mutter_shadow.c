@@ -84,29 +84,29 @@
 #define SC_STREAM_IFACE "org.gnome.Mutter.ScreenCast.Stream"
 
 /* ScreenCast cursor mode: the cursor comes as buffer metadata, not painted in */
-#define MUTTER_CURSOR_MODE_METADATA 2
+#define MUTTER_CURSOR_MODE_METADATA 2u
 
 /* cursor metadata: position, hot spot and, when the shape changes, a bitmap;
  * Mutter's bitmaps are up to 384x384 */
 #define MUTTER_CURSOR_META_SIZE(width, height) \
 	(sizeof(struct spa_meta_cursor) + sizeof(struct spa_meta_bitmap) + (width) * (height) * 4)
-#define MUTTER_CURSOR_META_MAX 384
+#define MUTTER_CURSOR_META_MAX 384u
 
 /* the largest pointer sent to the clients */
-#define MUTTER_SHADOW_CURSOR_MAX 96
+#define MUTTER_SHADOW_CURSOR_MAX 96u
 
 /* how long after a client's own pointer motion the server leaves the pointer
  * position to that client */
-#define MUTTER_SHADOW_CURSOR_QUIET_MS 500
+#define MUTTER_SHADOW_CURSOR_QUIET_MS 500u
 
-/* damage rectangles taken from one buffer */
-#define MUTTER_MAX_DAMAGE 16
+/* damage rectangles taken from one buuffer */
+#define MUTTER_MAX_DAMAGE 16u
 
 /* how long Mutter may take to offer its API, announce the stream, and give
  * the stream a format */
-#define MUTTER_NAME_TIMEOUT_MS 10000
-#define MUTTER_STREAM_TIMEOUT_MS 5000
-#define MUTTER_FORMAT_TIMEOUT_MS 5000
+#define MUTTER_NAME_TIMEOUT_MS 10000u
+#define MUTTER_STREAM_TIMEOUT_MS 5000u
+#define MUTTER_FORMAT_TIMEOUT_MS 5000u
 
 /* What the clients hear: 48 kHz, 2 channels, 16 bits; PipeWire converts what
  * the sink plays to it. The build may have no resampler, so every format
@@ -115,13 +115,13 @@
  * a client that has it takes it (96 kbit/s instead of 1.5 Mbit/s for PCM). Its
  * block alignment is 1: rdpsnd pads every wave to a multiple of it with zeros,
  * and an Opus packet with zeros after it no longer decodes. */
-#define MUTTER_AUDIO_RATE 48000
-#define MUTTER_AUDIO_CHANNELS 2
-#define MUTTER_AUDIO_FRAME_BYTES (MUTTER_AUDIO_CHANNELS * 2)
+#define MUTTER_AUDIO_RATE 48000u
+#define MUTTER_AUDIO_CHANNELS 2u
+#define MUTTER_AUDIO_FRAME_BYTES (MUTTER_AUDIO_CHANNELS * 2ull)
 /* samples are sent in messages of 20 ms */
-#define MUTTER_AUDIO_MESSAGE_FRAMES (MUTTER_AUDIO_RATE / 50)
+#define MUTTER_AUDIO_MESSAGE_FRAMES (MUTTER_AUDIO_RATE / 50u)
 /* how often the sound statistics are logged (debug level) */
-#define MUTTER_AUDIO_LOG_MS 5000
+#define MUTTER_AUDIO_LOG_MS 5000u
 
 /* xkbcommon's core modifiers: Lock is Caps Lock, Mod2 is Num Lock in every
  * stock keymap */
@@ -147,6 +147,11 @@ typedef struct
 	int primary;
 	char connector[MUTTER_SHADOW_CONNECTOR_SIZE];
 } MUTTER_LOGICAL;
+
+WINPR_ATTR_NODISCARD
+FREERDP_API const char* ShadowSubsystemName(void);
+WINPR_ATTR_NODISCARD
+FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 
 static const AUDIO_FORMAT mutter_audio_offered_formats[] = {
 	{ WAVE_FORMAT_OPUS, MUTTER_AUDIO_CHANNELS, MUTTER_AUDIO_RATE, 12000, 1, 16, 0, nullptr },
@@ -210,7 +215,9 @@ static BOOL mutter_call_for_path(sd_bus* bus, sd_bus_message* call, const char* 
 	const int called = sd_bus_call(bus, call, 0, &err, &reply);
 	if (called < 0)
 	{
-		WLog_ERR(TAG, "%s failed: %s", what, err.message ? err.message : strerror(-called));
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "%s failed: %s", what,
+		         err.message ? err.message : winpr_strerror(-called, buffer, sizeof(buffer)));
 		sd_bus_error_free(&err);
 		return FALSE;
 	}
@@ -434,7 +441,9 @@ static UINT32 mutter_list_monitors(sd_bus* bus, MONITOR_DEF* monitors,
 	    sd_bus_call_method(bus, DC_NAME, DC_PATH, DC_NAME, "GetCurrentState", &err, &reply, "");
 	if (called < 0)
 	{
-		WLog_WARN(TAG, "GetCurrentState failed: %s", err.message ? err.message : strerror(-called));
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "GetCurrentState failed: %s",
+		          err.message ? err.message : winpr_strerror(-called, buffer, sizeof(buffer)));
 		sd_bus_error_free(&err);
 		return 0;
 	}
@@ -503,7 +512,9 @@ static UINT32 mutter_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonit
 	const int opened = sd_bus_open_user(&bus);
 	if (opened < 0)
 	{
-		WLog_WARN(TAG, "cannot connect to the session bus: %s", strerror(-opened));
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "cannot connect to the session bus: %s",
+		          winpr_strerror(-opened, buffer, sizeof(buffer)));
 		return 0;
 	}
 
@@ -576,12 +587,14 @@ static void mutter_read_stream_parameters(mutterShadowSubsystem* mutter)
 	                                    "Parameters", &err, &reply, "a{sv}");
 	if (got < 0)
 	{
-		WLog_DBG(TAG, "no stream parameters: %s", err.message ? err.message : strerror(-got));
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_DBG(TAG, "no stream parameters: %s",
+		         err.message ? err.message : winpr_strerror(-got, buffer, sizeof(buffer)));
 		sd_bus_error_free(&err);
 		return;
 	}
 
-	if (mutter_read_dict(reply, "mapping-id", 's', &mappingId) && mappingId)
+	if (mutter_read_dict(reply, "mapping-id", 's', (void*)(&mappingId)) && mappingId)
 	{
 		free(mutter->mappingId);
 		mutter->mappingId = _strdup(mappingId);
@@ -615,7 +628,9 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 	                                             RD_SESSION_IFACE, "SessionId", &err, &sessionId);
 	if (gotId < 0)
 	{
-		WLog_ERR(TAG, "no SessionId: %s", err.message ? err.message : strerror(-gotId));
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "no SessionId: %s",
+		         err.message ? err.message : winpr_strerror(-gotId, buffer, sizeof(buffer)));
 		goto out;
 	}
 
@@ -663,8 +678,9 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 	                                       RD_SESSION_IFACE, "Start", &err, nullptr, "");
 	if (started < 0)
 	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "RemoteDesktop.Session.Start failed: %s",
-		         err.message ? err.message : strerror(-started));
+		         err.message ? err.message : winpr_strerror(-started, buffer, sizeof(buffer)));
 		goto out;
 	}
 	mutter->started = TRUE;
@@ -682,7 +698,7 @@ static BOOL mutter_setup_sessions(mutterShadowSubsystem* mutter, const char* con
 			WLog_ERR(TAG, "Mutter announced no PipeWire stream");
 			goto out;
 		}
-		(void)sd_bus_wait(mutter->bus, 100 * 1000);
+		(void)sd_bus_wait(mutter->bus, 100ull * 1000ull);
 	}
 	mutter_read_stream_parameters(mutter);
 
@@ -1048,6 +1064,7 @@ static void mutter_on_process(void* data)
 	while ((pb = pw_stream_dequeue_buffer(mutter->stream)) != nullptr)
 	{
 		struct spa_buffer* buf = pb->buffer;
+		// codespell:ignore-next-line datas
 		struct spa_data* d = &buf->datas[0];
 
 		mutter_cursor_update(mutter, buf);
@@ -1155,7 +1172,9 @@ static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 	mutter->core = pw_context_connect(mutter->context, nullptr, 0);
 	if (!mutter->core)
 	{
-		WLog_ERR(TAG, "cannot connect to PipeWire: %s", strerror(errno));
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "cannot connect to PipeWire: %s",
+		         winpr_strerror(errno, buffer, sizeof(buffer)));
 		return FALSE;
 	}
 	pw_core_add_listener(mutter->core, &mutter->coreListener, &mutter_core_events, mutter);
@@ -1287,11 +1306,14 @@ static void mutter_on_audio_process(void* data)
 
 	while ((pb = pw_stream_dequeue_buffer(mutter->audio)) != nullptr)
 	{
+		// codespell:ignore-next-line datas
 		const struct spa_data* d = &pb->buffer->datas[0];
 		if (d->data && d->chunk && (d->chunk->size > 0) &&
 		    ((size_t)d->chunk->offset + d->chunk->size <= d->maxsize))
 		{
-			const INT16* samples = (const INT16*)((const BYTE*)d->data + d->chunk->offset);
+			const BYTE* bdata = d->data;
+			const BYTE* offset = &bdata[d->chunk->offset];
+			const INT16* samples = WINPR_PACKED_ALIGN_CAST(const INT16*, offset);
 			const size_t frames = d->chunk->size / MUTTER_AUDIO_FRAME_BYTES;
 			mutter_audio_stats(mutter, frames);
 
@@ -1523,14 +1545,14 @@ static BOOL mutter_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
 	if (mutter->ei && mutter->lockedModsKnown)
 	{
 		/* the client's lock keys win: tap each one that differs */
-		const BOOL caps = (flags & KBD_SYNC_CAPS_LOCK) ? TRUE : FALSE;
-		const BOOL num = (flags & KBD_SYNC_NUM_LOCK) ? TRUE : FALSE;
-		if (caps != ((mutter->lockedMods & MUTTER_MOD_LOCK) ? TRUE : FALSE))
+		const BOOL caps = (flags & KBD_SYNC_CAPS_LOCK) != 0;
+		const BOOL num = (flags & KBD_SYNC_NUM_LOCK) != 0;
+		if (caps != ((mutter->lockedMods & MUTTER_MOD_LOCK) != 0))
 		{
 			mutter_key(mutter, KEY_CAPSLOCK, TRUE);
 			mutter_key(mutter, KEY_CAPSLOCK, FALSE);
 		}
-		if (num != ((mutter->lockedMods & MUTTER_MOD_NUM) ? TRUE : FALSE))
+		if (num != ((mutter->lockedMods & MUTTER_MOD_NUM) != 0))
 		{
 			mutter_key(mutter, KEY_NUMLOCK, TRUE);
 			mutter_key(mutter, KEY_NUMLOCK, FALSE);
@@ -1564,7 +1586,7 @@ static BOOL mutter_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem,
 	}
 
 	/* a key is pressed unless the release flag is set (KBD_FLAGS_DOWN marks a repeat) */
-	const BOOL down = (flags & KBD_FLAGS_RELEASE) ? FALSE : TRUE;
+	const BOOL down = (flags & KBD_FLAGS_RELEASE) == 0;
 
 	EnterCriticalSection(&mutter->eiLock);
 	if (mutter->ei)
@@ -1684,7 +1706,7 @@ static BOOL mutter_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpSh
 			/* button events carry the position too */
 			mutter_pointer_move(mutter, x, y);
 
-			const BOOL down = (flags & PTR_FLAGS_DOWN) ? TRUE : FALSE;
+			const BOOL down = (flags & PTR_FLAGS_DOWN) != 0;
 			if (flags & PTR_FLAGS_BUTTON1)
 				mutter_pointer_button(mutter, BTN_LEFT, down);
 			else if (flags & PTR_FLAGS_BUTTON2)
@@ -1711,10 +1733,10 @@ static BOOL mutter_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsyst
 	{
 		mutter_pointer_move(mutter, x, y);
 
-		const BOOL down = (flags & PTR_XFLAGS_DOWN) ? TRUE : FALSE;
-		if (flags & PTR_XFLAGS_BUTTON1)
+		const BOOL down = (flags & PTR_XFLAGS_DOWN) != 0;
+		if ((flags & PTR_XFLAGS_BUTTON1) != 0)
 			mutter_pointer_button(mutter, BTN_SIDE, down);
-		else if (flags & PTR_XFLAGS_BUTTON2)
+		else if ((flags & PTR_XFLAGS_BUTTON2) != 0)
 			mutter_pointer_button(mutter, BTN_EXTRA, down);
 	}
 	LeaveCriticalSection(&mutter->eiLock);
@@ -1785,11 +1807,28 @@ static int mutter_shadow_pam_authenticate(WINPR_ATTR_UNUSED rdpShadowSubsystem* 
 	if (!user || !password)
 		return -1;
 
-	const struct passwd* owner = getpwuid(getuid());
+	struct passwd pbuffer = WINPR_C_ARRAY_INIT;
+	struct passwd* owner = nullptr;
+
+	const long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (buflen <= 0)
+	{
+		WLog_ERR(TAG, "login as '%s' refused: _SC_GETPW_R_SIZE_MAX = %ld", buflen);
+		return -1;
+	}
+	char* buf = calloc((size_t)buflen, sizeof(char));
+	if (!buf)
+	{
+		WLog_ERR(TAG, "login as '%s' refused: _SC_GETPW_R_SIZE_MAX = %ld allocation failed",
+		         buflen);
+		return -1;
+	}
+	const int rc = getpwuid_r(getuid(), &pbuffer, buf, sizeof(buf), &owner);
 	if (!owner || !owner->pw_name || (strcmp(owner->pw_name, user) != 0))
 	{
 		WLog_ERR(TAG, "login as '%s' refused: this session belongs to '%s'", user,
 		         (owner && owner->pw_name) ? owner->pw_name : "?");
+		free(buf);
 		return -1;
 	}
 
@@ -1804,6 +1843,7 @@ static int mutter_shadow_pam_authenticate(WINPR_ATTR_UNUSED rdpShadowSubsystem* 
 	if (status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_start(%s) failure: %s", service, pam_strerror(handle, status));
+		free(buf);
 		return -1;
 	}
 
@@ -1814,6 +1854,7 @@ static int mutter_shadow_pam_authenticate(WINPR_ATTR_UNUSED rdpShadowSubsystem* 
 		WLog_ERR(TAG, "login as '%s' failed: %s", user, pam_strerror(handle, status));
 
 	pam_end(handle, status);
+	free(buf);
 	return (status == PAM_SUCCESS) ? 1 : -1;
 }
 #endif
@@ -1989,10 +2030,11 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	const int opened = sd_bus_open_user(&mutter->bus);
 	if (opened < 0)
 	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG,
 		         "cannot connect to the session bus: %s (start the server inside the GNOME "
 		         "session, as its user)",
-		         strerror(-opened));
+		         winpr_strerror(-opened, buffer, sizeof(buffer)));
 		return -1;
 	}
 
@@ -2212,14 +2254,12 @@ static rdpShadowSubsystem* mutter_shadow_subsystem_new(void)
 	return &mutter->common;
 }
 
-WINPR_ATTR_NODISCARD
-FREERDP_API const char* ShadowSubsystemName(void)
+const char* ShadowSubsystemName(void)
 {
 	return "Mutter";
 }
 
-WINPR_ATTR_NODISCARD
-FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	WINPR_ASSERT(pEntryPoints);
 
