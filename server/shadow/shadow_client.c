@@ -2686,6 +2686,85 @@ out:
 	return ret;
 }
 
+/* A size change can go through the graphics pipeline once its surface exists */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_gfx_can_reset(rdpShadowClient* client, const SHADOW_GFX_STATUS* pStatus)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(pStatus);
+
+	return pStatus->gfxOpened && pStatus->gfxSurfaceCreated && client->areGfxCapsReady &&
+	       client->rdpgfx &&
+	       freerdp_settings_get_bool(client->context.settings, FreeRDP_SupportGraphicsPipeline);
+}
+
+/**
+ * Function description
+ * Resize a client that has the graphics pipeline with the [MS-RDPEGFX] Reset Graphics PDU: delete
+ * the surface, Reset Graphics with the new size and monitors, then a new surface mapped to the
+ * output. The client resizes its desktop on the Reset Graphics PDU, so there is no
+ * Deactivate All and no reactivation: nothing else (pointer, sound, input) is held, and every
+ * frame after this is for the new size, on the new surface.
+ *
+ * @return TRUE on success
+ */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_gfx_resize(rdpShadowClient* client, SHADOW_GFX_STATUS* pStatus)
+{
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(pStatus);
+	WINPR_ASSERT(client->server);
+	WINPR_ASSERT(client->server->surface);
+
+	rdpSettings* settings = client->context.settings;
+	WINPR_ASSERT(settings);
+
+	RECTANGLE_16 viewport = {
+		.left = 0,
+		.top = 0,
+		.right = WINPR_ASSERTING_INT_CAST(UINT16, client->server->surface->width),
+		.bottom = WINPR_ASSERTING_INT_CAST(UINT16, client->server->surface->height)
+	};
+	if (client->server->shareSubRect)
+	{
+		if (!rectangles_intersection(&viewport, &(client->server->subRect), &viewport))
+			return FALSE;
+	}
+	const UINT32 width = viewport.right - viewport.left;
+	const UINT32 height = viewport.bottom - viewport.top;
+
+	if (!shadow_client_rdpgfx_release_surface(client))
+		return FALSE;
+	pStatus->gfxSurfaceCreated = FALSE;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, width))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, height))
+		return FALSE;
+
+	if (!shadow_client_rdpgfx_reset_graphic(client))
+		return FALSE;
+	if (!shadow_client_rdpgfx_new_surface(client))
+		return FALSE;
+	pStatus->gfxSurfaceCreated = TRUE;
+
+	/* the codecs are sized for the old surface, the next frame is a whole one */
+	if (shadow_encoder_reset(client->encoder) < 0)
+	{
+		WLog_ERR(TAG, "Failed to reset encoder");
+		return FALSE;
+	}
+
+	EnterCriticalSection(&(client->lock));
+	region16_clear(&(client->invalidRegion));
+	LeaveCriticalSection(&(client->lock));
+	shadow_client_mark_invalid(client, 0, nullptr);
+
+	WLog_INFO(TAG, "Client %s resized to %" PRIu32 "x%" PRIu32 " by Reset Graphics",
+	          client->context.peer->hostname, width, height);
+	return TRUE;
+}
+
 /**
  * Function description
  * Notify client for resize. The new desktop width/height
@@ -3227,8 +3306,23 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 				/* Check resize */
 				if (shadow_client_recalc_desktop_size(client))
 				{
+					if (shadow_client_gfx_can_reset(client, &gfxstatus))
+					{
+						/* the new size and this update's frame for it, in that order */
+						if (!shadow_client_gfx_resize(client, &gfxstatus))
+						{
+							WLog_ERR(TAG, "Failed to resize the graphics pipeline");
+							break;
+						}
+						if (!shadow_client_send_surface_update(client, &gfxstatus))
+						{
+							WLog_ERR(TAG, "Failed to send surface update");
+							break;
+						}
+						client->encoder->gfxHeld = FALSE;
+					}
 					/* Screen size changed, do resize */
-					if (!shadow_client_send_resize(client, &gfxstatus))
+					else if (!shadow_client_send_resize(client, &gfxstatus))
 					{
 						WLog_ERR(TAG, "Failed to send resize message");
 						break;
