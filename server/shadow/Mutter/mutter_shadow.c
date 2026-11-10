@@ -87,6 +87,9 @@
 #define MUTTER_CURSOR_MODE_EMBEDDED 1u
 #define MUTTER_CURSOR_MODE_METADATA 2u
 #define MUTTER_VIRTUAL_ENV "FREERDP_SHADOW_MUTTER_VIRTUAL"
+/* "0" turns off the check for changes Mutter left out of its damage */
+#define MUTTER_DAMAGE_CHECK_ENV "FREERDP_SHADOW_MUTTER_DAMAGE_CHECK"
+#define MUTTER_CHECK_TILE 64
 
 /* FREERDP_SHADOW_MUTTER_VIRTUAL=<w>x<h>: TRUE and the size when set and valid */
 WINPR_ATTR_NODISCARD
@@ -872,6 +875,8 @@ static void mutter_cursor_send_shape(mutterShadowSubsystem* mutter, const BYTE* 
 	WINPR_ASSERT(pixels);
 
 	const UINT32 hash = mutter_cursor_hash(pixels, width, height, xHot, yHot);
+	WLog_DBG(TAG, "pointer shape %" PRIu32 "x%" PRIu32 ", resend %d", width, height,
+	         mutter->cursorResend);
 	if (mutter->cursorKnown && !mutter->cursorResend && (hash == mutter->cursorHash))
 		return;
 
@@ -939,6 +944,58 @@ static void mutter_cursor_send_position(mutterShadowSubsystem* mutter, INT32 x, 
 		WLog_DBG(TAG, "the pointer position was not sent");
 }
 
+/* Mutter sends a shape only when it changes, so a client that connects later would
+ * have no pointer until something else changed it */
+static void mutter_cursor_remember(mutterShadowSubsystem* mutter, const BYTE* pixels, UINT32 width,
+                                   UINT32 height, UINT32 xHot, UINT32 yHot)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(pixels);
+
+	const size_t size = 4ull * width * height;
+	BYTE* copy = malloc(size);
+	if (!copy)
+		return;
+	memcpy(copy, pixels, size);
+
+	free(mutter->cursorPixels);
+	mutter->cursorPixels = copy;
+	mutter->cursorWidth = width;
+	mutter->cursorHeight = height;
+	mutter->cursorXHot = xHot;
+	mutter->cursorYHot = yHot;
+}
+
+/* Until Mutter has sent a shape, which it may not do for long: an arrow, so a client is
+ * never left with no pointer */
+static void mutter_cursor_send_default(mutterShadowSubsystem* mutter)
+{
+	static const char* const arrow[] = { "X          ", "XX         ", "X.X        ", "X..X       ",
+		                                 "X...X      ", "X....X     ", "X.....X    ", "X......X   ",
+		                                 "X.......X  ", "X........X ", "X.....XXXXX", "X..X..X    ",
+		                                 "X.X X..X   ", "XX  X..X   ", "X    X..X  ", "     X..X  ",
+		                                 "      XX   " };
+	enum
+	{
+		ARROW_WIDTH = 11,
+		ARROW_HEIGHT = ARRAYSIZE(arrow)
+	};
+	BYTE pixels[4ull * ARROW_WIDTH * ARROW_HEIGHT] = WINPR_C_ARRAY_INIT;
+	for (size_t y = 0; y < ARROW_HEIGHT; y++)
+	{
+		for (size_t x = 0; x < ARROW_WIDTH; x++)
+		{
+			BYTE* pixel = &pixels[4ull * (y * ARROW_WIDTH + x)];
+			if (arrow[y][x] == ' ')
+				continue;
+			const BYTE value = (arrow[y][x] == '.') ? 0xff : 0x00;
+			pixel[0] = pixel[1] = pixel[2] = value;
+			pixel[3] = 0xff;
+		}
+	}
+	mutter_cursor_send_shape(mutter, pixels, ARROW_WIDTH, ARROW_HEIGHT, 0, 0);
+}
+
 /* The cursor in a buffer's metadata: its position, and its shape when it changed */
 static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffer* buf)
 {
@@ -965,6 +1022,7 @@ static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffe
 		{
 			/* Mutter sends an empty bitmap for a hidden pointer */
 			const BYTE transparent[4] = WINPR_C_ARRAY_INIT;
+			mutter_cursor_remember(mutter, transparent, 1, 1, 0, 0);
 			mutter_cursor_send_shape(mutter, transparent, 1, 1, 0, 0);
 		}
 		else
@@ -1003,6 +1061,7 @@ static void mutter_cursor_update(mutterShadowSubsystem* mutter, struct spa_buffe
 					    MIN((UINT32)MAX(mc->hotspot.x, 0) * scaled / side, outW - 1);
 					const UINT32 yHot =
 					    MIN((UINT32)MAX(mc->hotspot.y, 0) * scaled / side, outH - 1);
+					mutter_cursor_remember(mutter, pixels, outW, outH, xHot, yHot);
 					mutter_cursor_send_shape(mutter, pixels, outW, outH, xHot, yHot);
 					free(pixels);
 				}
@@ -1137,6 +1196,82 @@ static void mutter_copy_rect(mutterShadowSubsystem* mutter, rdpShadowSurface* su
 		WLog_ERR(TAG, "cannot mark the changed region");
 }
 
+/* Mutter's damage metadata now and then leaves out a change: a window that opens or closes, the
+ * clock in the top bar. Nothing repaints it later, so the client kept the old picture there.
+ * Compare the buffer with the surface in tiles after the damage was copied, and copy the tiles that
+ * still differ. When the damage was right, every tile is equal and nothing is copied. Returns the
+ * tiles copied. */
+static UINT32 mutter_repair_missed_damage(mutterShadowSubsystem* mutter, rdpShadowSurface* surface,
+                                          const BYTE* src, UINT32 stride)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(src);
+
+	const UINT32 width = MIN(mutter->width, surface->width);
+	const UINT32 height = MIN(mutter->height, surface->height);
+	/* the same format is copied byte for byte; otherwise compare the colour (alpha is undefined
+	 * in BGRx) */
+	const BOOL sameFormat = (mutter->format == surface->format);
+	UINT32 tiles = 0;
+
+	for (UINT32 ty = 0; ty < height; ty += MUTTER_CHECK_TILE)
+	{
+		const UINT32 th = MIN(MUTTER_CHECK_TILE, height - ty);
+		for (UINT32 tx = 0; tx < width; tx += MUTTER_CHECK_TILE)
+		{
+			const UINT32 tw = MIN(MUTTER_CHECK_TILE, width - tx);
+			BOOL dirty = FALSE;
+			for (UINT32 y = ty; (y < ty + th) && !dirty; y++)
+			{
+				const BYTE* a = &src[1ull * y * stride + 4ull * tx];
+				const BYTE* b = &surface->data[1ull * y * surface->scanline + 4ull * tx];
+				if (sameFormat)
+					dirty = (memcmp(a, b, 4ull * tw) != 0);
+				else
+				{
+					for (UINT32 x = 0; (x < tw) && !dirty; x++)
+						dirty = (memcmp(&a[4ull * x], &b[4ull * x], 3) != 0);
+				}
+			}
+			if (dirty)
+			{
+				mutter_copy_rect(mutter, surface, src, stride, (INT32)tx, (INT32)ty, (INT32)tw,
+				                 (INT32)th);
+				tiles++;
+			}
+		}
+	}
+	return tiles;
+}
+
+/* counts and logs what mutter_repair_missed_damage found */
+static void mutter_damage_stats(mutterShadowSubsystem* mutter, UINT32 tiles)
+{
+	WINPR_ASSERT(mutter);
+
+	mutter->damageFrames++;
+	mutter->damageTiles += tiles;
+	if ((tiles > 0) && !mutter->damageMissSeen)
+	{
+		mutter->damageMissSeen = TRUE;
+		WLog_INFO(TAG,
+		          "Mutter left changes out of its damage: %" PRIu32
+		          " tile(s) copied, the check stays on (" MUTTER_DAMAGE_CHECK_ENV
+		          "=0 turns it off)",
+		          tiles);
+	}
+	const UINT64 now = GetTickCount64();
+	if (now - mutter->damageLogged >= 5000)
+	{
+		WLog_DBG(TAG, "damage check: %" PRIu64 " tile(s) Mutter left out, in %" PRIu64 " frame(s)",
+		         mutter->damageTiles, mutter->damageFrames);
+		mutter->damageTiles = 0;
+		mutter->damageFrames = 0;
+		mutter->damageLogged = now;
+	}
+}
+
 static void mutter_on_process(void* data)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)data;
@@ -1189,6 +1324,9 @@ static void mutter_on_process(void* data)
 				                 r->region.position.y, (INT32)r->region.size.width,
 				                 (INT32)r->region.size.height);
 			}
+			if (mutter->damageCheck)
+				mutter_damage_stats(mutter,
+				                    mutter_repair_missed_damage(mutter, surface, src, stride));
 		}
 		LeaveCriticalSection(&surface->lock);
 		painted = TRUE;
@@ -1198,10 +1336,12 @@ static void mutter_on_process(void* data)
 	if (!painted)
 		return;
 
-	ArrayList_Lock(server->clients);
+	/* Not under the clients list lock: the frame update waits until every client has encoded
+	 * the frame (an AV2 frame takes 40 to 120 ms, a key frame up to 800 ms), and the sound
+	 * thread needs the lock for each chunk it hands to the clients; it stalled, and PipeWire
+	 * dropped the sound. The update has a subscriber list of its own (see win_shadow.c). */
 	if (ArrayList_Count(server->clients) > 0)
 		shadow_subsystem_frame_update(&mutter->common);
-	ArrayList_Unlock(server->clients);
 
 	EnterCriticalSection(&surface->lock);
 	region16_clear(&surface->invalidRegion);
@@ -2025,6 +2165,11 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 		static const BYTE clear[4] = { 0 };
 		mutter_cursor_send_shape(mutter, clear, 1, 1, 0, 0);
 	}
+	else if (mutter->cursorPixels)
+		mutter_cursor_send_shape(mutter, mutter->cursorPixels, mutter->cursorWidth,
+		                         mutter->cursorHeight, mutter->cursorXHot, mutter->cursorYHot);
+	else
+		mutter_cursor_send_default(mutter);
 
 	rdpShadowServer* server = mutter->common.server;
 	rdpShadowSurface* surface = server ? server->surface : nullptr;
@@ -2037,10 +2182,9 @@ static void mutter_shadow_refresh(mutterShadowSubsystem* mutter)
 		WLog_ERR(TAG, "cannot mark the screen changed");
 	LeaveCriticalSection(&surface->lock);
 
-	ArrayList_Lock(server->clients);
+	/* not under the clients list lock, as in mutter_on_process */
 	if (ArrayList_Count(server->clients) > 0)
 		shadow_subsystem_frame_update(&mutter->common);
-	ArrayList_Unlock(server->clients);
 
 	EnterCriticalSection(&surface->lock);
 	region16_clear(&surface->invalidRegion);
@@ -2271,6 +2415,14 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 
 	UINT32 count = 0;
 	mutter->virtualMonitor = mutter_virtual_size(&mutter->virtualWidth, &mutter->virtualHeight);
+	{
+		/* on unless "0" */
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		const char* check = getenv(MUTTER_DAMAGE_CHECK_ENV);
+		mutter->damageCheck = !check || (strcmp(check, "0") != 0);
+		if (!mutter->damageCheck)
+			WLog_INFO(TAG, "the check for changes Mutter left out of its damage is off");
+	}
 	if (mutter->virtualMonitor)
 	{
 		/* one monitor, this server's own */
@@ -2458,6 +2610,7 @@ static void mutter_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 		(void)CloseHandle(mutter->stopEvent);
 	if (mutter->clientsEvent)
 		(void)CloseHandle(mutter->clientsEvent);
+	free(mutter->cursorPixels);
 	free(mutter);
 }
 
