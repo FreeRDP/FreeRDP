@@ -460,6 +460,14 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 	    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
 	    UINT32 flags);
 
+	/** @brief Check if the library supports image scaling
+	 *
+	 *  @return TRUE if \ref freerdp_image_scale will allow scaling, FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_image_scaling_supported(void);
+
 	/*** Scale an image to destination
 	 *
 	 * @param pDstData   destination buffer
