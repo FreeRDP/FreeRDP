@@ -315,6 +315,13 @@ static DWORD WINAPI udplistener_thread(LPVOID arg)
 		events[count++] = listener->wake;
 		EnterCriticalSection(&listener->lock);
 		(void)ResetEvent(listener->wake);
+		/* udplistener_stop_thread sets stop before wake: a stop that came after the check above
+		 * either shows here, or its wake-up comes after the reset and ends the wait */
+		if (InterlockedCompareExchange(&listener->stop, 0, 0) != 0)
+		{
+			LeaveCriticalSection(&listener->lock);
+			break;
+		}
 		/* the last wait set is done with, sockets retired since can go */
 		udplistener_close_retired(listener);
 		for (size_t x = 0; x < listener->socketCount; x++)

@@ -208,6 +208,9 @@ static void fuzz_listener(const uint8_t* data, size_t size)
 out:
 	freerdp_udp_flow_free(flow);
 	freerdp_udp_flow_free(second);
+	/* Removing flows only releases the listener after freerdp_udp_listener_free() has marked it
+	 * as freed. */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): see above
 	freerdp_udp_listener_free(listener);
 }
 
