@@ -1114,7 +1114,7 @@ static BOOL emt_server_process_datagrams(rdpEmt* emt)
 		}
 		else if (!rdpudp_receive(emt->udp, data, length))
 		{
-			emt_fail(emt, "failed to establish the RDP-UDP connection");
+			emt_fail(emt, "the RDP-UDP connection failed");
 			return FALSE;
 		}
 		if (!emt->tlsStarted && (rdpudp_get_state(emt->udp) == RDPUDP_STATE_ESTABLISHED) &&

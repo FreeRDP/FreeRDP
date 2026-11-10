@@ -97,6 +97,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP_RECEIVE_SLOTS 32768
 #define RDPUDP_RECEIVE_REACH 32767
 
+/* Number of datagrams rdpudp_check() reads from its socket before running timers. The server
+ * tunnel uses the same budget for its flow (RDPEMT_INPUT_BUDGET). */
+#define RDPUDP_INPUT_BUDGET 256
+
 /* Max chunk size a server accepts, capping client slot usage at 64 MB. MTU is not used
  * as the limit because ACKs are appended to full chunks, and Windows/mstsc datagrams
  * can exceed MTU by 28 bytes. */
@@ -3179,7 +3183,10 @@ BOOL rdpudp_check(rdpUdp* udp)
 		return FALSE;
 
 	BYTE* buffer = udp->recvBuffer;
-	while (udp->ownsSocket)
+	/* Process at most RDPUDP_INPUT_BUDGET datagrams per call. A peer sending faster than they are
+	 * processed would otherwise keep the socket from draining, and the retransmission timers
+	 * below would never run. The socket stays readable for the next call. */
+	for (size_t count = 0; udp->ownsSocket && (count < RDPUDP_INPUT_BUDGET); count++)
 	{
 		const int rc = _recv(udp->sockfd, (char*)buffer,
 		                     WINPR_ASSERTING_INT_CAST(int, sizeof(udp->recvBuffer)), 0);
