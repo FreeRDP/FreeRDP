@@ -45,6 +45,7 @@ set(SRCS
     sdl_window.cpp
     sdl_clip.hpp
     sdl_clip.cpp
+    sdl_web_clip_offers.hpp
     sdl_context.hpp
     sdl_context.cpp
     sdl_rail.hpp
