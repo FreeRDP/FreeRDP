@@ -29,6 +29,7 @@
 
 #include "../crypto/tls.h"
 #include "../core/utils.h"
+#include "../core/tcp.h"
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("utils.http")
@@ -104,7 +105,7 @@ static int get_line_context(rdpContext* context, BIO* bio, char* buffer, size_t 
 		{
 			if (BIO_should_retry(bio))
 			{
-				BIO_wait(bio, 10, 10);
+				BIO_wait_read(bio, 10);
 				continue;
 			}
 		}
