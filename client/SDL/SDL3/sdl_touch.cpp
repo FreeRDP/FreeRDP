@@ -48,7 +48,7 @@
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 			cflags = (flags & 0xFF00) | (0x100 - cval);
 		if (!freerdp_client_send_wheel_event(sdl->common(), cflags))
-			return FALSE;
+			return sdl::utils::inputSent(sdl->getWLog(), FALSE, "wheel event");
 
 		avalue -= cval;
 	}
@@ -116,7 +116,10 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseMotionEvent& ev)
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? ev.xrel : ev.x);
 	auto y = static_cast<INT32>(relative ? ev.yrel : ev.y);
-	return freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y);
+	return sdl::utils::inputSent(
+	    sdl->getWLog(),
+	    freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y),
+	    "mouse move");
 }
 
 bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
@@ -186,9 +189,14 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseButtonEvent& ev)
 	auto y = static_cast<INT32>(relative ? 0 : ev.y);
 
 	if ((flags & (~PTR_FLAGS_DOWN)) != 0)
-		return freerdp_client_send_button_event(sdl->common(), relative, flags, x, y);
+		return sdl::utils::inputSent(
+		    sdl->getWLog(), freerdp_client_send_button_event(sdl->common(), relative, flags, x, y),
+		    "mouse button");
 	else if ((xflags & (~PTR_XFLAGS_DOWN)) != 0)
-		return freerdp_client_send_extended_button_event(sdl->common(), relative, xflags, x, y);
+		return sdl::utils::inputSent(
+		    sdl->getWLog(),
+		    freerdp_client_send_extended_button_event(sdl->common(), relative, xflags, x, y),
+		    "mouse button");
 	else
 		return TRUE;
 }

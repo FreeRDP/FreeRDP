@@ -114,6 +114,12 @@ namespace sdl::utils
 
 	[[nodiscard]] std::string windowTitle(const rdpSettings* settings);
 
+	/* A key press, a mouse move or click, a wheel turn or a focus change is sent to the
+	 * server as it happens and may fail: while the connection is down (a dropped network,
+	 * a reconnect) it cannot go out. Such an event is lost, the connection reports its own
+	 * state, and handling the event still succeeds. Returns true, logs a failed send. */
+	[[nodiscard]] bool inputSent(wLog* log, BOOL sent, const char* what);
+
 } // namespace sdl::utils
 
 namespace sdl::error
