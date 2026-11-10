@@ -36,6 +36,7 @@
 
 #include "shadow.h"
 #include "shadow_rfx_dirty.h"
+#include "shadow_autodetect.h"
 
 #define TAG CLIENT_TAG("shadow")
 
@@ -244,6 +245,7 @@ static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 	if (server && server->clients)
 		ArrayList_Remove(server->clients, (void*)client);
 
+	shadow_client_autodetect_uninit(client);
 	shadow_encoder_free(client->encoder);
 
 	/* Clear queued messages and free resource */
@@ -356,6 +358,9 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 		goto fail;
 
 	if (!(client->encoder = shadow_encoder_new(client)))
+		goto fail;
+
+	if (!shadow_client_autodetect_init(client))
 		goto fail;
 
 	if (!ArrayList_Append(server->clients, (void*)client))
@@ -3284,7 +3289,8 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 #endif
 
 		/* a frame that waits for an acknowledgement also goes out after a stall */
-		const DWORD timeout = client->encoder->gfxHeld ? 100 : INFINITE;
+		const DWORD timeout = MIN(client->encoder->gfxHeld ? 100 : INFINITE,
+		                          shadow_client_autodetect_timeout(client));
 		status = WaitForMultipleObjects(nCount, events, FALSE, timeout);
 
 		if (status == WAIT_FAILED)
@@ -3371,6 +3377,12 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		if (!peer->CheckFileDescriptor(peer))
 		{
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+			goto fail;
+		}
+
+		if (!shadow_client_autodetect_poll(client))
+		{
+			WLog_ERR(TAG, "Failed to send an RTT Measure Request");
 			goto fail;
 		}
 
