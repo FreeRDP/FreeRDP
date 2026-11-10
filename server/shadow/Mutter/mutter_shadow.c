@@ -98,15 +98,29 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 	WINPR_ASSERT(width);
 	WINPR_ASSERT(height);
 
+	*width = 0;
+	*height = 0;
+
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	const char* env = getenv(MUTTER_VIRTUAL_ENV);
-	unsigned w = 0;
-	unsigned h = 0;
-	if (!env || (sscanf(env, "%ux%u", &w, &h) != 2) || (w < 64) || (h < 64) || (w > 8192) ||
-	    (h > 8192))
+	if (!env)
 		return FALSE;
-	*width = w;
-	*height = h;
+
+	errno = 0;
+
+	char* next = nullptr;
+	unsigned long w = strtoul(env, &next, 0);
+	if ((errno != 0) || (w < 64) || (w > 8192))
+		return FALSE;
+	if (!next || (*next != 'x'))
+		return FALSE;
+
+	unsigned long h = strtoul(next, nullptr, 0);
+	if ((errno != 0) || (h < 64) || (h > 8192))
+		return FALSE;
+
+	*width = WINPR_ASSERTING_INT_CAST(UINT32, w);
+	*height = WINPR_ASSERTING_INT_CAST(UINT32, h);
 	return TRUE;
 }
 
@@ -2100,17 +2114,23 @@ static int mutter_shadow_pam_authenticate(WINPR_ATTR_UNUSED rdpShadowSubsystem* 
 	const long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
 	if (buflen <= 0)
 	{
-		WLog_ERR(TAG, "login as '%s' refused: _SC_GETPW_R_SIZE_MAX = %ld", buflen);
+		WLog_ERR(TAG, "login as '%s' refused: _SC_GETPW_R_SIZE_MAX = %ld", user, buflen);
 		return -1;
 	}
 	char* buf = calloc((size_t)buflen, sizeof(char));
 	if (!buf)
 	{
-		WLog_ERR(TAG, "login as '%s' refused: _SC_GETPW_R_SIZE_MAX = %ld allocation failed",
+		WLog_ERR(TAG, "login as '%s' refused: _SC_GETPW_R_SIZE_MAX = %ld allocation failed", user,
 		         buflen);
 		return -1;
 	}
 	const int rc = getpwuid_r(getuid(), &pbuffer, buf, sizeof(buf), &owner);
+	if (rc != 0)
+	{
+		WLog_ERR(TAG, "login as '%s' refused: getpwuid_r returned %d", user, rc);
+		free(buf);
+		return -1;
+	}
 	if (!owner || !owner->pw_name || (strcmp(owner->pw_name, user) != 0))
 	{
 		WLog_ERR(TAG, "login as '%s' refused: this session belongs to '%s'", user,
@@ -2234,8 +2254,11 @@ static void mutter_record_again(mutterShadowSubsystem* mutter)
 		started = sd_bus_call_method(mutter->bus, SC_NAME, mutter->streamPath, SC_STREAM_IFACE,
 		                             "Start", &err, nullptr, "");
 		if (started < 0)
+		{
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "ScreenCast.Stream.Start failed: %s",
-			         err.message ? err.message : strerror(-started));
+			         err.message ? err.message : winpr_strerror(-started, buffer, sizeof(buffer)));
+		}
 	}
 	sd_bus_error_free(&err);
 
