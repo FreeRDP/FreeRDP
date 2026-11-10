@@ -212,11 +212,16 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Geometry tracking channel" },
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Consume multitouch input locally" },
-#ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-"
-	  "cache[:on|off],thin-client[:on|off],progressive[:on|"
+	  "[[progressive[:on|off]|RFX[:on|off]"
+#ifdef WITH_GFX_H264
+	  "|AVC420[:on|off]AVC444[:on|off]"
+#endif
+	  "],mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|"
 	  "off],frame-ack[:on|off]"
+#if defined(WITH_GFX_AV1)
+	  ",AV1[:on|off|i444|i420]"
+#endif
 #if defined(WITH_GFX_AV2)
 	  ",AV2[:on|off|i444|i420]"
 #endif
@@ -228,12 +233,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[[AVC420|AVC444],mask:<value>]", nullptr, nullptr,
 	  -1, nullptr, "[DEPRECATED, use /gfx:avc420] RDP8.1 graphics pipeline using H264 codec" },
-#endif
-#else
-	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-cache["
-	  ":on|off],thin-client[:on|off],progressive[:on|off]]",
-	  nullptr, nullptr, -1, nullptr, "RDP8 graphics pipeline" },
 #endif
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
