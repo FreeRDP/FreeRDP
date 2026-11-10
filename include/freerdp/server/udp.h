@@ -49,7 +49,7 @@
  *  other users' datagrams. Listener and socket-pair sockets are close-on-exec; a child
  *  that forks without exec must call freerdp_udp_listener_close_after_fork() instead of
  *  freerdp_udp_listener_free(). The relay ends when either socket in the pair closes.
- *  This header is installed only with -DWITH_RDPEUDP=ON.
+ *  This header is installed only if WITH_RDPEUDP_SERVER is defined in freerdp/config.h.
  *
  *  Datagrams are identified by source address; only the client's SYN ties a datagram to a
  *  connection via a cleartext hash. A UDP connection is unproven until the security cookie

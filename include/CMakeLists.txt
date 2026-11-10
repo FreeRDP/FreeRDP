@@ -150,7 +150,8 @@ endif()
 file(GLOB_RECURSE PUBLIC_COMMON_BIN_HEADERS LIST_DIRECTORIES false "${CMAKE_CURRENT_BINARY_DIR}/freerdp/*.h")
 list(SORT PUBLIC_COMMON_HEADERS)
 
-# Install udp.h only in UDP builds: its presence is how users tell that the server supports UDP.
+# Install udp.h only when UDP support is enabled. Users should check for the
+# WITH_RDPEUDP_SERVER definition in freerdp/config.h before including the header.
 if(NOT WITH_RDPEUDP)
   list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/server/udp.h")
   set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/server/udp\\.h$" EXCLUDE)

@@ -64,6 +64,15 @@
 #cmakedefine WITH_GFX_AV1
 #cmakedefine WITH_GFX_AZURE
 #cmakedefine WITH_RDPEUDP
+/** If defined, indicates that the server supports UDP multitransport and that
+ *  freerdp/server/udp.h is installed. It is defined alongside WITH_RDPEUDP, which
+ *  only signified client support prior to version 3.34.0.
+ *
+ *  \since version 3.34.0
+ */
+#if defined(WITH_RDPEUDP)
+#define WITH_RDPEUDP_SERVER
+#endif
 
 #cmakedefine WITH_FFMPEG_HWACCEL
 
