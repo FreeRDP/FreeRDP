@@ -824,6 +824,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	auto rc = (SDL_PushEvent(&ev) == 1);
 	const UINT ret = clipboard->SendFormatListResponse(rc);
 #if defined(__EMSCRIPTEN__)
+	clipboard->_web_offers.serverAnnounced();
 	if (ret == CHANNEL_RC_OK)
 		std::ignore = clipboard->webRequestServerText();
 #endif
@@ -1536,7 +1537,10 @@ bool sdlClip::webOffer(const char* utf8, const BYTE* dib, size_t dibSize)
 	std::vector<CLIPRDR_FORMAT> formats;
 	{
 		std::scoped_lock lock(clip->_lock);
-		clip->_web_local = utf8 ? utf8 : "";
+		const std::string text = utf8 ? utf8 : "";
+		if (!clip->_web_offers.offer(text, dib, dibSize))
+			return true;
+		clip->_web_local = text;
 		clip->_web_local_dib.assign(dib, dib ? dib + dibSize : dib);
 		/* remember what we offered: the server may announce it back much later */
 		if (!clip->_web_local.empty())
@@ -1625,6 +1629,7 @@ bool sdlClip::webTakeDataResponse(const CLIPRDR_FORMAT_DATA_RESPONSE* response)
 			}
 			_web_local.clear(); /* new content from the server: it owns the clipboard now */
 			_web_local_dib.clear();
+			_web_offers.serverSentText(utf8);
 		}
 		web_write(utf8, nullptr, 0);
 	}
@@ -1639,6 +1644,7 @@ bool sdlClip::webTakeDataResponse(const CLIPRDR_FORMAT_DATA_RESPONSE* response)
 				return true; /* one of our own images announced back */
 			_web_local.clear();
 			_web_local_dib.clear();
+			_web_offers.serverSentImage();
 		}
 		auto copy = static_cast<BYTE*>(malloc(size));
 		if (copy)

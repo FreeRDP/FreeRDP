@@ -188,7 +188,8 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				if (sdl->getDialog().handleEvent(windowEvent))
 					continue;
 
-				if (sdl->shallAbort(true))
+				/* Still handle a quit, it cancels the session */
+				if (sdl->shallAbort(true) && (windowEvent.type != SDL_EVENT_QUIT))
 					continue;
 
 				if (!sdl->handleEvent(windowEvent))
@@ -709,6 +710,14 @@ int main(int argc, char* argv[])
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
 		return -1;
 	}
+
+#if defined(WITH_SDL_AUDIO)
+	/* Keeps the audio channels from initializing or quitting SDL audio
+	 * while this thread pumps events. */
+	if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
+		WLog_Print(sdl->getWLog(), WLOG_WARN, "SDL_InitSubSystem(SDL_INIT_AUDIO): %s",
+		           SDL_GetError());
+#endif
 
 #if defined(__APPLE__)
 	/* macOS has no num lock state, SDL_KMOD_NUM always starts off and we would turn num lock

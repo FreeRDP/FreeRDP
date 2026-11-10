@@ -873,7 +873,8 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 	 * with EBUSY ("interface claimed by usb-storage while 'xfreerdp3' sets config") and the
 	 * device stays with the local driver. Detach again before changing the configuration. */
 	pdev->status &= (UINT16)~URBDRC_DEVICE_DETACH_KERNEL;
-	(void)libusb_udev_detach_kernel_driver(idev);
+	if (!libusb_udev_detach_kernel_driver(idev))
+		WLog_Print(urbdrc->log, WLOG_WARN, "libusb_udev_detach_kernel_driver failed, ignoring");
 
 	/* The configuration value -1 is mean to put the device in unconfigured state. */
 	if (bConfigurationValue == 0)

@@ -3341,6 +3341,9 @@ fail:
 	}
 
 out:
+	/* however the client went, no key it held stays down on the shared desktop */
+	if (!shadow_input_release_keys(client))
+		WLog_WARN(TAG, "not every key the client held could be released");
 	WINPR_ASSERT(peer->Disconnect);
 	peer->Disconnect(peer);
 	freerdp_peer_context_free(peer);

@@ -24,6 +24,8 @@
 #include <winpr/winpr.h>
 #include <freerdp/freerdp.h>
 
+#include "../crypto/tls.h"
+
 /* HTTP tunnel redir flags. */
 #define HTTP_TUNNEL_REDIR_ENABLE_ALL 0x80000000
 #define HTTP_TUNNEL_REDIR_DISABLE_ALL 0x40000000
@@ -138,5 +140,10 @@ FREERDP_LOCAL BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA,
  */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL utils_set_umask(void);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL utils_tls_connect(rdpContext* context, rdpTls* tls, wLog* log,
+                                     const char* hostname, UINT16 port, BOOL layerConnect,
+                                     UINT32 timeout);
 
 #endif /* FREERDP_LIB_CORE_UTILS_H */

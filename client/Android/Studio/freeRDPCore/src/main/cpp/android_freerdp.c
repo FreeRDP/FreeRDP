@@ -1169,8 +1169,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1as_1unicode
 	const jsize len = text ? (*env)->GetStringLength(env, text) : 0;
 	const jchar* chars = (len > 0) ? (*env)->GetStringChars(env, text, nullptr) : nullptr;
 	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_key_as_unicode_new(
-	    flags, scancode, (const WCHAR*)chars, chars ? (size_t)len : 0,
-	    (FREERDP_CLIENT_KBD_MOD)modmask);
+	    flags, scancode, (const WCHAR*)chars, chars ? (size_t)len : 0, modmask);
 
 	if (chars)
 		(*env)->ReleaseStringChars(env, text, chars);

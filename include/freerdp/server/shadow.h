@@ -36,6 +36,9 @@
 #if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
 #endif
+#if defined(CHANNEL_CLIPRDR_SERVER)
+#include <freerdp/server/cliprdr.h>
+#endif
 #include <freerdp/server/rdpgfx.h>
 
 #include <freerdp/codec/color.h>
@@ -135,6 +138,9 @@ extern "C"
 		audin_server_context* audin;
 #endif
 		RdpgfxServerContext* rdpgfx;
+#if defined(CHANNEL_CLIPRDR_SERVER)
+		CliprdrServerContext* cliprdr; /** @since version 3.33.1 */
+#endif
 
 		BOOL resizeRequested;
 		UINT32 resizeWidth;
@@ -148,6 +154,10 @@ extern "C"
 		HANDLE soundThread;       /** @since version 3.34.0 */
 		CRITICAL_SECTION vcmLock; /** one drain of the channel queue at a time
 		                           *  @since version 3.34.0 */
+		/** the keys this client pressed and has not released, one bit per scan code with its
+		 *  KBD_FLAGS_EXTENDED (0x100) and KBD_FLAGS_EXTENDED1 (0x200) flags
+		 *  @since version 3.34.0 */
+		BYTE keysDown[128];
 	};
 
 	struct rdp_shadow_server
@@ -195,6 +205,9 @@ extern "C"
 	    UINT32 reservedAV1[2];
 #endif
 		BOOL h264HwAccel; /** @since version 3.32.0 */
+		/** how many clients hold each key of rdpShadowClient::keysDown, guarded by lock
+		 *  @since version 3.33.0 */
+		UINT16 keysHeld[0x400];
 	};
 
 	struct rdp_shadow_surface

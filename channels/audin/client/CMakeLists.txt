@@ -64,3 +64,7 @@ endif()
 if(EMSCRIPTEN)
   add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "emscripten" "")
 endif()
+
+if(WITH_SDL_AUDIO)
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "sdl" "")
+endif()

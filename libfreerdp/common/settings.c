@@ -3809,7 +3809,7 @@ char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty, size_
 			case RDP_SETTINGS_TYPE_UINT64:
 			{
 				const uint64_t val = freerdp_settings_get_uint64(settings, iter.u64);
-				if (!WINPR_JSON_AddIntegerToObject(juint64, name, val))
+				if (!WINPR_JSON_AddUIntegerToObject(juint64, name, val))
 					goto fail;
 			}
 			break;

@@ -34,6 +34,7 @@
 
 #include "sdl_types.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_web_clip_offers.hpp"
 
 /** @brief a clipboard format request */
 class ClipRequest
@@ -105,6 +106,7 @@ class sdlClip
 	std::string _web_local;           /* text from the browser clipboard, offered to the server */
 	std::vector<BYTE> _web_local_dib; /* image from the browser clipboard as CF_DIB */
 	std::deque<size_t> _web_recent;   /* hashes of recent offers, to recognise late echoes */
+	SdlWebClipOffers _web_offers;
 #endif
 
   private:

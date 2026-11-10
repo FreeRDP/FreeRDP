@@ -298,7 +298,7 @@ static void android_event_unicodekey_free(ANDROID_EVENT_KEY* event)
 
 ANDROID_EVENT_KEY_AS_UNICODE* android_event_key_as_unicode_new(UINT16 flags, UINT32 scancode,
                                                                const WCHAR* wstr, size_t wlen,
-                                                               FREERDP_CLIENT_KBD_MOD modmask)
+                                                               UINT32 modmask)
 {
 	ANDROID_EVENT_KEY_AS_UNICODE* event =
 	    (ANDROID_EVENT_KEY_AS_UNICODE*)calloc(1, sizeof(ANDROID_EVENT_KEY_AS_UNICODE));

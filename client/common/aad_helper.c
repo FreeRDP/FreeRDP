@@ -661,7 +661,12 @@ void aad_auth_helper_stop(AadAuthHelper* helper)
 
 		char* notif = build_exit_notification();
 		if (notif)
-			(void)helper_write_line(helper, notif);
+		{
+			if (!helper_write_line(helper, notif))
+			{
+				WLog_WARN(TAG, "helper_write_line failed");
+			}
+		}
 		free(notif);
 
 		if (WaitForSingleObject(helper->hProcess, 3000) != WAIT_OBJECT_0)

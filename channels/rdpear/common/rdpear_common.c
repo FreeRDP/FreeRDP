@@ -191,7 +191,7 @@ BOOL ndr_decoder_read_RPC_UNICODE_STRING(WinPrNdrDecoder* context, wStream* s, c
 		                                 &res->lenHints,
 		                                 (void*)&res->Buffer,
 		                                 TRUE,
-		                                 winpr_ndr_uint16VaryingArray_descr() };
+		                                 winpr_ndr_wcharVaryingArray_descr() };
 	UINT16 Length = 0;
 	UINT16 MaximumLength = 0;
 
