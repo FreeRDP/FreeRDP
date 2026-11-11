@@ -644,7 +644,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 	 * not know it never confirms it. */
 	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV2))
 	{
-		if (freerdp_codec_supported(FREERDP_CODEC_AVC420, FALSE) &&
+		if (freerdp_codec_supported(FREERDP_CODEC_AV2_I420, FALSE) &&
 		    !rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_2))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
