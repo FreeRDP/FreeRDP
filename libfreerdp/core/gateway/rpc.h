@@ -595,7 +595,7 @@ typedef struct
 	RingBuffer ReceivePipe;
 	wStream* ReceiveFragment;
 	CRITICAL_SECTION PipeLock;
-	wArrayList* ClientCallList;
+	wHashTable* ClientCallList;
 	char* host;
 	UINT16 port;
 	BOOL isProxy;
@@ -604,7 +604,6 @@ typedef struct
 typedef struct
 {
 	RpcClient* client;
-	BIO* bio;
 	rdpTls* tls;
 	rdpCredsspAuth* auth;
 	HttpContext* http;

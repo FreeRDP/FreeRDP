@@ -728,9 +728,17 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 	if (port > UINT16_MAX)
 		return FALSE;
 
-	channel->tls->hostname = host;
-	channel->tls->port = WINPR_ASSERTING_INT_CAST(UINT16, port);
-	channel->tls->isGatewayTransport = TRUE;
+	if (channel->tls)
+		return FALSE;
+
+	rdpTls* tls = channel->tls = freerdp_tls_new(context);
+
+	if (!tls)
+		return FALSE;
+
+	tls->hostname = host;
+	tls->port = WINPR_ASSERTING_INT_CAST(UINT16, port);
+	tls->isGatewayTransport = TRUE;
 	return utils_tls_connect(context, channel->tls, channel->rpc->log, channel->client->host,
 	                         channel->client->port, TRUE, timeout);
 }

@@ -338,6 +338,8 @@ static void ecam_dev_stop_stream(CameraDevice* dev, size_t streamIndex)
 		dev->ihal->StopStream(dev->ihal, dev->deviceId, 0);
 	}
 
+	stream->haveSample = FALSE;
+	stream->samplesRequested = FALSE;
 	Stream_Free(stream->sampleRespBuffer, TRUE);
 	stream->sampleRespBuffer = nullptr;
 

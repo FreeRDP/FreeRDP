@@ -762,7 +762,6 @@ BOOL utils_tls_connect(rdpContext* context, rdpTls* tls, wLog* log, const char* 
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 	WLog_Print(log, WLOG_DEBUG, "connecting to %s %d", peerHostname, peerPort);
-	WLog_Print(log, WLOG_INFO, "xxxxxxxxxxxxxxx connecting with %d", layerConnect);
 	BIO* bufferedBio = BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)

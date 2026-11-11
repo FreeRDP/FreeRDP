@@ -187,8 +187,9 @@ static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 {
 	int status = 1;
 
+	WINPR_ASSERT(rpc);
 	rpc->State = state;
-	WLog_DBG(TAG, "%s", rpc_client_state_str(state));
+	WLog_Print(rpc->log, WLOG_DEBUG, "%s", rpc_client_state_str(state));
 	return status;
 }
 
@@ -410,7 +411,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 		if (!rpc_get_stub_data_info(rpc, &header, &StubOffset, &StubLength))
 		{
-			WLog_ERR(TAG, "expected stub");
+			WLog_Print(rpc->log, WLOG_ERROR, "expected stub");
 			goto fail;
 		}
 
@@ -453,13 +454,13 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 		if (rpc->StubCallId != header.common.call_id)
 		{
-			WLog_ERR(TAG,
-			         "invalid call_id: actual: %" PRIu32 ", expected: %" PRIu32
-			         ", frag_count: %" PRIu32 "",
-			         rpc->StubCallId, header.common.call_id, rpc->StubFragCount);
+			WLog_Print(rpc->log, WLOG_ERROR,
+			           "invalid call_id: actual: %" PRIu32 ", expected: %" PRIu32
+			           ", frag_count: %" PRIu32 "",
+			           rpc->StubCallId, header.common.call_id, rpc->StubFragCount);
 		}
 
-		call = rpc_client_call_find_by_id(rpc->client, rpc->StubCallId);
+		call = rpc_client_call_find_by_id(rpc->log, rpc->client, rpc->StubCallId);
 
 		if (!call)
 			goto fail;
@@ -571,7 +572,8 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	}
 	else
 	{
-		WLog_ERR(TAG, "unexpected RPC PDU type 0x%02" PRIX8 "", header.common.ptype);
+		WLog_Print(rpc->log, WLOG_ERROR, "unexpected RPC PDU type 0x%02" PRIX8 "",
+		           header.common.ptype);
 		goto fail;
 	}
 
@@ -579,6 +581,8 @@ success:
 	rc = (rc < 0) ? 1 : 0; /* In case of default error return change to 1, otherwise we already set
 	                          the return code */
 fail:
+	if (rc < 1)
+		rpc_client_call_discard(rpc->log, rpc->client, header.common.call_id);
 	rts_free_pdu_header(&header, FALSE);
 	return rc;
 }
@@ -612,7 +616,8 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			if (!rpc_ncacn_http_recv_out_channel_response(&outChannel->common, response))
 			{
 				http_response_free(response);
-				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
+				WLog_Print(rpc->log, WLOG_ERROR,
+				           "rpc_ncacn_http_recv_out_channel_response failure");
 				return -1;
 			}
 
@@ -621,7 +626,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			if (!rpc_ncacn_http_send_out_channel_request(&outChannel->common, FALSE))
 			{
 				http_response_free(response);
-				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+				WLog_Print(rpc->log, WLOG_ERROR, "rpc_ncacn_http_send_out_channel_request failure");
 				return -1;
 			}
 
@@ -636,7 +641,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 				if (!rts_send_CONN_A1_pdu(rpc))
 				{
 					http_response_free(response);
-					WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
+					WLog_Print(rpc->log, WLOG_ERROR, "rpc_send_CONN_A1_pdu error!");
 					return -1;
 				}
 
@@ -668,7 +673,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		const UINT16 statusCode = http_response_get_status_code(response);
 		if (statusCode != HTTP_STATUS_OK)
 		{
-			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
+			http_response_log_error_status(rpc->log, WLOG_ERROR, response);
 
 			if (statusCode == HTTP_STATUS_DENIED)
 			{
@@ -719,9 +724,9 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (header.frag_length >= rpc->max_recv_frag)
 			{
-				WLog_ERR(TAG,
-				         "rpc_client_recv: invalid fragment size: %" PRIu16 " (max: %" PRIu16 ")",
-				         header.frag_length, rpc->max_recv_frag);
+				WLog_Print(rpc->log, WLOG_ERROR,
+				           "rpc_client_recv: invalid fragment size: %" PRIu16 " (max: %" PRIu16 ")",
+				           header.frag_length, rpc->max_recv_frag);
 				winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(fragment),
 				              Stream_GetPosition(fragment));
 				return -1;
@@ -734,7 +739,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 				if (status < 0)
 				{
-					WLog_ERR(TAG, "error reading fragment body");
+					WLog_Print(rpc->log, WLOG_ERROR, "error reading fragment body");
 					return -1;
 				}
 
@@ -807,7 +812,7 @@ static SSIZE_T rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 							}
 							else
 							{
-								WLog_ERR(TAG, "rts_send_OUT_R1/A3_pdu failure");
+								WLog_Print(rpc->log, WLOG_ERROR, "rts_send_OUT_R1/A3_pdu failure");
 							}
 						}
 						else
@@ -817,12 +822,14 @@ static SSIZE_T rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 					}
 					else
 					{
-						WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+						WLog_Print(rpc->log, WLOG_ERROR,
+						           "rpc_ncacn_http_send_out_channel_request failure");
 					}
 				}
 				else
 				{
-					WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
+					WLog_Print(rpc->log, WLOG_ERROR,
+					           "rpc_ncacn_http_recv_out_channel_response failure");
 				}
 
 				break;
@@ -831,9 +838,9 @@ static SSIZE_T rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 			case CLIENT_OUT_CHANNEL_STATE_CONNECTED:
 			case CLIENT_OUT_CHANNEL_STATE_NEGOTIATED:
 			default:
-				WLog_ERR(TAG,
-				         "rpc_client_nondefault_out_channel_recv: Unexpected message %08" PRIx32,
-				         nextOutChannel->State);
+				WLog_Print(rpc->log, WLOG_ERROR,
+				           "rpc_client_nondefault_out_channel_recv: Unexpected message %08" PRIx32,
+				           nextOutChannel->State);
 				status = -1;
 		}
 
@@ -893,7 +900,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 		{
 			if (!rpc_ncacn_http_recv_in_channel_response(&inChannel->common, response))
 			{
-				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
+				WLog_Print(rpc->log, WLOG_ERROR, "rpc_ncacn_http_recv_in_channel_response failure");
 				http_response_free(response);
 				return -1;
 			}
@@ -902,7 +909,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 			if (!rpc_ncacn_http_send_in_channel_request(&inChannel->common))
 			{
-				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+				WLog_Print(rpc->log, WLOG_ERROR, "rpc_ncacn_http_send_in_channel_request failure");
 				http_response_free(response);
 				return -1;
 			}
@@ -916,7 +923,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 				if (!rts_send_CONN_B1_pdu(rpc))
 				{
-					WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
+					WLog_Print(rpc->log, WLOG_ERROR, "rpc_send_CONN_B1_pdu error!");
 					http_response_free(response);
 					return -1;
 				}
@@ -954,39 +961,89 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
  * http://msdn.microsoft.com/en-us/library/gg593159/
  */
 
-RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
+RpcClientCall* rpc_client_call_find_by_id(wLog* log, RpcClient* client, UINT32 CallId)
 {
-	RpcClientCall* clientCall = nullptr;
-
 	if (!client)
 		return nullptr;
 
-	ArrayList_Lock(client->ClientCallList);
-	const size_t count = ArrayList_Count(client->ClientCallList);
+	RpcClientCall* val = HashTable_GetItemValue(client->ClientCallList, &CallId);
+	WLog_Print(log, WLOG_TRACE, "search 0x%08" PRIx32 ": %p {%" PRIuz "}", CallId, (void*)val,
+	           HashTable_Count(client->ClientCallList));
+	return val;
+}
 
-	for (size_t index = 0; index < count; index++)
+BOOL rpc_client_call_add(wLog* log, RpcClient* client, RpcClientCall* call)
+{
+	WINPR_ASSERT(client);
+	if (!call)
+		return FALSE;
+
+	const BOOL rc = HashTable_Insert(client->ClientCallList, &call->CallId, call);
+	WLog_Print(log, WLOG_TRACE, "adding 0x%08" PRIx32 ": %s {%" PRIuz "}", call->CallId,
+	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
+	return rc;
+}
+
+void rpc_client_call_discard(wLog* log, RpcClient* client, UINT32 CallId)
+{
+	WINPR_ASSERT(client);
+
+	const BOOL rc = HashTable_Remove(client->ClientCallList, &CallId);
+	WLog_Print(log, WLOG_TRACE, "discard 0x%08" PRIx32 ": %s {%" PRIuz "}", CallId,
+	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
+}
+
+WINPR_ATTR_NODISCARD
+static RPC_CLIENT_CALL_STATE next(RPC_CLIENT_CALL_STATE state)
+{
+	switch (state)
 	{
-		clientCall = (RpcClientCall*)ArrayList_GetItem(client->ClientCallList, index);
+		case RPC_CLIENT_CALL_STATE_INITIAL:
+			return RPC_CLIENT_CALL_STATE_SEND_PDUS;
+		case RPC_CLIENT_CALL_STATE_SEND_PDUS:
+			return RPC_CLIENT_CALL_STATE_DISPATCHED;
+		case RPC_CLIENT_CALL_STATE_DISPATCHED:
+			return RPC_CLIENT_CALL_STATE_RECEIVE_PDU;
+		case RPC_CLIENT_CALL_STATE_RECEIVE_PDU:
+			return RPC_CLIENT_CALL_STATE_COMPLETE;
+		case RPC_CLIENT_CALL_STATE_COMPLETE:
+			return RPC_CLIENT_CALL_STATE_FINAL;
+		case RPC_CLIENT_CALL_STATE_FINAL:
+			return RPC_CLIENT_CALL_STATE_FINAL;
 
-		if (clientCall->CallId == CallId)
-			break;
+		case RPC_CLIENT_CALL_STATE_FAULT:
+		default:
+			return RPC_CLIENT_CALL_STATE_FAULT;
+	}
+}
+
+void rpc_client_call_advance(wLog* log, RpcClient* client, UINT32 CallId,
+                             RPC_CLIENT_CALL_STATE expected, BOOL success)
+{
+	WINPR_ASSERT(client);
+	HashTable_Lock(client->ClientCallList);
+	RpcClientCall* call = rpc_client_call_find_by_id(log, client, CallId);
+	if (call)
+	{
+		if (success)
+			call->State = next(call->State);
+		else
+			call->State = RPC_CLIENT_CALL_STATE_FAULT;
 	}
 
-	ArrayList_Unlock(client->ClientCallList);
-	return clientCall;
+	HashTable_Unlock(client->ClientCallList);
 }
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 {
-	RpcClientCall* clientCall = nullptr;
-	clientCall = (RpcClientCall*)calloc(1, sizeof(RpcClientCall));
+	RpcClientCall* clientCall = (RpcClientCall*)calloc(1, sizeof(RpcClientCall));
 
 	if (!clientCall)
 		return nullptr;
 
 	clientCall->CallId = CallId;
 	clientCall->OpNum = OpNum;
-	clientCall->State = RPC_CLIENT_CALL_STATE_SEND_PDUS;
+	clientCall->State = RPC_CLIENT_CALL_STATE_INITIAL;
 	return clientCall;
 }
 
@@ -1002,25 +1059,23 @@ static void rpc_array_client_call_free(void* call)
 
 int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t length)
 {
-	RpcClientCall* clientCall = nullptr;
 	wStream s = Stream_Init();
 	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(inChannel);
 
 	SSIZE_T status = rpc_channel_write(&inChannel->common, buffer, length);
 
 	if (status <= 0)
-		return -1;
+		goto fail;
 
 	Stream_StaticConstInit(&s, buffer, length);
 	const rts_pdu_status_t rc = rts_read_common_pdu_header(&s, &header, FALSE);
 	if (rc != RTS_PDU_VALID)
-		return FALSE;
-
-	clientCall = rpc_client_call_find_by_id(inChannel->common.client, header.call_id);
-	if (!clientCall)
-		return -1;
-
-	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
+	{
+		status = -1;
+		goto fail;
+	}
 
 	/*
 	 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
@@ -1037,12 +1092,19 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 	}
 
 	if (status > INT32_MAX)
-		return -1;
+		status = -1;
+
+fail:
+	rpc_client_call_advance(inChannel->common.rpc->log, inChannel->common.client, header.call_id,
+	                        RPC_CLIENT_CALL_STATE_DISPATCHED, status > 0);
 	return (int)status;
 }
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
+	if (!rpc)
+		return FALSE;
+
 	size_t offset = 0;
 	BYTE* buffer = nullptr;
 	size_t stub_data_pad = 0;
@@ -1058,15 +1120,12 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	if (!s)
 		return FALSE;
 
-	if (!rpc)
-		goto fail;
-
 	auth = rpc->auth;
 	connection = rpc->VirtualConnection;
 
 	if (!auth)
 	{
-		WLog_ERR(TAG, "invalid auth context");
+		WLog_Print(rpc->log, WLOG_ERROR, "invalid auth context");
 		goto fail;
 	}
 
@@ -1101,7 +1160,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		if (!clientCall)
 			goto fail;
 
-		if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
+		if (!rpc_client_call_add(rpc->log, rpc->client, clientCall))
 		{
 			rpc_client_call_free(clientCall);
 			goto fail;
@@ -1176,6 +1235,9 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	rc = TRUE;
 fail:
+	if (!rc)
+		rpc_client_call_discard(rpc->log, rpc->client, request_pdu.header.call_id);
+
 	free(buffer);
 	Stream_Free(s, TRUE);
 	return rc;
@@ -1206,6 +1268,26 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 		freeaddrinfo(result);
 		return TRUE;
 	}
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL compare_uint32(const void* objA, const void* objB)
+{
+	if (!objA || !objB)
+		return FALSE;
+
+	const UINT32* a = objA;
+	const UINT32* b = objB;
+	return *a == *b;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT32 hash_uint32(const void* key)
+{
+	if (!key)
+		return 0;
+	const UINT32* k = key;
+	return *k;
 }
 
 RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
@@ -1246,12 +1328,17 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 	if (!InitializeCriticalSectionAndSpinCount(&(client->PipeLock), 4000))
 		goto fail;
 
-	client->ClientCallList = ArrayList_New(TRUE);
+	client->ClientCallList = HashTable_New(TRUE);
 
 	if (!client->ClientCallList)
 		goto fail;
 
-	obj = ArrayList_Object(client->ClientCallList);
+	if (!HashTable_SetHashFunction(client->ClientCallList, hash_uint32))
+		goto fail;
+
+	obj = HashTable_KeyObject(client->ClientCallList);
+	obj->fnObjectEquals = compare_uint32;
+	obj = HashTable_ValueObject(client->ClientCallList);
 	obj->fnObjectFree = rpc_array_client_call_free;
 	return client;
 fail:
@@ -1281,8 +1368,7 @@ void rpc_client_free(RpcClient* client)
 	if (client->pdu)
 		rpc_pdu_free(client->pdu);
 
-	if (client->ClientCallList)
-		ArrayList_Free(client->ClientCallList);
+	HashTable_Free(client->ClientCallList);
 
 	free(client);
 }
