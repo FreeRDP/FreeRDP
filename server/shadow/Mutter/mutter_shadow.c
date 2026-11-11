@@ -140,7 +140,7 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 #define MUTTER_MSG_CLIPBOARD_WRITE_DONE 0x10004
 /* a transfer gives up when its application stays silent for this long */
 #define MUTTER_CLIPBOARD_STALL_MS 5000
-#define MUTTER_CLIPBOARD_CALL_USEC (2 * 1000 * 1000)
+#define MUTTER_CLIPBOARD_CALL_USEC (2ull * 1000ull * 1000ull)
 /* the mime types of a selection that the session offers */
 #define MUTTER_CLIPBOARD_MAX_MIMES 64
 
@@ -2247,7 +2247,11 @@ static void mutter_clipboard_write_done(mutterShadowSubsystem* mutter, UINT32 se
 	    sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE,
 	                       "SelectionWriteDone", nullptr, nullptr, "ub", serial, ok ? 1 : 0);
 	if (rc < 0)
-		WLog_WARN(TAG, "clipboard: SelectionWriteDone failed: %s", strerror(-rc));
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "clipboard: SelectionWriteDone failed: %s",
+		          winpr_strerror(-rc, buffer, sizeof(buffer)));
+	}
 }
 
 /* subsystem thread: a client's clipboard becomes the session's selection */
@@ -2285,8 +2289,11 @@ static void mutter_clipboard_set_selection(mutterShadowSubsystem* mutter,
 	if (rc >= 0)
 		rc = sd_bus_call(mutter->bus, call, MUTTER_CLIPBOARD_CALL_USEC, &err, nullptr);
 	if (rc < 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "clipboard: SetSelection failed: %s",
-		          err.message ? err.message : strerror(-rc));
+		          err.message ? err.message : winpr_strerror(-rc, buffer, sizeof(buffer)));
+	}
 
 	sd_bus_error_free(&err);
 	sd_bus_message_unref(call);
@@ -2371,7 +2378,7 @@ static BOOL mutter_clipboard_read_all(mutterShadowSubsystem* mutter, mutterClipb
 	{
 		if (job->size + 4096 > capacity)
 		{
-			const size_t wanted = capacity ? capacity * 2 : 64 * 1024;
+			const size_t wanted = capacity ? capacity * 2 : 64ull * 1024ull;
 			if (wanted > SHADOW_CLIPBOARD_MAX_SIZE)
 			{
 				WLog_WARN(TAG, "clipboard: the selection is too large");
@@ -2581,8 +2588,11 @@ static void mutter_clipboard_enable(mutterShadowSubsystem* mutter)
 		    sd_bus_call_method(mutter->bus, RD_NAME, mutter->rdSessionPath, RD_SESSION_IFACE,
 		                       "EnableClipboard", &err, nullptr, "a{sv}", 0);
 		if (enabled < 0)
+		{
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_WARN(TAG, "EnableClipboard failed: %s: no clipboard",
-			          err.message ? err.message : strerror(-enabled));
+			          err.message ? err.message : winpr_strerror(-enabled, buffer, sizeof(buffer)));
+		}
 		else
 		{
 			mutter->clipboardEnabled = TRUE;
