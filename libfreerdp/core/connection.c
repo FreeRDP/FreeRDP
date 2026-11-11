@@ -47,6 +47,7 @@
 #include "../crypto/privatekey.h"
 #include "../crypto/certificate.h"
 #include "gateway/arm.h"
+#include "gateway/rdg.h"
 
 #include "utils.h"
 
@@ -432,7 +433,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_restricted_admin_mode_required(rdp->nego, settings->RestrictedAdminModeRequired);
 	nego_set_RCG_required(rdp->nego, settings->RemoteCredentialGuard);
 	nego_set_gateway_enabled(rdp->nego, settings->GatewayEnabled);
-	nego_set_gateway_bypass_local(rdp->nego, settings->GatewayBypassLocal);
+	nego_set_gateway_bypass_local(rdp->nego, settings->GatewayBypassLocal &&
+	                                             !transport_has_rdg_redirect(rdp->transport));
 	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
 	nego_enable_tls(rdp->nego, settings->TlsSecurity);
 	nego_enable_nla(rdp->nego, settings->NlaSecurity);
@@ -508,7 +510,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	return activated;
 }
 
-BOOL rdp_client_disconnect(rdpRdp* rdp)
+static BOOL rdp_client_disconnect_internal(rdpRdp* rdp, rdpRdg** redirectRdg)
 {
 	rdpContext* context = nullptr;
 
@@ -522,6 +524,9 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	 * transport and fastpath they use. */
 	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
+
+	if (redirectRdg)
+		*redirectRdg = transport_take_rdg_for_redirect(rdp->transport);
 
 	if (rdp->nego)
 	{
@@ -546,11 +551,16 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	return TRUE;
 }
 
-BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
+BOOL rdp_client_disconnect(rdpRdp* rdp)
+{
+	return rdp_client_disconnect_internal(rdp, nullptr);
+}
+
+static BOOL rdp_client_disconnect_and_clear_internal(rdpRdp* rdp, rdpRdg** redirectRdg)
 {
 	rdpContext* context = nullptr;
 
-	if (!rdp_client_disconnect(rdp))
+	if (!rdp_client_disconnect_internal(rdp, redirectRdg))
 		return FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -564,6 +574,11 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 	context->LastError = FREERDP_ERROR_SUCCESS;
 	clearChannelError(context);
 	return utils_reset_abort(rdp);
+}
+
+BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
+{
+	return rdp_client_disconnect_and_clear_internal(rdp, nullptr);
 }
 
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
@@ -654,12 +669,12 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 	return FALSE;
 }
 
-BOOL rdp_client_redirect(rdpRdp* rdp)
+static BOOL rdp_client_redirect_internal(rdpRdp* rdp, rdpRdg** redirectRdg)
 {
 	BOOL status = 0;
 	rdpSettings* settings = nullptr;
 
-	if (!rdp_client_disconnect_and_clear(rdp))
+	if (!rdp_client_disconnect_and_clear_internal(rdp, redirectRdg))
 		return FALSE;
 
 	/* Only disconnect & close the channels here.
@@ -726,12 +741,26 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	if (!ok)
 		return FALSE;
 
+	if (*redirectRdg)
+	{
+		transport_stage_rdg_redirect(rdp->transport, *redirectRdg);
+		*redirectRdg = nullptr;
+	}
+
 	rdp->redirectionCount++;
 	status = rdp_client_connect(rdp);
 
 	if (status)
 		status = rdp_client_reconnect_channels(rdp, TRUE);
 
+	return status;
+}
+
+BOOL rdp_client_redirect(rdpRdp* rdp)
+{
+	rdpRdg* redirectRdg = nullptr;
+	const BOOL status = rdp_client_redirect_internal(rdp, &redirectRdg);
+	rdg_free(redirectRdg);
 	return status;
 }
 
