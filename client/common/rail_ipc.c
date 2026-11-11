@@ -50,6 +50,7 @@
 
 struct rdp_client_rail_callbacks
 {
+	BOOL saved;
 	pcRailServerExecuteResult ServerExecuteResult;
 	pMonitoredDesktop MonitoredDesktop;
 	pNonMonitoredDesktop NonMonitoredDesktop;
@@ -69,6 +70,7 @@ struct rdp_client_rail_ipc
 	const rdpClientContext* cctx;
 	wStream* buffer;
 	struct rdp_client_rail_callbacks client;
+	CRITICAL_SECTION lock;
 };
 
 #if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RAIL_CLIENT)
@@ -165,6 +167,7 @@ WINPR_ATTR_NODISCARD
 static BOOL rail_ipc_open_fifo(rdpClientRailIpc* ipc)
 {
 	WINPR_ASSERT(ipc);
+
 	/* Ownership is locked before replacing a stale FIFO. */
 	if ((unlink(ipc->path) < 0) && (errno != ENOENT))
 	{
@@ -224,7 +227,7 @@ static void rail_ipc_disable(rdpClientRailIpc* ipc)
 	}
 }
 
-static BOOL rail_ipc_on_event(rdpContext* context, void* userdata)
+static BOOL rail_ipc_on_event_int(rdpContext* context, void* userdata)
 {
 	rdpClientRailIpc* ipc = userdata;
 	WINPR_ASSERT(context);
@@ -272,8 +275,13 @@ static BOOL rail_ipc_on_event(rdpContext* context, void* userdata)
 	if (input)
 	{
 		RAIL_EXEC_ORDER exec = WINPR_C_ARRAY_INIT;
-		exec.flags = (uint32_t)WINPR_JSON_GetNumberValue(
-		    WINPR_JSON_GetObjectItemCaseSensitive(input, "flags"));
+		const INT64 val =
+		    WINPR_JSON_GetIntegerValue(WINPR_JSON_GetObjectItemCaseSensitive(input, "flags"));
+		if ((val >= 0) && (val <= UINT16_MAX))
+			exec.flags = (uint16_t)val;
+		else
+			WLog_Print(ipc->log, WLOG_WARN,
+			           "JSON: flags: %" PRId64 " out of range, expected in range[0,65535]", val);
 		exec.RemoteApplicationProgram =
 		    WINPR_JSON_GetStringValue(WINPR_JSON_GetObjectItemCaseSensitive(input, "program"));
 		exec.RemoteApplicationWorkingDir =
@@ -283,16 +291,19 @@ static BOOL rail_ipc_on_event(rdpContext* context, void* userdata)
 		if (ipc->rail->ClientExecute)
 		{
 			WLog_Print(ipc->log, WLOG_DEBUG, "execute %s", exec.RemoteApplicationProgram);
-			const UINT rc = ipc->rail->ClientExecute(ipc->rail, &exec);
-			(void)WINPR_JSON_AddUIntegerToObject(input, "ClientExecuteReturn", rc);
-			char* str = WINPR_JSON_PrintUnformatted(input);
-			if (rc != 0)
-				WLog_Print(ipc->log, WLOG_WARN, "Failed to execute %s", str);
-
-			if (str)
+			if (ipc && ipc->rail)
 			{
-				// TODO: write(ipc->writeFd, str, strlen(str));
-				free(str);
+				const UINT rc = ipc->rail->ClientExecute(ipc->rail, &exec);
+				(void)WINPR_JSON_AddUIntegerToObject(input, "ClientExecuteReturn", rc);
+				char* str = WINPR_JSON_PrintUnformatted(input);
+				if (rc != 0)
+					WLog_Print(ipc->log, WLOG_WARN, "Failed to execute %s", str);
+
+				if (str)
+				{
+					// TODO: write(ipc->writeFd, str, strlen(str));
+					free(str);
+				}
 			}
 		}
 		WINPR_JSON_Delete(input);
@@ -300,6 +311,18 @@ static BOOL rail_ipc_on_event(rdpContext* context, void* userdata)
 	Stream_ResetPosition(ipc->buffer);
 
 	return TRUE;
+}
+
+static BOOL rail_ipc_on_event(rdpContext* context, void* userdata)
+{
+	rdpClientRailIpc* ipc = userdata;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(ipc);
+
+	EnterCriticalSection(&ipc->lock);
+	const BOOL rc = rail_ipc_on_event_int(context, userdata);
+	LeaveCriticalSection(&ipc->lock);
+	return rc;
 }
 
 WINPR_ATTR_MALLOC(free, 1)
@@ -336,6 +359,7 @@ fail:
 	WINPR_JSON_Delete(json);
 	return str;
 }
+
 static UINT rail_ipc_server_execute_result(RailClientContext* context,
                                            const RAIL_EXEC_RESULT_ORDER* execResult)
 {
@@ -350,8 +374,11 @@ static UINT rail_ipc_server_execute_result(RailClientContext* context,
 	// TODO: write(cctx->railIpc->writeFd, str, len);
 	winpr_znfree(str, len);
 	// Call client code
-	return IFCALLRESULT(CHANNEL_RC_OK, cctx->railIpc->client.ServerExecuteResult,
-	                    cctx->railIpc->rail, execResult);
+	cctx->railIpc->rail->custom = cctx->railIpc->client.context;
+	const UINT rc = IFCALLRESULT(CHANNEL_RC_OK, cctx->railIpc->client.ServerExecuteResult,
+	                             cctx->railIpc->rail, execResult);
+	cctx->railIpc->rail->custom = cctx;
+	return rc;
 }
 
 static BOOL rail_ipc_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
@@ -360,8 +387,14 @@ static BOOL rail_ipc_monitored_desktop(rdpContext* context, const WINDOW_ORDER_I
 	WINPR_ASSERT(context);
 
 	rdpClientContext* cctx = (rdpClientContext*)context;
-	if (!rail_ipc_start(cctx->railIpc))
-		return FALSE;
+
+	rdpClientRailIpc* ipc = cctx->railIpc;
+	WINPR_ASSERT(ipc);
+	EnterCriticalSection(&ipc->lock);
+	const BOOL rc = rail_ipc_start(ipc);
+	LeaveCriticalSection(&ipc->lock);
+	if (!rc)
+		return rc;
 	return IFCALLRESULT(TRUE, cctx->railIpc->client.MonitoredDesktop, context, orderInfo,
 	                    monitored_desktop);
 }
@@ -374,7 +407,8 @@ static BOOL rail_ipc_non_monitored_desktop(rdpContext* context, const WINDOW_ORD
 	return IFCALLRESULT(TRUE, cctx->railIpc->client.NonMonitoredDesktop, context, orderInfo);
 }
 
-void rail_ipc_attach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientContext* cctx)
+static void rail_ipc_attach_int(rdpClientRailIpc* ipc, RailClientContext* rail,
+                                rdpClientContext* cctx)
 {
 	WINPR_ASSERT(ipc);
 	WINPR_ASSERT(rail);
@@ -385,6 +419,8 @@ void rail_ipc_attach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientCo
 		return;
 
 	// Back up client context and callbacks
+	WINPR_ASSERT(!ipc->client.saved);
+	ipc->client.saved = TRUE;
 	ipc->client.context = rail->custom;
 	ipc->client.ServerExecuteResult = rail->ServerExecuteResult;
 	ipc->client.MonitoredDesktop = cctx->context.update->window->MonitoredDesktop;
@@ -400,7 +436,16 @@ void rail_ipc_attach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientCo
 	cctx->context.update->window->NonMonitoredDesktop = rail_ipc_non_monitored_desktop;
 }
 
-void rail_ipc_detach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientContext* cctx)
+void rail_ipc_attach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientContext* cctx)
+{
+	WINPR_ASSERT(ipc);
+	EnterCriticalSection(&ipc->lock);
+	rail_ipc_attach_int(ipc, rail, cctx);
+	LeaveCriticalSection(&ipc->lock);
+}
+
+static void rail_ipc_detach_int(rdpClientRailIpc* ipc, RailClientContext* rail,
+                                rdpClientContext* cctx)
 {
 	WINPR_ASSERT(ipc);
 	WINPR_ASSERT(rail);
@@ -413,10 +458,13 @@ void rail_ipc_detach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientCo
 	rail_ipc_stop(ipc);
 
 	// restore client context and callbacks
-	rail->custom = ipc->client.context;
-	rail->ServerExecuteResult = ipc->client.ServerExecuteResult;
-	cctx->context.update->window->MonitoredDesktop = ipc->client.MonitoredDesktop;
-	cctx->context.update->window->NonMonitoredDesktop = ipc->client.NonMonitoredDesktop;
+	if (ipc->client.saved)
+	{
+		rail->custom = ipc->client.context;
+		rail->ServerExecuteResult = ipc->client.ServerExecuteResult;
+		cctx->context.update->window->MonitoredDesktop = ipc->client.MonitoredDesktop;
+		cctx->context.update->window->NonMonitoredDesktop = ipc->client.NonMonitoredDesktop;
+	}
 
 	const struct rdp_client_rail_callbacks empty = WINPR_C_ARRAY_INIT;
 	ipc->client = empty;
@@ -424,9 +472,19 @@ void rail_ipc_detach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientCo
 	ipc->log = nullptr;
 }
 
+void rail_ipc_detach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientContext* cctx)
+{
+	WINPR_ASSERT(ipc);
+	EnterCriticalSection(&ipc->lock);
+	rail_ipc_detach_int(ipc, rail, cctx);
+	LeaveCriticalSection(&ipc->lock);
+}
+
 BOOL rail_ipc_start(rdpClientRailIpc* ipc)
 {
 	WINPR_ASSERT(ipc);
+	if (ipc->fifoCreated)
+		return TRUE;
 
 	if (!rail_ipc_build_names(ipc, ipc->cctx->context.settings) || !rail_ipc_open_fifo(ipc))
 		goto fail;
@@ -452,7 +510,7 @@ void rail_ipc_stop(rdpClientRailIpc* ipc)
 	rail_ipc_disable(ipc);
 
 	free(ipc->path);
-	*ipc = (rdpClientRailIpc){ .readFd = -1, .writeFd = -1 };
+	ipc->path = nullptr;
 }
 
 #else
@@ -480,6 +538,7 @@ rdpClientRailIpc* rail_ipc_new(void)
 	if (!ipc->buffer)
 		goto fail;
 
+	InitializeCriticalSection(&ipc->lock);
 	ipc->readFd = -1;
 	ipc->writeFd = -1;
 	return ipc;
@@ -493,6 +552,7 @@ void rail_ipc_free(rdpClientRailIpc* ipc)
 {
 	if (!ipc)
 		return;
+	DeleteCriticalSection(&ipc->lock);
 	Stream_Free(ipc->buffer, TRUE);
 	free(ipc);
 }
