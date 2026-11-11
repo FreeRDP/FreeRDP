@@ -155,6 +155,90 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	return error;
 }
 
+#if defined(WITH_GFX_AZURE)
+/**
+ * HEVC420 (undocumented) uses the AVC420 metablock, then a table of the NAL unit sizes and
+ * the Annex B bitstream:
+ *
+ *   RDPGFX_H264_METABLOCK
+ *   UINT32 cbNalSizes        size of the following table in bytes, 4 to 2048 (max 512 NAL units)
+ *   UINT32 nalSize[cbNalSizes / 4]
+ *   Annex B NAL units, each nalSize[i] bytes including its start code
+ *
+ * The table is checked against the bitstream and dropped, decoders get the Annex B data.
+ *
+ * With RDPGFX_CAPVERSION_113 and RDPGFX_CAPVERSION_115 a BYTE frameAttributes (bit 0: key
+ * frame) follows the table.
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+WINPR_ATTR_NODISCARD
+static UINT rdpgfx_decode_HEVC(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	RDPGFX_HEVC_BITMAP_STREAM hevc = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, cmd->data, cmd->length);
+
+	UINT error = rdpgfx_read_h264_metablock(gfx, s, &(hevc.meta));
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "rdpgfx_read_h264_metablock failed with error %" PRIu32 "!", error);
+		return error;
+	}
+
+	error = ERROR_INVALID_DATA;
+	if (!Stream_CheckAndLogRequiredLengthWLog(gfx->base.log, s, 4))
+		goto fail;
+
+	hevc.cbNalSizes = Stream_Get_UINT32(s);
+	if ((hevc.cbNalSizes == 0) || (hevc.cbNalSizes > 2048) || ((hevc.cbNalSizes % 4) != 0) ||
+	    !Stream_CheckAndLogRequiredLengthWLog(gfx->base.log, s, hevc.cbNalSizes))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR, "HEVC420 invalid NAL size table length %" PRIu32,
+		           hevc.cbNalSizes);
+		goto fail;
+	}
+
+	size_t total = 0;
+	hevc.nalSize = Stream_Pointer(s);
+	for (UINT32 x = 0; x < hevc.cbNalSizes / sizeof(UINT32); x++)
+		total += Stream_Get_UINT32(s);
+
+	if ((gfx->ConnectionCaps.version == RDPGFX_CAPVERSION_113) ||
+	    (gfx->ConnectionCaps.version == RDPGFX_CAPVERSION_115))
+	{
+		if (!Stream_CheckAndLogRequiredLengthWLog(gfx->base.log, s, 1))
+			goto fail;
+		hevc.frameAttributes = Stream_Get_UINT8(s);
+		WLog_Print(gfx->base.log, WLOG_TRACE, "HEVC420 frameAttributes 0x%02" PRIx8 "%s",
+		           hevc.frameAttributes, (hevc.frameAttributes & 0x01) ? " (key frame)" : "");
+	}
+	else
+		hevc.frameAttributes = -1;
+
+	const size_t remaining = Stream_GetRemainingLength(s);
+	if ((total != remaining) || (remaining > UINT32_MAX))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "HEVC420 NAL sizes add up to %" PRIuz " bytes, but %" PRIuz " bytes follow",
+		           total, remaining);
+		goto fail;
+	}
+
+	hevc.data = Stream_Pointer(s);
+	hevc.length = (UINT32)remaining;
+	cmd->extra = (void*)&hevc;
+
+	error = logSurfaceCommand(gfx, cmd);
+
+fail:
+	free_h264_metablock(&hevc.meta);
+	cmd->extra = nullptr;
+	return error;
+}
+#endif
+
 /**
  * Function description
  *
@@ -284,6 +368,16 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 				           "rdpgfx_decode_AVC444 failed with error %" PRIu32 "", error);
 
 			break;
+
+#if defined(WITH_GFX_AZURE)
+		case RDPGFX_CODECID_HEVC420:
+		case RDPGFX_CODECID_HEVC444:
+			if ((error = rdpgfx_decode_HEVC(gfx, cmd)))
+				WLog_Print(gfx->base.log, WLOG_ERROR,
+				           "rdpgfx_decode_HEVC failed with error %" PRIu32 "", error);
+
+			break;
+#endif
 
 		default:
 			error = logSurfaceCommand(gfx, cmd);

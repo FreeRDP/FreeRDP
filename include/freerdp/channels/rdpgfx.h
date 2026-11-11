@@ -155,7 +155,9 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 	RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE = 0x00000080U /* 10.7+ */
 #if defined(WITH_GFX_AZURE)
 	,
-	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100 /* 11.0+, undocumented, Azure only */
+	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100, /* 11.0+, undocumented, Azure only */
+	RDPGFX_CAPS_FLAG_HEVC_ENABLE = 0x00000400, /* 11.2+, undocumented */
+	RDPGFX_CAPS_FLAG_HEVC_I444 = 0x00002000    /* 11.5+, undocumented */
 #endif
 #if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 	,
@@ -206,7 +208,16 @@ typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
 	RDPGFX_CODECID_CAPROGRESSIVE_V2 = 0x000Du,
 	RDPGFX_CODECID_AVC444 = 0x000Eu,
 	RDPGFX_CODECID_AVC444v2 = 0x000Fu,
+#if defined(WITH_GFX_AZURE)
+	RDPGFX_CODECID_HEVC420 = 0x0010u, /**< undocumented, only valid with
+		                               * RDPGFX_CAPS_FLAG_HEVC_ENABLE confirmed */
+	RDPGFX_CODECID_HEVC444 =
+		0x0012u, /**< undocumented, only valid with
+		          * RDPGFX_CAPS_FLAG_HEVC_ENABLE | RDPGFX_CAPS_FLAG_HEVC_I444 confirmed */
+	RDPGFX_CODECID_MAX = 0x0012u
+#else
 	RDPGFX_CODECID_MAX = 0x0010u
+#endif
 } RDPGFX_CODECID;
 
 #define RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE 17
@@ -439,6 +450,16 @@ typedef struct
 	BYTE LC;
 	RDPGFX_AVC420_BITMAP_STREAM bitstream[2];
 } RDPGFX_AVC444_BITMAP_STREAM;
+
+typedef struct
+{
+	RDPGFX_H264_METABLOCK meta;
+	UINT32 cbNalSizes;     //                  (4 to 2048, multiple of 4)
+	UINT32* nalSize;       //[cbNalSizes / 4]
+	INT16 frameAttributes; //           (11.5; bit 0 = key frame, negative for not supported)
+	UINT32 length;
+	BYTE* data;
+} RDPGFX_HEVC_BITMAP_STREAM;
 
 typedef struct
 {
