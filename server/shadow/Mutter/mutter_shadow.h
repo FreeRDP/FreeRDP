@@ -134,6 +134,14 @@ struct mutter_shadow_subsystem
 	float audioPeak;
 	UINT64 audioLogged;
 
+	/* clipboard: D-Bus on the subsystem thread; an application may stall the pipes
+	 * of a transfer, so the data moves on a thread of its own */
+	BOOL clipboardEnabled;
+	sd_bus_slot* selectionOwnerSlot;
+	sd_bus_slot* selectionTransferSlot;
+	wMessageQueue* clipboardJobs;
+	HANDLE clipboardThread;
+
 	/* the clients connected; the event tells the thread the count changed */
 	volatile LONG clients;
 	HANDLE clientsEvent;

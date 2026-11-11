@@ -62,6 +62,7 @@ extern "C"
 	typedef struct rdp_shadow_capture rdpShadowCapture;
 	typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 	typedef struct rdp_shadow_multiclient_event rdpShadowMultiClientEvent;
+	typedef struct rdp_shadow_clipboard rdpShadowClipboard; /** @since version 3.34.0 */
 
 	typedef struct S_RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
 	typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
@@ -107,6 +108,29 @@ extern "C"
 	                                                          rdpShadowClient* client,
 	                                                          const AUDIO_FORMAT* format,
 	                                                          wStream* data);
+
+	/** The clipboard of the session, for a subsystem that has one: see
+	 *  shadow_clipboard_session_changed(). Each hook may run on any thread, must not block,
+	 *  and must not call the shadow_clipboard_ functions before it returned: the work goes
+	 *  to the subsystem's own thread.
+	 *
+	 *  @since version 3.34.0
+	 */
+#define SHADOW_CLIPBOARD_MAX_SIZE (256ull * 1024ull * 1024ull)
+
+	/** A client copied: the session offers its data from now on, in these mime types. With
+	 *  none, that client left or has nothing to offer: the session drops the offer. */
+	typedef BOOL (*pfnShadowClipboardOffer)(rdpShadowSubsystem* subsystem,
+	                                        const char* const* mimeTypes, size_t count);
+
+	/** A client pastes: read the session's clipboard, and hand the data, or a failure, to
+	 *  shadow_clipboard_session_data(). One read at a time. */
+	typedef BOOL (*pfnShadowClipboardRead)(rdpShadowSubsystem* subsystem, const char* mimeType);
+
+	/** The answer to shadow_clipboard_session_request(): the data, or nullptr on a failure.
+	 *  It is only valid during the call. */
+	typedef BOOL (*pfnShadowClipboardProvide)(rdpShadowSubsystem* subsystem, UINT32 request,
+	                                          const BYTE* data, size_t size);
 
 	struct rdp_shadow_client
 	{
@@ -214,6 +238,7 @@ extern "C"
 #else
 	    UINT32 reservedAV2[2];
 #endif
+		rdpShadowClipboard* clipboard; /** @since version 3.34.0 */
 	};
 
 	struct rdp_shadow_surface
@@ -285,6 +310,12 @@ extern "C"
 		rdpShadowServer* server;
 
 		WINPR_ATTR_NODISCARD pfnShadowRelMouseEvent RelMouseEvent; /** @since version 3.15.0 */
+
+		/* all three, or a client gets no clipboard channel from the core */
+		WINPR_ATTR_NODISCARD pfnShadowClipboardOffer ClipboardOffer; /** @since version 3.34.0 */
+		WINPR_ATTR_NODISCARD pfnShadowClipboardRead ClipboardRead;   /** @since version 3.34.0 */
+		WINPR_ATTR_NODISCARD pfnShadowClipboardProvide
+		    ClipboardProvide; /** @since version 3.34.0 */
 	};
 
 /* Definition of message between subsystem and clients */
@@ -461,6 +492,45 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode);
+
+	/** The session's clipboard changed, and not through ClipboardOffer.
+	 *
+	 *  @param server The server
+	 *  @param mimeTypes What the session offers now
+	 *  @param count The number of mime types, 0 for an empty clipboard
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_clipboard_session_changed(rdpShadowServer* server,
+	                                                  const char* const* mimeTypes, size_t count);
+
+	/** The answer to ClipboardRead.
+	 *
+	 *  @param server The server
+	 *  @param data What the session holds in that mime type, nullptr on a failure
+	 *  @param size The size of \b data
+	 *
+	 *  @return \b TRUE for success, \b FALSE when no read was waiting
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_clipboard_session_data(rdpShadowServer* server, const BYTE* data,
+	                                               size_t size);
+
+	/** The session pastes what a client offered: ClipboardProvide gets the answer.
+	 *
+	 *  @param server The server
+	 *  @param request Any number of the subsystem's, ClipboardProvide gets it back
+	 *  @param mimeType One of the mime types of ClipboardOffer
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_clipboard_session_request(rdpShadowServer* server, UINT32 request,
+	                                                  const char* mimeType);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 shadow_encoder_preferred_fps(rdpShadowEncoder* encoder);
