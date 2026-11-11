@@ -564,13 +564,15 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 				 * desktop, and send all of it. DXGI reports changes only: on a
 				 * desktop that does not change, a new client would otherwise wait
 				 * for its first picture until something moves; a new duplication
-				 * starts with the whole desktop image. While capture is paused (a desktop
-				 * this process may not capture) a missing duplication is tried again only
-				 * every WIN_SHADOW_DXGI_DENIED_RETRY_MS, not on every pass */
+				 * starts with the whole desktop image. A missing duplication is
+				 * retried from dxgiRetryTime on, not on every pass: every
+				 * WIN_SHADOW_DXGI_DENIED_RETRY_MS while a desktop this process
+				 * may not capture is active, every WIN_SHADOW_DXGI_INIT_RETRY_MS
+				 * after a failure which does not recover by itself (no D3D11
+				 * device, no duplicatable output) */
 				const BOOL followed = win_shadow_follow_input_desktop();
-				const BOOL retry =
-				    !subsystem->dxgiOutputDuplication &&
-				    (!subsystem->dxgiDenied || (GetTickCount64() >= subsystem->dxgiRetryTime));
+				const BOOL retry = !subsystem->dxgiOutputDuplication &&
+				                   (GetTickCount64() >= subsystem->dxgiRetryTime);
 				if (followed || refresh || retry)
 				{
 					refresh = FALSE;
@@ -821,6 +823,8 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	status = win_shadow_wds_init(subsystem);
 #elif defined(WITH_DXGI_1_2)
 	status = win_shadow_dxgi_init(subsystem);
+	if (status < 0)
+		WLog_WARN(TAG, "DXGI init failed, the capture thread retries at a low rate");
 #endif
 	virtualScreen = &(subsystem->base.virtualScreen);
 	virtualScreen->left = 0;
