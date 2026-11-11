@@ -604,7 +604,6 @@ typedef struct
 typedef struct
 {
 	RpcClient* client;
-	BIO* bio;
 	rdpTls* tls;
 	rdpCredsspAuth* auth;
 	HttpContext* http;

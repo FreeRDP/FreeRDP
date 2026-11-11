@@ -3321,14 +3321,14 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 		case BIO_C_READ_BLOCKED:
 		{
-			BIO* cbio = outChannel->common.bio;
+			BIO* cbio = outChannel->common.tls->underlying;
 			status = BIO_read_blocked(cbio);
 		}
 		break;
 
 		case BIO_C_WRITE_BLOCKED:
 		{
-			BIO* cbio = inChannel->common.bio;
+			BIO* cbio = inChannel->common.tls->underlying;
 			status = BIO_write_blocked(cbio);
 		}
 		break;
@@ -3336,7 +3336,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_READ:
 		{
 			int timeout = (int)arg1;
-			BIO* cbio = outChannel->common.bio;
+			BIO* cbio = outChannel->common.tls->underlying;
 
 			if (BIO_read_blocked(cbio))
 				return BIO_wait_read(cbio, timeout);
@@ -3350,7 +3350,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_WRITE:
 		{
 			int timeout = (int)arg1;
-			BIO* cbio = inChannel->common.bio;
+			BIO* cbio = inChannel->common.tls->underlying;
 
 			if (BIO_write_blocked(cbio))
 				status = BIO_wait_write(cbio, timeout);
