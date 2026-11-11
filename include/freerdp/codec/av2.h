@@ -45,7 +45,15 @@ extern "C"
 		FREERDP_AV2_CONTEXT_OPTION_PROFILE,     /**< 0: 4:2:0, 1: 4:4:4 */
 		FREERDP_AV2_CONTEXT_OPTION_RATECONTROL, /**< a FREERDP_AV2_RATECONTROL value */
 		FREERDP_AV2_CONTEXT_OPTION_BITRATE,     /**< target bitrate in kbit/s */
-		FREERDP_AV2_CONTEXT_OPTION_USAGETYPE    /**< the encoder's usage (good quality, realtime) */
+		FREERDP_AV2_CONTEXT_OPTION_USAGETYPE,   /**< the encoder's usage (good quality, realtime) */
+		FREERDP_AV2_CONTEXT_OPTION_QP,          /**< the quantizer of FREERDP_AV2_Q, 1 to 255
+		                                             (lower is better); 0 leaves libavm's */
+		FREERDP_AV2_CONTEXT_OPTION_THREADS,     /**< encoder threads, 0 for one */
+		FREERDP_AV2_CONTEXT_OPTION_SPEED,       /**< libavm's cpu-used, 0 (slowest) to 10;
+		                                             UINT32_MAX for 9 (realtime) or 6 */
+		FREERDP_AV2_CONTEXT_OPTION_TILE_COLUMNS, /**< log2 of the tile columns, 0 to 6 */
+		FREERDP_AV2_CONTEXT_OPTION_DPB_SIZE      /**< reference frames kept, 1 to 16; 0 leaves
+		                                              libavm's 8 */
 	} FREERDP_AV2_CONTEXT_OPTION;
 
 	/** @brief Set a codec option

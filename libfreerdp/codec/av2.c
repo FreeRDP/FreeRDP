@@ -83,6 +83,10 @@ struct S_FREERDP_AV2_CONTEXT
 	avm_codec_enc_cfg_t ecfg;
 	avm_codec_pts_t framecount;
 	avm_enc_frame_flags_t eflags;
+	UINT32 qp;          /* FREERDP_AV2_CONTEXT_OPTION_QP, 0: libavm's */
+	UINT32 speed;       /* FREERDP_AV2_CONTEXT_OPTION_SPEED, UINT32_MAX: by usage */
+	UINT32 tileColumns; /* FREERDP_AV2_CONTEXT_OPTION_TILE_COLUMNS, log2 */
+	UINT32 dpbSize;     /* FREERDP_AV2_CONTEXT_OPTION_DPB_SIZE, 0: libavm's */
 #endif
 	avm_codec_flags_t flags;
 	avm_codec_iface_t* iface;
@@ -216,11 +220,39 @@ BOOL freerdp_av2_context_set_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONTEX
 				return FALSE;
 			av2->ecfg.g_usage = value;
 			break;
+		case FREERDP_AV2_CONTEXT_OPTION_QP:
+			if (!av2->encoder || (value > 255))
+				return FALSE;
+			av2->qp = value;
+			break;
+		case FREERDP_AV2_CONTEXT_OPTION_THREADS:
+			if (!av2->encoder || (value > 64))
+				return FALSE;
+			av2->ecfg.g_threads = (value > 0) ? value : 1;
+			break;
+		case FREERDP_AV2_CONTEXT_OPTION_SPEED:
+			if (!av2->encoder || ((value > 10) && (value != UINT32_MAX)))
+				return FALSE;
+			av2->speed = value;
+			break;
+		case FREERDP_AV2_CONTEXT_OPTION_TILE_COLUMNS:
+			if (!av2->encoder || (value > 6))
+				return FALSE;
+			av2->tileColumns = value;
+			break;
+		case FREERDP_AV2_CONTEXT_OPTION_DPB_SIZE:
+			if (!av2->encoder || (value > 16))
+				return FALSE;
+			av2->dpbSize = value;
+			break;
 		default:
 			WLog_Print(av2->log, WLOG_ERROR, "Unknown FREERDP_AV2_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
 			return TRUE;
 	}
+	/* before the first reset only kept: the encoder starts once, with all of them */
+	if (!av2->initialized)
+		return TRUE;
 	return freerdp_av2_context_reset(av2, av2->ecfg.g_w, av2->ecfg.g_h);
 #else
 	WLog_Print(av2->log, WLOG_WARN,
@@ -263,6 +295,26 @@ UINT32 freerdp_av2_context_get_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONT
 			if (!av2->encoder)
 				return 0;
 			return av2->ecfg.g_usage;
+		case FREERDP_AV2_CONTEXT_OPTION_QP:
+			if (!av2->encoder)
+				return 0;
+			return av2->qp;
+		case FREERDP_AV2_CONTEXT_OPTION_THREADS:
+			if (!av2->encoder)
+				return 0;
+			return av2->ecfg.g_threads;
+		case FREERDP_AV2_CONTEXT_OPTION_SPEED:
+			if (!av2->encoder)
+				return 0;
+			return av2->speed;
+		case FREERDP_AV2_CONTEXT_OPTION_TILE_COLUMNS:
+			if (!av2->encoder)
+				return 0;
+			return av2->tileColumns;
+		case FREERDP_AV2_CONTEXT_OPTION_DPB_SIZE:
+			if (!av2->encoder)
+				return 0;
+			return av2->dpbSize;
 		default:
 			WLog_Print(av2->log, WLOG_ERROR, "Unknown FREERDP_AV2_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -755,13 +807,40 @@ BOOL freerdp_av2_context_reset(FREERDP_AV2_CONTEXT* av2, UINT32 width, UINT32 he
 		}
 		av2->initialized = true;
 
-		/* A remote desktop: screen content, the fastest preset of the usage */
-		const int cpuUsed = (av2->ecfg.g_usage == AVM_USAGE_REALTIME) ? 9 : 6;
-		if (!av2_avm_control(av2, AVME_SET_CPUUSED, "AVME_SET_CPUUSED", cpuUsed) ||
-		    !av2_avm_control(av2, AV2E_SET_TUNE_CONTENT, "AV2E_SET_TUNE_CONTENT",
+		/* A remote desktop: screen content, the fastest preset of the usage unless set */
+		int cpuUsed = (av2->ecfg.g_usage == AVM_USAGE_REALTIME) ? 9 : 6;
+		if (av2->speed != UINT32_MAX)
+			cpuUsed = (int)av2->speed;
+		if ((avm_codec_control(&av2->ctx, AVME_SET_CPUUSED, cpuUsed) != AVM_CODEC_OK) &&
+		    (cpuUsed > 9))
+		{
+			/* speed 10 is newer than libavm v1.0.0, and realtime only */
+			WLog_Print(av2->log, WLOG_WARN, "AVME_SET_CPUUSED %d refused: 9 instead", cpuUsed);
+			cpuUsed = 9;
+			if (!av2_avm_control(av2, AVME_SET_CPUUSED, "AVME_SET_CPUUSED", cpuUsed))
+				return FALSE;
+		}
+		if (!av2_avm_control(av2, AV2E_SET_TUNE_CONTENT, "AV2E_SET_TUNE_CONTENT",
 		                     AVM_CONTENT_SCREEN) ||
-		    !av2_avm_control(av2, AV2E_SET_ROW_MT, "AV2E_SET_ROW_MT", 1))
+		    !av2_avm_control(av2, AV2E_SET_ROW_MT, "AV2E_SET_ROW_MT", 1) ||
+		    !av2_avm_control(av2, AV2E_SET_TILE_COLUMNS, "AV2E_SET_TILE_COLUMNS",
+		                     (int)av2->tileColumns))
 			return FALSE;
+		/* Q: the quantizer of every frame; CQ: the best it may get, a bit rate on top */
+		if (((av2->ecfg.rc_end_usage == AVM_Q) || (av2->ecfg.rc_end_usage == AVM_CQ)) &&
+		    (av2->qp > 0) && !av2_avm_control(av2, AVME_SET_QP, "AVME_SET_QP", (int)av2->qp))
+			return FALSE;
+		/* Each reference frame is kept whole, in 16 bits with a border: the setting that
+		 * decides most of the encoder's memory. libavm has no control for it, only the
+		 * option avmenc's --dpb-size sets, before the first frame. */
+		if (av2->dpbSize > 0)
+		{
+			char dpb[8] = WINPR_C_ARRAY_INIT;
+			(void)_snprintf(dpb, sizeof(dpb), "%" PRIu32, av2->dpbSize);
+			if (avm_codec_set_option(&av2->ctx, "dpb-size", dpb) != AVM_CODEC_OK)
+				WLog_Print(av2->log, WLOG_WARN, "dpb-size %s refused: %s", dpb,
+				           avm_codec_error(&av2->ctx));
+		}
 
 		av2->framecount = 0;
 		av2->eflags = AVM_EFLAG_FORCE_KF;
@@ -901,6 +980,7 @@ FREERDP_AV2_CONTEXT* freerdp_av2_context_new(BOOL Compressor)
 		ctx->ecfg.g_profile = AV2_PROFILE_MAIN_420_10_IP0;
 		ctx->ecfg.g_bit_depth = AVM_BITS_8;
 		ctx->ecfg.g_input_bit_depth = 8;
+		ctx->speed = UINT32_MAX;
 #else
 		WLog_Print(ctx->log, WLOG_ERROR,
 		           "AV2 encoder requires libavm with its encoder, recompile with '-DWITH_AVM=ON'");
