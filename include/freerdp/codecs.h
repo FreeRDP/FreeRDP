@@ -122,6 +122,18 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_codec_id_to_str(UINT32 id);
 
+	/**  @brief Check if a given codec is supported in the build
+	 *
+	 *   @param codec The codec to check
+	 *   @param encoder If encoding or decoding is required
+	 *
+	 *   @return TRUE if supported, FALSE otherwise
+	 *
+	 *   @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_codec_supported(FreeRDP_CodecFlags codec, BOOL encoder);
+
 #ifdef __cplusplus
 }
 #endif

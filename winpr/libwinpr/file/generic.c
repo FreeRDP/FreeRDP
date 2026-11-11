@@ -538,7 +538,7 @@ BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInf
 DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
 {
 	struct stat fileStat = WINPR_C_ARRAY_INIT;
-	if (lstat(lpFileName, &fileStat) != 0)
+	if (stat(lpFileName, &fileStat) != 0)
 		return INVALID_FILE_ATTRIBUTES;
 
 	return FileAttributesFromStat(lpFileName, &fileStat);
@@ -1168,9 +1168,13 @@ static DWORD FileAttributesFromStat(const char* path, const struct stat* fileSta
 	if (!(fileStat->st_mode & S_IWUSR))
 		dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
-	if (S_ISLNK(fileStat->st_mode))
-		dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
-
+	struct stat lFileStat = WINPR_C_ARRAY_INIT;
+	const int rc = lstat(path, &lFileStat);
+	if (rc == 0)
+	{
+		if (S_ISLNK(lFileStat.st_mode))
+			dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
+	}
 	return dwFileAttributes;
 }
 

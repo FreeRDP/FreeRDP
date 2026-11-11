@@ -115,6 +115,21 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	return fp;
 }
 
+WINPR_ATTR_NODISCARD
+static long ASN1_STRING_length_wrapper(const ASN1_STRING* asn)
+{
+	if (!asn)
+		return 0;
+#if (OPENSSL_VERSION_NUMBER >= 0x40100000L)
+	const size_t rc = ASN1_STRING_get_length(asn);
+	if (rc > LONG_MAX)
+		return 0;
+	return WINPR_ASSERTING_INT_CAST(long, rc);
+#else
+	return ASN1_STRING_length(asn);
+#endif
+}
+
 BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length)
 {
 	WINPR_ASSERT(xcert);
@@ -136,7 +151,7 @@ BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length)
 	int fallback = 0;
 	BYTE* hash = nullptr;
 	ASN1_OCTET_STRING* digest = X509_digest_sig(xcert, nullptr, &fallback);
-	const int len = digest ? ASN1_STRING_length(digest) : 0;
+	const long len = ASN1_STRING_length_wrapper(digest);
 	if (fallback)
 	{
 		if (len > 0)
@@ -1017,7 +1032,7 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 
 	/* Decode the structure. */
 	inp = ASN1_STRING_get0_data(sequence);
-	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length(sequence));
+	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length_wrapper(sequence));
 	if (params == nullptr)
 		goto end;
 
@@ -1051,7 +1066,8 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 			goto end;
 		mgf_param_sequence = mgf_param_value;
 		inp = ASN1_STRING_get0_data(mgf_param_sequence);
-		mgf1_digest_alg = d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length(mgf_param_sequence));
+		mgf1_digest_alg =
+		    d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length_wrapper(mgf_param_sequence));
 		if (mgf1_digest_alg == nullptr)
 			goto end;
 

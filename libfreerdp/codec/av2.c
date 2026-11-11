@@ -269,6 +269,7 @@ UINT32 freerdp_av2_context_get_option(FREERDP_AV2_CONTEXT* av2, FREERDP_AV2_CONT
 			return 0;
 	}
 #else
+	WINPR_UNUSED(av2);
 	WINPR_UNUSED(option);
 	return 0;
 #endif
