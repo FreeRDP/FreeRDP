@@ -38,7 +38,7 @@
 #include "../utils.h"
 #include "../../crypto/opensslcompat.h"
 
-#define TAG FREERDP_TAG("core.gateway.tsg")
+#define TSG_TAG FREERDP_TAG("core.gateway.tsg")
 
 #define TSG_CAPABILITY_TYPE_NAP 0x00000001
 
@@ -674,8 +674,9 @@ static BOOL tsg_ndr_read_version_caps(wLog* log, wStream* s, UINT32* index,
 
 	if (caps->numCapabilities > 1)
 	{
-		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
-		         caps->numCapabilities);
+		WLog_Print(log, WLOG_ERROR,
+		           "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		           caps->numCapabilities);
 		return FALSE;
 	}
 
@@ -698,8 +699,9 @@ static BOOL tsg_ndr_write_version_caps(wLog* log, wStream* s, UINT32* index,
 
 	if (caps->numCapabilities > 1)
 	{
-		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
-		         caps->numCapabilities);
+		WLog_Print(log, WLOG_ERROR,
+		           "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		           caps->numCapabilities);
 		return FALSE;
 	}
 	Stream_Write_UINT32(s, caps->numCapabilities);
@@ -920,8 +922,9 @@ static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
 
 	if (caps->numCapabilities > 1)
 	{
-		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
-		         caps->numCapabilities);
+		tsg_print(buffer, length,
+		          "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		          caps->numCapabilities);
 		return FALSE;
 	}
 
@@ -1596,7 +1599,7 @@ static BOOL tsg_ndr_read_tunnel_context(wLog* log, wStream* s, CONTEXT_HANDLE* t
 	INT32 ReturnValue = 0;
 	Stream_Read_INT32(s, ReturnValue); /* ReturnValue (4 bytes) */
 	if (ReturnValue != NO_ERROR)
-		WLog_WARN(TAG, "ReturnValue=%s", NtStatus2Tag(ReturnValue));
+		WLog_Print(log, WLOG_ERROR, "ReturnValue=%s", NtStatus2Tag(ReturnValue));
 	return TRUE;
 }
 
@@ -1615,10 +1618,10 @@ static BOOL tsg_ndr_read_TSG_PACKET_MSG_RESPONSE_header(wLog* log, wStream* s,
 
 	if (pkt->msgType != SwitchValue)
 	{
-		WLog_ERR(TAG,
-		         "[MS-TSGU] 2.2.9.2.1.9 TSG_PACKET_MSG_RESPONSE MsgType[0x%08" PRIx32
-		         "] != MessageSwitchValue [0x%08" PRIx32 "]",
-		         pkt->msgType, SwitchValue);
+		WLog_Print(log, WLOG_ERROR,
+		           "[MS-TSGU] 2.2.9.2.1.9 TSG_PACKET_MSG_RESPONSE MsgType[0x%08" PRIx32
+		           "] != MessageSwitchValue [0x%08" PRIx32 "]",
+		           pkt->msgType, SwitchValue);
 		return FALSE;
 	}
 
@@ -3223,7 +3226,7 @@ rdpTsg* tsg_new(rdpTransport* transport)
 
 	if (!tsg)
 		return nullptr;
-	tsg->log = WLog_Get(TAG);
+	tsg->log = WLog_Get(TSG_TAG);
 	tsg->transport = transport;
 	tsg->rpc = rpc_new(tsg->transport);
 
