@@ -108,6 +108,71 @@ static void win_shadow_send_input(const char* what, INPUT* event)
 		          GetLastError());
 }
 
+/* UIPI: a process below High integrity (a scheduled task defaults to Medium)
+ * may not send input to windows of a higher integrity level (an elevated
+ * foreground application), and SendInput does not report the refusal: it
+ * returns success and does not set the last error. The screen capture is
+ * unaffected, so such a shadow serves a perfectly fine picture while every
+ * keystroke and mouse click into an elevated window is silently dropped.
+ * Say so at startup: this turns a "keyboard and mouse dead while picture is
+ * fine" report into a log line readable in seconds.
+ * https://learn.microsoft.com/en-us/windows/win32/secauthz/how-uipi-works */
+static void win_shadow_check_input_integrity(void)
+{
+	HANDLE token = nullptr;
+	DWORD length = 0;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+	{
+		WLog_WARN(TAG, "OpenProcessToken failed: cannot read the process integrity level (0x%08lX)",
+		          GetLastError());
+		return;
+	}
+
+	/* the integrity level RID is the last sub-authority of the mandatory
+	 * label SID (S-1-16-<rid>) */
+	if (!GetTokenInformation(token, TokenIntegrityLevel, nullptr, 0, &length) &&
+	    (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+	{
+		PTOKEN_MANDATORY_LABEL label = (PTOKEN_MANDATORY_LABEL)malloc(length);
+
+		if (!label)
+			WLog_WARN(TAG, "out of memory: cannot read the process integrity level");
+		else
+		{
+			if (GetTokenInformation(token, TokenIntegrityLevel, label, length, &length) &&
+			    label->Label.Sid)
+			{
+				const PSID sid = label->Label.Sid;
+				const DWORD rid = *GetSidSubAuthority(sid, *GetSidSubAuthorityCount(sid) - 1);
+
+				if (rid < SECURITY_MANDATORY_HIGH_RID)
+					WLog_WARN(TAG,
+					          "process is NOT elevated (integrity level 0x%04lX, Medium or lower): "
+					          "injected input to elevated windows will be silently dropped by UIPI "
+					          "- run the shadow elevated (e.g. scheduled task RunLevel Highest) or "
+					          "expect \"keyboard and mouse dead while picture is fine\" reports",
+					          rid);
+				else
+					WLog_DBG(TAG,
+					         "process integrity level 0x%04lX: injected input reaches elevated "
+					         "windows",
+					         rid);
+			}
+			else
+				WLog_WARN(
+				    TAG,
+				    "GetTokenInformation(TokenIntegrityLevel) failed: cannot read the process "
+				    "integrity level (0x%08lX)",
+				    GetLastError());
+
+			free(label);
+		}
+	}
+
+	(void)CloseHandle(token);
+}
+
 /* Ctrl+Alt+Del: asks freerdp-shadow-service for the secure attention
  * sequence (win_sas.h) */
 static void win_shadow_send_sas(void)
@@ -804,6 +869,7 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
 	int status;
 	MONITOR_DEF* virtualScreen;
+	win_shadow_check_input_integrity();
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
 	if (subsystem->base.numMonitors > 0)
 	{
