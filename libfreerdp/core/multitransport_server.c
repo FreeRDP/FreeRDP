@@ -204,7 +204,6 @@ static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
 		rdpemt_free(emt);
 		return FALSE;
 	}
-	rdpemt_set_send_limit(emt, multi->udpSendLimit);
 	/* Record start time before OfferTunnel (which may block). The response wakeup fires
 	 * RDPEMT_SERVER_RESPONSE_TIMEOUT_MS later. */
 	multi->serverOfferTime = GetTickCount64();
@@ -219,6 +218,8 @@ static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
 	EnterCriticalSection(&multi->lock);
 	/* One request per connection; free any existing tunnel to prevent leaks. */
 	rdpEmt* old = multi->reliable;
+	/* Under lock: freerdp_peer_set_udp_send_limit() may be called from another thread. */
+	rdpemt_set_send_limit(emt, multi->udpSendLimit);
 	multi->reliable = emt;
 	multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_PENDING;
 	multi->serverTunnelUp = FALSE;
