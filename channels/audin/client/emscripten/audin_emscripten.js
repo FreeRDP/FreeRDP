@@ -113,12 +113,13 @@ function audin_web_start(id, capture, samples, channels, rate)
 	(async () => {
 		try
 		{
-			/* voice processing by default; a page can ask for other constraints */
-			const audio = Module.freerdpAudinConstraints || {
+			/* voice processing by default; a page can override single constraints */
+			const audio = {
 				channelCount: channels,
 				echoCancellation: true,
 				noiseSuppression: true,
-				autoGainControl: true
+				autoGainControl: true,
+				...Module.freerdpAudinConstraints
 			};
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: audio });
 			if (st.stopped)
@@ -127,7 +128,21 @@ function audin_web_start(id, capture, samples, channels, rate)
 				return;
 			}
 			st.stream = stream;
-			const ctx = (st.ctx = new AudioContext());
+			/* capture at the negotiated rate so the browser resamples; not every browser can
+			 * connect a microphone to a context of another rate, then the worklet resamples */
+			let ctx, source;
+			try
+			{
+				ctx = st.ctx = new AudioContext({ sampleRate: rate });
+				source = ctx.createMediaStreamSource(stream);
+			}
+			catch (e)
+			{
+				if (ctx)
+					ctx.close().catch(() => {});
+				ctx = st.ctx = new AudioContext();
+				source = ctx.createMediaStreamSource(stream);
+			}
 			if (!all.workletUrl)
 				all.workletUrl =
 				    URL.createObjectURL(new Blob([worklet], { type: "text/javascript" }));
@@ -146,7 +161,7 @@ function audin_web_start(id, capture, samples, channels, rate)
 					rate: rate
 				}
 			});
-			ctx.createMediaStreamSource(stream).connect(node);
+			source.connect(node);
 			/* the output is silent; connected so that the browser keeps pulling the node */
 			node.connect(ctx.destination);
 			if (ctx.state !== "running")
@@ -160,6 +175,8 @@ function audin_web_start(id, capture, samples, channels, rate)
 		catch (e)
 		{
 			err("[audin] microphone capture failed: " + e);
+			if (typeof Module.onFreerdpMicrophoneError === "function")
+				Module.onFreerdpMicrophoneError(e);
 		}
 	})();
 }
