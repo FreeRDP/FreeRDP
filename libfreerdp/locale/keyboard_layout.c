@@ -1062,7 +1062,7 @@ static UINT32 get_object_integer(WINPR_JSON* json, size_t pos, const char* name)
 		return 0;
 	}
 
-	return (UINT32)WINPR_JSON_GetNumberValue(obj);
+	return (UINT32)WINPR_JSON_GetUIntegerValue(obj);
 }
 
 static bool parse_json_layout_entry_id(WINPR_JSON* json, size_t pos, RDP_KEYBOARD_LAYOUT* entry)

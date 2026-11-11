@@ -2776,14 +2776,7 @@ static int64_t int_from_json_item(const WINPR_JSON* item, int64_t min, int64_t m
 		return 0;
 	}
 
-	const double val = WINPR_JSON_GetNumberValue(item);
-	if (isinf(val) || isnan(val))
-	{
-		errno = ERANGE;
-		return 0;
-	}
-
-	const int64_t ival = (int64_t)val;
+	const INT64 ival = WINPR_JSON_GetIntegerValue(item);
 	if ((ival < min) || (ival > max))
 	{
 		errno = ERANGE;
@@ -2812,14 +2805,7 @@ static uint64_t uint_from_json_item(const WINPR_JSON* item, uint64_t max)
 		return 0;
 	}
 
-	const double val = WINPR_JSON_GetNumberValue(item);
-	if (isinf(val) || isnan(val) || (val < 0.0))
-	{
-		errno = ERANGE;
-		return 0;
-	}
-
-	const uint64_t uval = (uint64_t)val;
+	const uint64_t uval = WINPR_JSON_GetUIntegerValue(item);
 	if (uval > max)
 	{
 		errno = ERANGE;

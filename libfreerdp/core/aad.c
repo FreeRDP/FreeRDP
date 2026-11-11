@@ -101,7 +101,7 @@ static BOOL json_get_object(wLog* wlog, WINPR_JSON* json, const char* key, WINPR
 	return TRUE;
 }
 
-static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, double* result)
+static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, UINT64* result)
 {
 	BOOL rc = FALSE;
 	WINPR_JSON* prop = nullptr;
@@ -114,7 +114,7 @@ static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, doubl
 		goto fail;
 	}
 
-	*result = WINPR_JSON_GetNumberValue(prop);
+	*result = WINPR_JSON_GetUIntegerValue(prop);
 
 	rc = TRUE;
 fail:
@@ -564,7 +564,7 @@ fail:
 static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 {
 	int rc = -1;
-	double result = 0;
+	UINT64 result = 0;
 	DWORD error_code = 0;
 	WINPR_JSON* json = nullptr;
 	const char* jstr = Stream_PointerAs(s, char);

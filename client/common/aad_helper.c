@@ -268,8 +268,8 @@ static WINPR_JSON* wait_for_response(AadAuthHelper* helper, UINT32 expectedId)
 		}
 
 		WINPR_JSON* id = WINPR_JSON_GetObjectItemCaseSensitive(msg, "id");
-		const double idValue = (id && WINPR_JSON_IsNumber(id)) ? WINPR_JSON_GetNumberValue(id) : 0;
-		if (!id || !WINPR_JSON_IsNumber(id) || ((UINT32)idValue != expectedId))
+		const INT64 idValue = (id && WINPR_JSON_IsNumber(id)) ? WINPR_JSON_GetIntegerValue(id) : 0;
+		if (!id || !WINPR_JSON_IsNumber(id) || (idValue != expectedId))
 		{
 			WLog_WARN(TAG, "aad-auth-helper: dropping response with unexpected id");
 			WINPR_JSON_Delete(msg);

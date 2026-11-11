@@ -392,17 +392,17 @@ static bool TestEncoder(void)
 		    uint32_t, FreeRDPGetColorFromatFromName(
 		                  WINPR_JSON_GetStringValue(WINPR_JSON_GetObjectItem(obj, "format"))));
 		const uint32_t width = WINPR_ASSERTING_INT_CAST(
-		    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetObjectItem(obj, "width")));
+		    uint32_t, WINPR_JSON_GetUIntegerValue(WINPR_JSON_GetObjectItem(obj, "width")));
 		const uint32_t height = WINPR_ASSERTING_INT_CAST(
-		    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetObjectItem(obj, "height")));
+		    uint32_t, WINPR_JSON_GetUIntegerValue(WINPR_JSON_GetObjectItem(obj, "height")));
 		const uint32_t step = WINPR_ASSERTING_INT_CAST(
-		    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetObjectItem(obj, "step")));
+		    uint32_t, WINPR_JSON_GetUIntegerValue(WINPR_JSON_GetObjectItem(obj, "step")));
 
 		WINPR_JSON* jbpp = WINPR_JSON_GetObjectItem(obj, "bpp");
 		for (size_t x = 0; x < WINPR_JSON_GetArraySize(jbpp); x++)
 		{
 			const uint32_t bpp = WINPR_ASSERTING_INT_CAST(
-			    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetArrayItem(jbpp, x)));
+			    uint32_t, WINPR_JSON_GetUIntegerValue(WINPR_JSON_GetArrayItem(jbpp, x)));
 			if (!RunEncoderTest(name, format, width, height, step, bpp))
 				goto fail;
 			if (!RunDecoderTest(name, format, width, height, step, bpp))
