@@ -285,6 +285,12 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_GfxCodecAV2:
 			return settings->GfxCodecAV2;
 
+		case FreeRDP_GfxCodecHEVC:
+			return settings->GfxCodecHEVC;
+
+		case FreeRDP_GfxCodecHEVC444:
+			return settings->GfxCodecHEVC444;
+
 		case FreeRDP_GfxH264:
 			return settings->GfxH264;
 
@@ -979,6 +985,14 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GfxCodecAV2:
 			settings->GfxCodecAV2 = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecHEVC:
+			settings->GfxCodecHEVC = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecHEVC444:
+			settings->GfxCodecHEVC444 = cnv.c;
 			break;
 
 		case FreeRDP_GfxH264:

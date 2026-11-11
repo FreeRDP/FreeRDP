@@ -127,6 +127,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GfxAVC444v2, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxAVC444v2" },
 	{ FreeRDP_GfxCodecAV1, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxCodecAV1" },
 	{ FreeRDP_GfxCodecAV2, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxCodecAV2" },
+	{ FreeRDP_GfxCodecHEVC, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxCodecHEVC" },
+	{ FreeRDP_GfxCodecHEVC444, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxCodecHEVC444" },
 	{ FreeRDP_GfxH264, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxH264" },
 	{ FreeRDP_GfxPlanar, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxPlanar" },
 	{ FreeRDP_GfxProgressive, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxProgressive" },
