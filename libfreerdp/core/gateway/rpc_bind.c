@@ -208,7 +208,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	bind_pdu.header.ptype = initial ? PTYPE_BIND : PTYPE_ALTER_CONTEXT;
 	bind_pdu.header.pfc_flags =
 	    PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
-	bind_pdu.header.call_id = 2;
+	bind_pdu.header.call_id = rpc->CallId++;
 	bind_pdu.max_xmit_frag = rpc->max_xmit_frag;
 	bind_pdu.max_recv_frag = rpc->max_recv_frag;
 	bind_pdu.assoc_group_id = 0;
@@ -279,7 +279,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	if (!clientCall)
 		goto fail;
 
-	if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
+	if (!rpc_client_call_add(rpc->log, rpc->client, clientCall))
 	{
 		rpc_client_call_free(clientCall);
 		goto fail;
@@ -418,14 +418,14 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	sbuffer = credssp_auth_get_output_buffer(rpc->auth);
 
 	if (!sbuffer)
-		return -1;
+		goto fail;
 
 	auth_3_pdu.header = rpc_pdu_header_init(rpc);
 	auth_3_pdu.header.auth_length = (UINT16)sbuffer->cbBuffer;
 	auth_3_pdu.auth_verifier.auth_value = sbuffer->pvBuffer;
 	auth_3_pdu.header.ptype = PTYPE_RPC_AUTH_3;
 	auth_3_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
-	auth_3_pdu.header.call_id = 2;
+	auth_3_pdu.header.call_id = rpc->CallId++;
 	auth_3_pdu.max_xmit_frag = rpc->max_xmit_frag;
 	auth_3_pdu.max_recv_frag = rpc->max_recv_frag;
 	offset = 20;
@@ -446,18 +446,20 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	buffer = Stream_New(nullptr, auth_3_pdu.header.frag_length);
 
 	if (!buffer)
-		return -1;
+		goto fail;
 
 	if (!rts_write_pdu_auth3(buffer, &auth_3_pdu))
 		goto fail;
 
 	clientCall = rpc_client_call_new(auth_3_pdu.header.call_id, 0);
 
-	if (ArrayList_Append(rpc->client->ClientCallList, clientCall))
+	if (rpc_client_call_add(rpc->log, rpc->client, clientCall))
 	{
 		Stream_SealLength(buffer);
 		status = rpc_in_channel_send_pdu(inChannel, Stream_Buffer(buffer), Stream_Length(buffer));
 	}
+	else
+		rpc_client_call_free(clientCall);
 
 fail:
 	Stream_Free(buffer, TRUE);

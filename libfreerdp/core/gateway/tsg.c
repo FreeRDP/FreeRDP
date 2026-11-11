@@ -2700,7 +2700,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 		break;
 
 		case TSG_STATE_AUTHORIZED:
-			call = rpc_client_call_find_by_id(rpc->client, pdu->CallId);
+			call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
 
 			if (!call)
 				return FALSE;
@@ -2772,7 +2772,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 			break;
 
 		case TSG_STATE_PIPE_CREATED:
-			call = rpc_client_call_find_by_id(rpc->client, pdu->CallId);
+			call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
 
 			if (!call)
 				return FALSE;

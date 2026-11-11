@@ -459,7 +459,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			         rpc->StubCallId, header.common.call_id, rpc->StubFragCount);
 		}
 
-		call = rpc_client_call_find_by_id(rpc->client, rpc->StubCallId);
+		call = rpc_client_call_find_by_id(rpc->log, rpc->client, rpc->StubCallId);
 
 		if (!call)
 			goto fail;
@@ -954,39 +954,89 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
  * http://msdn.microsoft.com/en-us/library/gg593159/
  */
 
-RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
+RpcClientCall* rpc_client_call_find_by_id(wLog* log, RpcClient* client, UINT32 CallId)
 {
-	RpcClientCall* clientCall = nullptr;
-
 	if (!client)
 		return nullptr;
 
-	ArrayList_Lock(client->ClientCallList);
-	const size_t count = ArrayList_Count(client->ClientCallList);
+	RpcClientCall* val = HashTable_GetItemValue(client->ClientCallList, &CallId);
+	WLog_Print(log, WLOG_TRACE, "search 0x%08" PRIx32 ": %p {%" PRIuz "}", CallId, (void*)val,
+	           HashTable_Count(client->ClientCallList));
+	return val;
+}
 
-	for (size_t index = 0; index < count; index++)
+BOOL rpc_client_call_add(wLog* log, RpcClient* client, RpcClientCall* call)
+{
+	WINPR_ASSERT(client);
+	if (!call)
+		return FALSE;
+
+	const BOOL rc = HashTable_Insert(client->ClientCallList, &call->CallId, call);
+	WLog_Print(log, WLOG_TRACE, "adding 0x%08" PRIx32 ": %s {%" PRIuz "}", call->CallId,
+	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
+	return rc;
+}
+
+void rpc_client_call_discard(wLog* log, RpcClient* client, UINT32 CallId)
+{
+	WINPR_ASSERT(client);
+
+	const BOOL rc = HashTable_Remove(client->ClientCallList, &CallId);
+	WLog_Print(log, WLOG_TRACE, "discard 0x%08" PRIx32 ": %s {%" PRIuz "}", CallId,
+	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
+}
+
+WINPR_ATTR_NODISCARD
+static RPC_CLIENT_CALL_STATE next(RPC_CLIENT_CALL_STATE state)
+{
+	switch (state)
 	{
-		clientCall = (RpcClientCall*)ArrayList_GetItem(client->ClientCallList, index);
+		case RPC_CLIENT_CALL_STATE_INITIAL:
+			return RPC_CLIENT_CALL_STATE_SEND_PDUS;
+		case RPC_CLIENT_CALL_STATE_SEND_PDUS:
+			return RPC_CLIENT_CALL_STATE_DISPATCHED;
+		case RPC_CLIENT_CALL_STATE_DISPATCHED:
+			return RPC_CLIENT_CALL_STATE_RECEIVE_PDU;
+		case RPC_CLIENT_CALL_STATE_RECEIVE_PDU:
+			return RPC_CLIENT_CALL_STATE_COMPLETE;
+		case RPC_CLIENT_CALL_STATE_COMPLETE:
+			return RPC_CLIENT_CALL_STATE_FINAL;
+		case RPC_CLIENT_CALL_STATE_FINAL:
+			return RPC_CLIENT_CALL_STATE_FINAL;
 
-		if (clientCall->CallId == CallId)
-			break;
+		case RPC_CLIENT_CALL_STATE_FAULT:
+		default:
+			return RPC_CLIENT_CALL_STATE_FAULT;
+	}
+}
+
+void rpc_client_call_advance(wLog* log, RpcClient* client, UINT32 CallId,
+                             RPC_CLIENT_CALL_STATE expected, BOOL success)
+{
+	WINPR_ASSERT(client);
+	HashTable_Lock(client->ClientCallList);
+	RpcClientCall* call = rpc_client_call_find_by_id(log, client, CallId);
+	if (call)
+	{
+		if (success)
+			call->State = next(call->State);
+		else
+			call->State = RPC_CLIENT_CALL_STATE_FAULT;
 	}
 
-	ArrayList_Unlock(client->ClientCallList);
-	return clientCall;
+	HashTable_Unlock(client->ClientCallList);
 }
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 {
-	RpcClientCall* clientCall = nullptr;
-	clientCall = (RpcClientCall*)calloc(1, sizeof(RpcClientCall));
+	RpcClientCall* clientCall = (RpcClientCall*)calloc(1, sizeof(RpcClientCall));
 
 	if (!clientCall)
 		return nullptr;
 
 	clientCall->CallId = CallId;
 	clientCall->OpNum = OpNum;
-	clientCall->State = RPC_CLIENT_CALL_STATE_SEND_PDUS;
+	clientCall->State = RPC_CLIENT_CALL_STATE_INITIAL;
 	return clientCall;
 }
 
@@ -1002,7 +1052,6 @@ static void rpc_array_client_call_free(void* call)
 
 int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t length)
 {
-	RpcClientCall* clientCall = nullptr;
 	wStream s = Stream_Init();
 	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 
@@ -1016,7 +1065,8 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 	if (rc != RTS_PDU_VALID)
 		return FALSE;
 
-	clientCall = rpc_client_call_find_by_id(inChannel->common.client, header.call_id);
+	RpcClientCall* clientCall = rpc_client_call_find_by_id(
+	    inChannel->common.rpc->log, inChannel->common.client, header.call_id);
 	if (!clientCall)
 		return -1;
 
@@ -1101,7 +1151,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		if (!clientCall)
 			goto fail;
 
-		if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
+		if (!rpc_client_call_add(rpc->log, rpc->client, clientCall))
 		{
 			rpc_client_call_free(clientCall);
 			goto fail;
@@ -1208,6 +1258,26 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 	}
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL compare_uint32(const void* objA, const void* objB)
+{
+	if (!objA || !objB)
+		return FALSE;
+
+	const UINT32* a = objA;
+	const UINT32* b = objB;
+	return *a == *b;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT32 hash_uint32(const void* key)
+{
+	if (!key)
+		return 0;
+	const UINT32* k = key;
+	return *k;
+}
+
 RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 {
 	wObject* obj = nullptr;
@@ -1246,12 +1316,17 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 	if (!InitializeCriticalSectionAndSpinCount(&(client->PipeLock), 4000))
 		goto fail;
 
-	client->ClientCallList = ArrayList_New(TRUE);
+	client->ClientCallList = HashTable_New(TRUE);
 
 	if (!client->ClientCallList)
 		goto fail;
 
-	obj = ArrayList_Object(client->ClientCallList);
+	if (!HashTable_SetHashFunction(client->ClientCallList, hash_uint32))
+		goto fail;
+
+	obj = HashTable_KeyObject(client->ClientCallList);
+	obj->fnObjectEquals = compare_uint32;
+	obj = HashTable_ValueObject(client->ClientCallList);
 	obj->fnObjectFree = rpc_array_client_call_free;
 	return client;
 fail:
@@ -1281,8 +1356,7 @@ void rpc_client_free(RpcClient* client)
 	if (client->pdu)
 		rpc_pdu_free(client->pdu);
 
-	if (client->ClientCallList)
-		ArrayList_Free(client->ClientCallList);
+	HashTable_Free(client->ClientCallList);
 
 	free(client);
 }
