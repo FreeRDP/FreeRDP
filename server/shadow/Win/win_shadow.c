@@ -884,6 +884,16 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 		subsystem->height = GetSystemMetrics(SM_CYSCREEN);
 	}
 #if defined(WITH_WDS_API)
+	/* The Windows Desktop Sharing API is the low performance capture path:
+	 * its throughput degrades with multiple clients and high frame rates.
+	 * Which capture backend a binary carries is decided at build time (the
+	 * alternative, DXGI desktop duplication, is WITH_SHADOW_WIN_DXGI=ON),
+	 * so a binary holding only the slow path would degrade silently: say
+	 * what was built in. */
+	WLog_WARN(TAG,
+	          "capture uses the Windows Desktop Sharing API: the low performance capture path, "
+	          "throughput drops with multiple clients or high frame rates - build with "
+	          "WITH_SHADOW_WIN_DXGI=ON for DXGI desktop duplication");
 	status = win_shadow_wds_init(subsystem);
 #elif defined(WITH_DXGI_1_2)
 	status = win_shadow_dxgi_init(subsystem);
