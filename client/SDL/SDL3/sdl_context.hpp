@@ -233,6 +233,7 @@ class SdlContext
 		SDL_WindowID window = 0;
 		SDL_FPoint local = {};
 		SDL_FPoint server = {};
+		uint32_t epoch = 0;
 	} _lastMotion; /* last motion forwarded to the server */
 	struct
 	{

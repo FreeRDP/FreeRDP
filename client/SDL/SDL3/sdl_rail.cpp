@@ -228,6 +228,16 @@ void SdlRail::sendWorkArea(const SDL_Rect& local)
 		_sentWorkArea = area;
 }
 
+void SdlRail::noteUsableBoundsChanged(SDL_DisplayID display)
+{
+	if (display != SDL_GetPrimaryDisplay())
+		return;
+	std::unique_lock lock(_windowsLock);
+	_sentWorkArea = {};
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(TAG, "sdl_push_user_event failed");
+}
+
 void SdlRail::handleMaximized(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
@@ -244,6 +254,8 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
 	}
+	/* Move first: the server maximizes on its window's monitor. */
+	followDisplay(appWindow, true);
 	appWindow->setRailMaximized(true);
 	/* Force full repaint (skips dirty-rect). */
 	appWindow->invalidateAll();
@@ -252,6 +264,12 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 	{
 		appWindow->deferMaximize();
 		WLog_DBG(TAG, "local maximize deferred id=0x%08" PRIx32 " (modal loop open)",
+		         static_cast<UINT32>(appWindow->id()));
+	}
+	else if (appWindow->deferMaximizeUntilEcho())
+	{
+		/* Right after a move, Windows can keep the restored size. */
+		WLog_DBG(TAG, "local maximize deferred id=0x%08" PRIx32 " (move not confirmed)",
 		         static_cast<UINT32>(appWindow->id()));
 	}
 	else
@@ -388,6 +406,9 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow)
 		return false;
+	/* Input is translated with the server rect: move first. */
+	if (!appWindow->effectivelyMaximized())
+		followDisplay(appWindow, true);
 	SDL_FPoint rpos = { x, y };
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
@@ -515,7 +536,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 
 	std::unique_lock lock(_windowsLock);
 
-	/* Report workarea once (avoids maximizing under local panels). */
+	/* Report workarea (avoids maximizing under local panels). */
 	if (_sentWorkArea.w == 0)
 	{
 		SDL_Rect usable{};
@@ -619,6 +640,10 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			         static_cast<uint32_t>(win.id()), unconfirmed.w, unconfirmed.h);
 			sendClientWindowMove(&win, unconfirmed);
 		}
+		if (!win.effectivelyMaximized())
+			followDisplay(&win, false);
+		if (win.takeMaximizeAfterEcho() && win.effectivelyMaximized())
+			sendSystemCommand(&win, SC_MAXIMIZE);
 		if (win.takeRestoreRetry())
 		{
 			WLog_DBG(TAG, "restore resent id=0x%08" PRIx32, static_cast<uint32_t>(win.id()));
@@ -1161,6 +1186,34 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	completeLocalMoveIfPending();
 }
 
+/* The WM may end a resize short of the pointer, so the release reaches none of our windows. */
+static constexpr Uint32 kReleasePollMs = 100;
+
+static Uint32 releasePollTimer(void* userdata, [[maybe_unused]] SDL_TimerID timerID,
+                               [[maybe_unused]] Uint32 interval)
+{
+	if (!SDL_RunOnMainThread([](void* rail) { static_cast<SdlRail*>(rail)->pollDragRelease(); },
+	                         userdata, false))
+		WLog_WARN(TAG, "could not queue the drag release check: %s", SDL_GetError());
+	return 0;
+}
+
+void SdlRail::pollDragRelease()
+{
+	{
+		std::unique_lock lock(_windowsLock);
+		if ((_localMove.id == 0) || compositorDrag())
+			return;
+	}
+	if (SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK)
+	{
+		if (SDL_AddTimer(kReleasePollMs, releasePollTimer, this) == 0)
+			WLog_WARN(TAG, "drag release timer failed: %s", SDL_GetError());
+		return;
+	}
+	completeLocalMoveIfPending();
+}
+
 SDL_Window* SdlRail::beginLocalMove(uint32_t windowId, uint16_t moveType)
 {
 	const RailDragModel model = railPlatformCaps().drag;
@@ -1190,6 +1243,11 @@ SDL_Window* SdlRail::beginLocalMove(uint32_t windowId, uint16_t moveType)
 			_localMove.pointer = _lastPointerServer;
 			/* Clear prior loop-end state on new drag. */
 			appWindow->clearLoopEnd();
+			/* Not for keyboard moves: no button is held. */
+			if ((model == RailDragModel::WmMoveResize) &&
+			    (SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK) &&
+			    (SDL_AddTimer(kReleasePollMs, releasePollTimer, this) == 0))
+				WLog_WARN(TAG, "drag release timer failed: %s", SDL_GetError());
 		}
 		appWindow->setLocalMoveActive(true);
 		if (!isMove)
@@ -1213,7 +1271,19 @@ void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
 		return;
 	std::unique_lock lock(_windowsLock);
 	auto* appWindow = getWindowBySdlId(id);
-	if (!appWindow || appWindow->isPopup() || appWindow->effectivelyMaximized())
+	if (!appWindow || appWindow->isPopup())
+		return;
+	WLog_DBG(TAG, "display changed id=0x%08" PRIx32 " display %" PRIu32,
+	         static_cast<uint32_t>(appWindow->id()), display);
+	appWindow->noteDisplayChange();
+}
+
+void SdlRail::followDisplay(SdlRailWindow* appWindow, bool now)
+{
+	if (!appWindow->takeDisplayChange(now))
+		return;
+	const SDL_DisplayID display = SDL_GetDisplayForWindow(appWindow->window());
+	if (display == 0)
 		return;
 	/* The end of the server move loop would undo it. */
 	if (_moveLoop.id == appWindow->id())
@@ -1224,7 +1294,7 @@ void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
 	moveToDisplay(appWindow, display);
 }
 
-void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
+bool SdlRail::monitorRect(SDL_DisplayID display, SDL_Rect& rect) const
 {
 	const auto* settings = _context->common()->context.settings;
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
@@ -1232,21 +1302,31 @@ void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
 	{
 		const auto* mon = static_cast<const rdpMonitor*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
-		if (!mon || (mon->orig_screen != display))
-			continue;
-		const SDL_Rect area = { mon->x, mon->y, mon->width, mon->height };
-		SDL_Rect rect = appWindow->windowRect();
-		const SDL_Point center = { rect.x + rect.w / 2, rect.y + rect.h / 2 };
-		if (SDL_PointInRect(&center, &area))
-			return;
-		rect.x = area.x + std::max(0, (area.w - rect.w) / 2);
-		rect.y = area.y + std::max(0, (area.h - rect.h) / 2);
-		WLog_DBG(TAG, "window 0x%08" PRIx32 " now on display %" PRIu32 ", server move to %d,%d",
-		         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
-		sendClientWindowMove(appWindow, rect);
-		appWindow->adoptLocalGeometry(rect);
-		return;
+		if (mon && (mon->orig_screen == display))
+		{
+			rect = { mon->x, mon->y, mon->width, mon->height };
+			return true;
+		}
 	}
+	return false;
+}
+
+void SdlRail::moveToDisplay(SdlRailWindow* appWindow, SDL_DisplayID display)
+{
+	SDL_Rect area{};
+	if (!monitorRect(display, area))
+		return;
+	SDL_Rect rect = appWindow->windowRect();
+	const SDL_Point center = { rect.x + rect.w / 2, rect.y + rect.h / 2 };
+	if (SDL_PointInRect(&center, &area))
+		return;
+	rect.x = area.x + std::max(0, (area.w - rect.w) / 2);
+	rect.y = area.y + std::max(0, (area.h - rect.h) / 2);
+	WLog_DBG(TAG, "window 0x%08" PRIx32 " now on display %" PRIu32 ", server move to %d,%d",
+	         static_cast<uint32_t>(appWindow->id()), display, rect.x, rect.y);
+	sendClientWindowMove(appWindow, rect);
+	appWindow->adoptLocalGeometry(rect);
+	_pointerEpoch++;
 }
 
 /* Send ClientWindowMove with full frame geometry including server margins (caller holds
@@ -1294,8 +1374,15 @@ void SdlRail::clampIntoDesktop(const SdlRailWindow& appWindow, int& x, int& y, i
 	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	/* Clamp the content rect to the remote desktop; the resize band may extend outside. */
 	const SDL_Rect s = appWindow.serverRect({ x, y, w, h });
-	x += std::clamp(s.x, _inputOrigin.x, _inputOrigin.x + std::max(0, dw - s.w)) - s.x;
-	y += std::clamp(s.y, _inputOrigin.y, _inputOrigin.y + std::max(0, dh - s.h)) - s.y;
+	SDL_Rect area = { _inputOrigin.x, _inputOrigin.y, dw, dh };
+	/* Wayland: keep the window on its monitor if it fits. */
+	SDL_Rect mon{};
+	if (!railPlatformCaps().supportsWindowPositions &&
+	    monitorRect(SDL_GetDisplayForWindow(appWindow.window()), mon) && (s.w <= mon.w) &&
+	    (s.h <= mon.h))
+		area = mon;
+	x += std::clamp(s.x, area.x, area.x + std::max(0, area.w - s.w)) - s.x;
+	y += std::clamp(s.y, area.y, area.y + std::max(0, area.h - s.h)) - s.y;
 }
 
 void SdlRail::noteDragResize(SDL_WindowID id, int w, int h)
