@@ -2618,17 +2618,163 @@ static BOOL tsg_proxy_reauth(rdpTsg* tsg)
 	return tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 }
 
-BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
+WINPR_ATTR_NODISCARD
+static BOOL tsg_recv_authorized(rdpTsg* tsg, const RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
-	RpcClientCall* call = nullptr;
-	rdpRpc* rpc = nullptr;
 
 	WINPR_ASSERT(tsg);
 	WINPR_ASSERT(pdu);
-	WINPR_ASSERT(tsg->rpc);
 
-	rpc = tsg->rpc;
+	rdpRpc* rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
+
+	RpcClientCall* call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
+
+	if (!call)
+		return FALSE;
+
+	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
+	{
+		if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
+		{
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
+			return FALSE;
+		}
+	}
+	else if (call->OpNum == TsProxyCreateChannelOpnum)
+	{
+		CONTEXT_HANDLE ChannelContext;
+
+		if (!TsProxyCreateChannelReadResponse(tsg->log, pdu, &ChannelContext, &tsg->ChannelId))
+		{
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCreateChannelReadResponse failure");
+			return FALSE;
+		}
+
+		if (!tsg->reauthSequence)
+			CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+		else
+			CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+
+		if (!tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED))
+			return FALSE;
+
+		if (!tsg->reauthSequence)
+		{
+			if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
+			{
+				WLog_Print(tsg->log, WLOG_ERROR, "TsProxySetupReceivePipe failure");
+				return FALSE;
+			}
+		}
+		else
+		{
+			if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
+			{
+				WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
+				return FALSE;
+			}
+
+			if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
+			{
+				WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelWriteRequest failure");
+				return FALSE;
+			}
+		}
+
+		rc = tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
+		tsg->reauthSequence = FALSE;
+	}
+	else
+	{
+		WLog_Print(tsg->log, WLOG_ERROR, "TSG_STATE_AUTHORIZED unexpected OpNum: %" PRIu32 "\n",
+		           call->OpNum);
+	}
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL tsg_recv_pipe_created(rdpTsg* tsg, const RPC_PDU* pdu)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(pdu);
+
+	rdpRpc* rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
+
+	RpcClientCall* call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
+
+	if (!call)
+		return FALSE;
+
+	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
+	{
+		rc = TsProxyMakeTunnelCallReadResponse(tsg, pdu);
+		if (!rc)
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
+	}
+	else if (call->OpNum == TsProxyCreateChannelOpnum)
+	{
+		CONTEXT_HANDLE ChannelContext;
+
+		rc = TsProxyCreateChannelReadResponse(tsg->log, pdu, &ChannelContext, &tsg->ChannelId);
+		if (!rc)
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCreateChannelReadResponse failure");
+		else
+		{
+			if (!tsg->reauthSequence)
+				CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+			else
+				CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+
+			rc = tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED);
+			if (rc)
+			{
+				if (!tsg->reauthSequence)
+				{
+					rc = TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext);
+					if (!rc)
+						WLog_Print(tsg->log, WLOG_ERROR, "TsProxySetupReceivePipe failure");
+				}
+				else
+				{
+					rc = TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext);
+					if (!rc)
+						WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
+					else
+					{
+						rc = TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext);
+						if (!rc)
+							WLog_Print(tsg->log, WLOG_ERROR,
+							           "TsProxyCloseTunnelWriteRequest failure");
+					}
+				}
+
+				if (rc)
+				{
+					rc = tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
+					tsg->reauthSequence = FALSE;
+				}
+			}
+		}
+	}
+	else
+	{
+		WLog_Print(tsg->log, WLOG_ERROR, "TSG_STATE_AUTHORIZED unexpected OpNum: %" PRIu32 "\n",
+		           call->OpNum);
+	}
+	return rc;
+}
+
+BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(pdu);
 
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 	{
@@ -2700,121 +2846,14 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 		break;
 
 		case TSG_STATE_AUTHORIZED:
-			call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
-
-			if (!call)
-				return FALSE;
-
-			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
-			{
-				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-			}
-			else if (call->OpNum == TsProxyCreateChannelOpnum)
-			{
-				CONTEXT_HANDLE ChannelContext;
-
-				if (!TsProxyCreateChannelReadResponse(tsg->log, pdu, &ChannelContext,
-				                                      &tsg->ChannelId))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCreateChannelReadResponse failure");
-					return FALSE;
-				}
-
-				if (!tsg->reauthSequence)
-					CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
-				else
-					CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
-
-				if (!tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED))
-					return FALSE;
-
-				if (!tsg->reauthSequence)
-				{
-					if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
-					{
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxySetupReceivePipe failure");
-						return FALSE;
-					}
-				}
-				else
-				{
-					if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
-					{
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
-						return FALSE;
-					}
-
-					if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
-					{
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelWriteRequest failure");
-						return FALSE;
-					}
-				}
-
-				rc = tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
-				tsg->reauthSequence = FALSE;
-			}
-			else
-			{
-				WLog_Print(tsg->log, WLOG_ERROR,
-				           "TSG_STATE_AUTHORIZED unexpected OpNum: %" PRIu32 "\n", call->OpNum);
-			}
-
+			rc = tsg_recv_authorized(tsg, pdu);
 			break;
 
 		case TSG_STATE_CHANNEL_CREATED:
 			break;
 
 		case TSG_STATE_PIPE_CREATED:
-			call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
-
-			if (!call)
-				return FALSE;
-
-			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
-			{
-				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-
-				if (tsg->ReauthTunnelContext)
-					rc = tsg_proxy_reauth(tsg);
-			}
-			else if (call->OpNum == TsProxyCloseChannelOpnum)
-			{
-				CONTEXT_HANDLE ChannelContext;
-
-				if (!TsProxyCloseChannelReadResponse(tsg->log, pdu, &ChannelContext))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-			}
-			else if (call->OpNum == TsProxyCloseTunnelOpnum)
-			{
-				CONTEXT_HANDLE TunnelContext;
-
-				if (!TsProxyCloseTunnelReadResponse(tsg->log, pdu, &TunnelContext))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-			}
-
+			rc = tsg_recv_pipe_created(tsg, pdu);
 			break;
 
 		case TSG_STATE_TUNNEL_CLOSE_PENDING:
