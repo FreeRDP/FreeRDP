@@ -1701,7 +1701,7 @@ static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_C
 				WLog_Print(
 				    gfx->base.log, WLOG_ERROR,
 				    "RDPGFX_SURFACE_COMMAND::codecId %s not allowed with %s [%s]",
-				    rdpgfx_get_codec_id_string(cmd->codecId),
+				    rdpgfx_get_codec_id_string(WINPR_ASSERTING_INT_CAST(UINT16, cmd->codecId)),
 				    rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
 				    rdpgfx_caps_flags_str(gfx->ConnectionCaps.flags, buffer, sizeof(buffer)));
 				return FALSE;
