@@ -253,6 +253,11 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 
 	Stream_Seek(out, 9);
 
+	const size_t formatsPos = Stream_GetPosition(s);
+	BOOL filter = TRUE;
+	BOOL filtered = FALSE;
+
+retry:
 	/* SoundFormats (variable) */
 	for (UINT32 i = 0; i < NumFormats; i++)
 	{
@@ -266,8 +271,9 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 
 		audio_format_print(audin->log, WLOG_DEBUG, &format);
 
-		if (!audio_format_compatible(audin->fixed_format, &format))
+		if (filter && !audio_format_compatible(audin->fixed_format, &format))
 		{
+			filtered = TRUE;
 			audio_format_free(&format);
 			continue;
 		}
@@ -289,6 +295,21 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		{
 			audio_format_free(&format);
 		}
+	}
+
+	if (filtered && (callback->formats_count == 0))
+	{
+		/* a microphone that never opens is worse than one in another format */
+		WLog_Print(audin->log, WLOG_WARN,
+		           "the server offers no format matching the configured one, using any format");
+		filter = FALSE;
+		filtered = FALSE;
+		if (!Stream_SetPosition(s, formatsPos) || !Stream_SetPosition(out, 9))
+		{
+			error = ERROR_INVALID_DATA;
+			goto out;
+		}
+		goto retry;
 	}
 
 	if ((error = audin_send_incoming_data_pdu(callback)))

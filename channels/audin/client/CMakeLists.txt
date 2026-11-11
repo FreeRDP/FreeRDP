@@ -25,6 +25,10 @@ include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
+if(BUILD_TESTING_INTERNAL)
+  add_subdirectory(test)
+endif()
+
 if(WITH_OSS)
   add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "")
 endif()
