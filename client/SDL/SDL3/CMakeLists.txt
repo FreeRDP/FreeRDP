@@ -48,6 +48,8 @@ set(SRCS
     sdl_web_clip_offers.hpp
     sdl_context.hpp
     sdl_context.cpp
+    sdl_render_service.cpp
+    sdl_render_service.hpp
     sdl_rail.hpp
     sdl_rail.cpp
     sdl_rail_platform.hpp

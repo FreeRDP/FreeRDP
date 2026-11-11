@@ -244,8 +244,19 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 							if (!sdl->drawToWindows(rectangles))
 								throw ErrorMsg{ -1, windowEvent.type, "sdl->drawToWindows" };
 						} while (!rectangles.empty());
+						/* geometry updates come with the session updates, not with the
+						 * renderers' frames */
+						if (sdl->hasRenderers() && !sdl->presentRenderers())
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->presentRenderers" };
 					}
 					break;
+					case SDL_EVENT_USER_WINDOW_INFO:
+						sdl->flushWindowInfo();
+						break;
+					case SDL_EVENT_USER_RENDERER:
+						if (!sdl->presentRenderers())
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->presentRenderers" };
+						break;
 					case SDL_EVENT_USER_CREATE_WINDOWS:
 					{
 						auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);

@@ -34,7 +34,11 @@
 #include <scoped_guard.hpp>
 
 #include "dialogs/sdl_dialogs.hpp"
+#include "sdl_render_service.hpp"
+
 #include <freerdp/client/aad_helper.h>
+#include <freerdp/client/geometry.h>
+#include <freerdp/gdi/gdi.h>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 static constexpr auto sdl_connection_dialog = "sdl-connection-dialog";
@@ -74,6 +78,39 @@ SdlContext::SdlContext(rdpContext* context)
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
+
+	const WINDOW_INFO_SOURCE source = { this, windowInfoGet, windowInfoSessionType };
+	_context->windowInfoService = freerdp_client_window_info_service_new(&source);
+	if (!_context->windowInfoService)
+		WLog_Print(_log, WLOG_WARN, "no window info service: channels won't know our windows");
+	_context->bitmapRenderService = sdl_render_service_new(this);
+	if (!_context->bitmapRenderService)
+		WLog_Print(_log, WLOG_WARN, "no bitmap render service: no redirected video");
+}
+
+SdlContext::~SdlContext()
+{
+	/* the channels, freed after us, may still hold the services */
+	if (_context->windowInfoService)
+	{
+		freerdp_client_window_info_service_detach(_context->windowInfoService);
+		_context->windowInfoService->Release();
+		_context->windowInfoService = nullptr;
+	}
+	if (_context->bitmapRenderService)
+	{
+		sdl_render_service_detach(_context->bitmapRenderService);
+		_context->bitmapRenderService->Release();
+		_context->bitmapRenderService = nullptr;
+	}
+	/* renderers the channels didn't remove */
+	std::scoped_lock lock(_rendererLock);
+	for (auto& kv : _renderers)
+	{
+		if (kv.second.callback)
+			kv.second.callback->Release();
+	}
+	_renderers.clear();
 }
 
 std::optional<bool> SdlContext::allowScreenSaver() const
@@ -501,6 +538,7 @@ bool SdlContext::createWindows()
 		_windows.insert({ window.id(), std::move(window) });
 	}
 
+	updateWindowInfo();
 	return true;
 }
 
@@ -1398,6 +1436,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 			if (!resizeToScale(window))
 				return false;
+			updateWindowInfo();
 			if (isConnected())
 			{
 				if (!window->fill())
@@ -1417,6 +1456,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				return false;
 			if (!restoreCursor())
 				return false;
+			updateWindowInfo();
 			break;
 		case SDL_EVENT_WINDOW_MOVED:
 		{
@@ -2188,4 +2228,325 @@ bool SdlContext::fullscreen() const
 bool SdlContext::toggleFullscreen()
 {
 	return setFullscreen(!fullscreen());
+}
+
+/* ---- rdpContext::windowInfoService ---- */
+
+static bool window_info_equal(const WTS_WINDOW_INFO& a, const WTS_WINDOW_INFO& b)
+{
+	return (a.hwnd == b.hwnd) && (a.remoteWidth == b.remoteWidth) &&
+	       (a.remoteHeight == b.remoteHeight) && (a.viewWidth == b.viewWidth) &&
+	       (a.viewHeight == b.viewHeight) && (a.scrollX == b.scrollX) && (a.scrollY == b.scrollY) &&
+	       (a.scale == b.scale);
+}
+
+/** @brief the handle for WTS_WINDOW_INFO::hwnd: the HWND, the X11 Window, nullptr on Wayland */
+static HWND native_window(SDL_Window* window)
+{
+	if (!window)
+		return nullptr;
+	auto props = SDL_GetWindowProperties(window);
+#if defined(_WIN32)
+	return static_cast<HWND>(
+	    SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
+#else
+	return reinterpret_cast<HWND>(
+	    static_cast<uintptr_t>(SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0)));
+#endif
+}
+
+void SdlContext::updateWindowInfo()
+{
+	WTS_WINDOW_INFO info{};
+	auto window = getFirstWindow();
+	if (window && window->window())
+	{
+		auto settings = _context->settings;
+		info.hwnd = native_window(window->window());
+		info.remoteWidth =
+		    static_cast<INT32>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+		info.remoteHeight =
+		    static_cast<INT32>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+		int w = 0;
+		int h = 0;
+		if (SDL_GetWindowSizeInPixels(window->window(), &w, &h))
+		{
+			info.viewWidth = w;
+			info.viewHeight = h;
+		}
+		/* session pixels to native pixels */
+		const float density = SDL_GetWindowPixelDensity(window->window());
+		const auto p0 = pixelToScreen(window->id(), SDL_FPoint{ 0, 0 });
+		const auto p1 = pixelToScreen(window->id(), SDL_FPoint{ 1000, 1000 });
+		const float scale = (p1.x - p0.x) * density / 1000.0f;
+		info.scale = (scale > 0.0f) ? scale : 1.0f;
+	}
+
+	{
+		std::scoped_lock lock(_windowInfoLock);
+		if (window_info_equal(info, _desktopWindowInfo))
+			return;
+		_desktopWindowInfo = info;
+	}
+	if (!_rail.enabled())
+		freerdp_client_window_info_service_changed(_context->windowInfoService, 0);
+}
+
+void SdlContext::railWindowInfoChanged(uint64_t remoteId)
+{
+	bool first = false;
+	{
+		std::scoped_lock lock(_windowInfoLock);
+		first = _railWindowInfoPending.empty();
+		_railWindowInfoPending.insert(remoteId);
+	}
+	if (first)
+		std::ignore = sdl_push_user_event(SDL_EVENT_USER_WINDOW_INFO);
+}
+
+void SdlContext::flushWindowInfo()
+{
+	std::set<uint64_t> pending;
+	{
+		std::scoped_lock lock(_windowInfoLock);
+		pending.swap(_railWindowInfoPending);
+	}
+
+	for (const auto id : pending)
+	{
+		WTS_WINDOW_INFO info{};
+		SDL_Window* window = nullptr;
+		/* RemoteApp windows are drawn 1:1: the same remote and view size, scale left at 0 */
+		if (_rail.windowGeometry(id, window, info.viewWidth, info.viewHeight))
+		{
+			info.hwnd = native_window(window);
+			info.remoteWidth = info.viewWidth;
+			info.remoteHeight = info.viewHeight;
+		}
+		{
+			std::scoped_lock lock(_windowInfoLock);
+			if (info.viewWidth > 0)
+				_railWindowInfo[id] = info;
+			else
+				_railWindowInfo.erase(id);
+		}
+		if (info.viewWidth > 0)
+			freerdp_client_window_info_service_changed(_context->windowInfoService, id);
+	}
+}
+
+HRESULT SdlContext::windowInfoGet(void* custom, UINT64 remoteHwnd, WTS_WINDOW_INFO* info)
+{
+	auto sdl = static_cast<SdlContext*>(custom);
+	WINPR_ASSERT(sdl);
+	WINPR_ASSERT(info);
+
+	std::scoped_lock lock(sdl->_windowInfoLock);
+	if (!sdl->_rail.enabled())
+	{
+		/* remoteHwnd only means something in RemoteApp */
+		if (!sdl->_desktopWindowInfo.hwnd && (sdl->_desktopWindowInfo.viewWidth == 0))
+			return E_UNEXPECTED; /* no window yet */
+		*info = sdl->_desktopWindowInfo;
+		return S_OK;
+	}
+	auto it = sdl->_railWindowInfo.find(remoteHwnd);
+	if (it == sdl->_railWindowInfo.end())
+		return E_INVALIDARG;
+	*info = it->second;
+	return S_OK;
+}
+
+UINT32 SdlContext::windowInfoSessionType(void* custom)
+{
+	auto sdl = static_cast<SdlContext*>(custom);
+	WINPR_ASSERT(sdl);
+	return sdl->_rail.enabled() ? WTS_RDP_SESSION_TYPE_REMOTEAPP : WTS_RDP_SESSION_TYPE_DESKTOP;
+}
+
+/* ---- mapped renderers (rdpContext::bitmapRenderService): the channels' calls come from their
+ * threads, the textures are the main thread's ---- */
+
+Uint64 SdlContext::rendererAdd(UINT64 mappingId, IWTSBitmapRendererCallback* callback)
+{
+	std::scoped_lock lock(_rendererLock);
+	const auto id = _nextRenderer++;
+	auto& r = _renderers[id];
+	r.mappingId = mappingId;
+	r.callback = callback;
+	if (callback)
+		callback->AddRef();
+	return id;
+}
+
+bool SdlContext::rendererFrame(Uint64 id, const BYTE* data, UINT32 width, UINT32 height,
+                               LONG stride)
+{
+	{
+		std::scoped_lock lock(_rendererLock);
+		auto it = _renderers.find(id);
+		if (it == _renderers.end())
+			return false;
+		auto& r = it->second;
+		/* Render's buffer is the caller's for the call only */
+		const size_t row = static_cast<size_t>(width) * 4;
+		r.pixels.resize(row * height);
+		for (UINT32 y = 0; y < height; y++)
+			memcpy(&r.pixels[y * row], data + static_cast<size_t>(y) * static_cast<size_t>(stride),
+			       row);
+		r.pitch = static_cast<int>(row);
+		r.width = static_cast<int>(width);
+		r.height = static_cast<int>(height);
+		r.dirty = true;
+	}
+	renderersChanged();
+	return true;
+}
+
+void SdlContext::rendererRemove(Uint64 id)
+{
+	IWTSBitmapRendererCallback* callback = nullptr;
+	{
+		std::scoped_lock lock(_rendererLock);
+		auto it = _renderers.find(id);
+		if (it == _renderers.end())
+			return;
+		callback = it->second.callback;
+		_renderers.erase(it);
+	}
+	if (callback)
+		callback->Release();
+	renderersChanged();
+}
+
+bool SdlContext::hasRenderers()
+{
+	std::scoped_lock lock(_rendererLock);
+	return !_renderers.empty();
+}
+
+void SdlContext::renderersChanged()
+{
+	/* one pending event at a time: frames coming faster than we draw are coalesced */
+	if (!_renderersPending.exchange(true))
+		std::ignore = sdl_push_user_event(SDL_EVENT_USER_RENDERER);
+}
+
+bool SdlContext::presentRenderers()
+{
+	_renderersPending = false;
+	if (!isConnected())
+		return true;
+
+	/* OnTargetSizeChanged() calls, made once _rendererLock is released */
+	std::vector<std::pair<IWTSBitmapRendererCallback*, WTS_RECT>> targets;
+	{
+		std::scoped_lock lock(_rendererLock);
+
+		/* a renderer is placed by its mapping's geometry (MS-RDPEGT), hidden without one */
+		struct Placement
+		{
+			bool visible = false;
+			SDL_Rect rect{};
+			std::vector<SDL_Rect> region; /* the visible parts, empty: all of it */
+		};
+		std::map<Uint64, Placement> placements;
+		rdpGdi* gdi = _context->gdi;
+		GeometryClientContext* geometry = gdi ? gdi->geometry : nullptr;
+		if (geometry && geometry->geometries)
+		{
+			HashTable_Lock(geometry->geometries);
+			for (auto& kv : _renderers)
+			{
+				auto g = static_cast<const MAPPED_GEOMETRY*>(
+				    HashTable_GetItemValue(geometry->geometries, &kv.second.mappingId));
+				if (!g)
+					continue;
+				Placement p;
+				p.rect = { static_cast<int>(g->topLevelLeft + g->left),
+					       static_cast<int>(g->topLevelTop + g->top),
+					       static_cast<int>(std::max<INT64>(0, g->right - g->left)),
+					       static_cast<int>(std::max<INT64>(0, g->bottom - g->top)) };
+				p.visible = (p.rect.w > 0) && (p.rect.h > 0);
+				/* the region's rectangles are relative to the tracked rectangle */
+				INT64 area = 0;
+				for (UINT32 i = 0; g->geometry.rects && (i < g->geometry.nRectCount); i++)
+				{
+					const RDP_RECT& r = g->geometry.rects[i];
+					const int left = std::max(0, static_cast<int>(r.x));
+					const int top = std::max(0, static_cast<int>(r.y));
+					const int right = std::min(p.rect.w, r.x + r.width);
+					const int bottom = std::min(p.rect.h, r.y + r.height);
+					if ((right <= left) || (bottom <= top))
+						continue;
+					area += static_cast<INT64>(right - left) * (bottom - top);
+					p.region.push_back(
+					    { p.rect.x + left, p.rect.y + top, right - left, bottom - top });
+				}
+				if (area >= static_cast<INT64>(p.rect.w) * p.rect.h)
+					p.region.clear();
+				placements[kv.first] = std::move(p);
+			}
+			HashTable_Unlock(geometry->geometries);
+		}
+
+		for (auto& kv : _renderers)
+		{
+			auto& r = kv.second;
+			const auto& p = placements[kv.first];
+			if (p.visible && r.callback && !SDL_RectsEqual(&p.rect, &r.target))
+			{
+				r.target = p.rect;
+				r.callback->AddRef();
+				targets.emplace_back(r.callback, WTS_RECT{ p.rect.x, p.rect.y, p.rect.x + p.rect.w,
+				                                           p.rect.y + p.rect.h });
+			}
+		}
+
+		for (auto& w : _windows)
+		{
+			auto& window = w.second;
+			window.pruneVideoOverlays([this](Uint64 id) { return _renderers.count(id) != 0; });
+			for (auto& kv : _renderers)
+			{
+				auto& r = kv.second;
+				const auto& p = placements[kv.first];
+				/* where the session is drawn in the window: as drawToWindow() does */
+				SDL_Point offset{ 0, 0 };
+				if (!useLocalScale() &&
+				    freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+					offset = { window.offsetX(), window.offsetY() };
+				auto toWindow = [&](const SDL_Rect& rc)
+				{
+					if (useLocalScale())
+						return SDL_FRect{ static_cast<float>(rc.x) * _localScale.x,
+							              static_cast<float>(rc.y) * _localScale.y,
+							              static_cast<float>(rc.w) * _localScale.x,
+							              static_cast<float>(rc.h) * _localScale.y };
+					return SDL_FRect{ static_cast<float>(rc.x + offset.x),
+						              static_cast<float>(rc.y + offset.y), static_cast<float>(rc.w),
+						              static_cast<float>(rc.h) };
+				};
+				const SDL_FRect dst = toWindow(p.rect);
+				std::vector<SDL_FRect> clip;
+				clip.reserve(p.region.size());
+				for (const auto& rc : p.region)
+					clip.push_back(toWindow(rc));
+				const bool visible = p.visible && !r.pixels.empty();
+				if (!window.setVideoOverlay(kv.first, r.dirty ? r.pixels.data() : nullptr, r.pitch,
+				                            r.width, r.height, dst, clip, visible))
+					continue;
+			}
+			window.updateSurface();
+		}
+		for (auto& kv : _renderers)
+			kv.second.dirty = false;
+	}
+
+	for (auto& t : targets)
+	{
+		std::ignore = t.first->OnTargetSizeChanged(t.second);
+		t.first->Release();
+	}
+	return true;
 }
