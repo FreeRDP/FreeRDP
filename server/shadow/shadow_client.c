@@ -1257,7 +1257,9 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			default:
 				return ERROR_BAD_PROFILE;
 		}
-		const BOOL av1 = shadow_encoder_prepare(client->encoder, codec) >= 0;
+		/* only ask whether the build can encode it: the encoder is made in
+		 * shadow_client_send_caps_confirm, once the client has chosen */
+		const BOOL av1 = freerdp_codec_supported(&client->context, codec, TRUE);
 		if (!av1)
 		{
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecAV1, FALSE))
@@ -1282,7 +1284,9 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			default:
 				return ERROR_BAD_PROFILE;
 		}
-		const BOOL av2 = shadow_encoder_prepare(client->encoder, codec) >= 0;
+		/* only ask whether the build can encode it: the encoder is made in
+		 * shadow_client_send_caps_confirm, once the client has chosen */
+		const BOOL av2 = freerdp_codec_supported(&client->context, codec, TRUE);
 		if (!av2)
 		{
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecAV2, FALSE))
