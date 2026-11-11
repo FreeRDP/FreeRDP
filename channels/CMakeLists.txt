@@ -277,6 +277,10 @@ foreach(FILEPATH ${FILEPATHS})
   endif()
 endforeach(FILEPATH)
 
+if(BUILD_TESTING OR BUILD_FUZZERS)
+  add_subdirectory(test)
+endif()
+
 if(WITH_CHANNELS)
   if(WITH_CLIENT_CHANNELS)
     add_subdirectory(client)

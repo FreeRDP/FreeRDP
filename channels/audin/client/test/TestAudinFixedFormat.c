@@ -30,33 +30,10 @@
 #include <freerdp/dvc.h>
 #include <freerdp/settings.h>
 
+#include "dvc_test_host.h"
+
 #define MSG_SNDIN_FORMATS 0x02
 #define MAX_FORMATS 4
-
-#define TEST_CHECK(cond)                                                             \
-	do                                                                               \
-	{                                                                                \
-		if (!(cond))                                                                 \
-		{                                                                            \
-			(void)fprintf(stderr, "%s:%d: failed: %s\n", __func__, __LINE__, #cond); \
-			return FALSE;                                                            \
-		}                                                                            \
-	} while (0)
-
-typedef struct
-{
-	IDRDYNVC_ENTRY_POINTS iface;
-	rdpContext* context;
-	const ADDIN_ARGV* args;
-	IWTSPlugin* plugin;
-} test_entry_points;
-
-typedef struct
-{
-	IWTSVirtualChannelManager iface;
-	IWTSListener listener;
-	IWTSListenerCallback* listenerCallback;
-} test_channel_manager;
 
 /* records the formats the client answers with */
 typedef struct
@@ -115,53 +92,6 @@ static PVIRTUALCHANNELENTRY VCAPITYPE test_provider(LPCSTR pszName, LPCSTR pszSu
 	return g_provider(pszName, pszSubsystem, pszType, dwFlags);
 }
 
-static UINT test_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
-                                 WINPR_ATTR_UNUSED const char* name, IWTSPlugin* pPlugin)
-{
-	((test_entry_points*)pEntryPoints)->plugin = pPlugin;
-	return CHANNEL_RC_OK;
-}
-
-static IWTSPlugin* test_get_plugin(WINPR_ATTR_UNUSED IDRDYNVC_ENTRY_POINTS* pEntryPoints,
-                                   WINPR_ATTR_UNUSED const char* name)
-{
-	return nullptr;
-}
-
-static const ADDIN_ARGV* test_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
-{
-	return ((test_entry_points*)pEntryPoints)->args;
-}
-
-static rdpSettings* test_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
-{
-	return ((test_entry_points*)pEntryPoints)->context->settings;
-}
-
-static rdpContext* test_get_rdp_context(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
-{
-	return ((test_entry_points*)pEntryPoints)->context;
-}
-
-static UINT test_create_listener(IWTSVirtualChannelManager* pChannelMgr,
-                                 WINPR_ATTR_UNUSED const char* pszChannelName,
-                                 WINPR_ATTR_UNUSED ULONG ulFlags,
-                                 IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
-{
-	test_channel_manager* mgr = (test_channel_manager*)pChannelMgr;
-	mgr->listenerCallback = pListenerCallback;
-	if (ppListener)
-		*ppListener = &mgr->listener;
-	return CHANNEL_RC_OK;
-}
-
-static UINT test_destroy_listener(IWTSVirtualChannelManager* pChannelMgr,
-                                  WINPR_ATTR_UNUSED IWTSListener* pListener)
-{
-	((test_channel_manager*)pChannelMgr)->listenerCallback = nullptr;
-	return CHANNEL_RC_OK;
-}
-
 static BOOL read_formats(test_channel* channel, wStream* s)
 {
 	TEST_CHECK(Stream_CheckAndLogRequiredLength("test", s, 8));
@@ -187,11 +117,6 @@ static UINT test_channel_write(IWTSVirtualChannel* pChannel, ULONG cbSize, const
 	if (messageId != MSG_SNDIN_FORMATS)
 		return CHANNEL_RC_OK;
 	return read_formats((test_channel*)pChannel, s) ? CHANNEL_RC_OK : ERROR_INVALID_DATA;
-}
-
-static UINT test_channel_close(WINPR_ATTR_UNUSED IWTSVirtualChannel* pChannel)
-{
-	return CHANNEL_RC_OK;
 }
 
 static BOOL write_pcm_format(wStream* s, UINT16 channels, UINT32 rate)
@@ -223,17 +148,14 @@ static BOOL send_server_formats(IWTSVirtualChannelCallback* callback)
 	return rc;
 }
 
-static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr, test_channel* channel)
+static BOOL check_channel(IWTSPlugin* plugin, test_channel* channel)
 {
+	dvc_test_channel_manager mgr = WINPR_C_ARRAY_INIT;
 	IWTSVirtualChannelCallback* callback = nullptr;
-	BOOL accept = TRUE;
 
-	TEST_CHECK(plugin->Initialize(plugin, &mgr->iface) == CHANNEL_RC_OK);
-	TEST_CHECK(mgr->listenerCallback);
-	TEST_CHECK(mgr->listenerCallback->OnNewChannelConnection(mgr->listenerCallback, &channel->iface,
-	                                                         nullptr, &accept,
-	                                                         &callback) == CHANNEL_RC_OK);
-	TEST_CHECK(callback);
+	dvc_test_channel_manager_init(&mgr);
+	TEST_CHECK(plugin->Initialize(plugin, &mgr.iface) == CHANNEL_RC_OK);
+	TEST_CHECK(dvc_test_open_channel(&mgr, &channel->iface, &callback));
 
 	const BOOL rc = send_server_formats(callback);
 	/* frees the channel callback */
@@ -243,42 +165,17 @@ static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr, test_ch
 	return TRUE;
 }
 
-static BOOL load_plugin(test_entry_points* ep)
-{
-	PDVC_PLUGIN_ENTRY pluginEntry =
-	    WINPR_FUNC_PTR_CAST(freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME, nullptr, nullptr,
-		                                                     FREERDP_ADDIN_CHANNEL_DYNAMIC),
-		                    PDVC_PLUGIN_ENTRY);
-	TEST_CHECK(pluginEntry);
-
-	ep->iface.RegisterPlugin = test_register_plugin;
-	ep->iface.GetPlugin = test_get_plugin;
-	ep->iface.GetPluginData = test_get_plugin_data;
-	ep->iface.GetRdpSettings = test_get_rdp_settings;
-	ep->iface.GetRdpContext = test_get_rdp_context;
-
-	TEST_CHECK(pluginEntry(&ep->iface) == CHANNEL_RC_OK);
-	TEST_CHECK(ep->plugin);
-	return TRUE;
-}
-
 /* Connects audin with the given /microphone options and records the formats it answers with. */
 static BOOL negotiate(rdpContext* context, const ADDIN_ARGV* args, test_channel* channel)
 {
-	test_entry_points ep = WINPR_C_ARRAY_INIT;
-	ep.context = context;
-	ep.args = args;
-	TEST_CHECK(load_plugin(&ep));
-
-	test_channel_manager mgr = WINPR_C_ARRAY_INIT;
-	mgr.iface.CreateListener = test_create_listener;
-	mgr.iface.DestroyListener = test_destroy_listener;
+	dvc_test_entry_points ep = WINPR_C_ARRAY_INIT;
+	TEST_CHECK(dvc_test_load_plugin(&ep, context, AUDIN_CHANNEL_NAME, args));
 
 	memset(channel, 0, sizeof(*channel));
+	dvc_test_channel_init(&channel->iface);
 	channel->iface.Write = test_channel_write;
-	channel->iface.Close = test_channel_close;
 
-	const BOOL rc = check_channel(ep.plugin, &mgr, channel);
+	const BOOL rc = check_channel(ep.plugin, channel);
 	/* frees the plugin */
 	(void)ep.plugin->Terminated(ep.plugin);
 	return rc;

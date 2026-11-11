@@ -8,7 +8,7 @@ set(TESTS TestAudinFixedFormat.c)
 
 create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 add_executable(${MODULE_NAME} ${SRCS})
-target_link_libraries(${MODULE_NAME} PRIVATE winpr freerdp freerdp-client)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp-channels-test winpr freerdp freerdp-client)
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
 foreach(test ${TESTS})

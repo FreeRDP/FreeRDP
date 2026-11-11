@@ -33,110 +33,9 @@
 #include <freerdp/codec/zgfx.h>
 #include <freerdp/dvc.h>
 
+#include "dvc_test_host.h"
+
 #define INVALID_CMDID 0x7FFF
-
-#define TEST_CHECK(cond)                                                             \
-	do                                                                               \
-	{                                                                                \
-		if (!(cond))                                                                 \
-		{                                                                            \
-			(void)fprintf(stderr, "%s:%d: failed: %s\n", __func__, __LINE__, #cond); \
-			return FALSE;                                                            \
-		}                                                                            \
-	} while (0)
-
-typedef struct
-{
-	IDRDYNVC_ENTRY_POINTS iface;
-	rdpContext* context;
-	IWTSPlugin* plugin;
-} test_entry_points;
-
-typedef struct
-{
-	IWTSVirtualChannelManager iface;
-	IWTSListener listener;
-	IWTSListenerCallback* listenerCallback;
-} test_channel_manager;
-
-static UINT test_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
-                                 WINPR_ATTR_UNUSED const char* name, IWTSPlugin* pPlugin)
-{
-	test_entry_points* ep = (test_entry_points*)pEntryPoints;
-	if (ep->plugin)
-		return CHANNEL_RC_ALREADY_INITIALIZED;
-	ep->plugin = pPlugin;
-	return CHANNEL_RC_OK;
-}
-
-static IWTSPlugin* test_get_plugin(WINPR_ATTR_UNUSED IDRDYNVC_ENTRY_POINTS* pEntryPoints,
-                                   WINPR_ATTR_UNUSED const char* name)
-{
-	return nullptr;
-}
-
-static const ADDIN_ARGV* test_get_plugin_data(WINPR_ATTR_UNUSED IDRDYNVC_ENTRY_POINTS* pEntryPoints)
-{
-	return nullptr;
-}
-
-static rdpSettings* test_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
-{
-	return ((test_entry_points*)pEntryPoints)->context->settings;
-}
-
-static rdpContext* test_get_rdp_context(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
-{
-	return ((test_entry_points*)pEntryPoints)->context;
-}
-
-static UINT test_create_listener(IWTSVirtualChannelManager* pChannelMgr,
-                                 WINPR_ATTR_UNUSED const char* pszChannelName,
-                                 WINPR_ATTR_UNUSED ULONG ulFlags,
-                                 IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
-{
-	test_channel_manager* mgr = (test_channel_manager*)pChannelMgr;
-	mgr->listenerCallback = pListenerCallback;
-	if (ppListener)
-		*ppListener = &mgr->listener;
-	return CHANNEL_RC_OK;
-}
-
-static UINT test_destroy_listener(IWTSVirtualChannelManager* pChannelMgr,
-                                  WINPR_ATTR_UNUSED IWTSListener* pListener)
-{
-	((test_channel_manager*)pChannelMgr)->listenerCallback = nullptr;
-	return CHANNEL_RC_OK;
-}
-
-static UINT32 test_get_channel_id(WINPR_ATTR_UNUSED IWTSVirtualChannel* channel)
-{
-	return 1;
-}
-
-static const char* test_get_channel_name(WINPR_ATTR_UNUSED IWTSVirtualChannel* channel)
-{
-	return RDPGFX_DVC_CHANNEL_NAME;
-}
-
-static IWTSVirtualChannel* test_find_channel_by_id(WINPR_ATTR_UNUSED IWTSVirtualChannelManager* mgr,
-                                                   WINPR_ATTR_UNUSED UINT32 ChannelId)
-{
-	return nullptr;
-}
-
-static UINT test_channel_write(WINPR_ATTR_UNUSED IWTSVirtualChannel* pChannel,
-                               WINPR_ATTR_UNUSED ULONG cbSize,
-                               WINPR_ATTR_UNUSED const BYTE* pBuffer,
-                               WINPR_ATTR_UNUSED void* pReserved)
-{
-	return CHANNEL_RC_OK;
-}
-
-static UINT test_channel_close(WINPR_ATTR_UNUSED IWTSVirtualChannel* pChannel)
-{
-	return CHANNEL_RC_OK;
-}
 
 static BOOL find_stat(const char* name, size_t* index)
 {
@@ -170,11 +69,11 @@ static BOOL all_zero(RdpgfxClientContext* gfx)
 static BOOL check_names(void)
 {
 	static const char* const expected[] = { "RDPGFX_CODECID_UNCOMPRESSED_BYTES",
-		                                    "RDPGFX_CODECID_AVC444v2_BYTES",
-		                                    "RDPGFX_CMDID_WATERMARK",
-		                                    "RDPGFX_CMDID_INVALID",
-		                                    "RDPGFX_FRAMES_DECODED",
-		                                    "RDPGFX_FRAMES_UNACKNOWLEDGED" };
+	                                        "RDPGFX_CODECID_AVC444v2_BYTES",
+	                                        "RDPGFX_CMDID_WATERMARK",
+	                                        "RDPGFX_CMDID_INVALID",
+	                                        "RDPGFX_FRAMES_DECODED",
+	                                        "RDPGFX_FRAMES_UNACKNOWLEDGED" };
 
 	const size_t max = rdpgfx_stats_max_index();
 
@@ -203,7 +102,7 @@ static BOOL check_names(void)
 	    strcmp(rdpgfx_stats_name_for_index(RDPGFX_CODECID_AVC444), "RDPGFX_CODECID_AVC444") == 0);
 	TEST_CHECK(
 	    strcmp(rdpgfx_stats_name_for_index(RDPGFX_CODECID_MAX + RDPGFX_CMDID_WIRETOSURFACE_1),
-	           "RDPGFX_CMDID_WIRETOSURFACE_1") == 0);
+		       "RDPGFX_CMDID_WIRETOSURFACE_1") == 0);
 
 	for (size_t x = 0; x < ARRAYSIZE(expected); x++)
 	{
@@ -306,33 +205,19 @@ static BOOL check_session(RdpgfxClientContext* gfx, IWTSVirtualChannelCallback* 
 	return TRUE;
 }
 
-static BOOL open_channel(test_channel_manager* mgr, IWTSVirtualChannel* channel,
-                         IWTSVirtualChannelCallback** callback)
+static BOOL check_channel(IWTSPlugin* plugin)
 {
-	BOOL accept = TRUE;
-	*callback = nullptr;
-
-	TEST_CHECK(mgr->listenerCallback->OnNewChannelConnection(
-	               mgr->listenerCallback, channel, nullptr, &accept, callback) == CHANNEL_RC_OK);
-	TEST_CHECK(*callback);
-	TEST_CHECK((*callback)->OnOpen(*callback) == CHANNEL_RC_OK);
-	return TRUE;
-}
-
-static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr)
-{
+	dvc_test_channel_manager mgr = WINPR_C_ARRAY_INIT;
 	IWTSVirtualChannel channel = WINPR_C_ARRAY_INIT;
-	channel.Write = test_channel_write;
-	channel.Close = test_channel_close;
+	IWTSVirtualChannelCallback* callback = nullptr;
 
-	TEST_CHECK(plugin->Initialize(plugin, &mgr->iface) == CHANNEL_RC_OK);
-	TEST_CHECK(mgr->listenerCallback);
+	dvc_test_channel_manager_init(&mgr);
+	dvc_test_channel_init(&channel);
+	TEST_CHECK(plugin->Initialize(plugin, &mgr.iface) == CHANNEL_RC_OK);
 
 	RdpgfxClientContext* gfx = (RdpgfxClientContext*)plugin->pInterface;
 	TEST_CHECK(gfx);
-
-	IWTSVirtualChannelCallback* callback = nullptr;
-	TEST_CHECK(open_channel(mgr, &channel, &callback));
+	TEST_CHECK(dvc_test_open_channel(&mgr, &channel, &callback));
 
 	const BOOL rc = check_session(gfx, callback);
 
@@ -345,7 +230,7 @@ static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr)
 	TEST_CHECK(stat_value(gfx, "RDPGFX_CODECID_UNCOMPRESSED_BYTES") == 12);
 
 	/* the next channel starts from zero */
-	TEST_CHECK(open_channel(mgr, &channel, &callback));
+	TEST_CHECK(dvc_test_open_channel(&mgr, &channel, &callback));
 	const BOOL zero = all_zero(gfx);
 	(void)callback->OnClose(callback);
 	TEST_CHECK(zero);
@@ -354,31 +239,10 @@ static BOOL check_channel(IWTSPlugin* plugin, test_channel_manager* mgr)
 
 static BOOL check_plugin(rdpContext* context)
 {
-	PDVC_PLUGIN_ENTRY pluginEntry = WINPR_FUNC_PTR_CAST(
-	    freerdp_channels_load_static_addin_entry(RDPGFX_CHANNEL_NAME, nullptr, nullptr,
-	                                             FREERDP_ADDIN_CHANNEL_DYNAMIC),
-	    PDVC_PLUGIN_ENTRY);
-	TEST_CHECK(pluginEntry);
+	dvc_test_entry_points ep = WINPR_C_ARRAY_INIT;
+	TEST_CHECK(dvc_test_load_plugin(&ep, context, RDPGFX_CHANNEL_NAME, nullptr));
 
-	test_entry_points ep = WINPR_C_ARRAY_INIT;
-	ep.iface.RegisterPlugin = test_register_plugin;
-	ep.iface.GetPlugin = test_get_plugin;
-	ep.iface.GetPluginData = test_get_plugin_data;
-	ep.iface.GetRdpSettings = test_get_rdp_settings;
-	ep.iface.GetRdpContext = test_get_rdp_context;
-	ep.context = context;
-
-	TEST_CHECK(pluginEntry(&ep.iface) == CHANNEL_RC_OK);
-	TEST_CHECK(ep.plugin);
-
-	test_channel_manager mgr = WINPR_C_ARRAY_INIT;
-	mgr.iface.CreateListener = test_create_listener;
-	mgr.iface.DestroyListener = test_destroy_listener;
-	mgr.iface.GetChannelId = test_get_channel_id;
-	mgr.iface.GetChannelName = test_get_channel_name;
-	mgr.iface.FindChannelById = test_find_channel_by_id;
-
-	const BOOL rc = check_channel(ep.plugin, &mgr);
+	const BOOL rc = check_channel(ep.plugin);
 
 	/* frees the plugin */
 	(void)ep.plugin->Terminated(ep.plugin);
