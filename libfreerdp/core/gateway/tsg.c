@@ -2917,6 +2917,11 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 			           tsg_state_to_string(oldState), rem);
 		}
 	}
+
+	rpc_client_call_advance(tsg->rpc->log, tsg->rpc->client, pdu->CallId,
+	                        RPC_CLIENT_CALL_STATE_RECEIVE_PDU, rc);
+	if (!rc)
+		rpc_client_call_discard(tsg->rpc->log, tsg->rpc->client, pdu->CallId);
 	return rc;
 }
 

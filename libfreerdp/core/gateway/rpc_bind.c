@@ -288,6 +288,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	Stream_SealLength(buffer);
 	status = rpc_in_channel_send_pdu(inChannel, Stream_Buffer(buffer), Stream_Length(buffer));
 fail:
+	if (status <= 0)
+		rpc_client_call_discard(rpc->log, rpc->client, bind_pdu.header.call_id);
 
 	if (bind_pdu.p_context_elem.p_cont_elem)
 	{
@@ -462,6 +464,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 		rpc_client_call_free(clientCall);
 
 fail:
+	if (status <= 0)
+		rpc_client_call_discard(rpc->log, rpc->client, auth_3_pdu.header.call_id);
 	Stream_Free(buffer, TRUE);
 	return (status > 0) ? 1 : -1;
 }

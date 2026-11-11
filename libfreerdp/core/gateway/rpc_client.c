@@ -581,6 +581,8 @@ success:
 	rc = (rc < 0) ? 1 : 0; /* In case of default error return change to 1, otherwise we already set
 	                          the return code */
 fail:
+	if (rc < 1)
+		rpc_client_call_discard(rpc->log, rpc->client, header.common.call_id);
 	rts_free_pdu_header(&header, FALSE);
 	return rc;
 }
@@ -1060,22 +1062,20 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 	wStream s = Stream_Init();
 	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 
+	WINPR_ASSERT(inChannel);
+
 	SSIZE_T status = rpc_channel_write(&inChannel->common, buffer, length);
 
 	if (status <= 0)
-		return -1;
+		goto fail;
 
 	Stream_StaticConstInit(&s, buffer, length);
 	const rts_pdu_status_t rc = rts_read_common_pdu_header(&s, &header, FALSE);
 	if (rc != RTS_PDU_VALID)
-		return FALSE;
-
-	RpcClientCall* clientCall = rpc_client_call_find_by_id(
-	    inChannel->common.rpc->log, inChannel->common.client, header.call_id);
-	if (!clientCall)
-		return -1;
-
-	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
+	{
+		status = -1;
+		goto fail;
+	}
 
 	/*
 	 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
@@ -1092,12 +1092,19 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 	}
 
 	if (status > INT32_MAX)
-		return -1;
+		status = -1;
+
+fail:
+	rpc_client_call_advance(inChannel->common.rpc->log, inChannel->common.client, header.call_id,
+	                        RPC_CLIENT_CALL_STATE_DISPATCHED, status > 0);
 	return (int)status;
 }
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
+	if (!rpc)
+		return FALSE;
+
 	size_t offset = 0;
 	BYTE* buffer = nullptr;
 	size_t stub_data_pad = 0;
@@ -1112,9 +1119,6 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	if (!s)
 		return FALSE;
-
-	if (!rpc)
-		goto fail;
 
 	auth = rpc->auth;
 	connection = rpc->VirtualConnection;
@@ -1231,6 +1235,9 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	rc = TRUE;
 fail:
+	if (!rc)
+		rpc_client_call_discard(rpc->log, rpc->client, request_pdu.header.call_id);
+
 	free(buffer);
 	Stream_Free(s, TRUE);
 	return rc;
