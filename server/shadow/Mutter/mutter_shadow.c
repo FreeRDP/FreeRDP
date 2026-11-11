@@ -115,7 +115,7 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 	if (!next || (*next != 'x'))
 		return FALSE;
 
-	unsigned long h = strtoul(next, nullptr, 0);
+	unsigned long h = strtoul(&next[1], nullptr, 0);
 	if ((errno != 0) || (h < 64) || (h > 8192))
 		return FALSE;
 
@@ -127,7 +127,7 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 /* cursor metadata: position, hot spot and, when the shape changes, a bitmap;
  * Mutter's bitmaps are up to 384x384 */
 #define MUTTER_CURSOR_META_SIZE(width, height) \
-	(sizeof(struct spa_meta_cursor) + sizeof(struct spa_meta_bitmap) + (width) * (height) * 4)
+	(sizeof(struct spa_meta_cursor) + sizeof(struct spa_meta_bitmap) + 4ull * (width) * (height))
 #define MUTTER_CURSOR_META_MAX 384u
 
 /* the largest pointer sent to the clients */
