@@ -595,6 +595,8 @@ bool SdlContext::updateWindow(SDL_WindowID id)
 	auto r = w.rect();
 	m.width = r.w;
 	m.height = r.h;
+	/* The window may be on another display than the one it was created on. */
+	m.attributes.desktopScaleFactor = static_cast<UINT32>(std::roundf(w.scale() * 100.0f));
 	w.setMonitor(m);
 	return true;
 }
