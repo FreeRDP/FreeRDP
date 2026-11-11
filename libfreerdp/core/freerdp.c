@@ -34,6 +34,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "message.h"
+#include "plugin_services.h"
 #include <freerdp/buildflags.h>
 #include "gateway/rpc_fault.h"
 #include "../cache/cache.h"
@@ -956,6 +957,10 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!context->dump)
 		goto fail;
 
+	context->pluginServiceProvider = plugin_services_new(context);
+	if (!context->pluginServiceProvider)
+		goto fail;
+
 	/* Fallback:
 	 * Client common library might set a function pointer to handle this, but here we provide a
 	 * default implementation that simply calls instance->GetAccessToken.
@@ -1006,7 +1011,16 @@ void freerdp_context_free(freerdp* instance)
 
 	ctx = instance->context;
 
+	/* before the client frees its services: what channels still hold stops using them */
+	plugin_services_detach(ctx->pluginServiceProvider);
 	IFCALL(instance->ContextFree, instance, ctx);
+	if (ctx->windowInfoService || ctx->bitmapRenderService)
+	{
+		/* the client's to release, when its own state goes: they may use it */
+		WLog_Print(ctx->log, WLOG_WARN, "the client left its plugin services in the context");
+		ctx->windowInfoService = nullptr;
+		ctx->bitmapRenderService = nullptr;
+	}
 	rdp_free(ctx->rdp);
 	ctx->rdp = nullptr;
 	ctx->settings = nullptr; /* owned by rdpRdp */
@@ -1033,6 +1047,11 @@ void freerdp_context_free(freerdp* instance)
 	stream_dump_free(ctx->dump);
 	ctx->dump = nullptr;
 
+	/* last: channels are gone; plugins may still hold services, which keep the provider */
+	if (ctx->pluginServiceProvider)
+		WINPR_COM_RELEASE(ctx->pluginServiceProvider);
+	ctx->pluginServiceProvider = nullptr;
+
 	ctx->input = nullptr;      /* owned by rdpRdp */
 	ctx->update = nullptr;     /* owned by rdpRdp */
 	ctx->settings = nullptr;   /* owned by rdpRdp */
@@ -1053,6 +1072,15 @@ int freerdp_get_disconnect_ultimatum(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return context->disconnectUltimatum;
+}
+
+IWTSPluginServiceProvider* freerdp_get_plugin_service_provider(const rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	IWTSPluginServiceProvider* provider = context->pluginServiceProvider;
+	if (provider)
+		WINPR_COM_ADDREF(provider);
+	return provider;
 }
 
 UINT32 freerdp_error_info(const freerdp* instance)

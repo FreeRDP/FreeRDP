@@ -7,7 +7,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(DRIVER ${MODULE_NAME}.c)
 
-set(TESTS TestVersion.c TestSettings.c TestUtils.c)
+set(TESTS TestVersion.c TestSettings.c TestUtils.c TestPluginServices.c)
 
 if(BUILD_TESTING_INTERNAL)
   list(
