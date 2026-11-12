@@ -244,7 +244,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_REPORT_MIN_BUDGET 16
 
 #define RDPUDP2_KEEPALIVE_MS 4000
-#define RDPUDP2_PEER_TIMEOUT_MS 16000
+/* Half a second more than the 16 seconds of the specification, as Windows has it: keepalives of
+ * Windows come a little over 4 seconds apart, so the fourth after three lost ones arrived
+ * 16.06 seconds after the last one heard, and at 16000 an idle tunnel ended 40 ms before it. */
+#define RDPUDP2_PEER_TIMEOUT_MS 16500
 
 /* Silence after which the peer may have moved more than half the sequence space on, see
  * v3_resync_base. Two keepalive intervals: an idle tunnel gets there when one keepalive is

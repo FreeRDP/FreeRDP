@@ -1458,6 +1458,29 @@ out:
 	return rc;
 }
 
+/* mstsc sends a keepalive a little over every 4 seconds (4.01 to 4.02 in a capture). After
+ * three lost ones the fourth arrives 16.06 seconds after the last one heard: the tunnel has to
+ * be there for it still, as it is on Windows, which waits 16.5 seconds. */
+static BOOL server_waits_for_the_fourth_keepalive(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_run_timers(udp, 16060))
+		goto out;
+	sent.hasAck = FALSE;
+	if (!server_receive_data_aoa(udp, 101, 2) || !server_run_timers(udp, 100))
+		goto out;
+	rc = (rdpudp_get_state(udp) == RDPUDP_STATE_ESTABLISHED) && sent.hasAck && (sent.ack == 101) &&
+	     (sent.delivered == 2);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
 /* Silent clients are dropped after the peer timeout. */
 static BOOL server_ends_a_silent_connection(void)
 {
@@ -2225,6 +2248,7 @@ static const TestCase cases[] = {
 	{ "server_limits_buffered_chunks_until_verified",
 	  server_limits_buffered_chunks_until_verified },
 	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
+	{ "server_waits_for_the_fourth_keepalive", server_waits_for_the_fourth_keepalive },
 	{ "server_keepalive_after_a_silence_is_an_ack_of_acks",
 	  server_keepalive_after_a_silence_is_an_ack_of_acks },
 	{ "idle_tunnel_survives_lost_wake_ups", idle_tunnel_survives_lost_wake_ups },
