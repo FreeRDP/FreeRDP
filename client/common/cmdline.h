@@ -216,6 +216,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[[progressive[:on|off]|RFX[:on|off]"
 #ifdef WITH_GFX_H264
 	  "|AVC420[:on|off]AVC444[:on|off]"
+	  "|AVC-mixed[:on|off]"
 #endif
 	  "],mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|"
 	  "off],frame-ack[:on|off]"
