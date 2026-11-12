@@ -43,7 +43,7 @@
 /* What was already on its way to the main loop when the hold began still arrives, at most what
  * the main loop's event queue takes. More than that means the hold does not work, and the
  * connection ends. A client that never responds can pin this memory for the session. */
-#define SOFT_SYNC_MAX_BACKLOG (256 * 1024)
+#define SOFT_SYNC_MAX_BACKLOG ((size_t)256 * 1024)
 #define SOFT_SYNC_MAX_BACKLOG_BYTES (48ull * 1024ull * 1024ull)
 
 /* Timeout for channel Create Response. After this, open channels are moved and unanswered
