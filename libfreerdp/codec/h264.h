@@ -48,8 +48,6 @@ extern "C"
 		pfnH264SubsystemUninit Uninit;
 		WINPR_ATTR_NODISCARD pfnH264SubsystemDecompress Decompress;
 		WINPR_ATTR_NODISCARD pfnH264SubsystemCompress Compress;
-		BOOL SupportsHEVC;    /**< can decode H.265/HEVC, see H264_CONTEXT_OPTION_HEVC */
-		BOOL SupportsHEVC444; /**< can decode HEVC 4:4:4, see H264_CONTEXT_OPTION_HEVC444 */
 	};
 
 	struct S_H264_CONTEXT

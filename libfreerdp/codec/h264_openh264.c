@@ -529,6 +529,9 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 
 static BOOL openh264_init(H264_CONTEXT* h264)
 {
+	if (h264->hevc || h264->hevc444)
+		return FALSE;
+
 #if defined(WITH_OPENH264_LOADING)
 	BOOL success = FALSE;
 #endif

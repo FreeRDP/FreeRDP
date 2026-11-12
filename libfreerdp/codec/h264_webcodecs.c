@@ -429,14 +429,14 @@ static int webcodecs_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	int rc = -1;
 	h264_wc_job job = { .handle = sys->handle,
-	                    .src = src,
-	                    .size = size,
-	                    .key = hasIdr,
-	                    .codec = codec,
-	                    .plane = sys->plane,
-	                    .stride = sys->stride,
-	                    .gbr = sys->hevc444,
-	                    .rc = -1 };
+		                .src = src,
+		                .size = size,
+		                .key = hasIdr,
+		                .codec = codec,
+		                .plane = sys->plane,
+		                .stride = sys->stride,
+		                .gbr = sys->hevc444,
+		                .rc = -1 };
 	if (!ensure_planes(sys, MAX(h264->width, 16), MAX(h264->height, 16)))
 		goto fail;
 	job.maxWidth = sys->width;
@@ -524,6 +524,6 @@ static BOOL webcodecs_init(H264_CONTEXT* h264)
 	return TRUE;
 }
 
-const H264_CONTEXT_SUBSYSTEM g_Subsystem_WebCodecs = {
-	"WebCodecs", webcodecs_init, webcodecs_uninit, webcodecs_decompress, nullptr, TRUE, TRUE
-};
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_WebCodecs = { "WebCodecs", webcodecs_init,
+	                                                   webcodecs_uninit, webcodecs_decompress,
+	                                                   nullptr };

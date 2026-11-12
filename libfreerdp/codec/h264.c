@@ -193,7 +193,7 @@ static BOOL yuv444_planes_decode(H264_CONTEXT* h264, DWORD DstFormat, BYTE* pDst
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
 		const prim_size_t roi = { .width = rect->right - rect->left,
-		                          .height = rect->bottom - rect->top };
+			                      .height = rect->bottom - rect->top };
 		const BYTE* pSrc[3] = WINPR_C_ARRAY_INIT;
 		for (size_t p = 0; p < 3; p++)
 			pSrc[p] = &h264->pYUVData[p][1ull * rect->top * h264->iStride[p] + rect->left];
@@ -965,12 +965,6 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 		if (!subsystem || !subsystem->Init)
 			break;
 
-		if (h264->hevc && !subsystem->SupportsHEVC)
-			continue;
-
-		if (h264->hevc && h264->hevc444 && !subsystem->SupportsHEVC444)
-			continue;
-
 		if (subsystem->Init(h264))
 		{
 			h264->subsystem = subsystem;
@@ -1208,9 +1202,9 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 		case H264_CONTEXT_OPTION_HW_ACCEL:
 			return h264->hwAccel;
 		case H264_CONTEXT_OPTION_HEVC:
-			return h264->hevc;
+			return h264->hevc ? 1 : 0;
 		case H264_CONTEXT_OPTION_HEVC444:
-			return h264->hevc444;
+			return h264->hevc444 ? 1 : 0;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
