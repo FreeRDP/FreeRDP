@@ -201,12 +201,6 @@ static UINT audin_mac_close(IAudinDevice *device)
 	AudinMacDevice *mac = (AudinMacDevice *)device;
 
 	WINPR_ASSERT(mac);
-	if (!mac->isAuthorized)
-	{
-		WLog_ERR(TAG, "not authorized");
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	if (device == nullptr)
 	{
 		WLog_ERR(TAG, "device == nullptr");
