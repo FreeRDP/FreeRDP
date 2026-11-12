@@ -1185,6 +1185,9 @@ static BOOL videotoolbox_init(H264_CONTEXT *h264)
 {
 	WINPR_ASSERT(h264);
 
+	if (h264->hevc || h264->hevc444)
+		return FALSE;
+
 	if (h264->Compressor)
 		return videotoolbox_encoder_init(h264);
 

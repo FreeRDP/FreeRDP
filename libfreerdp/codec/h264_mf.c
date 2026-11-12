@@ -1415,8 +1415,8 @@ static HRESULT mf_decoder_create_hevc(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 	UINT32 count = 0;
 	HRESULT hr =
 	    sys->MFTEnumEx(sMFT_CATEGORY_VIDEO_DECODER,
-		               MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_LOCALMFT | MFT_ENUM_FLAG_SORTANDFILTER,
-		               &input, nullptr, &activates, &count);
+	                   MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_LOCALMFT | MFT_ENUM_FLAG_SORTANDFILTER,
+	                   &input, nullptr, &activates, &count);
 	if (FAILED(hr))
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "MFTEnumEx(HEVC decoder) failure: 0x%08" PRIX32 "",
@@ -1658,5 +1658,5 @@ error:
 	return FALSE;
 }
 
-const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init,     mf_uninit,
-                                                mf_decompress,     mf_compress, TRUE };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init, mf_uninit,
+	                                            mf_decompress, mf_compress };

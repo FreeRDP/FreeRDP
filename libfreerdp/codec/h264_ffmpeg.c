@@ -1362,13 +1362,15 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	h264->pSystemData = (void*)sys;
 
+	const enum AVCodecID codecId =
+	    (h264->hevc || h264->hevc444) ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
 #endif
 
 	if (!h264->Compressor)
 	{
-		sys->codecDecoder = avcodec_find_decoder(h264->hevc ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264);
+		sys->codecDecoder = avcodec_find_decoder(codecId);
 
 		if (!sys->codecDecoder)
 		{
@@ -1450,7 +1452,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			goto EXCEPTION;
 		}
 
-		sys->codecParser = av_parser_init(h264->hevc ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264);
+		sys->codecParser = av_parser_init(codecId);
 
 		if (!sys->codecParser)
 		{
@@ -1497,7 +1499,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #endif
 		if (!sys->codecEncoder)
 		{
-			sys->codecEncoder = avcodec_find_encoder(AV_CODEC_ID_H264);
+			sys->codecEncoder = avcodec_find_encoder(codecId);
 			h264->hwAccel = FALSE; /* not supported */
 		}
 
@@ -1539,10 +1541,6 @@ EXCEPTION:
 	return FALSE;
 }
 
-const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec",
-                                                        libavcodec_init,
-                                                        libavcodec_uninit,
-                                                        libavcodec_decompress,
-                                                        libavcodec_compress,
-                                                        TRUE,
-                                                        TRUE };
+const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec", libavcodec_init,
+	                                                    libavcodec_uninit, libavcodec_decompress,
+	                                                    libavcodec_compress };

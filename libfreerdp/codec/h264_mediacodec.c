@@ -1244,14 +1244,17 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 WINPR_ATTR_NODISCARD
 static BOOL mediacodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_MEDIACODEC* sys = nullptr;
 	media_status_t status = AMEDIA_OK;
 
 	WINPR_ASSERT(h264);
 
 	WLog_Print(h264->log, WLOG_DEBUG, "Initializing MediaCodec");
 
-	sys = (H264_CONTEXT_MEDIACODEC*)calloc(1, sizeof(H264_CONTEXT_MEDIACODEC));
+	if (h264->hevc || h264->hevc444)
+		return FALSE;
+
+	H264_CONTEXT_MEDIACODEC* sys =
+	    (H264_CONTEXT_MEDIACODEC*)calloc(1, sizeof(H264_CONTEXT_MEDIACODEC));
 
 	if (!sys)
 	{

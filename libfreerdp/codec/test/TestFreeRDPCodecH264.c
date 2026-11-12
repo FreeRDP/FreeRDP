@@ -546,7 +546,7 @@ static BOOL testDecodeHEVC444(void)
 	const UINT32 stride = width * 4;
 	/* two regions, the right one starting at an odd column; column 15 and row 0 stay unset */
 	const RECTANGLE_16 rects[] = { { .left = 0, .top = 1, .right = 8, .bottom = height },
-	                               { .left = 9, .top = 1, .right = 15, .bottom = height } };
+		                           { .left = 9, .top = 1, .right = 15, .bottom = height } };
 	const BYTE fill = 0x42;
 	H264_CONTEXT* h264 = h264_context_new(FALSE);
 	BYTE* dst = malloc(1ull * stride * height);
@@ -569,7 +569,7 @@ static BOOL testDecodeHEVC444(void)
 
 	const INT32 res =
 	    avc420_decompress(h264, columns_idr_16x16_hevc444, sizeof(columns_idr_16x16_hevc444), dst,
-		                  format, stride, width, height, rects, ARRAYSIZE(rects));
+	                      format, stride, width, height, rects, ARRAYSIZE(rects));
 	if (res < 0)
 	{
 		(void)fprintf(stderr, "[%s] avc420_decompress failed: %" PRId32 "\n", __func__, res);
