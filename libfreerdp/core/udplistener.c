@@ -820,6 +820,21 @@ BOOL udplistener_add_flow_on_address(const struct sockaddr* addr, size_t addrlen
 			if (udpsocket_address_equal(&sock->addr, (const struct sockaddr*)&local, localLength))
 				sockfd = sock->sockfd;
 		}
+		/* A socket retired a moment ago is still bound until the listener thread closes it,
+		 * and a second bind to its address would fail: it is taken back into use. The thread
+		 * may still have its event in the wait set, which does no harm. */
+		for (size_t x = 0; (sockfd == INVALID_SOCKET) && (x < g_listener->retiredCount) &&
+		                   (g_listener->socketCount < UDPLISTENER_MAX_SOCKETS);
+		     x++)
+		{
+			const udpListenerSocket* sock = &g_listener->retired[x];
+			if (!udpsocket_address_equal(&sock->addr, (const struct sockaddr*)&local, localLength))
+				continue;
+			sockfd = sock->sockfd;
+			g_listener->sockets[g_listener->socketCount++] = *sock;
+			g_listener->retired[x] = g_listener->retired[--g_listener->retiredCount];
+			(void)SetEvent(g_listener->wake);
+		}
 		if ((sockfd == INVALID_SOCKET) &&
 		    udplistener_open_socket(g_listener, (const struct sockaddr*)&local, localLength))
 			sockfd = g_listener->sockets[g_listener->socketCount - 1].sockfd;
