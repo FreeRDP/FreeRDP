@@ -211,12 +211,14 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 	}
 
 	channel->creationStatus = (INT32)CreationStatus;
-	IFCALLRET(channel->vcm->dvc_creation_status, status, channel->vcm->dvc_creation_status_userdata,
+	/* the callback may close the channel, which frees it */
+	WTSVirtualChannelManager* vcm = channel->vcm;
+	IFCALLRET(vcm->dvc_creation_status, status, vcm->dvc_creation_status_userdata,
 	          channel->channelId, (INT32)CreationStatus);
 	if (!status)
 		WLog_ERR(TAG, "vcm->dvc_creation_status failed!");
 
-	wts_tunnel_channel_opened(channel->vcm);
+	wts_tunnel_channel_opened(vcm);
 	return status;
 }
 
