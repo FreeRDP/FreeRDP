@@ -653,6 +653,7 @@ BOOL multitransport_check(rdpMultitransport* multi)
 		mt_event* ev = Queue_Dequeue(multi->events);
 		if (!ev)
 			break;
+		multitransport_server_event_taken(multi, ev);
 		const BOOL rc = multitransport_handle_event(multi, ev);
 		mt_event_free(ev);
 		if (!rc)
@@ -708,7 +709,10 @@ void multitransport_reset(rdpMultitransport* multi)
 		/* not Queue_Clear(), it misses the events of a queue that is exactly full */
 		mt_event* ev = nullptr;
 		while ((ev = Queue_Dequeue(multi->events)))
+		{
+			multitransport_server_event_taken(multi, ev);
 			mt_event_free(ev);
+		}
 	}
 	if (InterlockedCompareExchange(&multi->tunnelEventLost, 0, 1) != 0)
 		WLog_DBG(TAG, "a lost UDP tunnel event no longer matters, the tunnel is gone");

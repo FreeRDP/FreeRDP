@@ -63,6 +63,10 @@ typedef void (*rdpEmtEventFn)(void* custom, rdpEmt* emt, RDPEMT_EVENT event, con
  * \b s, sealed and at position 0. \b FALSE fails the tunnel. */
 typedef BOOL (*rdpEmtReceiverFn)(void* custom, wStream* s);
 
+/** Called on the tunnel thread before each client datagram, see rdpemt_set_receive_hold().
+ * \b TRUE while the owner cannot take more tunnel data. Must not block or take locks. */
+typedef BOOL (*rdpEmtHoldFn)(void* custom);
+
 #if defined(WITH_RDPEUDP)
 
 /** UDP multitransport is compiled in (-DWITH_RDPEUDP=ON, which requires OpenSSL). */
@@ -107,6 +111,11 @@ FREERDP_LOCAL rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE*
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT16 maxVersion,
                                            UINT32 secLevel, const char* ciphers);
+
+/** Server: asks \b hold, with the custom pointer of the tunnel's callback, before each client
+ *  datagram. While it returns \b TRUE the tunnel accepts no data from the client, which sends
+ *  it again later (rdpudp_set_receive_hold()), so what the owner has queued stops growing. */
+FREERDP_LOCAL void rdpemt_set_receive_hold(rdpEmt* emt, rdpEmtHoldFn hold);
 
 /** Server: flow from which the tunnel receives datagrams. Owned by the tunnel. */
 WINPR_ATTR_NODISCARD

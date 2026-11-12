@@ -34,10 +34,17 @@
 
 #define TAG FREERDP_TAG("core.server")
 
-/* Max client tunnel PDUs held until Soft-Sync Response. A client that never responds can
- * pin this memory for the session. */
-#define SOFT_SYNC_MAX_BACKLOG 1024
-#define SOFT_SYNC_MAX_BACKLOG_BYTES (1024ull * 1024ull)
+/* Client tunnel PDUs held until the Soft-Sync Response. From this many on the tunnel accepts
+ * no more data from the client (multitransport_hold_tunnel_data), which sends it again once the
+ * Response is in: a client may write on the tunnel as soon as it has sent the Response on TCP,
+ * and TCP can be the slower of the two. */
+#define SOFT_SYNC_HOLD_BACKLOG 1024
+#define SOFT_SYNC_HOLD_BACKLOG_BYTES (1024ull * 1024ull)
+/* What was already on its way to the main loop when the hold began still arrives, at most what
+ * the main loop's event queue takes. More than that means the hold does not work, and the
+ * connection ends. A client that never responds can pin this memory for the session. */
+#define SOFT_SYNC_MAX_BACKLOG (256 * 1024)
+#define SOFT_SYNC_MAX_BACKLOG_BYTES (48ull * 1024ull * 1024ull)
 
 /* Timeout for channel Create Response. After this, open channels are moved and unanswered
  * ones remain on TCP. */
@@ -155,6 +162,16 @@ static BOOL wts_read_tunnel_pdu(WTSVirtualChannelManager* vcm, const BYTE* data,
 	}
 }
 
+/* The connection's multitransport, nullptr without one (unit tests). */
+WINPR_ATTR_NODISCARD
+static rdpMultitransport* wts_tunnel_multitransport(const WTSVirtualChannelManager* vcm)
+{
+	WINPR_ASSERT(vcm);
+	if (!vcm->client || !vcm->client->context || !vcm->client->context->rdp)
+		return nullptr;
+	return vcm->client->context->rdp->multitransport;
+}
+
 /* [MS-RDPEDYC] 2.2.5.2 DYNVC_SOFT_SYNC_RESPONSE: Specifies the tunnels the client writes on;
  * the server will also read from these tunnels henceforth (3.3.5.3.2). */
 BOOL wts_tunnel_read_soft_sync_response(WTSVirtualChannelManager* vcm, wStream* s)
@@ -208,6 +225,8 @@ BOOL wts_tunnel_read_soft_sync_response(WTSVirtualChannelManager* vcm, wStream* 
 	}
 out:
 	HashTable_Unlock(vcm->dynamicVirtualChannels);
+	/* the backlog is processed, the client's data is taken as it comes from here on */
+	multitransport_hold_tunnel_data(wts_tunnel_multitransport(vcm), FALSE);
 	return rc;
 }
 
@@ -366,6 +385,7 @@ static BOOL wts_tunnel_data_received(void* custom, UINT32 tunnelType, wStream* s
 	WINPR_UNUSED(tunnelType);
 
 	BOOL rc = FALSE;
+	BOOL hold = FALSE;
 	HashTable_Lock(vcm->dynamicVirtualChannels);
 	/* [MS-RDPEDYC] 3.3.5.3.2: The server does not process tunnel data before the Soft-Sync Response
 	 */
@@ -377,7 +397,12 @@ static BOOL wts_tunnel_data_received(void* custom, UINT32 tunnelType, wStream* s
 	else if (vcm->tunnel->softSyncState != SOFT_SYNC_STATE_ANSWERED)
 	{
 		const size_t length = Stream_Length(s);
-		if ((Queue_Count(vcm->tunnel->tunnelBacklog) >= SOFT_SYNC_MAX_BACKLOG) ||
+		const size_t held =
+		    WINPR_ASSERTING_INT_CAST(size_t, Queue_Count(vcm->tunnel->tunnelBacklog));
+		hold = (held + 1 >= SOFT_SYNC_HOLD_BACKLOG) ||
+		       (length >= SOFT_SYNC_HOLD_BACKLOG_BYTES - vcm->tunnel->backlogBytes) ||
+		       (vcm->tunnel->backlogBytes >= SOFT_SYNC_HOLD_BACKLOG_BYTES);
+		if ((held >= SOFT_SYNC_MAX_BACKLOG) ||
 		    (length > SOFT_SYNC_MAX_BACKLOG_BYTES - vcm->tunnel->backlogBytes))
 			WLog_ERR(TAG, "tunnel data continues to arrive without a Soft-Sync Response");
 		else if (Queue_Enqueue(vcm->tunnel->tunnelBacklog, s))
@@ -393,6 +418,8 @@ static BOOL wts_tunnel_data_received(void* custom, UINT32 tunnelType, wStream* s
 	else
 		rc = wts_read_tunnel_pdu(vcm, Stream_Buffer(s), Stream_Length(s));
 	HashTable_Unlock(vcm->dynamicVirtualChannels);
+	if (hold)
+		multitransport_hold_tunnel_data(wts_tunnel_multitransport(vcm), TRUE);
 	if (s)
 		Stream_Release(s);
 	return rc;
@@ -454,6 +481,7 @@ void wts_tunnel_free(WTSVirtualChannelManager* vcm)
 	if (vcm->client && vcm->client->context &&
 	    !freerdp_multitransport_set_dvc_callbacks(vcm->client->context, nullptr, nullptr))
 		WLog_WARN(TAG, "failed to remove the multitransport callbacks");
+	multitransport_hold_tunnel_data(wts_tunnel_multitransport(vcm), FALSE);
 	if (!vcm->tunnel)
 		return;
 	if (vcm->tunnel->tunnelBacklog)

@@ -1506,6 +1506,45 @@ out:
 	return rc;
 }
 
+/* A receiver that cannot take more holds data back: packets are dropped unacknowledged while
+ * the hold is on, and taken when the client sends them again after it. */
+static BOOL server_takes_no_data_while_held(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_run_timers(udp, 100) || !sent.hasAck ||
+	    (sent.ack != 100) || (sent.delivered != 1))
+		goto out;
+
+	rdpudp_set_receive_hold(udp, TRUE);
+	sent.hasAck = FALSE;
+	if (!server_receive_data(udp, 101, 2) || !server_receive_data(udp, 102, 3) ||
+	    !server_receive_data(udp, 103, 4) || !server_run_timers(udp, 100))
+		goto out;
+	if (sent.hasAck || sent.hasVector || (sent.delivered != 1))
+	{
+		(void)fprintf(stderr, "held: ACK %d, vector %d, %" PRIuz " delivered\n", sent.hasAck,
+		              sent.hasVector, sent.delivered);
+		goto out;
+	}
+
+	rdpudp_set_receive_hold(udp, FALSE);
+	if (!server_receive_data(udp, 101, 2) || !server_receive_data(udp, 102, 3) ||
+	    !server_receive_data(udp, 103, 4) || !server_run_timers(udp, 100))
+		goto out;
+	rc = sent.hasAck && (sent.ack == 103) && !sent.hasVector && (sent.delivered == 4);
+	if (!rc)
+		(void)fprintf(stderr, "released: ACK %d of 0x%04" PRIx16 ", %" PRIuz " delivered\n",
+		              sent.hasAck, sent.ack, sent.delivered);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
 /* After a silence the server holds its ACKs back until an AckOfAcks comes. Its keepalive goes
  * on: an AckOfAcks of its own, which acknowledges nothing. */
 static BOOL server_keepalive_after_a_silence_is_an_ack_of_acks(void)
@@ -2249,6 +2288,7 @@ static const TestCase cases[] = {
 	  server_limits_buffered_chunks_until_verified },
 	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
 	{ "server_waits_for_the_fourth_keepalive", server_waits_for_the_fourth_keepalive },
+	{ "server_takes_no_data_while_held", server_takes_no_data_while_held },
 	{ "server_keepalive_after_a_silence_is_an_ack_of_acks",
 	  server_keepalive_after_a_silence_is_an_ack_of_acks },
 	{ "idle_tunnel_survives_lost_wake_ups", idle_tunnel_survives_lost_wake_ups },

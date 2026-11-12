@@ -44,8 +44,12 @@
 
 /* Upper bound on tunnel data queued for the main loop. Since data is already acked and
  * cannot be retransmitted, exceeding this limit ends the connection to prevent server
- * memory exhaustion if the main loop is blocked (e.g. on a write). */
+ * memory exhaustion if the main loop is blocked (e.g. on a write). The tunnel stops taking
+ * data from the client at MULTITRANSPORT_SERVER_QUEUE_HOLD, so the limit is not reached. */
 #define MULTITRANSPORT_SERVER_QUEUE_LIMIT (32 * 1024 * 1024)
+/* Above this the tunnel accepts no more data from the client (rdpemt_set_receive_hold): a main
+ * loop that is busy or blocked then slows the client down as it would on TCP. */
+#define MULTITRANSPORT_SERVER_QUEUE_HOLD (MULTITRANSPORT_SERVER_QUEUE_LIMIT / 2)
 /* Per-event overhead (event, stream, and allocations) to ensure many small events do
  * not exceed the memory limit. */
 #define MULTITRANSPORT_SERVER_EVENT_COST 128
@@ -60,6 +64,57 @@ static void multitransport_server_notify_link_state(rdpMultitransport* multi,
 	WINPR_ASSERT(multi);
 	if (multi->udpCallbacks.LinkChanged)
 		multi->udpCallbacks.LinkChanged(multi->udpCustom, state);
+}
+
+/* What an event adds to serverQueuedBytes. */
+WINPR_ATTR_NODISCARD
+static LONG multitransport_server_event_cost(size_t length)
+{
+	return (length > (size_t)(MULTITRANSPORT_SERVER_QUEUE_LIMIT - MULTITRANSPORT_SERVER_EVENT_COST))
+	           ? MULTITRANSPORT_SERVER_QUEUE_LIMIT + 1
+	           : (LONG)length + MULTITRANSPORT_SERVER_EVENT_COST;
+}
+
+/* Runs on the tunnel thread before each client datagram. */
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_server_receive_hold(void* custom)
+{
+	rdpMultitransport* multi = custom;
+	WINPR_ASSERT(multi);
+	return (InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0) >
+	        MULTITRANSPORT_SERVER_QUEUE_HOLD) ||
+	       (InterlockedCompareExchange(&multi->serverDataHold, 0, 0) != 0);
+}
+
+void multitransport_server_event_taken(rdpMultitransport* multi, const mt_event* ev)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(ev);
+	if ((ev->type != MT_EVENT_DATA) && (ev->type != MT_EVENT_AUTODETECT))
+		return;
+	if (!multitransport_is_server(multi))
+		return;
+
+	const LONG cost = multitransport_server_event_cost(ev->length);
+	LONG queued = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0);
+	while (TRUE)
+	{
+		const LONG left = (queued > cost) ? queued - cost : 0;
+		const LONG seen = InterlockedCompareExchange(&multi->serverQueuedBytes, left, queued);
+		if (seen == queued)
+			break;
+		queued = seen;
+	}
+}
+
+void multitransport_hold_tunnel_data(rdpMultitransport* multi, BOOL hold)
+{
+	if (!multi)
+		return;
+	/* compare-exchange: WinPR's InterlockedExchange reads the old value non-atomically */
+	if (InterlockedCompareExchange(&multi->serverDataHold, hold ? 1 : 0, hold ? 0 : 1) ==
+	    (hold ? 0 : 1))
+		WLog_DBG(TAG, "tunnel data from the client is %s", hold ? "held back" : "accepted again");
 }
 
 /* Runs on the tunnel thread. SYN_RECEIVED and WRITABLE events only set flags that the main
@@ -90,10 +145,7 @@ static void multitransport_server_tunnel_event(void* custom, rdpEmt* emt, RDPEMT
 		case RDPEMT_EVENT_DATA:
 		case RDPEMT_EVENT_AUTODETECT:
 		{
-			const LONG add = (length > (size_t)(MULTITRANSPORT_SERVER_QUEUE_LIMIT -
-			                                    MULTITRANSPORT_SERVER_EVENT_COST))
-			                     ? MULTITRANSPORT_SERVER_QUEUE_LIMIT + 1
-			                     : (LONG)length + MULTITRANSPORT_SERVER_EVENT_COST;
+			const LONG add = multitransport_server_event_cost(length);
 			/* Only increment if it fits to ensure the count stays within the limit. */
 			BOOL fits = TRUE;
 			LONG queued = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0);
@@ -195,6 +247,7 @@ static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
 		WLog_WARN(TAG, "unable to wait for a UDP tunnel, so one will not be offered");
 		return FALSE;
 	}
+	rdpemt_set_receive_hold(emt, multitransport_server_receive_hold);
 	/* Apply the main connection's TLS limits to the tunnel. */
 	if (!rdpemt_set_tls_settings(emt, freerdp_settings_get_uint16(settings, FreeRDP_TLSMinVersion),
 	                             freerdp_settings_get_uint16(settings, FreeRDP_TLSMaxVersion),
@@ -439,16 +492,6 @@ void multitransport_tunnel_check(rdpMultitransport* multi)
 	rdpAutoDetect* autodetect = multi->rdp->autodetect;
 	if (autodetect && autodetect->bandwidthMeasureStarted)
 		autodetect->bandwidthMeasureByteCount += direct;
-
-	/* Main loop drains queued events after this, so their bytes are no longer counted */
-	LONG queued = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, 0);
-	while (queued != 0)
-	{
-		const LONG seen = InterlockedCompareExchange(&multi->serverQueuedBytes, 0, queued);
-		if (seen == queued)
-			break;
-		queued = seen;
-	}
 
 	if (InterlockedCompareExchange(&multi->serverSynPending, 0, 1) != 0)
 		multitransport_server_notify_link_state(multi, FREERDP_UDP_LINK_SYN_RECEIVED);

@@ -104,6 +104,7 @@ struct rdp_emt
 
 	rdpEmtEventFn callback;
 	void* custom;
+	rdpEmtHoldFn hold; /* guarded by lock, see rdpemt_set_receive_hold() */
 
 	/* guarded by lock: tunnel data goes to receiver instead of callback when it is set */
 	rdpEmtReceiverFn receiver;
@@ -1103,6 +1104,8 @@ static BOOL emt_server_process_datagrams(rdpEmt* emt)
 	     (count < RDPEMT_INPUT_BUDGET) && !emt->failed && udpflow_read(emt->flow, data, &length);
 	     count++)
 	{
+		/* asked for every datagram: what the owner has queued changes while this loop runs */
+		rdpudp_set_receive_hold(emt->udp, emt->hold && emt->hold(emt->custom));
 		if (rdpudp_get_state(emt->udp) == RDPUDP_STATE_CLOSED)
 		{
 			if (!rdpudp_accept(emt->udp, emt_flow_send, emt->flow, data, length))
@@ -1385,6 +1388,14 @@ fail:
 	rdpemt_free(emt);
 	WINPR_PRAGMA_DIAG_POP
 	return nullptr;
+}
+
+void rdpemt_set_receive_hold(rdpEmt* emt, rdpEmtHoldFn hold)
+{
+	WINPR_ASSERT(emt);
+	EnterCriticalSection(&emt->lock);
+	emt->hold = hold;
+	LeaveCriticalSection(&emt->lock);
 }
 
 BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT16 maxVersion, UINT32 secLevel,

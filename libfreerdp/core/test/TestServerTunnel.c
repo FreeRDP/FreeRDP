@@ -169,6 +169,36 @@ static BOOL soft_sync_leaves_a_lost_tunnel_alone(void)
 	return TRUE;
 }
 
+/* A client may write on the tunnel as soon as it has sent its Soft-Sync Response on TCP, and
+ * the tunnel can be the faster of the two. What arrives before the Response waits; past
+ * SOFT_SYNC_HOLD_BACKLOG the tunnel is asked to take no more, and what was already on its way
+ * is still kept rather than ending the connection. */
+static BOOL tunnel_data_ahead_of_the_response_waits(void)
+{
+	tunnelFixture f;
+	TEST(fixture_init(&f));
+	f.tunnel.softSyncState = SOFT_SYNC_STATE_SENT;
+
+	const size_t count = SOFT_SYNC_HOLD_BACKLOG + 100;
+	for (size_t x = 0; x < count; x++)
+	{
+		wStream* s = Stream_New(nullptr, 16);
+		TEST(s);
+		Stream_Zero(s, 16);
+		Stream_SealLength(s);
+		Stream_ResetPosition(s);
+		TEST(wts_tunnel_data_received(&f.vcm, TUNNELTYPE_UDPFECR, s));
+	}
+	TEST((size_t)Queue_Count(f.tunnel.tunnelBacklog) == count);
+	TEST(f.tunnel.backlogBytes == 16 * count);
+
+	wStream* held = nullptr;
+	while ((held = Queue_Dequeue(f.tunnel.tunnelBacklog)))
+		Stream_Release(held);
+	fixture_free(&f);
+	return TRUE;
+}
+
 int TestServerTunnel(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -177,6 +207,8 @@ int TestServerTunnel(int argc, char* argv[])
 	if (!a_create_response_wakes_soft_sync())
 		return -1;
 	if (!soft_sync_leaves_a_lost_tunnel_alone())
+		return -1;
+	if (!tunnel_data_ahead_of_the_response_waits())
 		return -1;
 	return 0;
 }

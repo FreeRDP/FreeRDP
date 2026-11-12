@@ -81,6 +81,11 @@ FREERDP_LOCAL BOOL multitransport_queue_dvc(rdpMultitransport* multi, const BYTE
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_flush_dvc(rdpMultitransport* multi);
 
+/** Server: while \b hold is set the tunnel accepts no more data from the client, which sends it
+ *  again later. Data already on its way to the main loop still arrives. Any thread.
+ *  @param multi may be \b nullptr */
+FREERDP_LOCAL void multitransport_hold_tunnel_data(rdpMultitransport* multi, BOOL hold);
+
 /** Server: Sends a Bandwidth Measure Start or Stop over the tunnel if the transport
  *  selects it. These must remain ordered with channel data, as the client measures
  *  the data in between. If the tunnel is not ready, the request fails rather than
