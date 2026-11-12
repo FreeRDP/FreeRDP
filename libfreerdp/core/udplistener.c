@@ -359,6 +359,17 @@ static BOOL udplistener_add_socket(freerdp_udp_listener* listener, SOCKET sockfd
 	int addrlen = WINPR_ASSERTING_INT_CAST(int, sizeof(addr));
 	if (_getsockname(sockfd, (struct sockaddr*)&addr, &addrlen) != 0)
 		return FALSE;
+	/* Flows are bound by address, which only compares for these families: an entry on any
+	 * other socket could not be found again to remove it. */
+	int type = 0;
+	int typeLength = sizeof(type);
+	if (((addr.ss_family != AF_INET) && (addr.ss_family != AF_INET6)) ||
+	    (_getsockopt(sockfd, SOL_SOCKET, SO_TYPE, (char*)&type, &typeLength) != 0) ||
+	    (type != SOCK_DGRAM))
+	{
+		WLog_ERR(TAG, "not a UDP socket");
+		return FALSE;
+	}
 
 	HANDLE event = WSACreateEvent();
 	if (!event)
@@ -512,6 +523,14 @@ DWORD freerdp_udp_listener_get_event_handles(freerdp_udp_listener* listener, HAN
 BOOL freerdp_udp_listener_start(freerdp_udp_listener* listener)
 {
 	WINPR_ASSERT(listener);
+	/* A thread that ended by itself (its wait failed) is replaced, or nobody would read the
+	 * sockets while this still reported a running thread. */
+	if (listener->thread && (WaitForSingleObject(listener->thread, 0) == WAIT_OBJECT_0))
+	{
+		WLog_WARN(TAG, "the listener thread has ended, starting a new one");
+		(void)CloseHandle(listener->thread);
+		listener->thread = nullptr;
+	}
 	if (listener->thread)
 		return TRUE;
 	if (InterlockedCompareExchange(&listener->stop, 0, 1) != 0)

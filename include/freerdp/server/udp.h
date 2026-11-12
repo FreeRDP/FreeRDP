@@ -276,8 +276,8 @@ extern "C"
 	                                           UINT16 port);
 
 	/** Takes ownership of a bound UDP socket (e.g., opened by a privileged parent).
-	 *  @return \b FALSE if the listener has 32 sockets or cannot wait on this fd; caller
-	 *  retains ownership of fd.
+	 *  @return \b FALSE if the listener has 32 sockets, fd is not an IPv4 or IPv6 UDP
+	 *  socket, or the listener cannot wait on it; caller retains ownership of fd.
 	 *  @since version 3.34.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_open_from_socket(freerdp_udp_listener* listener, int fd);
