@@ -247,8 +247,13 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_PEER_TIMEOUT_MS 16000
 
 /* Silence after which the peer may have moved more than half the sequence space on, see
- * v3_resync_base. Two keepalive intervals, an idle tunnel never gets there. */
+ * v3_resync_base. Two keepalive intervals: an idle tunnel gets there when one keepalive is
+ * lost, see v3_send_base_keepalive. */
 #define RDPUDP2_RESYNC_MS (2ull * RDPUDP2_KEEPALIVE_MS)
+/* Server: interval of the keepalive during that resync, see v3_send_base_keepalive. A client
+ * in resync sends nothing until one of these arrives, and the server has heard nothing for
+ * RDPUDP2_RESYNC_MS already: at the normal interval two lost ones would end the tunnel. */
+#define RDPUDP2_RESYNC_KEEPALIVE_MS 1000
 
 /* Server: The distance behind the window that an AckOfAcks after silence can be while
  * keeping the window stationary. See v3_resync_base: Windows resends at most 8190 packets
@@ -1011,6 +1016,28 @@ static UINT32 sender_base(const rdpUdp* udp)
 	if (udp->inFlight > 0)
 		return udp->sendBase;
 	return (udp->version == RDPUDP_PROTOCOL_VERSION_3) ? udp->nextCoded : udp->nextSource;
+}
+
+/* Server: the keepalive while v3Resync holds back every ACK. Sending nothing would leave the
+ * peer without a datagram: on an idle tunnel one lost keepalive starts the resync, the peer then
+ * hears nothing for RDPUDP2_RESYNC_MS, stops acknowledging as well, and both ends wait for an
+ * AckOfAcks that only data carries until the peer timeout ends the tunnel. An AckOfAcks alone
+ * ([MS-RDPEUDP2] 2.2.1.2.4) names no position of the peer's, so it is safe after a silence, and
+ * it ends the resync of a peer that waits for one. A FreeRDP peer answers each with an ACK
+ * (v3_process_datagram). */
+WINPR_ATTR_NODISCARD
+static BOOL v3_send_base_keepalive(rdpUdp* udp)
+{
+	BYTE buffer[16] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(udp);
+	wStream* s = v3_packet_init(&sbuffer, buffer, sizeof(buffer), RDPUDP2_AOA);
+	if (!s)
+		return FALSE;
+	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
+	Stream_Write_UINT16(s, base); /* AckOfAcks */
+	return v3_send_packet(udp, s, RDPUDP2_PACKET_STANDARD);
 }
 
 /* The sequence number the next new or resent datagram gets */
@@ -2331,6 +2358,17 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	if (haveAoA)
 		v3_advance_base(udp, aoa);
 
+	/* An AckOfAcks with nothing else is the keepalive of a peer that has not heard from this end
+	 * for RDPUDP2_RESYNC_MS (v3_send_base_keepalive), and is close to its peer timeout. It gets
+	 * an ACK now instead of with the next keepalive: one answer every keepalive interval could
+	 * come too late, or be the one datagram that is lost. */
+	if (haveAoA && !haveData && !(flags & (RDPUDP2_ACK | RDPUDP2_ACKVEC)) && udp->v3BaseKnown &&
+	    !udp->v3Resync)
+	{
+		udp->ackPending = TRUE;
+		udp->v3WindowPending = TRUE;
+	}
+
 	if (!haveData)
 		return TRUE;
 
@@ -2816,9 +2854,18 @@ static BOOL run_timers(rdpUdp* udp)
 	if (scan)
 		udp->pendingDue = nextDue;
 
-	if (now - udp->lastSent >= (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS))
+	/* A resend above may have set lastSent after now was read: nothing is due then. */
+	const BOOL baseKeepalive = v3 && udp->server && udp->v3Resync;
+	const UINT64 keepalive = baseKeepalive ? RDPUDP2_RESYNC_KEEPALIVE_MS
+	                                       : (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS);
+	if ((now >= udp->lastSent) && (now - udp->lastSent >= keepalive))
 	{
-		if (!rdpudp_send_ack(udp))
+		if (baseKeepalive)
+		{
+			if (!v3_send_base_keepalive(udp))
+				return FALSE;
+		}
+		else if (!rdpudp_send_ack(udp))
 			return FALSE;
 		udp->lastSent = now;
 	}
