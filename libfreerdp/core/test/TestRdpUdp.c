@@ -457,6 +457,7 @@ typedef struct
 	UINT32 initialSequence;
 	UINT16 version;
 	BYTE cookie[32];
+	BYTE raw[SYN_LENGTH]; /* the datagram as it came */
 } SynInfo;
 
 static void ctx_free(TestCtx* ctx)
@@ -505,6 +506,8 @@ static BOOL ctx_start(TestCtx* ctx, BOOL offerV3, SynInfo* syn)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return FALSE;
 	syn->length = (size_t)rc;
+	if (syn->length <= sizeof(syn->raw))
+		memcpy(syn->raw, buffer, syn->length);
 	Stream_Seek(s, 6); /* snSourceAck, uReceiveWindowSize */
 	syn->flags = Stream_Get_UINT16_BE(s);
 	syn->initialSequence = Stream_Get_UINT32_BE(s);
@@ -693,6 +696,36 @@ fail:
 	return rc;
 }
 
+/* An AckOfAcks with nothing else is how a server that has heard nothing for 8 seconds asks
+ * whether the client is still there. Each one is answered with an ACK at once: the next
+ * keepalive could be 4 seconds away, and the server's timeout closer than that. */
+static BOOL ack_of_acks_on_its_own_is_answered(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, 100, 1, "a"));
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 30));
+	const V3Packet* ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 100));
+
+	for (size_t x = 0; x < 2; x++)
+	{
+		/* the base the client is at: nothing moves, and it still answers */
+		CHECK(send_aoa(&ctx, 101));
+		CHECK(pump(&ctx));
+		CHECK(drain(&ctx, 30));
+		ack = last_ack(&ctx);
+		CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 100));
+	}
+	CHECK(delivered_is(&ctx, "a"));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 static BOOL send_data_aoa(TestCtx* ctx, UINT16 dataSeq, UINT16 channelSeq, const char* text,
                           UINT16 aoa)
 {
@@ -844,6 +877,8 @@ typedef struct
 	size_t sends;     /* Total number of datagrams sent */
 	size_t dataSends; /* Number of datagrams carrying data */
 	size_t aoaSends;  /* Count of data datagrams that also carry AckOfAcks */
+	size_t baseSends; /* Datagrams with an AckOfAcks and nothing else */
+	UINT16 base;      /* The AckOfAcks of the last of those */
 } ServerSent;
 
 /* Server test clock in nanoseconds; advanced manually instead of sleeping. */
@@ -878,6 +913,11 @@ static BOOL server_on_send(void* custom, const BYTE* data, size_t length)
 	{
 		sent->hasVector = TRUE;
 		sent->vectorBase = packet.vecBase;
+	}
+	if (packet.hasAoA && !packet.hasData && !(packet.flags & (V3_ACK | V3_ACKVEC)))
+	{
+		sent->baseSends++;
+		sent->base = packet.aoa;
 	}
 	if (packet.hasData)
 	{
@@ -1443,6 +1483,218 @@ out:
 	return rc;
 }
 
+/* After a silence the server holds its ACKs back until an AckOfAcks comes. Its keepalive goes
+ * on: an AckOfAcks of its own, which acknowledges nothing. */
+static BOOL server_keepalive_after_a_silence_is_an_ack_of_acks(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_run_timers(udp, 100) || !sent.hasAck)
+		goto out;
+	/* idle, the keepalive is an ACK */
+	sent.hasAck = FALSE;
+	if (!server_run_timers(udp, 4500) || !sent.hasAck || (sent.baseSends != 0))
+		goto out;
+
+	/* 8 seconds without a datagram from the client */
+	if (!server_run_timers(udp, 4000))
+		goto out;
+	sent.hasAck = FALSE;
+	sent.hasVector = FALSE;
+	const size_t before = sent.sends;
+	const size_t baseBefore = sent.baseSends;
+	if (!server_run_timers(udp, 4500))
+		goto out;
+	const size_t bases = sent.baseSends - baseBefore;
+	rc = (bases >= 1) && (sent.sends == before + bases) && !sent.hasAck && !sent.hasVector;
+	if (!rc)
+		(void)fprintf(stderr, "after the silence: %" PRIuz " AckOfAcks, %" PRIuz " sent, ACK %d\n",
+		              bases, sent.sends - before, sent.hasAck);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A FreeRDP client and a FreeRDP server joined through the test's socket, both on the test
+ * clock. */
+typedef struct
+{
+	TestCtx client;
+	rdpUdp* server;
+	ServerSent sent;
+	size_t loseToClient; /* datagrams of the server still to lose */
+	size_t loseToServer; /* datagrams of the client still to lose */
+	size_t loseBases;    /* AckOfAcks keepalives of the server still to lose */
+} Pair;
+
+static BOOL pair_on_send(void* custom, const BYTE* data, size_t length)
+{
+	Pair* pair = custom;
+	/* counts what the server sends, see ServerSent */
+	const size_t bases = pair->sent.baseSends;
+	if (!server_on_send(&pair->sent, data, length))
+		return FALSE;
+	if ((pair->sent.baseSends != bases) && (pair->loseBases > 0))
+	{
+		pair->loseBases--;
+		return TRUE;
+	}
+	if (pair->loseToClient > 0)
+	{
+		pair->loseToClient--;
+		return TRUE;
+	}
+	return server_send_raw(&pair->client, data, length);
+}
+
+/* Moves the clock on in steps of 10 ms. FALSE when either end failed. */
+static BOOL pair_run(Pair* pair, UINT32 ms)
+{
+	BYTE buffer[1500] = WINPR_C_ARRAY_INIT;
+	for (UINT32 x = 0; x < ms; x += 10)
+	{
+		g_serverTime += 10ULL * 1000000ULL;
+		if (!rdpudp_check(pair->client.udp))
+			return FALSE;
+		size_t length = 0;
+		while ((length = server_recv(&pair->client, buffer, sizeof(buffer), 0)) > 0)
+		{
+			if (pair->loseToServer > 0)
+			{
+				pair->loseToServer--;
+				continue;
+			}
+			if (!rdpudp_receive(pair->server, buffer, length))
+				return FALSE;
+		}
+		if (!rdpudp_check(pair->server))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static void pair_free(Pair* pair)
+{
+	rdpudp_free(pair->server);
+	pair->server = nullptr;
+	ctx_free(&pair->client);
+}
+
+/* Connected, with one chunk delivered each way, so both ends know the other's base. */
+static BOOL pair_connect(Pair* pair)
+{
+	SynInfo syn = WINPR_C_ARRAY_INIT;
+	if (!ctx_start(&pair->client, TRUE, &syn) || (syn.length > sizeof(syn.raw)))
+		return FALSE;
+	/* the test clock takes over from the system clock without going back */
+	g_serverTime = GetTickCount64() * 1000000ULL;
+	rdpudp_set_clock(pair->client.udp, server_clock, nullptr);
+
+	pair->server = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, &pair->sent);
+	if (!pair->server)
+		return FALSE;
+	rdpudp_set_clock(pair->server, server_clock, nullptr);
+	if (!rdpudp_accept(pair->server, pair_on_send, pair, syn.raw, syn.length))
+		return FALSE;
+	for (size_t x = 0;
+	     (x < 100) && (rdpudp_get_state(pair->client.udp) != RDPUDP_STATE_ESTABLISHED); x++)
+	{
+		if (!pump(&pair->client))
+			return FALSE;
+	}
+	if (rdpudp_get_state(pair->client.udp) != RDPUDP_STATE_ESTABLISHED)
+		return FALSE;
+
+	if (!rdpudp_send(pair->client.udp, (const BYTE*)"c", 1) ||
+	    !rdpudp_send(pair->server, (const BYTE*)"s", 1))
+		return FALSE;
+	for (size_t x = 0; (x < 100) && ((pair->sent.delivered < 1) ||
+	                                 (Stream_GetPosition(pair->client.delivered) < 1));
+	     x++)
+	{
+		Sleep(1);
+		if (!pair_run(pair, 10))
+			return FALSE;
+	}
+	return (pair->sent.delivered == 1) && delivered_is(&pair->client, "s");
+}
+
+/* An idle tunnel loses one keepalive: the end that misses it hears nothing for two keepalive
+ * intervals and holds its ACKs back from then on. Without a keepalive from an end in that state
+ * the other end went the same way 8 seconds later, and the peer timeout ended a tunnel whose
+ * path had lost a single datagram. */
+static BOOL idle_pair_survives(BOOL fromServer)
+{
+	BOOL rc = FALSE;
+	Pair pair = WINPR_C_ARRAY_INIT;
+	pair.client.server = INVALID_SOCKET;
+	CHECK(pair_connect(&pair));
+	CHECK(pair_run(&pair, 1000));
+
+	if (fromServer)
+		pair.loseToClient = 1;
+	else
+		pair.loseToServer = 1;
+	/* well past the 16 second peer timeout */
+	CHECK(pair_run(&pair, 40000));
+	CHECK((pair.loseToClient == 0) && (pair.loseToServer == 0));
+
+	/* and the stream goes on in both directions */
+	CHECK(rdpudp_send(pair.client.udp, (const BYTE*)"d", 1));
+	CHECK(rdpudp_send(pair.server, (const BYTE*)"t", 1));
+	for (size_t x = 0; (x < 100) && ((pair.sent.delivered < 2) ||
+	                                 (Stream_GetPosition(pair.client.delivered) < 2));
+	     x++)
+	{
+		Sleep(1);
+		CHECK(pair_run(&pair, 10));
+	}
+	CHECK(pair.sent.delivered == 2);
+	CHECK(delivered_is(&pair.client, "st"));
+	rc = TRUE;
+fail:
+	pair_free(&pair);
+	return rc;
+}
+
+/* Found with the Keepalive model: a client that missed one keepalive is in resync and sends
+ * nothing, so the server hears nothing either and has to wake it with the AckOfAcks keepalive
+ * before its own peer timeout. At the normal keepalive interval it gets two attempts; with both
+ * lost, three lost datagrams in 16 seconds ended the tunnel. */
+static BOOL idle_tunnel_survives_lost_wake_ups(void)
+{
+	BOOL rc = FALSE;
+	Pair pair = WINPR_C_ARRAY_INIT;
+	pair.client.server = INVALID_SOCKET;
+	CHECK(pair_connect(&pair));
+	CHECK(pair_run(&pair, 1000));
+
+	/* the client misses a keepalive and falls silent, then the server's first two wake-ups
+	 * are lost */
+	pair.loseToClient = 1;
+	pair.loseBases = 2;
+	CHECK(pair_run(&pair, 40000));
+	CHECK((pair.loseToClient == 0) && (pair.loseBases == 0));
+	rc = TRUE;
+fail:
+	pair_free(&pair);
+	return rc;
+}
+
+static BOOL idle_tunnel_survives_a_lost_server_keepalive(void)
+{
+	return idle_pair_survives(TRUE);
+}
+
+static BOOL idle_tunnel_survives_a_lost_client_keepalive(void)
+{
+	return idle_pair_survives(FALSE);
+}
+
 /* A burst of timeouts should double the RTO only once, not once per datagram (up to 64x),
  * to avoid leaving the tunnel silent for seconds. */
 static BOOL server_backs_off_once_for_many_timeouts(void)
@@ -1961,6 +2213,7 @@ static const TestCase cases[] = {
 	  retransmission_is_reordered_back_into_the_stream },
 	{ "ack_of_acks_advances_the_window_without_touching_the_stream",
 	  ack_of_acks_advances_the_window_without_touching_the_stream },
+	{ "ack_of_acks_on_its_own_is_answered", ack_of_acks_on_its_own_is_answered },
 	{ "ack_of_acks_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_past_its_own_packet_keeps_the_chunk },
 	{ "ack_of_acks_past_its_own_packet_gets_no_ack_vector",
@@ -1972,6 +2225,13 @@ static const TestCase cases[] = {
 	{ "server_limits_buffered_chunks_until_verified",
 	  server_limits_buffered_chunks_until_verified },
 	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
+	{ "server_keepalive_after_a_silence_is_an_ack_of_acks",
+	  server_keepalive_after_a_silence_is_an_ack_of_acks },
+	{ "idle_tunnel_survives_lost_wake_ups", idle_tunnel_survives_lost_wake_ups },
+	{ "idle_tunnel_survives_a_lost_server_keepalive",
+	  idle_tunnel_survives_a_lost_server_keepalive },
+	{ "idle_tunnel_survives_a_lost_client_keepalive",
+	  idle_tunnel_survives_a_lost_client_keepalive },
 	{ "server_keeps_its_window_when_acks_were_lost_in_a_silence",
 	  server_keeps_its_window_when_acks_were_lost_in_a_silence },
 	{ "server_refuses_a_short_syn", server_refuses_a_short_syn },
