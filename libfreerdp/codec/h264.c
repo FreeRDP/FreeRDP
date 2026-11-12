@@ -1030,6 +1030,11 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
+	return h264_context_new_ex(Compressor, FALSE, FALSE);
+}
+
+H264_CONTEXT* h264_context_new_ex(BOOL Compressor, BOOL hevc, BOOL hevc444)
+{
 	H264_CONTEXT* h264 = (H264_CONTEXT*)calloc(1, sizeof(H264_CONTEXT));
 	if (!h264)
 		return nullptr;
@@ -1039,6 +1044,8 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	if (!h264->log)
 		goto fail;
 
+	h264->hevc = hevc;
+	h264->hevc444 = hevc444;
 	h264->Compressor = Compressor;
 	if (Compressor)
 	{

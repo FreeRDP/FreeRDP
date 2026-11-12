@@ -29,7 +29,7 @@ struct S_FREERDP_HEVC_CONTEXT
 {
 	BOOL Compressor;
 	wLog* log;
-	H264_CONTEXT* decoder;
+	H264_CONTEXT* context;
 };
 
 WINPR_ATTR_NODISCARD
@@ -51,23 +51,18 @@ static H264_CONTEXT_OPTION hevc2h264option(FREERDP_HEVC_CONTEXT_OPTION option)
 			return 0;
 	}
 }
-BOOL freerdp_hevc_context_set_option(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
-                                     WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT_OPTION option,
-                                     WINPR_ATTR_UNUSED UINT32 value)
+BOOL freerdp_hevc_context_set_option(FREERDP_HEVC_CONTEXT* hevc, FREERDP_HEVC_CONTEXT_OPTION option,
+                                     UINT32 value)
 {
 	WINPR_ASSERT(hevc);
-	if (!hevc->Compressor)
-		return h264_context_set_option(hevc->decoder, hevc2h264option(option), value);
-	return FALSE;
+	return h264_context_set_option(hevc->context, hevc2h264option(option), value);
 }
 
-UINT32 freerdp_hevc_context_get_option(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
-                                       WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT_OPTION option)
+UINT32 freerdp_hevc_context_get_option(FREERDP_HEVC_CONTEXT* hevc,
+                                       FREERDP_HEVC_CONTEXT_OPTION option)
 {
 	WINPR_ASSERT(hevc);
-	if (!hevc->Compressor)
-		return h264_context_get_option(hevc->decoder, hevc2h264option(option));
-	return 0;
+	return h264_context_get_option(hevc->context, hevc2h264option(option));
 }
 
 INT32 freerdp_hevc_compress(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
@@ -91,29 +86,22 @@ INT32 freerdp_hevc_decompress(FREERDP_HEVC_CONTEXT* hevc, const BYTE* pSrcData, 
                               UINT32 numRegionRect)
 {
 	WINPR_ASSERT(hevc);
-	return h26X_decompress(hevc->decoder, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
+	return h26X_decompress(hevc->context, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
 	                       nDstWidth, nDstHeight, regionRects, numRegionRect);
 }
 
-BOOL freerdp_hevc_context_reset(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
-                                WINPR_ATTR_UNUSED UINT32 width, WINPR_ATTR_UNUSED UINT32 height)
+BOOL freerdp_hevc_context_reset(FREERDP_HEVC_CONTEXT* hevc, UINT32 width, UINT32 height)
 {
 	WINPR_ASSERT(hevc);
-	if (!hevc->Compressor)
-		return h264_context_reset(hevc->decoder, width, height);
-
-	WLog_Print(hevc->log, WLOG_WARN,
-	           "This build does not support HEVC codec. Recompile with '-DWITH_AVM=ON' or "
-	           "'-DWITH_DHEVCD=ON'");
-	return FALSE;
+	return h264_context_reset(hevc->context, width, height);
 }
 
-void freerdp_hevc_context_free(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc)
+void freerdp_hevc_context_free(FREERDP_HEVC_CONTEXT* hevc)
 {
 	if (!hevc)
 		return;
 
-	h264_context_free(hevc->decoder);
+	h264_context_free(hevc->context);
 	free(hevc);
 }
 
@@ -124,5 +112,12 @@ FREERDP_HEVC_CONTEXT* freerdp_hevc_context_new(BOOL Compressor)
 		return nullptr;
 	ctx->Compressor = Compressor;
 	ctx->log = WLog_Get(TAG);
+	ctx->context = h264_context_new_ex(Compressor, TRUE, TRUE);
+	if (!ctx->context)
+		goto fail;
 	return ctx;
+
+fail:
+	freerdp_hevc_context_free(ctx);
+	return nullptr;
 }

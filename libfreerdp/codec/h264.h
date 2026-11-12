@@ -125,6 +125,9 @@ extern "C"
 	                                    WINPR_ATTR_UNUSED UINT32 nDstHeight,
 	                                    const RECTANGLE_16* regionRects, UINT32 numRegionRects);
 
+	WINPR_ATTR_MALLOC(h264_context_free, 1)
+	H264_CONTEXT* h264_context_new_ex(BOOL Compressor, BOOL hevc, BOOL hevc444);
+
 #ifdef __cplusplus
 }
 #endif
