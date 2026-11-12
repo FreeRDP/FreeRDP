@@ -138,6 +138,12 @@ FREERDP_LOCAL BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length);
  *  limited number of out-of-order chunks are buffered. */
 FREERDP_LOCAL void rdpudp_set_peer_verified(rdpUdp* udp);
 
+/** Server: while set, data packets are dropped as if they were lost: not acknowledged, so the
+ *  peer sends them again. Acknowledgements and AckOfAcks are still processed and the peer still
+ *  counts as heard. For a receiver that cannot take more for now: what it accepts is acknowledged
+ *  and never comes again. */
+FREERDP_LOCAL void rdpudp_set_receive_hold(rdpUdp* udp, BOOL hold);
+
 /** Overrides the system clock for this connection to allow tests to advance time.
  *  @param clock clock function, or NULL to use the system clock */
 FREERDP_LOCAL void rdpudp_set_clock(rdpUdp* udp, rdpUdpClockFn clock, void* custom);

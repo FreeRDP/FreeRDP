@@ -83,9 +83,12 @@ struct rdp_multitransport
 	LONG serverSynPending;
 	LONG serverWritablePending;
 
-	/* Tunnel data bytes queued since the main loop last drained events. Accessed via
-	 * Interlocked functions. */
+	/* Tunnel data bytes in events the main loop has not taken yet. Accessed via Interlocked
+	 * functions. */
 	LONG serverQueuedBytes;
+	/* Set while the channel code cannot take more tunnel data, see
+	 * multitransport_hold_tunnel_data(). Accessed via Interlocked functions. */
+	LONG serverDataHold;
 #endif
 
 	/* Tunnel state and synchronization; reliableResponseSent is client-only. */
@@ -167,6 +170,9 @@ FREERDP_LOCAL void multitransport_server_tunnel_closed(rdpMultitransport* multi)
 /** Main loop thread: processes flags set by the tunnel thread before handling queued events. */
 FREERDP_LOCAL void multitransport_tunnel_check(rdpMultitransport* multi);
 
+/** The main loop took \b ev off the queue, or dropped it: its bytes no longer count as queued. */
+FREERDP_LOCAL void multitransport_server_event_taken(rdpMultitransport* multi, const mt_event* ev);
+
 #else
 
 #define MT_SHARED static
@@ -219,6 +225,11 @@ static inline void multitransport_server_tunnel_closed(WINPR_ATTR_UNUSED rdpMult
 }
 
 static inline void multitransport_tunnel_check(WINPR_ATTR_UNUSED rdpMultitransport* multi)
+{
+}
+
+static inline void multitransport_server_event_taken(WINPR_ATTR_UNUSED rdpMultitransport* multi,
+                                                     WINPR_ATTR_UNUSED const mt_event* ev)
 {
 }
 

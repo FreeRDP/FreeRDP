@@ -315,6 +315,7 @@ struct rdp_udp
 	wLog* log;
 	SOCKET sockfd;
 	BOOL ownsSocket;     /* FALSE for server connections, which do not own the socket */
+	BOOL receiveHold;    /* see rdpudp_set_receive_hold() */
 	rdpUdpClockFn clock; /* If nullptr, the system clock is used; see rdpudp_set_clock(). */
 	void* clockCustom;
 	UINT16 chunkReach; /* Maximum channel sequence distance ahead of the expected sequence that is
@@ -2375,6 +2376,10 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	if (!haveData)
 		return TRUE;
 
+	/* The receiver cannot take more: the packet counts as lost and the peer resends it. */
+	if (udp->receiveHold)
+		return TRUE;
+
 	/* Server: The base is derived only from AckOfAcks. Before version 3.34, FreeRDP clients
 	 * sent AckOfAcks only on the first data packet and resends (now they repeat it until
 	 * acknowledged, see v3_send_data). Using a later packet as the base could cause a lost
@@ -3325,6 +3330,12 @@ void rdpudp_set_peer_verified(rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
 	udp->chunkReach = RDPUDP_RECEIVE_REACH;
+}
+
+void rdpudp_set_receive_hold(rdpUdp* udp, BOOL hold)
+{
+	WINPR_ASSERT(udp);
+	udp->receiveHold = hold;
 }
 
 void rdpudp_set_clock(rdpUdp* udp, rdpUdpClockFn clock, void* custom)
