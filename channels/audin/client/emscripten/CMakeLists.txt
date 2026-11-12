@@ -36,3 +36,4 @@ set_source_files_properties(audin_emscripten.c PROPERTIES OBJECT_DEPENDS ${CMAKE
 if(NOT BUILD_SHARED_LIBS)
   install(FILES ${_js} DESTINATION ${FREERDP_ADDIN_PATH})
 endif()
+set_property(GLOBAL APPEND PROPERTY FREERDP_EMSCRIPTEN_ASSETS ${CMAKE_CURRENT_SOURCE_DIR}/audin_emscripten_worklet.js)

@@ -166,6 +166,14 @@ if(EMSCRIPTEN)
     target_link_options(${MODULE_NAME} PRIVATE "--js-library=${CMAKE_CURRENT_SOURCE_DIR}/${_js}")
     set_property(TARGET ${MODULE_NAME} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_js})
   endforeach()
+  get_property(_assets GLOBAL PROPERTY FREERDP_EMSCRIPTEN_ASSETS)
+  foreach(_asset ${_assets})
+    add_custom_command(
+      TARGET ${MODULE_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_asset}
+                                               $<TARGET_FILE_DIR:${MODULE_NAME}>
+    )
+  endforeach()
+  install(FILES ${_assets} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")
