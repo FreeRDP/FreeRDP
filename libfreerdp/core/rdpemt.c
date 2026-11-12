@@ -1398,6 +1398,15 @@ void rdpemt_set_receive_hold(rdpEmt* emt, rdpEmtHoldFn hold)
 	LeaveCriticalSection(&emt->lock);
 }
 
+BOOL rdpemt_has_failed(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	EnterCriticalSection(&emt->lock);
+	const BOOL failed = emt->failed;
+	LeaveCriticalSection(&emt->lock);
+	return failed;
+}
+
 BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT16 maxVersion, UINT32 secLevel,
                              const char* ciphers)
 {

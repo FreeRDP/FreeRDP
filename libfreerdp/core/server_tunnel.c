@@ -179,6 +179,17 @@ BOOL wts_tunnel_read_soft_sync_response(WTSVirtualChannelManager* vcm, wStream* 
 	WINPR_ASSERT(vcm);
 	WINPR_ASSERT(s);
 
+	/* No request outstanding, as always without a tunnel: logged and ignored whatever it
+	 * holds, as before there was Soft-Sync. Only this thread takes the state out of SENT. */
+	HashTable_Lock(vcm->dynamicVirtualChannels);
+	const BOOL expected = (vcm->tunnel->softSyncState == SOFT_SYNC_STATE_SENT);
+	HashTable_Unlock(vcm->dynamicVirtualChannels);
+	if (!expected)
+	{
+		WLog_WARN(TAG, "received an unexpected Soft-Sync response");
+		return TRUE;
+	}
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return FALSE;
 	Stream_Seek_UINT8(s); /* Skip padding byte */
@@ -241,6 +252,11 @@ static BOOL wts_soft_sync(WTSVirtualChannelManager* vcm)
 
 	if (!InterlockedCompareExchange(&vcm->tunnel->tunnelReady, 0, 0) || !vcm->drdynvc_channel ||
 	    (vcm->drdynvc_state != DRDYNVC_STATE_READY))
+		return TRUE;
+	/* tunnelReady is cleared when the main loop handles the tunnel's failure. A request sent
+	 * between the failure and that would count as channels moved, and end a connection that
+	 * could have stayed on TCP. */
+	if (multitransport_tunnel_has_failed(wts_tunnel_multitransport(vcm)))
 		return TRUE;
 
 	BOOL rc = FALSE;

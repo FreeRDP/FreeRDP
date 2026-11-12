@@ -117,6 +117,10 @@ FREERDP_LOCAL BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT1
  *  it again later (rdpudp_set_receive_hold()), so what the owner has queued stops growing. */
 FREERDP_LOCAL void rdpemt_set_receive_hold(rdpEmt* emt, rdpEmtHoldFn hold);
 
+/** \b TRUE once the tunnel has failed; the RDPEMT_EVENT_FAILED for it may still be on its way. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpemt_has_failed(rdpEmt* emt);
+
 /** Server: flow from which the tunnel receives datagrams. Owned by the tunnel. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt);

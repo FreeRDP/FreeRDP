@@ -117,6 +117,16 @@ void multitransport_hold_tunnel_data(rdpMultitransport* multi, BOOL hold)
 		WLog_DBG(TAG, "tunnel data from the client is %s", hold ? "held back" : "accepted again");
 }
 
+BOOL multitransport_tunnel_has_failed(rdpMultitransport* multi)
+{
+	if (!multi)
+		return FALSE;
+	EnterCriticalSection(&multi->lock);
+	const BOOL failed = multi->reliable && rdpemt_has_failed(multi->reliable);
+	LeaveCriticalSection(&multi->lock);
+	return failed;
+}
+
 /* Runs on the tunnel thread. SYN_RECEIVED and WRITABLE events only set flags that the main
  * loop reads before processing queued events. */
 static void multitransport_server_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT event,
