@@ -255,6 +255,92 @@ fail:
 	return rc;
 }
 
+/* The tuning options: kept before the first reset, checked, applied by it, and a frame comes
+ * out in constant quality; out of range values are refused. */
+static BOOL testTuning(uint32_t width, uint32_t height)
+{
+	BOOL rc = FALSE;
+	void* src = nullptr;
+	void* out = nullptr;
+	RDPGFX_H264_METABLOCK meta = WINPR_C_ARRAY_INIT;
+	FREERDP_AV2_CONTEXT* enc = freerdp_av2_context_new(TRUE);
+	FREERDP_AV2_CONTEXT* dec = freerdp_av2_context_new(FALSE);
+	if (!enc || !dec)
+		goto fail;
+
+	const struct
+	{
+		FREERDP_AV2_CONTEXT_OPTION option;
+		UINT32 value;
+		UINT32 bad;
+	} options[] = {
+		{ FREERDP_AV2_CONTEXT_OPTION_QP, 160, 256 },
+		{ FREERDP_AV2_CONTEXT_OPTION_THREADS, 2, 65 },
+		{ FREERDP_AV2_CONTEXT_OPTION_SPEED, 10, 11 },
+		{ FREERDP_AV2_CONTEXT_OPTION_TILE_COLUMNS, 1, 7 },
+		{ FREERDP_AV2_CONTEXT_OPTION_DPB_SIZE, 4, 17 },
+	};
+	if (!freerdp_av2_context_set_option(enc, FREERDP_AV2_CONTEXT_OPTION_RATECONTROL, FREERDP_AV2_Q))
+		goto fail;
+	for (size_t x = 0; x < ARRAYSIZE(options); x++)
+	{
+		if (freerdp_av2_context_set_option(enc, options[x].option, options[x].bad) ||
+		    !freerdp_av2_context_set_option(enc, options[x].option, options[x].value) ||
+		    (freerdp_av2_context_get_option(enc, options[x].option) != options[x].value))
+			goto fail;
+	}
+
+	if (!freerdp_av2_context_reset(enc, width, height) ||
+	    !freerdp_av2_context_reset(dec, width, height))
+		goto fail;
+	if (freerdp_av2_context_get_option(enc, FREERDP_AV2_CONTEXT_OPTION_RATECONTROL) !=
+	    FREERDP_AV2_Q)
+		goto fail;
+
+	uint32_t stride = 0;
+	uint32_t ostride = 0;
+	src = allocRGB(PIXEL_FORMAT_BGRA32, width, height, &stride);
+	out = allocRGB(PIXEL_FORMAT_BGRA32, width, height, &ostride);
+	if (!src || !out || (stride != ostride))
+		goto fail;
+
+	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
+	for (size_t frame = 0; frame < 3; frame++)
+	{
+		/* the next frames after a change once the encoder runs: it starts again, the last one
+		 * in constrained quality, the quality up to a bit rate */
+		if ((frame == 1) &&
+		    !freerdp_av2_context_set_option(enc, FREERDP_AV2_CONTEXT_OPTION_QP, 120))
+			goto fail;
+		if ((frame == 2) &&
+		    (!freerdp_av2_context_set_option(enc, FREERDP_AV2_CONTEXT_OPTION_BITRATE, 500) ||
+		     !freerdp_av2_context_set_option(enc, FREERDP_AV2_CONTEXT_OPTION_RATECONTROL,
+		                                     FREERDP_AV2_CQ) ||
+		     (freerdp_av2_context_get_option(enc, FREERDP_AV2_CONTEXT_OPTION_RATECONTROL) !=
+		      FREERDP_AV2_CQ)))
+			goto fail;
+		uint8_t* dst = nullptr;
+		uint32_t dstsize = 0;
+		if ((freerdp_av2_compress(enc, src, PIXEL_FORMAT_BGRA32, stride, width, height, &rect, &dst,
+		                          &dstsize, &meta) < 0) ||
+		    (dstsize == 0) || !dst)
+			goto fail;
+		free_h264_metablock(&meta);
+		if (freerdp_av2_decompress(dec, dst, dstsize, out, PIXEL_FORMAT_BGRA32, stride, width,
+		                           height, &rect, 1) < 0)
+			goto fail;
+	}
+	rc = TRUE;
+
+fail:
+	freerdp_av2_context_free(enc);
+	freerdp_av2_context_free(dec);
+	free_h264_metablock(&meta);
+	free(src);
+	free(out);
+	return rc;
+}
+
 int TestFreeRDPCodecAV2(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -279,6 +365,8 @@ int TestFreeRDPCodecAV2(int argc, char* argv[])
 	if (!testColours(1, 64, 64))
 		return -1;
 	if (!testSequence(64, 64, 4))
+		return -1;
+	if (!testTuning(128, 64))
 		return -1;
 
 	return 0;

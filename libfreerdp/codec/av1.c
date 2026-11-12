@@ -66,6 +66,8 @@ struct S_FREERDP_AV1_CONTEXT
 	aom_codec_iface_t* iface;
 	/* the next frame converts the whole surface to YUV (after a reset or a failure) */
 	bool fullFrameNext;
+	UINT32 cqLevel; /* FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL, 0: libaom's */
+	UINT32 speed;   /* FREERDP_AV1_CONTEXT_OPTION_SPEED */
 	/* encoder statistics, see av1_encoder_stats() */
 	struct
 	{
@@ -128,14 +130,19 @@ static BOOL av1_aom_apply_controls(FREERDP_AV1_CONTEXT* av1)
 		int value;
 		const char* name;
 	} controls[] = {
-		{ AOME_SET_CPUUSED, AV1_AOM_RT_SPEED, "AOME_SET_CPUUSED" },
+		{ AOME_SET_CPUUSED, (int)av1->speed, "AOME_SET_CPUUSED" },
 		/* screen content tools (palette, intra block copy): sharp text at a lower bit rate */
 		{ AV1E_SET_TUNE_CONTENT, AOM_CONTENT_SCREEN, "AV1E_SET_TUNE_CONTENT" },
 		{ AV1E_SET_ROW_MT, 1, "AV1E_SET_ROW_MT" },
+		/* the quality the two quality modes keep; the other modes ignore it */
+		{ AOME_SET_CQ_LEVEL, (int)av1->cqLevel, "AOME_SET_CQ_LEVEL" },
 	};
 
+	const bool quality = (av1->ecfg.rc_end_usage == AOM_Q) || (av1->ecfg.rc_end_usage == AOM_CQ);
 	for (size_t x = 0; x < ARRAYSIZE(controls); x++)
 	{
+		if ((controls[x].id == AOME_SET_CQ_LEVEL) && (!quality || (av1->cqLevel == 0)))
+			continue;
 		const aom_codec_err_t rc = aom_codec_control(&av1->ctx, controls[x].id, controls[x].value);
 		if (rc != AOM_CODEC_OK)
 		{
@@ -251,11 +258,29 @@ BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEX
 				return FALSE;
 			av1->ecfg.g_usage = value;
 			break;
+		case FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL:
+			if (!av1->encoder || (value > 63))
+				return FALSE;
+			av1->cqLevel = value;
+			break;
+		case FREERDP_AV1_CONTEXT_OPTION_THREADS:
+			if (!av1->encoder || (value > 64))
+				return FALSE;
+			av1->ecfg.g_threads = (value > 0) ? value : av1_aom_threads();
+			break;
+		case FREERDP_AV1_CONTEXT_OPTION_SPEED:
+			if (!av1->encoder || (value > 12))
+				return FALSE;
+			av1->speed = value;
+			break;
 		default:
 			WLog_Print(av1->log, WLOG_ERROR, "Unknown FREERDP_AV1_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
 			return TRUE;
 	}
+	/* before the first reset only kept: the encoder starts once, with all of them */
+	if (!av1->initialized)
+		return TRUE;
 	return freerdp_av1_context_reset(av1, av1->ecfg.g_w, av1->ecfg.g_h);
 #else
 	WLog_Print(av1->log, WLOG_WARN, "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
@@ -286,6 +311,18 @@ UINT32 freerdp_av1_context_get_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONT
 			if (!av1->encoder)
 				return 0;
 			return av1->ecfg.g_usage;
+		case FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL:
+			if (!av1->encoder)
+				return 0;
+			return av1->cqLevel;
+		case FREERDP_AV1_CONTEXT_OPTION_THREADS:
+			if (!av1->encoder)
+				return 0;
+			return av1->ecfg.g_threads;
+		case FREERDP_AV1_CONTEXT_OPTION_SPEED:
+			if (!av1->encoder)
+				return 0;
+			return av1->speed;
 		default:
 			WLog_Print(av1->log, WLOG_ERROR, "Unknown FREERDP_AV1_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -1026,6 +1063,7 @@ FREERDP_AV1_CONTEXT* freerdp_av1_context_new(BOOL Compressor)
 			goto fail;
 		}
 		ctx->ecfg.g_threads = av1_aom_threads();
+		ctx->speed = AV1_AOM_RT_SPEED;
 #else
 		WLog_Print(ctx->log, WLOG_ERROR,
 		           "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
