@@ -226,6 +226,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 #if defined(WITH_GFX_AV2)
 	  ",AV2[:on|off|i444|i420]"
 #endif
+#if defined(WITH_GFX_AZURE)
+	  ",HEVC[:on|off|i420|i444]"
+#endif
 #if defined(WITH_GFX_AV1)
 	  ",AV1[:on|off|i444|i420]]"
 #endif

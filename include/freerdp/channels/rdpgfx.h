@@ -215,7 +215,7 @@ typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
 	RDPGFX_CODECID_HEVC444 =
 		0x0012u, /**< undocumented, only valid with
 		          * RDPGFX_CAPS_FLAG_HEVC_ENABLE | RDPGFX_CAPS_FLAG_HEVC_I444 confirmed */
-	RDPGFX_CODECID_MAX = 0x0012u
+	RDPGFX_CODECID_MAX = 0x0013u
 #else
 	RDPGFX_CODECID_MAX = 0x0010u
 #endif

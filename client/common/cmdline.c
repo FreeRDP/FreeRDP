@@ -2701,6 +2701,39 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 					}
 				}
 #endif
+#if defined(WITH_GFX_AZURE)
+				else if (option_starts_with("HEVC", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("hevc:i420", val) == 0)
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, TRUE))
+								rc = COMMAND_LINE_ERROR;
+							else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+							                                    FALSE))
+								rc = COMMAND_LINE_ERROR;
+						}
+						else if (_stricmp("hevc:i444", val) == 0)
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, TRUE))
+								rc = COMMAND_LINE_ERROR;
+							else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+							                                    TRUE))
+								rc = COMMAND_LINE_ERROR;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
+				}
+#endif
 				else
 					rc = COMMAND_LINE_ERROR;
 			}

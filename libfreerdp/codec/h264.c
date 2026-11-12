@@ -1030,6 +1030,11 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
+	return h264_context_new_ex(Compressor, FALSE, FALSE);
+}
+
+H264_CONTEXT* h264_context_new_ex(BOOL Compressor, BOOL hevc, BOOL hevc444)
+{
 	H264_CONTEXT* h264 = (H264_CONTEXT*)calloc(1, sizeof(H264_CONTEXT));
 	if (!h264)
 		return nullptr;
@@ -1039,6 +1044,8 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	if (!h264->log)
 		goto fail;
 
+	h264->hevc = hevc;
+	h264->hevc444 = hevc444;
 	h264->Compressor = Compressor;
 	if (Compressor)
 	{
@@ -1143,11 +1150,6 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			const BOOL hevc = value != 0;
 			if (h264->hevc == hevc)
 				return TRUE;
-			if (hevc && h264->Compressor)
-			{
-				WLog_Print(h264->log, WLOG_WARN, "HEVC is only supported for decoding");
-				return FALSE;
-			}
 			/* the codec decides which subsystem can be used, select it again */
 			if (h264->subsystem)
 				IFCALL(h264->subsystem->Uninit, h264);
