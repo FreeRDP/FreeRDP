@@ -169,6 +169,29 @@ static BOOL soft_sync_leaves_a_lost_tunnel_alone(void)
 	return TRUE;
 }
 
+/* Without a request outstanding a Soft-Sync Response is logged and ignored whatever it holds,
+ * as a server without Soft-Sync does. One that answers a request has to be well-formed. */
+static BOOL a_soft_sync_response_nobody_asked_for_is_ignored(void)
+{
+	tunnelFixture f;
+	TEST(fixture_init(&f));
+
+	const BYTE truncated[2] = { 0, 1 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, truncated, sizeof(truncated));
+	TEST(s);
+	TEST(wts_tunnel_read_soft_sync_response(&f.vcm, s));
+	TEST(f.tunnel.softSyncState == SOFT_SYNC_STATE_NONE);
+
+	f.tunnel.softSyncState = SOFT_SYNC_STATE_SENT;
+	s = Stream_StaticConstInit(&sbuffer, truncated, sizeof(truncated));
+	TEST(s);
+	TEST(!wts_tunnel_read_soft_sync_response(&f.vcm, s));
+
+	fixture_free(&f);
+	return TRUE;
+}
+
 /* A client may write on the tunnel as soon as it has sent its Soft-Sync Response on TCP, and
  * the tunnel can be the faster of the two. What arrives before the Response waits; past
  * SOFT_SYNC_HOLD_BACKLOG the tunnel is asked to take no more, and what was already on its way
@@ -207,6 +230,8 @@ int TestServerTunnel(int argc, char* argv[])
 	if (!a_create_response_wakes_soft_sync())
 		return -1;
 	if (!soft_sync_leaves_a_lost_tunnel_alone())
+		return -1;
+	if (!a_soft_sync_response_nobody_asked_for_is_ignored())
 		return -1;
 	if (!tunnel_data_ahead_of_the_response_waits())
 		return -1;

@@ -1648,7 +1648,11 @@ end:
 fail:
 	Stream_Free(s, TRUE);
 	if (channel)
+	{
 		HashTable_Remove(vcm->dynamicVirtualChannels, &channel->channelId);
+		/* Soft-Sync may have been waiting for this channel's Create Response */
+		wts_tunnel_channel_opened(vcm);
+	}
 	HashTable_Unlock(g_ServerHandles);
 
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);

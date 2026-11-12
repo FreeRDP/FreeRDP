@@ -86,6 +86,12 @@ FREERDP_LOCAL BOOL multitransport_flush_dvc(rdpMultitransport* multi);
  *  @param multi may be \b nullptr */
 FREERDP_LOCAL void multitransport_hold_tunnel_data(rdpMultitransport* multi, BOOL hold);
 
+/** Server: \b TRUE if the tunnel thread has failed the tunnel, also before the main loop has
+ *  handled that and told the channel code. Any thread.
+ *  @param multi may be \b nullptr */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_tunnel_has_failed(rdpMultitransport* multi);
+
 /** Server: Sends a Bandwidth Measure Start or Stop over the tunnel if the transport
  *  selects it. These must remain ordered with channel data, as the client measures
  *  the data in between. If the tunnel is not ready, the request fails rather than
