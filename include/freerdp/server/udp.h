@@ -158,13 +158,14 @@ extern "C"
 	FREERDP_API BOOL freerdp_peer_set_udp_send_limit(freerdp_peer* peer, size_t limit);
 
 	/** @brief Callback for receiving datagrams; see freerdp_udp_flow_set_receive().
-	 *  Called with the listener's and the flow's locks held. Must not block or call
-	 *  listener functions.
+	 *  Called with the listener's and the flow's locks held. Must not block, call
+	 *  listener functions, or free the flow or set its callbacks.
 	 *  @return \b FALSE to drop the datagram. */
 	typedef BOOL (*FreeRDP_UdpFlowReceiveFn)(void* custom, const BYTE* data, size_t length);
 
 	/** @brief Callback for sending datagrams to a client; see freerdp_udp_flow_set_send().
-	 *  Invoked while the flow's lock is held; must not block on threads using the flow.
+	 *  Invoked while the flow's lock is held; must not block on threads using the flow, call
+	 *  listener functions, or free the flow or set its callbacks.
 	 *  @return \b FALSE on fatal errors. Network loss is not an error, as RDP-UDP
 	 *  handles retransmission. */
 	typedef BOOL (*FreeRDP_UdpFlowSendFn)(void* custom, const BYTE* data, size_t length);
@@ -281,7 +282,8 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_open_from_socket(freerdp_udp_listener* listener, int fd);
 
-	/** @return number of handles to wait on, or 0 if they exceed count
+	/** @return number of handles to wait on, or 0 if they exceed count. A listener always
+	 *  has at least one handle.
 	 *  @since version 3.34.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API DWORD freerdp_udp_listener_get_event_handles(freerdp_udp_listener* listener,
@@ -293,7 +295,8 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_check(freerdp_udp_listener* listener);
 
-	/** Starts a listener-owned thread to run freerdp_udp_listener_check().
+	/** Starts a listener-owned thread to run freerdp_udp_listener_check(). Does nothing if
+	 *  the thread runs already. Not thread-safe: call it from one thread.
 	 *  @since version 3.34.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_start(freerdp_udp_listener* listener);
@@ -329,14 +332,16 @@ extern "C"
 	 *  @param fd from freerdp_udp_socket_pair() (other end to freerdp_udp_flow_set_socket());
 	 *  must be SOCK_SEQPACKET or SOCK_DGRAM.
 	 *  @return \b FALSE if cookieHash is already expected or relay limit reached; caller
-	 *  retains fd.
+	 *  retains fd, which may have been set non-blocking.
 	 *  @since version 3.34.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_udp_listener_add_relay(freerdp_udp_listener* listener,
 	                                                const BYTE cookieHash[32], int fd);
 
 	/** Terminates the relay for cookieHash (e.g., on connection end). The relay thread
-	 *  closes the socket shortly after. Thread-safe.
+	 *  closes the socket shortly after, and only then are the cookie hash and the relay's
+	 *  place among the 256 free again: freerdp_udp_listener_add_relay() can fail until then.
+	 *  Thread-safe.
 	 *  @return \b FALSE if no relay exists for cookieHash
 	 *  @since version 3.34.0 */
 	FREERDP_API BOOL freerdp_udp_listener_remove_relay(freerdp_udp_listener* listener,
