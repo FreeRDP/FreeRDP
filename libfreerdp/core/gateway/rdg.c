@@ -2522,19 +2522,43 @@ void rdg_free(rdpRdg* rdg)
 
 BOOL rdg_detach_for_redirect(rdpRdg* rdg)
 {
-	if (!rdg || !rdg->attached || !rdg->frontBio || rdg->transferEncoding.isWebsocketTransport ||
+	if (!rdg)
+		return FALSE;
+
+	if (!rdg->attached || !rdg->frontBio || rdg->transferEncoding.isWebsocketTransport ||
 	    (rdg->state != RDG_CLIENT_STATE_OPENED) || rdg->packetRemainingCount ||
 	    rdg->nextHeaderLengthRead || rdg->closeResponsePending)
+	{
+		WLog_Print(rdg->log, WLOG_INFO,
+		           "[RDG-REUSE] Cannot detach tunnel: attached=%d frontBioPresent=%d websocket=%d "
+		           "state=%d expectedState=%d remainingPayloadBytes=%u bufferedHeaderBytes=%zu "
+		           "closeResponsePending=%d",
+		           (int)rdg->attached, rdg->frontBio != nullptr,
+		           (int)rdg->transferEncoding.isWebsocketTransport, (int)rdg->state,
+		           (int)RDG_CLIENT_STATE_OPENED, (unsigned int)rdg->packetRemainingCount,
+		           rdg->nextHeaderLengthRead, (int)rdg->closeResponsePending);
 		return FALSE;
+	}
 
 	const rdpSettings* settings = rdg->context->settings;
 	if (!settings->GatewayEnabled || !settings->GatewayHttpTransport ||
 	    settings->GatewayArmTransport || settings->GatewayUrl || !settings->GatewayHostname)
+	{
+		WLog_Print(rdg->log, WLOG_INFO,
+		           "[RDG-REUSE] Ineligible gateway settings: enabled=%d http=%d arm=%d "
+		           "gatewayUrlPresent=%d hostnamePresent=%d",
+		           (int)settings->GatewayEnabled, (int)settings->GatewayHttpTransport,
+		           (int)settings->GatewayArmTransport, settings->GatewayUrl != nullptr,
+		           settings->GatewayHostname != nullptr);
 		return FALSE;
+	}
 
 	char* hostname = _strdup(settings->GatewayHostname);
 	if (!hostname)
+	{
+		WLog_Print(rdg->log, WLOG_INFO, "[RDG-REUSE] Cannot copy the gateway hostname");
 		return FALSE;
+	}
 
 	free(rdg->redirectGatewayHost);
 	rdg->redirectGatewayHost = hostname;
