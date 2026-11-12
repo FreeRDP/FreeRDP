@@ -2531,6 +2531,7 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 		{
 			BOOL GfxH264 = FALSE;
 			BOOL GfxAVC444 = FALSE;
+			BOOL GfxAVCMixed = FALSE;
 			BOOL RemoteFxCodec = FALSE;
 			BOOL GfxProgressive = FALSE;
 			BOOL codecSelected = FALSE;
@@ -2555,6 +2556,15 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
 						GfxH264 = bval != PARSE_OFF;
+					codecSelected = TRUE;
+				}
+				else if (option_starts_with("AVC-mixed", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						GfxAVCMixed = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else
@@ -2698,6 +2708,8 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 			if ((rc == CHANNEL_RC_OK) && codecSelected)
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, GfxAVC444))
+					rc = COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAVCMM, GfxAVCMixed))
 					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, GfxAVC444))
 					rc = COMMAND_LINE_ERROR;
