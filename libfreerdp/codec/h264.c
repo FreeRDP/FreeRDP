@@ -31,6 +31,7 @@
 #include <freerdp/codec/yuv.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/codecs.h>
 
 #include "h264.h"
 
@@ -1211,5 +1212,62 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
 			return 0;
+	}
+}
+
+BOOL freerdp_codec_supported(WINPR_ATTR_UNUSED rdpContext* context, FreeRDP_CodecFlags codec,
+                             WINPR_ATTR_UNUSED BOOL encoder)
+{
+	switch (codec)
+	{
+		case FREERDP_CODEC_INTERLEAVED:
+		case FREERDP_CODEC_PLANAR:
+		case FREERDP_CODEC_NSCODEC:
+		case FREERDP_CODEC_REMOTEFX:
+		case FREERDP_CODEC_CLEARCODEC:
+		case FREERDP_CODEC_ALPHACODEC:
+		case FREERDP_CODEC_PROGRESSIVE:
+			return TRUE;
+#if defined(WITH_GFX_H264)
+		case FREERDP_CODEC_AVC420:
+		case FREERDP_CODEC_AVC444:
+			return TRUE;
+#endif
+#if defined(WITH_GFX_AV1)
+		case FREERDP_CODEC_AV1_I420:
+		case FREERDP_CODEC_AV1_I444:
+#if defined(WITH_LIBAOM)
+			return TRUE;
+#elif defined(WITH_DAV1D)
+			if (!encoder)
+				return TRUE;
+			return FALSE;
+#endif
+			return FALSE;
+#endif
+#if defined(WITH_GFX_AV2)
+		case FREERDP_CODEC_AV2_I420:
+		case FREERDP_CODEC_AV2_I444:
+#if defined(WITH_LIBAVM)
+#if defined(WITH_LIBAVM_ENCODER)
+			return TRUE;
+#else
+			if (!encoder)
+				return TRUE;
+#endif
+#endif
+#if defined(WITH_DAV2D)
+			if (!encoder)
+				return TRUE;
+#endif
+			return FALSE;
+#endif
+#if defined(WITH_GFX_AZURE)
+		case FREERDP_CODEC_HEVC_I420:
+		case FREERDP_CODEC_HEVC_I444:
+			return TRUE;
+#endif
+		default:
+			return FALSE;
 	}
 }
