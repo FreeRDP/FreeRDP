@@ -3182,6 +3182,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	wMessageQueue* MsgQueue = nullptr;
 	/* This should only be visited in client thread */
 	SHADOW_GFX_STATUS gfxstatus = WINPR_C_ARRAY_INIT;
+	BOOL dispTried = FALSE;
 	rdpUpdate* update = nullptr;
 
 	WINPR_ASSERT(client);
@@ -3414,6 +3415,14 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 						}
 					}
 #endif
+
+					/* Without it the client only keeps the size it connected with */
+					if (client->disp && !dispTried)
+					{
+						dispTried = TRUE;
+						if (client->disp->Open(client->disp) != CHANNEL_RC_OK)
+							WLog_WARN(TAG, "Failed to open Display Control");
+					}
 
 					/* Init RDPGFX dynamic channel */
 					if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline) &&

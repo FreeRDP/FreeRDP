@@ -92,6 +92,8 @@
 /* "0" turns off the check for changes Mutter left out of its damage */
 #define MUTTER_DAMAGE_CHECK_ENV "FREERDP_SHADOW_MUTTER_DAMAGE_CHECK"
 #define MUTTER_CHECK_TILE 64
+#define SCREEN_SAVER_NAME "org.gnome.ScreenSaver"
+#define SCREEN_SAVER_PATH "/org/gnome/ScreenSaver"
 
 /* FREERDP_SHADOW_MUTTER_VIRTUAL=<w>x<h>: TRUE and the size when set and valid */
 WINPR_ATTR_NODISCARD
@@ -175,6 +177,12 @@ static BOOL mutter_virtual_size(UINT32* width, UINT32* height)
 #define MUTTER_AUDIO_MESSAGE_FRAMES (MUTTER_AUDIO_RATE / 50u)
 /* how often the sound statistics are logged (debug level) */
 #define MUTTER_AUDIO_LOG_MS 5000u
+/* a message to the subsystem thread: the virtual monitor takes a client's size */
+#define MUTTER_MSG_VIRTUAL_SIZE 0x10005
+#define MUTTER_MSG_UNLOCK 0x10006
+
+/* How long a client waits for the virtual monitor to take its size */
+#define MUTTER_VIRTUAL_SIZE_WAIT_MS 1000
 
 /* xkbcommon's core modifiers: Lock is Caps Lock, Mod2 is Num Lock in every
  * stock keymap */
@@ -1477,6 +1485,35 @@ static BOOL mutter_connect_stream(mutterShadowSubsystem* mutter)
 	return TRUE;
 }
 
+/* The format the stream asks for, size being what a virtual monitor takes */
+WINPR_ATTR_NODISCARD
+static const struct spa_pod* mutter_stream_format(struct spa_pod_builder* b,
+                                                  const struct spa_rectangle* size)
+{
+	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
+	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
+	const struct spa_fraction rate = SPA_FRACTION(0, 1);
+	const struct spa_fraction maxRate = SPA_FRACTION(60, 1);
+	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
+
+	/* no modifiers offered: Mutter sends frames in shared memory */
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
+	return spa_pod_builder_add_object(
+	    b, SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat, SPA_FORMAT_mediaType,
+	    SPA_POD_Id(SPA_MEDIA_TYPE_video), SPA_FORMAT_mediaSubtype,
+	    SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw), SPA_FORMAT_VIDEO_format,
+	    SPA_POD_CHOICE_ENUM_Id(3, SPA_VIDEO_FORMAT_BGRx, SPA_VIDEO_FORMAT_BGRx,
+	                           SPA_VIDEO_FORMAT_BGRA),
+	    SPA_FORMAT_VIDEO_size, SPA_POD_CHOICE_RANGE_Rectangle(size, &minSize, &maxSize),
+	    SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&rate), SPA_FORMAT_VIDEO_maxFramerate,
+	    SPA_POD_CHOICE_RANGE_Fraction(&maxRate, &minRate, &maxRate));
+	WINPR_PRAGMA_DIAG_POP
+}
+
 /* A new stream, connected to Mutter's node mutter->nodeId. Each node gets a
  * stream of its own: a stream connected again keeps its first target. */
 WINPR_ATTR_NODISCARD
@@ -1501,25 +1538,7 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 	const struct spa_rectangle size =
 	    mutter->virtualMonitor ? SPA_RECTANGLE(mutter->virtualWidth, mutter->virtualHeight)
 	                           : SPA_RECTANGLE(1920, 1080);
-	const struct spa_rectangle minSize = SPA_RECTANGLE(1, 1);
-	const struct spa_rectangle maxSize = SPA_RECTANGLE(8192, 8192);
-	const struct spa_fraction rate = SPA_FRACTION(0, 1);
-	const struct spa_fraction maxRate = SPA_FRACTION(60, 1);
-	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
-
-	/* no modifiers offered: Mutter sends frames in shared memory */
-	WINPR_PRAGMA_DIAG_PUSH
-	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
-	const struct spa_pod* params[] = { spa_pod_builder_add_object(
-		&b, SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat, SPA_FORMAT_mediaType,
-		SPA_POD_Id(SPA_MEDIA_TYPE_video), SPA_FORMAT_mediaSubtype,
-		SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw), SPA_FORMAT_VIDEO_format,
-		SPA_POD_CHOICE_ENUM_Id(3, SPA_VIDEO_FORMAT_BGRx, SPA_VIDEO_FORMAT_BGRx,
-		                       SPA_VIDEO_FORMAT_BGRA),
-		SPA_FORMAT_VIDEO_size, SPA_POD_CHOICE_RANGE_Rectangle(&size, &minSize, &maxSize),
-		SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&rate), SPA_FORMAT_VIDEO_maxFramerate,
-		SPA_POD_CHOICE_RANGE_Fraction(&maxRate, &minRate, &maxRate)) };
-	WINPR_PRAGMA_DIAG_POP
+	const struct spa_pod* params[] = { mutter_stream_format(&b, &size) };
 
 	if (pw_stream_connect(
 	        mutter->stream, PW_DIRECTION_INPUT, mutter->nodeId,
@@ -1530,6 +1549,26 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 		return FALSE;
 	}
 	return TRUE;
+}
+
+/* Subsystem thread: ask for another size, Mutter resizes the virtual monitor and
+ * mutter_stream_param_changed takes it from there */
+static void mutter_virtual_resize(mutterShadowSubsystem* mutter, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(mutter);
+
+	if (!mutter->stream)
+		return;
+
+	mutter->virtualWidth = width;
+	mutter->virtualHeight = height;
+
+	uint8_t podBuffer[1024] = WINPR_C_ARRAY_INIT;
+	struct spa_pod_builder b = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
+	const struct spa_rectangle size = SPA_RECTANGLE(width, height);
+	const struct spa_pod* params[] = { mutter_stream_format(&b, &size) };
+	if (pw_stream_update_params(mutter->stream, params, ARRAYSIZE(params)) < 0)
+		WLog_WARN(TAG, "cannot ask for %" PRIu32 "x%" PRIu32, width, height);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2772,6 +2811,38 @@ static void mutter_clipboard_enable(mutterShadowSubsystem* mutter)
 	sd_bus_error_free(&err);
 }
 
+/* subsystem thread. A client gets here with the user's password, and a session with a
+ * monitor of its own has no real screen anyone could be sitting at: a lock screen would
+ * only ask for the same password again. A real screen stays locked. */
+static void mutter_unlock_screen(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	sd_bus_error err = SD_BUS_ERROR_NULL;
+	sd_bus_message* reply = nullptr;
+	int locked = 0;
+	int rc = sd_bus_call_method(mutter->bus, SCREEN_SAVER_NAME, SCREEN_SAVER_PATH,
+	                            SCREEN_SAVER_NAME, "GetActive", &err, &reply, "");
+	if (rc >= 0)
+		rc = sd_bus_message_read(reply, "b", &locked);
+	sd_bus_message_unref(reply);
+
+	if ((rc >= 0) && locked)
+	{
+		rc = sd_bus_call_method(mutter->bus, SCREEN_SAVER_NAME, SCREEN_SAVER_PATH,
+		                        SCREEN_SAVER_NAME, "SetActive", &err, nullptr, "b", 0);
+		if (rc >= 0)
+			WLog_INFO(TAG, "the login unlocked the session");
+	}
+	if (rc < 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "the screen stays as it is: %s",
+		          err.message ? err.message : winpr_strerror(-rc, buffer, sizeof(buffer)));
+	}
+	sd_bus_error_free(&err);
+}
+
 static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessage* message)
 {
 	WINPR_ASSERT(mutter);
@@ -2802,6 +2873,15 @@ static void mutter_shadow_process_message(mutterShadowSubsystem* mutter, wMessag
 			mutter_clipboard_write_done(mutter, job->serial, job->ok);
 		}
 		break;
+
+		case MUTTER_MSG_VIRTUAL_SIZE:
+			mutter_virtual_resize(mutter, (UINT32)(size_t)message->wParam,
+			                      (UINT32)(size_t)message->lParam);
+			break;
+
+		case MUTTER_MSG_UNLOCK:
+			mutter_unlock_screen(mutter);
+			break;
 
 		default:
 			WLog_ERR(TAG, "Unknown message id: %" PRIu32 "", message->id);
@@ -2995,6 +3075,10 @@ out:
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                        UINT32 width, UINT32 height);
+
+WINPR_ATTR_NODISCARD
 static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
@@ -3029,6 +3113,7 @@ static int mutter_shadow_subsystem_init(rdpShadowSubsystem* subsystem)
 	}
 	if (mutter->virtualMonitor)
 	{
+		mutter->common.ClientResize = mutter_shadow_client_resize;
 		/* one monitor, this server's own */
 		subsystem->monitors[0] = (MONITOR_DEF){ 0, 0, (INT32)mutter->virtualWidth - 1,
 			                                    (INT32)mutter->virtualHeight - 1, 1 };
@@ -3202,9 +3287,89 @@ static int mutter_shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 	return 1;
 }
 
+/* A virtual monitor is nobody else's: it takes the size the client asked for, before
+ * the client is activated, so it does not get a window of the old size first. On a
+ * timeout the client is resized when Mutter answers, or stays with the size it has. */
+/* even sizes: the 4:2:0 encoders need them */
+static UINT32 mutter_virtual_side(UINT32 side, UINT32 least)
+{
+	return MIN(MAX(side, least), 8192) & ~1u;
+}
+
 WINPR_ATTR_NODISCARD
-static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem,
-                                         WINPR_ATTR_UNUSED rdpShadowClient* client)
+static BOOL mutter_virtual_request(mutterShadowSubsystem* mutter, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(mutter->common.MsgPipe);
+	return MessageQueue_Post(mutter->common.MsgPipe->In, nullptr, MUTTER_MSG_VIRTUAL_SIZE,
+	                         (void*)(size_t)width, (void*)(size_t)height);
+}
+
+static void mutter_virtual_follow_client(mutterShadowSubsystem* mutter, rdpShadowClient* client)
+{
+	WINPR_ASSERT(mutter);
+	WINPR_ASSERT(client);
+
+	const rdpSettings* settings = client->context.settings;
+	const UINT32 width =
+	    mutter_virtual_side(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth), 320);
+	const UINT32 height =
+	    mutter_virtual_side(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), 200);
+
+	if ((width == mutter->width) && (height == mutter->height))
+		return;
+
+	if (!mutter_virtual_request(mutter, width, height))
+		return;
+
+	const UINT64 end = GetTickCount64() + MUTTER_VIRTUAL_SIZE_WAIT_MS;
+	while ((GetTickCount64() < end) && ((mutter->width != width) || (mutter->height != height)))
+		Sleep(10);
+	WLog_INFO(TAG,
+	          "the virtual monitor for a %" PRIu32 "x%" PRIu32 " client is %" PRIu32 "x%" PRIu32,
+	          width, height, mutter->width, mutter->height);
+}
+
+/* The newest connection decides: an older one may be a laptop that was closed, and
+ * nothing tells the server for a while yet */
+WINPR_ATTR_NODISCARD
+static BOOL mutter_shadow_client_resize(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                        UINT32 width, UINT32 height)
+{
+	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
+	WINPR_ASSERT(mutter);
+
+	const void* newest = InterlockedCompareExchangePointer(&mutter->sizeClient, nullptr, nullptr);
+	if (newest && (newest != client))
+		return TRUE;
+
+	WLog_INFO(TAG, "the client asks for %" PRIu32 "x%" PRIu32, width, height);
+	return mutter_virtual_request(mutter, mutter_virtual_side(width, 320),
+	                              mutter_virtual_side(height, 200));
+}
+
+/* A desktop that went idle shows a black screen until someone touches it, and a client
+ * can only take that for a broken picture: a move to where the pointer already is counts
+ * as a touch. Runs after the login. */
+static void mutter_wake_screen(mutterShadowSubsystem* mutter)
+{
+	WINPR_ASSERT(mutter);
+
+	if ((mutter->width == 0) || (mutter->height == 0))
+		return;
+
+	/* the client that just connected may have made the desktop smaller */
+	const UINT32 x = MIN(mutter->common.pointerX, MIN(mutter->width, UINT16_MAX + 1u) - 1u);
+	const UINT32 y = MIN(mutter->common.pointerY, MIN(mutter->height, UINT16_MAX + 1u) - 1u);
+
+	EnterCriticalSection(&mutter->eiLock);
+	if (mutter->ei && mutter->pointer && mutter->pointerReady)
+		mutter_pointer_move(mutter, (UINT16)x, (UINT16)y);
+	LeaveCriticalSection(&mutter->eiLock);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
 	WINPR_ASSERT(mutter);
@@ -3213,15 +3378,30 @@ static BOOL mutter_shadow_client_connect(rdpShadowSubsystem* subsystem,
 	mutter->cursorResend = TRUE;
 	(void)InterlockedIncrement(&mutter->clients);
 	(void)SetEvent(mutter->clientsEvent);
+	void* older = nullptr;
+	do
+	{
+		older = mutter->sizeClient;
+	} while (InterlockedCompareExchangePointer(&mutter->sizeClient, client, older) != older);
+	if (mutter->virtualMonitor)
+		mutter_virtual_follow_client(mutter, client);
+	if (client->mayInteract)
+	{
+		mutter_wake_screen(mutter);
+		if (mutter->virtualMonitor && mutter->common.server->authentication &&
+		    !MessageQueue_Post(mutter->common.MsgPipe->In, nullptr, MUTTER_MSG_UNLOCK, nullptr,
+		                       nullptr))
+			WLog_WARN(TAG, "cannot ask for the session to unlock");
+	}
 	return TRUE;
 }
 
-static void mutter_shadow_client_disconnect(rdpShadowSubsystem* subsystem,
-                                            WINPR_ATTR_UNUSED rdpShadowClient* client)
+static void mutter_shadow_client_disconnect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
 {
 	mutterShadowSubsystem* mutter = (mutterShadowSubsystem*)subsystem;
 	WINPR_ASSERT(mutter);
 
+	(void)InterlockedCompareExchangePointer(&mutter->sizeClient, nullptr, client);
 	(void)InterlockedDecrement(&mutter->clients);
 	(void)SetEvent(mutter->clientsEvent);
 }
