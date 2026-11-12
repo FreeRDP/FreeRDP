@@ -1513,9 +1513,10 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 		SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&rate), SPA_FORMAT_VIDEO_maxFramerate,
 		SPA_POD_CHOICE_RANGE_Fraction(&maxRate, &minRate, &maxRate)) };
 
-	if (pw_stream_connect(mutter->stream, PW_DIRECTION_INPUT, mutter->nodeId,
-	                      PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS, params,
-	                      ARRAYSIZE(params)) < 0)
+	if (pw_stream_connect(
+	        mutter->stream, PW_DIRECTION_INPUT, mutter->nodeId,
+	        (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS), params,
+	        ARRAYSIZE(params)) < 0)
 	{
 		WLog_ERR(TAG, "pw_stream_connect failed");
 		return FALSE;
@@ -1689,8 +1690,9 @@ static BOOL mutter_audio_init(mutterShadowSubsystem* mutter)
 
 	/* PipeWire links it to the default sink's monitor and converts to our format */
 	if (pw_stream_connect(mutter->audio, PW_DIRECTION_INPUT, PW_ID_ANY,
-	                      PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS |
-	                          PW_STREAM_FLAG_INACTIVE,
+	                      (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
+	                                             PW_STREAM_FLAG_MAP_BUFFERS |
+	                                             PW_STREAM_FLAG_INACTIVE),
 	                      params, ARRAYSIZE(params)) < 0)
 		goto fail;
 
