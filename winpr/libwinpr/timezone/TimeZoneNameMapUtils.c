@@ -68,6 +68,7 @@ static void tz_entry_free(TimeZoneNameMapEntry* entry)
 	*entry = empty;
 }
 
+#if defined(WITH_TIMEZONE_COMPILED)
 static TimeZoneNameMapEntry tz_entry_clone(const TimeZoneNameMapEntry* entry)
 {
 	TimeZoneNameMapEntry clone = WINPR_C_ARRAY_INIT;
@@ -86,6 +87,7 @@ static TimeZoneNameMapEntry tz_entry_clone(const TimeZoneNameMapEntry* entry)
 		clone.StandardName = _strdup(entry->StandardName);
 	return clone;
 }
+#endif
 
 static void tz_context_free(void)
 {
