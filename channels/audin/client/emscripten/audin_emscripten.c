@@ -28,7 +28,8 @@
  * Browsers only allow the microphone in a secure context after the user agreed, and only run an
  * AudioContext after the user interacted with the page. Echo cancellation, noise suppression and
  * automatic gain are on, as for a call; a page can set Module.freerdpAudinConstraints to other
- * MediaTrackConstraints, e.g. to record music unprocessed.
+ * MediaTrackConstraints, e.g. to record music unprocessed. The worklet is
+ * audin_emscripten_worklet.js, served next to the executable or at Module.freerdpAudinWorkletUrl.
  */
 
 #include <freerdp/config.h>

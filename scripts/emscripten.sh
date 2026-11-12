@@ -9,7 +9,8 @@
 # Needs emsdk 6 (CI uses 6.0.12): with 4.x the unit tests abort in
 # emscripten_sleep(), which needs ASYNCIFY there.
 #
-# The client needs a page that serves sdl-freerdp.js with
+# The client needs a page that serves sdl-freerdp.js (and the files next to
+# it, such as audin_emscripten_worklet.js) with
 #   Cross-Origin-Opener-Policy: same-origin
 #   Cross-Origin-Embedder-Policy: require-corp
 # (SharedArrayBuffer for pthreads) and a WebSocket to TCP bridge such as
