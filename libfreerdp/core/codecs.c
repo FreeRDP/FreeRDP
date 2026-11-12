@@ -298,7 +298,8 @@ const char* freerdp_codec_id_to_str(UINT32 id)
 #undef ENTRY
 }
 
-BOOL freerdp_codec_supported(FreeRDP_CodecFlags codec, WINPR_ATTR_UNUSED BOOL encoder)
+BOOL freerdp_codec_supported(WINPR_ATTR_UNUSED rdpContext* context, FreeRDP_CodecFlags codec,
+                             WINPR_ATTR_UNUSED BOOL encoder)
 {
 	switch (codec)
 	{
