@@ -661,6 +661,8 @@ static UINT shadow_clipboard_client_data_request(CliprdrServerContext* context,
 				shadow_clipboard_read_free(read);
 		}
 	}
+
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): fetch owned by clipboard->reads
 	if (queued)
 		shadow_clipboard_read_next(clipboard);
 	LeaveCriticalSection(&clipboard->lock);
@@ -861,6 +863,7 @@ BOOL shadow_clipboard_session_request(rdpShadowServer* server, UINT32 request, c
 		}
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): fetch owned by clipboard->fetches
 	if (queued)
 		shadow_clipboard_fetch_next(clipboard);
 	else
@@ -978,6 +981,7 @@ int shadow_client_cliprdr_init(rdpShadowClient* client)
 		return -1;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): peer owned by clipboard->peers
 	const UINT rc = cliprdr->Start(cliprdr);
 	if (rc != CHANNEL_RC_OK)
 	{

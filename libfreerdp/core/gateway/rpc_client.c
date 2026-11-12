@@ -979,7 +979,7 @@ BOOL rpc_client_call_add(wLog* log, RpcClient* client, RpcClientCall* call)
 		return FALSE;
 
 	const BOOL rc = HashTable_Insert(client->ClientCallList, &call->CallId, call);
-	WLog_Print(log, WLOG_TRACE, "adding 0x%08" PRIx32 ": %s {%" PRIuz "}", call->CallId,
+	WLog_Print(log, WLOG_INFO, "adding 0x%08" PRIx32 ": %s {%" PRIuz "}", call->CallId,
 	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
 	return rc;
 }
@@ -989,7 +989,7 @@ void rpc_client_call_discard(wLog* log, RpcClient* client, UINT32 CallId)
 	WINPR_ASSERT(client);
 
 	const BOOL rc = HashTable_Remove(client->ClientCallList, &CallId);
-	WLog_Print(log, WLOG_TRACE, "discard 0x%08" PRIx32 ": %s {%" PRIuz "}", CallId,
+	WLog_Print(log, WLOG_INFO, "discard 0x%08" PRIx32 ": %s {%" PRIuz "}", CallId,
 	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
 }
 
@@ -1029,8 +1029,14 @@ void rpc_client_call_advance(wLog* log, RpcClient* client, UINT32 CallId,
 			call->State = next(call->State);
 		else
 			call->State = RPC_CLIENT_CALL_STATE_FAULT;
-	}
 
+		if (call->State != expected)
+			WLog_Print(log, WLOG_WARN,
+			           "unexpected call state: got %s [0x%08" PRIx32 "], expected %s [0x%08" PRIx32
+			           "]",
+			           rpc_client_call_state_str(call->State), call->State,
+			           rpc_client_call_state_str(expected), expected);
+	}
 	HashTable_Unlock(client->ClientCallList);
 }
 

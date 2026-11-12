@@ -1163,6 +1163,8 @@ static void mutter_on_param_changed(void* data, uint32_t id, const struct spa_po
 			         mutter->height);
 	}
 
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
 	/* shared memory only (no dma-buf), with the damage and the cursor */
 	const int32_t stride = (int32_t)mutter->width * 4;
 	params[0] = spa_pod_builder_add_object(
@@ -1187,7 +1189,10 @@ static void mutter_on_param_changed(void* data, uint32_t id, const struct spa_po
 	    SPA_POD_CHOICE_RANGE_Int(
 	        MUTTER_CURSOR_META_SIZE(64, 64), MUTTER_CURSOR_META_SIZE(1, 1),
 	        MUTTER_CURSOR_META_SIZE(MUTTER_CURSOR_META_MAX, MUTTER_CURSOR_META_MAX)));
-	(void)pw_stream_update_params(mutter->stream, params, ARRAYSIZE(params));
+	WINPR_PRAGMA_DIAG_POP
+
+	    (void)
+	pw_stream_update_params(mutter->stream, params, ARRAYSIZE(params));
 }
 
 /* Copies one rectangle of a frame to the surface and marks it changed */
@@ -1503,6 +1508,8 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 	const struct spa_fraction minRate = SPA_FRACTION(1, 1);
 
 	/* no modifiers offered: Mutter sends frames in shared memory */
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG("-Wgnu-statement-expression-from-macro-expansion")
 	const struct spa_pod* params[] = { spa_pod_builder_add_object(
 		&b, SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat, SPA_FORMAT_mediaType,
 		SPA_POD_Id(SPA_MEDIA_TYPE_video), SPA_FORMAT_mediaSubtype,
@@ -1512,10 +1519,12 @@ static BOOL mutter_stream_connect_node(mutterShadowSubsystem* mutter)
 		SPA_FORMAT_VIDEO_size, SPA_POD_CHOICE_RANGE_Rectangle(&size, &minSize, &maxSize),
 		SPA_FORMAT_VIDEO_framerate, SPA_POD_Fraction(&rate), SPA_FORMAT_VIDEO_maxFramerate,
 		SPA_POD_CHOICE_RANGE_Fraction(&maxRate, &minRate, &maxRate)) };
+	WINPR_PRAGMA_DIAG_POP
 
-	if (pw_stream_connect(mutter->stream, PW_DIRECTION_INPUT, mutter->nodeId,
-	                      PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS, params,
-	                      ARRAYSIZE(params)) < 0)
+	if (pw_stream_connect(
+	        mutter->stream, PW_DIRECTION_INPUT, mutter->nodeId,
+	        (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS), params,
+	        ARRAYSIZE(params)) < 0)
 	{
 		WLog_ERR(TAG, "pw_stream_connect failed");
 		return FALSE;
@@ -1689,8 +1698,9 @@ static BOOL mutter_audio_init(mutterShadowSubsystem* mutter)
 
 	/* PipeWire links it to the default sink's monitor and converts to our format */
 	if (pw_stream_connect(mutter->audio, PW_DIRECTION_INPUT, PW_ID_ANY,
-	                      PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS |
-	                          PW_STREAM_FLAG_INACTIVE,
+	                      (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
+	                                             PW_STREAM_FLAG_MAP_BUFFERS |
+	                                             PW_STREAM_FLAG_INACTIVE),
 	                      params, ARRAYSIZE(params)) < 0)
 		goto fail;
 
@@ -1735,7 +1745,7 @@ static void mutter_audio_follow_clients(mutterShadowSubsystem* mutter)
 	if (active == mutter->audioActive)
 		return;
 
-	if (pw_stream_set_active(mutter->audio, active ? true : false) < 0)
+	if (pw_stream_set_active(mutter->audio, active) < 0)
 	{
 		WLog_WARN(TAG, "sound: cannot %s the capture", active ? "start" : "stop");
 		return;
@@ -1830,7 +1840,7 @@ static void mutter_key(mutterShadowSubsystem* mutter, uint32_t code, BOOL down)
 	if (!mutter->keyboard || !mutter->keyboardReady)
 		return;
 	/* Mutter keeps the modifier state itself, as for a real keyboard */
-	ei_device_keyboard_key(mutter->keyboard, code, down ? true : false);
+	ei_device_keyboard_key(mutter->keyboard, code, down);
 	ei_device_frame(mutter->keyboard, ei_now(mutter->ei));
 
 	/* Mutter reports the new locks later, through libei: until then, follow the
@@ -1973,7 +1983,7 @@ static void mutter_pointer_button(mutterShadowSubsystem* mutter, uint32_t button
 
 	if (!ei_device_has_capability(mutter->pointer, EI_DEVICE_CAP_BUTTON))
 		return;
-	ei_device_button_button(mutter->pointer, button, down ? true : false);
+	ei_device_button_button(mutter->pointer, button, down);
 	ei_device_frame(mutter->pointer, ei_now(mutter->ei));
 }
 
@@ -2237,15 +2247,6 @@ typedef struct
 	int fd;
 } mutterClipboardJob;
 
-WINPR_ATTR_NODISCARD
-static mutterClipboardJob* mutter_clipboard_job_new(void)
-{
-	mutterClipboardJob* job = calloc(1, sizeof(mutterClipboardJob));
-	if (job)
-		job->fd = -1;
-	return job;
-}
-
 static void mutter_clipboard_job_free(mutterClipboardJob* job)
 {
 	if (!job)
@@ -2261,6 +2262,15 @@ static void mutter_clipboard_job_free(mutterClipboardJob* job)
 	if (job->fd >= 0)
 		(void)close(job->fd);
 	free(job);
+}
+
+WINPR_ATTR_MALLOC(mutter_clipboard_job_free, 1)
+static mutterClipboardJob* mutter_clipboard_job_new(void)
+{
+	mutterClipboardJob* job = calloc(1, sizeof(mutterClipboardJob));
+	if (job)
+		job->fd = -1;
+	return job;
 }
 
 static void mutter_clipboard_message_free(wMessage* message)

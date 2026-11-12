@@ -2718,55 +2718,28 @@ static BOOL tsg_recv_pipe_created(rdpTsg* tsg, const RPC_PDU* pdu)
 		rc = TsProxyMakeTunnelCallReadResponse(tsg, pdu);
 		if (!rc)
 			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
+		else if (tsg->ReauthTunnelContext)
+			rc = tsg_proxy_reauth(tsg);
 	}
-	else if (call->OpNum == TsProxyCreateChannelOpnum)
+	else if (call->OpNum == TsProxyCloseChannelOpnum)
 	{
 		CONTEXT_HANDLE ChannelContext;
 
-		rc = TsProxyCreateChannelReadResponse(tsg->log, pdu, &ChannelContext, &tsg->ChannelId);
+		rc = TsProxyCloseChannelReadResponse(tsg->log, pdu, &ChannelContext);
 		if (!rc)
-			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCreateChannelReadResponse failure");
-		else
-		{
-			if (!tsg->reauthSequence)
-				CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
-			else
-				CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelReadResponse failure");
+	}
+	else if (call->OpNum == TsProxyCloseTunnelOpnum)
+	{
+		CONTEXT_HANDLE TunnelContext = WINPR_C_ARRAY_INIT;
 
-			rc = tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED);
-			if (rc)
-			{
-				if (!tsg->reauthSequence)
-				{
-					rc = TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext);
-					if (!rc)
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxySetupReceivePipe failure");
-				}
-				else
-				{
-					rc = TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext);
-					if (!rc)
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
-					else
-					{
-						rc = TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext);
-						if (!rc)
-							WLog_Print(tsg->log, WLOG_ERROR,
-							           "TsProxyCloseTunnelWriteRequest failure");
-					}
-				}
-
-				if (rc)
-				{
-					rc = tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
-					tsg->reauthSequence = FALSE;
-				}
-			}
-		}
+		rc = TsProxyCloseTunnelReadResponse(tsg->log, pdu, &TunnelContext);
+		if (!rc)
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelReadResponse failure");
 	}
 	else
 	{
-		WLog_Print(tsg->log, WLOG_ERROR, "TSG_STATE_AUTHORIZED unexpected OpNum: %" PRIu32 "\n",
+		WLog_Print(tsg->log, WLOG_ERROR, "TSG_STATE_PIPE_CREATED unexpected OpNum: %" PRIu32 "\n",
 		           call->OpNum);
 	}
 	return rc;

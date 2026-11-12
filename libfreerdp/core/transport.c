@@ -346,7 +346,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 
 	tls->hostname = settings->ServerHostname;
 	tls->serverName = settings->UserSpecifiedServerName;
-	tls->port = MIN(UINT16_MAX, settings->ServerPort);
+	tls->port = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, settings->ServerPort));
 
 	if (tls->port == 0)
 		tls->port = 3389;
