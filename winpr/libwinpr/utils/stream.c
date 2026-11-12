@@ -75,18 +75,32 @@ BOOL Stream_ResizeToCapacity(wStream* s, size_t size)
 	return Stream_SetPosition(s, position);
 }
 
+/* The capacity grows in fixed steps, never exponentially. A stream filled chunk by chunk must not
+ * reallocate for every chunk, and a small stream must not be padded out to megabytes: a pool keeps
+ * its streams, so every message that waits in a queue would hold that padding.
+ * With these steps a stream of N bytes wastes less than 4 KiB, 64 KiB or 1 MiB depending on its
+ * size and is reallocated at most about 31 + N / 1 MiB times while it is filled. */
+static size_t stream_capacity_step(size_t size)
+{
+	if (size < 64ull * 1024ull)
+		return 4ull * 1024ull;
+	if (size < 1024ull * 1024ull)
+		return 64ull * 1024ull;
+	return 1024ull * 1024ull;
+}
+
 BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 {
 	WINPR_ASSERT(s);
 	if (s->capacity >= size)
 		return TRUE;
 
-	const size_t increment = 1024ull * 1024ull;
-	if (size > SIZE_MAX - increment)
+	const size_t increment = stream_capacity_step(size);
+	const size_t padding = (increment - size % increment) % increment;
+	if (size > SIZE_MAX - padding)
 		return FALSE;
 
-	const size_t new_capacity = size + increment - size % increment;
-	return Stream_ResizeToCapacity(s, new_capacity);
+	return Stream_ResizeToCapacity(s, size + padding);
 }
 
 BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
