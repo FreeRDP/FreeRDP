@@ -24,12 +24,16 @@
 
 #include <freerdp/log.h>
 #include <freerdp/settings.h>
-#include <freerdp/server/echo.h>
-
 #include "sf_udp.h"
+
+/* The echo channel gives the tunnel something to carry once a second. */
+#if defined(CHANNEL_ECHO_SERVER)
+#include <freerdp/server/echo.h>
+#endif
 
 #define TAG SERVER_TAG("sample")
 
+#if defined(CHANNEL_ECHO_SERVER)
 struct sf_udp
 {
 	echo_server_context* echo;
@@ -87,6 +91,7 @@ static void sf_peer_echo(testPeerContext* context)
 	if (!context->udp->echo->Request(context->udp->echo, (const BYTE*)&now, sizeof(now)))
 		WLog_WARN(TAG, "echo request unsuccessful");
 }
+#endif
 
 BOOL sf_udp_configure(rdpSettings* settings, BOOL udp)
 {
@@ -113,10 +118,12 @@ void sf_udp_tick(testPeerContext* context, BOOL udp)
 
 	if (!udp)
 		return;
+#if defined(CHANNEL_ECHO_SERVER)
 	if (!context->udp)
 		context->udp = calloc(1, sizeof(struct sf_udp));
 	if (context->udp)
 		sf_peer_echo(context);
+#endif
 }
 
 void sf_udp_free(testPeerContext* context)
@@ -125,6 +132,7 @@ void sf_udp_free(testPeerContext* context)
 
 	if (!context->udp)
 		return;
+#if defined(CHANNEL_ECHO_SERVER)
 	if (context->udp->echo)
 	{
 		if (context->udp->echo->Close(context->udp->echo) != CHANNEL_RC_OK)
@@ -132,6 +140,7 @@ void sf_udp_free(testPeerContext* context)
 		echo_server_context_free(context->udp->echo);
 	}
 	free(context->udp);
+#endif
 	context->udp = nullptr;
 }
 

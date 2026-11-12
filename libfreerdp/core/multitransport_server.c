@@ -248,6 +248,17 @@ static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
 	EVP_PKEY* evp = freerdp_key_get_evp_pkey(key);
 	if (!evp)
 		return FALSE;
+	/* The tunnel's TLS signs with RSA or ECDSA on P-256 or P-384 (emt_start_tls). With another
+	 * key every handshake would fail, after the client had spent its attempt. */
+	const int keyType = EVP_PKEY_base_id(evp);
+	const int keyBits = EVP_PKEY_bits(evp);
+	if ((keyType != EVP_PKEY_RSA) &&
+	    ((keyType != EVP_PKEY_EC) || ((keyBits != 256) && (keyBits != 384))))
+	{
+		WLog_INFO(TAG, "UDP is not offered: the tunnel's TLS cannot use the server's key type");
+		EVP_PKEY_free(evp);
+		return FALSE;
+	}
 	rdpEmt* emt = rdpemt_new_server(WLog_Get(TAG), multi->reliableReqId, multi->reliableCookie,
 	                                x509, evp, multi->udpCallbacks.ManualWorker,
 	                                multitransport_server_tunnel_event, multi);
@@ -616,12 +627,19 @@ DWORD multitransport_server_add_event(rdpMultitransport* multi, HANDLE* events, 
 	WINPR_ASSERT(multi);
 	WINPR_ASSERT(events);
 
-	if ((used == 0) || (used >= count))
+	if (used == 0)
 		return used;
 
 	/* Let freerdp_peer_check_fds handle tunnel events triggered by client datagrams */
 	if (!multitransport_server_has_tunnel(multi))
 		return used;
+	if (used >= count)
+	{
+		/* as for the transport's handles: without this one, tunnel events would wait for
+		 * activity on TCP */
+		WLog_ERR(TAG, "no room for the UDP tunnel's event handle, %" PRIu32 " given", count);
+		return 0;
+	}
 	events[used] = multitransport_get_event_handle(multi);
 	return used + 1;
 }

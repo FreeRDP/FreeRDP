@@ -487,7 +487,15 @@ BOOL wts_tunnel_new(WTSVirtualChannelManager* vcm, rdpContext* context, wtsTunne
 		.TunnelDataReceived = wts_tunnel_data_received,
 		.TunnelStateChanged = wts_tunnel_state_changed,
 	};
-	return freerdp_multitransport_set_dvc_callbacks(context, &callbacks, vcm);
+	if (!freerdp_multitransport_set_dvc_callbacks(context, &callbacks, vcm))
+		return FALSE;
+	/* TunnelStateChanged is called when the state changes. A channel manager opened after
+	 * the tunnel became ready would wait for a call that has already been made. */
+	if ((freerdp_multitransport_get_tunnel_state(context, TUNNELTYPE_UDPFECR) ==
+	     FREERDP_MULTITRANSPORT_TUNNEL_READY) &&
+	    (InterlockedCompareExchange(&vcm->tunnel->tunnelReady, 1, 0) == 0))
+		WLog_DBG(TAG, "the UDP tunnel was ready before the channel manager opened");
+	return TRUE;
 }
 
 void wts_tunnel_free(WTSVirtualChannelManager* vcm)

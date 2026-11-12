@@ -3378,8 +3378,15 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 #endif
 
 		/* a frame that waits for an acknowledgement also goes out after a stall */
-		const DWORD timeout = MIN(client->encoder->gfxHeld ? 100 : INFINITE,
-		                          shadow_client_autodetect_timeout(client));
+		DWORD timeout = MIN(client->encoder->gfxHeld ? 100 : INFINITE,
+		                    shadow_client_autodetect_timeout(client));
+		/* With a UDP tunnel on offer the channel manager is checked every second: it moves
+		 * the channels to the tunnel once it has waited long enough for the client's answers
+		 * to their creation, and nothing signals that moment. */
+		const BOOL udp = (freerdp_settings_get_uint32(settings, FreeRDP_MultitransportFlags) &
+		                  SOFTSYNC_TCP_TO_UDP) != 0;
+		if (udp && (timeout > 1000))
+			timeout = 1000;
 		status = WaitForMultipleObjects(nCount, events, FALSE, timeout);
 
 		if (status == WAIT_FAILED)
@@ -3540,7 +3547,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			}
 		}
 
-		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
+		if ((WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
 		{
 			if (!shadow_client_drain_channels(client, TRUE))
 			{
