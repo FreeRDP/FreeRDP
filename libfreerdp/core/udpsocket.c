@@ -48,7 +48,8 @@
 
 /* Sockets bound to the unspecified address can determine the local address used for
  * each datagram, allowing replies to be sent from the address the client contacted. */
-#if !defined(_WIN32) && defined(IP_PKTINFO)
+/* NetBSD has IP_PKTINFO, but its struct in_pktinfo lacks the ipi_spec_dst used for sending. */
+#if !defined(_WIN32) && defined(IP_PKTINFO) && !defined(__NetBSD__)
 #define UDPLISTENER_LOCAL_ADDRESS_IPV4
 #endif
 #if !defined(_WIN32) && defined(IPV6_RECVPKTINFO) && defined(IPV6_PKTINFO)
