@@ -928,3 +928,23 @@ void rpc_free(rdpRpc* rpc)
 		free(rpc);
 	}
 }
+
+const char* rpc_client_call_state_str(uint32_t state)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+	switch (state)
+	{
+		EVCASE(RPC_CLIENT_CALL_STATE_INITIAL);
+		EVCASE(RPC_CLIENT_CALL_STATE_SEND_PDUS);
+		EVCASE(RPC_CLIENT_CALL_STATE_DISPATCHED);
+		EVCASE(RPC_CLIENT_CALL_STATE_RECEIVE_PDU);
+		EVCASE(RPC_CLIENT_CALL_STATE_COMPLETE);
+		EVCASE(RPC_CLIENT_CALL_STATE_FAULT);
+		EVCASE(RPC_CLIENT_CALL_STATE_FINAL);
+		default:
+			return "RPC_CLIENT_CALL_STATE_UNKNOWN";
+	}
+#undef EVCASE
+}
