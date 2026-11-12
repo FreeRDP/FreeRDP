@@ -2239,15 +2239,6 @@ typedef struct
 	int fd;
 } mutterClipboardJob;
 
-WINPR_ATTR_NODISCARD
-static mutterClipboardJob* mutter_clipboard_job_new(void)
-{
-	mutterClipboardJob* job = calloc(1, sizeof(mutterClipboardJob));
-	if (job)
-		job->fd = -1;
-	return job;
-}
-
 static void mutter_clipboard_job_free(mutterClipboardJob* job)
 {
 	if (!job)
@@ -2263,6 +2254,15 @@ static void mutter_clipboard_job_free(mutterClipboardJob* job)
 	if (job->fd >= 0)
 		(void)close(job->fd);
 	free(job);
+}
+
+WINPR_ATTR_MALLOC(mutter_clipboard_job_free, 1)
+static mutterClipboardJob* mutter_clipboard_job_new(void)
+{
+	mutterClipboardJob* job = calloc(1, sizeof(mutterClipboardJob));
+	if (job)
+		job->fd = -1;
+	return job;
 }
 
 static void mutter_clipboard_message_free(wMessage* message)
