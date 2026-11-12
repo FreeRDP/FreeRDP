@@ -984,6 +984,11 @@ static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpSha
 	rdpSettings* clientSettings = client->context.settings;
 	WINPR_ASSERT(clientSettings);
 
+	char buffer[128] = WINPR_C_ARRAY_INIT;
+	WLog_INFO(TAG, "selected GFX caps %s [0x%08" PRIx32 "] flags=%s",
+	          rdpgfx_caps_version_str(pdu->capsSet->version), pdu->capsSet->version,
+	          rdpgfx_caps_flags_str(pdu->capsSet->flags, buffer, sizeof(buffer)));
+
 #if defined(WITH_GFX_AV2)
 	if (pdu->capsSet->version == RDPGFX_CAPVERSION_FRDP_2)
 	{
@@ -1064,9 +1069,9 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 	{
 		const RDPGFX_CAPSET* currentCaps = &capsSets[index];
 
-		WLog_INFO(TAG, "testing  %s vs %s[0x%08" PRIx32 "]",
-		          rdpgfx_caps_version_str(currentCaps->version),
-		          rdpgfx_caps_version_str(capsVersion), capsVersion);
+		WLog_DBG(TAG, "testing  %s vs %s[0x%08" PRIx32 "]",
+		         rdpgfx_caps_version_str(currentCaps->version),
+		         rdpgfx_caps_version_str(capsVersion), capsVersion);
 		if (currentCaps->version == capsVersion)
 		{
 			RDPGFX_CAPSET caps = *currentCaps;
