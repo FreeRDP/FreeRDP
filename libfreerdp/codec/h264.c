@@ -175,10 +175,49 @@ static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSi
 	return status;
 }
 
+/* A full resolution 4:4:4 picture (HEVC 4:4:4): every pixel has its own chroma sample, convert
+ * only the updated regions. The colour is BT.709 full range as for 4:2:0. */
+WINPR_ATTR_NODISCARD
+static BOOL yuv444_planes_decode(H264_CONTEXT* h264, DWORD DstFormat, BYTE* pDstData,
+                                 UINT32 nDstStep, const RECTANGLE_16* regionRects,
+                                 UINT32 numRegionRects)
+{
+	WINPR_ASSERT(h264);
+
+	primitives_t* prims = primitives_get();
+	if (!prims || !prims->I444ToRGB_8u)
+		return FALSE;
+
+	const size_t bpp = FreeRDPGetBytesPerPixel(DstFormat);
+	for (UINT32 x = 0; x < numRegionRects; x++)
+	{
+		const RECTANGLE_16* rect = &regionRects[x];
+		const prim_size_t roi = { .width = rect->right - rect->left,
+		                          .height = rect->bottom - rect->top };
+		const BYTE* pSrc[3] = WINPR_C_ARRAY_INIT;
+		for (size_t p = 0; p < 3; p++)
+			pSrc[p] = &h264->pYUVData[p][1ull * rect->top * h264->iStride[p] + rect->left];
+		BYTE* pDst = &pDstData[1ull * rect->top * nDstStep + rect->left * bpp];
+
+		if (prims->I444ToRGB_8u(pSrc, h264->iStride, pDst, nDstStep, DstFormat, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
-                        DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
-                        WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
-                        UINT32 numRegionRects)
+                        DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight,
+                        const RECTANGLE_16* regionRects, UINT32 numRegionRects)
+{
+	return h26X_decompress(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep, nDstWidth,
+	                       nDstHeight, regionRects, numRegionRects);
+}
+
+INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
+                      DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
+                      WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                      UINT32 numRegionRects)
 {
 	int status = 0;
 	const BYTE* pYUVData[3];
@@ -196,6 +235,13 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 
 	if (status < 0)
 		return status;
+
+	if (h264->yuv444)
+	{
+		if (!yuv444_planes_decode(h264, DstFormat, pDstData, nDstStep, regionRects, numRegionRects))
+			return -1002;
+		return 1;
+	}
 
 	pYUVData[0] = h264->pYUVData[0];
 	pYUVData[1] = h264->pYUVData[1];
@@ -908,6 +954,7 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 		return FALSE;
 
 	h264->subsystem = nullptr;
+	h264->yuv444 = FALSE;
 	if (!InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, nullptr, nullptr))
 		return FALSE;
 
@@ -917,6 +964,12 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 
 		if (!subsystem || !subsystem->Init)
 			break;
+
+		if (h264->hevc && !subsystem->SupportsHEVC)
+			continue;
+
+		if (h264->hevc && h264->hevc444 && !subsystem->SupportsHEVC444)
+			continue;
 
 		if (subsystem->Init(h264))
 		{
@@ -1091,6 +1144,45 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			h264->hwAccel = (value);
 			IFCALL(h264->subsystem->Uninit, h264);
 			return IFCALLRESULT(TRUE, h264->subsystem->Init, h264);
+		case H264_CONTEXT_OPTION_HEVC:
+		{
+			const BOOL hevc = value != 0;
+			if (h264->hevc == hevc)
+				return TRUE;
+			if (hevc && h264->Compressor)
+			{
+				WLog_Print(h264->log, WLOG_WARN, "HEVC is only supported for decoding");
+				return FALSE;
+			}
+			/* the codec decides which subsystem can be used, select it again */
+			if (h264->subsystem)
+				IFCALL(h264->subsystem->Uninit, h264);
+			h264->hevc = hevc;
+			if (h264_context_init(h264))
+				return TRUE;
+			WLog_Print(h264->log, WLOG_WARN, "no H264 subsystem supports %s",
+			           hevc ? "HEVC" : "H264");
+			return FALSE;
+		}
+		case H264_CONTEXT_OPTION_HEVC444:
+		{
+			const BOOL hevc444 = value != 0;
+			if (h264->hevc444 == hevc444)
+				return TRUE;
+			if (hevc444 && !h264->hevc)
+			{
+				WLog_Print(h264->log, WLOG_WARN, "HEVC 4:4:4 needs H264_CONTEXT_OPTION_HEVC");
+				return FALSE;
+			}
+			if (h264->subsystem)
+				IFCALL(h264->subsystem->Uninit, h264);
+			h264->hevc444 = hevc444;
+			if (h264_context_init(h264))
+				return TRUE;
+			WLog_Print(h264->log, WLOG_WARN, "no H264 subsystem supports HEVC %s",
+			           hevc444 ? "4:4:4" : "4:2:0");
+			return FALSE;
+		}
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -1115,6 +1207,10 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 			return h264->UsageType;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
 			return h264->hwAccel;
+		case H264_CONTEXT_OPTION_HEVC:
+			return h264->hevc;
+		case H264_CONTEXT_OPTION_HEVC444:
+			return h264->hevc444;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);

@@ -440,7 +440,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 		if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxH264) &&
-		    freerdp_codec_supported(FREERDP_CODEC_AVC420, FALSE))
+		    freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AVC420, FALSE))
 			capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
 	}
 
@@ -452,7 +452,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			caps10Flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 		if (!freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxAVC444) ||
-		    !freerdp_codec_supported(FREERDP_CODEC_AVC444, FALSE))
+		    !freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AVC444, FALSE))
 			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 
 		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_10))
@@ -564,7 +564,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		{
 			const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112,
 				                    RDPGFX_CAPVERSION_113, RDPGFX_CAPVERSION_115 };
-			const BOOL hevc = freerdp_codec_supported(FREERDP_CODEC_HEVC_I420, FALSE);
+			const BOOL hevc =
+			    freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_HEVC_I420, FALSE);
 
 			for (size_t x = 0; x < ARRAYSIZE(caps); x++)
 			{
@@ -594,7 +595,8 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 						{
 							if (freerdp_settings_get_bool(gfx->rdpcontext->settings,
 							                              FreeRDP_GfxCodecHEVC444) &&
-							    freerdp_codec_supported(FREERDP_CODEC_HEVC_I444, FALSE))
+							    freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_HEVC_I444,
+							                            FALSE))
 								caps10Flags |= RDPGFX_CAPS_FLAG_HEVC_I444;
 						}
 					}
@@ -625,7 +627,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 #if defined(WITH_GFX_AV1)
 	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV1))
 	{
-		if (freerdp_codec_supported(FREERDP_CODEC_AV1_I420, FALSE) &&
+		if (freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AV1_I420, FALSE) &&
 		    !rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_1))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
@@ -634,7 +636,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->version = RDPGFX_CAPVERSION_FRDP_1;
 			capsSet->length = 0x4;
 
-			if (freerdp_codec_supported(FREERDP_CODEC_AV1_I444, FALSE))
+			if (freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AV1_I444, FALSE))
 				capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED;
 			else
 				capsSet->flags |= RDPGFX_CAPS_FLAG_AV1_I444_DISABLED;
@@ -655,7 +657,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 	 * not know it never confirms it. */
 	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV2))
 	{
-		if (freerdp_codec_supported(FREERDP_CODEC_AV2_I420, FALSE) &&
+		if (freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AV2_I420, FALSE) &&
 		    !rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_FRDP_2))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
@@ -664,7 +666,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->version = RDPGFX_CAPVERSION_FRDP_2;
 			capsSet->length = 0x4;
 
-			if (freerdp_codec_supported(FREERDP_CODEC_AV2_I444, FALSE))
+			if (freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AV2_I444, FALSE))
 			{
 				capsSet->flags = caps10Flags | RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED;
 

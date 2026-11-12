@@ -131,6 +131,7 @@ extern "C"
 
 	/**  @brief Check if a given codec is supported in the build
 	 *
+	 *   @param context The RDP context to use for the check
 	 *   @param codec The codec to check
 	 *   @param encoder If encoding or decoding is required
 	 *
@@ -139,7 +140,8 @@ extern "C"
 	 *   @since version 3.34.0
 	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL freerdp_codec_supported(FreeRDP_CodecFlags codec, BOOL encoder);
+	FREERDP_API BOOL freerdp_codec_supported(rdpContext* context, FreeRDP_CodecFlags codec,
+	                                         BOOL encoder);
 
 #ifdef __cplusplus
 }

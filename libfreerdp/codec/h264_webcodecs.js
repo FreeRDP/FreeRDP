@@ -18,12 +18,70 @@
 /* JavaScript side of h264_webcodecs.c, linked with --js-library. Runs on the main browser
  * thread. */
 
-/* Copies frame into the I420 planes t (y, u, v, ys, cs); resolves with 1, or -4 for an
+/* Turns an RGB frame back into full resolution Y'CbCr planes. Browsers that return RGB
+ * (Firefox) convert with the colour description of the stream. The HEVC 4:4:4 streams of
+ * Windows servers label their Y'CbCr samples as GBR (matrix_coefficients 0), so with gbr set
+ * the red, green and blue channels hold Cr, Y and Cb unchanged. Other streams were converted
+ * to RGB: convert back to BT.709 full range, which h264.c converts to the surface again. */
+function h264_wc_copy_rgb(frame, t, order)
+{
+	const w = frame.visibleRect.width, h = frame.visibleRect.height;
+	const tmp = new Uint8Array(frame.allocationSize());
+	return frame.copyTo(tmp).then((layout) => {
+		const heap = HEAPU8;
+		const [ri, gi, bi] = order;
+		for (let r = 0; r < h; r++)
+		{
+			const src = layout[0].offset + r * layout[0].stride;
+			const py = t.y + r * t.ys, pu = t.u + r * t.cs, pv = t.v + r * t.cs;
+			for (let x = 0; x < w; x++)
+			{
+				const s = src + 4 * x;
+				const R = tmp[s + ri], G = tmp[s + gi], B = tmp[s + bi];
+				if (t.gbr)
+				{
+					heap[py + x] = G;
+					heap[pu + x] = B;
+					heap[pv + x] = R;
+					continue;
+				}
+				/* BT.709: Kr 0.2126, Kb 0.0722, 16 bit fixed point */
+				const Y = 13933 * R + 46871 * G + 4732 * B;
+				const cb = ((B * 65536 - Y) * 0.5389 + 8421376) >> 16;
+				const cr = ((R * 65536 - Y) * 0.635 + 8421376) >> 16;
+				heap[py + x] = (Y + 32768) >> 16;
+				heap[pu + x] = cb < 0 ? 0 : (cb > 255 ? 255 : cb);
+				heap[pv + x] = cr < 0 ? 0 : (cr > 255 ? 255 : cr);
+			}
+		}
+		return 3;
+	});
+}
+
+/* Copies frame into the planes t (y, u, v, ys, cs, gbr), whose chroma planes have full
+ * resolution; resolves with 1 for a 4:2:0 picture, 3 for a 4:4:4 one, or -4 for an
  * unsupported pixel format. */
 function h264_wc_copy(frame, t)
 {
 	const w = frame.visibleRect.width, h = frame.visibleRect.height;
 	const cw = (w + 1) >> 1, ch = (h + 1) >> 1;
+	if (frame.format === "I444")
+	{
+		const view = HEAPU8.subarray(t.y, t.v + t.cs * h);
+		return frame
+		    .copyTo(view, {
+			    layout: [
+				    { offset: 0, stride: t.ys }, { offset: t.u - t.y, stride: t.cs },
+				    { offset: t.v - t.y, stride: t.cs }
+			    ]
+		    })
+		    .then(() => 3);
+	}
+	/* byte offsets of red, green and blue */
+	if ((frame.format === "RGBX") || (frame.format === "RGBA"))
+		return h264_wc_copy_rgb(frame, t, [0, 1, 2]);
+	if ((frame.format === "BGRX") || (frame.format === "BGRA"))
+		return h264_wc_copy_rgb(frame, t, [2, 1, 0]);
 	if (frame.format === "I420")
 	{
 		const view = HEAPU8.subarray(t.y, t.v + t.cs * ch);
@@ -61,13 +119,15 @@ function h264_wc_copy(frame, t)
 	});
 }
 
-/* Opens a decoder slot once the browser has confirmed it can decode H.264 at all. */
-function h264_wc_js_open(ctx, handle)
+/* Opens a decoder slot once the browser has confirmed it can decode the codec of the probe
+ * string at all (H.264 or HEVC, cached per codec string). */
+function h264_wc_js_open(ctx, handle, probe)
 {
 	const reg = (Module.freerdpH264 =
-	                 Module.freerdpH264 || { next: 1, decoders: new Map(), supported: null });
+	                 Module.freerdpH264 || { next: 1, decoders: new Map(), supported: new Map() });
+	const codec = UTF8ToString(probe);
 	const finish = (ok) => {
-		reg.supported = ok;
+		reg.supported.set(codec, ok);
 		HEAP32[handle >>> 2] = 0;
 		if (ok)
 		{
@@ -77,13 +137,12 @@ function h264_wc_js_open(ctx, handle)
 		}
 		_freerdp_h264_wc_finish(ctx);
 	};
-	if (reg.supported !== null)
-		return finish(reg.supported);
+	if (reg.supported.has(codec))
+		return finish(reg.supported.get(codec));
 	if (typeof VideoDecoder !== "function" || typeof EncodedVideoChunk !== "function")
 		return finish(false);
-	/* Constrained Baseline 3.1: any H.264 capable browser decodes it */
-	VideoDecoder.isConfigSupported({ codec: "avc1.42e01f" })
-	    .then((s) => finish(!!s.supported), () => finish(false));
+	VideoDecoder.isConfigSupported({ codec }).then((s) => finish(!!s.supported),
+	                                               () => finish(false));
 }
 
 function h264_wc_js_close(handle)
@@ -104,8 +163,8 @@ function h264_wc_js_close(handle)
 }
 
 /* Stores the result in *rc and completes asynchronously through _freerdp_h264_wc_finish. */
-function h264_wc_js_decode(ctx, handle, src, size, key, codec, y, u, v, ys, cs, maxWidth, maxHeight,
-                           dim, rc)
+function h264_wc_js_decode(ctx, handle, src, size, key, codec, y, u, v, ys, cs, gbr, maxWidth,
+                           maxHeight, dim, rc)
 {
 	size >>>= 0;
 	ys >>>= 0;
@@ -191,6 +250,7 @@ function h264_wc_js_decode(ctx, handle, src, size, key, codec, y, u, v, ys, cs, 
 		v,
 		ys,
 		cs,
+		gbr,
 		maxWidth,
 		maxHeight,
 		dim,
@@ -222,7 +282,7 @@ function h264_wc_js_decode(ctx, handle, src, size, key, codec, y, u, v, ys, cs, 
 }
 
 /* Copies the frame kept by h264_wc_js_decode after the planes were enlarged. */
-function h264_wc_js_copy(ctx, handle, y, u, v, ys, cs, rc)
+function h264_wc_js_copy(ctx, handle, y, u, v, ys, cs, gbr, rc)
 {
 	ys >>>= 0;
 	cs >>>= 0;
@@ -237,7 +297,7 @@ function h264_wc_js_copy(ctx, handle, y, u, v, ys, cs, rc)
 		return finish(-1);
 	d.frame = null;
 	Promise.resolve()
-	    .then(() => h264_wc_copy(frame, { y, u, v, ys, cs }))
+	    .then(() => h264_wc_copy(frame, { y, u, v, ys, cs, gbr }))
 	    .then(
 	        (r) => {
 		        frame.close();
@@ -251,16 +311,18 @@ function h264_wc_js_copy(ctx, handle, y, u, v, ys, cs, rc)
 }
 
 addToLibrary({
+	$h264_wc_copy_rgb: h264_wc_copy_rgb,
 	$h264_wc_copy: h264_wc_copy,
+	$h264_wc_copy__deps: ["$h264_wc_copy_rgb"],
 	h264_wc_js_open,
-	h264_wc_js_open__sig: "vpp",
-	h264_wc_js_open__deps: ["freerdp_h264_wc_finish"],
+	h264_wc_js_open__sig: "vppp",
+	h264_wc_js_open__deps: ["$UTF8ToString", "freerdp_h264_wc_finish"],
 	h264_wc_js_close,
 	h264_wc_js_close__sig: "vi",
 	h264_wc_js_decode,
-	h264_wc_js_decode__sig: "vpipiippppiiiipp",
+	h264_wc_js_decode__sig: "vpipiippppiiiiipp",
 	h264_wc_js_decode__deps: ["$h264_wc_copy", "$UTF8ToString", "freerdp_h264_wc_finish"],
 	h264_wc_js_copy,
-	h264_wc_js_copy__sig: "vpipppiip",
+	h264_wc_js_copy__sig: "vpipppiiip",
 	h264_wc_js_copy__deps: ["$h264_wc_copy", "freerdp_h264_wc_finish"],
 });
