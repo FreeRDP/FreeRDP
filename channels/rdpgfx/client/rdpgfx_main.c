@@ -1739,7 +1739,6 @@ static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_C
 		case RDPGFX_CODECID_AVC444v2:
 		case RDPGFX_CODECID_CAPROGRESSIVE:
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			return TRUE;
 #if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		case RDPGFX_CODECID_AV1:
 #endif
