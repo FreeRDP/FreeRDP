@@ -1735,7 +1735,7 @@ static void mutter_audio_follow_clients(mutterShadowSubsystem* mutter)
 	if (active == mutter->audioActive)
 		return;
 
-	if (pw_stream_set_active(mutter->audio, active ? true : false) < 0)
+	if (pw_stream_set_active(mutter->audio, active) < 0)
 	{
 		WLog_WARN(TAG, "sound: cannot %s the capture", active ? "start" : "stop");
 		return;
@@ -1830,7 +1830,7 @@ static void mutter_key(mutterShadowSubsystem* mutter, uint32_t code, BOOL down)
 	if (!mutter->keyboard || !mutter->keyboardReady)
 		return;
 	/* Mutter keeps the modifier state itself, as for a real keyboard */
-	ei_device_keyboard_key(mutter->keyboard, code, down ? true : false);
+	ei_device_keyboard_key(mutter->keyboard, code, down);
 	ei_device_frame(mutter->keyboard, ei_now(mutter->ei));
 
 	/* Mutter reports the new locks later, through libei: until then, follow the
@@ -1973,7 +1973,7 @@ static void mutter_pointer_button(mutterShadowSubsystem* mutter, uint32_t button
 
 	if (!ei_device_has_capability(mutter->pointer, EI_DEVICE_CAP_BUTTON))
 		return;
-	ei_device_button_button(mutter->pointer, button, down ? true : false);
+	ei_device_button_button(mutter->pointer, button, down);
 	ei_device_frame(mutter->pointer, ei_now(mutter->ei));
 }
 
