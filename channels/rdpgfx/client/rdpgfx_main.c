@@ -306,8 +306,10 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 	{
 		const RDPGFX_CAPSET* capsSet = &(pdu->capsSets[index]);
 
-		WLog_Print(gfx->base.log, WLOG_DEBUG, "Sending %s [0x%08" PRIx32 "] flags=0x%08" PRIx32,
-		           rdpgfx_caps_version_str(capsSet->version), capsSet->version, capsSet->flags);
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_Print(gfx->base.log, WLOG_DEBUG, "Sending %s [0x%08" PRIx32 "] flags=%s",
+		           rdpgfx_caps_version_str(capsSet->version), capsSet->version,
+		           rdpgfx_caps_flags_str(capsSet->flags, buffer, sizeof(buffer)));
 
 		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
@@ -568,7 +570,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			{
 				const UINT32 cap = caps[x];
 
-				if (!rdpgfx_is_capability_filtered(gfx, cap))
+				if (rdpgfx_is_capability_filtered(gfx, cap))
 					continue;
 
 				if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecHEVC))
@@ -712,10 +714,14 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	gfx->ConnectionCaps = capsSet;
 	if (context)
 		context->CapsVersion = capsSet.version;
-	WLog_Print(gfx->base.log, WLOG_DEBUG,
-	           "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: 0x%08" PRIX32 "",
-	           rdpgfx_caps_version_str(capsSet.version), capsSet.version, capsSet.flags);
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 
+		WLog_Print(gfx->base.log, WLOG_DEBUG,
+		           "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: %s",
+		           rdpgfx_caps_version_str(capsSet.version), capsSet.version,
+		           rdpgfx_caps_flags_str(capsSet.flags, buffer, sizeof(buffer)));
+	}
 	memset(gfx->allowedCodecs, TRUE, sizeof(gfx->allowedCodecs));
 
 	gfx->allowedCodecs[RDPGFX_CODECID_AVC420] = FALSE;
