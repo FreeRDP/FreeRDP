@@ -320,7 +320,7 @@ static BOOL rdpdr_process_server_header(BOOL server, wLog* log, wStream* s, UINT
 		       "got %" PRIuz,
 		       rdpdr_component_string(component), rdpdr_packetid_string(PacketId), expect,
 		       Stream_GetRemainingLength(s));
-		return ERROR_INVALID_DATA;
+		return FALSE;
 	}
 
 	return TRUE;
