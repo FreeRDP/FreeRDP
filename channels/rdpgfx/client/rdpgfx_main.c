@@ -771,7 +771,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	gfx->allowedCodecs[RDPGFX_CODECID_HEVC420] = FALSE;
 	gfx->allowedCodecs[RDPGFX_CODECID_HEVC444] = FALSE;
 
-	if (capsSet.version >= RDPGFX_CAPVERSION_113)
+	if (capsSet.version >= RDPGFX_CAPVERSION_112)
 	{
 		if ((capsSet.flags & RDPGFX_CAPS_FLAG_HEVC_ENABLE) != 0)
 		{
