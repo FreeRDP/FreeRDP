@@ -1143,11 +1143,6 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			const BOOL hevc = value != 0;
 			if (h264->hevc == hevc)
 				return TRUE;
-			if (hevc && h264->Compressor)
-			{
-				WLog_Print(h264->log, WLOG_WARN, "HEVC is only supported for decoding");
-				return FALSE;
-			}
 			/* the codec decides which subsystem can be used, select it again */
 			if (h264->subsystem)
 				IFCALL(h264->subsystem->Uninit, h264);
