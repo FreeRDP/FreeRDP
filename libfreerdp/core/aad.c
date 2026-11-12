@@ -790,7 +790,7 @@ int aad_client_begin(rdpAad* aad)
 	return -1;
 }
 
-int aad_recv(rdpAad* aad, wStream* s)
+int aad_recv(rdpAad* aad, WINPR_ATTR_UNUSED wStream* s)
 {
 	WINPR_ASSERT(aad);
 	WLog_Print(aad->log, WLOG_ERROR, "AAD security not compiled in, aborting!");
@@ -894,6 +894,7 @@ cleanup:
 	return token;
 }
 
+#if defined(WITH_AAD)
 BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 {
 	WINPR_ASSERT(context);
@@ -914,6 +915,7 @@ BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 	rdp->wellknown = freerdp_utils_aad_get_wellknown_context(context, log, base, tenantid);
 	return rdp->wellknown != nullptr;
 }
+#endif
 
 const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)
 {
