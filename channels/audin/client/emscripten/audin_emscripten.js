@@ -20,15 +20,23 @@
 function audin_web_start(id, capture, samples, channels, rate)
 {
 	const all = (Module.freerdpAudin = Module.freerdpAudin || {});
-	const st = { stopped: false, stream: null, ctx: null };
+	const st = { stopped: false, stream: null, ctx: null, closed: null };
+	const shutdown = () => {
+		if (st.stream)
+			st.stream.getTracks().forEach((t) => t.stop());
+		st.stream = null;
+		if (st.ctx)
+			st.closed = st.ctx.close();
+		st.ctx = null;
+		return st.closed;
+	};
 	st.stop = () => {
 		st.stopped = true;
 		delete all[id];
-		if (st.stream)
-			st.stream.getTracks().forEach((t) => t.stop());
 		const release = () => _audin_emscripten_release(capture);
-		if (st.ctx)
-			st.ctx.close().then(release, release);
+		const closed = shutdown();
+		if (closed)
+			closed.then(release, release);
 		else
 			release();
 	};
@@ -96,7 +104,12 @@ function audin_web_start(id, capture, samples, channels, rate)
 		}
 		catch (e)
 		{
+			if (st.stopped)
+				return;
 			err("[audin] microphone capture failed: " + e);
+			Atomics.store(HEAP32, capture >>> 2, 0);
+			Atomics.notify(HEAP32, (capture >>> 2) + 1);
+			shutdown();
 			if (typeof Module.onFreerdpMicrophoneError === "function")
 				Module.onFreerdpMicrophoneError(e);
 		}
