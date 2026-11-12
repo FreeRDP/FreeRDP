@@ -521,6 +521,11 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if (code)
 				{
+					if (code > INT16_MAX)
+					{
+						WLog_ERR(RFX_TAG, "code=%d", code);
+						return -1;
+					}
 					mag = WINPR_ASSERTING_INT_CAST(int16_t, code);
 					nIdx = 32 - lzcnt_s(WINPR_ASSERTING_INT_CAST(uint32_t, mag));
 				}
