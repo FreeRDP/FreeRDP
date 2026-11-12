@@ -154,6 +154,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_REORDER_DECAY_ROUNDS 8
 /* Retransmitted data sequence numbers, used to detect late-arriving originals. */
 #define RDPUDP2_RESENT_HISTORY 256
+/* An original that has not shown up by then is not late but lost. Entries only leave through
+ * ACK vectors, and without the limit one that saw no vector for half the sequence space would
+ * match an unrelated datagram a wrap later. */
+#define RDPUDP2_RESENT_MAX_AGE_MS 2000
 /* [RFC6298] 5.5: after a timeout, new datagrams use the doubled timeout until an RTT
  * sample arrives, backing off by at most 2^RDPUDP2_MAX_RTO_BACKOFF. This ensures RTT
  * growth past the timeout is measured, as Karn's rule discards samples from
@@ -364,6 +368,7 @@ struct rdp_udp
 		BOOL valid;
 		BOOL reported; /* Retransmitted due to an ACK vector report rather than a timeout */
 		UINT16 seq;
+		UINT64 at;                    /* when it was resent, milliseconds */
 	} resent[RDPUDP2_RESENT_HISTORY]; /* Data sequence numbers that have been superseded by a
 	                                     retransmission */
 	size_t resentNext;
@@ -2150,12 +2155,13 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 		return;
 
 	/* The original copy of a retransmitted datagram arrived; it was delayed, not lost. */
+	const UINT64 vectorTime = now_ms(udp);
 	for (size_t x = 0; x < RDPUDP2_RESENT_HISTORY; x++)
 	{
 		if (!udp->resent[x].valid)
 			continue;
 		const UINT16 seq = udp->resent[x].seq;
-		if (seq16_after(base, seq))
+		if (seq16_after(base, seq) || (vectorTime - udp->resent[x].at > RDPUDP2_RESENT_MAX_AGE_MS))
 		{
 			udp->resent[x].valid = FALSE;
 			continue;
@@ -2841,6 +2847,7 @@ static BOOL run_timers(rdpUdp* udp)
 				udp->resent[udp->resentNext].valid = TRUE;
 				udp->resent[udp->resentNext].reported = reported;
 				udp->resent[udp->resentNext].seq = WINPR_ASSERTING_INT_CAST(UINT16, p->seq);
+				udp->resent[udp->resentNext].at = now;
 				udp->resentNext = (udp->resentNext + 1) % RDPUDP2_RESENT_HISTORY;
 			}
 			udp->pendingIndex[p->seq & 0xFFFF] = 0;
