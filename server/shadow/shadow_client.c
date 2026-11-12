@@ -2879,7 +2879,12 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			events[nCount++] = gfxevent;
 #endif
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		/* With a UDP tunnel on offer the channel manager is checked every second: it moves
+		 * the channels to the tunnel once it has waited long enough for the client's answers
+		 * to their creation, and nothing signals that moment. */
+		const BOOL udp = (freerdp_settings_get_uint32(settings, FreeRDP_MultitransportFlags) &
+		                  SOFTSYNC_TCP_TO_UDP) != 0;
+		status = WaitForMultipleObjects(nCount, events, FALSE, udp ? 1000 : INFINITE);
 
 		if (status == WAIT_FAILED)
 			goto fail;
@@ -2998,7 +3003,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			}
 		}
 
-		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
+		if ((WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
 		{
 			if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
 			{
