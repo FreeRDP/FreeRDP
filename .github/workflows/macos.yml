@@ -32,6 +32,9 @@ jobs:
         run: |
           ./scripts/bundle-mac-os.sh --build-deps-only
 
+      - name: Log workspace before build
+        run: |
+          find .
 
       - name: "Run mac os build..."
         run: |
