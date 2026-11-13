@@ -1650,6 +1650,39 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 }
 
 /**
+ * The server restarts the graphics pipeline and asks for the capabilities again. It then confirms
+ * one, resets the graphics and creates its surfaces anew, so the ones we still hold are dropped
+ * here.
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpgfx_recv_caps_reset_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	WINPR_ASSERT(callback);
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(gfx);
+
+	/* the PDU has no body, tolerate one */
+	if (!Stream_SafeSeek(s, Stream_GetRemainingLength(s)))
+		return ERROR_INVALID_DATA;
+
+	WLog_Print(gfx->base.log, WLOG_DEBUG, "RecvCapsResetPdu: sending the capabilities again");
+
+	free_surfaces(gfx->context, gfx->SurfaceTable);
+	const UINT error = evict_cache_slots(gfx->context, gfx->MaxCacheSlots, gfx->CacheSlots);
+	if (error)
+	{
+		// print error, but don't consider this a hard failure
+		WLog_Print(gfx->base.log, WLOG_ERROR, "evict_cache_slots failed with error %" PRIu32 "",
+		           error);
+	}
+	gfx->UnacknowledgedFrames = 0;
+	gfx->TotalDecodedFrames = 0;
+
+	return rdpgfx_send_supported_caps(callback);
+}
+
+/**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
@@ -2586,6 +2619,13 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* data)
 			if (!Stream_SafeSeek(s, packetlen))
 				error = ERROR_INVALID_DATA;
 			break;
+
+		case RDPGFX_CMDID_CAPSRESET:
+			if ((error = rdpgfx_recv_caps_reset_pdu(callback, s)))
+				WLog_Print(gfx->base.log, WLOG_ERROR,
+				           "rdpgfx_recv_caps_reset_pdu failed with error %" PRIu32 "!", error);
+			break;
+
 		default:
 			error = CHANNEL_RC_BAD_PROC;
 			break;
