@@ -19,7 +19,7 @@ jobs:
 
       - name: Cache Dependencies
         id: restore-dependencies
-        uses: actions/restore@v6
+        uses: actions/cache/restore@v6
         with:
           path: |
             !build-macos/**/*freerdp*
@@ -34,7 +34,8 @@ jobs:
       
       - name: Save Dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        uses: actions/save@v6
+        id: save-dependencies
+        uses: actions/cache/save@v6
         with:
           path: |
             !build-macos/**/*freerdp*
