@@ -246,6 +246,6 @@ FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BIO_METHOD* BIO_s_transport_layer(void);
+FREERDP_LOCAL const BIO_METHOD* BIO_s_transport_layer(void);
 
 #endif /* FREERDP_LIB_CORE_TRANSPORT_H */

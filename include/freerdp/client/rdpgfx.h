@@ -175,6 +175,12 @@ extern "C"
 		CRITICAL_SECTION mux;
 		rdpCodecs* codecs;
 		PROFILER_DEFINE(SurfaceProfiler)
+
+		/** The RDPGFX_CAPVERSION_* the server confirmed, 0 before the caps confirm PDU.
+		 * Tells what RDPGFX_CODECID_AV1 carries: AV1 with RDPGFX_CAPVERSION_FRDP_1, AV2 with
+		 * RDPGFX_CAPVERSION_FRDP_2.
+		 * @since version 3.34.0 */
+		UINT32 CapsVersion;
 	};
 
 	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
@@ -183,6 +189,15 @@ extern "C"
 	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* context);
 
 	/** @brief Get the number of GFX stats indices in use.
+	 *
+	 *  The indices hold, in this order: surface commands per codec ID, PDUs per command ID with
+	 *  one more slot for invalid command IDs, encoded bytes per codec ID (the name of the codec's
+	 *  slot with _BYTES added), frames the server ended and frames not yet acknowledged. The
+	 *  frames counted as ended are the ones reported as decoded in the frame acknowledge PDU,
+	 *  whatever the decoders made of them. Codec IDs nothing uses read RDPGFX_CODECID_UNKNOWN.
+	 *  All of them start at 0 when the channel opens and are still readable after it closed.
+	 *  New stats are added at the end, an index never changes its meaning. Use the name to find
+	 *  one.
 	 *
 	 *  @return The number of GFX stats indices that will return a value
 	 *  @since version 3.27.0

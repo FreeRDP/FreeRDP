@@ -426,24 +426,33 @@ static int transport_bio_simple_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_simple_socket(void)
+static BOOL CALLBACK bio_register(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce, PVOID Parameter,
+                                  WINPR_ATTR_UNUSED PVOID* Context)
+{
+	BIO_METHOD** methods = (BIO_METHOD**)Parameter;
+	WINPR_ASSERT(methods);
+
+	BIO_METHOD* bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "SimpleSocket");
+	*methods = bio_methods;
+	if (!bio_methods)
+		return FALSE;
+
+	BIO_meth_set_write(bio_methods, transport_bio_simple_write);
+	BIO_meth_set_read(bio_methods, transport_bio_simple_read);
+	BIO_meth_set_puts(bio_methods, transport_bio_simple_puts);
+	BIO_meth_set_gets(bio_methods, transport_bio_simple_gets);
+	BIO_meth_set_ctrl(bio_methods, transport_bio_simple_ctrl);
+	BIO_meth_set_create(bio_methods, transport_bio_simple_new);
+	BIO_meth_set_destroy(bio_methods, transport_bio_simple_free);
+	return TRUE;
+}
+
+const BIO_METHOD* BIO_s_simple_socket(void)
 {
 	static BIO_METHOD* bio_methods = nullptr;
-
-	if (bio_methods == nullptr)
-	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "SimpleSocket")))
-			return nullptr;
-
-		BIO_meth_set_write(bio_methods, transport_bio_simple_write);
-		BIO_meth_set_read(bio_methods, transport_bio_simple_read);
-		BIO_meth_set_puts(bio_methods, transport_bio_simple_puts);
-		BIO_meth_set_gets(bio_methods, transport_bio_simple_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_bio_simple_ctrl);
-		BIO_meth_set_create(bio_methods, transport_bio_simple_new);
-		BIO_meth_set_destroy(bio_methods, transport_bio_simple_free);
-	}
-
+	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+	if (!InitOnceExecuteOnce(&once, bio_register, (void*)&bio_methods, nullptr))
+		return nullptr;
 	return bio_methods;
 }
 
@@ -641,24 +650,32 @@ static int transport_bio_buffered_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_buffered_socket(void)
+static BOOL CALLBACK bio_socket_register(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce, PVOID Parameter,
+                                         WINPR_ATTR_UNUSED PVOID* Context)
+{
+	BIO_METHOD** methods = (BIO_METHOD**)Parameter;
+	WINPR_ASSERT(methods);
+
+	BIO_METHOD* bio_methods = BIO_meth_new(BIO_TYPE_BUFFERED, "BufferedSocket");
+	*methods = bio_methods;
+	if (!bio_methods)
+		return FALSE;
+	BIO_meth_set_write(bio_methods, transport_bio_buffered_write);
+	BIO_meth_set_read(bio_methods, transport_bio_buffered_read);
+	BIO_meth_set_puts(bio_methods, transport_bio_buffered_puts);
+	BIO_meth_set_gets(bio_methods, transport_bio_buffered_gets);
+	BIO_meth_set_ctrl(bio_methods, transport_bio_buffered_ctrl);
+	BIO_meth_set_create(bio_methods, transport_bio_buffered_new);
+	BIO_meth_set_destroy(bio_methods, transport_bio_buffered_free);
+	return TRUE;
+}
+
+const BIO_METHOD* BIO_s_buffered_socket(void)
 {
 	static BIO_METHOD* bio_methods = nullptr;
-
-	if (bio_methods == nullptr)
-	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_BUFFERED, "BufferedSocket")))
-			return nullptr;
-
-		BIO_meth_set_write(bio_methods, transport_bio_buffered_write);
-		BIO_meth_set_read(bio_methods, transport_bio_buffered_read);
-		BIO_meth_set_puts(bio_methods, transport_bio_buffered_puts);
-		BIO_meth_set_gets(bio_methods, transport_bio_buffered_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_bio_buffered_ctrl);
-		BIO_meth_set_create(bio_methods, transport_bio_buffered_new);
-		BIO_meth_set_destroy(bio_methods, transport_bio_buffered_free);
-	}
-
+	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+	if (!InitOnceExecuteOnce(&once, bio_socket_register, (void*)&bio_methods, nullptr))
+		return nullptr;
 	return bio_methods;
 }
 

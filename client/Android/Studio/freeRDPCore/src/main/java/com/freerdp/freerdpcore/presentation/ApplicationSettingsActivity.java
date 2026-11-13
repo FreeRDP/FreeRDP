@@ -286,6 +286,13 @@ public class ApplicationSettingsActivity
 		    context.getString(R.string.preference_key_ui_use_back_as_altf4), false);
 	}
 
+	public static boolean getPhysicalKeyboardDeviceLayout(Context context)
+	{
+		SharedPreferences preferences = get(context);
+		return preferences.getBoolean(
+		    context.getString(R.string.preference_key_ui_physical_keyboard_device_layout), false);
+	}
+
 	public static boolean getAcceptAllCertificates(Context context)
 	{
 		SharedPreferences preferences = get(context);

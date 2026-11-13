@@ -957,8 +957,10 @@ static void xf_keyboard_sync_pressed_modifiers(xfContext* xfc, UINT32 state, Key
 		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
 			continue;
 
+		WINPR_ASSERT(sizeof(KeyCode) == 1);
+		WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) == 256);
 		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
-		if ((keycode == 0) || (keycode >= ARRAYSIZE(xfc->KeyboardState)))
+		if (keycode == 0)
 			continue;
 
 		const int mask = xf_keyboard_get_keymask(xfc, keysyms[i]);
@@ -982,8 +984,10 @@ static void xf_keyboard_sync_pressed_modifiers(xfContext* xfc, UINT32 state, Key
 		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
 			continue;
 
+		WINPR_ASSERT(sizeof(KeyCode) == 1);
+		WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) == 256);
 		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
-		if ((keycode == 0) || (keycode >= ARRAYSIZE(xfc->KeyboardState)) || (keycode == skip))
+		if ((keycode == 0) || (keycode == skip))
 			continue;
 		if (xfc->KeyboardState[keycode])
 			continue;
@@ -1199,13 +1203,13 @@ static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 }
 
 WINPR_ATTR_NODISCARD
-static FREERDP_CLIENT_KBD_MOD xk_keyboard_get_modifier_keys(xfContext* xfc);
+static UINT32 xk_keyboard_get_modifier_keys(xfContext* xfc);
 
 static BOOL xf_keyboard_has_system_modifier(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
-	const FREERDP_CLIENT_KBD_MOD mods = xk_keyboard_get_modifier_keys(xfc);
+	const UINT32 mods = xk_keyboard_get_modifier_keys(xfc);
 	return (mods & (FREERDP_CLIENT_KBD_MOD_LCONTROL | FREERDP_CLIENT_KBD_MOD_RCONTROL |
 	                FREERDP_CLIENT_KBD_MOD_LMENU | FREERDP_CLIENT_KBD_MOD_RMENU |
 	                FREERDP_CLIENT_KBD_MOD_LWIN | FREERDP_CLIENT_KBD_MOD_RWIN)) == 0;
@@ -1237,7 +1241,7 @@ BOOL xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 		{
 			wchar_t buffer[32] = WINPR_C_ARRAY_INIT;
 			int xwc = -1;
-			const FREERDP_CLIENT_KBD_MOD modmask = xk_keyboard_get_modifier_keys(xfc);
+			const UINT32 modmask = xk_keyboard_get_modifier_keys(xfc);
 
 			XIM xim = XOpenIM(xfc->display, nullptr, nullptr, nullptr);
 			if (!xim)
@@ -1477,8 +1481,7 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 	return TRUE;
 }
 
-static int xf_keyboard_execute_action_script(xfContext* xfc, FREERDP_CLIENT_KBD_MOD mods,
-                                             KeySym keysym)
+static int xf_keyboard_execute_action_script(xfContext* xfc, UINT32 mods, KeySym keysym)
 {
 	int status = 1;
 	BOOL match = FALSE;
@@ -1541,9 +1544,9 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, FREERDP_CLIENT_KBD_
 	return status;
 }
 
-FREERDP_CLIENT_KBD_MOD xk_keyboard_get_modifier_keys(xfContext* xfc)
+UINT32 xk_keyboard_get_modifier_keys(xfContext* xfc)
 {
-	FREERDP_CLIENT_KBD_MOD mods = FREERDP_CLIENT_KBD_MOD_NONE;
+	UINT32 mods = FREERDP_CLIENT_KBD_MOD_NONE;
 
 	if (xf_keyboard_key_pressed(xfc, XK_Shift_L))
 		mods |= FREERDP_CLIENT_KBD_MOD_LSHIFT;
@@ -1566,7 +1569,7 @@ FREERDP_CLIENT_KBD_MOD xk_keyboard_get_modifier_keys(xfContext* xfc)
 
 BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 {
-	const FREERDP_CLIENT_KBD_MOD mods = xk_keyboard_get_modifier_keys(xfc);
+	const UINT32 mods = xk_keyboard_get_modifier_keys(xfc);
 
 	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
 	// do not return anything such that the key could be used by client if ungrab is not the goal
@@ -1747,7 +1750,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 		return;
 
 	// all requirements for ungrab are fulfilled, ungrabbing now
-	const FREERDP_CLIENT_KBD_MOD mods = xk_keyboard_get_modifier_keys(xfc);
+	const UINT32 mods = xk_keyboard_get_modifier_keys(xfc);
 
 	if (((mods & (FREERDP_CLIENT_KBD_MOD_RCONTROL)) == 0))
 	{

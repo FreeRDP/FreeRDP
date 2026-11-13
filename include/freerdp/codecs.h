@@ -29,6 +29,12 @@
 #if defined(WITH_GFX_AV1)
 #include <freerdp/codec/av1.h>
 #endif
+#if defined(WITH_GFX_AV2)
+#include <freerdp/codec/av2.h>
+#endif
+#if defined(WITH_GFX_AZURE)
+#include <freerdp/codec/hevc.h>
+#endif
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/h264.h>
@@ -51,6 +57,14 @@ typedef enum
 #if defined(WITH_GFX_AV1)
 	FREERDP_CODEC_AV1_I420 = 0x00000200u,
 	FREERDP_CODEC_AV1_I444 = 0x00000400u,
+#endif
+#if defined(WITH_GFX_AV2)
+	FREERDP_CODEC_AV2_I420 = 0x00000800u, /* @since version 3.34.0 */
+	FREERDP_CODEC_AV2_I444 = 0x00001000u, /* @since version 3.34.0 */
+#endif
+#if defined(WITH_GFX_AZURE)
+	FREERDP_CODEC_HEVC_I420 = 0x00002000u, /* @since version 3.34.0 */
+	FREERDP_CODEC_HEVC_I444 = 0x00004000u, /* @since version 3.34.0 */
 #endif
 	FREERDP_CODEC_ALL = 0x7FFFFFFFu /* C enum types are restricted to int */
 } FreeRDP_CodecFlags;
@@ -114,6 +128,20 @@ extern "C"
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_codec_id_to_str(UINT32 id);
+
+	/**  @brief Check if a given codec is supported in the build
+	 *
+	 *   @param context The RDP context to use for the check
+	 *   @param codec The codec to check
+	 *   @param encoder If encoding or decoding is required
+	 *
+	 *   @return TRUE if supported, FALSE otherwise
+	 *
+	 *   @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_codec_supported(rdpContext* context, FreeRDP_CodecFlags codec,
+	                                         BOOL encoder);
 
 #ifdef __cplusplus
 }

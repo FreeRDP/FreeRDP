@@ -39,6 +39,39 @@
 
 #define TAG FREERDP_TAG("crypto")
 
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+/* SHAKE256 with 512 bits of output over the DER encoding of the cert */
+static void* ed448_cert_digest(const X509* cert, size_t* pLength)
+{
+	WINPR_ASSERT(pLength);
+
+	*pLength = 0;
+
+	int ok = 0;
+	unsigned char* der = nullptr;
+	const int derlen = i2d_X509(cert, &der);
+	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+	void* out = calloc(32, sizeof(BYTE));
+	if ((derlen <= 0) || !ctx || !out || !der)
+		goto fail;
+
+	ok = EVP_DigestInit_ex(ctx, EVP_shake256(), nullptr) &&
+	     EVP_DigestUpdate(ctx, der, (size_t)derlen) && EVP_DigestFinalXOF(ctx, out, 32);
+
+fail:
+
+	EVP_MD_CTX_free(ctx);
+	OPENSSL_free(der);
+	if (!ok)
+	{
+		free(out);
+		return nullptr;
+	}
+	*pLength = 32;
+	return out;
+}
+#endif
+
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
 	UINT32 fp_len = EVP_MAX_MD_SIZE;
@@ -67,12 +100,83 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	if (X509_digest(xcert, md, fp, &fp_len) != 1)
 	{
 		free(fp);
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+		if (_stricmp("shake256", hash) == 0)
+		{
+			fp = ed448_cert_digest(xcert, length);
+			return fp;
+		}
+#endif
 		WLog_ERR(TAG, "certificate does not have a %s hash!", hash);
 		return nullptr;
 	}
 
 	*length = fp_len;
 	return fp;
+}
+
+WINPR_ATTR_NODISCARD
+static long ASN1_STRING_length_wrapper(const ASN1_STRING* asn)
+{
+	if (!asn)
+		return 0;
+#if (OPENSSL_VERSION_NUMBER >= 0x40100000L)
+	const size_t rc = ASN1_STRING_get_length(asn);
+	if (rc > LONG_MAX)
+		return 0;
+	return WINPR_ASSERTING_INT_CAST(long, rc);
+#else
+	return ASN1_STRING_length(asn);
+#endif
+}
+
+BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length)
+{
+	WINPR_ASSERT(xcert);
+	WINPR_ASSERT(length);
+
+	/* RFC 5929 section 4.1 leaves tls-server-end-point undefined when the certificate's
+	 * signatureAlgorithm uses no hash (Ed25519, Ed448, ML-DSA, SLH-DSA). Use the hash
+	 * X509_digest_sig() picks for these: SHA-512 for Ed25519 (the RFC 8419 default), SHA-256
+	 * for ML-DSA and SLH-DSA. Ed448 (SHAKE256) gives no result with OpenSSL 3.5, which needs an
+	 * output length for it. RSA-PSS and the algorithms with a hash are not handled here. */
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L) && !defined(LIBRESSL_VERSION_NUMBER)
+	const int nid = X509_get_signature_nid(xcert);
+	int md_nid = NID_undef;
+	int pk_nid = NID_undef;
+	if ((nid == NID_rsassaPss) || (OBJ_find_sigid_algs(nid, &md_nid, &pk_nid) != 1) ||
+	    (md_nid != NID_undef) || (pk_nid == NID_undef))
+		return nullptr;
+
+	int fallback = 0;
+	BYTE* hash = nullptr;
+	ASN1_OCTET_STRING* digest = X509_digest_sig(xcert, nullptr, &fallback);
+	const long len = ASN1_STRING_length_wrapper(digest);
+	if (fallback)
+	{
+		if (len > 0)
+		{
+			hash = calloc((size_t)len + 1, sizeof(BYTE));
+			if (hash)
+			{
+				memcpy(hash, ASN1_STRING_get0_data(digest), (size_t)len);
+				*length = (size_t)len;
+			}
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+		}
+		else if (nid == NID_ED448)
+		{
+			hash = x509_utils_get_hash(xcert, "shake256", length);
+#endif
+		}
+	}
+	ASN1_OCTET_STRING_free(digest);
+	return hash;
+#else
+	WINPR_UNUSED(xcert);
+	WINPR_UNUSED(length);
+	return nullptr;
+#endif
 }
 
 WINPR_ATTR_NODISCARD
@@ -928,7 +1032,7 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 
 	/* Decode the structure. */
 	inp = ASN1_STRING_get0_data(sequence);
-	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length(sequence));
+	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length_wrapper(sequence));
 	if (params == nullptr)
 		goto end;
 
@@ -962,7 +1066,8 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 			goto end;
 		mgf_param_sequence = mgf_param_value;
 		inp = ASN1_STRING_get0_data(mgf_param_sequence);
-		mgf1_digest_alg = d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length(mgf_param_sequence));
+		mgf1_digest_alg =
+		    d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length_wrapper(mgf_param_sequence));
 		if (mgf1_digest_alg == nullptr)
 			goto end;
 

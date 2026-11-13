@@ -38,6 +38,8 @@
 #include <aom/aomdx.h>
 #endif
 
+#include "h264.h"
+
 #if defined(WITH_DAV1D)
 #include <dav1d/dav1d.h>
 #endif
@@ -66,6 +68,8 @@ struct S_FREERDP_AV1_CONTEXT
 	aom_codec_iface_t* iface;
 	/* the next frame converts the whole surface to YUV (after a reset or a failure) */
 	bool fullFrameNext;
+	UINT32 cqLevel; /* FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL, 0: libaom's */
+	UINT32 speed;   /* FREERDP_AV1_CONTEXT_OPTION_SPEED */
 	/* encoder statistics, see av1_encoder_stats() */
 	struct
 	{
@@ -128,14 +132,19 @@ static BOOL av1_aom_apply_controls(FREERDP_AV1_CONTEXT* av1)
 		int value;
 		const char* name;
 	} controls[] = {
-		{ AOME_SET_CPUUSED, AV1_AOM_RT_SPEED, "AOME_SET_CPUUSED" },
+		{ AOME_SET_CPUUSED, (int)av1->speed, "AOME_SET_CPUUSED" },
 		/* screen content tools (palette, intra block copy): sharp text at a lower bit rate */
 		{ AV1E_SET_TUNE_CONTENT, AOM_CONTENT_SCREEN, "AV1E_SET_TUNE_CONTENT" },
 		{ AV1E_SET_ROW_MT, 1, "AV1E_SET_ROW_MT" },
+		/* the quality the two quality modes keep; the other modes ignore it */
+		{ AOME_SET_CQ_LEVEL, (int)av1->cqLevel, "AOME_SET_CQ_LEVEL" },
 	};
 
+	const bool quality = (av1->ecfg.rc_end_usage == AOM_Q) || (av1->ecfg.rc_end_usage == AOM_CQ);
 	for (size_t x = 0; x < ARRAYSIZE(controls); x++)
 	{
+		if ((controls[x].id == AOME_SET_CQ_LEVEL) && (!quality || (av1->cqLevel == 0)))
+			continue;
 		const aom_codec_err_t rc = aom_codec_control(&av1->ctx, controls[x].id, controls[x].value);
 		if (rc != AOM_CODEC_OK)
 		{
@@ -172,41 +181,6 @@ static BOOL av1_aom_damage(const FREERDP_AV1_CONTEXT* av1, const RECTANGLE_16* r
 	return TRUE;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
-{
-	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
-	if (!meta || (QP > UINT8_MAX))
-	{
-		free(rectangles);
-		return FALSE;
-	}
-
-	meta->regionRects = rectangles;
-	if (count == 0)
-		return TRUE;
-
-	if (count > UINT32_MAX)
-		return FALSE;
-
-	meta->quantQualityVals = calloc(count, sizeof(RDPGFX_H264_QUANT_QUALITY));
-
-	if (!meta->quantQualityVals || !meta->regionRects)
-		return FALSE;
-	meta->numRegionRects = (UINT32)count;
-	for (size_t x = 0; x < count; x++)
-	{
-		RDPGFX_H264_QUANT_QUALITY* cur = &meta->quantQualityVals[x];
-		cur->qp = (UINT8)QP;
-
-		/* qpVal bit 6 and 7 are flags, so mask them out here.
-		 * qualityVal is [0-100] so 100 - qpVal [0-64] is always in range */
-		cur->qualityVal = 100 - (QP & 0x3F);
-	}
-	return TRUE;
-}
-
 #endif
 
 BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEXT_OPTION option,
@@ -239,7 +213,7 @@ BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEX
 					           value);
 					return FALSE;
 			}
-			av1->ecfg.rc_end_usage = value;
+			av1->ecfg.rc_end_usage = WINPR_ASSERTING_INT_CAST(enum aom_rc_mode, value);
 			break;
 		case FREERDP_AV1_CONTEXT_OPTION_BITRATE:
 			if (!av1->encoder)
@@ -251,11 +225,29 @@ BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEX
 				return FALSE;
 			av1->ecfg.g_usage = value;
 			break;
+		case FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL:
+			if (!av1->encoder || (value > 63))
+				return FALSE;
+			av1->cqLevel = value;
+			break;
+		case FREERDP_AV1_CONTEXT_OPTION_THREADS:
+			if (!av1->encoder || (value > 64))
+				return FALSE;
+			av1->ecfg.g_threads = (value > 0) ? value : av1_aom_threads();
+			break;
+		case FREERDP_AV1_CONTEXT_OPTION_SPEED:
+			if (!av1->encoder || (value > 12))
+				return FALSE;
+			av1->speed = value;
+			break;
 		default:
 			WLog_Print(av1->log, WLOG_ERROR, "Unknown FREERDP_AV1_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
 			return TRUE;
 	}
+	/* before the first reset only kept: the encoder starts once, with all of them */
+	if (!av1->initialized)
+		return TRUE;
 	return freerdp_av1_context_reset(av1, av1->ecfg.g_w, av1->ecfg.g_h);
 #else
 	WLog_Print(av1->log, WLOG_WARN, "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
@@ -286,6 +278,18 @@ UINT32 freerdp_av1_context_get_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONT
 			if (!av1->encoder)
 				return 0;
 			return av1->ecfg.g_usage;
+		case FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL:
+			if (!av1->encoder)
+				return 0;
+			return av1->cqLevel;
+		case FREERDP_AV1_CONTEXT_OPTION_THREADS:
+			if (!av1->encoder)
+				return 0;
+			return av1->ecfg.g_threads;
+		case FREERDP_AV1_CONTEXT_OPTION_SPEED:
+			if (!av1->encoder)
+				return 0;
+			return av1->speed;
 		default:
 			WLog_Print(av1->log, WLOG_ERROR, "Unknown FREERDP_AV1_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -351,6 +355,14 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	if (!av1->encoder)
 	{
 		WLog_Print(av1->log, WLOG_ERROR, "av1->encoder: %d", av1->encoder);
+		return -1;
+	}
+
+	if ((nSrcWidth == 0) || (nSrcWidth > UINT16_MAX) || (nSrcHeight == 0) ||
+	    (nSrcHeight > UINT16_MAX))
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "%" PRIu32 "x%" PRIu32 " out of range, maximum %dx%d",
+		           nSrcWidth, nSrcHeight, UINT16_MAX, UINT16_MAX);
 		return -1;
 	}
 
@@ -498,9 +510,11 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 		if (pkt->kind != AOM_CODEC_CX_FRAME_PKT)
 			continue;
 
+		if (pkt->data.frame.sz > UINT32_MAX)
+			return -1;
 		*ppDstData = pkt->data.frame.buf;
-		*pDstSize = pkt->data.frame.sz;
-	};
+		*pDstSize = WINPR_ASSERTING_INT_CAST(UINT32, pkt->data.frame.sz);
+	}
 	if (*pDstSize == 0)
 		return 0;
 
@@ -509,8 +523,8 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	RECTANGLE_16* rect = calloc(1, sizeof(RECTANGLE_16));
 	if (rect)
 	{
-		rect->right = nSrcWidth;
-		rect->bottom = nSrcHeight;
+		rect->right = WINPR_ASSERTING_INT_CAST(UINT16, nSrcWidth);
+		rect->bottom = WINPR_ASSERTING_INT_CAST(UINT16, nSrcHeight);
 	}
 	return allocate_h264_metablock(10, rect, meta, 1);
 #else
@@ -651,7 +665,7 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 				rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
 				break;
 			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
+				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported",
 				           pic->p.layout);
 				return -1;
 		}
@@ -1016,6 +1030,7 @@ FREERDP_AV1_CONTEXT* freerdp_av1_context_new(BOOL Compressor)
 			goto fail;
 		}
 		ctx->ecfg.g_threads = av1_aom_threads();
+		ctx->speed = AV1_AOM_RT_SPEED;
 #else
 		WLog_Print(ctx->log, WLOG_ERROR,
 		           "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");

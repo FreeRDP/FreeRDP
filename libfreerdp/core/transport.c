@@ -346,7 +346,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 
 	tls->hostname = settings->ServerHostname;
 	tls->serverName = settings->UserSpecifiedServerName;
-	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->ServerPort));
+	tls->port = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, settings->ServerPort));
 
 	if (tls->port == 0)
 		tls->port = 3389;
@@ -2253,6 +2253,10 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			status = -1;
 			break;
 
+		case BIO_CTRL_EOF:
+			status = -1;
+			break;
+
 		default:
 			WLog_ERR(TAG, "Unsupported BIO_CTRL %d", cmd);
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
@@ -2288,23 +2292,32 @@ static int transport_layer_bio_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_transport_layer(void)
+static BOOL CALLBACK bio_transport_register(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce, PVOID Parameter,
+                                            WINPR_ATTR_UNUSED PVOID* Context)
+{
+	BIO_METHOD** methods = (BIO_METHOD**)Parameter;
+	WINPR_ASSERT(methods);
+
+	BIO_METHOD* bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "TransportLayer");
+	*methods = bio_methods;
+	if (!bio_methods)
+		return FALSE;
+
+	BIO_meth_set_write(bio_methods, transport_layer_bio_write);
+	BIO_meth_set_read(bio_methods, transport_layer_bio_read);
+	BIO_meth_set_puts(bio_methods, transport_layer_bio_puts);
+	BIO_meth_set_gets(bio_methods, transport_layer_bio_gets);
+	BIO_meth_set_ctrl(bio_methods, transport_layer_bio_ctrl);
+	BIO_meth_set_create(bio_methods, transport_layer_bio_new);
+	BIO_meth_set_destroy(bio_methods, transport_layer_bio_free);
+	return TRUE;
+}
+
+const BIO_METHOD* BIO_s_transport_layer(void)
 {
 	static BIO_METHOD* bio_methods = nullptr;
-
-	if (bio_methods == nullptr)
-	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "TransportLayer")))
-			return nullptr;
-
-		BIO_meth_set_write(bio_methods, transport_layer_bio_write);
-		BIO_meth_set_read(bio_methods, transport_layer_bio_read);
-		BIO_meth_set_puts(bio_methods, transport_layer_bio_puts);
-		BIO_meth_set_gets(bio_methods, transport_layer_bio_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_layer_bio_ctrl);
-		BIO_meth_set_create(bio_methods, transport_layer_bio_new);
-		BIO_meth_set_destroy(bio_methods, transport_layer_bio_free);
-	}
-
+	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+	if (!InitOnceExecuteOnce(&once, bio_transport_register, (void*)&bio_methods, nullptr))
+		return nullptr;
 	return bio_methods;
 }

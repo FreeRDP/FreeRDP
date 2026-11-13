@@ -15,6 +15,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client.h>
 #include <freerdp/input.h>
 #include <freerdp/log.h>
 
@@ -168,6 +169,18 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			}
 			break;
 
+			case EVENT_TYPE_KEY_AS_UNICODE:
+			{
+				ANDROID_EVENT_KEY_AS_UNICODE* key_event = (ANDROID_EVENT_KEY_AS_UNICODE*)event;
+
+				/* The Java side still sends key combinations as virtual keys, so for now no Ctrl,
+				 * Alt or Win is in the mask here. */
+				rc = freerdp_client_send_key_as_unicode(&afc->common, key_event->flags,
+				                                        key_event->str, key_event->scancode,
+				                                        key_event->modmask);
+			}
+			break;
+
 			case EVENT_TYPE_CURSOR:
 			{
 				ANDROID_EVENT_CURSOR* cursor_event = (ANDROID_EVENT_CURSOR*)event;
@@ -279,6 +292,34 @@ ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key)
 }
 
 static void android_event_unicodekey_free(ANDROID_EVENT_KEY* event)
+{
+	free(event);
+}
+
+ANDROID_EVENT_KEY_AS_UNICODE* android_event_key_as_unicode_new(UINT16 flags, UINT32 scancode,
+                                                               const WCHAR* wstr, size_t wlen,
+                                                               UINT32 modmask)
+{
+	ANDROID_EVENT_KEY_AS_UNICODE* event =
+	    (ANDROID_EVENT_KEY_AS_UNICODE*)calloc(1, sizeof(ANDROID_EVENT_KEY_AS_UNICODE));
+
+	if (!event)
+		return nullptr;
+
+	event->type = EVENT_TYPE_KEY_AS_UNICODE;
+	event->flags = flags;
+	event->scancode = scancode;
+	event->modmask = modmask;
+
+	/* One character, at most a surrogate pair, fits str. Anything else leaves it empty, which
+	 * tells freerdp_client_send_key_as_unicode to send the scancode. */
+	if (wstr && (wlen > 0) && (wlen <= 2) &&
+	    (ConvertWCharNToUtf8(wstr, wlen, event->str, ARRAYSIZE(event->str)) < 0))
+		memset(event->str, 0, sizeof(event->str));
+	return event;
+}
+
+static void android_event_key_as_unicode_free(ANDROID_EVENT_KEY_AS_UNICODE* event)
 {
 	free(event);
 }
@@ -465,6 +506,10 @@ void android_event_free(ANDROID_EVENT* event)
 
 		case EVENT_TYPE_KEY_UNICODE:
 			android_event_unicodekey_free((ANDROID_EVENT_KEY*)event);
+			break;
+
+		case EVENT_TYPE_KEY_AS_UNICODE:
+			android_event_key_as_unicode_free((ANDROID_EVENT_KEY_AS_UNICODE*)event);
 			break;
 
 		case EVENT_TYPE_CURSOR:

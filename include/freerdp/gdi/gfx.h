@@ -54,6 +54,16 @@ extern "C"
 #else
 	    void* reservedAV1;
 #endif
+#if defined(WITH_GFX_AV2)
+		FREERDP_AV2_CONTEXT* av2; /** @since version 3.34.0 */
+#else
+	    void* reservedAV2;
+#endif
+#if defined(WITH_GFX_AZURE)
+		FREERDP_HEVC_CONTEXT* hevc; /** @since version 3.34.0 */
+#else
+	    void* reservedHEVC;
+#endif
 	};
 	typedef struct gdi_gfx_surface gdiGfxSurface;
 

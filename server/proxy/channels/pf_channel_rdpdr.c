@@ -320,7 +320,7 @@ static BOOL rdpdr_process_server_header(BOOL server, wLog* log, wStream* s, UINT
 		       "got %" PRIuz,
 		       rdpdr_component_string(component), rdpdr_packetid_string(PacketId), expect,
 		       Stream_GetRemainingLength(s));
-		return ERROR_INVALID_DATA;
+		return FALSE;
 	}
 
 	return TRUE;
@@ -1590,21 +1590,30 @@ static BOOL pf_channel_rdpdr_client_pass_message(pServerContext* ps, pClientCont
                                                  WINPR_ATTR_UNUSED UINT16 channelId,
                                                  const char* channel_name, wStream* s)
 {
-	pf_channel_client_context* rdpdr = nullptr;
-
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(pc);
 
-	rdpdr = HashTable_GetItemValue(pc->interceptContextMap, channel_name);
+	BOOL rc = FALSE;
+
+	HashTable_Lock(pc->interceptContextMap);
+	pf_channel_client_context* rdpdr =
+	    HashTable_GetItemValue(pc->interceptContextMap, channel_name);
 	if (!rdpdr)
-		return TRUE; /* Ignore data for channels not available on proxy -> server connection */
+		goto fail; /* Ignore data for channels not available on proxy -> server connection */
 	WINPR_ASSERT(rdpdr->queue);
 
 	if (!pf_channel_rdpdr_rewrite_device_list(rdpdr, ps, s, FALSE))
-		return FALSE;
+		goto fail;
 	if (!Queue_Enqueue(rdpdr->queue, s))
-		return FALSE;
-	return pf_channel_send_client_queue(pc, rdpdr);
+		goto fail;
+	if (!pf_channel_send_client_queue(pc, rdpdr))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	HashTable_Unlock(pc->interceptContextMap);
+	return rc || !rdpdr;
 }
 
 #if defined(WITH_PROXY_EMULATE_SMARTCARD)

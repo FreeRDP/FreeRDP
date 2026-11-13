@@ -36,6 +36,10 @@
 #if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
 #endif
+#include <freerdp/server/disp.h>
+#if defined(CHANNEL_CLIPRDR_SERVER)
+#include <freerdp/server/cliprdr.h>
+#endif
 #include <freerdp/server/rdpgfx.h>
 
 #include <freerdp/codec/color.h>
@@ -59,6 +63,7 @@ extern "C"
 	typedef struct rdp_shadow_capture rdpShadowCapture;
 	typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 	typedef struct rdp_shadow_multiclient_event rdpShadowMultiClientEvent;
+	typedef struct rdp_shadow_clipboard rdpShadowClipboard; /** @since version 3.34.0 */
 
 	typedef struct S_RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
 	typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
@@ -82,6 +87,11 @@ extern "C"
 	                                          rdpShadowClient* client);
 	typedef BOOL (*pfnShadowClientCapabilities)(rdpShadowSubsystem* subsystem,
 	                                            rdpShadowClient* client);
+	/** The client asks for another desktop size. A subsystem that sets this offers Display
+	 *  Control to its clients. Runs on the channel's thread and must not block.
+	 *  @since version 3.34.0 */
+	typedef BOOL (*pfnShadowClientResize)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+	                                      UINT32 width, UINT32 height);
 
 	typedef BOOL (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem,
 	                                          rdpShadowClient* client, UINT32 flags);
@@ -104,6 +114,29 @@ extern "C"
 	                                                          rdpShadowClient* client,
 	                                                          const AUDIO_FORMAT* format,
 	                                                          wStream* data);
+
+	/** The clipboard of the session, for a subsystem that has one: see
+	 *  shadow_clipboard_session_changed(). Each hook may run on any thread, must not block,
+	 *  and must not call the shadow_clipboard_ functions before it returned: the work goes
+	 *  to the subsystem's own thread.
+	 *
+	 *  @since version 3.34.0
+	 */
+#define SHADOW_CLIPBOARD_MAX_SIZE (256ull * 1024ull * 1024ull)
+
+	/** A client copied: the session offers its data from now on, in these mime types. With
+	 *  none, that client left or has nothing to offer: the session drops the offer. */
+	typedef BOOL (*pfnShadowClipboardOffer)(rdpShadowSubsystem* subsystem,
+	                                        const char* const* mimeTypes, size_t count);
+
+	/** A client pastes: read the session's clipboard, and hand the data, or a failure, to
+	 *  shadow_clipboard_session_data(). One read at a time. */
+	typedef BOOL (*pfnShadowClipboardRead)(rdpShadowSubsystem* subsystem, const char* mimeType);
+
+	/** The answer to shadow_clipboard_session_request(): the data, or nullptr on a failure.
+	 *  It is only valid during the call. */
+	typedef BOOL (*pfnShadowClipboardProvide)(rdpShadowSubsystem* subsystem, UINT32 request,
+	                                          const BYTE* data, size_t size);
 
 	struct rdp_shadow_client
 	{
@@ -135,12 +168,27 @@ extern "C"
 		audin_server_context* audin;
 #endif
 		RdpgfxServerContext* rdpgfx;
+#if defined(CHANNEL_CLIPRDR_SERVER)
+		CliprdrServerContext* cliprdr; /** @since version 3.33.1 */
+#endif
 
 		BOOL resizeRequested;
 		UINT32 resizeWidth;
 		UINT32 resizeHeight;
 		BOOL areGfxCapsReady; /** @since version 3.3.0 */
 		RDPGFX_CAPSET confirmedCaps; /** @since version 3.25.0 */
+		/** sound samples and volume: a thread of their own sends them, so that a frame being
+		 *  encoded does not hold the sound back
+		 *  @since version 3.34.0 */
+		wMessageQueue* SoundQueue;
+		HANDLE soundThread;       /** @since version 3.34.0 */
+		CRITICAL_SECTION vcmLock; /** one drain of the channel queue at a time
+		                           *  @since version 3.34.0 */
+		/** the keys this client pressed and has not released, one bit per scan code with its
+		 *  KBD_FLAGS_EXTENDED (0x100) and KBD_FLAGS_EXTENDED1 (0x200) flags
+		 *  @since version 3.34.0 */
+		BYTE keysDown[128];
+		DispServerContext* disp; /** @since version 3.34.0 */
 	};
 
 	struct rdp_shadow_server
@@ -188,6 +236,22 @@ extern "C"
 	    UINT32 reservedAV1[2];
 #endif
 		BOOL h264HwAccel; /** @since version 3.32.0 */
+		/** how many clients hold each key of rdpShadowClient::keysDown, guarded by lock
+		 *  @since version 3.34.0 */
+		UINT16 keysHeld[0x400];
+#if defined(WITH_GFX_AV2)
+		FREERDP_AV2_RATECONTROL AV2RateControlMode; /** @since version 3.34.0 */
+		UINT32 AV2BitRate;                          /** @since version 3.34.0 */
+#else
+	    UINT32 reservedAV2[2];
+#endif
+		rdpShadowClipboard* clipboard; /** @since version 3.34.0 */
+#if defined(WITH_GFX_AZURE)
+		FREERDP_HEVC_RATECONTROL HEVCRateControlMode; /** @since version 3.34.0 */
+		UINT32 HEVCBitRate;                           /** @since version 3.34.0 */
+#else
+	    UINT32 reservedHEVC[2];
+#endif
 	};
 
 	struct rdp_shadow_surface
@@ -259,6 +323,14 @@ extern "C"
 		rdpShadowServer* server;
 
 		WINPR_ATTR_NODISCARD pfnShadowRelMouseEvent RelMouseEvent; /** @since version 3.15.0 */
+
+		/* all three, or a client gets no clipboard channel from the core */
+		WINPR_ATTR_NODISCARD pfnShadowClipboardOffer ClipboardOffer; /** @since version 3.34.0 */
+		WINPR_ATTR_NODISCARD pfnShadowClipboardRead ClipboardRead;   /** @since version 3.34.0 */
+		WINPR_ATTR_NODISCARD pfnShadowClipboardProvide
+		    ClipboardProvide; /** @since version 3.34.0 */
+
+		WINPR_ATTR_NODISCARD pfnShadowClientResize ClientResize; /** @since version 3.34.0 */
 	};
 
 /* Definition of message between subsystem and clients */
@@ -317,6 +389,22 @@ extern "C"
 
 	FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
+
+	/** @brief Add a subsystem to the ones the server may use.
+	 *
+	 *  When more than one is added (and none is set with \b shadow_subsystem_set_entry), the
+	 *  server uses the first that finds a monitor, in the order they were added. The command
+	 *  line option \b /subsystem changes that order.
+	 *
+	 *  @param name The name \b /subsystem knows it by
+	 *  @param pEntry The subsystem's entry function
+	 *
+	 *  @return \b TRUE for success, \b FALSE for an invalid argument or too many subsystems
+	 *
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_subsystem_add_entry(const char* name, pfnShadowSubsystemEntry pEntry);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR(
@@ -419,6 +507,45 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode);
+
+	/** The session's clipboard changed, and not through ClipboardOffer.
+	 *
+	 *  @param server The server
+	 *  @param mimeTypes What the session offers now
+	 *  @param count The number of mime types, 0 for an empty clipboard
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_clipboard_session_changed(rdpShadowServer* server,
+	                                                  const char* const* mimeTypes, size_t count);
+
+	/** The answer to ClipboardRead.
+	 *
+	 *  @param server The server
+	 *  @param data What the session holds in that mime type, nullptr on a failure
+	 *  @param size The size of \b data
+	 *
+	 *  @return \b TRUE for success, \b FALSE when no read was waiting
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_clipboard_session_data(rdpShadowServer* server, const BYTE* data,
+	                                               size_t size);
+
+	/** The session pastes what a client offered: ClipboardProvide gets the answer.
+	 *
+	 *  @param server The server
+	 *  @param request Any number of the subsystem's, ClipboardProvide gets it back
+	 *  @param mimeType One of the mime types of ClipboardOffer
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL shadow_clipboard_session_request(rdpShadowServer* server, UINT32 request,
+	                                                  const char* mimeType);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 shadow_encoder_preferred_fps(rdpShadowEncoder* encoder);

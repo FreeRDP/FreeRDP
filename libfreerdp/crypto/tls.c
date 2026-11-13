@@ -43,6 +43,7 @@
 
 #include <freerdp/log.h>
 #include "../crypto/tls.h"
+#include "../crypto/x509_utils.h"
 #include "../core/tcp.h"
 
 #include "opensslcompat.h"
@@ -764,22 +765,34 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(const rdpCertificate* ce
 
 	/* See https://www.rfc-editor.org/rfc/rfc5929 for details about hashes */
 	WINPR_MD_TYPE alg = freerdp_certificate_get_signature_alg(cert);
-	const char* hash = nullptr;
-	switch (alg)
+	char* CertificateHash = nullptr;
+	if (alg == WINPR_MD_NONE)
 	{
-
-		case WINPR_MD_MD5:
-		case WINPR_MD_SHA1:
-			hash = winpr_md_type_to_string(WINPR_MD_SHA256);
-			break;
-		default:
-			hash = winpr_md_type_to_string(alg);
-			break;
+		/* Ed25519, Ed448, ML-DSA, SLH-DSA: no hash in the signature algorithm */
+		const X509* x509 =
+		    freerdp_certificate_get_x509(WINPR_CAST_CONST_PTR_AWAY(cert, rdpCertificate*));
+		CertificateHash =
+		    (char*)x509_utils_get_hashless_signature_hash(x509, &CertificateHashLength);
 	}
-	if (!hash)
-		return nullptr;
+	else
+	{
+		const char* hash = nullptr;
+		switch (alg)
+		{
 
-	char* CertificateHash = freerdp_certificate_get_hash(cert, hash, &CertificateHashLength);
+			case WINPR_MD_MD5:
+			case WINPR_MD_SHA1:
+				hash = winpr_md_type_to_string(WINPR_MD_SHA256);
+				break;
+			default:
+				hash = winpr_md_type_to_string(alg);
+				break;
+		}
+		if (!hash)
+			return nullptr;
+
+		CertificateHash = freerdp_certificate_get_hash(cert, hash, &CertificateHashLength);
+	}
 	if (!CertificateHash)
 		return nullptr;
 
@@ -1097,9 +1110,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 		if (tls->isClientMode)
 		{
-			WINPR_ASSERT(tls->port <= UINT16_MAX);
-			verify_status =
-			    tls_verify_certificate(tls, cert, tls_get_server_name(tls), (UINT16)tls->port);
+			verify_status = tls_verify_certificate(tls, cert, tls_get_server_name(tls), tls->port);
 
 			if (verify_status < 1)
 			{
@@ -1387,8 +1398,9 @@ BOOL freerdp_tls_send_alert(rdpTls* tls)
 	return TRUE;
 }
 
-int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length)
+int freerdp_tls_write_all(rdpTls* tls, const void* data, size_t length)
 {
+	const BYTE* bdata = data;
 	WINPR_ASSERT(tls);
 	size_t offset = 0;
 	BIO* bio = tls->bio;
@@ -1399,7 +1411,7 @@ int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length)
 	while (offset < length)
 	{
 		ERR_clear_error();
-		const int status = BIO_write(bio, &data[offset], (int)(length - offset));
+		const int status = BIO_write(bio, &bdata[offset], (int)(length - offset));
 
 		if (status > 0)
 			offset += (size_t)status;
@@ -1789,6 +1801,9 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 
 	if (tls->isGatewayTransport)
 		flags |= VERIFY_CERT_FLAG_GATEWAY;
+
+	if (tls->isHttpRequest)
+		flags |= VERIFY_CERT_FLAG_HTTP;
 
 	if (is_redirected(tls))
 		flags |= VERIFY_CERT_FLAG_REDIRECT;

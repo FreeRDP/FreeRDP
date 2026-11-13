@@ -20,105 +20,38 @@
 function audin_web_start(id, capture, samples, channels, rate)
 {
 	const all = (Module.freerdpAudin = Module.freerdpAudin || {});
-	const st = { stopped: false, stream: null, ctx: null };
+	const st = { stopped: false, stream: null, ctx: null, closed: null };
+	const shutdown = () => {
+		if (st.stream)
+			st.stream.getTracks().forEach((t) => t.stop());
+		st.stream = null;
+		if (st.ctx)
+			st.closed = st.ctx.close();
+		st.ctx = null;
+		return st.closed;
+	};
 	st.stop = () => {
 		st.stopped = true;
 		delete all[id];
-		if (st.stream)
-			st.stream.getTracks().forEach((t) => t.stop());
 		const release = () => _audin_emscripten_release(capture);
-		if (st.ctx)
-			st.ctx.close().then(release, release);
+		const closed = shutdown();
+		if (closed)
+			closed.then(release, release);
 		else
 			release();
 	};
 	all[id] = st;
 
-	/* The worklet code: runs on the audio thread, in its own global scope. */
-	function worklet_main()
-	{
-		class FreeRDPAudinCapture extends AudioWorkletProcessor
-		{
-			constructor(options)
-			{
-				super();
-				const o = options.processorOptions;
-				this.words = new Int32Array(o.memory, o.capture, 2);
-				this.ring = new Int16Array(o.memory, o.capture + 8, o.samples);
-				this.mask = o.samples - 1;
-				this.channels = o.channels;
-				this.step = sampleRate / o.rate; /* input frames per output frame */
-				this.t = 0;                      /* next output position in the input block */
-				this.last = new Float32Array(o.channels);
-				this.frame = new Float32Array(o.channels);
-				this.before = new Float32Array(o.channels);
-			}
-			read(input, i, out)
-			{
-				/* map the microphone channels to the negotiated ones */
-				if (this.channels === 1 && input.length > 1)
-					out[0] = (input[0][i] + input[1][i]) / 2;
-				else
-					for (let c = 0; c < this.channels; c++)
-						out[c] = input[Math.min(c, input.length - 1)][i];
-			}
-			process(inputs)
-			{
-				if (Atomics.load(this.words, 0) === 0)
-					return false;
-				const input = inputs[0];
-				if (!input || input.length === 0)
-					return true;
-				const n = input[0].length;
-				const ch = this.channels;
-				const cur = this.frame;
-				const a = this.before;
-				let pos = Atomics.load(this.words, 1);
-				/* linear interpolation between this.last (position -1) and the block */
-				let t = this.t;
-				let prev = -2;
-				while (t < n - 1)
-				{
-					const i = Math.floor(t);
-					const f = t - i;
-					if (i !== prev)
-					{
-						if (i < 0)
-							a.set(this.last);
-						else
-							this.read(input, i, a);
-						this.read(input, i + 1, cur);
-						prev = i;
-					}
-					for (let c = 0; c < ch; c++)
-					{
-						let v = a[c] + (cur[c] - a[c]) * f;
-						v = v < -1 ? -1 : v > 1 ? 1 : v;
-						this.ring[pos & this.mask] = v < 0 ? v * 32768 : v * 32767;
-						pos++;
-					}
-					t += this.step;
-				}
-				this.t = t - n;
-				this.read(input, n - 1, this.last);
-				Atomics.store(this.words, 1, pos | 0);
-				Atomics.notify(this.words, 1);
-				return true;
-			}
-		}
-		registerProcessor("freerdp-audin-capture", FreeRDPAudinCapture);
-	}
-	const worklet = "(" + worklet_main.toString() + ")();";
-
 	(async () => {
 		try
 		{
-			/* voice processing by default; a page can ask for other constraints */
-			const audio = Module.freerdpAudinConstraints || {
+			/* voice processing by default; a page can override single constraints */
+			const audio = {
 				channelCount: channels,
 				echoCancellation: true,
 				noiseSuppression: true,
-				autoGainControl: true
+				autoGainControl: true,
+				...Module.freerdpAudinConstraints
 			};
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: audio });
 			if (st.stopped)
@@ -127,11 +60,23 @@ function audin_web_start(id, capture, samples, channels, rate)
 				return;
 			}
 			st.stream = stream;
-			const ctx = (st.ctx = new AudioContext());
-			if (!all.workletUrl)
-				all.workletUrl =
-				    URL.createObjectURL(new Blob([worklet], { type: "text/javascript" }));
-			await ctx.audioWorklet.addModule(all.workletUrl);
+			/* capture at the negotiated rate so the browser resamples; not every browser can
+			 * connect a microphone to a context of another rate, then the worklet resamples */
+			let ctx, source;
+			try
+			{
+				ctx = st.ctx = new AudioContext({ sampleRate: rate });
+				source = ctx.createMediaStreamSource(stream);
+			}
+			catch (e)
+			{
+				if (ctx)
+					ctx.close().catch(() => {});
+				ctx = st.ctx = new AudioContext();
+				source = ctx.createMediaStreamSource(stream);
+			}
+			await ctx.audioWorklet.addModule(Module.freerdpAudinWorkletUrl ||
+			                                 locateFile("audin_emscripten_worklet.js"));
 			if (st.stopped)
 				return;
 			const node = new AudioWorkletNode(ctx, "freerdp-audin-capture", {
@@ -146,7 +91,7 @@ function audin_web_start(id, capture, samples, channels, rate)
 					rate: rate
 				}
 			});
-			ctx.createMediaStreamSource(stream).connect(node);
+			source.connect(node);
 			/* the output is silent; connected so that the browser keeps pulling the node */
 			node.connect(ctx.destination);
 			if (ctx.state !== "running")
@@ -159,7 +104,14 @@ function audin_web_start(id, capture, samples, channels, rate)
 		}
 		catch (e)
 		{
+			if (st.stopped)
+				return;
 			err("[audin] microphone capture failed: " + e);
+			Atomics.store(HEAP32, capture >>> 2, 0);
+			Atomics.notify(HEAP32, (capture >>> 2) + 1);
+			shutdown();
+			if (typeof Module.onFreerdpMicrophoneError === "function")
+				Module.onFreerdpMicrophoneError(e);
 		}
 	})();
 }

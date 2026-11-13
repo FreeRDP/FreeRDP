@@ -31,13 +31,11 @@
 #include <freerdp/codec/yuv.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/codecs.h>
 
 #include "h264.h"
 
 #define TAG FREERDP_TAG("codec")
-
-WINPR_ATTR_NODISCARD
-static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
 
 WINPR_ATTR_NODISCARD
 static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
@@ -175,10 +173,49 @@ static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSi
 	return status;
 }
 
+/* A full resolution 4:4:4 picture (HEVC 4:4:4): every pixel has its own chroma sample, convert
+ * only the updated regions. The colour is BT.709 full range as for 4:2:0. */
+WINPR_ATTR_NODISCARD
+static BOOL yuv444_planes_decode(H264_CONTEXT* h264, DWORD DstFormat, BYTE* pDstData,
+                                 UINT32 nDstStep, const RECTANGLE_16* regionRects,
+                                 UINT32 numRegionRects)
+{
+	WINPR_ASSERT(h264);
+
+	primitives_t* prims = primitives_get();
+	if (!prims || !prims->I444ToRGB_8u)
+		return FALSE;
+
+	const size_t bpp = FreeRDPGetBytesPerPixel(DstFormat);
+	for (UINT32 x = 0; x < numRegionRects; x++)
+	{
+		const RECTANGLE_16* rect = &regionRects[x];
+		const prim_size_t roi = { .width = rect->right - rect->left,
+			                      .height = rect->bottom - rect->top };
+		const BYTE* pSrc[3] = WINPR_C_ARRAY_INIT;
+		for (size_t p = 0; p < 3; p++)
+			pSrc[p] = &h264->pYUVData[p][1ull * rect->top * h264->iStride[p] + rect->left];
+		BYTE* pDst = &pDstData[1ull * rect->top * nDstStep + rect->left * bpp];
+
+		if (prims->I444ToRGB_8u(pSrc, h264->iStride, pDst, nDstStep, DstFormat, &roi) !=
+		    PRIMITIVES_SUCCESS)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
-                        DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
-                        WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
-                        UINT32 numRegionRects)
+                        DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight,
+                        const RECTANGLE_16* regionRects, UINT32 numRegionRects)
+{
+	return h26X_decompress(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep, nDstWidth,
+	                       nDstHeight, regionRects, numRegionRects);
+}
+
+INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
+                      DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
+                      WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                      UINT32 numRegionRects)
 {
 	int status = 0;
 	const BYTE* pYUVData[3];
@@ -197,6 +234,13 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 	if (status < 0)
 		return status;
 
+	if (h264->yuv444)
+	{
+		if (!yuv444_planes_decode(h264, DstFormat, pDstData, nDstStep, regionRects, numRegionRects))
+			return -1002;
+		return 1;
+	}
+
 	pYUVData[0] = h264->pYUVData[0];
 	pYUVData[1] = h264->pYUVData[1];
 	pYUVData[2] = h264->pYUVData[2];
@@ -208,8 +252,8 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
+BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles, RDPGFX_H264_METABLOCK* meta,
+                             size_t count)
 {
 	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
 	if (!meta || (QP > UINT8_MAX))
@@ -333,10 +377,9 @@ static inline BOOL diff_tile_avc444v2_aux(const RECTANGLE_16* tile, UINT32 width
 	return FALSE;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE_16* regionRect,
-                           BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
-                           UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
+BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRect,
+                    BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
+                    UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
 {
 	size_t count = 0;
 	size_t wc = 0;
@@ -908,6 +951,7 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 		return FALSE;
 
 	h264->subsystem = nullptr;
+	h264->yuv444 = FALSE;
 	if (!InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, nullptr, nullptr))
 		return FALSE;
 
@@ -983,6 +1027,11 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
+	return h264_context_new_ex(Compressor, FALSE, FALSE);
+}
+
+H264_CONTEXT* h264_context_new_ex(BOOL Compressor, BOOL hevc, BOOL hevc444)
+{
 	H264_CONTEXT* h264 = (H264_CONTEXT*)calloc(1, sizeof(H264_CONTEXT));
 	if (!h264)
 		return nullptr;
@@ -992,6 +1041,8 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	if (!h264->log)
 		goto fail;
 
+	h264->hevc = hevc;
+	h264->hevc444 = hevc444;
 	h264->Compressor = Compressor;
 	if (Compressor)
 	{
@@ -1091,6 +1142,40 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			h264->hwAccel = (value);
 			IFCALL(h264->subsystem->Uninit, h264);
 			return IFCALLRESULT(TRUE, h264->subsystem->Init, h264);
+		case H264_CONTEXT_OPTION_HEVC:
+		{
+			const BOOL hevc = value != 0;
+			if (h264->hevc == hevc)
+				return TRUE;
+			/* the codec decides which subsystem can be used, select it again */
+			if (h264->subsystem)
+				IFCALL(h264->subsystem->Uninit, h264);
+			h264->hevc = hevc;
+			if (h264_context_init(h264))
+				return TRUE;
+			WLog_Print(h264->log, WLOG_WARN, "no H264 subsystem supports %s",
+			           hevc ? "HEVC" : "H264");
+			return FALSE;
+		}
+		case H264_CONTEXT_OPTION_HEVC444:
+		{
+			const BOOL hevc444 = value != 0;
+			if (h264->hevc444 == hevc444)
+				return TRUE;
+			if (hevc444 && !h264->hevc)
+			{
+				WLog_Print(h264->log, WLOG_WARN, "HEVC 4:4:4 needs H264_CONTEXT_OPTION_HEVC");
+				return FALSE;
+			}
+			if (h264->subsystem)
+				IFCALL(h264->subsystem->Uninit, h264);
+			h264->hevc444 = hevc444;
+			if (h264_context_init(h264))
+				return TRUE;
+			WLog_Print(h264->log, WLOG_WARN, "no H264 subsystem supports HEVC %s",
+			           hevc444 ? "4:4:4" : "4:2:0");
+			return FALSE;
+		}
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -1115,9 +1200,149 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 			return h264->UsageType;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
 			return h264->hwAccel;
+		case H264_CONTEXT_OPTION_HEVC:
+			return h264->hevc ? 1 : 0;
+		case H264_CONTEXT_OPTION_HEVC444:
+			return h264->hevc444 ? 1 : 0;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
 			return 0;
 	}
+}
+
+static BOOL codecSupportStatus[33][2];
+static INIT_ONCE codecSupportStatusOnce = INIT_ONCE_STATIC_INIT;
+
+static size_t codecFlagToIndex(FreeRDP_CodecFlags codec)
+{
+	for (size_t index = 0; index < 32; index++)
+	{
+		const size_t mask = 1 << index;
+		if (codec == mask)
+			return index;
+	}
+	return ARRAYSIZE(codecSupportStatus) - 1;
+}
+
+static void setCodecSupportStatus(FreeRDP_CodecFlags codec, BOOL decoder, BOOL encoder)
+{
+	const size_t index = codecFlagToIndex(codec);
+	codecSupportStatus[index][0] = decoder;
+	codecSupportStatus[index][1] = encoder;
+}
+
+#if defined(WITH_GFX_AV1)
+WINPR_ATTR_NODISCARD
+static BOOL test_av1(BOOL Compressor, UINT32 flags)
+{
+	FREERDP_AV1_CONTEXT* av1 = freerdp_av1_context_new(Compressor);
+	if (!av1)
+		return FALSE;
+	UINT32 profile = 0;
+	if (flags == FREERDP_CODEC_AV1_I444)
+		profile = 1;
+	const BOOL decoder =
+	    freerdp_av1_context_set_option(av1, FREERDP_AV1_CONTEXT_OPTION_PROFILE, profile);
+	freerdp_av1_context_free(av1);
+	return decoder;
+}
+#endif
+
+#if defined(WITH_GFX_AV2)
+WINPR_ATTR_NODISCARD
+static BOOL test_av2(BOOL Compressor, UINT32 flags)
+{
+	FREERDP_AV2_CONTEXT* av2 = freerdp_av2_context_new(Compressor);
+	if (!av2)
+		return FALSE;
+	UINT32 profile = 0;
+	if (flags == FREERDP_CODEC_AV2_I444)
+		profile = 1;
+	const BOOL decoder =
+	    freerdp_av2_context_set_option(av2, FREERDP_AV2_CONTEXT_OPTION_PROFILE, profile);
+	freerdp_av2_context_free(av2);
+	return decoder;
+}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD
+static BOOL test_hevc(BOOL Compressor, UINT32 flags)
+{
+	FREERDP_HEVC_CONTEXT* hevc = freerdp_hevc_context_new(Compressor);
+	if (!hevc)
+		return FALSE;
+
+	UINT32 profile = 0;
+	if (flags == FREERDP_CODEC_HEVC_I444)
+		profile = 1;
+	const BOOL decoder =
+	    freerdp_hevc_context_set_option(hevc, FREERDP_HEVC_CONTEXT_OPTION_PROFILE, profile);
+	freerdp_hevc_context_free(hevc);
+	return decoder;
+}
+#endif
+
+static BOOL CALLBACK codec_support_status_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                               WINPR_ATTR_UNUSED PVOID param,
+                                               WINPR_ATTR_UNUSED PVOID* context)
+{
+	setCodecSupportStatus(FREERDP_CODEC_INTERLEAVED, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_PLANAR, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_NSCODEC, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_REMOTEFX, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_CLEARCODEC, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_ALPHACODEC, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_PROGRESSIVE, TRUE, TRUE);
+
+#if defined(WITH_GFX_H264)
+	{
+		H264_CONTEXT* h264 = h264_context_new(FALSE);
+		const BOOL decoder = h264 != nullptr;
+		h264_context_free(h264);
+
+		H264_CONTEXT* h264enc = h264_context_new(TRUE);
+		const BOOL encoder = h264enc != nullptr;
+		h264_context_free(h264enc);
+
+		setCodecSupportStatus(FREERDP_CODEC_AVC420, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_AVC444, decoder, encoder);
+	}
+#endif
+#if defined(WITH_GFX_AV1)
+	{
+		setCodecSupportStatus(FREERDP_CODEC_AV1_I420, test_av1(FALSE, FREERDP_CODEC_AV1_I420),
+		                      test_av1(TRUE, FREERDP_CODEC_AV1_I420));
+		setCodecSupportStatus(FREERDP_CODEC_AV1_I444, test_av1(FALSE, FREERDP_CODEC_AV1_I444),
+		                      test_av1(TRUE, FREERDP_CODEC_AV1_I444));
+	}
+#endif
+#if defined(WITH_GFX_AV2)
+	{
+		setCodecSupportStatus(FREERDP_CODEC_AV2_I420, test_av2(FALSE, FREERDP_CODEC_AV2_I420),
+		                      test_av2(TRUE, FREERDP_CODEC_AV2_I420));
+		setCodecSupportStatus(FREERDP_CODEC_AV2_I444, test_av2(FALSE, FREERDP_CODEC_AV2_I444),
+		                      test_av2(TRUE, FREERDP_CODEC_AV2_I444));
+	}
+#endif
+#if defined(WITH_GFX_AZURE)
+	{
+		setCodecSupportStatus(FREERDP_CODEC_HEVC_I420, test_hevc(FALSE, FREERDP_CODEC_HEVC_I420),
+		                      test_hevc(TRUE, FREERDP_CODEC_HEVC_I420));
+		setCodecSupportStatus(FREERDP_CODEC_HEVC_I444, test_hevc(FALSE, FREERDP_CODEC_HEVC_I444),
+		                      test_hevc(TRUE, FREERDP_CODEC_HEVC_I444));
+	}
+#endif
+
+	return TRUE;
+}
+
+BOOL freerdp_codec_supported(WINPR_ATTR_UNUSED rdpContext* context, FreeRDP_CodecFlags codec,
+                             BOOL encoder)
+{
+	if (!InitOnceExecuteOnce(&codecSupportStatusOnce, codec_support_status_init, nullptr, nullptr))
+		FALSE;
+	size_t index = encoder ? 1 : 0;
+	return codecSupportStatus[codecFlagToIndex(codec)][index];
 }

@@ -21,6 +21,7 @@
 #define FREERDP_UTILS_HTTP_H
 
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 typedef enum
 {
@@ -71,9 +72,29 @@ extern "C"
 {
 #endif
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+	WINPR_DEPRECATED_VAR("[since 3.34.0] use freerdp_http_request_context instead",
+	                     WINPR_ATTR_NODISCARD FREERDP_API BOOL freerdp_http_request(
+	                         const char* url, const char* body, long* status_code, BYTE** response,
+	                         size_t* response_length));
+#endif
+
+	/**! @brief send a HTTP request and reuse \ref context TLS certificate handling
+	 *
+	 * @param context The context to get the TLS certificate configuration/handling from
+	 * @param url The url to send the request to
+	 * @param body The body string to write in the request
+	 * @param status_code a pointer to the status code of the response
+	 * @param response a pointer to an allocated buffer that contains the response data
+	 * @param response_length a pointer holding the size of the response
+	 *
+	 * @return TRUE for success, FALSE otherwise
+	 * @since version 3.34.0
+	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL freerdp_http_request(const char* url, const char* body, long* status_code,
-	                                      BYTE** response, size_t* response_length);
+	FREERDP_API BOOL freerdp_http_request_context(rdpContext* context, const char* url,
+	                                              const char* body, long* status_code,
+	                                              BYTE** response, size_t* response_length);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_http_status_string(long status);

@@ -66,13 +66,19 @@ SdlContext::SdlContext(rdpContext* context)
 	/* TODO: Client display set up */
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
-	                  nullptr, -1, nullptr, "Allow local screensaver to activate" });
+	                  nullptr, -1, nullptr,
+	                  "Allow local screensaver to activate (default: on for RemoteApp)" });
 	/* BoolValueTrue does not compile in C++, any non null default means on */
 	_args.push_back({ sdl_connection_dialog, COMMAND_LINE_VALUE_BOOL, nullptr, "on", nullptr, -1,
 	                  nullptr, "the connection dialog with progress and errors" });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
+}
+
+std::optional<bool> SdlContext::allowScreenSaver() const
+{
+	return _allowScreenSaver;
 }
 
 void SdlContext::setHasCursor(bool val)
@@ -186,8 +192,9 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		/* The server takes the scale of a single monitor from the core data only, so put the
 		 * display scale there too. Otherwise the session starts at 100% and is redone once the
 		 * display channel sends the layout. */
-		if ((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
-		     FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0)
+		if (((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
+		      FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
+		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			UINT32 scale = 0;
 			for (UINT32 x = 0; x < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); x++)
@@ -546,6 +553,10 @@ static std::vector<rdpMonitor> sdl_web_monitors(const rdpMonitor& canvas)
 
 bool SdlContext::updateWindowList()
 {
+	/* The windows only know their own size: keep the layout from connect. */
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+		return true;
+
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
@@ -584,6 +595,8 @@ bool SdlContext::updateWindow(SDL_WindowID id)
 	auto r = w.rect();
 	m.width = r.w;
 	m.height = r.h;
+	/* The window may be on another display than the one it was created on. */
+	m.attributes.desktopScaleFactor = static_cast<UINT32>(std::roundf(w.scale() * 100.0f));
 	w.setMonitor(m);
 	return true;
 }
@@ -1120,13 +1133,23 @@ bool SdlContext::detectDisplays()
 	int count = 0;
 	auto display = SDL_GetDisplays(&count);
 	if (!display)
+	{
+		WLog_Print(getWLog(), WLOG_ERROR, "SDL_GetDisplays failed: %s", SDL_GetError());
 		return false;
+	}
 	for (int x = 0; x < count; x++)
 	{
 		const auto id = display[x];
 		addOrUpdateDisplay(id);
 	}
 	SDL_free(display);
+
+	/* The monitor setup needs at least one display. */
+	if (_displays.empty())
+	{
+		WLog_Print(getWLog(), WLOG_ERROR, "none of the %d displays has a usable size", count);
+		return false;
+	}
 	return true;
 }
 
@@ -1250,7 +1273,9 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 	}
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
 	{
-		_lastMotion = { ev.windowID, { ev.x, ev.y }, { copy.motion.x, copy.motion.y } };
+		_lastMotion = {
+			ev.windowID, { ev.x, ev.y }, { copy.motion.x, copy.motion.y }, _rail.pointerEpoch()
+		};
 		_rail.noteServerPointer(copy.motion.x, copy.motion.y);
 		return SdlTouch::handleEvent(this, copy.motion);
 	}
@@ -1405,7 +1430,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 		{
 			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Window closed, terminating RDP session...");
-			freerdp_abort_connect_context(context());
+			std::ignore = abortConnect();
 		}
 		break;
 		default:
@@ -1418,6 +1443,10 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 {
 	if (!getDisplayChannelContext().handleEvent(ev))
 		return false;
+#if SDL_VERSION_ATLEAST(3, 3, 2)
+	if (ev.type == SDL_EVENT_DISPLAY_USABLE_BOUNDS_CHANGED)
+		_rail.noteUsableBoundsChanged(ev.displayID);
+#endif
 
 	switch (ev.type)
 	{
@@ -1475,6 +1504,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 		{
 			/* The window may have moved since the last motion: keep the server's position. */
 			if ((ev.windowID == _lastMotion.window) &&
+			    (_lastMotion.epoch == _rail.pointerEpoch()) &&
 			    (fabsf(ev.x - _lastMotion.local.x) < FLT_EPSILON) &&
 			    (fabsf(ev.y - _lastMotion.local.y) < FLT_EPSILON))
 			{
@@ -1515,6 +1545,11 @@ bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
 void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 {
 	auto monitor = SdlWindow::query(id, false);
+	if ((monitor.width <= 0) || (monitor.height <= 0))
+	{
+		WLog_Print(getWLog(), WLOG_WARN, "display %" PRIu32 " has no usable size, skipped", id);
+		return;
+	}
 	_displays.emplace(id, monitor);
 
 	/* Update actual display rectangles:
@@ -1752,6 +1787,7 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 	{
 		if (strcmp(arg->Name, sdl_allow_screensaver) == 0)
 		{
+			sdl->_allowScreenSaver = (arg->Value != nullptr);
 			if (arg->Value != nullptr)
 			{
 				if (!SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1"))
@@ -1945,6 +1981,14 @@ void SdlContext::setConnected(bool val)
 bool SdlContext::isConnected() const
 {
 	return _connected;
+}
+
+/* Stop requested by the user. Overwrite any earlier error with CONNECT_CANCELLED,
+ * otherwise an auto reconnect ignores the stop. */
+bool SdlContext::abortConnect() const
+{
+	freerdp_set_last_error(context(), FREERDP_ERROR_CONNECT_CANCELLED);
+	return freerdp_abort_connect_context(context());
 }
 
 rdpContext* SdlContext::context() const

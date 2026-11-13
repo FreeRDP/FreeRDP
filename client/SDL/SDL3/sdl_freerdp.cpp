@@ -188,7 +188,8 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				if (sdl->getDialog().handleEvent(windowEvent))
 					continue;
 
-				if (sdl->shallAbort(true))
+				/* Still handle a quit, it cancels the session */
+				if (sdl->shallAbort(true) && (windowEvent.type != SDL_EVENT_QUIT))
 					continue;
 
 				if (!sdl->handleEvent(windowEvent))
@@ -197,7 +198,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				switch (windowEvent.type)
 				{
 					case SDL_EVENT_QUIT:
-						std::ignore = freerdp_abort_connect_context(sdl->context());
+						std::ignore = sdl->abortConnect();
 						break;
 					case SDL_EVENT_USER_CERT_DIALOG:
 					{
@@ -573,7 +574,10 @@ static void SDLCALL rdp_file_cb(void* userdata, const char* const* filelist,
 
 	bool running = true;
 	if (!SDL_Init(flags))
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init failed: %s", SDL_GetError());
 		return {};
+	}
 
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING,
@@ -649,7 +653,7 @@ int main(int argc, char* argv[])
 		                                                          sdl->args());
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 		{
-			if (!sdl_list_monitors(sdl))
+			if (sdl_list_monitors(sdl) != 0)
 				return -1;
 		}
 		else
@@ -702,7 +706,18 @@ int main(int argc, char* argv[])
 
 	/* Basic SDL initialization */
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
 		return -1;
+	}
+
+#if defined(WITH_SDL_AUDIO)
+	/* Keeps the audio channels from initializing or quitting SDL audio
+	 * while this thread pumps events. */
+	if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
+		WLog_Print(sdl->getWLog(), WLOG_WARN, "SDL_InitSubSystem(SDL_INIT_AUDIO): %s",
+		           SDL_GetError());
+#endif
 
 #if defined(__APPLE__)
 	/* macOS has no num lock state, SDL_KMOD_NUM always starts off and we would turn num lock

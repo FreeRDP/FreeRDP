@@ -84,19 +84,20 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(e);
 
+	/* Never connected (failed connect). */
+	if (!e->pInterface)
+		return;
+
 	// TODO: Set resizeable depending on disp channel and /dynamic-resolution
 	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
 		auto rail = reinterpret_cast<RailClientContext*>(e->pInterface);
-		WINPR_ASSERT(rail);
 		sdl->getRailChannelContext().uninit(rail);
 		rail->custom = nullptr;
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
-		WINPR_ASSERT(clip);
-
 		if (!sdl->getClipboardChannelContext().uninit(clip))
 			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to uninitialize clipboard channel");
 		clip->custom = nullptr;
@@ -104,8 +105,6 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		auto disp = reinterpret_cast<DispClientContext*>(e->pInterface);
-		WINPR_ASSERT(disp);
-
 		if (!sdl->getDisplayChannelContext().uninit(disp))
 			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to uninitialize display channel");
 		disp->custom = nullptr;

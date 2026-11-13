@@ -18,7 +18,11 @@
 
 #include <freerdp/config.h>
 
+#include <errno.h>
+#include <stdlib.h>
+
 #include <winpr/assert.h>
+#include <winpr/sysinfo.h>
 
 #include "shadow.h"
 
@@ -312,11 +316,82 @@ static int shadow_encoder_init_av1(rdpShadowEncoder* encoder, UINT32 codecs)
 		goto fail;
 
 	encoder->codecs &= ~(FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
-	encoder->codecs |= codecs;
+	encoder->codecs |= codecs & (FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
 	return 1;
 fail:
 	freerdp_av1_context_free(encoder->av1);
 	encoder->av1 = nullptr;
+	return -1;
+}
+#endif
+
+#if defined(WITH_GFX_AV2)
+WINPR_ATTR_NODISCARD
+static int shadow_encoder_init_av2(rdpShadowEncoder* encoder, UINT32 codecs)
+{
+	WINPR_ASSERT(encoder);
+
+	UINT32 profile = 0;
+	if ((codecs & FREERDP_CODEC_AV2_I444) != 0)
+		profile = 1;
+
+	if (!encoder->av2)
+		encoder->av2 = freerdp_av2_context_new(TRUE);
+
+	if (!encoder->av2)
+		goto fail;
+
+	if (!freerdp_av2_context_reset(encoder->av2, encoder->width, encoder->height))
+		goto fail;
+
+	if (!freerdp_av2_context_set_option(encoder->av2, FREERDP_AV2_CONTEXT_OPTION_PROFILE, profile))
+		goto fail;
+
+	if (!freerdp_av2_context_set_option(encoder->av2, FREERDP_AV2_CONTEXT_OPTION_RATECONTROL,
+	                                    encoder->server->AV2RateControlMode))
+		goto fail;
+	if (!freerdp_av2_context_set_option(encoder->av2, FREERDP_AV2_CONTEXT_OPTION_BITRATE,
+	                                    encoder->server->AV2BitRate))
+		goto fail;
+
+	encoder->codecs &= ~(FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+	encoder->codecs |= codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+	return 1;
+fail:
+	freerdp_av2_context_free(encoder->av2);
+	encoder->av2 = nullptr;
+	return -1;
+}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD
+static int shadow_encoder_init_hevc(rdpShadowEncoder* encoder, UINT32 codecs)
+{
+	WINPR_ASSERT(encoder);
+
+	if (!encoder->hevc)
+		encoder->hevc = freerdp_hevc_context_new(TRUE);
+
+	if (!encoder->hevc)
+		goto fail;
+
+	if (!freerdp_hevc_context_reset(encoder->hevc, encoder->width, encoder->height))
+		goto fail;
+
+	if (!freerdp_hevc_context_set_option(encoder->hevc, FREERDP_HEVC_CONTEXT_OPTION_RATECONTROL,
+	                                     encoder->server->HEVCRateControlMode))
+		goto fail;
+	if (!freerdp_hevc_context_set_option(encoder->hevc, FREERDP_HEVC_CONTEXT_OPTION_BITRATE,
+	                                     encoder->server->HEVCBitRate))
+		goto fail;
+
+	encoder->codecs &= ~(FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+	encoder->codecs |= codecs & (FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+	return 1;
+fail:
+	freerdp_hevc_context_free(encoder->hevc);
+	encoder->hevc = nullptr;
 	return -1;
 }
 #endif
@@ -433,6 +508,19 @@ static int shadow_encoder_uninit_av1(rdpShadowEncoder* encoder)
 }
 #endif
 
+#if defined(WITH_GFX_AV2)
+static int shadow_encoder_uninit_av2(rdpShadowEncoder* encoder)
+{
+	WINPR_ASSERT(encoder);
+
+	freerdp_av2_context_free(encoder->av2);
+	encoder->av2 = nullptr;
+
+	encoder->codecs &= (UINT32) ~(FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+	return 1;
+}
+#endif
+
 static int shadow_encoder_uninit_progressive(rdpShadowEncoder* encoder)
 {
 	WINPR_ASSERT(encoder);
@@ -466,6 +554,9 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 	shadow_encoder_uninit_h264(encoder);
 #if defined(WITH_GFX_AV1)
 	shadow_encoder_uninit_av1(encoder);
+#endif
+#if defined(WITH_GFX_AV2)
+	shadow_encoder_uninit_av2(encoder);
 #endif
 
 	shadow_encoder_uninit_progressive(encoder);
@@ -510,6 +601,8 @@ int shadow_encoder_reset(rdpShadowEncoder* encoder)
 	encoder->maxFps = 32;
 	encoder->frameId = 0;
 	encoder->lastAckframeId = 0;
+	encoder->lastAckTick = GetTickCount64();
+	encoder->gfxHeld = FALSE;
 	encoder->frameAck = freerdp_settings_get_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled);
 	return 1;
 }
@@ -576,13 +669,44 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 #if defined(WITH_GFX_AV1)
 	const UINT32 cmask = codecs & (FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
 	const UINT32 emask = encoder->codecs & (FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
-	if (cmask != emask)
+	/* only when AV1 is asked for: preparing another codec must not touch it */
+	if ((cmask != 0) && (cmask != emask))
 	{
 		WLog_DBG(TAG, "initializing AV1 encoder");
 		status = shadow_encoder_init_av1(encoder, codecs);
 
 		if (status < 0)
 			return -1;
+	}
+#endif
+
+#if defined(WITH_GFX_AV2)
+	{
+		const UINT32 cmask2 = codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+		const UINT32 emask2 = encoder->codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+		if ((cmask2 != 0) && (cmask2 != emask2))
+		{
+			WLog_DBG(TAG, "initializing AV2 encoder");
+			status = shadow_encoder_init_av2(encoder, codecs);
+
+			if (status < 0)
+				return -1;
+		}
+	}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+	{
+		const UINT32 cmask2 = codecs & (FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+		const UINT32 emask2 = encoder->codecs & (FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+		if ((cmask2 != 0) && (cmask2 != emask2))
+		{
+			WLog_DBG(TAG, "initializing HEVC encoder");
+			status = shadow_encoder_init_hevc(encoder, codecs);
+
+			if (status < 0)
+				return -1;
+		}
 	}
 #endif
 
@@ -602,6 +726,23 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client)
 	encoder->server = server;
 	encoder->fps = 16;
 	encoder->maxFps = 32;
+	encoder->lastAckTick = GetTickCount64();
+	{
+		/* like xrdp's XRDP_GFX_FRAMES_IN_FLIGHT; 0 turns the limit off */
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		const char* env = getenv("FREERDP_SHADOW_GFX_FRAMES_IN_FLIGHT");
+		encoder->maxInFlight = SHADOW_GFX_FRAMES_IN_FLIGHT;
+		if (env && *env)
+		{
+			char* end = nullptr;
+			errno = 0;
+			const unsigned long value = strtoul(env, &end, 10);
+			if ((errno == 0) && end && (*end == '\0') && (value <= 1000))
+				encoder->maxInFlight = (UINT32)value;
+			else
+				WLog_WARN(TAG, "FREERDP_SHADOW_GFX_FRAMES_IN_FLIGHT=%s ignored: 0 to 1000", env);
+		}
+	}
 
 	if (shadow_encoder_init(encoder) < 0)
 	{

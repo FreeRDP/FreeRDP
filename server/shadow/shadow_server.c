@@ -41,6 +41,7 @@
 #endif
 
 #include "shadow.h"
+#include "shadow_cliprdr.h"
 
 #define TAG SERVER_TAG("shadow")
 
@@ -576,6 +577,59 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 #endif
+#if defined(WITH_GFX_AV2)
+		CommandLineSwitchCase(arg, "gfx-av2")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			UINT32 profile = freerdp_settings_get_uint32(settings, FreeRDP_GfxCodecAV2Profile);
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (strncmp("profile:", cur, 8) == 0)
+					{
+						const char* val = &cur[8];
+						if (strcmp("high", val) == 0)
+							profile = 1;
+						else if (strcmp("low", val) == 0)
+							profile = 0;
+						else
+						{
+							const unsigned long v = strtoul(val, nullptr, 0);
+							if ((errno != 0) || (v >= UINT32_MAX))
+							{
+								parseFailed = TRUE;
+								break;
+							}
+							else
+								profile = WINPR_ASSERTING_INT_CAST(UINT32, v);
+						}
+					}
+					else if (strcmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile, profile))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "gfx-rfx")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, arg->Value != nullptr))
@@ -598,6 +652,57 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+#if defined(WITH_GFX_AZURE)
+		CommandLineSwitchCase(arg, "gfx-hevc")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			BOOL enabled444 = TRUE;
+
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (_stricmp("on", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = TRUE;
+					}
+					else if (_stricmp("i444", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = TRUE;
+					}
+					else if (_stricmp("i420", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = FALSE;
+					}
+					else if (_stricmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+						enabled444 = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444, enabled444))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "keytab")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKeytab, arg->Value))
@@ -618,6 +723,23 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
+
+	/* Before /monitors: the subsystem decides which monitors there are */
+	arg = CommandLineFindArgumentA(cargs, "subsystem");
+
+	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			if (!shadow_subsystem_set_order(arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+		else
+		{
+			shadow_subsystem_list();
+			status = COMMAND_LINE_STATUS_PRINT;
+		}
+	}
 
 	arg = CommandLineFindArgumentA(cargs, "monitors");
 
@@ -1128,6 +1250,8 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*)server;
 	server->listener->CheckPeerAcceptRestrictions = shadow_server_check_peer_restrictions;
 	server->listener->PeerAccepted = shadow_client_accepted;
+	server->clipboard = shadow_clipboard_new(server);
+
 	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
@@ -1154,6 +1278,8 @@ int shadow_server_uninit(rdpShadowServer* server)
 	shadow_subsystem_uninit(server->subsystem);
 	shadow_subsystem_free(server->subsystem);
 	server->subsystem = nullptr;
+	shadow_clipboard_free(server->clipboard);
+	server->clipboard = nullptr;
 	freerdp_listener_free(server->listener);
 	server->listener = nullptr;
 	free(server->CertificateFile);
@@ -1191,6 +1317,14 @@ rdpShadowServer* shadow_server_new(void)
 #if defined(WITH_GFX_AV1)
 	server->AV1BitRate = 3000; /* kbit/s */
 	server->AV1RateControlMode = FREERDP_AV1_VBR;
+#endif
+#if defined(WITH_GFX_AV2)
+	server->AV2BitRate = 500;
+	server->AV2RateControlMode = FREERDP_AV2_VBR;
+#endif
+#if defined(WITH_GFX_AZURE)
+	server->HEVCBitRate = 500000;
+	server->HEVCRateControlMode = FREERDP_HEVC_VBR;
 #endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
 	return server;

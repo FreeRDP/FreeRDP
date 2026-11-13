@@ -28,7 +28,8 @@ function rdpsnd_web_play(data, size, channels, rate, volume, queued_ms)
 		HEAP32[queued_ms >>> 2] = 0;
 		return;
 	}
-	const a = (Module.freerdpAudio = Module.freerdpAudio || { next: 0, gain: null });
+	const a =
+	    (Module.freerdpAudio = Module.freerdpAudio || { next: 0, gain: null, sources: new Set() });
 	if (!a.gain)
 	{
 		a.gain = ctx.createGain();
@@ -47,14 +48,27 @@ function rdpsnd_web_play(data, size, channels, rate, volume, queued_ms)
 		for (let i = 0; i < frames; i++)
 			out[i] = pcm[i * channels + c] / 32768;
 	}
+	/* Jitter buffer: after an underrun (or at start) begin startMs ahead, enough for internet
+	 * jitter; if more than maxMs piled up, drop the backlog so audio never lags further. A page
+	 * can tune both with Module.freerdpAudioLatency = { startMs, maxMs }. */
+	const lat = Module.freerdpAudioLatency || {};
+	const start = (lat.startMs > 0 ? lat.startMs : 120) / 1000;
+	const max = Math.max((lat.maxMs > 0 ? lat.maxMs : 500) / 1000, start);
 	const now = ctx.currentTime;
-	/* Jitter buffer: after an underrun (or at start) begin 120 ms ahead, enough for internet
-	 * jitter; if more than 500 ms piled up, drop the backlog so audio never lags further. */
-	if (a.next < now || a.next > now + 0.5)
-		a.next = now + 0.12;
+	if (a.next > now + max)
+	{
+		/* the dropped backlog is still scheduled and would play over the new audio */
+		for (const s of a.sources)
+			s.stop();
+		a.sources.clear();
+	}
+	if (a.next < now || a.next > now + max)
+		a.next = now + start;
 	const src = ctx.createBufferSource();
 	src.buffer = buffer;
 	src.connect(a.gain);
+	src.onended = () => a.sources.delete(src);
+	a.sources.add(src);
 	src.start(a.next);
 	a.next += frames / rate;
 	HEAP32[queued_ms >>> 2] = Math.round((a.next - now) * 1000);

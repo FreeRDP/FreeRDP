@@ -390,6 +390,17 @@ extern "C"
 	                                                    int64_t number);
 
 	/**
+	 * @brief WINPR_JSON_AddUIntegerToObject
+	 * @param object The JSON object the new item is added to
+	 * @param name The name of the object
+	 * @return the new JSON item added
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API WINPR_JSON* WINPR_JSON_AddUIntegerToObject(WINPR_JSON* object, const char* name,
+	                                                     uint64_t number);
+
+	/**
 	 * @brief WINPR_JSON_AddStringToObject
 	 * @param object The JSON object the new item is added to
 	 * @param name The name of the object

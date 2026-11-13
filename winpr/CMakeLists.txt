@@ -232,7 +232,11 @@ set(WINPR_HAVE_SSIZE_T ${HAVE_SSIZE_T})
 set(WINPR_HAVE_WIN_SSIZE_T ${HAVE_WIN_SSIZE_T})
 
 if(APPLE)
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror=unguarded-availability-new")
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag("-Werror=unguarded-availability-new" C_FLAG)
+  if(C_FLAG)
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror=unguarded-availability-new")
+  endif()
 endif()
 
 if(CMAKE_VERSION VERSION_LESS "3.19")

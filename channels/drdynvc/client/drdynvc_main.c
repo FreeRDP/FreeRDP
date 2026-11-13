@@ -942,8 +942,9 @@ static void dvcman_static_bridge_deliver(DVCMAN_STATIC_BRIDGE* bridge, const BYT
 {
 	WINPR_ASSERT(bridge);
 
-	if ((length > 0) && !freerdp_channels_data(bridge->instance, bridge->staticChannelId, data,
-	                                           length, flags, totalLength))
+	if ((length > 0) &&
+	    !freerdp_channels_data_bridge(bridge->instance, bridge->staticChannelId, data, length, flags,
+	                                  totalLength))
 		WLog_DBG(TAG, "static channel %" PRIu16 " took no data, %" PRIuz " bytes discarded",
 		         bridge->staticChannelId, length);
 }
@@ -1009,8 +1010,8 @@ static UINT dvcman_static_bridge_on_close(IWTSVirtualChannelCallback* pChannelCa
 	DVCMAN_STATIC_BRIDGE* bridge = (DVCMAN_STATIC_BRIDGE*)pChannelCallback;
 	WINPR_ASSERT(bridge);
 
-	/* the static channel sends on itself again (3.1.5.4.5), unless it is gone already or another
-	 * dynamic channel carries it since */
+	/* Remove this bridge without restoring the original static transport.  Once Soft-Sync has
+	 * moved a channel, [MS-RDPEDYC] 3.1.5.4.1 forbids using that static transport again. */
 	if (bridge->target &&
 	    !freerdp_channels_set_static_bridge(bridge->instance, bridge->staticChannelName, nullptr,
 	                                        nullptr, bridge->target))

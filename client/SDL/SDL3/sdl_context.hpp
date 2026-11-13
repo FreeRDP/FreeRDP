@@ -64,6 +64,7 @@ class SdlContext
 
 	void setConnected(bool val);
 	[[nodiscard]] bool isConnected() const;
+	[[nodiscard]] bool abortConnect() const;
 	void cleanup();
 
 	[[nodiscard]] bool resizeable() const;
@@ -100,6 +101,7 @@ class SdlContext
 	[[nodiscard]] std::vector<SDL_Rect> pop();
 
 	void setHasCursor(bool val);
+	[[nodiscard]] std::optional<bool> allowScreenSaver() const;
 	[[nodiscard]] bool hasCursor() const;
 
 	void setMetadata();
@@ -231,6 +233,7 @@ class SdlContext
 		SDL_WindowID window = 0;
 		SDL_FPoint local = {};
 		SDL_FPoint server = {};
+		uint32_t epoch = 0;
 	} _lastMotion; /* last motion forwarded to the server */
 	struct
 	{
@@ -265,6 +268,7 @@ class SdlContext
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::optional<bool> _connectionDialog;
+	std::optional<bool> _allowScreenSaver;
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
 };

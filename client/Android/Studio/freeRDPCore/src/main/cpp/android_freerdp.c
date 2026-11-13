@@ -1146,6 +1146,50 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1even
 	return JNI_TRUE;
 }
 
+/* Leaves the choice between the character and the key's scancode to
+ * freerdp_client_send_key_as_unicode, as the X11 and SDL clients do. */
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1as_1unicode_1event(
+    JNIEnv* env, jclass cls, jlong instance, jint keycode, jstring text, jint modmask,
+    jboolean down)
+{
+	/* LibFreeRDP.KBD_MOD_* in Java mirror these values. */
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LSHIFT == 0x01);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RSHIFT == 0x02);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LMENU == 0x04);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RMENU == 0x08);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LCONTROL == 0x10);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RCONTROL == 0x20);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LWIN == 0x40);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RWIN == 0x80);
+
+	freerdp* inst = (freerdp*)instance;
+	const DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode((DWORD)keycode, 4);
+	const UINT16 flags = (down == JNI_TRUE) ? 0 : KBD_FLAGS_RELEASE;
+	const jsize len = text ? (*env)->GetStringLength(env, text) : 0;
+	const jchar* chars = (len > 0) ? (*env)->GetStringChars(env, text, nullptr) : nullptr;
+	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_key_as_unicode_new(
+	    flags, scancode, (const WCHAR*)chars, chars ? (size_t)len : 0, modmask);
+
+	if (chars)
+		(*env)->ReleaseStringChars(env, text, chars);
+
+	if (!event)
+		return JNI_FALSE;
+
+	if (!android_push_event(inst, event))
+	{
+		android_event_free(event);
+		return JNI_FALSE;
+	}
+
+	WLog_DBG(TAG,
+	         "send_key_as_unicode_event: %" PRIu32 ", %" PRId32 " UTF-16 units, 0x%02" PRIX32
+	         ", %d",
+	         scancode, (INT32)len, (UINT32)modmask, flags);
+	return JNI_TRUE;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1is_1unicode_1input_1supported(
     JNIEnv* env, jclass cls, jlong instance)

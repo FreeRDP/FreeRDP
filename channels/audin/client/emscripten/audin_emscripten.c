@@ -28,7 +28,8 @@
  * Browsers only allow the microphone in a secure context after the user agreed, and only run an
  * AudioContext after the user interacted with the page. Echo cancellation, noise suppression and
  * automatic gain are on, as for a call; a page can set Module.freerdpAudinConstraints to other
- * MediaTrackConstraints, e.g. to record music unprocessed.
+ * MediaTrackConstraints, e.g. to record music unprocessed. The worklet is
+ * audin_emscripten_worklet.js, served next to the executable or at Module.freerdpAudinWorkletUrl.
  */
 
 #include <freerdp/config.h>
@@ -140,6 +141,13 @@ static DWORD WINAPI audin_emscripten_thread(LPVOID arg)
 
 	while (!__atomic_load_n(&dev->stop, __ATOMIC_ACQUIRE))
 	{
+		if (!__atomic_load_n(&capture->active, __ATOMIC_ACQUIRE))
+		{
+			if (!__atomic_load_n(&dev->stop, __ATOMIC_ACQUIRE))
+				WLog_Print(dev->log, WLOG_ERROR, "microphone capture failed, sending no audio");
+			break;
+		}
+
 		const uint32_t written = __atomic_load_n(&capture->write_pos, __ATOMIC_ACQUIRE);
 		const uint32_t available = written - read_pos;
 
@@ -219,8 +227,8 @@ static UINT audin_emscripten_close(IAudinDevice* device)
 	if (!dev->capture)
 		return CHANNEL_RC_OK;
 
+	__atomic_store_n(&dev->stop, 1, __ATOMIC_SEQ_CST);
 	__atomic_store_n(&dev->capture->active, 0, __ATOMIC_SEQ_CST);
-	__atomic_store_n(&dev->stop, 1, __ATOMIC_RELEASE);
 	(void)emscripten_futex_wake(&dev->capture->write_pos, INT32_MAX);
 
 	if (dev->thread)

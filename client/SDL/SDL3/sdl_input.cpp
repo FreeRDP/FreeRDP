@@ -300,7 +300,7 @@ static const scancode_entry_t map[] = {
 	return flags;
 }
 
-[[nodiscard]] static FREERDP_CLIENT_KBD_MOD sdl_get_kbd_modmask(SDL_Keymod mod)
+[[nodiscard]] static UINT32 sdl_get_kbd_modmask(SDL_Keymod mod)
 {
 	static const std::array<std::pair<SDL_Keymod, uint32_t>, 8> masks = {
 		{ { SDL_KMOD_LSHIFT, FREERDP_CLIENT_KBD_MOD_LSHIFT },
@@ -319,7 +319,7 @@ static const scancode_entry_t map[] = {
 		if ((mod & sdl) != 0)
 			modmask |= rdp;
 	}
-	return static_cast<FREERDP_CLIENT_KBD_MOD>(modmask);
+	return modmask;
 }
 
 bool sdlInput::keyboard_sync_state()
@@ -621,7 +621,7 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
 				if (!keyboard_sync_state())
 					return false;
-				freerdp_abort_connect_context(_sdl->context());
+				std::ignore = _sdl->abortConnect();
 				return true;
 			}
 			if (ev.scancode == _hotkeyMinimize)

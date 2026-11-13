@@ -1168,6 +1168,13 @@ static DWORD FileAttributesFromStat(const char* path, const struct stat* fileSta
 	if (!(fileStat->st_mode & S_IWUSR))
 		dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
+	struct stat lFileStat = WINPR_C_ARRAY_INIT;
+	const int rc = lstat(path, &lFileStat);
+	if (rc == 0)
+	{
+		if (S_ISLNK(lFileStat.st_mode))
+			dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
+	}
 	return dwFileAttributes;
 }
 

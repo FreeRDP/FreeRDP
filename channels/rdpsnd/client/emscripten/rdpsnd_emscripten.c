@@ -84,6 +84,8 @@ typedef struct
 	rdpsndEmscriptenPlugin* plugin;
 	BYTE* data;
 	size_t size;
+	UINT32 channels; /* the format at Play(): Open() may change it before the job runs */
+	UINT32 rate;
 } play_job;
 
 /* in rdpsnd_emscripten.js */
@@ -98,7 +100,7 @@ static void play_on_main(void* arg)
 	rdpsndEmscriptenPlugin* p = job->plugin;
 	WINPR_ASSERT(p);
 
-	rdpsnd_web_play(job->data, (int)job->size, (int)p->channels, (int)p->rate,
+	rdpsnd_web_play(job->data, (int)job->size, (int)job->channels, (int)job->rate,
 	                (int)(p->volume & 0xffff), (int*)&p->queued_ms);
 	free(job->data);
 	free(job);
@@ -188,6 +190,8 @@ static UINT rdpsnd_emscripten_play(rdpsndDevicePlugin* device, const BYTE* data,
 	memcpy(job->data, data, size);
 	job->plugin = p;
 	job->size = size;
+	job->channels = p->channels;
+	job->rate = p->rate;
 
 	if (emscripten_is_main_browser_thread())
 		play_on_main(job);

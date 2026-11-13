@@ -2531,6 +2531,7 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 		{
 			BOOL GfxH264 = FALSE;
 			BOOL GfxAVC444 = FALSE;
+			BOOL GfxAVCMixed = FALSE;
 			BOOL RemoteFxCodec = FALSE;
 			BOOL GfxProgressive = FALSE;
 			BOOL codecSelected = FALSE;
@@ -2555,6 +2556,15 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
 						GfxH264 = bval != PARSE_OFF;
+					codecSelected = TRUE;
+				}
+				else if (option_starts_with("AVC-mixed", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						GfxAVCMixed = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else
@@ -2657,6 +2667,73 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 					}
 				}
 #endif
+#if defined(WITH_GFX_AV2)
+				else if (option_starts_with("AV2", val))
+				{
+					uint32_t profile = 1;
+					BOOL enabled = FALSE;
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("av2:i420", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 0;
+						}
+						else if (_stricmp("av2:i444", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 1;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else
+						enabled = bval != PARSE_OFF; /* a bare AV2 turns it on */
+
+					if (enabled || (bval != PARSE_FAIL))
+					{
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
+							rc = COMMAND_LINE_ERROR;
+						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile,
+						                                      profile))
+							rc = COMMAND_LINE_ERROR;
+					}
+				}
+#endif
+#if defined(WITH_GFX_AZURE)
+				else if (option_starts_with("HEVC", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("hevc:i420", val) == 0)
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, TRUE))
+								rc = COMMAND_LINE_ERROR;
+							else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+							                                    FALSE))
+								rc = COMMAND_LINE_ERROR;
+						}
+						else if (_stricmp("hevc:i444", val) == 0)
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, TRUE))
+								rc = COMMAND_LINE_ERROR;
+							else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+							                                    TRUE))
+								rc = COMMAND_LINE_ERROR;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
+				}
+#endif
 				else
 					rc = COMMAND_LINE_ERROR;
 			}
@@ -2664,6 +2741,8 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 			if ((rc == CHANNEL_RC_OK) && codecSelected)
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, GfxAVC444))
+					rc = COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAVCMM, GfxAVCMixed))
 					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, GfxAVC444))
 					rc = COMMAND_LINE_ERROR;
@@ -3797,7 +3876,7 @@ static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	/* Defaults are enabled, visible, sticky, fullscreen */
+	/* Defaults are enabled, visible, sticky, fullscreen, centered */
 	UINT32 Floatbar = 0x0017;
 
 	if (arg->Value)
@@ -3860,6 +3939,21 @@ static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 					Floatbar |= 0x10u;
 				else if (option_equals("window", val))
 					Floatbar |= 0x20u;
+				else
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
+			/* position:[left|center|right] */
+			else if (option_starts_with("position:", cur))
+			{
+				const char* val = cur + 9;
+				Floatbar &= ~0xC0u;
+
+				if (option_equals("left", val))
+					Floatbar |= 0x40u;
+				else if (option_equals("right", val))
+					Floatbar |= 0x80u;
+				else if (option_equals("center", val))
+					Floatbar &= ~0xC0u;
 				else
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}

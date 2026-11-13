@@ -521,6 +521,11 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if (code)
 				{
+					if (code > INT16_MAX)
+					{
+						WLog_ERR(RFX_TAG, "code=%d", code);
+						return -1;
+					}
 					mag = WINPR_ASSERTING_INT_CAST(int16_t, code);
 					nIdx = 32 - lzcnt_s(WINPR_ASSERTING_INT_CAST(uint32_t, mag));
 				}
@@ -732,6 +737,10 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 				numZeros++;
 				GetNextInput(input);
 			}
+
+			/* GetNextInput consumed the final zero without counting it in the loop. */
+			if (input == 0 && data_size == 0)
+				numZeros++;
 
 			// emit output zeros
 			runmax = 1u << k;

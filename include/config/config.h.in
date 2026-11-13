@@ -40,6 +40,7 @@
 #cmakedefine WITH_IOSAUDIO
 #cmakedefine WITH_OPENSLES
 #cmakedefine WITH_AAUDIO
+#cmakedefine WITH_SDL_AUDIO
 #cmakedefine WITH_GSM
 #cmakedefine WITH_LAME
 /** If defined Opus codec support is available.
@@ -62,6 +63,8 @@
 #cmakedefine WITH_MEDIA_FOUNDATION
 #cmakedefine WITH_MEDIACODEC
 #cmakedefine WITH_GFX_AV1
+#cmakedefine WITH_GFX_AV2
+#cmakedefine WITH_GFX_AV2_I444
 #cmakedefine WITH_GFX_AZURE
 #cmakedefine WITH_RDPEUDP
 /** If defined, indicates that the server supports UDP multitransport and that

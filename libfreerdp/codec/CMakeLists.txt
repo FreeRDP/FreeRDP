@@ -61,12 +61,14 @@ if(WITH_GFX_AV1)
     if(WITH_AV1_WEBCODECS)
       add_compile_definitions(WITH_AV1_WEBCODECS)
       list(APPEND CODEC_SRCS av1_webcodecs.c av1_webcodecs.h)
-      # The JavaScript side, for the executable's link: a link item, so that it also reaches the
-      # executable through static libraries (link options of their private dependencies don't).
+      # The JavaScript side, for the executable's link: a link item, so that it
+      # also reaches the executable through static libraries (link options of
+      # their private dependencies don't).
       freerdp_library_add_public(
         "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/av1_webcodecs.js"
       )
-      # so that editing the JavaScript recompiles this file, and so relinks the executables
+      # so that editing the JavaScript recompiles this file, and so relinks the
+      # executables
       set_source_files_properties(
         av1_webcodecs.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/av1_webcodecs.js
       )
@@ -75,6 +77,18 @@ if(WITH_GFX_AV1)
       endif()
     endif()
   endif()
+endif()
+
+if(WITH_GFX_AV2)
+  include(WarnExperimental)
+  warn_experimental("AV2 codec support for GFX channel" "-DWITH_GFX_AV2=OFF")
+  list(APPEND CODEC_SRCS av2.c)
+endif()
+
+if(WITH_GFX_AZURE)
+  include(WarnExperimental)
+  warn_experimental("HEVC codec support for GFX channel" "-DWITH_GFX_AZURE=OFF")
+  list(APPEND CODEC_SRCS hevc.c)
 endif()
 
 set(CODEC_SSE3_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
@@ -136,6 +150,8 @@ if(FAAC_FOUND)
   freerdp_pc_add_requires_private("faac")
 endif()
 
+cmake_dependent_option(WITH_AOM "[AV1] compile with AOM" OFF "WITH_GFX_AV1" OFF)
+cmake_dependent_option(WITH_DAV1D "[AV1] compile with DAV1D" OFF "WITH_GFX_AV1" OFF)
 if(WITH_AOM AND AOM_FOUND)
   add_compile_definitions(WITH_LIBAOM)
   list(APPEND CODEC_LIBS aom)
@@ -158,6 +174,38 @@ if(WITH_GFX_AV1)
   endif()
 endif()
 
+cmake_dependent_option(WITH_AVM "[AV2] compile with AVM" OFF "WITH_GFX_AV2" OFF)
+cmake_dependent_option(WITH_DAV2D "[AV2] compile with DAV2D" OFF "WITH_GFX_AV2" OFF)
+if(WITH_GFX_AV2)
+  if(WITH_AVM AND AVM_FOUND)
+    add_compile_definitions(WITH_LIBAVM)
+    list(APPEND CODEC_LIBS avm)
+    include_directories(SYSTEM ${AVM_INCLUDE_DIRS})
+    freerdp_pc_add_requires_private("avm")
+    # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a
+    # browser): it has neither the encoder's headers nor its functions, and AV2
+    # encoding is then unavailable
+    option(WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON)
+    if(WITH_AVM_ENCODER)
+      add_compile_definitions(WITH_LIBAVM_ENCODER)
+    endif()
+  endif()
+
+  # libavm, the reference, decodes when present: dav2d is the decoder without it
+  if(WITH_AVM AND AVM_FOUND)
+    message(STATUS "AV2 decoder: libavm")
+  elseif(WITH_DAV2D AND DAV2D_FOUND)
+    add_compile_definitions(WITH_DAV2D)
+    list(APPEND CODEC_LIBS dav2d)
+    include_directories(SYSTEM ${DAV2D_INCLUDE_DIRS})
+    freerdp_pc_add_requires_private("dav2d")
+    message(STATUS "AV2 decoder: dav2d")
+  else()
+    message(STATUS "AV2 decoder: none (need -DWITH_DAV2D=ON or -DWITH_AVM=ON)")
+  endif()
+endif()
+
+option(WITH_YUV "compile with YUV" OFF)
 if(WITH_YUV AND YUV_FOUND)
   add_compile_definitions(WITH_LIBYUV)
   list(APPEND CODEC_LIBS yuv)
@@ -165,7 +213,7 @@ if(WITH_YUV AND YUV_FOUND)
 endif()
 
 if(WITH_APPLE_VIDEOTOOLBOX)
-  list(APPEND CODEC_SRCS h264_videotoolbox.c)
+  list(APPEND CODEC_SRCS h264_videotoolbox.m)
   find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
   find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
   find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
@@ -177,12 +225,14 @@ endif()
 
 if(WITH_H264_WEBCODECS)
   list(APPEND CODEC_SRCS h264_webcodecs.c)
-  # The JavaScript side, for the executable's link: a link item, so that it also reaches the
-  # executable through static libraries (link options of their private dependencies don't).
+  # The JavaScript side, for the executable's link: a link item, so that it also
+  # reaches the executable through static libraries (link options of their
+  # private dependencies don't).
   freerdp_library_add_public(
     "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/h264_webcodecs.js"
   )
-  # so that editing the JavaScript recompiles this file, and so relinks the executables
+  # so that editing the JavaScript recompiles this file, and so relinks the
+  # executables
   set_source_files_properties(h264_webcodecs.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/h264_webcodecs.js)
   if(NOT BUILD_SHARED_LIBS)
     install(FILES h264_webcodecs.js DESTINATION ${FREERDP_PLUGIN_PATH})

@@ -308,7 +308,11 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 			/* fallthrough */
 			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_ERROR:
+			/* fallthrough */
+			WINPR_FALLTHROUGH
+		default:
 		{
+			/* The transfer is finished in any case, always dequeue it */
 			const UINT32 InterfaceId =
 			    ((STREAM_ID_PROXY << 30) | user_data->idev->get_ReqCompletion(user_data->idev));
 
@@ -328,8 +332,6 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 			}
 		}
 		break;
-		default:
-			break;
 	}
 	ArrayList_Unlock(list);
 }
@@ -871,7 +873,8 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 	 * with EBUSY ("interface claimed by usb-storage while 'xfreerdp3' sets config") and the
 	 * device stays with the local driver. Detach again before changing the configuration. */
 	pdev->status &= (UINT16)~URBDRC_DEVICE_DETACH_KERNEL;
-	(void)libusb_udev_detach_kernel_driver(idev);
+	if (!libusb_udev_detach_kernel_driver(idev))
+		WLog_Print(urbdrc->log, WLOG_WARN, "libusb_udev_detach_kernel_driver failed, ignoring");
 
 	/* The configuration value -1 is mean to put the device in unconfigured state. */
 	if (bConfigurationValue == 0)
@@ -1517,7 +1520,11 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	}
 	rc = libusb_submit_transfer(iso_transfer);
 	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_submit_transfer", rc))
+	{
+		/* Never submitted, so no completion callback will remove it from the queue */
+		ArrayList_Remove(pdev->request_queue, iso_transfer);
 		return -1;
+	}
 	return rc;
 }
 
@@ -1652,7 +1659,11 @@ static int libusb_udev_bulk_or_interrupt_transfer(
 	}
 	rc = libusb_submit_transfer(transfer);
 	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_submit_transfer", rc))
+	{
+		/* Never submitted, so no completion callback will remove it from the queue */
+		ArrayList_Remove(pdev->request_queue, transfer);
 		return -1;
+	}
 	return rc;
 }
 

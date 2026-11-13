@@ -44,6 +44,10 @@
 #define FLOATBAR_COLOR_BORDER "RGB:75/9a/c8"
 #define FLOATBAR_COLOR_FOREGROUND "RGB:FF/FF/FF"
 
+#define XF_FLOATBAR_FLAG_POSITION_MASK 0x00C0
+#define XF_FLOATBAR_FLAG_POSITION_LEFT 0x0040
+#define XF_FLOATBAR_FLAG_POSITION_RIGHT 0x0080
+
 #define XF_FLOATBAR_MODE_NONE 0
 #define XF_FLOATBAR_MODE_DRAGGING 1
 #define XF_FLOATBAR_MODE_RESIZE_LEFT 2
@@ -89,8 +93,12 @@ struct xf_floatbar
 	BOOL entered;
 };
 
+static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button);
+
+WINPR_ATTR_MALLOC(xf_floatbar_button_free, 1)
 static xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type);
 
+WINPR_ATTR_NODISCARD
 static BOOL xf_floatbar_button_onclick_close(xfFloatbar* floatbar)
 {
 	if (!floatbar)
@@ -99,6 +107,7 @@ static BOOL xf_floatbar_button_onclick_close(xfFloatbar* floatbar)
 	return freerdp_abort_connect_context(&floatbar->xfc->common.context);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL xf_floatbar_button_onclick_minimize(xfFloatbar* floatbar)
 {
 	xfContext* xfc = nullptr;
@@ -111,6 +120,7 @@ static BOOL xf_floatbar_button_onclick_minimize(xfFloatbar* floatbar)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL xf_floatbar_button_onclick_restore(xfFloatbar* floatbar)
 {
 	if (!floatbar)
@@ -120,6 +130,7 @@ static BOOL xf_floatbar_button_onclick_restore(xfFloatbar* floatbar)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL xf_floatbar_button_onclick_locked(xfFloatbar* floatbar)
 {
 	if (!floatbar)
@@ -172,6 +183,7 @@ BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL create_floatbar(xfFloatbar* floatbar)
 {
 	xfContext* xfc = nullptr;
@@ -190,7 +202,25 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	if (status != 1)
 		return FALSE;
 
-	floatbar->x = attr.x + attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
+	switch (floatbar->flags & XF_FLOATBAR_FLAG_POSITION_MASK)
+	{
+		case XF_FLOATBAR_FLAG_POSITION_LEFT:
+			floatbar->x = 0;
+			break;
+
+		case XF_FLOATBAR_FLAG_POSITION_RIGHT:
+			floatbar->x = attr.width - FLOATBAR_DEFAULT_WIDTH;
+			break;
+
+		default:
+			floatbar->x = attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
+			break;
+	}
+
+	/* never start off screen, e.g. if the window is narrower than the floatbar */
+	if (floatbar->x < 0)
+		floatbar->x = 0;
+
 	floatbar->y = 0;
 
 	if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)
@@ -369,6 +399,7 @@ fail:
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value)
 {
 	XColor color;
@@ -464,6 +495,7 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	LogDynAndXFreeGC(floatbar->xfc->log, display, shape_gc);
 }
 
+WINPR_ATTR_NODISCARD
 static xfFloatbarButton* xf_floatbar_get_button(xfFloatbar* floatbar, Window window)
 {
 	WINPR_ASSERT(floatbar);
@@ -894,7 +926,7 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 	return floatbar->handle == event->xany.window;
 }
 
-static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
+void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 {
 	if (!button)
 		return;

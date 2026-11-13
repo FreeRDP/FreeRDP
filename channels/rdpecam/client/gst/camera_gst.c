@@ -283,8 +283,9 @@ static DWORD WINAPI cam_gst_capture_thread(LPVOID param)
 			if (hal->loop && !hal->live)
 			{
 				WLog_DBG(TAG, "End of stream, playing it again");
-				if (!gst_element_seek_simple(hal->pipeline, GST_FORMAT_TIME,
-				                             GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT, 0))
+				if (!gst_element_seek_simple(
+				        hal->pipeline, GST_FORMAT_TIME,
+				        (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT), 0))
 				{
 					WLog_ERR(TAG, "Unable to rewind the pipeline");
 					break;

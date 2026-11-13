@@ -568,9 +568,11 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	DomainMCSPDU MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
 	                                                  : DomainMCSPDU_SendDataIndication;
 
+	const size_t start = Stream_GetPosition(s);
 	*channelId = 0; /* Initialize in case of early abort */
 	if (!tpkt_read_header(s, length))
 		return FALSE;
+	const UINT16 tpktLength = *length;
 
 	if (!tpdu_read_header(s, &code, &li, *length))
 		return FALSE;
@@ -667,6 +669,19 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
+
+	/* userData fills the enclosing TPKT after the MCS header. Validate the wire
+	 * length before removing security headers or FIPS padding. Share Control
+	 * PDUs may still be batched inside this userData. */
+	const size_t headerLength = Stream_GetPosition(s) - start;
+	if ((headerLength > tpktLength) || (*length != tpktLength - headerLength))
+	{
+		WLog_Print(rdp->log, WLOG_ERROR,
+		           "MCS userData length %" PRIu16 " is inconsistent with TPKT length %" PRIu16
+		           " and header length %" PRIuz,
+		           *length, tpktLength, headerLength);
+		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, *length))
 		return FALSE;
@@ -2958,11 +2973,12 @@ static BOOL option_is_experimental(WINPR_ATTR_UNUSED wLog* log, WINPR_ATTR_UNUSE
                                    const char* tok)
 {
 	const char* experimental[] = { STR(WITH_DSP_EXPERIMENTAL), STR(WITH_FFMPEG_HWACCEL),
-		                           STR(WITH_GFX_AV1),          STR(WITH_GFX_AZURE),
-		                           STR(WITH_MEDIACODEC),       STR(WITH_CLIENT_SDL2),
-		                           STR(WITH_OPENCL),           STR(WITH_LIBRESSL),
-		                           STR(WITH_MBEDTLS),          STR(WITH_MEDIA_FOUNDATION),
-		                           STR(WITH_KRB5_HEIMDAL),     STR(WITH_RDPEUDP) };
+		                           STR(WITH_GFX_AV1),          STR(WITH_GFX_AV2),
+		                           STR(WITH_GFX_AZURE),        STR(WITH_MEDIACODEC),
+		                           STR(WITH_CLIENT_SDL2),      STR(WITH_OPENCL),
+		                           STR(WITH_LIBRESSL),         STR(WITH_MBEDTLS),
+		                           STR(WITH_MEDIA_FOUNDATION), STR(WITH_KRB5_HEIMDAL),
+		                           STR(WITH_RDPEUDP) };
 	for (size_t x = 0; x < ARRAYSIZE(experimental); x++)
 	{
 		const char* opt = experimental[x];

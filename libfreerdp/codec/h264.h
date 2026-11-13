@@ -88,6 +88,11 @@ extern "C"
 
 		UINT32 YUVWidth;
 		UINT32 YUVHeight;
+
+		BOOL hevc;    /**< decode H.265/HEVC instead of H.264 */
+		BOOL hevc444; /**< the HEVC stream is 4:4:4, needs a subsystem with SupportsHEVC444 */
+		BOOL yuv444;  /**< set by the subsystem: pYUVData holds a full resolution 4:4:4 picture
+		               *   (Y, Cb, Cr) instead of 4:2:0 */
 	};
 
 	WINPR_ATTR_NODISCARD
@@ -112,6 +117,28 @@ extern "C"
 #ifdef WITH_H264_WEBCODECS
 	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_WebCodecs;
 #endif
+
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
+	                                    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
+	                                    WINPR_ATTR_UNUSED UINT32 nDstWidth,
+	                                    WINPR_ATTR_UNUSED UINT32 nDstHeight,
+	                                    const RECTANGLE_16* regionRects, UINT32 numRegionRects);
+
+	WINPR_ATTR_MALLOC(h264_context_free, 1)
+	H264_CONTEXT* h264_context_new_ex(BOOL Compressor, BOOL hevc, BOOL hevc444);
+
+	WINPR_ATTR_NODISCARD
+	BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
+
+	WINPR_ATTR_NODISCARD
+	BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles, RDPGFX_H264_METABLOCK* meta,
+	                             size_t count);
+
+	WINPR_ATTR_NODISCARD
+	BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRect,
+	                    BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
+	                    UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta);
 
 #ifdef __cplusplus
 }

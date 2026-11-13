@@ -808,7 +808,7 @@ BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 		    log, level,
 		    "Provide at least the following log lines detailing your monitor configuration:");
 		log_monitor_configuration(settings, log, level);
-		return FALSE;
+		rc = FALSE;
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
@@ -818,10 +818,22 @@ BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 		{
 			WLog_Print(log, WLOG_ERROR,
 			           "Inconsistent settings: Gateway support enabled, but no gateway provided.");
-			return FALSE;
+			rc = FALSE;
 		}
 	}
-	return TRUE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+	{
+		if (freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors))
+		{
+			WLog_Print(
+			    log, WLOG_ERROR,
+			    "Inconsistent settings: RemoteApplicationMode and SpanMonitors are incompatible.");
+			rc = FALSE;
+		}
+	}
+
+	return rc;
 }
 
 BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
@@ -1284,6 +1296,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV1Profile, 1) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, TRUE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile, 1) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxSendQoeAck, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
 		goto out_fail;

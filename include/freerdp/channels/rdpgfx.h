@@ -88,7 +88,9 @@ typedef enum
 	RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW = 0x0018u,
 	RDPGFX_CMDID_PROTECT_SURFACE = 0x0019u,
 	RDPGFX_CMDID_WATERMARK = 0x001Au,
-	RDPGFX_CMDID_MAX = 0x001Bu
+	RDPGFX_CMDID_CAPSRESET = 0x001Bu, /**< undocumented, the server asks for a new
+		                               * RDPGFX_CAPS_ADVERTISE_PDU */
+	RDPGFX_CMDID_MAX = 0x001Cu
 } RDPGFX_CMDID;
 
 #define RDPGFX_HEADER_SIZE 8
@@ -107,6 +109,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 {
 #if defined(WITH_GFX_AV1)
 	RDPGFX_CAPVERSION_FRDP_1 = 0x00010000u, /**< Custom capversion for FreeRDP extensions */
+#endif
+#if defined(WITH_GFX_AV2)
+	RDPGFX_CAPVERSION_FRDP_2 = 0x00020000u, /**< Custom capversion for FreeRDP extensions: AV2
+		                                     * @since version 3.34.0 */
 #endif
 	RDPGFX_CAPVERSION_8 = 0x00080004u,   /**< [MS-RDPEGFX] 2.2.3.1 */
 	RDPGFX_CAPVERSION_81 = 0x00080105u,  /**< [MS-RDPEGFX] 2.2.3.2 */
@@ -151,15 +157,17 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 	RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE = 0x00000080U /* 10.7+ */
 #if defined(WITH_GFX_AZURE)
 	,
-	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100 /* 11.0+, undocumented, Azure only */
+	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100,  /* 11.0+, undocumented, Azure only */
+	RDPGFX_CAPS_FLAG_HEVC_ENABLE = 0x00000400,  /* 11.2+, undocumented */
+	RDPGFX_CAPS_FLAG_AVCMM_ENABLE = 0x00000800, /* 11.3 and 11.5, undocumented, needs AVC */
+	RDPGFX_CAPS_FLAG_HEVC_I444 = 0x00002000     /* 11.5+, undocumented */
 #endif
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 	,
-	RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED = 0x10000000U, /** Custom Extension: Only valid if
-		                                                  RDPGFX_CAPVERSION_FRDP_1 is used */
-	RDPGFX_CAPS_FLAG_AV1_I444_DISABLED =
-		0x20000000U /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used
-		             */
+	/* Custom extension: only valid in the RDPGFX_CAPVERSION_FRDP_1 (AV1) and
+	 * RDPGFX_CAPVERSION_FRDP_2 (AV2) capability sets, the same flags for both */
+	RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED = 0x10000000U,
+	RDPGFX_CAPS_FLAG_AV1_I444_DISABLED = 0x20000000U
 #endif
 } RDPGFX_CAPS_FLAG;
 
@@ -190,9 +198,9 @@ typedef struct
 typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
 {
 	RDPGFX_CODECID_UNCOMPRESSED = 0x0000u,
-#if defined(WITH_GFX_AV1)
-	RDPGFX_CODECID_AV1 =
-		0x0001u, /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used */
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+	RDPGFX_CODECID_AV1 = 0x0001u, /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1
+		                           * (AV1) or RDPGFX_CAPVERSION_FRDP_2 (AV2) is used */
 #endif
 	RDPGFX_CODECID_CAVIDEO = 0x0003u,
 	RDPGFX_CODECID_CLEARCODEC = 0x0008u,
@@ -203,7 +211,16 @@ typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
 	RDPGFX_CODECID_CAPROGRESSIVE_V2 = 0x000Du,
 	RDPGFX_CODECID_AVC444 = 0x000Eu,
 	RDPGFX_CODECID_AVC444v2 = 0x000Fu,
+#if defined(WITH_GFX_AZURE)
+	RDPGFX_CODECID_HEVC420 = 0x0010u, /**< undocumented, only valid with
+		                               * RDPGFX_CAPS_FLAG_HEVC_ENABLE confirmed */
+	RDPGFX_CODECID_HEVC444 =
+		0x0012u, /**< undocumented, only valid with
+		          * RDPGFX_CAPS_FLAG_HEVC_ENABLE | RDPGFX_CAPS_FLAG_HEVC_I444 confirmed */
+	RDPGFX_CODECID_MAX = 0x0013u
+#else
 	RDPGFX_CODECID_MAX = 0x0010u
+#endif
 } RDPGFX_CODECID;
 
 #define RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE 17
@@ -436,6 +453,16 @@ typedef struct
 	BYTE LC;
 	RDPGFX_AVC420_BITMAP_STREAM bitstream[2];
 } RDPGFX_AVC444_BITMAP_STREAM;
+
+typedef struct
+{
+	RDPGFX_H264_METABLOCK meta;
+	UINT32 cbNalSizes;     //                  (4 to 2048, multiple of 4)
+	UINT32* nalSize;       //[cbNalSizes / 4]
+	INT16 frameAttributes; //           (11.5; bit 0 = key frame, negative for not supported)
+	UINT32 length;
+	BYTE* data;
+} RDPGFX_HEVC_BITMAP_STREAM;
 
 typedef struct
 {

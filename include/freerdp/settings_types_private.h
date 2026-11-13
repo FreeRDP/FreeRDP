@@ -790,7 +790,19 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 GfxCodecAV1Profile); /** 3852
 		                                                     * @since version 3.25.0
 		                                                     */
-	UINT64 padding3904[3904 - 3853];                        /* 3853 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecAV2);          /** 3853
+		                                                     * @since version 3.33.0
+		                                                     */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 GfxCodecAV2Profile); /** 3854
+		                                                     * @since version 3.33.0
+		                                                     */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecHEVC);         /** 3855
+		                                                     * @since version 3.34.0 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecHEVC444);      /** 3856
+		                                                     * @since version 3.34.0 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecAVCMM);        /** 3857
+		                                                     * @since version 3.34.0 */
+	UINT64 padding3904[3904 - 3858];                        /* 3858 */
 
 	/**
 	 * Caches

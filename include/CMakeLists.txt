@@ -150,11 +150,26 @@ endif()
 file(GLOB_RECURSE PUBLIC_COMMON_BIN_HEADERS LIST_DIRECTORIES false "${CMAKE_CURRENT_BINARY_DIR}/freerdp/*.h")
 list(SORT PUBLIC_COMMON_HEADERS)
 
+if(NOT WITH_GFX_AV1)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/codec/av1.h")
+  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/av1\\.h$" EXCLUDE)
+endif()
+
+if(NOT WITH_GFX_AV2)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/codec/av2.h")
+  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/av2\\.h$" EXCLUDE)
+endif()
+
+if(NOT WITH_GFX_AZURE)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/codec/hevc.h")
+  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/hevc\\.h$" EXCLUDE)
+endif()
+
 # Install udp.h only when UDP support is enabled. Users should check for the
 # WITH_RDPEUDP_SERVER definition in freerdp/config.h before including the header.
 if(NOT WITH_RDPEUDP)
   list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/server/udp.h")
-  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/server/udp\\.h$" EXCLUDE)
+  list(APPEND PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/server/udp\\.h$" EXCLUDE)
 endif()
 
 if(WITH_SERVER)

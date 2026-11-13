@@ -138,6 +138,7 @@ option(WITH_CLANG_FORMAT "Detect clang-format. run 'cmake --build . --target cla
 option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
 
 option(WITH_GFX_AV1 "[experimental,unstable ABI/API] Enable AV1 support for GFX channel encoding/decoding" OFF)
+option(WITH_GFX_AV2 "[experimental,unstable ABI/API] Enable AV2 support for GFX channel encoding/decoding" OFF)
 option(WITH_GFX_AZURE "[experimental,unstable ABI/API] Enable Azure extension support for GFX channel" OFF)
 include(ConfigOptionsVideoToolbox)
 include(DetectIntrinsicSupport)
@@ -179,6 +180,9 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
   option(WITH_OSS "use OSS for sound" ${OSS_FOUND})
   option(WITH_SNDIO "use Sndio for sound" ${SNDIO_FOUND})
 endif()
+
+find_package(SDL3 QUIET)
+cmake_dependent_option(WITH_SDL_AUDIO "use SDL3 for sound and microphone redirection" OFF "SDL3_FOUND" OFF)
 
 option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
 

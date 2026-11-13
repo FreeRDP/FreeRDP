@@ -1649,7 +1649,24 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 
 	if (length < 1)
 	{
-		WLog_ERR(TAG, "i2d_PublicKey() failed");
+		/* i2d_PublicKey() has no encoding for keys such as Ed25519 or ML-DSA. CredSSP binds
+		 * the SubjectPublicKey of the certificate, which is what i2d_PublicKey() returns for
+		 * RSA and EC keys: take the BIT STRING contents. */
+		const unsigned char* spk = nullptr;
+		int spklen = 0;
+		if ((X509_PUBKEY_get0_param(nullptr, &spk, &spklen, nullptr,
+		                            X509_get_X509_PUBKEY(cert->x509)) != 1) ||
+		    !spk || (spklen < 1))
+		{
+			WLog_ERR(TAG, "i2d_PublicKey() failed");
+			goto exit;
+		}
+		*PublicKey = optr = (BYTE*)calloc((size_t)spklen, sizeof(BYTE));
+		if (!optr)
+			goto exit;
+		memcpy(optr, spk, (size_t)spklen);
+		*PublicKeyLength = (DWORD)spklen;
+		status = TRUE;
 		goto exit;
 	}
 

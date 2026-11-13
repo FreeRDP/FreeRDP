@@ -37,6 +37,16 @@ public class LibFreeRDP
 
 	private static final LongSparseArray<Boolean> mInstanceState = new LongSparseArray<>();
 
+	// FREERDP_CLIENT_KBD_MOD in freerdp/client.h
+	public static final int KBD_MOD_LSHIFT = 0x01;
+	public static final int KBD_MOD_RSHIFT = 0x02;
+	public static final int KBD_MOD_LMENU = 0x04;
+	public static final int KBD_MOD_RMENU = 0x08;
+	public static final int KBD_MOD_LCONTROL = 0x10;
+	public static final int KBD_MOD_RCONTROL = 0x20;
+	public static final int KBD_MOD_LWIN = 0x40;
+	public static final int KBD_MOD_RWIN = 0x80;
+
 	public static final long VERIFY_CERT_FLAG_NONE = 0x00;
 	public static final long VERIFY_CERT_FLAG_LEGACY = 0x02;
 	public static final long VERIFY_CERT_FLAG_REDIRECT = 0x10;
@@ -166,6 +176,10 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_send_unicodekey_event(long inst, int keycode,
 	                                                            boolean down);
+
+	private static native boolean freerdp_send_key_as_unicode_event(long inst, int keycode,
+	                                                                String text, int modmask,
+	                                                                boolean down);
 
 	private static native boolean freerdp_is_unicode_input_supported(long inst);
 
@@ -580,6 +594,18 @@ public class LibFreeRDP
 	public static boolean sendUnicodeKeyEvent(long inst, int keycode, boolean down)
 	{
 		return freerdp_send_unicodekey_event(inst, keycode, down);
+	}
+
+	public static boolean sendKeyAsUnicodeEvent(long inst, int keycode, int unicode, int modmask,
+	                                            boolean down)
+	{
+		// The character as UTF-16. 0, a lone surrogate or anything past U+10FFFF goes as an empty
+		// string, and the library then sends the key's scancode.
+		String text = "";
+		if (unicode > 0 && Character.isValidCodePoint(unicode) &&
+		    Character.getType(unicode) != Character.SURROGATE)
+			text = new String(Character.toChars(unicode));
+		return freerdp_send_key_as_unicode_event(inst, keycode, text, modmask, down);
 	}
 
 	public static boolean isUnicodeInputSupported(long inst)

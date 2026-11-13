@@ -574,6 +574,23 @@ rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STREAM* havc420)
 	       havc420->length;
 }
 
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD static inline UINT32
+rdpgfx_estimate_hevc(const RDPGFX_HEVC_BITMAP_STREAM* hevc)
+{
+	WINPR_ASSERT(hevc);
+	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
+	UINT32 len = sizeof(UINT32) /* numRegionRects */
+	             + 10ULL        /* regionRects + quantQualityVals */
+	                   * hevc->meta.numRegionRects +
+	             sizeof(UINT32) + /* cbNalSizes */
+	             hevc->cbNalSizes + hevc->length;
+	if (hevc->frameAttributes >= 0)
+		len++;
+	return len;
+}
+#endif
+
 /**
  * Function description
  * Estimate surface command packet size in stream without header
@@ -596,6 +613,19 @@ rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAND* cmd)
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
 			return RDPGFX_WIRE_TO_SURFACE_PDU_2_SIZE + cmd->length;
 
+#if defined(WITH_GFX_AZURE)
+		case RDPGFX_CODECID_HEVC420:
+		case RDPGFX_CODECID_HEVC444:
+		{
+			const RDPGFX_HEVC_BITMAP_STREAM* hevc = (const RDPGFX_HEVC_BITMAP_STREAM*)cmd->extra;
+			const UINT32 hevcSize = rdpgfx_estimate_hevc(hevc);
+			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + hevcSize;
+		}
+#endif
+
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+		case RDPGFX_CODECID_AV1:
+#endif
 		case RDPGFX_CODECID_AVC420:
 			havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
 			h264Size = rdpgfx_estimate_h264_avc420(havc420);
@@ -693,7 +723,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_h264_metablock(wLog* log, wStream*
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD static inline UINT
-rdpgfx_write_h264_avc420(wLog* log, wStream* s, RDPGFX_AVC420_BITMAP_STREAM* havc420)
+rdpgfx_write_h264_avc420(wLog* log, wStream* s, const RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	WINPR_ASSERT(havc420);
 	const UINT error = rdpgfx_write_h264_metablock(log, s, &(havc420->meta));
@@ -712,6 +742,50 @@ rdpgfx_write_h264_avc420(wLog* log, wStream* s, RDPGFX_AVC420_BITMAP_STREAM* hav
 	return error;
 }
 
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD static inline UINT rdpgfx_write_hevc(wLog* log, wStream* s,
+                                                          const RDPGFX_HEVC_BITMAP_STREAM* hevc,
+                                                          const RDPGFX_CAPSET* activeCaps)
+{
+	WINPR_ASSERT(hevc);
+	const UINT error = rdpgfx_write_h264_metablock(log, s, &(hevc->meta));
+
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_metablock failed with error %" PRIu32 "!",
+		           error);
+		return error;
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, sizeof(UINT32)))
+		return ERROR_OUTOFMEMORY;
+	Stream_Write_UINT32(s, hevc->cbNalSizes);
+
+	if (!Stream_EnsureRemainingCapacity(s, hevc->cbNalSizes))
+		return ERROR_OUTOFMEMORY;
+
+	for (size_t x = 0; x < hevc->cbNalSizes / 4; x++)
+		Stream_Write_UINT32(s, hevc->nalSize[x]);
+
+	if (activeCaps->version >= RDPGFX_CAPVERSION_115)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return ERROR_OUTOFMEMORY;
+
+		if (hevc->frameAttributes < 0)
+			Stream_Write_UINT8(s, 1);
+		else
+			Stream_Write_UINT8(s, hevc->frameAttributes & 0xff);
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, hevc->length))
+		return ERROR_OUTOFMEMORY;
+
+	Stream_Write(s, hevc->data, hevc->length);
+	return error;
+}
+#endif
+
 /**
  * Function description
  * Write RDPGFX_CMDID_WIRETOSURFACE_1 or RDPGFX_CMDID_WIRETOSURFACE_2
@@ -720,7 +794,8 @@ rdpgfx_write_h264_avc420(wLog* log, wStream* s, RDPGFX_AVC420_BITMAP_STREAM* hav
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream* s,
-                                                              const RDPGFX_SURFACE_COMMAND* cmd)
+                                                              const RDPGFX_SURFACE_COMMAND* cmd,
+                                                              const RDPGFX_CAPSET* activeCaps)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = nullptr;
@@ -780,7 +855,22 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream
 
 		switch (cmd->codecId)
 		{
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AZURE)
+			case RDPGFX_CODECID_HEVC420:
+			case RDPGFX_CODECID_HEVC444:
+			{
+				const RDPGFX_HEVC_BITMAP_STREAM* hevc = (RDPGFX_HEVC_BITMAP_STREAM*)cmd->extra;
+				error = rdpgfx_write_hevc(log, s, hevc, activeCaps);
+
+				if (error != CHANNEL_RC_OK)
+				{
+					WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_avc420 failed!");
+					return error;
+				}
+			}
+			break;
+#endif
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 			case RDPGFX_CODECID_AV1:
 #endif
 			case RDPGFX_CODECID_AVC420:
@@ -880,7 +970,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_send_surface_command(RdpgfxServerContext
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	error = rdpgfx_write_surface_command(context->priv->log, s, cmd);
+	error = rdpgfx_write_surface_command(context->priv->log, s, cmd, &context->priv->activeCapSet);
 
 	if (error != CHANNEL_RC_OK)
 	{
@@ -971,7 +1061,8 @@ rdpgfx_send_surface_frame_command(RdpgfxServerContext* context, const RDPGFX_SUR
 			goto error;
 		}
 
-		error = rdpgfx_write_surface_command(context->priv->log, s, cmd);
+		error =
+		    rdpgfx_write_surface_command(context->priv->log, s, cmd, &context->priv->activeCapSet);
 
 		if (error != CHANNEL_RC_OK)
 		{

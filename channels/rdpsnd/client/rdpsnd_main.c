@@ -185,6 +185,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd->ClientFormats || !rdpsnd->device)
 		return;
 
+	size_t compatible = 0;
 	for (UINT16 index = 0; index < rdpsnd->NumberOfServerFormats; index++)
 	{
 		const AUDIO_FORMAT* serverFormat = &rdpsnd->ServerFormats[index];
@@ -192,6 +193,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 		if (!audio_format_compatible(rdpsnd->fixed_format, serverFormat))
 			continue;
 
+		compatible++;
 		WINPR_ASSERT(rdpsnd->device->FormatSupported);
 		if (freerdp_dsp_supports_format(serverFormat, FALSE) ||
 		    rdpsnd->device->FormatSupported(rdpsnd->device, serverFormat))
@@ -199,6 +201,17 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 			AUDIO_FORMAT* clientFormat = &rdpsnd->ClientFormats[rdpsnd->NumberOfClientFormats++];
 			audio_format_copy(serverFormat, clientFormat);
 		}
+	}
+
+	if (compatible == 0)
+	{
+		WLog_Print(rdpsnd->log, WLOG_WARN,
+		           "%s server offers no format matching /sound format:%s (%" PRIu16
+		           "),rate:%" PRIu32 ",channel:%" PRIu16 ", audio output disabled",
+		           rdpsnd_is_dyn_str(rdpsnd->dynamic),
+		           audio_format_get_tag_string(rdpsnd->fixed_format->wFormatTag),
+		           rdpsnd->fixed_format->wFormatTag, rdpsnd->fixed_format->nSamplesPerSec,
+		           rdpsnd->fixed_format->nChannels);
 	}
 }
 
@@ -297,17 +310,18 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	Stream_Read_UINT8(s, rdpsnd->cBlockNo);  /* cLastBlockConfirmed */
 	Stream_Read_UINT16(s, rdpsnd->wVersion); /* wVersion */
 	Stream_Seek_UINT8(s);                    /* bPad */
-	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, wNumberOfFormats, 14ull))
 		return ERROR_BAD_LENGTH;
 
-	if (rdpsnd->NumberOfServerFormats > 0)
+	if (wNumberOfFormats > 0)
 	{
 		rdpsnd->ServerFormats = audio_formats_new(wNumberOfFormats);
 
 		if (!rdpsnd->ServerFormats)
 			return CHANNEL_RC_NO_MEMORY;
+
+		rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 
 		for (UINT16 index = 0; index < wNumberOfFormats; index++)
 		{
@@ -1155,6 +1169,9 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #endif
 #if defined(__EMSCRIPTEN__)
 		{ "emscripten", "" },
+#endif
+#if defined(WITH_SDL_AUDIO)
+		{ "sdl", "" },
 #endif
 		{ "fake", "" }
 	};

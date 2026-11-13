@@ -7,7 +7,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(DRIVER ${MODULE_NAME}.c)
 
-set(TESTS TestVersion.c TestSettings.c TestUtils.c)
+set(TESTS TestVersion.c TestSettings.c TestUtils.c TestPluginServices.c)
 
 if(BUILD_TESTING_INTERNAL)
   list(
@@ -19,9 +19,10 @@ if(BUILD_TESTING_INTERNAL)
     TestDisconnect.c
     TestMcs.c
     TestUpdateBitmap.c
+    TestRdpPacketLengths.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c TestServerTunnel.c TestUdpListener.c)
+    list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c TestServerTunnel.c TestUdpListener.c)
   endif()
 endif()
 

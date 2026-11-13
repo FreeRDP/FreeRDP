@@ -254,6 +254,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	Stream_Seek(out, 9);
 
 	/* SoundFormats (variable) */
+	size_t compatible = 0;
 	for (UINT32 i = 0; i < NumFormats; i++)
 	{
 		AUDIO_FORMAT format = WINPR_C_ARRAY_INIT;
@@ -272,6 +273,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 			continue;
 		}
 
+		compatible++;
 		if (freerdp_dsp_supports_format(&format, TRUE) ||
 		    audin->device->FormatSupported(audin->device, &format))
 		{
@@ -289,6 +291,16 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 		{
 			audio_format_free(&format);
 		}
+	}
+
+	if (compatible == 0)
+	{
+		WLog_Print(audin->log, WLOG_WARN,
+		           "server offers no format matching /microphone format:%s (%" PRIu16
+		           "),rate:%" PRIu32 ",channel:%" PRIu16 ", audio input disabled",
+		           audio_format_get_tag_string(audin->fixed_format->wFormatTag),
+		           audin->fixed_format->wFormatTag, audin->fixed_format->nSamplesPerSec,
+		           audin->fixed_format->nChannels);
 	}
 
 	if ((error = audin_send_incoming_data_pdu(callback)))
@@ -1121,6 +1133,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 #endif
 #if defined(__EMSCRIPTEN__)
 		{ "emscripten", "" },
+#endif
+#if defined(WITH_SDL_AUDIO)
+		{ "sdl", "" },
 #endif
 		{ nullptr, nullptr }
 	};

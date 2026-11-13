@@ -59,18 +59,27 @@ extern "C"
 #include <freerdp/input.h>
 #include <freerdp/graphics.h>
 
+	/* COM interfaces of freerdp/wts_services.h, the rdp_context slots only need their names */
+	typedef struct IWTSWindowInfoService IWTSWindowInfoService;
+	typedef struct IWTSBitmapRenderService IWTSBitmapRenderService;
+	typedef struct IWTSPluginServiceProvider IWTSPluginServiceProvider;
+
 #define MCS_BASE_CHANNEL_ID 1001
 #define MCS_GLOBAL_CHANNEL_ID 1003
 
 /* Flags used by certificate callbacks */
-#define VERIFY_CERT_FLAG_NONE 0x00
-#define VERIFY_CERT_FLAG_LEGACY 0x02
-#define VERIFY_CERT_FLAG_REDIRECT 0x10
-#define VERIFY_CERT_FLAG_GATEWAY 0x20
-#define VERIFY_CERT_FLAG_CHANGED 0x40
-#define VERIFY_CERT_FLAG_MISMATCH 0x80
-#define VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 0x100
-#define VERIFY_CERT_FLAG_FP_IS_PEM 0x200
+	typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+	{
+		VERIFY_CERT_FLAG_NONE = 0x00,
+		VERIFY_CERT_FLAG_LEGACY = 0x02,
+		VERIFY_CERT_FLAG_REDIRECT = 0x10,
+		VERIFY_CERT_FLAG_GATEWAY = 0x20,
+		VERIFY_CERT_FLAG_CHANGED = 0x40,
+		VERIFY_CERT_FLAG_MISMATCH = 0x80,
+		VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 = 0x100,
+		VERIFY_CERT_FLAG_FP_IS_PEM = 0x200,
+		VERIFY_CERT_FLAG_HTTP = 0x1000 /**< @since version 3.34.0 */
+	} RDP_VERIFY_CERT_FLAG;
 
 /* Message types used by gateway messaging callback */
 #define GATEWAY_MESSAGE_CONSENT 1
@@ -390,7 +399,20 @@ extern "C"
 		ALIGN64 rdpAutoDetect* autodetect; /* 43 owned by rdpRdp */
 		UINT64 paddingC1[45 - 44];         /* 44 */
 		ALIGN64 int disconnectUltimatum;   /* 45 */
-		UINT64 paddingC[64 - 46];          /* 46 */
+
+		/* Services for virtual channel plugins, with Microsoft's interfaces and behaviour (see
+		 * freerdp/wts_services.h): they let a channel, in tree or provided separately, take part in
+		 * the rendering (draw video frames in a mapped area, follow the window showing the
+		 * session). The two client services are created by the client (in ContextNew or before
+		 * connecting) holding one reference, and released and reset to nullptr by the client in
+		 * ContextFree; nullptr when the client has none. Channels don't read them directly but call
+		 * GetService() on the provider (freerdp_get_plugin_service_provider()), which gives each
+		 * its own instance where Microsoft's client does.
+		 * @since version 3.34.0 */
+		ALIGN64 IWTSWindowInfoService* windowInfoService;         /* 46 set by the client */
+		ALIGN64 IWTSBitmapRenderService* bitmapRenderService;     /* 47 set by the client */
+		ALIGN64 IWTSPluginServiceProvider* pluginServiceProvider; /* 48 owned by the core */
+		UINT64 paddingC[64 - 49];                                 /* 49 */
 
 		ALIGN64 rdpStreamDumpContext* dump; /* 64 */
 		ALIGN64 wLog* log;                  /* 65 */
@@ -763,6 +785,25 @@ owned by rdpRdp */
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_get_disconnect_ultimatum(const rdpContext* context);
+
+	/** @brief The services the client offers to virtual channel plugins (see
+	 *  freerdp/wts_services.h).
+	 *
+	 *  This is how a channel, including one built and shipped outside of FreeRDP, reaches the
+	 *  client's rendering: from the rdpContext of its entry points
+	 *  (IDRDYNVC_ENTRY_POINTS::GetRdpContext for a dynamic channel), it calls GetService() with
+	 *  RDCLIENT_BITMAP_RENDER_SERVICE or RDCLIENT_WINDOW_INFO_SERVICE and QueryInterface()s the
+	 *  result, as a plugin of Microsoft's clients does.
+	 *
+	 *  @param context the context, valid from freerdp_context_new() on
+	 *  @return the provider with a reference for the caller, to give back with
+	 *  WINPR_COM_RELEASE(); nullptr on error. It may outlive the context: the services it hands
+	 *  out then answer E_UNEXPECTED.
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API IWTSPluginServiceProvider*
+	freerdp_get_plugin_service_provider(const rdpContext* context);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 freerdp_get_last_error(const rdpContext* context);

@@ -31,6 +31,10 @@
 #include "win_sas.h"
 #include "win_audio.h"
 
+#if defined(CHANNEL_CLIPRDR_SERVER)
+#include "win_shadow_cliprdr.h"
+#endif
+
 #define TAG SERVER_TAG("shadow.win")
 
 /* https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-mouse_event
@@ -102,6 +106,71 @@ static void win_shadow_send_input(const char* what, INPUT* event)
 	if (SendInput(1, event, sizeof(INPUT)) == 0)
 		WLog_WARN(TAG, "%s: SendInput refused the event (0x%08lX), it is dropped", what,
 		          GetLastError());
+}
+
+/* UIPI: a process below High integrity (a scheduled task defaults to Medium)
+ * may not send input to windows of a higher integrity level (an elevated
+ * foreground application), and SendInput does not report the refusal: it
+ * returns success and does not set the last error. The screen capture is
+ * unaffected, so such a shadow serves a perfectly fine picture while every
+ * keystroke and mouse click into an elevated window is silently dropped.
+ * Say so at startup: this turns a "keyboard and mouse dead while picture is
+ * fine" report into a log line readable in seconds.
+ * https://learn.microsoft.com/en-us/windows/win32/secauthz/how-uipi-works */
+static void win_shadow_check_input_integrity(void)
+{
+	HANDLE token = nullptr;
+	DWORD length = 0;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+	{
+		WLog_WARN(TAG, "OpenProcessToken failed: cannot read the process integrity level (0x%08lX)",
+		          GetLastError());
+		return;
+	}
+
+	/* the integrity level RID is the last sub-authority of the mandatory
+	 * label SID (S-1-16-<rid>) */
+	if (!GetTokenInformation(token, TokenIntegrityLevel, nullptr, 0, &length) &&
+	    (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+	{
+		PTOKEN_MANDATORY_LABEL label = (PTOKEN_MANDATORY_LABEL)malloc(length);
+
+		if (!label)
+			WLog_WARN(TAG, "out of memory: cannot read the process integrity level");
+		else
+		{
+			if (GetTokenInformation(token, TokenIntegrityLevel, label, length, &length) &&
+			    label->Label.Sid)
+			{
+				const PSID sid = label->Label.Sid;
+				const DWORD rid = *GetSidSubAuthority(sid, *GetSidSubAuthorityCount(sid) - 1);
+
+				if (rid < SECURITY_MANDATORY_HIGH_RID)
+					WLog_WARN(TAG,
+					          "process is NOT elevated (integrity level 0x%04lX, Medium or lower): "
+					          "injected input to elevated windows will be silently dropped by UIPI "
+					          "- run the shadow elevated (e.g. scheduled task RunLevel Highest) or "
+					          "expect \"keyboard and mouse dead while picture is fine\" reports",
+					          rid);
+				else
+					WLog_DBG(TAG,
+					         "process integrity level 0x%04lX: injected input reaches elevated "
+					         "windows",
+					         rid);
+			}
+			else
+				WLog_WARN(
+				    TAG,
+				    "GetTokenInformation(TokenIntegrityLevel) failed: cannot read the process "
+				    "integrity level (0x%08lX)",
+				    GetLastError());
+
+			free(label);
+		}
+	}
+
+	(void)CloseHandle(token);
 }
 
 /* Ctrl+Alt+Del: asks freerdp-shadow-service for the secure attention
@@ -560,13 +629,15 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 				 * desktop, and send all of it. DXGI reports changes only: on a
 				 * desktop that does not change, a new client would otherwise wait
 				 * for its first picture until something moves; a new duplication
-				 * starts with the whole desktop image. While capture is paused (a desktop
-				 * this process may not capture) a missing duplication is tried again only
-				 * every WIN_SHADOW_DXGI_DENIED_RETRY_MS, not on every pass */
+				 * starts with the whole desktop image. A missing duplication is
+				 * retried from dxgiRetryTime on, not on every pass: every
+				 * WIN_SHADOW_DXGI_DENIED_RETRY_MS while a desktop this process
+				 * may not capture is active, every WIN_SHADOW_DXGI_INIT_RETRY_MS
+				 * after a failure which does not recover by itself (no D3D11
+				 * device, no duplicatable output) */
 				const BOOL followed = win_shadow_follow_input_desktop();
-				const BOOL retry =
-				    !subsystem->dxgiOutputDuplication &&
-				    (!subsystem->dxgiDenied || (GetTickCount64() >= subsystem->dxgiRetryTime));
+				const BOOL retry = !subsystem->dxgiOutputDuplication &&
+				                   (GetTickCount64() >= subsystem->dxgiRetryTime);
 				if (followed || refresh || retry)
 				{
 					refresh = FALSE;
@@ -768,11 +839,39 @@ int win_shadow_check_resize(winShadowSubsystem* subsystem)
 	return 1;
 }
 
+static BOOL win_shadow_client_connect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(client);
+
+#if defined(CHANNEL_CLIPRDR_SERVER)
+	/* cliprdr is a static channel: the join decision is final by the time
+	 * ClientConnect runs (shadow_client_channels_post_connect precedes it). */
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, CLIPRDR_SVC_CHANNEL_NAME))
+	{
+		if (win_shadow_cliprdr_init(client) < 0)
+			return FALSE;
+	}
+#endif
+	return TRUE;
+}
+
+static void win_shadow_client_disconnect(rdpShadowSubsystem* subsystem, rdpShadowClient* client)
+{
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(client);
+
+#if defined(CHANNEL_CLIPRDR_SERVER)
+	win_shadow_cliprdr_uninit(client);
+#endif
+}
+
 static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 {
 	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
 	int status;
 	MONITOR_DEF* virtualScreen;
+	win_shadow_check_input_integrity();
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
 	if (subsystem->base.numMonitors > 0)
 	{
@@ -787,9 +886,21 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 		subsystem->height = GetSystemMetrics(SM_CYSCREEN);
 	}
 #if defined(WITH_WDS_API)
+	/* The Windows Desktop Sharing API is the low performance capture path:
+	 * its throughput degrades with multiple clients and high frame rates.
+	 * Which capture backend a binary carries is decided at build time (the
+	 * alternative, DXGI desktop duplication, is WITH_SHADOW_WIN_DXGI=ON),
+	 * so a binary holding only the slow path would degrade silently: say
+	 * what was built in. */
+	WLog_WARN(TAG,
+	          "capture uses the Windows Desktop Sharing API: the low performance capture path, "
+	          "throughput drops with multiple clients or high frame rates - build with "
+	          "WITH_SHADOW_WIN_DXGI=ON for DXGI desktop duplication");
 	status = win_shadow_wds_init(subsystem);
 #elif defined(WITH_DXGI_1_2)
 	status = win_shadow_dxgi_init(subsystem);
+	if (status < 0)
+		WLog_WARN(TAG, "DXGI init failed, the capture thread retries at a low rate");
 #endif
 	virtualScreen = &(subsystem->base.virtualScreen);
 	virtualScreen->left = 0;
@@ -876,6 +987,8 @@ static rdpShadowSubsystem* win_shadow_subsystem_new(void)
 	subsystem->base.UnicodeKeyboardEvent = win_shadow_input_unicode_keyboard_event;
 	subsystem->base.MouseEvent = win_shadow_input_mouse_event;
 	subsystem->base.ExtendedMouseEvent = win_shadow_input_extended_mouse_event;
+	subsystem->base.ClientConnect = win_shadow_client_connect;
+	subsystem->base.ClientDisconnect = win_shadow_client_disconnect;
 	return &subsystem->base;
 }
 

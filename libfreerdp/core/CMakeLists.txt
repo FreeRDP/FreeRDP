@@ -91,6 +91,8 @@ set(${MODULE_PREFIX}_SRCS
     orders.c
     orders.h
     freerdp.c
+    plugin_services.c
+    plugin_services.h
     graphics.c
     client.c
     client.h

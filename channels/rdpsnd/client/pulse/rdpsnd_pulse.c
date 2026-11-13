@@ -64,6 +64,7 @@ typedef struct
 	UINT64 play_end; /* tick count when the queued audio has been played */
 } rdpsndPulsePlugin;
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 {
 	BOOL rc = TRUE;
@@ -93,6 +94,7 @@ static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
                                           const AUDIO_FORMAT* format);
 
@@ -165,6 +167,7 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 {
 	BOOL rc = 0;
@@ -319,6 +322,7 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_FORMAT* format)
 {
 	WINPR_ASSERT(format);
@@ -361,6 +365,7 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
@@ -377,6 +382,7 @@ static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 	return rdpsnd_pulse_connect(&pulse->device);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 {
 	pa_stream_state_t state = PA_STREAM_FAILED;
@@ -398,7 +404,10 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		if (pulse->reconnect_delay_seconds >= 0 && time(nullptr) - pulse->reconnect_time >= 0)
-			rdpsnd_pulse_context_connect(device);
+		{
+			if (!rdpsnd_pulse_context_connect(device))
+				return FALSE;
+		}
 		pa_threaded_mainloop_lock(pulse->mainloop);
 	}
 
@@ -469,6 +478,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
                               UINT32 latency)
 {
@@ -518,6 +528,7 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 	free(pulse);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_default_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* desired,
                                         AUDIO_FORMAT* defaultFormat)
 {
@@ -567,6 +578,7 @@ BOOL rdpsnd_pulse_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 rdpsnd_pulse_get_volume(rdpsndDevicePlugin* device)
 {
 	pa_operation* o = nullptr;
@@ -599,6 +611,7 @@ static void rdpsnd_set_volume_success_cb(WINPR_ATTR_UNUSED pa_context* c, int su
 	WLog_INFO(TAG, "%d", success);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	pa_cvolume cv = WINPR_C_ARRAY_INIT;
@@ -641,8 +654,16 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 }
 
 /* write size bytes of data, or of silence if data is nullptr; called with the mainloop locked */
+WINPR_ATTR_NODISCARD
 static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_t size)
 {
+	const size_t frame_size = pa_frame_size(&pulse->sample_spec);
+	if (frame_size == 0)
+		return FALSE;
+
+	/* pa_stream_write only accepts whole frames, drop an incomplete one at the end */
+	size -= size % frame_size;
+
 	while (size > 0)
 	{
 		size_t length = size;
@@ -650,6 +671,11 @@ static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_
 
 		if (pa_stream_begin_write(pulse->stream, &pa_data, &length) < 0)
 			return FALSE;
+
+		/* The returned length is the size of the buffer handed out, which is
+		 * not bound by what was asked for; never copy more than we have. */
+		if (length > size)
+			length = size;
 
 		/* A suspended or migrating stream (e.g. the default device just
 		 * changed) can hand out an empty buffer; treating it as progress
@@ -669,8 +695,14 @@ static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_
 		else
 			memset(pa_data, (pulse->sample_spec.format == PA_SAMPLE_U8) ? 0x80 : 0, length);
 
+		/* A buffer that is neither written nor cancelled stays attached to the
+		 * stream and is handed out again, with its own size, by the next
+		 * pa_stream_begin_write. */
 		if (pa_stream_write(pulse->stream, pa_data, length, nullptr, 0LL, PA_SEEK_RELATIVE) < 0)
+		{
+			pa_stream_cancel_write(pulse->stream);
 			return FALSE;
+		}
 
 		if (data)
 			data += length;
@@ -679,6 +711,38 @@ static BOOL rdpsnd_pulse_write(rdpsndPulsePlugin* pulse, const BYTE* data, size_
 	return TRUE;
 }
 
+/* whether the queued audio has run out: the tick count estimate runs ahead of the device whenever
+ * playback stalls (prebuffering after an underrun, bursts, clock drift); the stream's read and
+ * write positions say how much is really queued, the estimate is only trusted when they are not
+ * known */
+WINPR_ATTR_NODISCARD
+static BOOL rdpsnd_pulse_ran_dry(rdpsndPulsePlugin* pulse, UINT64 now)
+{
+	if (now < pulse->play_end)
+		return FALSE;
+
+	const pa_timing_info* ti = pa_stream_get_timing_info(pulse->stream);
+	if (!ti || ti->write_index_corrupt || ti->read_index_corrupt)
+		return TRUE;
+
+	int64_t queued = ti->write_index - ti->read_index;
+	if (ti->playing)
+	{
+		/* the positions are from the last timing update; take off what has been played since */
+		const pa_usec_t age = pa_timeval_age(&ti->timestamp);
+		queued -= (int64_t)pa_usec_to_bytes(age, &pulse->sample_spec);
+	}
+
+	/* less than 20 ms left: the device is about to run dry, as the estimate says */
+	if (queued <= (int64_t)pa_usec_to_bytes(20000ULL, &pulse->sample_spec))
+		return TRUE;
+
+	/* audio is still waiting: no silence, and the estimate follows the stream again */
+	pulse->play_end = now + pa_bytes_to_usec((uint64_t)queued, &pulse->sample_spec) / 1000ULL;
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
 static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
 	pa_usec_t latency = 0;
@@ -695,7 +759,8 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		// Discard this playback request and just attempt to reconnect the stream
 		WLog_DBG(TAG, "reconnecting playback stream");
-		rdpsnd_pulse_open_stream(device);
+		if (!rdpsnd_pulse_open_stream(device))
+			WLog_WARN(TAG, "Failed to (re)open pulse stream, ignoring playback");
 		return 0;
 	}
 
@@ -705,11 +770,12 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	 * and PulseAudio loses some of it. Put some silence in front, so the
 	 * following samples can arrive a little late. */
 	const UINT64 now = GetTickCount64();
-	if (now >= pulse->play_end)
+	if (rdpsnd_pulse_ran_dry(pulse, now))
 	{
 		const UINT32 ms = (pulse->latency > 0) ? pulse->latency : PULSE_DEFAULT_LATENCY_MS;
-		(void)rdpsnd_pulse_write(pulse, nullptr,
-		                         pa_usec_to_bytes(1000ULL * ms, &pulse->sample_spec));
+		if (!rdpsnd_pulse_write(pulse, nullptr,
+		                        pa_usec_to_bytes(1000ULL * ms, &pulse->sample_spec)))
+			WLog_WARN(TAG, "rdpsnd_pulse_write failed");
 		pulse->play_end = now + ms;
 	}
 
@@ -727,6 +793,7 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	return (UINT32)val;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT rdpsnd_pulse_parse_addin_args(rdpsndPulsePlugin* pulse, const ADDIN_ARGV* args)
 {
 	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = {

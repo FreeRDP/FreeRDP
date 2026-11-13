@@ -243,7 +243,9 @@ void pcap_flush(rdpPcap* pcap)
 	while (pcap->record != nullptr)
 	{
 		(void)pcap_write_record(pcap, pcap->record);
-		pcap->record = pcap->record->next;
+		pcap_record* next = pcap->record->next;
+		free(pcap->record);
+		pcap->record = next;
 	}
 
 	if (pcap->fp != nullptr)

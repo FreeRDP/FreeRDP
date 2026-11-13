@@ -357,6 +357,46 @@ static BOOL check_settings_modem_with_fonts(rdpSettings* settings)
 	return result;
 }
 
+/* Mirrors the position bits private to parse_floatbar_options() in cmdline.c. */
+#define FLOATBAR_FLAG_POSITION_MASK 0xC0u
+#define FLOATBAR_FLAG_POSITION_LEFT 0x40u
+#define FLOATBAR_FLAG_POSITION_RIGHT 0x80u
+
+WINPR_ATTR_NODISCARD
+static BOOL check_floatbar_position(rdpSettings* settings, UINT32 expected_position_bits)
+{
+	const UINT32 floatbar = freerdp_settings_get_uint32(settings, FreeRDP_Floatbar);
+	const UINT32 actual_position_bits = floatbar & FLOATBAR_FLAG_POSITION_MASK;
+
+	if (actual_position_bits != expected_position_bits)
+	{
+		TEST_FAILURE("Expected Floatbar position bits 0x%02" PRIx32 ", got 0x%02" PRIx32
+		             " (Floatbar=0x%08" PRIx32 ")\n",
+		             expected_position_bits, actual_position_bits, floatbar);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_settings_floatbar_position_default(rdpSettings* settings)
+{
+	return check_floatbar_position(settings, 0);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_settings_floatbar_position_left(rdpSettings* settings)
+{
+	return check_floatbar_position(settings, FLOATBAR_FLAG_POSITION_LEFT);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_settings_floatbar_position_right(rdpSettings* settings)
+{
+	return check_floatbar_position(settings, FLOATBAR_FLAG_POSITION_RIGHT);
+}
+
 typedef struct
 {
 	int expected_status;
@@ -560,6 +600,31 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_modem_with_fonts,
 	  { "testfreerdp", "+fonts", "/network:modem", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_default,
+	  { "testfreerdp", "/floatbar", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_left,
+	  { "testfreerdp", "/floatbar:position:left", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_right,
+	  { "testfreerdp", "/floatbar:position:right", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_default,
+	  { "testfreerdp", "/floatbar:position:center", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_left,
+	  { "testfreerdp", "/floatbar:sticky:on,default:visible,show:always,position:left",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/floatbar:position:bogus", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 };
 // NOLINTEND(bugprone-suspicious-missing-comma)

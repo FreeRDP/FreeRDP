@@ -56,6 +56,7 @@ const char* rdpgfx_get_cmd_id_string(UINT16 cmdId)
 		EVCASE(RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW);
 		EVCASE(RDPGFX_CMDID_PROTECT_SURFACE);
 		EVCASE(RDPGFX_CMDID_WATERMARK);
+		EVCASE(RDPGFX_CMDID_CAPSRESET);
 		default:
 			return "RDPGFX_CMDID_UNKNOWN";
 	}
@@ -64,47 +65,33 @@ const char* rdpgfx_get_cmd_id_string(UINT16 cmdId)
 
 const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 {
+#define EVCASE(x) \
+	case x:       \
+		return #x
+
 	switch (codecId)
 	{
-#if defined(WITH_GFX_AV1)
-		case RDPGFX_CODECID_AV1:
-			return "RDPGFX_CODECID_AV1";
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+		EVCASE(RDPGFX_CODECID_AV1);
 #endif
-
-		case RDPGFX_CODECID_UNCOMPRESSED:
-			return "RDPGFX_CODECID_UNCOMPRESSED";
-
-		case RDPGFX_CODECID_CAVIDEO:
-			return "RDPGFX_CODECID_CAVIDEO";
-
-		case RDPGFX_CODECID_CLEARCODEC:
-			return "RDPGFX_CODECID_CLEARCODEC";
-
-		case RDPGFX_CODECID_PLANAR:
-			return "RDPGFX_CODECID_PLANAR";
-
-		case RDPGFX_CODECID_AVC420:
-			return "RDPGFX_CODECID_AVC420";
-
-		case RDPGFX_CODECID_AVC444:
-			return "RDPGFX_CODECID_AVC444";
-
-		case RDPGFX_CODECID_AVC444v2:
-			return "RDPGFX_CODECID_AVC444v2";
-
-		case RDPGFX_CODECID_ALPHA:
-			return "RDPGFX_CODECID_ALPHA";
-
-		case RDPGFX_CODECID_CAPROGRESSIVE:
-			return "RDPGFX_CODECID_CAPROGRESSIVE";
-
-		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			return "RDPGFX_CODECID_CAPROGRESSIVE_V2";
+		EVCASE(RDPGFX_CODECID_UNCOMPRESSED);
+		EVCASE(RDPGFX_CODECID_CAVIDEO);
+		EVCASE(RDPGFX_CODECID_CLEARCODEC);
+		EVCASE(RDPGFX_CODECID_PLANAR);
+		EVCASE(RDPGFX_CODECID_AVC420);
+		EVCASE(RDPGFX_CODECID_AVC444);
+		EVCASE(RDPGFX_CODECID_AVC444v2);
+#if defined(WITH_GFX_AZURE)
+		EVCASE(RDPGFX_CODECID_HEVC420);
+		EVCASE(RDPGFX_CODECID_HEVC444);
+#endif
+		EVCASE(RDPGFX_CODECID_ALPHA);
+		EVCASE(RDPGFX_CODECID_CAPROGRESSIVE);
+		EVCASE(RDPGFX_CODECID_CAPROGRESSIVE_V2);
 		default:
-			break;
+			return "RDPGFX_CODECID_UNKNOWN";
 	}
-
-	return "RDPGFX_CODECID_UNKNOWN";
+#undef EVCASE
 }
 
 const char* rdpgfx_caps_version_str(UINT32 capsVersion)
@@ -117,6 +104,9 @@ const char* rdpgfx_caps_version_str(UINT32 capsVersion)
 	{
 #if defined(WITH_GFX_AV1)
 		EVCASE(RDPGFX_CAPVERSION_FRDP_1);
+#endif
+#if defined(WITH_GFX_AV2)
+		EVCASE(RDPGFX_CAPVERSION_FRDP_2);
 #endif
 		EVCASE(RDPGFX_CAPVERSION_8);
 		EVCASE(RDPGFX_CAPVERSION_81);
@@ -158,8 +148,11 @@ static const char* rdpgfx_caps_flag_str_int(UINT32 flag)
 		EVCASE(RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE);
 #if defined(WITH_GFX_AZURE)
 		EVCASE(RDPGFX_CAPS_FLAG_SCP_DISABLE);
+		EVCASE(RDPGFX_CAPS_FLAG_HEVC_ENABLE);
+		EVCASE(RDPGFX_CAPS_FLAG_AVCMM_ENABLE);
+		EVCASE(RDPGFX_CAPS_FLAG_HEVC_I444);
 #endif
-#if defined(WITH_GFX_AV1)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
 		EVCASE(RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED);
 		EVCASE(RDPGFX_CAPS_FLAG_AV1_I444_DISABLED);
 #endif
@@ -179,7 +172,7 @@ const char* rdpgfx_caps_flag_str(UINT32 flag)
 	const char prefix[] = "RDPGFX_CAPS_FLAG_";
 	if (strncmp(val, prefix, sizeof(prefix) - 1) != 0)
 		return val;
-	return &val[sizeof(prefix)];
+	return &val[sizeof(prefix) - 1];
 }
 
 const char* rdpgfx_caps_flags_str(UINT32 flags, char* buffer, size_t length)
