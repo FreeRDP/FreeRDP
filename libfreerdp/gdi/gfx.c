@@ -962,6 +962,22 @@ static UINT gdi_SurfaceCommand_HEVC(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (!surface->hevc)
 		return ERROR_NOT_SUPPORTED;
 
+	/* HEVC 4:2:0 and 4:4:4 may need different decoders (the hardware ones and Media Foundation
+	 * often lack 4:4:4), follow the codec of each command. A switch starts with a key frame. */
+	const UINT32 profile = (cmd->codecId == RDPGFX_CODECID_HEVC444) ? 1 : 0;
+	if (freerdp_hevc_context_get_option(surface->hevc, FREERDP_HEVC_CONTEXT_OPTION_PROFILE) !=
+	    profile)
+	{
+		if (!freerdp_hevc_context_set_option(surface->hevc, FREERDP_HEVC_CONTEXT_OPTION_PROFILE,
+		                                     profile))
+		{
+			WLog_ERR(TAG, "no HEVC %s decoder available", profile ? "4:4:4" : "4:2:0");
+			return ERROR_NOT_SUPPORTED;
+		}
+		if (!freerdp_hevc_context_reset(surface->hevc, surface->width, surface->height))
+			return ERROR_INTERNAL_ERROR;
+	}
+
 	if (!is_within_surface(surface, cmd))
 		return ERROR_INVALID_DATA;
 
