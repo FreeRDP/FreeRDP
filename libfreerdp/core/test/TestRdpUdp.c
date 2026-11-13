@@ -995,9 +995,11 @@ fail:
 /* Sending                                                                                   */
 /* ---------------------------------------------------------------------------------------- */
 
-/* AckOfAcks is the lowest of our data sequence numbers still awaiting acknowledgement. It goes
- * out when it changes, sending the sequence being transmitted would make the peer abandon every
- * packet still in flight. */
+/* AckOfAcks is the lowest of our data sequence numbers still awaiting acknowledgement, sending
+ * the sequence being transmitted would make the peer abandon every packet still in flight. Until
+ * the peer has acknowledged a packet it goes out with every data packet, so that the peer knows
+ * where the sequence space starts and notices a lost first packet ([MS-RDPEUDP2] 3.1.5.3). After
+ * that it goes out when it changes. */
 static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 {
 	BOOL rc = FALSE;
@@ -1008,10 +1010,11 @@ static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 	const V3Packet* sent = first_data(&ctx);
 	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE));
 
+	/* nothing acknowledged yet: repeated */
 	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"2", 1));
 	CHECK(drain(&ctx, 20));
 	sent = first_data(&ctx);
-	CHECK(sent && !sent->hasAoA);
+	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE));
 
 	CHECK(send_ack(&ctx, FIRST_SEQUENCE));
 	CHECK(pump(&ctx));
@@ -1019,6 +1022,12 @@ static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 	CHECK(drain(&ctx, 20));
 	sent = first_data(&ctx);
 	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE + 1));
+
+	/* acknowledged and unchanged: left out */
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"4", 1));
+	CHECK(drain(&ctx, 20));
+	sent = first_data(&ctx);
+	CHECK(sent && !sent->hasAoA);
 	rc = TRUE;
 fail:
 	ctx_free(&ctx);

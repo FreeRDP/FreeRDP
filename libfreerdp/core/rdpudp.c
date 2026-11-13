@@ -235,6 +235,7 @@ struct rdp_udp
 	BOOL cwrPending;
 	UINT32 announcedAoA;
 	BOOL aoaAnnounced;
+	BOOL peerAcked; /* TRUE once the peer has acknowledged a data datagram */
 	UINT16 nextChannelSeq;
 
 	/* receiving side */
@@ -787,8 +788,12 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) &&
 	                     (udp->v3BehindCount == 0) && !udp->v3Resync;
 	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
-	/* repeated on a resend, the first announcement may have been lost with it */
-	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) || (p->retransmits > 0);
+	/* Repeated on a resend, the first announcement may have been lost with it, and in all data
+	 * until the peer acknowledges ([MS-RDPEUDP2] 3.1.5.3, as Windows does). The peer takes the
+	 * start of the sequence space from the first AckOfAcks; without one it takes the first
+	 * datagram that arrives, and a first packet that was lost or late counts as received. */
+	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) ||
+	                     (p->retransmits > 0) || !udp->peerAcked;
 
 	/* Windows sets NOACK on every DATA packet without an ACK */
 	UINT16 flags = RDPUDP2_DATA | RDPUDP2_DELAYACKINFO;
@@ -1176,6 +1181,7 @@ static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
 	WINPR_ASSERT(p);
 	sample_rtt(udp, p);
 	pending_clear(p);
+	udp->peerAcked = TRUE;
 	if (udp->inFlight > 0)
 		udp->inFlight--;
 }
