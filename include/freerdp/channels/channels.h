@@ -149,6 +149,18 @@ extern "C"
 	FREERDP_API BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* data,
 	                                       size_t dataSize, UINT32 flags, size_t totalSize);
 
+#if defined(WITH_RDPEUDP)
+	/** Delivers data received through a dynamic-to-static channel bridge.
+	 *
+	 * Unlike freerdp_channels_data(), this remains enabled after the original static transport
+	 * has been disabled for a tunnelled channel.
+	 * @since version 3.33.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_channels_data_bridge(freerdp* instance, UINT16 channelId,
+	                                              const BYTE* data, size_t dataSize, UINT32 flags,
+	                                              size_t totalSize);
+#endif
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
 
@@ -162,9 +174,9 @@ extern "C"
 	 *  passed to @p send and to @p fnFree, which is called once the channel no longer uses it
 	 *  and no send is in progress. On failure the caller keeps @p custom.
 	 *
-	 *  A @p send of nullptr sends the channel's data on the static channel again; @p fnFree is
-	 *  not used then, and a @p custom other than nullptr only removes the bridge set with that
-	 *  @p custom, not one set since.
+	 *  A @p send of nullptr removes the active bridge, but does not re-enable the original static
+	 *  transport. @p fnFree is not used then, and a @p custom other than nullptr only removes the
+	 *  bridge set with that @p custom, not one set since.
 	 *  @since version 3.33.0 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_channels_set_static_bridge(freerdp* instance, const char* name,
