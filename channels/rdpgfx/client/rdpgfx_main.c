@@ -2622,6 +2622,15 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* data)
 				error = ERROR_INVALID_DATA;
 			break;
 
+		case RDPGFX_CMDID_UNUSED_0014:
+			/* servers send diagnostic information with this command, it carries no graphics */
+			WLog_Print(gfx->base.log, WLOG_DEBUG,
+			           "Diagnostic information from the server, skipping %" PRIu32 " bytes",
+			           header.pduLength);
+			if (!Stream_SafeSeek(s, packetlen))
+				error = ERROR_INVALID_DATA;
+			break;
+
 		case RDPGFX_CMDID_CAPSRESET:
 			if ((error = rdpgfx_recv_caps_reset_pdu(callback, s)))
 				WLog_Print(gfx->base.log, WLOG_ERROR,
