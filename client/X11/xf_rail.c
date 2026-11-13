@@ -1143,9 +1143,9 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		{
 			if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
 				return FALSE;
-			if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
-				return FALSE;
 		}
+		if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
