@@ -103,15 +103,13 @@ static CRITICAL_SECTION ContextBufferAllocTableLock = WINPR_C_ARRAY_INIT;
 
 static int sspi_ContextBufferAllocTableNew(void)
 {
-	size_t size = 0;
-
 	if (!InitializeCriticalSectionEx(&ContextBufferAllocTableLock, 0, 0))
 		return -1;
 
 	ContextBufferAllocTable.entries = nullptr;
 	ContextBufferAllocTable.cEntries = 0;
 	ContextBufferAllocTable.cMaxEntries = 4;
-	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
+	const size_t size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 	ContextBufferAllocTable.entries = (CONTEXT_BUFFER_ALLOC_ENTRY*)calloc(1, size);
 
 	if (!ContextBufferAllocTable.entries)
@@ -126,24 +124,23 @@ static int sspi_ContextBufferAllocTableNew(void)
 /* NB: ContextBufferAllocTableLock must be held by the caller */
 static int sspi_ContextBufferAllocTableGrow(void)
 {
-	size_t size = 0;
-	CONTEXT_BUFFER_ALLOC_ENTRY* entries = nullptr;
 	const UINT32 cMaxEntries = ContextBufferAllocTable.cMaxEntries + 128ull;
-	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * cMaxEntries;
+	const size_t size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * cMaxEntries;
 
 	if (!size)
 		return -1;
 
-	entries = (CONTEXT_BUFFER_ALLOC_ENTRY*)realloc(ContextBufferAllocTable.entries, size);
+	CONTEXT_BUFFER_ALLOC_ENTRY* entries =
+	    (CONTEXT_BUFFER_ALLOC_ENTRY*)realloc(ContextBufferAllocTable.entries, size);
 
 	/* on failure the old table (and the buffers it tracks) stays valid */
 	if (!entries)
 		return -1;
 
-	ContextBufferAllocTable.cMaxEntries = cMaxEntries;
 	ContextBufferAllocTable.entries = entries;
-	ZeroMemory((void*)&ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2],
-	           size / 2);
+	ZeroMemory(&ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries],
+	           cMaxEntries - ContextBufferAllocTable.cMaxEntries);
+	ContextBufferAllocTable.cMaxEntries = cMaxEntries;
 	return 1;
 }
 
