@@ -777,12 +777,14 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 		{
 			WLog_Print(gfx->base.log, WLOG_INFO, "HEVC confirmed by server");
 			gfx->allowedCodecs[RDPGFX_CODECID_HEVC420] = TRUE;
-		}
 
-		if ((capsSet.flags & RDPGFX_CAPS_FLAG_HEVC_I444) != 0)
-		{
-			WLog_Print(gfx->base.log, WLOG_INFO, "HEVC I444 confirmed by server");
-			gfx->allowedCodecs[RDPGFX_CODECID_HEVC444] = TRUE;
+			/* HEVC444 is only valid in RDPGFX_CAPVERSION_115 and needs HEVC enabled */
+			if ((capsSet.version >= RDPGFX_CAPVERSION_115) &&
+			    ((capsSet.flags & RDPGFX_CAPS_FLAG_HEVC_I444) != 0))
+			{
+				WLog_Print(gfx->base.log, WLOG_INFO, "HEVC I444 confirmed by server");
+				gfx->allowedCodecs[RDPGFX_CODECID_HEVC444] = TRUE;
+			}
 		}
 	}
 #endif
