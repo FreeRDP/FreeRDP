@@ -1005,7 +1005,9 @@ UINT SdlRail::server_execute_result(RailClientContext* context,
 	{
 		WLog_ERR(TAG, "RAIL exec error: execResult=0x%04" PRIx16 " rawResult=0x%08" PRIx32,
 		         execResult->execResult, execResult->rawResult);
-		freerdp_abort_connect_context(rail->_context->context());
+		if (!freerdp_settings_get_bool(rail->_context->context()->settings,
+		                               FreeRDP_RemoteApplicationExecFromPipe))
+			freerdp_abort_connect_context(rail->_context->context());
 	}
 	else
 	{

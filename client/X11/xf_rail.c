@@ -1230,7 +1230,9 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 		WLog_Print(
 		    xfc->log, WLOG_ERROR, "RAIL exec error: execResult=%s [0x%08" PRIx32 "] NtError=0x%X\n",
 		    error_code2str(execResult->execResult), execResult->execResult, execResult->rawResult);
-		freerdp_abort_connect_context(&xfc->common.context);
+		if (!freerdp_settings_get_bool(xfc->common.context.settings,
+		                               FreeRDP_RemoteApplicationExecFromPipe))
+			freerdp_abort_connect_context(&xfc->common.context);
 	}
 
 	return CHANNEL_RC_OK;

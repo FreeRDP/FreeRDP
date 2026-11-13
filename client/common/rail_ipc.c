@@ -51,10 +51,8 @@
 struct rdp_client_rail_callbacks
 {
 	BOOL saved;
-	pcRailServerExecuteResult ServerExecuteResult;
 	pMonitoredDesktop MonitoredDesktop;
 	pNonMonitoredDesktop NonMonitoredDesktop;
-	void* context;
 };
 
 struct rdp_client_rail_ipc
@@ -325,62 +323,6 @@ static BOOL rail_ipc_on_event(rdpContext* context, void* userdata)
 	return rc;
 }
 
-WINPR_ATTR_MALLOC(free, 1)
-static char* exec_result_to_str(const RAIL_EXEC_RESULT_ORDER* execResult, size_t* plen)
-{
-	if (plen)
-		*plen = 0;
-
-	WINPR_JSON* json = WINPR_JSON_CreateObject();
-	if (!json)
-		return nullptr;
-
-	if (!WINPR_JSON_AddIntegerToObject(json, "flags", execResult->flags))
-		goto fail;
-	if (!WINPR_JSON_AddIntegerToObject(json, "execResult", execResult->execResult))
-		goto fail;
-	if (!WINPR_JSON_AddIntegerToObject(json, "rawResult", execResult->rawResult))
-		goto fail;
-
-	char* name = ConvertWCharNToUtf8Alloc(execResult->exeOrFile.string,
-	                                      execResult->exeOrFile.length, nullptr);
-	if (name)
-	{
-		const void* rc = WINPR_JSON_AddStringToObject(json, "exeOrFile", name);
-		free(name);
-		if (!rc)
-			goto fail;
-	}
-
-fail:
-	char* str = WINPR_JSON_PrintUnformatted(json);
-	if (plen)
-		*plen = strlen(str);
-	WINPR_JSON_Delete(json);
-	return str;
-}
-
-static UINT rail_ipc_server_execute_result(RailClientContext* context,
-                                           const RAIL_EXEC_RESULT_ORDER* execResult)
-{
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(execResult);
-
-	rdpClientContext* cctx = context->custom;
-	WINPR_ASSERT(cctx);
-
-	size_t len = 0;
-	char* str = exec_result_to_str(execResult, &len);
-	// TODO: write(cctx->railIpc->writeFd, str, len);
-	winpr_znfree(str, len);
-	// Call client code
-	cctx->railIpc->rail->custom = cctx->railIpc->client.context;
-	const UINT rc = IFCALLRESULT(CHANNEL_RC_OK, cctx->railIpc->client.ServerExecuteResult,
-	                             cctx->railIpc->rail, execResult);
-	cctx->railIpc->rail->custom = cctx;
-	return rc;
-}
-
 static BOOL rail_ipc_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                        const MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
@@ -421,15 +363,11 @@ static void rail_ipc_attach_int(rdpClientRailIpc* ipc, RailClientContext* rail,
 	// Back up client context and callbacks
 	WINPR_ASSERT(!ipc->client.saved);
 	ipc->client.saved = TRUE;
-	ipc->client.context = rail->custom;
-	ipc->client.ServerExecuteResult = rail->ServerExecuteResult;
 	ipc->client.MonitoredDesktop = cctx->context.update->window->MonitoredDesktop;
 	ipc->client.NonMonitoredDesktop = cctx->context.update->window->NonMonitoredDesktop;
 	ipc->rail = rail;
 
 	// Register our own wrappers
-	rail->custom = cctx;
-	rail->ServerExecuteResult = rail_ipc_server_execute_result;
 	ipc->cctx = cctx;
 	ipc->log = cctx->context.log;
 	cctx->context.update->window->MonitoredDesktop = rail_ipc_monitored_desktop;
@@ -460,8 +398,6 @@ static void rail_ipc_detach_int(rdpClientRailIpc* ipc, RailClientContext* rail,
 	// restore client context and callbacks
 	if (ipc->client.saved)
 	{
-		rail->custom = ipc->client.context;
-		rail->ServerExecuteResult = ipc->client.ServerExecuteResult;
 		cctx->context.update->window->MonitoredDesktop = ipc->client.MonitoredDesktop;
 		cctx->context.update->window->NonMonitoredDesktop = ipc->client.NonMonitoredDesktop;
 	}
