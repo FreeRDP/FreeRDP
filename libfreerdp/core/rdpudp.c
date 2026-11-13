@@ -2005,7 +2005,10 @@ static BOOL run_timers(rdpUdp* udp)
 			return FALSE;
 	}
 
-	if (now - udp->lastSent >= (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS))
+	/* A resend above sets lastSent, to a time that can be later than now was read: nothing is
+	 * due then, and the difference must not wrap. */
+	if ((now >= udp->lastSent) &&
+	    (now - udp->lastSent >= (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS)))
 	{
 		if (!rdpudp_send_ack(udp))
 			return FALSE;
