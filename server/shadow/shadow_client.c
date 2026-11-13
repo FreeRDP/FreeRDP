@@ -989,59 +989,6 @@ static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpSha
 	          rdpgfx_caps_version_str(pdu->capsSet->version), pdu->capsSet->version,
 	          rdpgfx_caps_flags_str(pdu->capsSet->flags, buffer, sizeof(buffer)));
 
-#if defined(WITH_GFX_AV2)
-	if (pdu->capsSet->version == RDPGFX_CAPVERSION_FRDP_2)
-	{
-		UINT32 flags = FREERDP_CODEC_AV2_I420;
-		if ((pdu->capsSet->flags & RDPGFX_CAPS_FLAG_AV1_I444_DISABLED) == 0)
-			flags = FREERDP_CODEC_AV2_I444;
-
-		if (shadow_encoder_prepare(client->encoder, flags) < 0)
-			return ERROR_INVALID_PARAMETER;
-	}
-	else
-#endif
-#if defined(WITH_GFX_AV1)
-	    if (pdu->capsSet->version == RDPGFX_CAPVERSION_FRDP_1)
-	{
-		UINT32 flags = FREERDP_CODEC_AV1_I420;
-		if ((pdu->capsSet->flags & RDPGFX_CAPS_FLAG_AV1_I444_DISABLED) == 0)
-			flags = FREERDP_CODEC_AV1_I444;
-
-		if (shadow_encoder_prepare(client->encoder, flags) < 0)
-			return ERROR_INVALID_PARAMETER;
-	}
-	else
-#endif
-	    if (shadow_avc444_enabled(client) || shadow_avc420_enabled(client))
-	{
-#ifdef WITH_GFX_H264
-		const BOOL h264 = (shadow_encoder_prepare(client->encoder, FREERDP_CODEC_AVC420 |
-		                                                               FREERDP_CODEC_AVC444) >= 0);
-		if (h264)
-		{
-			/* the server's own setting (-gfx-avc420) still counts */
-			if (!freerdp_settings_set_bool(
-			        clientSettings, FreeRDP_GfxH264,
-			        shadow_client_caps_allow_avc420(pdu->capsSet) &&
-			            freerdp_settings_get_bool(clientSettings, FreeRDP_GfxH264)))
-				return rc;
-		}
-		else
-		{
-			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
-				return rc;
-		}
-#else
-		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE))
-			return rc;
-		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE))
-			return rc;
-		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
-			return rc;
-#endif
-	}
-
 	return rc;
 }
 
@@ -1087,6 +1034,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 			BOOL avc420 = TRUE;
 			BOOL avc444 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 			BOOL avc444v2 = avc444;
+
 			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444v2) || !h264)
 				avc444v2 = FALSE;
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, avc444v2))
@@ -1099,6 +1047,8 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 				avc420 = FALSE;
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, avc420))
 				return FALSE;
+			if (!avc444v2 && !avc444 && !avc420)
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 
 			const BOOL progressive = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxProgressive);
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressive, progressive))
@@ -1135,9 +1085,23 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 			                                 av2Profile))
 				return FALSE;
 #endif
+#if defined(WITH_GFX_AZURE)
+			const BOOL hevc = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxCodecHEVC);
+			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecHEVC, hevc))
+				return FALSE;
+			if (!hevc)
+				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_HEVC_ENABLE;
+			else
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_HEVC_ENABLE;
 
-			if (!h264 || (!avc444v2 && !avc444 && !avc420))
-				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+			const BOOL hevc444 = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxCodecHEVC444);
+			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecHEVC444, hevc444))
+				return FALSE;
+			if (!hevc444)
+				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_HEVC_I444;
+			else
+				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_HEVC_I444;
+#endif
 
 #if defined(WITH_GFX_AV1)
 			if (currentCaps->version == RDPGFX_CAPVERSION_FRDP_1)
@@ -1237,57 +1201,61 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 		RDPGFX_CAPVERSION_102,    RDPGFX_CAPVERSION_101, RDPGFX_CAPVERSION_10,
 	};
 
-	const BOOL h264 =
-	    shadow_encoder_prepare(client->encoder, FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444) >= 0;
+	const BOOL h264 = freerdp_codec_supported(&client->context, FREERDP_CODEC_AVC420, TRUE) ||
+	                  freerdp_codec_supported(&client->context, FREERDP_CODEC_AVC444, TRUE);
 
 #if defined(WITH_GFX_AV1)
-	if (freerdp_settings_get_bool(clientSettings, FreeRDP_GfxCodecAV1))
 	{
-		UINT32 codec = 0;
-		const UINT32 profile =
-		    freerdp_settings_get_uint32(clientSettings, FreeRDP_GfxCodecAV1Profile);
-		switch (profile)
+		BOOL av1 = freerdp_codec_supported(&client->context, FREERDP_CODEC_AV1_I420, TRUE) &&
+		           freerdp_settings_get_bool(clientSettings, FreeRDP_GfxCodecAV1);
+		if (av1)
 		{
-			case 0:
-				codec = FREERDP_CODEC_AV1_I420;
-				break;
-			case 1:
-				codec = FREERDP_CODEC_AV1_I444;
-				break;
-			default:
-				return ERROR_BAD_PROFILE;
+			const UINT32 profile =
+			    freerdp_settings_get_uint32(clientSettings, FreeRDP_GfxCodecAV1Profile);
+			switch (profile)
+			{
+				case 0:
+				case 1:
+					break;
+				default:
+					return ERROR_BAD_PROFILE;
+			}
 		}
-		const BOOL av1 = shadow_encoder_prepare(client->encoder, codec) >= 0;
-		if (!av1)
-		{
-			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecAV1, FALSE))
-				return ERROR_INTERNAL_ERROR;
-		}
+		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecAV1, av1))
+			return ERROR_INTERNAL_ERROR;
 	}
 #endif
 #if defined(WITH_GFX_AV2)
-	if (freerdp_settings_get_bool(clientSettings, FreeRDP_GfxCodecAV2))
 	{
-		UINT32 codec = 0;
-		const UINT32 profile =
-		    freerdp_settings_get_uint32(clientSettings, FreeRDP_GfxCodecAV2Profile);
-		switch (profile)
+		BOOL av2 = freerdp_codec_supported(&client->context, FREERDP_CODEC_AV2_I420, TRUE) &&
+		           freerdp_settings_get_bool(clientSettings, FreeRDP_GfxCodecAV2);
+		if (av2)
 		{
-			case 0:
-				codec = FREERDP_CODEC_AV2_I420;
-				break;
-			case 1:
-				codec = FREERDP_CODEC_AV2_I444;
-				break;
-			default:
-				return ERROR_BAD_PROFILE;
+			const UINT32 profile =
+			    freerdp_settings_get_uint32(clientSettings, FreeRDP_GfxCodecAV2Profile);
+			switch (profile)
+			{
+				case 0:
+				case 1:
+					break;
+				default:
+					return ERROR_BAD_PROFILE;
+			}
 		}
-		const BOOL av2 = shadow_encoder_prepare(client->encoder, codec) >= 0;
-		if (!av2)
-		{
-			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecAV2, FALSE))
-				return ERROR_INTERNAL_ERROR;
-		}
+		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecAV2, av2))
+			return ERROR_INTERNAL_ERROR;
+	}
+#endif
+#if defined(WITH_GFX_AZURE)
+	{
+		BOOL hevc = freerdp_codec_supported(&client->context, FREERDP_CODEC_HEVC_I420, TRUE) &&
+		            freerdp_settings_get_bool(clientSettings, FreeRDP_GfxCodecHEVC);
+		BOOL hevc444 = freerdp_codec_supported(&client->context, FREERDP_CODEC_HEVC_I444, TRUE) &&
+		               freerdp_settings_get_bool(clientSettings, FreeRDP_GfxCodecHEVC444);
+		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecHEVC, hevc))
+			return ERROR_INTERNAL_ERROR;
+		if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxCodecHEVC444, hevc444))
+			return ERROR_INTERNAL_ERROR;
 	}
 #endif
 
@@ -1308,7 +1276,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 			if (currentCaps->version == RDPGFX_CAPVERSION_81)
 			{
 				RDPGFX_CAPSET caps = *currentCaps;
-				RDPGFX_CAPS_CONFIRM_PDU pdu;
+				RDPGFX_CAPS_CONFIRM_PDU pdu = WINPR_C_ARRAY_INIT;
 				pdu.capsSet = &caps;
 
 				flags = pdu.capsSet->flags;
@@ -1325,14 +1293,8 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) != 0))
 					return rc;
 
-#ifndef WITH_GFX_H264
-				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
-					return rc;
-				if (h264)
+				if (!freerdp_codec_supported(&client->context, FREERDP_CODEC_AVC420, TRUE))
 					pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
-#else
-
-#endif
 
 				return shadow_client_send_caps_confirm(context, client, &pdu);
 			}
@@ -1507,6 +1469,94 @@ static BOOL shadow_client_send_av2(rdpShadowClient* client, const BYTE* pSrcData
 		cmd->extra = nullptr;
 	}
 	free_h264_metablock(&avc420.meta);
+
+	if (error)
+	{
+		WLog_ERR(TAG, "SurfaceFrameCommand failed with error %" PRIu32 "", error);
+		return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_hevc_enabled(const rdpShadowClient* client)
+{
+	WINPR_ASSERT(client);
+	const BOOL hevc = freerdp_settings_get_bool(client->context.settings, FreeRDP_GfxCodecHEVC);
+	const BOOL hevc444 =
+	    freerdp_settings_get_bool(client->context.settings, FreeRDP_GfxCodecHEVC444);
+	if (client->confirmedCaps.version < RDPGFX_CAPVERSION_112)
+		return FALSE;
+
+	// HEVC is only active when AVC444 is not
+	if ((client->confirmedCaps.flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0)
+		return FALSE;
+
+	// HEVC must be requested
+	if ((client->confirmedCaps.flags & RDPGFX_CAPS_FLAG_HEVC_ENABLE) == 0)
+		return FALSE;
+
+	if (client->confirmedCaps.version >= RDPGFX_CAPVERSION_115)
+		return hevc || hevc444;
+	return hevc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_send_hevc(rdpShadowClient* client, const BYTE* pSrcData, UINT32 nSrcStep,
+                                    UINT32 SrcFormat, UINT16 nWidth, UINT16 nHeight,
+                                    const RECTANGLE_16* damage, RDPGFX_SURFACE_COMMAND* cmd,
+                                    const RDPGFX_START_FRAME_PDU* cmdstart,
+                                    const RDPGFX_END_FRAME_PDU* cmdend)
+{
+	WINPR_ASSERT(client);
+
+	rdpShadowEncoder* encoder = client->encoder;
+	WINPR_ASSERT(encoder);
+
+	UINT error = CHANNEL_RC_OK;
+	INT32 rc = 0;
+	RDPGFX_HEVC_BITMAP_STREAM hevc = WINPR_C_ARRAY_INIT;
+
+	UINT32 flags = FREERDP_CODEC_HEVC_I420;
+	if ((client->confirmedCaps.flags & RDPGFX_CAPS_FLAG_HEVC_I444) != 0)
+		flags = FREERDP_CODEC_HEVC_I444;
+
+	if (shadow_encoder_prepare(encoder, flags) < 0)
+	{
+		WLog_ERR(TAG, "Failed to prepare encoder FREERDP_CODEC_HEVC");
+		return FALSE;
+	}
+
+	/* The whole surface is encoded, but only the damaged part needs converting to YUV. */
+	WINPR_ASSERT(damage);
+	rc = freerdp_hevc_compress(encoder->hevc, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight,
+	                           damage, &hevc.data, &hevc.length, &hevc.meta);
+	if (rc < 0)
+	{
+		WLog_ERR(TAG, "freerdp_hevc_compress failed");
+		return FALSE;
+	}
+
+	/* rc > 0 means new data */
+	if (rc > 0)
+	{
+		cmd->codecId = RDPGFX_CODECID_HEVC420;
+		if ((flags & FREERDP_CODEC_HEVC_I444) != 0)
+			cmd->codecId = RDPGFX_CODECID_HEVC444;
+
+		// TODO: Extract NAL
+		const UINT32 nalArray[1] = { hevc.length };
+		hevc.cbNalSizes = sizeof(nalArray);
+		hevc.nalSize = nalArray;
+		cmd->extra = (void*)&hevc;
+
+		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,
+		          cmdend);
+		cmd->extra = nullptr;
+	}
+	free_h264_metablock(&hevc.meta);
 
 	if (error)
 	{
@@ -2034,6 +2084,14 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	{
 		return shadow_client_send_av1(client, pSrcData, nSrcStep, SrcFormat, nWidth, nHeight,
 		                              damage, &cmd, &cmdstart, &cmdend);
+	}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+	if (shadow_client_hevc_enabled(client))
+	{
+		return shadow_client_send_hevc(client, pSrcData, nSrcStep, SrcFormat, nWidth, nHeight,
+		                               damage, &cmd, &cmdstart, &cmdend);
 	}
 #endif
 

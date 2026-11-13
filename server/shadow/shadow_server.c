@@ -643,6 +643,57 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+#if defined(WITH_GFX_AZURE)
+		CommandLineSwitchCase(arg, "gfx-hevc")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			BOOL enabled444 = TRUE;
+
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (_stricmp("on", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = TRUE;
+					}
+					else if (_stricmp("i444", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = TRUE;
+					}
+					else if (_stricmp("i420", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = FALSE;
+					}
+					else if (_stricmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+						enabled444 = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444, enabled444))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "keytab")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKeytab, arg->Value))
@@ -1261,6 +1312,10 @@ rdpShadowServer* shadow_server_new(void)
 #if defined(WITH_GFX_AV2)
 	server->AV2BitRate = 500;
 	server->AV2RateControlMode = FREERDP_AV2_VBR;
+#endif
+#if defined(WITH_GFX_AZURE)
+	server->HEVCBitRate = 500000;
+	server->HEVCRateControlMode = FREERDP_HEVC_VBR;
 #endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
 	return server;

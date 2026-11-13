@@ -135,6 +135,10 @@ int main(int argc, char** argv)
 		  "Allow GFX AVC420 codec" },
 		{ "gfx-avc444", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX AVC444 codec" },
+#if defined(WITH_GFX_AZURE)
+		{ "gfx-hevc", COMMAND_LINE_VALUE_OPTIONAL, "[on|off|i420|i444]", BoolValueTrue, nullptr, -1,
+		  nullptr, "Allow GFX pipeline HEVC codec extension" },
+#endif
 		{ "bitmap-compat", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 		  "Limit BitmapUpdate to 1 rectangle (fixes broken windows 11 24H2 clients)" },
 		{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, nullptr, nullptr,

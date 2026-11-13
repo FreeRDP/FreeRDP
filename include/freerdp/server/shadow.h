@@ -246,6 +246,12 @@ extern "C"
 	    UINT32 reservedAV2[2];
 #endif
 		rdpShadowClipboard* clipboard; /** @since version 3.34.0 */
+#if defined(WITH_GFX_AZURE)
+		FREERDP_HEVC_RATECONTROL HEVCRateControlMode; /** @since version 3.34.0 */
+		UINT32 HEVCBitRate;                           /** @since version 3.34.0 */
+#else
+	    UINT32 reservedHEVC[2];
+#endif
 	};
 
 	struct rdp_shadow_surface
