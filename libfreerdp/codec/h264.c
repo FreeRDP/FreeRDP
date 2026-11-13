@@ -377,10 +377,9 @@ static inline BOOL diff_tile_avc444v2_aux(const RECTANGLE_16* tile, UINT32 width
 	return FALSE;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE_16* regionRect,
-                           BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
-                           UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
+BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRect,
+                    BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
+                    UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
 {
 	size_t count = 0;
 	size_t wc = 0;

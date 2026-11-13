@@ -135,6 +135,11 @@ extern "C"
 	BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles, RDPGFX_H264_METABLOCK* meta,
 	                             size_t count);
 
+	WINPR_ATTR_NODISCARD
+	BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRect,
+	                    BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
+	                    UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta);
+
 #ifdef __cplusplus
 }
 #endif
