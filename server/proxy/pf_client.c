@@ -56,7 +56,7 @@
 
 /* Upper bound for pClientContext::server_messages, the proxy server thread queues whatever the
  * client sends while the proxy client thread might be busy (re)connecting */
-#define PF_CLIENT_MAX_SERVER_MESSAGES 4096
+#define PF_CLIENT_MAX_SERVER_MESSAGES 4096ul
 
 static void channel_data_free(void* obj);
 
@@ -474,7 +474,19 @@ static BOOL pf_client_send_channel_data(pClientContext* pc, const proxyChannelDa
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(ev);
 
-	return Queue_Enqueue(pc->cached_server_channel_data, ev);
+	Queue_Lock(pc->cached_server_channel_data);
+	const BOOL rc = Queue_Enqueue(pc->cached_server_channel_data, ev);
+	const size_t count = Queue_Count(pc->cached_server_channel_data);
+	Queue_Unlock(pc->cached_server_channel_data);
+	if (count > PF_CLIENT_MAX_SERVER_MESSAGES)
+	{
+		PROXY_LOG_INFO(TAG, pc,
+		               "Remote not responding, %" PRIuz "[%" PRIu64
+		               " max] packets queued. Assuming dead, terminating connection",
+		               count, PF_CLIENT_MAX_SERVER_MESSAGES);
+		return FALSE;
+	}
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
