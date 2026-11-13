@@ -117,7 +117,11 @@ static UINT data_response(CliprdrClientContext* context,
                           const CLIPRDR_FORMAT_DATA_RESPONSE* response)
 {
 	WINPR_UNUSED(context);
-	WINPR_UNUSED(response);
+	const BYTE expected[] = { 'h', 0, 'e', 0, 'l', 0, 'l', 0, 'o', 0, 0, 0 };
+	CHECK(response->common.msgFlags == CB_RESPONSE_OK);
+	CHECK(response->common.dataLen == sizeof(expected));
+	CHECK(response->requestedFormatData);
+	CHECK(memcmp(response->requestedFormatData, expected, sizeof(expected)) == 0);
 	atomic_fetch_add(&data_responses, 1);
 	return CHANNEL_RC_OK;
 }
@@ -305,7 +309,7 @@ static BOOL run_tests(wfClipboard* clipboard, CliprdrClientContext* channel, HAN
 
 	/* Exercise the real incoming callback as well: it must release the WinPR
 	 * clipboard lock before waiting for display-thread work. This checks dispatch
-	 * and response completion, not MIME conversion or the response payload. */
+	 * and the complete UTF-16 response payload. */
 	w.read = FALSE;
 	w.request_data = TRUE;
 	CHECK(start(&w, &thread));

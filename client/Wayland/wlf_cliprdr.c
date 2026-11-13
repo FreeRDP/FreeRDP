@@ -993,10 +993,17 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			if (error)
 				goto fail;
 		}
+		else
+		{
+			ddata = (BYTE*)data;
+			dsize = len;
+			data = nullptr;
+		}
 	}
 fail:
 	ClipboardUnlock(clipboard->system);
 	rc = wlf_cliprdr_send_data_response(clipboard, ddata, dsize);
+	free(ddata);
 	free(data);
 	return rc;
 }
