@@ -38,9 +38,6 @@
 #define TAG FREERDP_TAG("codec")
 
 WINPR_ATTR_NODISCARD
-static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
-
-WINPR_ATTR_NODISCARD
 static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	BOOL isNull = FALSE;
@@ -255,8 +252,8 @@ INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, 
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
+BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles, RDPGFX_H264_METABLOCK* meta,
+                             size_t count)
 {
 	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
 	if (!meta || (QP > UINT8_MAX))

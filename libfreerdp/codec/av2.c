@@ -20,6 +20,8 @@
 #include <freerdp/log.h>
 #include <freerdp/codec/region.h>
 
+#include "h264.h"
+
 #define TAG FREERDP_TAG("codec.av2")
 
 #if defined(WITH_LIBAVM)
@@ -114,41 +116,6 @@ static void av2_avm_destroy(FREERDP_AV2_CONTEXT* av2)
 #endif
 
 #if defined(AV2_ENCODER_LIBAVM)
-
-WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
-{
-	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
-	if (!meta || (QP > UINT8_MAX))
-	{
-		free(rectangles);
-		return FALSE;
-	}
-
-	meta->regionRects = rectangles;
-	if (count == 0)
-		return TRUE;
-
-	if (count > UINT32_MAX)
-		return FALSE;
-
-	meta->quantQualityVals = calloc(count, sizeof(RDPGFX_H264_QUANT_QUALITY));
-
-	if (!meta->quantQualityVals || !meta->regionRects)
-		return FALSE;
-	meta->numRegionRects = (UINT32)count;
-	for (size_t x = 0; x < count; x++)
-	{
-		RDPGFX_H264_QUANT_QUALITY* cur = &meta->quantQualityVals[x];
-		cur->qp = (UINT8)QP;
-
-		/* qpVal bit 6 and 7 are flags, so mask them out here.
-		 * qualityVal is [0-100] so 100 - qpVal [0-64] is always in range */
-		cur->qualityVal = 100 - (QP & 0x3F);
-	}
-	return TRUE;
-}
 
 WINPR_ATTR_NODISCARD
 static BOOL av2_avm_control(FREERDP_AV2_CONTEXT* av2, int id, const char* name, int value)

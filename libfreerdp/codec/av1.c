@@ -38,6 +38,8 @@
 #include <aom/aomdx.h>
 #endif
 
+#include "h264.h"
+
 #if defined(WITH_DAV1D)
 #include <dav1d/dav1d.h>
 #endif
@@ -176,41 +178,6 @@ static BOOL av1_aom_damage(const FREERDP_AV1_CONTEXT* av1, const RECTANGLE_16* r
 	damage->top = (UINT16)top;
 	damage->right = (UINT16)right;
 	damage->bottom = (UINT16)bottom;
-	return TRUE;
-}
-
-WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
-{
-	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
-	if (!meta || (QP > UINT8_MAX))
-	{
-		free(rectangles);
-		return FALSE;
-	}
-
-	meta->regionRects = rectangles;
-	if (count == 0)
-		return TRUE;
-
-	if (count > UINT32_MAX)
-		return FALSE;
-
-	meta->quantQualityVals = calloc(count, sizeof(RDPGFX_H264_QUANT_QUALITY));
-
-	if (!meta->quantQualityVals || !meta->regionRects)
-		return FALSE;
-	meta->numRegionRects = (UINT32)count;
-	for (size_t x = 0; x < count; x++)
-	{
-		RDPGFX_H264_QUANT_QUALITY* cur = &meta->quantQualityVals[x];
-		cur->qp = (UINT8)QP;
-
-		/* qpVal bit 6 and 7 are flags, so mask them out here.
-		 * qualityVal is [0-100] so 100 - qpVal [0-64] is always in range */
-		cur->qualityVal = 100 - (QP & 0x3F);
-	}
 	return TRUE;
 }
 
