@@ -183,6 +183,16 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return json_number_value(ccast(item));
 }
 
+INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item)
+{
+	return json_integer_value(ccast(item));
+}
+
+UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item)
+{
+	return (UINT64)json_integer_value(ccast(item));
+}
+
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 	const json_t* jitem = ccast(item);

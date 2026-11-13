@@ -149,6 +149,18 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return cJSON_GetNumberValue((const cJSON*)item);
 }
 
+INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item)
+{
+	const double d = WINPR_JSON_GetNumberValue(item);
+	return WINPR_CXX_COMPAT_CAST(INT64, d);
+}
+
+UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item)
+{
+	const double d = WINPR_JSON_GetNumberValue(item);
+	return WINPR_CXX_COMPAT_CAST(UINT64, d);
+}
+
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 	return cJSON_IsInvalid((const cJSON*)item);

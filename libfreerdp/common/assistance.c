@@ -356,7 +356,7 @@ static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 		const size_t length = strlen(str);
 
 		{
-			int count = 1;
+			size_t count = 1;
 			for (size_t i = 0; i < length; i++)
 			{
 				if (str[i] == ',')

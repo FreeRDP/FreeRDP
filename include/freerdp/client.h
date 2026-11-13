@@ -310,9 +310,22 @@ extern "C"
 	FREERDP_API BOOL client_common_save_session_info(rdpContext* context, UINT32 type,
 	                                                 const void* data);
 
-	FREERDP_API void
-	freerdp_client_OnChannelConnectedEventHandler(void* context,
-	                                              const ChannelConnectedEventArgs* e);
+	/** @brief Call from your clients OnChannelConnected event handler after setting up all client
+	 * specific handling. This allows client/common to inject channel specific handlers.
+	 *
+	 *  @param context A user provided context, may be NULL
+	 *  @param e The \ref ChannelConnectedEventArgs provided
+	 */
+	FREERDP_API void freerdp_client_OnChannelConnectedEventHandler(
+	    void* context,
+
+	    /** @brief Call from your clients OnChannelDisconnected event handler after setting up all
+	     * client specific handling. This allows client/common to inject channel specific handlers.
+	     *
+	     *  @param context A user provided context, may be NULL
+	     *  @param e The \ref ChannelConnectedEventArgs provided
+	     */
+	    const ChannelConnectedEventArgs* e);
 	FREERDP_API void
 	freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 	                                                 const ChannelDisconnectedEventArgs* e);

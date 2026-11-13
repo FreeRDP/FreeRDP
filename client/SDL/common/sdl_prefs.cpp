@@ -114,8 +114,7 @@ int64_t SdlPref::get_int(const std::string& key, int64_t fallback, bool systemCo
 	auto item = get_item(key, systemConfigOnly);
 	if (!item || !WINPR_JSON_IsNumber(item))
 		return fallback;
-	auto val = WINPR_JSON_GetNumberValue(item);
-	return static_cast<int64_t>(val);
+	return WINPR_JSON_GetIntegerValue(item);
 }
 
 std::vector<std::string> SdlPref::get_array(const std::string& key,

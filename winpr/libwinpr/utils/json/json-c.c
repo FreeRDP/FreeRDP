@@ -115,6 +115,16 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return json_object_get_double((const json_object*)item);
 }
 
+INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item)
+{
+	return json_object_get_int64(item);
+}
+
+UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item)
+{
+	return json_object_get_uint64(item);
+}
+
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 	if (WINPR_JSON_IsArray(item))

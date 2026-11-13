@@ -63,18 +63,17 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 		if (!sdl->getDisplayChannelContext().init(disp))
 			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to initialize display channel");
 	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+
+	freerdp_client_OnChannelConnectedEventHandler(context, e);
+	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		/* After the common handler wires the GFX pipeline, override UpdateWindowFromSurface
 		 * to route window-mapped surfaces to RAIL. */
-		freerdp_client_OnChannelConnectedEventHandler(context, e);
 		auto gfx = reinterpret_cast<RdpgfxClientContext*>(e->pInterface);
 		auto ctx = static_cast<rdpContext*>(context);
 		if (gfx && freerdp_settings_get_bool(ctx->settings, FreeRDP_RemoteApplicationMode))
 			gfx->UpdateWindowFromSurface = SdlRail::UpdateWindowFromSurface;
 	}
-	else
-		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
 void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
@@ -109,8 +108,8 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to uninitialize display channel");
 		disp->custom = nullptr;
 	}
-	else
-		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
+
+	freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }
 
 void sdl_OnUserNotificationEventHandler(void* context, const UserNotificationEventArgs* e)
