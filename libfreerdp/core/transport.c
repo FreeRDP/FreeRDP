@@ -1314,6 +1314,11 @@ out_cleanup:
 		/* A write error indicates that the peer has dropped the connection */
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		/* Wake the thread that reads: transport_check_fds() then reports the closed layer and
+		 * the client can reconnect. A socket that fails writing does not always wake a reader:
+		 * a WebSocket closed by the client stays CLOSING, without a close event, until the
+		 * browser gives up its closing handshake (60 s in Chromium). */
+		(void)SetEvent(transport->rereadEvent);
 	}
 
 	LeaveCriticalSection(&(transport->WriteLock));
@@ -1519,6 +1524,9 @@ int transport_check_fds(rdpTransport* transport)
 	{
 		WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport layer closed");
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		/* set by a failed write; the next connection must not find it set */
+		transport->haveMoreBytesToRead = FALSE;
+		(void)ResetEvent(transport->rereadEvent);
 		return -1;
 	}
 
