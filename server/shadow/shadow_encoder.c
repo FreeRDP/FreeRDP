@@ -364,6 +364,38 @@ fail:
 }
 #endif
 
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD
+static int shadow_encoder_init_hevc(rdpShadowEncoder* encoder, UINT32 codecs)
+{
+	WINPR_ASSERT(encoder);
+
+	if (!encoder->hevc)
+		encoder->hevc = freerdp_hevc_context_new(TRUE);
+
+	if (!encoder->hevc)
+		goto fail;
+
+	if (!freerdp_hevc_context_reset(encoder->hevc, encoder->width, encoder->height))
+		goto fail;
+
+	if (!freerdp_hevc_context_set_option(encoder->hevc, FREERDP_HEVC_CONTEXT_OPTION_RATECONTROL,
+	                                     encoder->server->HEVCRateControlMode))
+		goto fail;
+	if (!freerdp_hevc_context_set_option(encoder->hevc, FREERDP_HEVC_CONTEXT_OPTION_BITRATE,
+	                                     encoder->server->HEVCBitRate))
+		goto fail;
+
+	encoder->codecs &= ~(FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+	encoder->codecs |= codecs & (FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+	return 1;
+fail:
+	freerdp_hevc_context_free(encoder->hevc);
+	encoder->hevc = nullptr;
+	return -1;
+}
+#endif
+
 WINPR_ATTR_NODISCARD
 static int shadow_encoder_init_progressive(rdpShadowEncoder* encoder)
 {
@@ -649,15 +681,32 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 #endif
 
 #if defined(WITH_GFX_AV2)
-	const UINT32 cmask2 = codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
-	const UINT32 emask2 = encoder->codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
-	if ((cmask2 != 0) && (cmask2 != emask2))
 	{
-		WLog_DBG(TAG, "initializing AV2 encoder");
-		status = shadow_encoder_init_av2(encoder, codecs);
+		const UINT32 cmask2 = codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+		const UINT32 emask2 = encoder->codecs & (FREERDP_CODEC_AV2_I420 | FREERDP_CODEC_AV2_I444);
+		if ((cmask2 != 0) && (cmask2 != emask2))
+		{
+			WLog_DBG(TAG, "initializing AV2 encoder");
+			status = shadow_encoder_init_av2(encoder, codecs);
 
-		if (status < 0)
-			return -1;
+			if (status < 0)
+				return -1;
+		}
+	}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+	{
+		const UINT32 cmask2 = codecs & (FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+		const UINT32 emask2 = encoder->codecs & (FREERDP_CODEC_HEVC_I420 | FREERDP_CODEC_HEVC_I444);
+		if ((cmask2 != 0) && (cmask2 != emask2))
+		{
+			WLog_DBG(TAG, "initializing HEVC encoder");
+			status = shadow_encoder_init_hevc(encoder, codecs);
+
+			if (status < 0)
+				return -1;
+		}
 	}
 #endif
 

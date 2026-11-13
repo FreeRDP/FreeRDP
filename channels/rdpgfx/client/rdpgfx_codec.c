@@ -38,7 +38,6 @@
 static UINT rdpgfx_read_h264_metablock(WINPR_ATTR_UNUSED RDPGFX_PLUGIN* gfx, wStream* s,
                                        RDPGFX_H264_METABLOCK* meta)
 {
-	RECTANGLE_16* regionRect = nullptr;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = nullptr;
 	UINT error = ERROR_INVALID_DATA;
 	meta->regionRects = nullptr;
@@ -76,9 +75,9 @@ static UINT rdpgfx_read_h264_metablock(WINPR_ATTR_UNUSED RDPGFX_PLUGIN* gfx, wSt
 
 	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
-		regionRect = &(meta->regionRects[index]);
+		RECTANGLE_16* regionRect = &(meta->regionRects[index]);
 
-		if ((error = rdpgfx_read_rect16(gfx->base.log, s, regionRect)))
+		if ((error = rdpgfx_read_rect16(gfx->base.log, s, regionRect, FALSE)))
 		{
 			WLog_Print(gfx->base.log, WLOG_ERROR,
 			           "rdpgfx_read_rect16 failed with error %" PRIu32 "!", error);

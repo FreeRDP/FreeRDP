@@ -128,6 +128,18 @@ extern "C"
 	WINPR_ATTR_MALLOC(h264_context_free, 1)
 	H264_CONTEXT* h264_context_new_ex(BOOL Compressor, BOOL hevc, BOOL hevc444);
 
+	WINPR_ATTR_NODISCARD
+	BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
+
+	WINPR_ATTR_NODISCARD
+	BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles, RDPGFX_H264_METABLOCK* meta,
+	                             size_t count);
+
+	WINPR_ATTR_NODISCARD
+	BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRect,
+	                    BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
+	                    UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta);
+
 #ifdef __cplusplus
 }
 #endif

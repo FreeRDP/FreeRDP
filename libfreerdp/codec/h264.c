@@ -38,9 +38,6 @@
 #define TAG FREERDP_TAG("codec")
 
 WINPR_ATTR_NODISCARD
-static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
-
-WINPR_ATTR_NODISCARD
 static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	BOOL isNull = FALSE;
@@ -255,8 +252,8 @@ INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, 
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
+BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles, RDPGFX_H264_METABLOCK* meta,
+                             size_t count)
 {
 	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
 	if (!meta || (QP > UINT8_MAX))
@@ -380,10 +377,9 @@ static inline BOOL diff_tile_avc444v2_aux(const RECTANGLE_16* tile, UINT32 width
 	return FALSE;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE_16* regionRect,
-                           BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
-                           UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
+BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRect,
+                    BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
+                    UINT32 v2AuxWidth, RDPGFX_H264_METABLOCK* meta)
 {
 	size_t count = 0;
 	size_t wc = 0;
@@ -1215,59 +1211,104 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 	}
 }
 
-BOOL freerdp_codec_supported(WINPR_ATTR_UNUSED rdpContext* context, FreeRDP_CodecFlags codec,
-                             WINPR_ATTR_UNUSED BOOL encoder)
+static BOOL codecSupportStatus[33][2];
+static INIT_ONCE codecSupportStatusOnce = INIT_ONCE_STATIC_INIT;
+
+static size_t codecFlagToIndex(FreeRDP_CodecFlags codec)
 {
-	switch (codec)
+	for (size_t index = 0; index < 32; index++)
 	{
-		case FREERDP_CODEC_INTERLEAVED:
-		case FREERDP_CODEC_PLANAR:
-		case FREERDP_CODEC_NSCODEC:
-		case FREERDP_CODEC_REMOTEFX:
-		case FREERDP_CODEC_CLEARCODEC:
-		case FREERDP_CODEC_ALPHACODEC:
-		case FREERDP_CODEC_PROGRESSIVE:
-			return TRUE;
+		const size_t mask = 1 << index;
+		if (codec == mask)
+			return index;
+	}
+	return ARRAYSIZE(codecSupportStatus) - 1;
+}
+
+static void setCodecSupportStatus(FreeRDP_CodecFlags codec, BOOL decoder, BOOL encoder)
+{
+	const size_t index = codecFlagToIndex(codec);
+	codecSupportStatus[index][0] = decoder;
+	codecSupportStatus[index][1] = encoder;
+}
+
+static BOOL CALLBACK codec_support_status_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                               WINPR_ATTR_UNUSED PVOID param,
+                                               WINPR_ATTR_UNUSED PVOID* context)
+{
+	setCodecSupportStatus(FREERDP_CODEC_INTERLEAVED, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_PLANAR, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_NSCODEC, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_REMOTEFX, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_CLEARCODEC, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_ALPHACODEC, TRUE, TRUE);
+	setCodecSupportStatus(FREERDP_CODEC_PROGRESSIVE, TRUE, TRUE);
+
 #if defined(WITH_GFX_H264)
-		case FREERDP_CODEC_AVC420:
-		case FREERDP_CODEC_AVC444:
-			return TRUE;
+	{
+		H264_CONTEXT* h264 = h264_context_new(FALSE);
+		const BOOL decoder = h264 != nullptr;
+		h264_context_free(h264);
+
+		H264_CONTEXT* h264enc = h264_context_new(TRUE);
+		const BOOL encoder = h264enc != nullptr;
+		h264_context_free(h264enc);
+
+		setCodecSupportStatus(FREERDP_CODEC_AVC420, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_AVC444, decoder, encoder);
+	}
 #endif
 #if defined(WITH_GFX_AV1)
-		case FREERDP_CODEC_AV1_I420:
-		case FREERDP_CODEC_AV1_I444:
-#if defined(WITH_LIBAOM)
-			return TRUE;
-#elif defined(WITH_DAV1D)
-			if (!encoder)
-				return TRUE;
-			return FALSE;
-#endif
-			return FALSE;
+	{
+		FREERDP_AV1_CONTEXT* av1 = freerdp_av1_context_new(FALSE);
+		const BOOL decoder = av1 != nullptr;
+		freerdp_av1_context_free(av1);
+
+		FREERDP_AV1_CONTEXT* av1enc = freerdp_av1_context_new(TRUE);
+		const BOOL encoder = av1enc != nullptr;
+		freerdp_av1_context_free(av1enc);
+
+		setCodecSupportStatus(FREERDP_CODEC_AV1_I420, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_AV1_I444, decoder, encoder);
+	}
 #endif
 #if defined(WITH_GFX_AV2)
-		case FREERDP_CODEC_AV2_I420:
-		case FREERDP_CODEC_AV2_I444:
-#if defined(WITH_LIBAVM)
-#if defined(WITH_LIBAVM_ENCODER)
-			return TRUE;
-#else
-			if (!encoder)
-				return TRUE;
-#endif
-#endif
-#if defined(WITH_DAV2D)
-			if (!encoder)
-				return TRUE;
-#endif
-			return FALSE;
+	{
+		FREERDP_AV2_CONTEXT* av1 = freerdp_av2_context_new(FALSE);
+		const BOOL decoder = av1 != nullptr;
+		freerdp_av2_context_free(av1);
+
+		FREERDP_AV2_CONTEXT* av2enc = freerdp_av2_context_new(TRUE);
+		const BOOL encoder = av2enc != nullptr;
+		freerdp_av2_context_free(av2enc);
+
+		setCodecSupportStatus(FREERDP_CODEC_AV2_I420, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_AV2_I444, decoder, encoder);
+	}
 #endif
 #if defined(WITH_GFX_AZURE)
-		case FREERDP_CODEC_HEVC_I420:
-		case FREERDP_CODEC_HEVC_I444:
-			return TRUE;
-#endif
-		default:
-			return FALSE;
+	{
+		FREERDP_HEVC_CONTEXT* hevc = freerdp_hevc_context_new(FALSE);
+		const BOOL decoder = hevc != nullptr;
+		freerdp_hevc_context_free(hevc);
+
+		FREERDP_HEVC_CONTEXT* hevcenc = freerdp_hevc_context_new(TRUE);
+		const BOOL encoder = hevcenc != nullptr;
+		freerdp_hevc_context_free(hevcenc);
+
+		setCodecSupportStatus(FREERDP_CODEC_HEVC_I420, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_HEVC_I444, decoder, encoder);
 	}
+#endif
+
+	return TRUE;
+}
+
+BOOL freerdp_codec_supported(WINPR_ATTR_UNUSED rdpContext* context, FreeRDP_CodecFlags codec,
+                             BOOL encoder)
+{
+	if (!InitOnceExecuteOnce(&codecSupportStatusOnce, codec_support_status_init, nullptr, nullptr))
+		FALSE;
+	size_t index = encoder ? 1 : 0;
+	return codecSupportStatus[codecFlagToIndex(codec)][index];
 }

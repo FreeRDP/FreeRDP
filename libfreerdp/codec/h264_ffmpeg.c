@@ -582,7 +582,7 @@ static BOOL libavcodec_create_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264)
 #endif
 	{
 		av_opt_set(sys->codecEncoderContext, "preset", "medium", AV_OPT_SEARCH_CHILDREN);
-		sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
+		sys->codecEncoderContext->pix_fmt = h264->hevc444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
 	}
 
 	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, nullptr) < 0)
@@ -668,7 +668,7 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		goto fail;
 	}
 
-	sys->videoFrame->format = AV_PIX_FMT_YUV420P;
+	sys->videoFrame->format = h264->hevc444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
 
 #if defined(WITH_FFMPEG_HWACCEL)
 	status = avcodec_receive_frame(sys->codecDecoderContext, (sys->useHwDecoder && sys->hwctx)
@@ -859,7 +859,11 @@ static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	WINPR_ASSERT(sys->videoFrame);
 	WINPR_ASSERT(sys->codecEncoderContext);
-	sys->videoFrame->format = AV_PIX_FMT_YUV420P;
+	if (h264->hevc444)
+		sys->videoFrame->format = AV_PIX_FMT_YUV444P;
+	else
+		sys->videoFrame->format = AV_PIX_FMT_YUV420P;
+
 	sys->videoFrame->width = sys->codecEncoderContext->width;
 	sys->videoFrame->height = sys->codecEncoderContext->height;
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 48, 100)
