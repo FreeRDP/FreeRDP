@@ -104,15 +104,12 @@ INT32 freerdp_hevc_compress(FREERDP_HEVC_CONTEXT* hevc, const BYTE* pSrcData, DW
 	const BYTE* pcYUV444Data[3] = { h264->pYUV444Data[0], h264->pYUV444Data[1],
 		                            h264->pYUV444Data[2] };
 
-	RECTANGLE_16* rect = calloc(1, sizeof(RECTANGLE_16));
-	if (!rect)
-		return -1;
-	*rect = *regionRect;
-
-	if (!allocate_h264_metablock(h264->QP, rect, meta, 1))
+	if (!detect_changes(!h264->firstLumaFrameDone, h264->QP, regionRect, h264->pYUV444Data,
+	                    h264->pOldYUV444Data, h264->iYUV444Stride, 0, meta))
 		goto fail;
 	if (h264->subsystem->Compress(h264, pcYUV444Data, h264->iYUV444Stride, &coded, &codedSize) < 0)
 		goto fail;
+	h264->firstLumaFrameDone = TRUE;
 
 	*ppDstData = coded;
 	*pDstSize = codedSize;
