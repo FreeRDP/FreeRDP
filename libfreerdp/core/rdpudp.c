@@ -136,6 +136,9 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP_SYN_TIMEOUT_MS 1000
 #define RDPUDP_SYN_ATTEMPTS 3
 
+/* Number of datagrams rdpudp_check() reads from its socket before it runs the timers. */
+#define RDPUDP_INPUT_BUDGET 256
+
 /* [MS-RDPEUDP] 3.1.6.1: the retransmit timeout is twice the round trip, at least the version's
  * minimum, and doubles with every resend of the same datagram. Windows lets it grow to 120
  * seconds (note <8>). Below the round trip, every datagram is resent before its acknowledgement
@@ -2202,7 +2205,10 @@ BOOL rdpudp_check(rdpUdp* udp)
 		return FALSE;
 
 	BYTE* buffer = udp->recvBuffer;
-	while (TRUE)
+	/* At most RDPUDP_INPUT_BUDGET datagrams per call. A peer that sends faster than they are
+	 * processed would otherwise keep the socket from draining, and the retransmission timers
+	 * below would never run. The socket stays readable for the next call. */
+	for (size_t count = 0; count < RDPUDP_INPUT_BUDGET; count++)
 	{
 		const int rc = _recv(udp->sockfd, (char*)buffer,
 		                     WINPR_ASSERTING_INT_CAST(int, sizeof(udp->recvBuffer)), 0);
