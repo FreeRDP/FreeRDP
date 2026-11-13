@@ -1055,6 +1055,8 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 		WLog_ERR(TAG, "RDP file %s is empty", name);
 		goto fail;
 	}
+	if ((UINT64)file_size > SIZE_MAX - 2)
+		goto fail;
 
 	buffer = (BYTE*)malloc((size_t)file_size + 2);
 
