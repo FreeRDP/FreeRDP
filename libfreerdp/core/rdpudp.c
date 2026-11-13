@@ -141,6 +141,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * seconds (note <8>). Below the round trip, every datagram is resent before its acknowledgement
  * can arrive. */
 #define RDPUDP_MAX_RTO_MS 120000
+/* RDP-UDP2: cap on the backed-off timeout, as in Windows, which clamps it to 2 seconds. The
+ * receiver ends the stream once a chunk has been missing for RDPUDP_STALL_TIMEOUT_MS; with the
+ * timeout doubling to RDPUDP_MAX_RTO_MS, a datagram lost a few times in a row is resent too
+ * late. A dead connection is noticed by the peer timeout. See rto_cap for round trips above
+ * the cap. */
+#define RDPUDP2_MAX_RTO_MS 2000
 
 /* [MS-RDPEUDP] 3.1.5.4: a datagram retransmitted three to five times without a response ends
  * the connection, and so does 65 seconds without any datagram from the peer (3.1.1.9). */
@@ -350,6 +356,19 @@ static UINT32 rto_initial(const rdpUdp* udp)
 	const UINT64 rtt2 = (UINT64)udp->srtt * 2ull;
 	const UINT64 rto = (rtt2 > floor) ? rtt2 : floor;
 	return (rto > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : WINPR_ASSERTING_INT_CAST(UINT32, rto);
+}
+
+/* How far the timeout of a datagram doubles. RDP-UDP2 stops at RDPUDP2_MAX_RTO_MS, or at the
+ * timeout of a first transmission where that is higher, so that a datagram is not resent before
+ * its acknowledgement can arrive. */
+WINPR_ATTR_NODISCARD
+static UINT32 rto_cap(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (udp->version != RDPUDP_PROTOCOL_VERSION_3)
+		return RDPUDP_MAX_RTO_MS;
+	const UINT32 initial = rto_initial(udp);
+	return (initial > RDPUDP2_MAX_RTO_MS) ? initial : RDPUDP2_MAX_RTO_MS;
 }
 
 static void chunk_free(void* obj)
@@ -1961,7 +1980,8 @@ static BOOL run_timers(rdpUdp* udp)
 			return FALSE;
 		}
 		p->retransmits++;
-		p->rto = (p->rto * 2 > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : p->rto * 2;
+		const UINT32 cap = rto_cap(udp);
+		p->rto = (p->rto > cap / 2) ? cap : p->rto * 2;
 		p->due = now + p->rto;
 		if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 		{
