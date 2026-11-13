@@ -65,19 +65,62 @@ UINT32 freerdp_hevc_context_get_option(FREERDP_HEVC_CONTEXT* hevc,
 	return h264_context_get_option(hevc->context, hevc2h264option(option));
 }
 
-INT32 freerdp_hevc_compress(WINPR_ATTR_UNUSED FREERDP_HEVC_CONTEXT* hevc,
-                            WINPR_ATTR_UNUSED const BYTE* pSrcData,
-                            WINPR_ATTR_UNUSED DWORD SrcFormat, WINPR_ATTR_UNUSED UINT32 nSrcStep,
-                            WINPR_ATTR_UNUSED UINT32 nSrcWidth, WINPR_ATTR_UNUSED UINT32 nSrcHeight,
-                            WINPR_ATTR_UNUSED const RECTANGLE_16* regionRect,
-                            WINPR_ATTR_UNUSED BYTE** ppDstData, WINPR_ATTR_UNUSED UINT32* pDstSize,
-                            WINPR_ATTR_UNUSED RDPGFX_H264_METABLOCK* meta)
+INT32 freerdp_hevc_compress(FREERDP_HEVC_CONTEXT* hevc, const BYTE* pSrcData, DWORD SrcFormat,
+                            UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
+                            const RECTANGLE_16* regionRect, BYTE** ppDstData, UINT32* pDstSize,
+                            RDPGFX_H264_METABLOCK* meta)
 {
 	WINPR_ASSERT(hevc);
-	WLog_Print(hevc->log, WLOG_ERROR,
-	           "This build does not support HEVC codec. Recompile with '-DWITH_AVM=ON' or "
-	           "'-DWITH_DHEVCD=ON'");
-	return -1;
+
+	H264_CONTEXT* h264 = hevc->context;
+	WINPR_ASSERT(h264);
+
+	int rc = -1;
+	BYTE* coded = nullptr;
+	UINT32 codedSize = 0;
+
+	if (!h264 || !h264->Compressor)
+		return -1;
+
+	if (!h264->subsystem->Compress)
+		return -1;
+
+	if (!avc420_ensure_buffer(h264, nSrcStep, nSrcWidth, nSrcHeight))
+		return -1;
+
+	if (!avc444_ensure_buffer(h264, nSrcHeight))
+		return -1;
+
+	prim_size_t roi = { .width = nSrcWidth, .height = nSrcHeight };
+
+	const primitives_t* p = primitives_get();
+	if (!p)
+		return -1;
+
+	const pstatus_t res = p->RGBToYUV444_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, h264->pYUV444Data,
+	                                               h264->iYUV444Stride, &roi);
+	if (res != 0)
+		return -1;
+	const BYTE* pcYUV444Data[3] = { h264->pYUV444Data[0], h264->pYUV444Data[1],
+		                            h264->pYUV444Data[2] };
+
+	RECTANGLE_16* rect = calloc(1, sizeof(RECTANGLE_16));
+	if (!rect)
+		return -1;
+	*rect = *regionRect;
+
+	if (!allocate_h264_metablock(h264->QP, rect, meta, 1))
+		goto fail;
+	if (h264->subsystem->Compress(h264, pcYUV444Data, h264->iYUV444Stride, &coded, &codedSize) < 0)
+		goto fail;
+
+	*ppDstData = coded;
+	*pDstSize = codedSize;
+	rc = 1;
+fail:
+	if (rc < 0)
+		free_h264_metablock(meta);
+	return rc;
 }
 
 INT32 freerdp_hevc_decompress(FREERDP_HEVC_CONTEXT* hevc, const BYTE* pSrcData, UINT32 SrcSize,
