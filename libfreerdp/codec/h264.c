@@ -1232,6 +1232,58 @@ static void setCodecSupportStatus(FreeRDP_CodecFlags codec, BOOL decoder, BOOL e
 	codecSupportStatus[index][1] = encoder;
 }
 
+#if defined(WITH_GFX_AV1)
+WINPR_ATTR_NODISCARD
+static BOOL test_av1(BOOL Compressor, UINT32 flags)
+{
+	FREERDP_AV1_CONTEXT* av1 = freerdp_av1_context_new(Compressor);
+	if (!av1)
+		return FALSE;
+	UINT32 profile = 0;
+	if (flags == FREERDP_CODEC_AV1_I444)
+		profile = 1;
+	const BOOL decoder =
+	    freerdp_av1_context_set_option(av1, FREERDP_AV1_CONTEXT_OPTION_PROFILE, profile);
+	freerdp_av1_context_free(av1);
+	return decoder;
+}
+#endif
+
+#if defined(WITH_GFX_AV2)
+WINPR_ATTR_NODISCARD
+static BOOL test_av2(BOOL Compressor, UINT32 flags)
+{
+	FREERDP_AV2_CONTEXT* av2 = freerdp_av2_context_new(Compressor);
+	if (!av2)
+		return FALSE;
+	UINT32 profile = 0;
+	if (flags == FREERDP_CODEC_AV2_I444)
+		profile = 1;
+	const BOOL decoder =
+	    freerdp_av2_context_set_option(av2, FREERDP_AV2_CONTEXT_OPTION_PROFILE, profile);
+	freerdp_av2_context_free(av2);
+	return decoder;
+}
+#endif
+
+#if defined(WITH_GFX_AZURE)
+WINPR_ATTR_NODISCARD
+static BOOL test_hevc(BOOL Compressor, UINT32 flags)
+{
+	FREERDP_HEVC_CONTEXT* hevc = freerdp_hevc_context_new(Compressor);
+	if (!hevc)
+		return FALSE;
+
+	UINT32 profile = 0;
+	if (flags == FREERDP_CODEC_HEVC_I444)
+		profile = 1;
+	const BOOL decoder =
+	    freerdp_hevc_context_set_option(hevc, FREERDP_HEVC_CONTEXT_OPTION_PROFILE, profile);
+	freerdp_hevc_context_free(hevc);
+	return decoder;
+}
+#endif
+
 static BOOL CALLBACK codec_support_status_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
                                                WINPR_ATTR_UNUSED PVOID param,
                                                WINPR_ATTR_UNUSED PVOID* context)
@@ -1260,44 +1312,26 @@ static BOOL CALLBACK codec_support_status_init(WINPR_ATTR_UNUSED PINIT_ONCE once
 #endif
 #if defined(WITH_GFX_AV1)
 	{
-		FREERDP_AV1_CONTEXT* av1 = freerdp_av1_context_new(FALSE);
-		const BOOL decoder = av1 != nullptr;
-		freerdp_av1_context_free(av1);
-
-		FREERDP_AV1_CONTEXT* av1enc = freerdp_av1_context_new(TRUE);
-		const BOOL encoder = av1enc != nullptr;
-		freerdp_av1_context_free(av1enc);
-
-		setCodecSupportStatus(FREERDP_CODEC_AV1_I420, decoder, encoder);
-		setCodecSupportStatus(FREERDP_CODEC_AV1_I444, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_AV1_I420, test_av1(FALSE, FREERDP_CODEC_AV1_I420),
+		                      test_av1(TRUE, FREERDP_CODEC_AV1_I420));
+		setCodecSupportStatus(FREERDP_CODEC_AV1_I444, test_av1(FALSE, FREERDP_CODEC_AV1_I444),
+		                      test_av1(TRUE, FREERDP_CODEC_AV1_I444));
 	}
 #endif
 #if defined(WITH_GFX_AV2)
 	{
-		FREERDP_AV2_CONTEXT* av1 = freerdp_av2_context_new(FALSE);
-		const BOOL decoder = av1 != nullptr;
-		freerdp_av2_context_free(av1);
-
-		FREERDP_AV2_CONTEXT* av2enc = freerdp_av2_context_new(TRUE);
-		const BOOL encoder = av2enc != nullptr;
-		freerdp_av2_context_free(av2enc);
-
-		setCodecSupportStatus(FREERDP_CODEC_AV2_I420, decoder, encoder);
-		setCodecSupportStatus(FREERDP_CODEC_AV2_I444, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_AV2_I420, test_av2(FALSE, FREERDP_CODEC_AV2_I420),
+		                      test_av2(TRUE, FREERDP_CODEC_AV2_I420));
+		setCodecSupportStatus(FREERDP_CODEC_AV2_I444, test_av2(FALSE, FREERDP_CODEC_AV2_I444),
+		                      test_av2(TRUE, FREERDP_CODEC_AV2_I444));
 	}
 #endif
 #if defined(WITH_GFX_AZURE)
 	{
-		FREERDP_HEVC_CONTEXT* hevc = freerdp_hevc_context_new(FALSE);
-		const BOOL decoder = hevc != nullptr;
-		freerdp_hevc_context_free(hevc);
-
-		FREERDP_HEVC_CONTEXT* hevcenc = freerdp_hevc_context_new(TRUE);
-		const BOOL encoder = hevcenc != nullptr;
-		freerdp_hevc_context_free(hevcenc);
-
-		setCodecSupportStatus(FREERDP_CODEC_HEVC_I420, decoder, encoder);
-		setCodecSupportStatus(FREERDP_CODEC_HEVC_I444, decoder, encoder);
+		setCodecSupportStatus(FREERDP_CODEC_HEVC_I420, test_hevc(FALSE, FREERDP_CODEC_HEVC_I420),
+		                      test_hevc(TRUE, FREERDP_CODEC_HEVC_I420));
+		setCodecSupportStatus(FREERDP_CODEC_HEVC_I444, test_hevc(FALSE, FREERDP_CODEC_HEVC_I444),
+		                      test_hevc(TRUE, FREERDP_CODEC_HEVC_I444));
 	}
 #endif
 
