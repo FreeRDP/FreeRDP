@@ -1684,6 +1684,27 @@ static UINT rdpgfx_recv_caps_reset_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStre
 	return rdpgfx_send_supported_caps(callback);
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL rdpgfx_codec_has_region_data_embedded(UINT16 codecId)
+{
+	switch (codecId)
+	{
+		case RDPGFX_CODECID_AVC420:
+		case RDPGFX_CODECID_AVC444:
+		case RDPGFX_CODECID_AVC444v2:
+#if defined(WITH_GFX_AZURE)
+		case RDPGFX_CODECID_HEVC420:
+		case RDPGFX_CODECID_HEVC444:
+#endif
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+		case RDPGFX_CODECID_AV1:
+#endif
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
 /**
  * Function description
  *
@@ -1705,7 +1726,9 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(GENERIC_CHANNEL_CALLBACK* callback
 	Stream_Read_UINT16(s, pdu.codecId);    /* codecId (2 bytes) */
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* pixelFormat (1 byte) */
 
-	if ((error = rdpgfx_read_rect16(gfx->base.log, s, &(pdu.destRect)))) /* destRect (8 bytes) */
+	if ((error = rdpgfx_read_rect16(
+	         gfx->base.log, s, &(pdu.destRect),
+	         rdpgfx_codec_has_region_data_embedded(pdu.codecId)))) /* destRect (8 bytes) */
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR, "rdpgfx_read_rect16 failed with error %" PRIu32 "",
 		           error);
@@ -1981,7 +2004,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStre
 	{
 		RECTANGLE_16* fillRect = &(pdu.fillRects[index]);
 
-		if ((error = rdpgfx_read_rect16(gfx->base.log, s, fillRect)))
+		if ((error = rdpgfx_read_rect16(gfx->base.log, s, fillRect, FALSE)))
 		{
 			WLog_Print(gfx->base.log, WLOG_ERROR,
 			           "rdpgfx_read_rect16 failed with error %" PRIu32 "!", error);
@@ -2026,7 +2049,8 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callbac
 	Stream_Read_UINT16(s, pdu.surfaceIdSrc);  /* surfaceIdSrc (2 bytes) */
 	Stream_Read_UINT16(s, pdu.surfaceIdDest); /* surfaceIdDest (2 bytes) */
 
-	if ((error = rdpgfx_read_rect16(gfx->base.log, s, &(pdu.rectSrc)))) /* rectSrc (8 bytes ) */
+	if ((error =
+	         rdpgfx_read_rect16(gfx->base.log, s, &(pdu.rectSrc), FALSE))) /* rectSrc (8 bytes ) */
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR, "rdpgfx_read_rect16 failed with error %" PRIu32 "!",
 		           error);
@@ -2100,7 +2124,7 @@ static UINT rdpgfx_recv_surface_to_cache_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	Stream_Read_UINT64(s, pdu.cacheKey);  /* cacheKey (8 bytes) */
 	Stream_Read_UINT16(s, pdu.cacheSlot); /* cacheSlot (2 bytes) */
 
-	UINT error = rdpgfx_read_rect16(gfx->base.log, s, &(pdu.rectSrc));
+	UINT error = rdpgfx_read_rect16(gfx->base.log, s, &(pdu.rectSrc), FALSE);
 	if (error != CHANNEL_RC_OK) /* rectSrc (8 bytes ) */
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR, "rdpgfx_read_rect16 failed with error %" PRIu32 "!",

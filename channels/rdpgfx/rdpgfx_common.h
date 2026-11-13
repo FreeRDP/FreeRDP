@@ -44,7 +44,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_point16(wStream* s, const RDPGFX_POINT16* point16);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL UINT rdpgfx_read_rect16(wLog* log, wStream* s, RECTANGLE_16* rect16);
+FREERDP_LOCAL UINT rdpgfx_read_rect16(wLog* log, wStream* s, RECTANGLE_16* rect16, BOOL allowEmpty);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16);
