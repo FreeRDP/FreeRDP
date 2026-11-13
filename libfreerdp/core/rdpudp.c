@@ -1487,6 +1487,7 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(s);
 	UINT16 seq = base;
+	BOOL baseReceived = FALSE;
 	for (size_t x = 0; x < count; x++)
 	{
 		const BYTE entry = Stream_Get_UINT8(s);
@@ -1498,7 +1499,11 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 			for (BYTE y = 0; y < run; y++)
 			{
 				if (received)
+				{
+					if (seq == base)
+						baseReceived = TRUE;
 					acknowledge_seq(udp, seq);
+				}
 				seq++;
 			}
 		}
@@ -1508,11 +1513,21 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 			for (BYTE bit = 0; bit < 7; bit++)
 			{
 				if (entry & (1 << bit))
+				{
+					if (seq == base)
+						baseReceived = TRUE;
 					acknowledge_seq(udp, seq);
+				}
 				seq++;
 			}
 		}
 	}
+
+	/* The base of an ACK vector is the receiver's first missing packet ([MS-RDPEUDP2] 3.1.5.7).
+	 * A vector that reports its base received is a report on a packet behind the receiver's
+	 * window, and says nothing about what lies below it (4.2.2). */
+	if (baseReceived)
+		return;
 
 	/* everything below the base has been received */
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
