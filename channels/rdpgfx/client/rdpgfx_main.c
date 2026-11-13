@@ -380,6 +380,24 @@ static RDPGFX_CAPSET* nextCapset(RDPGFX_CAPS_ADVERTISE_PDU* pdu, size_t count)
 	return &pdu->capsSets[pdu->capsSetCount++];
 }
 
+#if defined(WITH_GFX_AZURE)
+/* Only offer HEVC if it can be decoded: a server confirming it sends HEVC420 frames. */
+WINPR_ATTR_NODISCARD
+static BOOL rdpgfx_hevc_enabled(RDPGFX_PLUGIN* gfx)
+{
+	WINPR_ASSERT(gfx);
+
+	if (!freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecHEVC))
+		return FALSE;
+	if (freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_HEVC_I420, FALSE))
+		return TRUE;
+
+	WLog_Print(gfx->base.log, WLOG_WARN,
+	           "HEVC mode enabled, but decoder does not support it. Disabling.");
+	return FALSE;
+}
+#endif
+
 /**
  * Function description
  *
@@ -454,175 +472,162 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 		if (!freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxAVC444) ||
 		    !freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_AVC444, FALSE))
 			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+	}
 
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_10))
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_10))
+	{
+		RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+		if (!capsSet)
+			return ERROR_BAD_CONFIGURATION;
+		capsSet->version = RDPGFX_CAPVERSION_10;
+		capsSet->length = 4;
+		capsSet->flags = caps10Flags;
+	}
+
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_101))
+	{
+		RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+		if (!capsSet)
+			return ERROR_BAD_CONFIGURATION;
+		capsSet->version = RDPGFX_CAPVERSION_101;
+		capsSet->length = 0x10;
+		capsSet->flags = 0;
+	}
+
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_102))
+	{
+		RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+		if (!capsSet)
+			return ERROR_BAD_CONFIGURATION;
+		capsSet->version = RDPGFX_CAPVERSION_102;
+		capsSet->length = 0x4;
+		capsSet->flags = caps10Flags;
+	}
+
+	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxThinClient))
+	{
+		if ((caps10Flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0)
+			caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
+	}
+
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_103))
+	{
+		RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+		if (!capsSet)
+			return ERROR_BAD_CONFIGURATION;
+		capsSet->version = RDPGFX_CAPVERSION_103;
+		capsSet->length = 0x4;
+		capsSet->flags = caps10Flags & ~RDPGFX_CAPS_FLAG_SMALL_CACHE;
+	}
+
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_104))
+	{
+		RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+		if (!capsSet)
+			return ERROR_BAD_CONFIGURATION;
+		capsSet->version = RDPGFX_CAPVERSION_104;
+		capsSet->length = 0x4;
+		capsSet->flags = caps10Flags;
+	}
+
+	/* The following capabilities expect support for image scaling.
+	 * Disable these for builds that do not have support for that.
+	 */
+	if (freerdp_image_scaling_supported())
+	{
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_105))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 			if (!capsSet)
 				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_10;
-			capsSet->length = 4;
-			capsSet->flags = caps10Flags;
-		}
-
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_101))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_101;
-			capsSet->length = 0x10;
-			capsSet->flags = 0;
-		}
-
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_102))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_102;
+			capsSet->version = RDPGFX_CAPVERSION_105;
 			capsSet->length = 0x4;
 			capsSet->flags = caps10Flags;
 		}
 
-		if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxThinClient))
-		{
-			if ((caps10Flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0)
-				caps10Flags |= RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
-		}
-
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_103))
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106))
 		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 			if (!capsSet)
 				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_103;
-			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags & ~RDPGFX_CAPS_FLAG_SMALL_CACHE;
-		}
-
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_104))
-		{
-			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-			if (!capsSet)
-				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_104;
+			capsSet->version = RDPGFX_CAPVERSION_106;
 			capsSet->length = 0x4;
 			capsSet->flags = caps10Flags;
 		}
 
-		/* The following capabilities expect support for image scaling.
-		 * Disable these for builds that do not have support for that.
-		 */
-		if (freerdp_image_scaling_supported())
+		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106_ERR))
 		{
-			if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_105))
+			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+			if (!capsSet)
+				return ERROR_BAD_CONFIGURATION;
+			capsSet->version = RDPGFX_CAPVERSION_106_ERR;
+			capsSet->length = 0x4;
+			capsSet->flags = caps10Flags;
+		}
+	}
+
+	if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_107))
+	{
+		RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
+		if (!capsSet)
+			return ERROR_BAD_CONFIGURATION;
+		capsSet->version = RDPGFX_CAPVERSION_107;
+		capsSet->length = 0x4;
+		capsSet->flags = caps10Flags;
+		if (!freerdp_image_scaling_supported())
+			capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
+	}
+
+#if defined(WITH_GFX_AZURE)
+	if (freerdp_image_scaling_supported())
+	{
+		const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112, RDPGFX_CAPVERSION_113,
+			                    RDPGFX_CAPVERSION_115 };
+		const BOOL hevc = rdpgfx_hevc_enabled(gfx);
+		const BOOL hevc444 =
+		    hevc && freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecHEVC444) &&
+		    freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_HEVC_I444, FALSE);
+
+		for (size_t x = 0; x < ARRAYSIZE(caps); x++)
+		{
+			const UINT32 cap = caps[x];
+
+			if (rdpgfx_is_capability_filtered(gfx, cap))
+				continue;
+
+			/* the flags differ between the versions, keep them out of caps10Flags */
+			UINT32 flags = caps10Flags;
+
+			/* HEVC420 is valid from RDPGFX_CAPVERSION_112 on. AVC stays enabled: the server
+			 * falls back to it if it has no HEVC encoder. */
+			if (hevc && (cap >= RDPGFX_CAPVERSION_112))
+				flags |= RDPGFX_CAPS_FLAG_HEVC_ENABLE;
+
+			/* HEVC444 is only valid in RDPGFX_CAPVERSION_115 */
+			if (hevc444 && (cap >= RDPGFX_CAPVERSION_115))
+				flags |= RDPGFX_CAPS_FLAG_HEVC_I444;
+
+			/* AVC mixed mode is valid in RDPGFX_CAPVERSION_113 and RDPGFX_CAPVERSION_115.
+			 * The server then mixes AVC420 or AVC444 regions with the other codecs on a
+			 * surface, all of which are decoded already, so offer it whenever AVC is. */
+			if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAVCMM))
 			{
-				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-				if (!capsSet)
-					return ERROR_BAD_CONFIGURATION;
-				capsSet->version = RDPGFX_CAPVERSION_105;
-				capsSet->length = 0x4;
-				capsSet->flags = caps10Flags;
+				if ((cap >= RDPGFX_CAPVERSION_113) &&
+				    ((flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0))
+					flags |= RDPGFX_CAPS_FLAG_AVCMM_ENABLE;
 			}
 
-			if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106))
-			{
-				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-				if (!capsSet)
-					return ERROR_BAD_CONFIGURATION;
-				capsSet->version = RDPGFX_CAPVERSION_106;
-				capsSet->length = 0x4;
-				capsSet->flags = caps10Flags;
-			}
-
-			if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_106_ERR))
-			{
-				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-				if (!capsSet)
-					return ERROR_BAD_CONFIGURATION;
-				capsSet->version = RDPGFX_CAPVERSION_106_ERR;
-				capsSet->length = 0x4;
-				capsSet->flags = caps10Flags;
-			}
-		}
-
-		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_107))
-		{
 			RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
 			if (!capsSet)
 				return ERROR_BAD_CONFIGURATION;
-			capsSet->version = RDPGFX_CAPVERSION_107;
+			capsSet->version = cap;
 			capsSet->length = 0x4;
-			capsSet->flags = caps10Flags;
+			capsSet->flags = flags;
 			if (!freerdp_image_scaling_supported())
 				capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
 		}
-
-#if defined(WITH_GFX_AZURE)
-		if (freerdp_image_scaling_supported())
-		{
-			const UINT32 caps[] = { RDPGFX_CAPVERSION_111, RDPGFX_CAPVERSION_112,
-				                    RDPGFX_CAPVERSION_113, RDPGFX_CAPVERSION_115 };
-			const BOOL hevc =
-			    freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_HEVC_I420, FALSE);
-
-			for (size_t x = 0; x < ARRAYSIZE(caps); x++)
-			{
-				const UINT32 cap = caps[x];
-
-				if (rdpgfx_is_capability_filtered(gfx, cap))
-					continue;
-
-				if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecHEVC))
-				{
-					if (!hevc)
-					{
-						WLog_Print(
-						    gfx->base.log, WLOG_WARN,
-						    "HEVC mode enabled, but decoder does not support it. Disabling.");
-					}
-					else
-					{
-						/* caps >= RDPGFX_CAPVERSION_112 support HEVC420 mode, but only if AVC444 is
-						 * disabled */
-						if (cap >= RDPGFX_CAPVERSION_112)
-							caps10Flags |=
-							    RDPGFX_CAPS_FLAG_AVC_DISABLED | RDPGFX_CAPS_FLAG_HEVC_ENABLE;
-
-						/* caps >= RDPGFX_CAPVERSION_115 support HEVC444 mode as well. */
-						if (cap >= RDPGFX_CAPVERSION_115)
-						{
-							if (freerdp_settings_get_bool(gfx->rdpcontext->settings,
-							                              FreeRDP_GfxCodecHEVC444) &&
-							    freerdp_codec_supported(gfx->rdpcontext, FREERDP_CODEC_HEVC_I444,
-							                            FALSE))
-								caps10Flags |= RDPGFX_CAPS_FLAG_HEVC_I444;
-						}
-					}
-				}
-				/* AVC mixed mode is valid in RDPGFX_CAPVERSION_113 and RDPGFX_CAPVERSION_115.
-				 * The server then mixes AVC420 or AVC444 regions with the other codecs on a
-				 * surface, all of which are decoded already, so offer it whenever AVC is. */
-				if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAVCMM))
-				{
-					if ((cap >= RDPGFX_CAPVERSION_113) &&
-					    ((caps10Flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0))
-						caps10Flags |= RDPGFX_CAPS_FLAG_AVCMM_ENABLE;
-				}
-
-				RDPGFX_CAPSET* capsSet = nextCapset(&pdu, ARRAYSIZE(capsSets));
-				if (!capsSet)
-					return ERROR_BAD_CONFIGURATION;
-				capsSet->version = cap;
-				capsSet->length = 0x4;
-				capsSet->flags = caps10Flags;
-				if (!freerdp_image_scaling_supported())
-					capsSet->flags |= RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE;
-			}
-		}
-#endif
 	}
+#endif
 
 #if defined(WITH_GFX_AV1)
 	if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxCodecAV1))
