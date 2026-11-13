@@ -18,23 +18,30 @@ jobs:
           brew install autoconf automake git libtool meson
 
       - name: Cache Dependencies
-        id: cache-dependencies
-        uses: actions/cache@v6
+        id: restore-dependencies
+        uses: actions/restore@v6
         with:
           path: |
             !build-macos/**/*freerdp*
             !build-macos/**/*winpr*
             build-macos/**
-          key: ${{ runner.os }}-macos-${{ hashFiles('scripts/bundle-mac-os.sh') }}
+          key: ${{ runner.os }}-macosx-${{ hashFiles('scripts/bundle-mac-os.sh') }}
 
       - name: Build Dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        uses: actions/save@v6
+        with:
+          path: |
+            !build-macos/**/*freerdp*
+            !build-macos/**/*winpr*
+            build-macos/**
+          key: ${{ runner.os }}-macosx-${{ hashFiles('scripts/bundle-mac-os.sh') }}
         run: |
           ./scripts/bundle-mac-os.sh --build-deps-only
 
-      - name: Log workspace before build
+      - name: "Log workspace before build"
         run: |
-          find .
+          find build-macos
 
       - name: "Run mac os build..."
         run: |
