@@ -1,0 +1,13 @@
+[Unit]
+Description=Per-user LSA daemon for FreeRDP Remote Credential Guard
+Documentation=https://github.com/FreeRDP/FreeRDP/blob/master/docs/lsa4posix.md
+Requires=lsa4posix.socket
+
+[Service]
+Type=simple
+# Adjust the path if lsa4posix is installed system-wide (e.g. /usr/bin/lsa4posix).
+# Started on demand by lsa4posix.socket, which passes the listening socket; the daemon
+# also runs standalone (it binds its own socket when not socket-activated).
+ExecStart=%h/.local/bin/lsa4posix --foreground
+Restart=on-failure
+RestartSec=2
