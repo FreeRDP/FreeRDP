@@ -1835,6 +1835,11 @@ void SdlContext::setCredentialsRead()
 	_credentialsRead = true;
 }
 
+SdlWheelAxis& SdlContext::wheelAxis(bool horizontal)
+{
+	return horizontal ? _wheelX : _wheelY;
+}
+
 bool SdlContext::resizeToScale(SdlWindow* window)
 {
 	if (freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
