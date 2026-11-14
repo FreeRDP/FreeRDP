@@ -1754,6 +1754,22 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			const auto& cev = ev.clipboard;
 			return getClipboardChannelContext().handleEvent(cev);
 		}
+		case SDL_EVENT_TEXT_EDITING_CANDIDATES:
+		{
+			const auto& cev = ev.edit_candidates;
+			return getInputChannelContext().handleEvent(cev);
+		}
+		case SDL_EVENT_TEXT_EDITING:
+		{
+			const auto& cev = ev.edit;
+			return getInputChannelContext().handleEvent(cev);
+		}
+		case SDL_EVENT_TEXT_INPUT:
+		{
+			const auto& cev = ev.text;
+			return getInputChannelContext().handleEvent(cev);
+		}
+
 		case SDL_EVENT_KEY_DOWN:
 		case SDL_EVENT_KEY_UP:
 		{

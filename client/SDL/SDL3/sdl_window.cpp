@@ -70,6 +70,7 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	std::ignore = resizeToScale();
 
 	_monitor = query(_window, id, true);
+	std::ignore = SDL_StartTextInput(_window);
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
@@ -94,7 +95,10 @@ SdlWindow::~SdlWindow()
 	if (_renderer)
 		SDL_DestroyRenderer(_renderer);
 	if (_window)
+	{
+		std::ignore = SDL_StopTextInput(_window);
 		SDL_DestroyWindow(_window);
+	}
 }
 
 SDL_WindowID SdlWindow::id() const
@@ -811,6 +815,7 @@ SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent,
 		std::ignore = SDL_SyncWindow(_window);
 		_renderer = SDL_CreateRenderer(_window, nullptr);
 		_displayID = SDL_GetDisplayForWindow(_window);
+		std::ignore = SDL_StartTextInput(_window);
 	}
 }
 
