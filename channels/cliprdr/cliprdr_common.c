@@ -118,7 +118,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 
 wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, size_t dataLen)
 {
-	WINPR_ASSERT(dataLen < UINT32_MAX);
+	WINPR_ASSERT(dataLen < UINT32_MAX - 8ull);
 	wStream* s = Stream_New(nullptr, dataLen + 8ULL);
 
 	if (!s)
@@ -251,7 +251,14 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 		               "useAsciiNames=true. useAsciiNames requires "
 		               "useLongFormatNames=false, ignoring argument.");
 
-	const UINT32 length = formatList->numFormats * 36;
+	if (formatList->numFormats > UINT32_MAX / 36ull)
+	{
+		WLog_ERR(TAG, "called with numFormats=%" PRIu32 ", which exceeds maximum allowed %" PRIu32,
+		         formatList->numFormats, UINT32_MAX);
+		return nullptr;
+	}
+
+	const UINT32 length = formatList->numFormats * 36ull;
 	const size_t formatNameCharSize =
 	    (useLongFormatNames || !useAsciiNames) ? sizeof(WCHAR) : sizeof(CHAR);
 
