@@ -42,6 +42,7 @@
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 static constexpr auto sdl_connection_dialog = "sdl-connection-dialog";
+static constexpr auto sdl_info = "sdl-info";
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
@@ -75,6 +76,10 @@ SdlContext::SdlContext(rdpContext* context)
 	/* BoolValueTrue does not compile in C++, any non null default means on */
 	_args.push_back({ sdl_connection_dialog, COMMAND_LINE_VALUE_BOOL, nullptr, "on", nullptr, -1,
 	                  nullptr, "the connection dialog with progress and errors" });
+	_args.push_back({ sdl_info, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1,
+	                  nullptr,
+	                  "the stats and info overlay from the start (its hotkey SDL_Info, default "
+	                  "<modifier>+I, shows and hides it)" });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
@@ -393,7 +398,8 @@ BOOL SdlContext::postConnect(freerdp* instance)
 	                        true))
 		return FALSE;
 	sdl->setConnected(true);
-	return TRUE;
+	/* also after a reconnect: the overlay's rates and totals are this connection's */
+	return sdl->_overlay.connected();
 }
 
 /* This function is called whether a session ends by failure or success.
@@ -1131,7 +1137,49 @@ bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& re
 			return false;
 	}
 
-	window.updateSurface();
+	window.updateSurface((&window == overlayWindow()) ? &_overlay : nullptr);
+	return true;
+}
+
+SdlWindow* SdlContext::overlayWindow()
+{
+	/* RemoteApp windows are the server's, so v1 has no overlay there */
+	if (_rail.enabled() || _windows.empty())
+		return nullptr;
+	return &_windows.begin()->second;
+}
+
+bool SdlContext::toggleOverlay()
+{
+	return showOverlay(!_overlay.visible());
+}
+
+bool SdlContext::showOverlay(bool on)
+{
+	if (!_overlay.show(on))
+		return false;
+	if (on || !isConnected())
+		return true;
+
+	/* hidden: present the picture once without it */
+	auto window = overlayWindow();
+	if (window)
+		window->updateSurface();
+	return true;
+}
+
+bool SdlContext::updateOverlay()
+{
+	auto window = overlayWindow();
+	if (!window || !isConnected())
+		return true;
+
+	int w = 0;
+	int h = 0;
+	if (!SDL_GetWindowSizeInPixels(window->window(), &w, &h))
+		return true;
+	if (_overlay.update(w, h, window->rendererName()))
+		window->updateSurface(&_overlay);
 	return true;
 }
 
@@ -1847,6 +1895,11 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 		}
 		else if (strcmp(arg->Name, sdl_connection_dialog) == 0)
 			sdl->_connectionDialog = (arg->Value != nullptr);
+		else if (strcmp(arg->Name, sdl_info) == 0)
+		{
+			if (!sdl->_overlay.show(arg->Value != nullptr))
+				return -2;
+		}
 	}
 	return 0;
 }

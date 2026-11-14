@@ -21,12 +21,16 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <SDL3/SDL.h>
 
 #include <freerdp/settings_types.h>
+
+class SdlOverlay;
+class SdlOverlayPainter;
 
 class SdlWindow
 {
@@ -96,7 +100,9 @@ class SdlWindow
 	bool paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
 	                      const SDL_Rect& inset = { 0, 0, 0, 0 }, bool fillRevealed = true,
 	                      bool dashedBorder = true);
-	void updateSurface();
+	/** Present the picture, with the overlay over it when one is given and shown. */
+	void updateSurface(const SdlOverlay* overlay = nullptr);
+	[[nodiscard]] const char* rendererName() const;
 
 	/** @brief redirected video `id`, drawn over the session at each present at `dst`
 	 *  (render coordinates), only in `clip` (render coordinates) when not empty: what the page
@@ -133,6 +139,7 @@ class SdlWindow
 
   private:
 	void ensureRenderTarget();
+	void drawOverlay(const SdlOverlay& overlay);
 	bool ensureGdiTexture(SDL_Surface* surface);
 
 	SDL_Window* _window = nullptr;
@@ -152,6 +159,7 @@ class SdlWindow
 	SDL_Renderer* _renderer = nullptr;
 	SDL_Texture* _renderTarget = nullptr;
 	SDL_Texture* _gdiTexture = nullptr;
+	std::unique_ptr<SdlOverlayPainter> _overlayPainter;
 	int _gdiTextureW = 0;
 	int _gdiTextureH = 0;
 	int _initialW = 0;

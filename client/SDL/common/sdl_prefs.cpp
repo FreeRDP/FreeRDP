@@ -223,6 +223,16 @@ void SdlPref::print_config_file_help(int version)
 		std::cout << "      Default true. +/-sdl-connection-dialog overrides it unless "
 		             "allowCommandlineToOverride is disabled."
 		          << std::endl;
+		std::cout << std::endl;
+		std::cout << "    SDL_Info" << std::endl;
+		std::cout << "      Shows and hides the stats and info overlay (+sdl-info shows it from "
+		             "the start)."
+		          << std::endl;
+		std::cout << "      Default SDL_SCANCODE_I. Like every shortcut, the modifier and the key "
+		             "no longer reach the session: with the default right Shift, a capital I "
+		             "has to be typed with the left one."
+		          << std::endl;
+		std::cout << "      A string as defined at " << url << "/SDLScancodeLookup" << std::endl;
 	}
 
 #endif

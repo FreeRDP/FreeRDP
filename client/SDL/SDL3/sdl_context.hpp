@@ -41,6 +41,7 @@
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
 #include "sdl_rail.hpp"
+#include "sdl_overlay.hpp"
 #include "sdl_wheel.hpp"
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
@@ -79,6 +80,11 @@ class SdlContext
 	[[nodiscard]] bool setFullscreen(bool enter, bool forceOriginalDisplay = false);
 
 	[[nodiscard]] bool setMinimized();
+
+	/** The stats and info overlay, SDL's thread */
+	[[nodiscard]] bool toggleOverlay();
+	[[nodiscard]] bool showOverlay(bool on);
+	[[nodiscard]] bool updateOverlay();
 
 	[[nodiscard]] bool grabMouse() const;
 	[[nodiscard]] bool toggleGrabMouse();
@@ -191,6 +197,8 @@ class SdlContext
 	[[nodiscard]] SdlWheelAxis& wheelAxis(bool horizontal);
 
   private:
+	/** The window that shows the overlay, nullptr for none (RemoteApp) */
+	[[nodiscard]] SdlWindow* overlayWindow();
 	[[nodiscard]] bool resizeToScale(SdlWindow* window);
 	[[nodiscard]] bool useLocalScale() const;
 
@@ -323,6 +331,7 @@ class SdlContext
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::optional<bool> _connectionDialog;
 	std::optional<bool> _allowScreenSaver;
+	SdlOverlay _overlay{ this };
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
 	SdlWheelAxis _wheelX;
