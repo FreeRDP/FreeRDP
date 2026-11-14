@@ -70,6 +70,7 @@ struct rdp_transport
 	TRANSPORT_LAYER layer;
 	BIO* frontBio;
 	rdpRdg* rdg;
+	BOOL rdgRedirectPending;
 	rdpTsg* tsg;
 	rdpWst* wst;
 	rdpTls* tls;
@@ -542,6 +543,28 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
+
+	if (transport->rdgRedirectPending)
+	{
+		transport->rdgRedirectPending = FALSE;
+		if (transport->GatewayEnabled && rdg_redirect_matches_gateway(transport->rdg, settings))
+		{
+			if (!rdg_reopen_channel(transport->rdg))
+			{
+				rdg_free(transport->rdg);
+				transport->rdg = nullptr;
+				return FALSE;
+			}
+
+			transport->frontBio = rdg_get_front_bio_and_take_ownership(transport->rdg);
+			WINPR_ASSERT(transport->frontBio);
+			transport->layer = TRANSPORT_LAYER_TSG;
+			return TRUE;
+		}
+
+		rdg_free(transport->rdg);
+		transport->rdg = nullptr;
+	}
 
 	BOOL rpcFallback = !settings->GatewayHttpTransport;
 
@@ -1691,6 +1714,47 @@ void transport_set_aad_mode(rdpTransport* transport, BOOL AadMode)
 	transport->AadMode = AadMode;
 }
 
+static BOOL transport_default_disconnect(rdpTransport* transport);
+
+rdpRdg* transport_take_rdg_for_redirect(rdpTransport* transport)
+{
+	/* Opt in while this is being tested with gateways that differ in their close behavior. */
+	const char* reuse = getenv("FREERDP_RDG_REUSE_TUNNEL");
+	if (!reuse || strcmp(reuse, "1") != 0 || !transport || !transport->rdg ||
+	    (transport->io.TransportDisconnect != transport_default_disconnect) ||
+	    (transport->layer != TRANSPORT_LAYER_TSG && transport->layer != TRANSPORT_LAYER_TSG_TLS))
+		return nullptr;
+
+	EnterCriticalSection(&transport->ReadLock);
+	EnterCriticalSection(&transport->WriteLock);
+	rdpRdg* rdg = nullptr;
+	if (rdg_detach_for_redirect(transport->rdg))
+	{
+		rdg = transport->rdg;
+		transport->rdg = nullptr;
+	}
+	else
+		WLog_Print(transport->log, WLOG_INFO,
+		           "[RDG-REUSE] Current tunnel is not eligible for reuse");
+	LeaveCriticalSection(&transport->WriteLock);
+	LeaveCriticalSection(&transport->ReadLock);
+	return rdg;
+}
+
+void transport_stage_rdg_redirect(rdpTransport* transport, rdpRdg* rdg)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(!transport->rdg);
+	transport->rdg = rdg;
+	transport->rdgRedirectPending = TRUE;
+}
+
+BOOL transport_has_rdg_redirect(const rdpTransport* transport)
+{
+	return transport && transport->rdgRedirectPending &&
+	       rdg_redirect_matches_gateway(transport->rdg, transport->context->settings);
+}
+
 BOOL transport_disconnect(rdpTransport* transport)
 {
 	if (!transport)
@@ -1739,6 +1803,7 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 	transport->frontBio = nullptr;
 	transport->layer = TRANSPORT_LAYER_TCP;
 	transport->earlyUserAuth = FALSE;
+	transport->rdgRedirectPending = FALSE;
 	LeaveCriticalSection(&(transport->WriteLock));
 	LeaveCriticalSection(&(transport->ReadLock));
 	return status;

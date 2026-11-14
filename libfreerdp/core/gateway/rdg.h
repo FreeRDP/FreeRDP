@@ -45,6 +45,15 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback);
 
 WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdg_detach_for_redirect(rdpRdg* rdg);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdg_redirect_matches_gateway(const rdpRdg* rdg, const rdpSettings* settings);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdg_reopen_channel(rdpRdg* rdg);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */

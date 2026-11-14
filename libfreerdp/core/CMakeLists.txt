@@ -32,6 +32,7 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
     ${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
     ${${MODULE_PREFIX}_GATEWAY_DIR}/rdg.c
     ${${MODULE_PREFIX}_GATEWAY_DIR}/rdg.h
+    ${${MODULE_PREFIX}_GATEWAY_DIR}/rdg_private.h
     ${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
     ${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h
     ${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_bind.c

@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/sysinfo.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
@@ -38,7 +39,7 @@
 #include <freerdp/utils/ringbuffer.h>
 #include <freerdp/utils/smartcardlogon.h>
 
-#include "rdg.h"
+#include "rdg_private.h"
 #include "websocket.h"
 #include "../credssp_auth.h"
 #include "../proxy.h"
@@ -108,52 +109,6 @@ typedef enum
 #define HTTP_CAPABILITY_MESSAGING_SERVICE_MSG 0x8
 #define HTTP_CAPABILITY_REAUTH 0x10
 #define HTTP_CAPABILITY_UDP_TRANSPORT 0x20
-
-typedef struct
-{
-	TRANSFER_ENCODING httpTransferEncoding;
-	BOOL isWebsocketTransport;
-	http_encoding_chunked_context chunked;
-	websocket_context* websocket;
-} rdg_http_encoding_context;
-
-struct rdp_rdg
-{
-	rdpContext* context;
-	BOOL attached;
-	BIO* frontBio;
-	rdpTls* tlsIn;
-	rdpTls* tlsOut;
-	rdpCredsspAuth* auth;
-	HttpContext* http;
-	CRITICAL_SECTION writeSection;
-
-	int state;
-	UINT16 packetRemainingCount;
-	UINT16 reserved1;
-	int timeout;
-	UINT16 extAuth;
-	UINT16 reserved2;
-	rdg_http_encoding_context transferEncoding;
-
-	SmartcardCertInfo* smartcard;
-	wLog* log;
-
-	/* The header of the next packet, as much of it as has arrived: a read that would block returns
-	 * without losing it, and the next read goes on from there (rdg_read_data_packet). */
-	BYTE nextHeader[8];
-	size_t nextHeaderLengthRead;
-};
-
-enum
-{
-	RDG_CLIENT_STATE_INITIAL,
-	RDG_CLIENT_STATE_HANDSHAKE,
-	RDG_CLIENT_STATE_TUNNEL_CREATE,
-	RDG_CLIENT_STATE_TUNNEL_AUTHORIZE,
-	RDG_CLIENT_STATE_CHANNEL_CREATE,
-	RDG_CLIENT_STATE_OPENED,
-};
 
 #pragma pack(push, 1)
 
@@ -332,10 +287,82 @@ static BOOL rdg_read_http_unicode_string(wLog* log, wStream* s, const WCHAR** st
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
+static BOOL rdg_redirect_continue(rdpRdg* rdg)
+{
+	if (freerdp_shall_disconnect_context(rdg->context))
+	{
+		freerdp_set_last_error_if_not(rdg->context, FREERDP_ERROR_CONNECT_CANCELLED);
+		return FALSE;
+	}
+	if (GetTickCount64() >= rdg->redirectDeadline)
+	{
+		WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] Gateway response timeout expired");
+		freerdp_set_last_error_if_not(rdg->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static void rdg_redirect_wait(rdpRdg* rdg, BIO* bio, BOOL writing)
+{
+	const UINT64 now = GetTickCount64();
+	if (now >= rdg->redirectDeadline)
+		return;
+	const long timeout = (long)MIN(50, rdg->redirectDeadline - now);
+	const long rc = (BIO_should_read(bio) || (!BIO_should_write(bio) && !writing))
+	                    ? BIO_wait_read(bio, timeout)
+	                    : BIO_wait_write(bio, timeout);
+	/* Readiness is advisory. Retry the I/O and check the shared deadline again. */
+	WINPR_UNUSED(rc);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdg_redirect_flush(rdpRdg* rdg, BIO* bio)
+{
+	while (rdg_redirect_continue(rdg))
+	{
+		const int rc = BIO_flush(bio);
+		if ((rc <= 0) && !BIO_should_retry(bio))
+			return FALSE;
+
+		/* The buffered socket can accept a whole write without sending it, and the
+		 * TLS BIO can report a successful flush while bytes are still queued. */
+		if ((rc > 0) && (BIO_wpending(bio) == 0) && (BIO_write_blocked(bio) <= 0))
+			return TRUE;
+		if ((BIO_wpending(bio) > 0) && (BIO_write_blocked(bio) <= 0) && !BIO_should_retry(bio))
+			return FALSE;
+		rdg_redirect_wait(rdg, bio, TRUE);
+	}
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdg_redirect_write(rdpRdg* rdg, BIO* bio, const BYTE* data, size_t length)
+{
+	size_t offset = 0;
+	while (offset < length)
+	{
+		if (!rdg_redirect_continue(rdg))
+			return FALSE;
+		const int rc = BIO_write(bio, data + offset, (int)(length - offset));
+		if (rc <= 0)
+		{
+			if (!BIO_should_retry(bio))
+				return FALSE;
+			rdg_redirect_wait(rdg, bio, TRUE);
+			continue;
+		}
+		offset += (size_t)rc;
+	}
+	return rdg_redirect_flush(rdg, bio);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdg_write_chunked(rdpRdg* rdg, wStream* sPacket)
 {
 	size_t len = 0;
-	int status = 0;
+	BOOL status = FALSE;
+	BIO* bio = rdg->tlsIn->bio;
 	wStream* sChunk = nullptr;
 	char chunkSize[11];
 	(void)sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIXz "\r\n", Stream_Length(sPacket));
@@ -358,10 +385,17 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 	}
 
 	ERR_clear_error();
-	status = BIO_write(bio, Stream_Buffer(sChunk), (int)len);
+	if (rdg->redirectDeadline)
+	{
+		EnterCriticalSection(&rdg->writeSection);
+		status = rdg_redirect_write(rdg, bio, Stream_Buffer(sChunk), len);
+		LeaveCriticalSection(&rdg->writeSection);
+	}
+	else
+		status = BIO_write(bio, Stream_Buffer(sChunk), (int)len) == (int)len;
 	Stream_Free(sChunk, TRUE);
 
-	return (status == (SSIZE_T)len);
+	return status;
 }
 
 WINPR_ATTR_NODISCARD
@@ -371,7 +405,7 @@ static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 		return websocket_context_write_wstream(rdg->transferEncoding.websocket, rdg->tlsOut->bio,
 		                                       sPacket, WebsocketBinaryOpcode);
 
-	return rdg_write_chunked(rdg->tlsIn->bio, sPacket);
+	return rdg_write_chunked(rdg, sPacket);
 }
 
 WINPR_ATTR_NODISCARD
@@ -407,8 +441,8 @@ static BOOL rdg_shall_abort(rdpRdg* rdg)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t size,
-                         rdg_http_encoding_context* transferEncoding)
+static BOOL rdg_read_all_until(rdpContext* context, rdpTls* tls, wStream* s, size_t size,
+                               rdg_http_encoding_context* transferEncoding, UINT64 deadline)
 {
 	size_t readCount = 0;
 
@@ -418,7 +452,7 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t si
 	BYTE* pBuffer = Stream_Pointer(s);
 	while (readCount < size)
 	{
-		if (freerdp_shall_disconnect_context(context))
+		if (freerdp_shall_disconnect_context(context) || (deadline && GetTickCount64() >= deadline))
 			return FALSE;
 
 		int status =
@@ -428,7 +462,17 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t si
 			if (!BIO_should_retry(tls->bio))
 				return FALSE;
 
-			BIO_wait_read(tls->bio, 50);
+			long wait = 50;
+			if (deadline)
+			{
+				const UINT64 now = GetTickCount64();
+				if (now >= deadline)
+					return FALSE;
+				wait = (long)MIN(50, deadline - now);
+			}
+			const long rc = BIO_should_write(tls->bio) ? BIO_wait_write(tls->bio, wait)
+			                                           : BIO_wait_read(tls->bio, wait);
+			WINPR_UNUSED(rc);
 			continue;
 		}
 
@@ -439,8 +483,15 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t si
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t size,
+                         rdg_http_encoding_context* transferEncoding)
+{
+	return rdg_read_all_until(context, tls, s, size, transferEncoding, 0);
+}
+
 WINPR_ATTR_MALLOC(Stream_Free, 1)
-static wStream* rdg_receive_packet(rdpRdg* rdg)
+static wStream* rdg_receive_packet_until(rdpRdg* rdg, UINT64 deadline)
 {
 	const size_t header = sizeof(RdgPacketHeader);
 	size_t packetLength = 0;
@@ -449,13 +500,14 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	if (!s)
 		return nullptr;
 
-	if (!rdg_read_all(rdg->context, rdg->tlsOut, s, header, &rdg->transferEncoding))
+	if (!rdg_read_all_until(rdg->context, rdg->tlsOut, s, header, &rdg->transferEncoding, deadline))
 		goto fail;
 
 	Stream_Seek(s, 4);
 	Stream_Read_UINT32(s, packetLength);
 
-	if ((packetLength > INT_MAX) || (packetLength < header))
+	if ((packetLength > INT_MAX) || (packetLength < header) ||
+	    (deadline && (packetLength > 1024 * 1024)))
 		goto fail;
 
 	const size_t requestBlockSize = 4096;
@@ -465,7 +517,8 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 		if (offset + block > packetLength)
 			block = packetLength - offset;
 
-		if (!rdg_read_all(rdg->context, rdg->tlsOut, s, block, &rdg->transferEncoding))
+		if (!rdg_read_all_until(rdg->context, rdg->tlsOut, s, block, &rdg->transferEncoding,
+		                        deadline))
 			goto fail;
 
 		if (!Stream_SafeSeek(s, block))
@@ -1171,7 +1224,7 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	WLog_Print(rdg->log, WLOG_DEBUG, "channel response errorCode=%s, fieldsPresent=%s", error,
 	           channel_response_fields_present_to_string(fieldsPresent));
 
-	if (FAILED((HRESULT)errorCode))
+	if (errorCode != S_OK)
 	{
 		WLog_Print(rdg->log, WLOG_ERROR, "channel response errorCode=%s, fieldsPresent=%s", error,
 		           channel_response_fields_present_to_string(fieldsPresent));
@@ -1182,6 +1235,8 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	if (!rdg_process_channel_response_optional(rdg, s, fieldsPresent))
 		return FALSE;
 
+	rdg->channelClosed = FALSE;
+	rdg->closeResponsePending = FALSE;
 	rdg->state = RDG_CLIENT_STATE_OPENED;
 	return TRUE;
 }
@@ -1625,7 +1680,7 @@ static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 	while (rdg->state < RDG_CLIENT_STATE_OPENED)
 	{
 		BOOL status = FALSE;
-		wStream* s = rdg_receive_packet(rdg);
+		wStream* s = rdg_receive_packet_until(rdg, 0);
 
 		if (s)
 		{
@@ -1798,7 +1853,7 @@ static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 WINPR_ATTR_NODISCARD
 static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)
 {
-	int status = -1;
+	BOOL status = FALSE;
 	wStream* sClose = nullptr;
 	UINT32 errorCode = 0;
 	UINT32 packetSize = 12;
@@ -1823,13 +1878,15 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)
 	status = rdg_write_packet(rdg, sClose);
 	Stream_Free(sClose, TRUE);
 
-	return ((status >= 0));
+	if (status && (errorCode == 0))
+		rdg->channelClosed = TRUE;
+	return status;
 }
 
 WINPR_ATTR_NODISCARD
 static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 {
-	int status = -1;
+	BOOL status = FALSE;
 	wStream* sKeepAlive = nullptr;
 	size_t packetSize = 8;
 
@@ -1845,7 +1902,7 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 	status = rdg_write_packet(rdg, sKeepAlive);
 	Stream_Free(sKeepAlive, TRUE);
 
-	return ((status >= 0));
+	return status;
 }
 
 WINPR_ATTR_NODISCARD
@@ -2077,6 +2134,8 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
 	if (num < 0)
 		return num;
+	if (rdg->channelClosed || rdg->closeResponsePending)
+		return -1;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	EnterCriticalSection(&rdg->writeSection);
@@ -2385,6 +2444,7 @@ void rdg_free(rdpRdg* rdg)
 	freerdp_tls_free(rdg->tlsIn);
 	http_context_free(rdg->http);
 	credssp_auth_free(rdg->auth);
+	free(rdg->redirectGatewayHost);
 
 	if (!rdg->attached)
 		BIO_free_all(rdg->frontBio);
@@ -2396,6 +2456,221 @@ void rdg_free(rdpRdg* rdg)
 	websocket_context_free(rdg->transferEncoding.websocket);
 
 	free(rdg);
+}
+
+BOOL rdg_detach_for_redirect(rdpRdg* rdg)
+{
+	if (!rdg)
+		return FALSE;
+
+	if (!rdg->attached || !rdg->frontBio || rdg->transferEncoding.isWebsocketTransport ||
+	    (rdg->state != RDG_CLIENT_STATE_OPENED) || rdg->packetRemainingCount ||
+	    rdg->nextHeaderLengthRead || rdg->closeResponsePending)
+	{
+		WLog_Print(rdg->log, WLOG_INFO,
+		           "[RDG-REUSE] Cannot detach tunnel: attached=%d frontBioPresent=%d websocket=%d "
+		           "state=%d expectedState=%d remainingPayloadBytes=%u bufferedHeaderBytes=%zu "
+		           "closeResponsePending=%d",
+		           (int)rdg->attached, rdg->frontBio != nullptr,
+		           (int)rdg->transferEncoding.isWebsocketTransport, (int)rdg->state,
+		           (int)RDG_CLIENT_STATE_OPENED, (unsigned int)rdg->packetRemainingCount,
+		           rdg->nextHeaderLengthRead, (int)rdg->closeResponsePending);
+		return FALSE;
+	}
+
+	const rdpSettings* settings = rdg->context->settings;
+	if (!settings->GatewayEnabled || !settings->GatewayHttpTransport ||
+	    settings->GatewayArmTransport || settings->GatewayUrl || !settings->GatewayHostname)
+	{
+		WLog_Print(rdg->log, WLOG_INFO,
+		           "[RDG-REUSE] Ineligible gateway settings: enabled=%d http=%d arm=%d "
+		           "gatewayUrlPresent=%d hostnamePresent=%d",
+		           (int)settings->GatewayEnabled, (int)settings->GatewayHttpTransport,
+		           (int)settings->GatewayArmTransport, settings->GatewayUrl != nullptr,
+		           settings->GatewayHostname != nullptr);
+		return FALSE;
+	}
+
+	char* hostname = _strdup(settings->GatewayHostname);
+	if (!hostname)
+	{
+		WLog_Print(rdg->log, WLOG_INFO, "[RDG-REUSE] Cannot copy the gateway hostname");
+		return FALSE;
+	}
+
+	free(rdg->redirectGatewayHost);
+	rdg->redirectGatewayHost = hostname;
+	rdg->redirectGatewayPort = settings->GatewayPort;
+
+	/* The old transport still owns this BIO, possibly under session TLS.
+	 * Its destruction does not own or free rdg, or the two outer HTTPS streams. */
+	rdg->frontBio = nullptr;
+	rdg->attached = FALSE;
+	return TRUE;
+}
+
+BOOL rdg_redirect_matches_gateway(const rdpRdg* rdg, const rdpSettings* settings)
+{
+	return rdg && settings && settings->GatewayEnabled && settings->GatewayHttpTransport &&
+	       !settings->GatewayArmTransport && !settings->GatewayUrl && settings->GatewayHostname &&
+	       rdg->redirectGatewayHost && (rdg->redirectGatewayPort == settings->GatewayPort) &&
+	       (_stricmp(rdg->redirectGatewayHost, settings->GatewayHostname) == 0);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdg_send_redirect_close(rdpRdg* rdg)
+{
+	BYTE buf[12] = WINPR_C_ARRAY_INIT;
+	wStream s = WINPR_C_ARRAY_INIT;
+	Stream_StaticInit(&s, buf, sizeof(buf));
+	Stream_Write_UINT16(&s, PKT_TYPE_CLOSE_CHANNEL);
+	Stream_Write_UINT16(&s, 0);
+	Stream_Write_UINT32(&s, sizeof(buf));
+	Stream_Write_UINT32(&s, 0);
+	Stream_SealLength(&s);
+	return rdg_write_packet(rdg, &s);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdg_wait_for_redirect_channel(rdpRdg* rdg, BOOL closing, UINT64 deadline)
+{
+	while (rdg_redirect_continue(rdg))
+	{
+		wStream* s = rdg_receive_packet_until(rdg, deadline);
+		if (!s)
+			return FALSE;
+		if (!rdg_redirect_continue(rdg))
+		{
+			Stream_Free(s, TRUE);
+			return FALSE;
+		}
+
+		UINT16 type = 0;
+		UINT32 code = 0;
+		BOOL done = FALSE;
+		BOOL ok = TRUE;
+		Stream_ResetPosition(s);
+		Stream_Read_UINT16(s, type);
+		Stream_Seek(s, 6);
+		switch (type)
+		{
+			case PKT_TYPE_CLOSE_CHANNEL_RESPONSE:
+				ok = closing && rdg->closeResponsePending &&
+				     Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 4);
+				if (ok)
+				{
+					Stream_Read_UINT32(s, code);
+					ok = (code == 0);
+					if (!ok)
+						freerdp_set_last_error_log(rdg->context, code);
+					else
+					{
+						rdg->closeResponsePending = FALSE;
+						rdg->channelClosed = TRUE;
+					}
+					done = TRUE;
+				}
+				break;
+			case PKT_TYPE_CLOSE_CHANNEL:
+				/* A simultaneous server close must be acknowledged, but does not
+				 * consume the outstanding response to our own close request. */
+				ok = rdg_process_close_packet(rdg, s) && rdg->channelClosed;
+				if (!closing)
+					ok = FALSE;
+				break;
+			case PKT_TYPE_CHANNEL_RESPONSE:
+				ok = !closing && rdg_process_channel_response(rdg, s);
+				done = TRUE;
+				break;
+			case PKT_TYPE_KEEPALIVE:
+				ok = rdg_process_keep_alive_packet(rdg);
+				break;
+			case PKT_TYPE_SERVICE_MESSAGE:
+				ok = rdg_process_service_message(rdg, s);
+				break;
+			case PKT_TYPE_DATA:
+				/* As required by MS-TSGU 3.7.5.4, discard data for the closing channel. */
+				ok = closing;
+				break;
+			default:
+				ok = FALSE;
+				break;
+		}
+
+		WLog_Print(rdg->log, WLOG_DEBUG, "[RDG-REUSE] %s: %s (ok=%d, code=0x%08" PRIx32 ")",
+		           closing ? "close" : "open", rdg_pkt_type_to_string(type), ok, code);
+		Stream_Free(s, TRUE);
+		if (!ok || done)
+			return ok;
+	}
+	return FALSE;
+}
+
+BOOL rdg_reopen_channel(rdpRdg* rdg)
+{
+	BOOL status = FALSE;
+	WINPR_ASSERT(rdg);
+	WINPR_ASSERT(!rdg->frontBio && !rdg->attached);
+	const UINT32 timeout =
+	    freerdp_settings_get_uint32(rdg->context->settings, FreeRDP_GatewayResponseTimeout);
+	if (timeout == 0)
+	{
+		WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] GatewayResponseTimeout must be positive");
+		goto out;
+	}
+
+	/* A fresh session TLS BIO will be built over the new channel. Keep the
+	 * authorized gateway tunnel (and HTTP framing state) intact. */
+	WLog_Print(rdg->log, WLOG_INFO, "[RDG-REUSE] Reusing authorized HTTP gateway tunnel");
+	rdg->redirectDeadline = GetTickCount64() + timeout;
+	if (!rdg_redirect_continue(rdg))
+		goto out;
+	if (!rdg->channelClosed)
+	{
+		rdg->closeResponsePending = TRUE;
+		if (!rdg_send_redirect_close(rdg))
+		{
+			WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] Failed to write/drain close request");
+			goto out;
+		}
+		if (!rdg_wait_for_redirect_channel(rdg, TRUE, rdg->redirectDeadline))
+		{
+			const BOOL timely = rdg_redirect_continue(rdg);
+			WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] Close response failed: %s",
+			           timely ? "disconnect or unexpected packet" : "timeout or cancellation");
+			goto out;
+		}
+	}
+
+	/* Each phase uses the configured gateway response budget, including writes.
+	 * TcpConnectTimeout applies only to creating TCP sockets, not these responses. */
+	rdg->redirectDeadline = GetTickCount64() + timeout;
+	if (!rdg_send_channel_create(rdg))
+	{
+		WLog_Print(rdg->log, WLOG_ERROR,
+		           "[RDG-REUSE] Failed to write/drain channel create request");
+		goto out;
+	}
+	if (!rdg_wait_for_redirect_channel(rdg, FALSE, rdg->redirectDeadline))
+	{
+		const BOOL timely = rdg_redirect_continue(rdg);
+		WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] Channel response failed: %s",
+		           timely ? "gateway result, disconnect or unexpected packet"
+		                  : "timeout or cancellation");
+		goto out;
+	}
+
+	rdg->frontBio = BIO_new(BIO_s_rdg());
+	if (!rdg->frontBio)
+		goto out;
+	BIO_set_data(rdg->frontBio, rdg);
+	WLog_Print(rdg->log, WLOG_INFO, "[RDG-REUSE] Opened redirected channel");
+	status = TRUE;
+out:
+	rdg->redirectDeadline = 0;
+	if (!status)
+		freerdp_set_last_error_if_not(rdg->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+	return status;
 }
 
 BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg)

@@ -35,6 +35,7 @@ typedef enum
 #include "rdstls.h"
 
 #include "gateway/tsg.h"
+#include "gateway/rdg.h"
 
 #include <winpr/sspi.h>
 #include <winpr/wlog.h>
@@ -100,6 +101,14 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_attach_layer(rdpTransport* transport, rdpTransportLayer* layer);
 
 FREERDP_LOCAL BOOL transport_disconnect(rdpTransport* transport);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL rdpRdg* transport_take_rdg_for_redirect(rdpTransport* transport);
+
+FREERDP_LOCAL void transport_stage_rdg_redirect(rdpTransport* transport, rdpRdg* rdg);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL transport_has_rdg_redirect(const rdpTransport* transport);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_connect_rdp(rdpTransport* transport);
