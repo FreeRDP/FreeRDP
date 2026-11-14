@@ -641,9 +641,16 @@ extern "C"
 	 */
 	UWAC_API UwacReturnCode UwacClipboardOfferDestroy(UwacSeat* seat);
 	UWAC_API UwacReturnCode UwacClipboardOfferCreate(UwacSeat* seat, const char* mime);
+	/* May dispatch the default event queue; call on its owning thread. */
 	UWAC_API UwacReturnCode UwacClipboardOfferAnnounce(UwacSeat* seat, void* context,
 	                                                   UwacDataTransferHandler transfer,
 	                                                   UwacCancelDataTransferHandler cancel);
+	/**
+	 * Start a clipboard receive on the display thread without dispatching events.
+	 * Returns a nonblocking, close-on-exec read fd owned by the caller, or -1.
+	 * The fd may be read on a worker; the display thread must keep dispatching.
+	 */
+	UWAC_API int UwacClipboardDataGetFd(UwacSeat* seat, const char* mime);
 	UWAC_API void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size);
 
 	/**

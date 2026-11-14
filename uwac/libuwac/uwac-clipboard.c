@@ -24,6 +24,7 @@
 #include "uwac-utils.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -185,26 +186,40 @@ UwacReturnCode UwacClipboardOfferCreate(UwacSeat* seat, const char* mime)
 	return UWAC_SUCCESS;
 }
 
+typedef struct
+{
+	bool done;
+	uint32_t serial;
+} UwacSyncResult;
+
 static void callback_done(void* data, struct wl_callback* callback, uint32_t serial)
 {
-	*(uint32_t*)data = serial;
+	UwacSyncResult* result = data;
+	result->serial = serial;
+	result->done = true;
 }
 
 static const struct wl_callback_listener callback_listener = { .done = callback_done };
 
-static uint32_t get_serial(UwacSeat* s)
+static bool get_serial(UwacSeat* s, uint32_t* serial)
 {
-	struct wl_callback* callback = nullptr;
-	uint32_t serial = 0;
-	callback = wl_display_sync(s->display->display);
-	wl_callback_add_listener(callback, &callback_listener, &serial);
-
-	while (serial == 0)
+	UwacSyncResult result = { 0 };
+	struct wl_callback* callback = wl_display_sync(s->display->display);
+	if (!callback)
+		return false;
+	if (wl_callback_add_listener(callback, &callback_listener, &result) < 0)
+		goto fail;
+	while (!result.done)
 	{
-		wl_display_dispatch(s->display->display);
+		if (wl_display_dispatch(s->display->display) < 0)
+			goto fail;
 	}
-
-	return serial;
+	*serial = result.serial;
+	wl_callback_destroy(callback);
+	return true;
+fail:
+	wl_callback_destroy(callback);
+	return false;
 }
 
 UwacReturnCode UwacClipboardOfferAnnounce(UwacSeat* seat, void* context,
@@ -218,10 +233,41 @@ UwacReturnCode UwacClipboardOfferAnnounce(UwacSeat* seat, void* context,
 	seat->transfer_data = transfer;
 	seat->cancel_data = cancel;
 	seat->ignore_announcement = true;
-	wl_data_device_set_selection(seat->data_device, seat->data_source, get_serial(seat));
-	wl_display_roundtrip(seat->display->display);
+	uint32_t serial = 0;
+	bool success = get_serial(seat, &serial);
+	if (success)
+	{
+		wl_data_device_set_selection(seat->data_device, seat->data_source, serial);
+		success = (wl_display_roundtrip(seat->display->display) >= 0);
+	}
 	seat->ignore_announcement = false;
-	return UWAC_SUCCESS;
+	return success ? UWAC_SUCCESS : UWAC_ERROR_INTERNAL;
+}
+
+int UwacClipboardDataGetFd(UwacSeat* seat, const char* mime)
+{
+	int fds[2] = { -1, -1 };
+	if (!seat || !mime || !seat->offer)
+		return -1;
+	if (pipe(fds) < 0)
+		return -1;
+	if ((fcntl(fds[0], F_SETFD, FD_CLOEXEC) < 0) || (fcntl(fds[1], F_SETFD, FD_CLOEXEC) < 0) ||
+	    (fcntl(fds[0], F_SETFL, O_NONBLOCK) < 0))
+		goto fail;
+
+	wl_data_offer_receive(seat->offer, mime, fds[1]);
+	close(fds[1]);
+	fds[1] = -1;
+	/* Do not roundtrip here: that would dispatch callbacks on the caller's
+	 * thread. The caller's normal display loop handles events and flushing. */
+	if ((wl_display_flush(seat->display->display) < 0) && (errno != EAGAIN))
+		goto fail;
+	return fds[0];
+fail:
+	close(fds[0]);
+	if (fds[1] >= 0)
+		close(fds[1]);
+	return -1;
 }
 
 void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
