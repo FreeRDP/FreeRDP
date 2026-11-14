@@ -325,7 +325,9 @@ static const scancode_entry_t map[] = {
 bool sdlInput::keyboard_sync_state()
 {
 	const UINT32 syncFlags = sdl_get_kbd_flags();
-	return freerdp_input_send_synchronize_event(_sdl->context()->input, syncFlags);
+	return sdl::utils::inputSent(
+	    _sdl->getWLog(), freerdp_input_send_synchronize_event(_sdl->context()->input, syncFlags),
+	    "keyboard synchronize");
 }
 
 bool sdlInput::keyboard_focus_in()
@@ -335,7 +337,7 @@ bool sdlInput::keyboard_focus_in()
 
 	auto syncFlags = sdl_get_kbd_flags();
 	if (!freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(uint16_t, syncFlags)))
-		return false;
+		return sdl::utils::inputSent(_sdl->getWLog(), FALSE, "focus in");
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
 	// TODO: fullscreen/remote app
@@ -346,8 +348,11 @@ bool sdlInput::keyboard_focus_in()
 	auto w = SDL_GetMouseFocus();
 	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
 
-	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
-	                                        static_cast<Sint32>(pos.x), static_cast<Sint32>(pos.y));
+	return sdl::utils::inputSent(
+	    _sdl->getWLog(),
+	    freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
+	                                     static_cast<Sint32>(pos.x), static_cast<Sint32>(pos.y)),
+	    "mouse move");
 }
 
 /* This function is called to update the keyboard indicator LED */
@@ -664,12 +669,18 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 		std::array<char, 5> str = {};
 		if ((key >= 0x20) && (key != SDLK_DELETE) && (key <= 0x10FFFF))
 			std::ignore = SDL_UCS4ToUTF8(key, str.data());
-		return freerdp_client_send_key_as_unicode(
-		    _sdl->common(), (ev.type == SDL_EVENT_KEY_DOWN) ? 0 : KBD_FLAGS_RELEASE, str.data(),
-		    scancode, sdl_get_kbd_modmask(mods));
+		return sdl::utils::inputSent(_sdl->getWLog(),
+		                             freerdp_client_send_key_as_unicode(
+		                                 _sdl->common(),
+		                                 (ev.type == SDL_EVENT_KEY_DOWN) ? 0 : KBD_FLAGS_RELEASE,
+		                                 str.data(), scancode, sdl_get_kbd_modmask(mods)),
+		                             "key event");
 	}
-	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input,
-	                                            ev.type == SDL_EVENT_KEY_DOWN, ev.repeat, scancode);
+	return sdl::utils::inputSent(_sdl->getWLog(),
+	                             freerdp_input_send_keyboard_event_ex(_sdl->context()->input,
+	                                                                  ev.type == SDL_EVENT_KEY_DOWN,
+	                                                                  ev.repeat, scancode),
+	                             "key event");
 }
 
 bool sdlInput::keyboard_grab(Uint32 windowID, bool enable)
