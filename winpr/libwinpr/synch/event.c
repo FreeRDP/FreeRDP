@@ -257,10 +257,29 @@ static BOOL EventCloseHandle(HANDLE handle)
 	return EventCloseHandle_(event);
 }
 
-static HANDLE_OPS ops = { EventIsHandled, EventCloseHandle, EventGetFd, nullptr, /* CleanupHandle */
-	                      nullptr,        nullptr,          nullptr,    nullptr, nullptr, nullptr,
-	                      nullptr,        nullptr,          nullptr,    nullptr, nullptr, nullptr,
-	                      nullptr,        nullptr,          nullptr,    nullptr, nullptr };
+/* local patch (field-desk android): implement auto-reset semantics on POSIX.
+ * Upstream leaves CleanupHandle nullptr, so an auto-reset event stays signaled
+ * forever after the first SetEvent -> WaitForMultipleObjects returns spurious
+ * ready on every call, breaking FreeRDP's transport event loop on Android
+ * (connection aborted right after TLS handshake). Consume the signal after a
+ * successful wait, exactly like Win32 auto-reset. */
+static DWORD EventCleanupHandle(HANDLE handle)
+{
+	WINPR_EVENT* event = (WINPR_EVENT*)handle;
+
+	if (!EventIsHandled(handle))
+		return WAIT_FAILED;
+
+	if (!event->bManualReset)
+		winpr_event_reset(&event->impl);
+
+	return WAIT_OBJECT_0;
+}
+
+static HANDLE_OPS ops = { EventIsHandled,   EventCloseHandle, EventGetFd, EventCleanupHandle,
+	                      nullptr,          nullptr,          nullptr,    nullptr, nullptr, nullptr,
+	                      nullptr,          nullptr,          nullptr,    nullptr, nullptr, nullptr,
+	                      nullptr,          nullptr,          nullptr,    nullptr, nullptr };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
                     LPCWSTR lpName)
@@ -300,9 +319,6 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	event->bManualReset = bManualReset;
 	event->common.ops = &ops;
 	WINPR_HANDLE_SET_TYPE_AND_MODE(event, HANDLE_TYPE_EVENT, FD_READ);
-
-	if (!event->bManualReset)
-		WLog_ERR(TAG, "auto-reset events not yet implemented");
 
 	if (!winpr_event_init(&event->impl))
 		goto fail;
