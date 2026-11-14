@@ -1208,7 +1208,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		const size_t inlen = Stream_Length(context->commandData);
 		size_t outlen = 0;
 		res = EVP_PKEY_decrypt(ctx, nullptr, &outlen, Stream_Buffer(context->commandData), inlen);
-		if (res < 0)
+		if (res <= 0)
 		{
 			WLog_ERR(TAG, "Failed to decrypt data");
 			goto decrypt_failed;
@@ -1227,7 +1227,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		res = EVP_PKEY_decrypt(ctx, Stream_Buffer(context->responseData), &outlen,
 		                       Stream_Buffer(context->commandData), inlen);
 
-		if (res < 0)
+		if (res <= 0)
 		{
 			WLog_ERR(TAG, "Failed to decrypt data");
 			goto decrypt_failed;
