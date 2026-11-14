@@ -93,6 +93,7 @@ extern "C"
 		BOOL hevc444; /**< the HEVC stream is 4:4:4, needs a subsystem with SupportsHEVC444 */
 		BOOL yuv444;  /**< set by the subsystem: pYUVData holds a full resolution 4:4:4 picture
 		               *   (Y, Cb, Cr) instead of 4:2:0 */
+		FREERDP_DECODE_RESULT lastDecode;
 	};
 
 	WINPR_ATTR_NODISCARD

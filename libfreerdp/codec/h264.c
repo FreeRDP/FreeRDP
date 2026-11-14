@@ -204,6 +204,24 @@ static BOOL yuv444_planes_decode(H264_CONTEXT* h264, DWORD DstFormat, BYTE* pDst
 	return TRUE;
 }
 
+/* A failure is what remains unless the decode gets to its end */
+static void h264_last_decode_begin(H264_CONTEXT* h264)
+{
+	WINPR_ASSERT(h264);
+	const FREERDP_DECODE_RESULT result = { .status = FREERDP_DECODE_FAILED,
+		                                   .backend =
+		                                       h264->subsystem ? h264->subsystem->name : nullptr };
+	h264->lastDecode = result;
+}
+
+BOOL h264_context_get_last_decode(const H264_CONTEXT* h264, FREERDP_DECODE_RESULT* result)
+{
+	if (!h264 || !result)
+		return FALSE;
+	*result = h264->lastDecode;
+	return TRUE;
+}
+
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
                         DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight,
                         const RECTANGLE_16* regionRects, UINT32 numRegionRects)
@@ -220,7 +238,12 @@ INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, 
 	int status = 0;
 	const BYTE* pYUVData[3];
 
-	if (!h264 || h264->Compressor)
+	if (!h264)
+		return -1001;
+
+	h264_last_decode_begin(h264);
+
+	if (h264->Compressor)
 		return -1001;
 
 	if (!areRectsValid(h264->log, nDstWidth, nDstHeight, regionRects, numRegionRects))
@@ -229,7 +252,10 @@ INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, 
 	status = log_decompress(h264, pSrcData, SrcSize, regionRects, numRegionRects);
 
 	if (status == 0)
+	{
+		h264->lastDecode.status = FREERDP_DECODE_NO_PICTURE;
 		return 1;
+	}
 
 	if (status < 0)
 		return status;
@@ -238,6 +264,7 @@ INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, 
 	{
 		if (!yuv444_planes_decode(h264, DstFormat, pDstData, nDstStep, regionRects, numRegionRects))
 			return -1002;
+		h264->lastDecode.status = FREERDP_DECODE_PICTURE;
 		return 1;
 	}
 
@@ -248,6 +275,7 @@ INT32 h26X_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, 
 	                           pDstData, nDstStep, regionRects, numRegionRects))
 		return -1002;
 
+	h264->lastDecode.status = FREERDP_DECODE_PICTURE;
 	return 1;
 }
 
@@ -764,7 +792,8 @@ WINPR_ATTR_NODISCARD
 static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                                  BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
                                  WINPR_ATTR_UNUSED UINT32 nDstWidth, UINT32 nDstHeight,
-                                 const RECTANGLE_16* rects, UINT32 nrRects, avc444_frame_type type)
+                                 const RECTANGLE_16* rects, UINT32 nrRects, avc444_frame_type type,
+                                 BOOL* picture)
 {
 	const BYTE* pYUVData[3] = WINPR_C_ARRAY_INIT;
 	BYTE* pYUVDstData[3] = WINPR_C_ARRAY_INIT;
@@ -787,9 +816,13 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	pYUVDstData[0] = ppYUVDstData[0];
 	pYUVDstData[1] = ppYUVDstData[1];
 	pYUVDstData[2] = ppYUVDstData[2];
-	return (yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->YUVHeight,
-	                              pYUVDstData, piDstStride, DstFormat, pDstData, nDstStep, rects,
-	                              nrRects));
+	if (!yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->YUVHeight,
+	                           pYUVDstData, piDstStride, DstFormat, pDstData, nDstStep, rects,
+	                           nrRects))
+		return FALSE;
+
+	*picture = TRUE;
+	return TRUE;
 }
 
 #if defined(AVC444_FRAME_STAT)
@@ -815,10 +848,16 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
                         UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight, UINT32 codecId)
 {
 	INT32 status = -1;
+	BOOL picture = FALSE;
 	avc444_frame_type chroma =
 	    (codecId == RDPGFX_CODECID_AVC444) ? AVC444_CHROMAv1 : AVC444_CHROMAv2;
 
-	if (!h264 || !regionRects || !pSrcData || !pDstData || h264->Compressor)
+	if (!h264)
+		return -1001;
+
+	h264_last_decode_begin(h264);
+
+	if (!regionRects || !pSrcData || !pDstData || h264->Compressor)
 		return -1001;
 
 	if (!areRectsValid(h264->log, nDstWidth, nDstHeight, regionRects, numRegionRects))
@@ -832,11 +871,11 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 		         * Chroma420 in stream 2 */
 			if (!avc444_process_rects(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
 			                          nDstWidth, nDstHeight, regionRects, numRegionRects,
-			                          AVC444_LUMA))
+			                          AVC444_LUMA, &picture))
 				status = -1;
 			else if (!avc444_process_rects(h264, pAuxSrcData, AuxSrcSize, pDstData, DstFormat,
 			                               nDstStep, nDstWidth, nDstHeight, auxRegionRects,
-			                               numAuxRegionRect, chroma))
+			                               numAuxRegionRect, chroma, &picture))
 				status = -1;
 			else
 				status = 0;
@@ -845,7 +884,8 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 
 		case 2: /* Chroma420 in stream 1 */
 			if (!avc444_process_rects(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
-			                          nDstWidth, nDstHeight, regionRects, numRegionRects, chroma))
+			                          nDstWidth, nDstHeight, regionRects, numRegionRects, chroma,
+			                          &picture))
 				status = -1;
 			else
 				status = 0;
@@ -855,7 +895,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 		case 1: /* YUV420 in stream 1 */
 			if (!avc444_process_rects(h264, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
 			                          nDstWidth, nDstHeight, regionRects, numRegionRects,
-			                          AVC444_LUMA))
+			                          AVC444_LUMA, &picture))
 				status = -1;
 			else
 				status = 0;
@@ -865,6 +905,9 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 		default: /* WTF? */
 			break;
 	}
+
+	if (status == 0)
+		h264->lastDecode.status = picture ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 
 #if defined(AVC444_FRAME_STAT)
 
