@@ -89,6 +89,8 @@
 
 #include "oauth2.h"
 
+#include "rail_ipc.h"
+
 #include <freerdp/log.h>
 
 WINPR_ATTR_NODISCARD
@@ -198,6 +200,9 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 		cctx->oauth2 = freerdp_oauth2_new();
 		if (!cctx->oauth2)
 			return FALSE;
+		cctx->railIpc = rail_ipc_new();
+		if (!cctx->railIpc)
+			return FALSE;
 	}
 
 	const BOOL rc = IFCALLRESULT(TRUE, pEntryPoints->ClientNew, instance, context);
@@ -218,6 +223,8 @@ static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 	if (requireRdpClientContext(context))
 	{
 		rdpClientContext* cctx = (rdpClientContext*)context;
+
+		rail_ipc_free(cctx->railIpc);
 		freerdp_oauth2_free(cctx->oauth2);
 		cctx->oauth2 = nullptr;
 	}
@@ -1962,6 +1969,30 @@ static void client_encomsp_uninit(rdpClientContext* cctx, EncomspClientContext* 
 }
 #endif
 
+#if defined(CHANNEL_RAIL_CLIENT)
+static void client_rail_init(rdpClientContext* cctx, RailClientContext* rail)
+{
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT(requireRdpClientContext(&cctx->context));
+	if (!cctx || !requireRdpClientContext(&cctx->context))
+		return;
+
+	rail_ipc_attach(cctx->railIpc, rail, cctx);
+}
+
+static void client_rail_uninit(rdpClientContext* cctx, RailClientContext* rail)
+{
+	if (cctx)
+	{
+		WINPR_ASSERT(requireRdpClientContext(&cctx->context));
+		if (requireRdpClientContext(&cctx->context))
+		{
+			rail_ipc_detach(cctx->railIpc, rail, cctx);
+		}
+	}
+}
+#endif
+
 void freerdp_client_OnChannelConnectedEventHandler(void* context,
                                                    const ChannelConnectedEventArgs* e)
 {
@@ -2018,6 +2049,12 @@ void freerdp_client_OnChannelConnectedEventHandler(void* context,
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 		client_encomsp_init(cctx, (EncomspClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_RAIL_CLIENT)
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		client_rail_init(cctx, (RailClientContext*)e->pInterface);
 	}
 #endif
 }
@@ -2077,6 +2114,12 @@ void freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
 		client_encomsp_uninit(cctx, (EncomspClientContext*)e->pInterface);
+	}
+#endif
+#if defined(CHANNEL_RAIL_CLIENT)
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		client_rail_uninit(cctx, (RailClientContext*)e->pInterface);
 	}
 #endif
 }
