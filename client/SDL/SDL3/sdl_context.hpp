@@ -23,12 +23,14 @@
 #include <optional>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <atomic>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client/window_info_service.h>
 
 #include <SDL3/SDL.h>
 
@@ -54,8 +56,8 @@ class SdlContext
 
 	explicit SdlContext(rdpContext* context);
 	SdlContext(const SdlContext& other) = delete;
+	~SdlContext();
 	SdlContext(SdlContext&& other) = delete;
-	~SdlContext() = default;
 
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
@@ -111,6 +113,27 @@ class SdlContext
 	[[nodiscard]] bool shallAbort(bool ignoreDialogs = false);
 
 	[[nodiscard]] bool createWindows();
+
+	/** main thread: recomputes what rdpContext::windowInfoService tells about the session
+	 *  window after it was created, resized or rescaled, and tells the subscriber */
+	void updateWindowInfo();
+	/** any thread: a RemoteApp window (`remoteId`) was created, moved, resized or deleted; its
+	 *  window info is refreshed on the main thread (flushWindowInfo) */
+	void railWindowInfoChanged(uint64_t remoteId);
+	/** main thread: refreshes the RemoteApp windows' info railWindowInfoChanged() queued */
+	void flushWindowInfo();
+
+	/** main thread: draws the mapped renderers (rdpContext::bitmapRenderService) where the
+	 *  Geometry Tracking channel puts them */
+	[[nodiscard]] bool presentRenderers();
+	[[nodiscard]] bool hasRenderers();
+
+	/* rdpContext::bitmapRenderService's renderers (sdl_render_service.cpp), any thread */
+	[[nodiscard]] Uint64 rendererAdd(UINT64 mappingId, IWTSBitmapRendererCallback* callback);
+	[[nodiscard]] bool rendererFrame(Uint64 id, const BYTE* data, UINT32 width, UINT32 height,
+	                                 LONG stride);
+	void rendererRemove(Uint64 id);
+
 	[[nodiscard]] bool updateWindowList();
 	[[nodiscard]] bool updateWindow(SDL_WindowID id);
 
@@ -260,6 +283,33 @@ class SdlContext
 
 	std::map<SDL_DisplayID, rdpMonitor> _displays;
 	std::map<SDL_WindowID, SdlWindow> _windows;
+
+	/* the mapped renderers: what they were last given, under _rendererLock */
+	struct MappedRenderer
+	{
+		UINT64 mappingId = 0; /* MS-RDPEGT */
+		std::vector<Uint8> pixels;
+		int pitch = 0;
+		int width = 0;
+		int height = 0;
+		bool dirty = false;
+		IWTSBitmapRendererCallback* callback = nullptr; /* a reference */
+		SDL_Rect target{};                              /* last OnTargetSizeChanged */
+	};
+	void renderersChanged();
+	std::mutex _rendererLock;
+	std::map<Uint64, MappedRenderer> _renderers;
+	Uint64 _nextRenderer = 1;
+	std::atomic<bool> _renderersPending = false;
+	/* rdpContext::windowInfoService: answered from these snapshots (channel threads), which
+	 * the main thread refreshes. _windowInfoLock is a leaf lock. */
+	static HRESULT windowInfoGet(void* custom, UINT64 remoteHwnd, WTS_WINDOW_INFO* info);
+	static UINT32 windowInfoSessionType(void* custom);
+	std::mutex _windowInfoLock;
+	WTS_WINDOW_INFO _desktopWindowInfo{};
+	std::map<uint64_t, WTS_WINDOW_INFO> _railWindowInfo;
+	std::set<uint64_t> _railWindowInfoPending;
+
 	std::map<SDL_DisplayID, std::pair<SDL_Rect, SDL_Rect>> _offsets;
 
 	uint32_t _windowWidth = 0;

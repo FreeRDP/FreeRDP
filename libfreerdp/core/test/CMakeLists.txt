@@ -41,9 +41,18 @@ else()
   message("Skipping connection tests, requires BUILD_TESTING_INTERNAL, WITH_SAMPLE and WITH_SERVER set!")
 endif()
 
+# the interfaces of freerdp/wts_services.h between C and C++, when there is a C++ compiler
+include(CheckLanguage)
+check_language(CXX)
+if(CMAKE_CXX_COMPILER)
+  enable_language(CXX)
+  list(APPEND TESTS TestWtsServicesC.c)
+  set(CXX_SRCS TestWtsServicesCxx.cpp TestWtsServicesCxx.h)
+endif()
+
 create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 
-add_executable(${MODULE_NAME} ${SRCS})
+add_executable(${MODULE_NAME} ${SRCS} ${CXX_SRCS})
 
 if(WITH_RESOURCE_VERSIONING)
   target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RESOURCE_VERSIONING)

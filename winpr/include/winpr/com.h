@@ -52,13 +52,22 @@
  *	};
  *
  *  This is the layout of a MIDL vtable (the three IUnknown entries, then the others), and
- *  &vtbl->iunknown is a wIUnknownVtbl without any cast. The IUnknown entries take a wIUnknown*;
- *  the WINPR_COM_QUERY_INTERFACE / ADDREF / RELEASE macros call them on any interface.
+ *  &vtbl->iunknown is a wIUnknownVtbl without any cast. The IUnknown entries take a wIUnknown*.
  *
- *  In C++, wIUnknown is also given as a class with pure virtual methods, which has the same
- *  layout (define WINPR_COM_CINTERFACE to get the C form in C++ too). Such C++ interfaces must not
- *  have a virtual destructor nor overloaded methods, and only use single inheritance, or the
- *  vtable layout differs between compilers.
+ *  In C++, as in MIDL generated headers, interfaces are classes with pure virtual methods that
+ *  derive from the C++ form of wIUnknown, which gives the same layout (define WINPR_COM_CINTERFACE
+ *  to get the C form in C++ too):
+ *
+ *	struct IFoo : public wIUnknown
+ *	{
+ *		virtual UINT32 WINPR_COM_CALL Foo() = 0;
+ *		WINPR_COM_CXX_INTERFACE(IFoo)
+ *	};
+ *
+ *  Such C++ interfaces must not have a virtual destructor nor overloaded methods, and only use
+ *  single inheritance, or the vtable layout differs between compilers.
+ *
+ *  The WINPR_COM_QUERY_INTERFACE / ADDREF / RELEASE macros work on any interface in either form.
  *
  *  IIDs are passed as `const IID*` (winpr's POSIX REFIID is not const; on Windows it is the same
  *  pointer).
@@ -72,6 +81,33 @@
 #else
 #define WINPR_COM_CALL
 #endif
+
+/** @brief defined when interfaces are declared in C++ form: C++ without WINPR_COM_CINTERFACE */
+#if defined(__cplusplus) && !defined(WINPR_COM_CINTERFACE)
+#define WINPR_COM_CXX
+#endif
+
+/** @brief a pointer cast between unrelated COM types (an interface, the object implementing it,
+ *  void**), reinterpret_cast in C++ */
+#ifdef __cplusplus
+#define WINPR_COM_CAST(t, val) reinterpret_cast<t>(val)
+#else
+#define WINPR_COM_CAST(t, val) ((t)(val))
+#endif
+
+/** @brief ends the declaration of a C++ interface `name`: only an implementation creates it and
+ *  Release() frees it (protected constructor and destructor), it is not copied. The destructor is
+ *  not virtual, which would add vtable entries. */
+#define WINPR_COM_CXX_INTERFACE(name)      \
+  protected:                               \
+	name() = default;                      \
+	~name() = default;                     \
+                                           \
+  public:                                  \
+	name(const name&) = delete;            \
+	name(name&&) = delete;                 \
+	name& operator=(const name&) = delete; \
+	name& operator=(name&&) = delete;
 
 #ifdef __cplusplus
 extern "C"
@@ -93,7 +129,7 @@ extern "C"
 }
 #endif
 
-#if defined(__cplusplus) && !defined(WINPR_COM_CINTERFACE)
+#ifdef WINPR_COM_CXX
 /** @brief IUnknown, C++ form */
 struct wIUnknown
 {
@@ -101,11 +137,11 @@ struct wIUnknown
 	virtual ULONG WINPR_COM_CALL AddRef() = 0;
 	virtual ULONG WINPR_COM_CALL Release() = 0;
 
-  protected:
-	/* not virtual, which would add vtable entries: objects are freed by Release() */
-	~wIUnknown() = default;
+	WINPR_COM_CXX_INTERFACE(wIUnknown)
 };
-#else
+#endif
+
+#ifndef WINPR_COM_CXX
 /** @brief IUnknown, C form */
 struct wIUnknown
 {
@@ -141,18 +177,27 @@ extern "C"
 	(UINT32)(g)->Data1, (UINT16)(g)->Data2, (UINT16)(g)->Data3, (g)->Data4[0], (g)->Data4[1], \
 	    (g)->Data4[2], (g)->Data4[3], (g)->Data4[4], (g)->Data4[5], (g)->Data4[6], (g)->Data4[7]
 
-/** @brief the wIUnknownVtbl of `obj`, an interface in C form (wIUnknown itself or one whose vtable
- *  starts with `iunknown`) */
-#define WINPR_COM_IUNKNOWN_VTBL(obj) ((const wIUnknownVtbl*)(obj)->lpVtbl)
-
-/** @brief IUnknown calls on an interface in C form. In C++, the C++ form of wIUnknown is called
- *  directly: unknown->Release() */
+/** @brief IUnknown calls on any interface: in C form through its vtable, in C++ form directly.
+ *  In C form, WINPR_COM_IUNKNOWN_VTBL(obj) is the wIUnknownVtbl of `obj` (wIUnknown itself or an
+ *  interface whose vtable starts with `iunknown`). */
+#ifdef WINPR_COM_CXX
 #define WINPR_COM_QUERY_INTERFACE(obj, iid, ppv) \
-	(WINPR_COM_IUNKNOWN_VTBL(obj)->QueryInterface((wIUnknown*)(obj), (iid), (void**)(ppv)))
-#define WINPR_COM_ADDREF(obj) (WINPR_COM_IUNKNOWN_VTBL(obj)->AddRef((wIUnknown*)(obj)))
-#define WINPR_COM_RELEASE(obj) (WINPR_COM_IUNKNOWN_VTBL(obj)->Release((wIUnknown*)(obj)))
+	((obj)->QueryInterface((iid), WINPR_COM_CAST(void**, ppv)))
+#define WINPR_COM_ADDREF(obj) ((obj)->AddRef())
+#define WINPR_COM_RELEASE(obj) ((obj)->Release())
+#else
+#define WINPR_COM_IUNKNOWN_VTBL(obj) WINPR_COM_CAST(const wIUnknownVtbl*, (obj)->lpVtbl)
 
-	/* ---- implementing COM objects in C ----
+#define WINPR_COM_QUERY_INTERFACE(obj, iid, ppv)                                          \
+	(WINPR_COM_IUNKNOWN_VTBL(obj)->QueryInterface(WINPR_COM_CAST(wIUnknown*, obj), (iid), \
+	                                              WINPR_COM_CAST(void**, ppv)))
+#define WINPR_COM_ADDREF(obj) \
+	(WINPR_COM_IUNKNOWN_VTBL(obj)->AddRef(WINPR_COM_CAST(wIUnknown*, obj)))
+#define WINPR_COM_RELEASE(obj) \
+	(WINPR_COM_IUNKNOWN_VTBL(obj)->Release(WINPR_COM_CAST(wIUnknown*, obj)))
+#endif
+
+	/* ---- implementing COM objects in C (or in C++ with WINPR_COM_CINTERFACE) ----
 	 *
 	 * An object starts with a wComBase, whose first member is lpVtbl: a pointer to the object is
 	 * the pointer to its first interface, and methods cast This back to the object type.
@@ -216,24 +261,24 @@ extern "C"
  * a constant initializer (the address of a function imported from a DLL is not one for MSVC). */
 
 /** @brief prefix_AddRef and prefix_Release, for an object starting with a wComBase */
-#define WINPR_COM_REFCOUNT_THUNKS(prefix)                         \
-	static ULONG WINPR_COM_CALL prefix##_AddRef(wIUnknown* This)  \
-	{                                                             \
-		return winpr_com_base_add_ref((wComBase*)This);           \
-	}                                                             \
-	static ULONG WINPR_COM_CALL prefix##_Release(wIUnknown* This) \
-	{                                                             \
-		return winpr_com_base_release((wComBase*)This);           \
+#define WINPR_COM_REFCOUNT_THUNKS(prefix)                               \
+	static ULONG WINPR_COM_CALL prefix##_AddRef(wIUnknown* This)        \
+	{                                                                   \
+		return winpr_com_base_add_ref(WINPR_COM_CAST(wComBase*, This)); \
+	}                                                                   \
+	static ULONG WINPR_COM_CALL prefix##_Release(wIUnknown* This)       \
+	{                                                                   \
+		return winpr_com_base_release(WINPR_COM_CAST(wComBase*, This)); \
 	}
 
 /** @brief WINPR_COM_REFCOUNT_THUNKS plus prefix_QueryInterface answering IUnknown and `iid`
  *  (a `const IID*`, nullptr for IUnknown only) */
-#define WINPR_COM_IUNKNOWN_THUNKS(prefix, iid)                                              \
-	static HRESULT WINPR_COM_CALL prefix##_QueryInterface(wIUnknown* This, const IID* riid, \
-	                                                      void** ppvObject)                 \
-	{                                                                                       \
-		return winpr_com_base_query((wComBase*)This, (iid), riid, ppvObject);               \
-	}                                                                                       \
+#define WINPR_COM_IUNKNOWN_THUNKS(prefix, iid)                                                \
+	static HRESULT WINPR_COM_CALL prefix##_QueryInterface(wIUnknown* This, const IID* riid,   \
+	                                                      void** ppvObject)                   \
+	{                                                                                         \
+		return winpr_com_base_query(WINPR_COM_CAST(wComBase*, This), (iid), riid, ppvObject); \
+	}                                                                                         \
 	WINPR_COM_REFCOUNT_THUNKS(prefix)
 
 /** @brief the initializer of a wIUnknownVtbl from prefix_QueryInterface (the thunk above or the

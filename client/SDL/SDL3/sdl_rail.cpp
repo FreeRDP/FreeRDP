@@ -63,6 +63,19 @@ SdlRail* SdlRail::get(rdpContext* context)
 	return &sdl->getRailChannelContext();
 }
 
+bool SdlRail::windowGeometry(uint64_t id, SDL_Window*& window, int& width, int& height)
+{
+	std::scoped_lock lock(_windowsLock);
+	auto w = getWindow(id);
+	if (!w || w->isDeleted() || !w->window())
+		return false;
+	const SDL_Rect r = w->windowRect();
+	window = w->window();
+	width = r.w;
+	height = r.h;
+	return true;
+}
+
 SdlRailWindow* SdlRail::getWindow(uint64_t id)
 {
 	auto it = _windows.find(id);
@@ -615,7 +628,10 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			parent = owner->window();
 			parentRect = owner->outerRect(); /* the SDL window's on-screen geometry */
 		}
+		const bool realized = win.window() != nullptr;
 		win.paint(primary, fallbackFormat, damage, parent, parentRect);
+		if (!realized && win.window())
+			_context->railWindowInfoChanged(win.id());
 		/* Adopt WM-refused geometry and update server. */
 		SDL_Rect refusedOuter{};
 		if (win.takeWmOverride(refusedOuter))
@@ -630,6 +646,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			if (!SDL_RectsEqual(&rect, &cur))
 				sendClientWindowMove(&win, rect);
 			win.adoptLocalGeometry(rect);
+			_context->railWindowInfoChanged(win.id());
 		}
 		/* Resend a size the server left unanswered. */
 		SDL_Rect unconfirmed{};
@@ -735,7 +752,10 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			parent = chosen->window();
 			parentRect = chosen->outerRect(); /* the SDL window's on-screen geometry */
 		}
+		const bool realized = popup.window() != nullptr;
 		popup.paint(primary, fallbackFormat, damage, parent, parentRect);
+		if (!realized && popup.window())
+			_context->railWindowInfoChanged(popup.id());
 	}
 
 	/* All live windows now have real X11 handles: realize the server's z-order. */
@@ -1363,6 +1383,7 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 		appWindow->setLocalMoveActive(false); /* geometry is WM/server-owned while maximized */
 	else
 		appWindow->adoptLocalGeometry(rect);
+	_context->railWindowInfoChanged(appWindow->id());
 	/* Repaint now: the last presented frame may still be the resize placeholder. */
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
@@ -1668,6 +1689,7 @@ void SdlRail::completeLocalMoveIfPending()
 		const SDL_Rect rect = appWindow->serverRect({ x, y, w, h });
 		const bool restoredMidDrag = appWindow->localMoveSizeChanged();
 		appWindow->adoptLocalGeometry(rect);
+		_context->railWindowInfoChanged(appWindow->id());
 		/* Drag complete: apply pending server resize delayed during WM grab. */
 		if (restoredMidDrag)
 			appWindow->markGeometryDirty();
@@ -1883,6 +1905,7 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		WLog_VRB(TAG, "server geom id=0x%08" PRIx32 " rect=%d,%d %dx%d", orderInfo->windowId, r.x,
 		         r.y, r.w, r.h);
 		appWindow->updateWindowRect(r);
+		rail->_context->railWindowInfoChanged(orderInfo->windowId);
 	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 		appWindow->setOwner(windowState->ownerWindowId);
@@ -2030,6 +2053,7 @@ BOOL SdlRail::window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	{
 		WLog_DBG(TAG, "window delete id=0x%08" PRIx32, orderInfo->windowId);
 		appWindow->markDeleted();
+		rail->_context->railWindowInfoChanged(orderInfo->windowId);
 	}
 
 	/* Clear cached references to deleted window id. */

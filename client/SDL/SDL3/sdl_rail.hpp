@@ -135,6 +135,10 @@ class SdlRail
 	/* X11: end a WM drag once the button is up. */
 	void pollDragRelease();
 
+	/** main thread: the SDL window and client size (server coordinates, 1:1) of the
+	 *  RemoteApp window `id`; false if it doesn't exist or isn't realized yet */
+	[[nodiscard]] bool windowGeometry(uint64_t id, SDL_Window*& window, int& width, int& height);
+
   private:
 	void queueScreenSaverUpdate();
 	void updateScreenSaver(); /* main thread */

@@ -31,10 +31,10 @@
  *  included anywhere: it also defines IWTSVirtualChannelManager & co, which clash with
  *  freerdp/dvc.h.
  *
- *  The interfaces are only declared in C form (see winpr/com.h), in C and in C++: their vtables
- *  start with a wIUnknownVtbl `iunknown`, called with the WINPR_COM_* macros, and the other
- *  methods are called with ->lpVtbl->Method(This, ...). The objects GetService
- *  hands out are wIUnknown*: in C++ that is the C++ form, called directly.
+ *  As in MIDL generated headers, the interfaces have a C form and a C++ form (see winpr/com.h),
+ *  with the same layout: an object implemented in one is used from the other. In C, methods are
+ *  called with ->lpVtbl->Method(This, ...); in C++, with ->Method(...). The IUnknown methods are
+ *  called with the WINPR_COM_* macros in both.
  *
  *  Layouts are x64 ones. IWTSWindowInfoService is undocumented and only exists in rdclientax.dll
  *  (Windows App / AVD client), not in mstscax.dll.
@@ -82,6 +82,7 @@ extern "C"
 	WINPR_COM_DEFINE_GUID(IID_IWTSPluginServiceProvider, 0xd3e07363, 0x087c, 0x476c, 0x86, 0xa7,
 	                      0xdb, 0xb1, 0x5f, 0x46, 0xdd, 0xb4);
 
+#ifndef WINPR_COM_CXX
 	typedef struct IWTSPluginServiceProviderVtbl
 	{
 		wIUnknownVtbl iunknown;
@@ -97,6 +98,16 @@ extern "C"
 	{
 		const IWTSPluginServiceProviderVtbl* lpVtbl;
 	};
+#endif
+
+#ifdef WINPR_COM_CXX
+	struct IWTSPluginServiceProvider : public wIUnknown
+	{
+		virtual HRESULT WINPR_COM_CALL GetService(GUID ServiceId, wIUnknown** ppunkObject) = 0;
+
+		WINPR_COM_CXX_INTERFACE(IWTSPluginServiceProvider)
+	};
+#endif
 
 	/* ======================= bitmap render service ======================= */
 
@@ -126,6 +137,7 @@ extern "C"
 		LONG bottom;
 	} WTS_RECT;
 
+#ifndef WINPR_COM_CXX
 	typedef struct IWTSBitmapRendererVtbl
 	{
 		wIUnknownVtbl iunknown;
@@ -143,7 +155,23 @@ extern "C"
 	{
 		const IWTSBitmapRendererVtbl* lpVtbl;
 	};
+#endif
 
+#ifdef WINPR_COM_CXX
+	struct IWTSBitmapRenderer : public wIUnknown
+	{
+		virtual HRESULT WINPR_COM_CALL Render(GUID imageFormat, DWORD dwWidth, DWORD dwHeight,
+		                                      LONG cbStride, DWORD cbImageBuffer,
+		                                      BYTE* pImageBuffer) = 0;
+		virtual HRESULT WINPR_COM_CALL
+		GetRendererStatistics(BITMAP_RENDERER_STATISTICS* pStatistics) = 0;
+		virtual HRESULT WINPR_COM_CALL RemoveMapping() = 0;
+
+		WINPR_COM_CXX_INTERFACE(IWTSBitmapRenderer)
+	};
+#endif
+
+#ifndef WINPR_COM_CXX
 	typedef struct IWTSBitmapRendererCallbackVtbl
 	{
 		wIUnknownVtbl iunknown;
@@ -157,7 +185,18 @@ extern "C"
 	{
 		const IWTSBitmapRendererCallbackVtbl* lpVtbl;
 	};
+#endif
 
+#ifdef WINPR_COM_CXX
+	struct IWTSBitmapRendererCallback : public wIUnknown
+	{
+		virtual HRESULT WINPR_COM_CALL OnTargetSizeChanged(WTS_RECT rcNewSize) = 0;
+
+		WINPR_COM_CXX_INTERFACE(IWTSBitmapRendererCallback)
+	};
+#endif
+
+#ifndef WINPR_COM_CXX
 	typedef struct IWTSBitmapRenderServiceVtbl
 	{
 		wIUnknownVtbl iunknown;
@@ -173,6 +212,18 @@ extern "C"
 	{
 		const IWTSBitmapRenderServiceVtbl* lpVtbl;
 	};
+#endif
+
+#ifdef WINPR_COM_CXX
+	struct IWTSBitmapRenderService : public wIUnknown
+	{
+		virtual HRESULT WINPR_COM_CALL
+		GetMappedRenderer(UINT64 mappingId, IWTSBitmapRendererCallback* pMappedRendererCallback,
+		                  IWTSBitmapRenderer** ppMappedRenderer) = 0;
+
+		WINPR_COM_CXX_INTERFACE(IWTSBitmapRenderService)
+	};
+#endif
 
 	/* ======================= window info service (rdclientax.dll only) =======================
 	 *
@@ -217,6 +268,7 @@ extern "C"
 		float scale;
 	} WTS_WINDOW_INFO;
 
+#ifndef WINPR_COM_CXX
 	typedef struct IWTSWindowChangedCallbackVtbl
 	{
 		wIUnknownVtbl iunknown;
@@ -230,7 +282,18 @@ extern "C"
 	{
 		const IWTSWindowChangedCallbackVtbl* lpVtbl;
 	};
+#endif
 
+#ifdef WINPR_COM_CXX
+	struct IWTSWindowChangedCallback : public wIUnknown
+	{
+		virtual HRESULT WINPR_COM_CALL OnWindowChanged(const WTS_WINDOW_INFO* windowInfo) = 0;
+
+		WINPR_COM_CXX_INTERFACE(IWTSWindowChangedCallback)
+	};
+#endif
+
+#ifndef WINPR_COM_CXX
 	typedef struct IWTSWindowInfoServiceVtbl
 	{
 		wIUnknownVtbl iunknown;
@@ -253,6 +316,22 @@ extern "C"
 	{
 		const IWTSWindowInfoServiceVtbl* lpVtbl;
 	};
+#endif
+
+#ifdef WINPR_COM_CXX
+	struct IWTSWindowInfoService : public wIUnknown
+	{
+		virtual HRESULT WINPR_COM_CALL GetWindowInfo(UINT64 remoteHwnd,
+		                                             WTS_WINDOW_INFO* windowInfo) = 0;
+		virtual HRESULT WINPR_COM_CALL GetProcessId(DWORD* processId) = 0;
+		virtual HRESULT WINPR_COM_CALL GetRdpSessionType(UINT32* sessionType) = 0;
+		virtual HRESULT WINPR_COM_CALL
+		SubscribeWindowChanged(UINT64 remoteHwnd, IWTSWindowChangedCallback* callback) = 0;
+		virtual HRESULT WINPR_COM_CALL UnsubscribeWindowChanged() = 0;
+
+		WINPR_COM_CXX_INTERFACE(IWTSWindowInfoService)
+	};
+#endif
 
 #ifdef __cplusplus
 }

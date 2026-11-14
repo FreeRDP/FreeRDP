@@ -73,12 +73,14 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
-    : _window(other._window), _renderer(other._renderer), _renderTarget(other._renderTarget),
+    : _window(other._window), _videoOverlays(std::move(other._videoOverlays)),
+      _renderer(other._renderer), _renderTarget(other._renderTarget),
       _gdiTexture(other._gdiTexture), _gdiTextureW(other._gdiTextureW),
       _gdiTextureH(other._gdiTextureH), _initialW(other._initialW), _initialH(other._initialH),
       _displayID(other._displayID), _offset_x(other._offset_x), _offset_y(other._offset_y),
       _monitor(other._monitor)
 {
+	other._videoOverlays.clear();
 	other._window = nullptr;
 	other._renderer = nullptr;
 	other._renderTarget = nullptr;
@@ -87,6 +89,8 @@ SdlWindow::SdlWindow(SdlWindow&& other) noexcept
 
 SdlWindow::~SdlWindow()
 {
+	for (auto& o : _videoOverlays)
+		SDL_DestroyTexture(o.second.texture);
 	if (_gdiTexture)
 		SDL_DestroyTexture(_gdiTexture);
 	if (_renderTarget)
@@ -659,8 +663,85 @@ void SdlWindow::updateSurface()
 		return;
 	if (!SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr))
 		return;
+	drawVideoOverlays();
 	if (!SDL_RenderPresent(_renderer))
 		return;
+}
+
+void SdlWindow::drawVideoOverlays()
+{
+	for (const auto& entry : _videoOverlays)
+	{
+		const auto& o = entry.second;
+		if (!o.visible || !o.texture || (o.dst.w <= 0) || (o.dst.h <= 0))
+			continue;
+		if (o.clip.empty())
+		{
+			std::ignore = SDL_RenderTexture(_renderer, o.texture, nullptr, &o.dst);
+			continue;
+		}
+		/* each visible part, with the part of the texture it shows */
+		const float sx = static_cast<float>(o.w) / o.dst.w;
+		const float sy = static_cast<float>(o.h) / o.dst.h;
+		for (const auto& c : o.clip)
+		{
+			SDL_FRect part{};
+			if (!SDL_GetRectIntersectionFloat(&c, &o.dst, &part))
+				continue;
+			const SDL_FRect src{ (part.x - o.dst.x) * sx, (part.y - o.dst.y) * sy, part.w * sx,
+				                 part.h * sy };
+			std::ignore = SDL_RenderTexture(_renderer, o.texture, &src, &part);
+		}
+	}
+}
+
+bool SdlWindow::setVideoOverlay(Uint64 id, const void* pixels, int pitch, int w, int h,
+                                const SDL_FRect& dst, const std::vector<SDL_FRect>& clip,
+                                bool visible)
+{
+	if (!_renderer || (w <= 0) || (h <= 0))
+		return false;
+	auto& o = _videoOverlays[id];
+	if (!o.texture || (o.w != w) || (o.h != h))
+	{
+		if (o.texture)
+			SDL_DestroyTexture(o.texture);
+		o.texture =
+		    SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, w, h);
+		if (!o.texture)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
+			_videoOverlays.erase(id);
+			return false;
+		}
+		/* the video is opaque: its alpha is not for us to blend */
+		std::ignore = SDL_SetTextureBlendMode(o.texture, SDL_BLENDMODE_NONE);
+		o.w = w;
+		o.h = h;
+	}
+	if (pixels && !SDL_UpdateTexture(o.texture, nullptr, pixels, pitch))
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_UpdateTexture: %s", SDL_GetError());
+		return false;
+	}
+	o.dst = dst;
+	o.clip = clip;
+	o.visible = visible;
+	return true;
+}
+
+void SdlWindow::pruneVideoOverlays(const std::function<bool(Uint64)>& keep)
+{
+	for (auto it = _videoOverlays.begin(); it != _videoOverlays.end();)
+	{
+		if (keep(it->first))
+			++it;
+		else
+		{
+			SDL_DestroyTexture(it->second.texture);
+			it = _videoOverlays.erase(it);
+		}
+	}
 }
 
 bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
@@ -743,6 +824,7 @@ bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool conte
 	if (!SDL_SetRenderTarget(_renderer, nullptr))
 		return false;
 	std::ignore = SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr);
+	drawVideoOverlays();
 	std::ignore = SDL_RenderPresent(_renderer);
 	return true;
 }
