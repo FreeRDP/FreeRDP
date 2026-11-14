@@ -457,6 +457,7 @@ typedef struct
 	UINT32 initialSequence;
 	UINT16 version;
 	BYTE cookie[32];
+	BYTE raw[SYN_LENGTH]; /* the datagram as it came */
 } SynInfo;
 
 static void ctx_free(TestCtx* ctx)
@@ -505,6 +506,8 @@ static BOOL ctx_start(TestCtx* ctx, BOOL offerV3, SynInfo* syn)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 		return FALSE;
 	syn->length = (size_t)rc;
+	if (syn->length <= sizeof(syn->raw))
+		memcpy(syn->raw, buffer, syn->length);
 	Stream_Seek(s, 6); /* snSourceAck, uReceiveWindowSize */
 	syn->flags = Stream_Get_UINT16_BE(s);
 	syn->initialSequence = Stream_Get_UINT32_BE(s);
@@ -693,6 +696,36 @@ fail:
 	return rc;
 }
 
+/* An AckOfAcks with nothing else is how a server that has heard nothing for 8 seconds asks
+ * whether the client is still there. Each one is answered with an ACK at once: the next
+ * keepalive could be 4 seconds away, and the server's timeout closer than that. */
+static BOOL ack_of_acks_on_its_own_is_answered(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, 100, 1, "a"));
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 30));
+	const V3Packet* ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 100));
+
+	for (size_t x = 0; x < 2; x++)
+	{
+		/* the base the client is at: nothing moves, and it still answers */
+		CHECK(send_aoa(&ctx, 101));
+		CHECK(pump(&ctx));
+		CHECK(drain(&ctx, 30));
+		ack = last_ack(&ctx);
+		CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == 100));
+	}
+	CHECK(delivered_is(&ctx, "a"));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 static BOOL send_data_aoa(TestCtx* ctx, UINT16 dataSeq, UINT16 channelSeq, const char* text,
                           UINT16 aoa)
 {
@@ -825,6 +858,977 @@ static BOOL retransmitted_packets_are_acknowledged_again(void)
 	const V3Packet* ack = last_ack(&ctx);
 	CHECK(ack && (ack->flags & V3_ACKVEC) && (ack->vecBase == 100) && (ack->vecLength == 1) &&
 	      (ack->vec[0] == (0x80 | 0x40 | 1)));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
+typedef struct
+{
+	BOOL hasAck;
+	UINT16 ack;
+	BOOL hasVector;
+	UINT16 vectorBase;
+	UINT16 lastChannel;
+	UINT16 watchedChannel;
+	UINT32 watchedSends;
+	size_t delivered; /* Number of data chunks passed to the receive callback */
+	size_t sends;     /* Total number of datagrams sent */
+	size_t dataSends; /* Number of datagrams carrying data */
+	size_t aoaSends;  /* Count of data datagrams that also carry AckOfAcks */
+	size_t baseSends; /* Datagrams with an AckOfAcks and nothing else */
+	UINT16 base;      /* The AckOfAcks of the last of those */
+} ServerSent;
+
+/* Server test clock in nanoseconds; advanced manually instead of sleeping. */
+static UINT64 g_serverTime = 1000000000000ULL;
+
+static UINT64 server_clock(WINPR_ATTR_UNUSED void* custom)
+{
+	return g_serverTime;
+}
+
+static BOOL server_on_receive(void* custom, WINPR_ATTR_UNUSED const BYTE* data,
+                              WINPR_ATTR_UNUSED size_t length)
+{
+	ServerSent* sent = custom;
+	sent->delivered++;
+	return TRUE;
+}
+
+static BOOL server_on_send(void* custom, const BYTE* data, size_t length)
+{
+	ServerSent* sent = custom;
+	sent->sends++;
+	V3Packet packet = WINPR_C_ARRAY_INIT;
+	if (!parse_v3(data, length, &packet))
+		return TRUE;
+	if (packet.flags & V3_ACK)
+	{
+		sent->hasAck = TRUE;
+		sent->ack = packet.ack;
+	}
+	if (packet.flags & V3_ACKVEC)
+	{
+		sent->hasVector = TRUE;
+		sent->vectorBase = packet.vecBase;
+	}
+	if (packet.hasAoA && !packet.hasData && !(packet.flags & (V3_ACK | V3_ACKVEC)))
+	{
+		sent->baseSends++;
+		sent->base = packet.aoa;
+	}
+	if (packet.hasData)
+	{
+		sent->lastChannel = packet.channelSeq;
+		if (packet.channelSeq == sent->watchedChannel)
+			sent->watchedSends++;
+		sent->dataSends++;
+		if (packet.hasAoA)
+			sent->aoaSends++;
+	}
+	return TRUE;
+}
+
+static BOOL server_receive_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
+{
+	BYTE wire[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* Skip the prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_DATA | (15u << 12)));
+	Stream_Write_UINT16(s, dataSeq);
+	Stream_Write_UINT16(s, channelSeq);
+	Stream_Write(s, "abcd", 4);
+	const size_t length = Stream_GetPosition(s);
+	wire[0] = (BYTE)((7 << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	return rdpudp_receive(udp, wire, length);
+}
+
+/* Data packet containing an AckOfAcks (AOA). */
+static BOOL server_receive_data_with_aoa(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq, UINT16 aoa)
+{
+	BYTE wire[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* Skip the prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_DATA | V3_AOA | (15u << 12)));
+	Stream_Write_UINT16(s, aoa); /* Write the AckOfAcks field */
+	Stream_Write_UINT16(s, dataSeq);
+	Stream_Write_UINT16(s, channelSeq);
+	Stream_Write(s, "abcd", 4);
+	const size_t length = Stream_GetPosition(s);
+	wire[0] = (BYTE)((7 << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	return rdpudp_receive(udp, wire, length);
+}
+
+/* Data packet where AckOfAcks equals its own sequence number; the client will not resend
+ * anything below it. */
+static BOOL server_receive_data_aoa(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq)
+{
+	return server_receive_data_with_aoa(udp, dataSeq, channelSeq, dataSeq);
+}
+
+/* Advance clock in 5ms steps, running timers after each step. */
+static BOOL server_run_timers(rdpUdp* udp, UINT32 waitMs)
+{
+	for (UINT32 x = 0; x < waitMs; x += 5)
+	{
+		g_serverTime += 5ULL * 1000000ULL;
+		if (!rdpudp_check(udp))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/* Version 3 SYN padded to MTU. */
+static void server_make_syn(BYTE syn[SYN_LENGTH])
+{
+	memset(syn, 0, SYN_LENGTH);
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, syn, SYN_LENGTH);
+	Stream_Write_UINT32_BE(s, 0xFFFFFFFF);      /* Source acknowledgement number */
+	Stream_Write_UINT16_BE(s, 64);              /* Receive window size */
+	Stream_Write_UINT16_BE(s, 0x0001 | 0x1000); /* Set RDPUDP_FLAG_SYN and RDPUDP_FLAG_SYNEX */
+	Stream_Write_UINT32_BE(s, 1000);            /* Initial sequence number */
+	Stream_Write_UINT16_BE(s, SYN_LENGTH);      /* Upstream Maximum Transmission Unit (MTU) */
+	Stream_Write_UINT16_BE(s, SYN_LENGTH);      /* Downstream MTU */
+	Stream_Write_UINT16_BE(s, 0x0001);          /* Set the RDPUDP_VERSION_INFO_VALID flag */
+	Stream_Write_UINT16_BE(s, RDPUDP_PROTOCOL_VERSION_3);
+}
+
+/* Server connection using the test clock that has accepted a version 3 SYN. */
+static rdpUdp* server_accept(ServerSent* sent)
+{
+	rdpUdp* udp = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, sent);
+	if (!udp)
+		return nullptr;
+	rdpudp_set_clock(udp, server_clock, nullptr);
+
+	BYTE syn[1232];
+	server_make_syn(syn);
+	if (!rdpudp_accept(udp, server_on_send, sent, syn, sizeof(syn)))
+	{
+		rdpudp_free(udp);
+		return nullptr;
+	}
+	return udp;
+}
+
+/* mstsc closes the connection if it receives an ACK vector for a duplicate old packet. */
+static BOOL server_does_not_report_a_packet_behind_its_window(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* The client's first data packet contains its AckOfAcks. */
+	if (!server_receive_data_aoa(udp, 100, 1))
+		goto out;
+	for (UINT16 x = 1; x < 3; x++)
+	{
+		if (!server_receive_data(udp, (UINT16)(100 + x), (UINT16)(1 + x)))
+			goto out;
+	}
+	if (!server_run_timers(udp, 100) || !sent.hasAck || (sent.ack != 102) || sent.hasVector)
+		goto out;
+
+	/* Duplicate already covered by cumulative ACK. */
+	if (!server_receive_data(udp, 100, 1) || !server_run_timers(udp, 100) || sent.hasVector)
+		goto out;
+
+	/* Real gap should still be reported. */
+	if (!server_receive_data(udp, 104, 5) || !server_run_timers(udp, 100) || !sent.hasVector ||
+	    (sent.vectorBase != 103))
+		goto out;
+
+	rc = TRUE;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* FreeRDP clients only include an AckOfAcks in the first data packet. If that packet is lost
+ * or delayed, taking the base from a subsequent packet would place it below the window,
+ * and the cumulative ACK would inform the client that it arrived. */
+static BOOL server_takes_its_base_from_an_ackofacks(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* The second packet arrives first; no acknowledgments should be sent. */
+	if (!server_receive_data(udp, 101, 2) || !server_run_timers(udp, 100) || sent.hasAck ||
+	    sent.hasVector)
+		goto out;
+	/* Now receive the first packet, which contains the AckOfAcks. */
+	if (!server_receive_data_aoa(udp, 102, 1) || !server_run_timers(udp, 100))
+		goto out;
+	/* The window base is now 102: packet 101 was ignored, and chunk 2 must be resent. */
+	if (!sent.hasAck || (sent.ack != 102) || (sent.delivered != 1))
+		goto out;
+	rc = TRUE;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* Input chunks with channel sequence numbers from first to last, one per packet. */
+static BOOL server_receive_chunks(rdpUdp* udp, UINT16* dataSeq, UINT16 first, UINT16 last)
+{
+	for (UINT16 channel = first; channel <= last; channel++)
+	{
+		if (!server_receive_data(udp, (*dataSeq)++, channel))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/* Buffer only a few chunks after a gap until the client proves its cookie to prevent memory
+ * exhaustion by attackers who only know the cookie hash. */
+static BOOL server_limits_buffered_chunks_until_verified(void)
+{
+	BOOL rc = FALSE;
+	ServerSent unverified = WINPR_C_ARRAY_INIT;
+	ServerSent verified = WINPR_C_ARRAY_INIT;
+	rdpUdp* a = server_accept(&unverified);
+	rdpUdp* b = server_accept(&verified);
+	if (!a || !b)
+		goto out;
+	rdpudp_set_peer_verified(b);
+
+	/* Chunk 129 arrives first (128 ahead of expected) with the client's first AckOfAcks,
+	 * followed by chunks 1..128 to fill the gap. */
+	UINT16 seqA = 101;
+	UINT16 seqB = 101;
+	if (!server_receive_data_aoa(a, 100, 129) || !server_receive_chunks(a, &seqA, 1, 128) ||
+	    !server_receive_data_aoa(b, 100, 129) || !server_receive_chunks(b, &seqB, 1, 128))
+		goto out;
+
+	/* Unverified, chunk 129 is dropped and must be retransmitted. */
+	rc = (unverified.delivered == 128) && (verified.delivered == 129);
+out:
+	rdpudp_free(a);
+	rdpudp_free(b);
+	return rc;
+}
+
+/* SYN must be padded to MTU; shorter SYNs from spoofed sources could be used for
+ * amplification attacks via the larger SYN+ACK response. */
+static BOOL server_refuses_a_short_syn(void)
+{
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, &sent);
+	if (!udp)
+		return FALSE;
+
+	BYTE syn[1232];
+	server_make_syn(syn);
+	const BOOL refused = !rdpudp_accept(udp, server_on_send, &sent, syn, 64) &&
+	                     !rdpudp_accept(udp, server_on_send, &sent, syn, sizeof(syn) - 1);
+	BYTE hash[32] = WINPR_C_ARRAY_INIT;
+	const BOOL noHash = !rdpudp_get_syn_cookie_hash(syn, 64, hash) &&
+	                    rdpudp_get_syn_cookie_hash(syn, sizeof(syn), hash);
+	rdpudp_free(udp);
+	return refused && noHash && (sent.sends == 0);
+}
+
+/* Input a cumulative ACK from the client. */
+static BOOL server_receive_ack(rdpUdp* udp, UINT16 ack)
+{
+	BYTE wire[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* Skip the prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_ACK | (15u << 12)));
+	Stream_Write_UINT16(s, ack); /* Sequence number */
+	write_uint24(s, 0);          /* Received timestamp */
+	Stream_Write_UINT8(s, 0);    /* The sendAckTimeGap field */
+	Stream_Write_UINT8(s, 0);    /* Number of delayed ACKs */
+	const size_t length = Stream_GetPosition(s);
+	wire[0] = (BYTE)((7 << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	return rdpudp_receive(udp, wire, length);
+}
+
+/* Client determines the server's sequence space start from the first AckOfAcks. If initial
+ * data is lost, a later packet without AckOfAcks may be used as the start, causing the
+ * client to ack lost packets. Thus, every data packet carries AckOfAcks until the client
+ * sends an ACK. */
+static BOOL server_repeats_ack_of_acks_until_the_first_ack(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 5) || (sent.dataSends != 3) || (sent.aoaSends != 3))
+	{
+		(void)fprintf(stderr, "before the ACK: %" PRIuz " data, %" PRIuz " with AckOfAcks\n",
+		              sent.dataSends, sent.aoaSends);
+		goto out;
+	}
+
+	/* After the first ACK, AckOfAcks is only resent when the base moves. */
+	if (!server_receive_ack(udp, 102))
+		goto out;
+	sent.dataSends = 0;
+	sent.aoaSends = 0;
+	for (size_t x = 0; x < 2; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"efgh", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 5))
+		goto out;
+	rc = (sent.dataSends == 2) && (sent.aoaSends == 1);
+	if (!rc)
+		(void)fprintf(stderr, "after the ACK: %" PRIuz " data, %" PRIuz " with AckOfAcks\n",
+		              sent.dataSends, sent.aoaSends);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* An ACK past the last datagram the server sent can only be forged, e.g. by someone who saw
+ * the cookie hash in the SYN and spoofs the client's address. It must not acknowledge
+ * anything, so the data is still resent after the retransmit timeout. */
+static BOOL server_ignores_an_ack_past_what_it_sent(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 5) || (sent.dataSends != 3))
+		goto out;
+
+	/* data sequence numbers 100 to 102 are out; 0x2000 is far past them */
+	if (!server_receive_ack(udp, 0x2000))
+		goto out;
+	sent.dataSends = 0;
+	if (!server_run_timers(udp, 1500))
+		goto out;
+	rc = (sent.dataSends >= 1);
+	if (!rc)
+		(void)fprintf(stderr, "a forged ACK stopped the resends\n");
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A FreeRDP client that loses track of server sequence numbers after a silence may report a
+ * packet in an ACK vector that only looks behind its window. The base is not the first
+ * missing packet, meaning data below it was not received. */
+static BOOL server_keeps_what_lies_below_a_behind_report(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 5) || (sent.dataSends != 3))
+		goto out;
+
+	/* ACK vector with base 101 reporting 101 as received; packet 100 remains unacknowledged. */
+	BYTE wire[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* Advance the stream pointer past the prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_ACKVEC | (15u << 12)));
+	Stream_Write_UINT16(s, 101);            /* Set the base sequence number */
+	Stream_Write_UINT8(s, 1);               /* No timestamp; codedAckVecSize is 1 */
+	Stream_Write_UINT8(s, 0x80 | 0x40 | 1); /* Indicates a run of one received packet */
+	/* The prefix stores the length; 6 bytes follow it, and the datagram is padded to 8 bytes. */
+	const size_t layout = Stream_GetPosition(s) - 1;
+	const size_t length = 8;
+	wire[0] = (BYTE)((layout << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	if (!rdpudp_receive(udp, wire, length))
+		goto out;
+
+	/* Chunk 1 was sent in packet 100; it remains unacknowledged and should be resent. */
+	sent.watchedChannel = 1;
+	sent.watchedSends = 0;
+	if (!server_run_timers(udp, 1500))
+		goto out;
+	rc = (sent.watchedSends >= 1);
+	if (!rc)
+		(void)fprintf(stderr, "the behind report acknowledged datagram 100\n");
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* First datagram after SYN+ACK provides the initial RTT sample. */
+static rdpUdp* server_accept_with_rtt(ServerSent* sent, UINT32 rttMs)
+{
+	rdpUdp* udp = server_accept(sent);
+	if (!udp)
+		return nullptr;
+	g_serverTime += 1000000ULL * rttMs;
+	if (!server_receive_data(udp, 100, 1) || (rdpudp_get_rtt(udp) != rttMs))
+	{
+		(void)fprintf(stderr, "round trip %" PRIu32 " ms after the handshake\n",
+		              rdpudp_get_rtt(udp));
+		rdpudp_free(udp);
+		return nullptr;
+	}
+	return udp;
+}
+
+/* The client never retransmits acked chunks; chunks too large to buffer must not be acked to
+ * ensure the connection continues. */
+static BOOL server_drops_an_oversized_chunk(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	BYTE wire[2100] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, wire, sizeof(wire));
+	Stream_Seek(s, 1); /* Skip prefix byte */
+	Stream_Write_UINT16(s, (UINT16)(V3_DATA | V3_AOA | (15u << 12)));
+	Stream_Write_UINT16(s, 100); /* AckOfAcks, as on a client's first data packet */
+	Stream_Write_UINT16(s, 100); /* Data sequence number. */
+	Stream_Write_UINT16(s, 1);   /* Write the channel sequence number. */
+	Stream_Seek(s, 2049);
+	const size_t length = Stream_GetPosition(s);
+	wire[0] = (BYTE)((7 << 5) | (V3_TYPE_STANDARD << 1));
+	const BYTE eighth = wire[7];
+	wire[7] = wire[0];
+	wire[0] = eighth;
+	/* Server may send other ACKs, but none covering the dropped packet. */
+	const BOOL dropped = rdpudp_receive(udp, wire, length) && server_run_timers(udp, 100) &&
+	                     (!sent.hasAck || (sent.ack != 100)) && (sent.delivered == 0);
+	const BOOL resent = server_receive_data_aoa(udp, 100, 1) && server_run_timers(udp, 100) &&
+	                    (sent.delivered == 1);
+	rc = dropped && resent && sent.hasAck && (sent.ack == 100);
+	if (!rc)
+		(void)fprintf(stderr,
+		              "dropped %d, resent %d, ack %d of 0x%04" PRIx16 ", %" PRIuz " delivered\n",
+		              dropped, resent, sent.hasAck, sent.ack, sent.delivered);
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* The initial RTT sample is provided by the first datagram received after the SYN+ACK. */
+static BOOL server_samples_the_rtt_from_the_handshake(void)
+{
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept_with_rtt(&sent, 120);
+	if (!udp)
+		return FALSE;
+	rdpudp_free(udp);
+	return TRUE;
+}
+
+/* AckOfAcks can advance the window significantly in one datagram. The server must clear skipped
+ * slots as ranges, even when wrapping around the slot arrays. */
+static BOOL server_follows_large_ack_of_acks_jumps(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* Sequence: 100, 30100 (no wrap), 50100 (wrap), each followed by the next sequence number. */
+	const UINT16 seqs[] = { 100, 101, 30100, 30101, 50100, 50101 };
+	for (size_t x = 0; x < ARRAYSIZE(seqs); x++)
+	{
+		const UINT16 channel = (UINT16)(1 + x);
+		const BOOL ok = (x % 2 == 0) ? server_receive_data_aoa(udp, seqs[x], channel)
+		                             : server_receive_data(udp, seqs[x], channel);
+		if (!ok)
+			goto out;
+	}
+	if (!server_run_timers(udp, 100))
+		goto out;
+	rc = (sent.delivered == ARRAYSIZE(seqs)) && sent.hasAck && (sent.ack == 50101) &&
+	     !sent.hasVector;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A packet arriving ahead of a gap and skipped by an AckOfAcks must remain missing when the
+ * 16-bit sequence number wraps around 65536 later. Receive slots are not cleared as the
+ * window moves; they only track the specific sequence number they were stamped with. */
+static BOOL server_does_not_find_a_skipped_slot_a_wrap_later(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* Base 100; packet 105 arrives ahead of a gap, and an AckOfAcks at 110 skips past it. */
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_receive_data(udp, 105, 2) ||
+	    !server_receive_data_aoa(udp, 110, 3))
+		goto out;
+	/* Wrap the sequence space to 104; the window then waits for 105 again. */
+	if (!server_receive_data_aoa(udp, 30110, 4) || !server_receive_data_aoa(udp, 60110, 5) ||
+	    !server_receive_data_aoa(udp, 104, 6) || !server_run_timers(udp, 100))
+		goto out;
+	sent.hasAck = FALSE;
+	sent.hasVector = FALSE;
+	/* Packet 106 arrives: 105 is missing, so it is reported in an ACK vector and not
+	 * acknowledged. */
+	if (!server_receive_data(udp, 106, 7) || !server_run_timers(udp, 100))
+		goto out;
+	rc = sent.hasVector && (sent.vectorBase == 105) && !(sent.hasAck && (sent.ack == 106));
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* ACKs were lost during silence, and the client's subsequent AckOfAcks is behind our
+ * window. Since the sequence numbers did not wrap, the window remains in place and
+ * acknowledging resumes. Moving the window back would report packets already covered
+ * by a cumulative ACK (which causes mstsc to disconnect), while waiting for another
+ * AckOfAcks would leave the client without ACKs indefinitely. */
+static BOOL server_keeps_its_window_when_acks_were_lost_in_a_silence(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_receive_data(udp, 101, 2) ||
+	    !server_receive_data(udp, 102, 3) || !server_run_timers(udp, 100) || !sent.hasAck ||
+	    (sent.ack != 102))
+		goto out;
+
+	/* Simulate a silence long enough for resynchronization, but short of the peer timeout. */
+	if (!server_run_timers(udp, 9000))
+		goto out;
+	sent.hasAck = FALSE;
+	sent.hasVector = FALSE;
+
+	/* The client did not receive our ACKs; packet 100 remains its oldest unacknowledged
+	 * packet. */
+	if (!server_receive_data_with_aoa(udp, 103, 4, 100) || !server_run_timers(udp, 100))
+		goto out;
+	rc = sent.hasAck && (sent.ack == 103) && !sent.hasVector && (sent.delivered == 4);
+	if (!rc)
+		(void)fprintf(stderr,
+		              "after the silence: ACK %d of 0x%04" PRIx16 ", vector %d, %" PRIuz
+		              " delivered\n",
+		              sent.hasAck, sent.ack, sent.hasVector, sent.delivered);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* mstsc sends a keepalive a little over every 4 seconds (4.01 to 4.02 in a capture). After
+ * three lost ones the fourth arrives 16.06 seconds after the last one heard: the tunnel has to
+ * be there for it still, as it is on Windows, which waits 16.5 seconds. */
+static BOOL server_waits_for_the_fourth_keepalive(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_run_timers(udp, 16060))
+		goto out;
+	sent.hasAck = FALSE;
+	if (!server_receive_data_aoa(udp, 101, 2) || !server_run_timers(udp, 100))
+		goto out;
+	rc = (rdpudp_get_state(udp) == RDPUDP_STATE_ESTABLISHED) && sent.hasAck && (sent.ack == 101) &&
+	     (sent.delivered == 2);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* Silent clients are dropped after the peer timeout. */
+static BOOL server_ends_a_silent_connection(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_run_timers(udp, 5000))
+		goto out;
+	for (size_t x = 0; x < 60; x++)
+	{
+		g_serverTime += 1000ULL * 1000000ULL;
+		if (!rdpudp_check(udp))
+		{
+			rc = rdpudp_get_state(udp) == RDPUDP_STATE_FAILED;
+			break;
+		}
+	}
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A receiver that cannot take more holds data back: packets are dropped unacknowledged while
+ * the hold is on, and taken when the client sends them again after it. */
+static BOOL server_takes_no_data_while_held(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_run_timers(udp, 100) || !sent.hasAck ||
+	    (sent.ack != 100) || (sent.delivered != 1))
+		goto out;
+
+	rdpudp_set_receive_hold(udp, TRUE);
+	sent.hasAck = FALSE;
+	if (!server_receive_data(udp, 101, 2) || !server_receive_data(udp, 102, 3) ||
+	    !server_receive_data(udp, 103, 4) || !server_run_timers(udp, 100))
+		goto out;
+	if (sent.hasAck || sent.hasVector || (sent.delivered != 1))
+	{
+		(void)fprintf(stderr, "held: ACK %d, vector %d, %" PRIuz " delivered\n", sent.hasAck,
+		              sent.hasVector, sent.delivered);
+		goto out;
+	}
+
+	rdpudp_set_receive_hold(udp, FALSE);
+	if (!server_receive_data(udp, 101, 2) || !server_receive_data(udp, 102, 3) ||
+	    !server_receive_data(udp, 103, 4) || !server_run_timers(udp, 100))
+		goto out;
+	rc = sent.hasAck && (sent.ack == 103) && !sent.hasVector && (sent.delivered == 4);
+	if (!rc)
+		(void)fprintf(stderr, "released: ACK %d of 0x%04" PRIx16 ", %" PRIuz " delivered\n",
+		              sent.hasAck, sent.ack, sent.delivered);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* After a silence the server holds its ACKs back until an AckOfAcks comes. Its keepalive goes
+ * on: an AckOfAcks of its own, which acknowledges nothing. */
+static BOOL server_keepalive_after_a_silence_is_an_ack_of_acks(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	if (!server_receive_data_aoa(udp, 100, 1) || !server_run_timers(udp, 100) || !sent.hasAck)
+		goto out;
+	/* idle, the keepalive is an ACK */
+	sent.hasAck = FALSE;
+	if (!server_run_timers(udp, 4500) || !sent.hasAck || (sent.baseSends != 0))
+		goto out;
+
+	/* 8 seconds without a datagram from the client */
+	if (!server_run_timers(udp, 4000))
+		goto out;
+	sent.hasAck = FALSE;
+	sent.hasVector = FALSE;
+	const size_t before = sent.sends;
+	const size_t baseBefore = sent.baseSends;
+	if (!server_run_timers(udp, 4500))
+		goto out;
+	const size_t bases = sent.baseSends - baseBefore;
+	rc = (bases >= 1) && (sent.sends == before + bases) && !sent.hasAck && !sent.hasVector;
+	if (!rc)
+		(void)fprintf(stderr, "after the silence: %" PRIuz " AckOfAcks, %" PRIuz " sent, ACK %d\n",
+		              bases, sent.sends - before, sent.hasAck);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A FreeRDP client and a FreeRDP server joined through the test's socket, both on the test
+ * clock. */
+typedef struct
+{
+	TestCtx client;
+	rdpUdp* server;
+	ServerSent sent;
+	size_t loseToClient; /* datagrams of the server still to lose */
+	size_t loseToServer; /* datagrams of the client still to lose */
+	size_t loseBases;    /* AckOfAcks keepalives of the server still to lose */
+} Pair;
+
+static BOOL pair_on_send(void* custom, const BYTE* data, size_t length)
+{
+	Pair* pair = custom;
+	/* counts what the server sends, see ServerSent */
+	const size_t bases = pair->sent.baseSends;
+	if (!server_on_send(&pair->sent, data, length))
+		return FALSE;
+	if ((pair->sent.baseSends != bases) && (pair->loseBases > 0))
+	{
+		pair->loseBases--;
+		return TRUE;
+	}
+	if (pair->loseToClient > 0)
+	{
+		pair->loseToClient--;
+		return TRUE;
+	}
+	return server_send_raw(&pair->client, data, length);
+}
+
+/* Moves the clock on in steps of 10 ms. FALSE when either end failed. */
+static BOOL pair_run(Pair* pair, UINT32 ms)
+{
+	BYTE buffer[1500] = WINPR_C_ARRAY_INIT;
+	for (UINT32 x = 0; x < ms; x += 10)
+	{
+		g_serverTime += 10ULL * 1000000ULL;
+		if (!rdpudp_check(pair->client.udp))
+			return FALSE;
+		size_t length = 0;
+		while ((length = server_recv(&pair->client, buffer, sizeof(buffer), 0)) > 0)
+		{
+			if (pair->loseToServer > 0)
+			{
+				pair->loseToServer--;
+				continue;
+			}
+			if (!rdpudp_receive(pair->server, buffer, length))
+				return FALSE;
+		}
+		if (!rdpudp_check(pair->server))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static void pair_free(Pair* pair)
+{
+	rdpudp_free(pair->server);
+	pair->server = nullptr;
+	ctx_free(&pair->client);
+}
+
+/* Connected, with one chunk delivered each way, so both ends know the other's base. */
+static BOOL pair_connect(Pair* pair)
+{
+	SynInfo syn = WINPR_C_ARRAY_INIT;
+	if (!ctx_start(&pair->client, TRUE, &syn) || (syn.length > sizeof(syn.raw)))
+		return FALSE;
+	/* the test clock takes over from the system clock without going back */
+	g_serverTime = GetTickCount64() * 1000000ULL;
+	rdpudp_set_clock(pair->client.udp, server_clock, nullptr);
+
+	pair->server = rdpudp_new(WLog_Get(TAG), nullptr, server_on_receive, &pair->sent);
+	if (!pair->server)
+		return FALSE;
+	rdpudp_set_clock(pair->server, server_clock, nullptr);
+	if (!rdpudp_accept(pair->server, pair_on_send, pair, syn.raw, syn.length))
+		return FALSE;
+	for (size_t x = 0;
+	     (x < 100) && (rdpudp_get_state(pair->client.udp) != RDPUDP_STATE_ESTABLISHED); x++)
+	{
+		if (!pump(&pair->client))
+			return FALSE;
+	}
+	if (rdpudp_get_state(pair->client.udp) != RDPUDP_STATE_ESTABLISHED)
+		return FALSE;
+
+	if (!rdpudp_send(pair->client.udp, (const BYTE*)"c", 1) ||
+	    !rdpudp_send(pair->server, (const BYTE*)"s", 1))
+		return FALSE;
+	for (size_t x = 0; (x < 100) && ((pair->sent.delivered < 1) ||
+	                                 (Stream_GetPosition(pair->client.delivered) < 1));
+	     x++)
+	{
+		Sleep(1);
+		if (!pair_run(pair, 10))
+			return FALSE;
+	}
+	return (pair->sent.delivered == 1) && delivered_is(&pair->client, "s");
+}
+
+/* An idle tunnel loses one keepalive: the end that misses it hears nothing for two keepalive
+ * intervals and holds its ACKs back from then on. Without a keepalive from an end in that state
+ * the other end went the same way 8 seconds later, and the peer timeout ended a tunnel whose
+ * path had lost a single datagram. */
+static BOOL idle_pair_survives(BOOL fromServer)
+{
+	BOOL rc = FALSE;
+	Pair pair = WINPR_C_ARRAY_INIT;
+	pair.client.server = INVALID_SOCKET;
+	CHECK(pair_connect(&pair));
+	CHECK(pair_run(&pair, 1000));
+
+	if (fromServer)
+		pair.loseToClient = 1;
+	else
+		pair.loseToServer = 1;
+	/* well past the 16 second peer timeout */
+	CHECK(pair_run(&pair, 40000));
+	CHECK((pair.loseToClient == 0) && (pair.loseToServer == 0));
+
+	/* and the stream goes on in both directions */
+	CHECK(rdpudp_send(pair.client.udp, (const BYTE*)"d", 1));
+	CHECK(rdpudp_send(pair.server, (const BYTE*)"t", 1));
+	for (size_t x = 0; (x < 100) && ((pair.sent.delivered < 2) ||
+	                                 (Stream_GetPosition(pair.client.delivered) < 2));
+	     x++)
+	{
+		Sleep(1);
+		CHECK(pair_run(&pair, 10));
+	}
+	CHECK(pair.sent.delivered == 2);
+	CHECK(delivered_is(&pair.client, "st"));
+	rc = TRUE;
+fail:
+	pair_free(&pair);
+	return rc;
+}
+
+/* Found with the Keepalive model: a client that missed one keepalive is in resync and sends
+ * nothing, so the server hears nothing either and has to wake it with the AckOfAcks keepalive
+ * before its own peer timeout. At the normal keepalive interval it gets two attempts; with both
+ * lost, three lost datagrams in 16 seconds ended the tunnel. */
+static BOOL idle_tunnel_survives_lost_wake_ups(void)
+{
+	BOOL rc = FALSE;
+	Pair pair = WINPR_C_ARRAY_INIT;
+	pair.client.server = INVALID_SOCKET;
+	CHECK(pair_connect(&pair));
+	CHECK(pair_run(&pair, 1000));
+
+	/* the client misses a keepalive and falls silent, then the server's first two wake-ups
+	 * are lost */
+	pair.loseToClient = 1;
+	pair.loseBases = 2;
+	CHECK(pair_run(&pair, 40000));
+	CHECK((pair.loseToClient == 0) && (pair.loseBases == 0));
+	rc = TRUE;
+fail:
+	pair_free(&pair);
+	return rc;
+}
+
+static BOOL idle_tunnel_survives_a_lost_server_keepalive(void)
+{
+	return idle_pair_survives(TRUE);
+}
+
+static BOOL idle_tunnel_survives_a_lost_client_keepalive(void)
+{
+	return idle_pair_survives(FALSE);
+}
+
+/* A burst of timeouts should double the RTO only once, not once per datagram (up to 64x),
+ * to avoid leaving the tunnel silent for seconds. */
+static BOOL server_backs_off_once_for_many_timeouts(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+
+	/* Eight unacked datagrams time out simultaneously. */
+	for (size_t x = 0; x < 8; x++)
+	{
+		if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+			goto out;
+	}
+	if (!server_run_timers(udp, 250))
+		goto out;
+
+	/* RTO should only double once, ensuring the next datagram is retransmitted within a few hundred
+	 * ms. */
+	sent.watchedChannel = (UINT16)(sent.lastChannel + 1);
+	sent.watchedSends = 0;
+	if (!rdpudp_send(udp, (const BYTE*)"efgh", 4) || !server_run_timers(udp, 700))
+		goto out;
+	rc = sent.watchedSends >= 2;
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A client resends a datagram that is never acknowledged at least every 2 seconds. Doubling up
+ * to 120 seconds, a chunk lost five times in a row came back after the server had waited 16
+ * seconds for it and ended the stream; at 20% loss that happened in a few percent of tunnels. */
+static BOOL client_resends_at_least_every_two_seconds(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = WINPR_C_ARRAY_INIT;
+	SynInfo syn = WINPR_C_ARRAY_INIT;
+	CHECK(ctx_start(&ctx, TRUE, &syn));
+	/* the test clock takes over from the system clock without going back */
+	g_serverTime = GetTickCount64() * 1000000ULL;
+	rdpudp_set_clock(ctx.udp, server_clock, nullptr);
+	CHECK(send_syn_ack(&ctx, syn.initialSequence, RDPUDP_PROTOCOL_VERSION_3));
+	for (size_t x = 0; (x < 100) && (rdpudp_get_state(ctx.udp) != RDPUDP_STATE_ESTABLISHED); x++)
+		CHECK(pump(&ctx));
+	CHECK(rdpudp_get_state(ctx.udp) == RDPUDP_STATE_ESTABLISHED);
+
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"x", 1));
+	CHECK(drain(&ctx, 20));
+	CHECK(count_data(&ctx) == 1);
+
+	/* 12 seconds without an acknowledgement, short of the 16 second peer timeout */
+	UINT64 lastSend = g_serverTime;
+	UINT64 longestGap = 0;
+	size_t resends = 0;
+	for (size_t step = 0; step < 1200; step++)
+	{
+		g_serverTime += 10ULL * 1000000ULL;
+		CHECK(rdpudp_check(ctx.udp));
+		CHECK(drain(&ctx, 0));
+		if (count_data(&ctx) == 0)
+			continue;
+		const UINT64 gap = g_serverTime - lastSend;
+		if (gap > longestGap)
+			longestGap = gap;
+		lastSend = g_serverTime;
+		resends++;
+	}
+	CHECK(resends >= 6);
+	CHECK(longestGap <= 2000ULL * 1000000ULL);
+	CHECK(g_serverTime - lastSend <= 2000ULL * 1000000ULL);
 	rc = TRUE;
 fail:
 	ctx_free(&ctx);
@@ -995,9 +1999,11 @@ fail:
 /* Sending                                                                                   */
 /* ---------------------------------------------------------------------------------------- */
 
-/* AckOfAcks is the lowest of our data sequence numbers still awaiting acknowledgement. It goes
- * out when it changes, sending the sequence being transmitted would make the peer abandon every
- * packet still in flight. */
+/* AckOfAcks is the lowest data sequence number still awaiting acknowledgement. Sending the
+ * current sequence number would lead the peer to abandon all in-flight packets. Until the
+ * peer acknowledges any packet, AoA is included in every data packet so the peer can
+ * determine the start of the sequence space and detect lost initial packets
+ * ([MS-RDPEUDP2] 3.1.5.3). Thereafter, it is only sent when the value changes. */
 static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 {
 	BOOL rc = FALSE;
@@ -1008,10 +2014,11 @@ static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 	const V3Packet* sent = first_data(&ctx);
 	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE));
 
+	/* Still unacknowledged: the AoA value is repeated. */
 	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"2", 1));
 	CHECK(drain(&ctx, 20));
 	sent = first_data(&ctx);
-	CHECK(sent && !sent->hasAoA);
+	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE));
 
 	CHECK(send_ack(&ctx, FIRST_SEQUENCE));
 	CHECK(pump(&ctx));
@@ -1019,6 +2026,12 @@ static BOOL ack_of_acks_reports_the_oldest_unacknowledged_packet(void)
 	CHECK(drain(&ctx, 20));
 	sent = first_data(&ctx);
 	CHECK(sent && sent->hasAoA && (sent->aoa == FIRST_SEQUENCE + 1));
+
+	/* Acknowledged and unchanged: AoA is omitted. */
+	CHECK(rdpudp_send(ctx.udp, (const BYTE*)"4", 1));
+	CHECK(drain(&ctx, 20));
+	sent = first_data(&ctx);
+	CHECK(sent && !sent->hasAoA);
 	rc = TRUE;
 fail:
 	ctx_free(&ctx);
@@ -1262,12 +2275,43 @@ static const TestCase cases[] = {
 	  retransmission_is_reordered_back_into_the_stream },
 	{ "ack_of_acks_advances_the_window_without_touching_the_stream",
 	  ack_of_acks_advances_the_window_without_touching_the_stream },
+	{ "ack_of_acks_on_its_own_is_answered", ack_of_acks_on_its_own_is_answered },
 	{ "ack_of_acks_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_past_its_own_packet_keeps_the_chunk },
 	{ "ack_of_acks_past_its_own_packet_gets_no_ack_vector",
 	  ack_of_acks_past_its_own_packet_gets_no_ack_vector },
 	{ "ack_of_acks_far_past_its_own_packet_keeps_the_chunk",
 	  ack_of_acks_far_past_its_own_packet_keeps_the_chunk },
+	{ "server_backs_off_once_for_many_timeouts", server_backs_off_once_for_many_timeouts },
+	{ "client_resends_at_least_every_two_seconds", client_resends_at_least_every_two_seconds },
+	{ "server_limits_buffered_chunks_until_verified",
+	  server_limits_buffered_chunks_until_verified },
+	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
+	{ "server_waits_for_the_fourth_keepalive", server_waits_for_the_fourth_keepalive },
+	{ "server_takes_no_data_while_held", server_takes_no_data_while_held },
+	{ "server_keepalive_after_a_silence_is_an_ack_of_acks",
+	  server_keepalive_after_a_silence_is_an_ack_of_acks },
+	{ "idle_tunnel_survives_lost_wake_ups", idle_tunnel_survives_lost_wake_ups },
+	{ "idle_tunnel_survives_a_lost_server_keepalive",
+	  idle_tunnel_survives_a_lost_server_keepalive },
+	{ "idle_tunnel_survives_a_lost_client_keepalive",
+	  idle_tunnel_survives_a_lost_client_keepalive },
+	{ "server_keeps_its_window_when_acks_were_lost_in_a_silence",
+	  server_keeps_its_window_when_acks_were_lost_in_a_silence },
+	{ "server_refuses_a_short_syn", server_refuses_a_short_syn },
+	{ "server_follows_large_ack_of_acks_jumps", server_follows_large_ack_of_acks_jumps },
+	{ "server_does_not_find_a_skipped_slot_a_wrap_later",
+	  server_does_not_find_a_skipped_slot_a_wrap_later },
+	{ "server_repeats_ack_of_acks_until_the_first_ack",
+	  server_repeats_ack_of_acks_until_the_first_ack },
+	{ "server_ignores_an_ack_past_what_it_sent", server_ignores_an_ack_past_what_it_sent },
+	{ "server_samples_the_rtt_from_the_handshake", server_samples_the_rtt_from_the_handshake },
+	{ "server_drops_an_oversized_chunk", server_drops_an_oversized_chunk },
+	{ "server_takes_its_base_from_an_ackofacks", server_takes_its_base_from_an_ackofacks },
+	{ "server_keeps_what_lies_below_a_behind_report",
+	  server_keeps_what_lies_below_a_behind_report },
+	{ "server_does_not_report_a_packet_behind_its_window",
+	  server_does_not_report_a_packet_behind_its_window },
 	{ "late_packet_behind_the_window_fills_the_hole",
 	  late_packet_behind_the_window_fills_the_hole },
 	{ "retransmitted_packets_are_acknowledged_again",

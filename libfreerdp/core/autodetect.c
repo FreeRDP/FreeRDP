@@ -209,7 +209,7 @@ static BOOL autodetect_send_netchar_sync(rdpAutoDetect* autodetect, UINT16 seque
 }
 
 static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
-                                                    WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                                    RDP_TRANSPORT_TYPE transport,
                                                     UINT16 sequenceNumber)
 {
 	UINT16 requestType = 0;
@@ -218,6 +218,12 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
+
+	BOOL sent = FALSE;
+	if (multitransport_server_send_autodetect(autodetect->context->rdp->multitransport, transport,
+	                                          sequenceNumber, RDP_BW_START_REQUEST_TYPE_CONTINUOUS,
+	                                          &sent))
+		return sent;
 
 	s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
 	if (!s)
@@ -285,7 +291,7 @@ autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
 }
 
 static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
-                                                   WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                                   RDP_TRANSPORT_TYPE transport,
                                                    UINT16 sequenceNumber, UINT16 payloadLength)
 {
 	UINT16 requestType = 0;
@@ -294,6 +300,12 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
+
+	BOOL sent = FALSE;
+	if (multitransport_server_send_autodetect(autodetect->context->rdp->multitransport, transport,
+	                                          sequenceNumber, RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS,
+	                                          &sent))
+		return sent;
 
 	s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
 	if (!s)
@@ -1027,6 +1039,32 @@ state_run_t autodetect_recv_tunnel_request(rdpAutoDetect* autodetect, RDP_TRANSP
 			           requestType);
 			return STATE_RUN_SUCCESS;
 	}
+}
+
+state_run_t autodetect_recv_tunnel_response(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+                                            wStream* s)
+{
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(s);
+
+	/* The server only sends Bandwidth Measure Start/Stop over the tunnel, so only results
+	 * are expected. Do not pass responses to the application on a transport not used for
+	 * the request. */
+	UINT16 responseType = 0;
+	if (Stream_GetRemainingLength(s) >= 6)
+	{
+		const BYTE* header = Stream_ConstPointer(s);
+		responseType = winpr_Data_Get_UINT16(&header[4]);
+	}
+
+	if (responseType != RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS)
+	{
+		WLog_Print(autodetect->log, WLOG_DEBUG,
+		           "discarding auto-detect response 0x%04" PRIx16 " in a tunnel subheader",
+		           responseType);
+		return STATE_RUN_SUCCESS;
+	}
+	return autodetect_recv_response_packet(autodetect, transport, s);
 }
 
 state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,

@@ -70,6 +70,15 @@ struct rdp_peer_channel
 
 	char channelName[128];
 	CRITICAL_SECTION writeLock;
+
+	/* True if this channel uses the reliable UDP tunnel; subsequent writes use the tunnel.
+	 * Modify while holding the dynamicVirtualChannels lock. If the channel is already
+	 * writable, also hold the writeLock to ensure no messages cross the switch from
+	 * TCP to the tunnel. */
+	BOOL tunnel;
+	/* True once the Close Request is posted; set while holding the writeLock. Soft-Sync
+	 * excludes the channel from this point forward. Only the tunnel code sets this. */
+	BOOL closing;
 };
 
 struct WTSVirtualChannelManager
@@ -89,6 +98,9 @@ struct WTSVirtualChannelManager
 	void* dvc_creation_status_userdata;
 
 	wHashTable* dynamicVirtualChannels;
+
+	/* Routes dynamic channels over the reliable UDP tunnel; see server_tunnel.c. */
+	struct s_wts_tunnel* tunnel;
 };
 
 WINPR_ATTR_NODISCARD

@@ -97,8 +97,86 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP_RECEIVE_SLOTS 32768
 #define RDPUDP_RECEIVE_REACH 32767
 
-/* Datagrams of ours that may be unacknowledged at once. */
-#define RDPUDP_MAX_IN_FLIGHT 64
+/* Number of datagrams rdpudp_check() reads from its socket before running timers. The server
+ * tunnel uses the same budget for its flow (RDPEMT_INPUT_BUDGET). */
+#define RDPUDP_INPUT_BUDGET 256
+
+/* Max chunk size a server accepts, capping client slot usage at 64 MB. MTU is not used
+ * as the limit because ACKs are appended to full chunks, and Windows/mstsc datagrams
+ * can exceed MTU by 28 bytes. */
+#define RDPUDP_MAX_CHUNK 2048
+
+/* Server: number of chunks buffered past a gap until rdpudp_set_peer_verified(). This
+ * bounds the number of chunks a sender who knows the cookie hash but is not yet
+ * proven can make the server buffer. Since the client only sends the TLS handshake
+ * and Tunnel Create Request during this phase, a small limit suffices; out-of-reach
+ * chunks are not acked and will be retransmitted. */
+#define RDPUDP_UNVERIFIED_REACH 128
+
+/* Max datagrams in flight: caps the server's congestion window and defines the fixed
+ * client limit. 4096 datagrams are ~5 MB per round trip, ~50 MB/s at 100 ms. */
+#define RDPUDP_MAX_IN_FLIGHT 4096
+#define RDPUDP_CLIENT_MAX_IN_FLIGHT 64
+
+/* Datagrams in flight are found by sequence number through an index with one entry per
+ * 16-bit sequence number. RDP-UDP2 numbers are 16 bit, so a resend under a new number
+ * cannot land on an entry still in use. */
+#define RDPUDP_PENDING_INDEX 65536
+
+/* Server only: RDP-UDP2 congestion control ([MS-RDPEUDP] 3.1.1.8), RTT-based retransmit
+ * timeout, and fast retransmit on reported loss.
+ *
+ * The window (in datagrams) grows by one per ack during slow start, then by one per
+ * RDPUDP2_GROWTH_ACKS acks (~12% per RTT) if the queue is not building. It shrinks to
+ * 70% once per RTT if congested: either the round's loss is at least
+ * RDPUDP2_CONGESTED_LOSS_PERCENT and at least RDPUDP2_LOSS_RISE_PERCENT points above the
+ * smoothed loss of earlier rounds, or smoothed RTT exceeds the lowest sample of the last
+ * RDPUDP2_RTT_MIN_WINDOW_MS by more than the maximum of RDPUDP2_QUEUE_DELAY_MS, half the
+ * minimum RTT, or 4 * rttvar.
+ *
+ * Random loss is repaired without slowing down. A Windows 11 server maintained ~4 MB/s
+ * under 2% loss and 100 ms delay, whereas halving the window on every loss dropped
+ * throughput to 0.12 MB/s. Comparing each round with the smoothed loss keeps a steady
+ * background loss (for example 10% on a bad radio link) from shrinking the window by
+ * chance in every other round, while loss that grows with the sending rate, as at a
+ * policer or a full queue, still does.
+ *
+ * Lost datagrams are retransmitted when an ACK vector reports them missing (provided
+ * enough subsequent datagrams were received) or when the retransmit timer expires.
+ * The reorder threshold starts at RDPUDP2_REORDER_THRESHOLD and doubles up to
+ * RDPUDP2_MAX_REORDER_THRESHOLD if the original datagram arrives late ([MS-RDPEUDP2]
+ * 3.1.1.2.3). It decays by one every RDPUDP2_REORDER_DECAY_ROUNDS rounds without such
+ * events. Spurious losses are excluded from congestion calculations. */
+#define RDPUDP2_INITIAL_CWND 32
+#define RDPUDP2_MIN_CWND 8
+#define RDPUDP2_REORDER_THRESHOLD 3
+#define RDPUDP2_MAX_REORDER_THRESHOLD 128
+#define RDPUDP2_REORDER_DECAY_ROUNDS 8
+/* Retransmitted data sequence numbers, used to detect late-arriving originals. */
+#define RDPUDP2_RESENT_HISTORY 256
+/* An original that has not shown up by then is not late but lost. Entries only leave through
+ * ACK vectors, and without the limit one that saw no vector for half the sequence space would
+ * match an unrelated datagram a wrap later. */
+#define RDPUDP2_RESENT_MAX_AGE_MS 2000
+/* [RFC6298] 5.5: after a timeout, new datagrams use the doubled timeout until an RTT
+ * sample arrives, backing off by at most 2^RDPUDP2_MAX_RTO_BACKOFF. This ensures RTT
+ * growth past the timeout is measured, as Karn's rule discards samples from
+ * retransmitted datagrams. */
+#define RDPUDP2_MAX_RTO_BACKOFF 6
+#define RDPUDP2_GROWTH_ACKS 8
+#define RDPUDP2_CONGESTED_LOSS_PERCENT 10
+#define RDPUDP2_LOSS_RISE_PERCENT 5
+/* Weight of a round in the smoothed loss, 1/2^RDPUDP2_LOSS_AVG_SHIFT */
+#define RDPUDP2_LOSS_AVG_SHIFT 3
+#define RDPUDP2_ROUND_MIN_SAMPLES 16
+#define RDPUDP2_QUEUE_DELAY_MS 30
+#define RDPUDP2_RTT_MIN_WINDOW_MS 10000
+
+/* Max distance the newest data sequence number can lead the oldest unacked one.
+ * Data received behind a gap is buffered until the gap closes. With mstsc (100 ms delay,
+ * 1% loss), spans of 1024+ sustained full rate, while a span of 384 limited throughput
+ * to <4.7 MB/s. mstsc accepts new data up to a span of 6142. */
+#define RDPUDP2_MAX_SPAN RDPUDP_MAX_IN_FLIGHT
 
 /* [MS-RDPEUDP2] LogWindowSize. Windows always advertises the largest window (2^15 * MTU), a
  * smaller value throttles the server's sender for no benefit. */
@@ -141,6 +219,14 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * seconds (note <8>). Below the round trip, every datagram is resent before its acknowledgement
  * can arrive. */
 #define RDPUDP_MAX_RTO_MS 120000
+/* RDP-UDP2: cap on the backed-off timeout, as in Windows, which clamps it to 2 seconds. A
+ * receiver ends the stream once a chunk has been missing for RDPUDP_STALL_TIMEOUT_MS; with the
+ * timeout doubling to RDPUDP_MAX_RTO_MS, a datagram lost a few times in a row would be resent
+ * too late. Dead connections are handled by the peer timeout. See rto_v3_cap for RTT-based cap
+ * increases. */
+#define RDPUDP2_MAX_RTO_MS 2000
+/* Server: upper bound on the initial RTT sample from the handshake. */
+#define RDPUDP2_HANDSHAKE_RTT_MAX_MS 500
 
 /* [MS-RDPEUDP] 3.1.5.4: a datagram retransmitted three to five times without a response ends
  * the connection, and so does 65 seconds without any datagram from the peer (3.1.1.9). */
@@ -152,12 +238,41 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * seconds without a datagram mean the peer is gone. The retransmit limit is left to the sender,
  * the peer timeout already bounds how long a dead connection goes unnoticed. */
 #define RDPUDP2_MAX_RETRANSMITS 10
+
+/* To prevent ACK vector-induced flooding, retransmits for reported losses don't count
+ * toward the limit. Chunks are resent at most once per RTT since the last send,
+ * capped at cwnd/4 per RTT (minimum RDPUDP2_REPORT_MIN_BUDGET). Both use smoothed RTT,
+ * which is at least RDPUDP2_REPORT_MIN_ROUND_MS (clock resolution) to prevent
+ * duplicate resends when a round trip is measured as 0 ms. */
+#define RDPUDP2_REPORT_MIN_ROUND_MS 1
+#define RDPUDP2_REPORT_MIN_BUDGET 16
+
 #define RDPUDP2_KEEPALIVE_MS 4000
-#define RDPUDP2_PEER_TIMEOUT_MS 16000
+/* Half a second more than the 16 seconds of the specification, as Windows has it: keepalives of
+ * Windows come a little over 4 seconds apart, so the fourth after three lost ones arrived
+ * 16.06 seconds after the last one heard, and at 16000 an idle tunnel ended 40 ms before it. */
+#define RDPUDP2_PEER_TIMEOUT_MS 16500
 
 /* Silence after which the peer may have moved more than half the sequence space on, see
- * v3_resync_base. Two keepalive intervals, an idle tunnel never gets there. */
+ * v3_resync_base. Two keepalive intervals: an idle tunnel gets there when one keepalive is
+ * lost, see v3_send_base_keepalive. */
 #define RDPUDP2_RESYNC_MS (2ull * RDPUDP2_KEEPALIVE_MS)
+/* Server: interval of the keepalive during that resync, see v3_send_base_keepalive. A client
+ * in resync sends nothing until one of these arrives, and the server has heard nothing for
+ * RDPUDP2_RESYNC_MS already: at the normal interval two lost ones would end the tunnel. */
+#define RDPUDP2_RESYNC_KEEPALIVE_MS 1000
+
+/* Server: The distance behind the window that an AckOfAcks after silence can be while
+ * keeping the window stationary. See v3_resync_base: Windows resends at most 8190 packets
+ * past the oldest unacknowledged datagram, plus another 8190 for those in flight. A real
+ * sequence move to this point would require 49152 numbers within the peer timeout, but
+ * Windows moves at most ~2500 per second. */
+#define RDPUDP2_STALE_AOA_REACH 16384
+
+/* Server: Limits the distance between the newest data sequence number and the oldest one in
+ * flight, including resends. [MS-RDPEUDP2] 3.1.1.1.3 limits the active range to 32767, as
+ * exceeding half the space causes serial arithmetic to treat AckOfAcks as a number ahead. */
+#define RDPUDP2_MAX_RESEND_SPAN (RDPUDP_RECEIVE_REACH - 1)
 
 /* [MS-RDPEUDP2] 3.1.5.1.3: the peer resends a lost chunk under a new data sequence number, and
  * the receiver has no way to ask for it. A stream stuck behind a missing chunk for as long as the
@@ -168,15 +283,21 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 
 typedef struct
 {
-	BOOL used;
 	UINT32 seq; /* source sequence (v1/v2) or data sequence (v3) */
 	UINT16 channelSeq;
 	BYTE* payload;
 	size_t length;
 	UINT64 sent;
+	UINT64 lastSent; /* Server: timestamp of the most recent transmission; 'sent' stores the initial
+	                    transmission time. */
 	UINT64 due;
 	UINT32 rto;
 	UINT32 retransmits;
+	UINT32 timeouts; /* Retransmissions due to timeout; only these count toward the limit. */
+	BOOL lost;       /* Reported missing by an ACK vector; do not wait for the due timer. */
+	/* server: reported missing within one RTT of sending. run_timers processes the
+	 * report after the RTT expires, as the peer may have further reports. */
+	BOOL reportHeld;
 } rdpudp_pending;
 
 typedef struct
@@ -197,6 +318,12 @@ struct rdp_udp
 {
 	wLog* log;
 	SOCKET sockfd;
+	BOOL ownsSocket;     /* FALSE for server connections, which do not own the socket */
+	BOOL receiveHold;    /* see rdpudp_set_receive_hold() */
+	rdpUdpClockFn clock; /* If nullptr, the system clock is used; see rdpudp_set_clock(). */
+	void* clockCustom;
+	UINT16 chunkReach; /* Maximum channel sequence distance ahead of the expected sequence that is
+	                      accepted */
 	RDPUDP_STATE state;
 	UINT16 version;
 	BOOL offerV3;
@@ -211,10 +338,48 @@ struct rdp_udp
 	UINT64 lastSent;
 	UINT64 lastReceived;
 	UINT32 srtt;
+	UINT32 rttvar;     /* RTT variation in milliseconds, as defined in RFC 6298 */
+	BOOL rttSampled;   /* True if srtt and rttvar have been initialized with at least one sample */
+	UINT64 synAckSent; /* server: timestamp of the SYN+ACK transmission, until the first datagram;
+	                      otherwise 0 */
+	BOOL synAckResent; /* server: the SYN+ACK was retransmitted */
 
 	/* sending side */
-	rdpudp_pending pending[RDPUDP_MAX_IN_FLIGHT];
+	rdpudp_pending pending[RDPUDP_MAX_IN_FLIGHT]; /* the first inFlight entries are in use */
 	size_t inFlight;
+	/* position in pending + 1 by the low 16 bits of the sequence number, 0 when free */
+	UINT16 pendingIndex[RDPUDP_PENDING_INDEX];
+	UINT32 sendBase;     /* lowest sequence number in flight, while inFlight > 0 */
+	UINT64 pendingDue;   /* run_timers looks at the datagrams in flight from this time on */
+	UINT32 cwnd;         /* Congestion window for RDP-UDP2, measured in datagrams */
+	UINT32 ssthresh;     /* The slow start threshold. */
+	UINT32 ccAcked;      /* Number of ACKs counted toward the next congestion window increase */
+	UINT64 ccRoundStart; /* Start time of the round trip being tracked for congestion control; see
+	                        cc_round */
+	UINT32 ccRoundAcked;
+	UINT32 ccRoundLost;
+	UINT32 ccLossAvg;        /* Smoothed loss of the rounds with enough samples, in 1/1000 */
+	UINT32 reorderThreshold; /* Sequence distance beyond which a missing datagram is
+	                          * considered lost */
+	UINT32 reorderCalmRounds;
+	UINT32 rtoBackoff; /* Number of times the timeout has doubled since the last RTT sample */
+	struct
+	{
+		BOOL valid;
+		BOOL reported; /* Retransmitted due to an ACK vector report rather than a timeout */
+		UINT16 seq;
+		UINT64 at;                    /* when it was resent, milliseconds */
+	} resent[RDPUDP2_RESENT_HISTORY]; /* Data sequence numbers that have been superseded by a
+	                                     retransmission */
+	size_t resentNext;
+	UINT32 rttMin; /* Lowest RTT sample from the previous and current windows; UINT32_MAX if none
+	                  was recorded */
+	UINT32 rttMinNext; /* lowest RTT sample for the window currently being collected */
+	UINT64 rttMinStart;
+	/* RTT for the reported-loss budget (see report_allowed). Unlike ccRoundStart,
+	 * this is purely time-based and ignores peer traffic. */
+	UINT64 reportRoundStart;
+	UINT32 reportRoundUsed;
 	UINT32 peerWindow;
 	wQueue* sendQueue;
 	UINT32 initialSequence;
@@ -223,6 +388,7 @@ struct rdp_udp
 	BOOL cwrPending;
 	UINT32 announcedAoA;
 	BOOL aoaAnnounced;
+	BOOL peerAcked; /* Indicates whether the peer has acknowledged at least one data datagram */
 	UINT16 nextChannelSeq;
 
 	/* receiving side */
@@ -243,8 +409,12 @@ struct rdp_udp
 	BOOL v3BaseKnown;
 	BOOL v3Resync; /* silent for RDPUDP2_RESYNC_MS: no ACK until an AckOfAcks sets the base */
 	UINT16 v3Expected;
+	UINT64 v3ExpectedFull; /* v3Expected without the 16-bit wrap; it only grows */
 	UINT16 v3Highest;
-	BOOL v3Received[RDPUDP_RECEIVE_SLOTS];
+	/* Per slot, the full sequence number (like v3ExpectedFull) of the data packet that arrived,
+	 * or 0 if empty. Since each slot is stamped with its sequence number, moving the window
+	 * doesn't require clearing for wrap-around; see v3_received. */
+	UINT64 v3Received[RDPUDP_RECEIVE_SLOTS];
 	UINT64 v3Arrival[RDPUDP_RECEIVE_SLOTS]; /* when each data sequence arrived, in ns */
 	UINT64 v3InOrderArrival;                /* when data sequence v3Expected - 1 arrived */
 	BOOL v3InOrderReceived; /* FALSE while v3Expected - 1 is one AckOfAcks gave up on */
@@ -262,6 +432,13 @@ struct rdp_udp
 	size_t v3BehindCount;
 	UINT64 v3BehindArrival;
 	UINT16 v3NextChannel;
+
+	/* Server: send functions and the SYN+ACK used for repeated SYN requests. */
+	BOOL server;
+	rdpUdpSendFn sendFn;
+	void* sendCustom;
+	BYTE synAck[RDPUDP_MTU];
+	size_t synAckLength;
 
 	/* One received datagram. Kept here rather than on the stack, rdpudp_check is not reentrant. */
 	BYTE recvBuffer[0x10000];
@@ -316,6 +493,53 @@ static UINT16 channel_seq_next(UINT16 seq)
 	return (seq == UINT16_MAX) ? 1 : seq16_add(seq, 1);
 }
 
+/* RDP-UDP2 receive slots. A slot stores the full sequence number of the packet that arrived
+ * in it, so a packet 65536 positions later in the same slot is not incorrectly identified
+ * as received. Previously, slots were cleared as the window advanced, and AckOfAcks jumps
+ * of up to 32767 cleared them. */
+
+/* Returns the full sequence number for seq, assuming it lies within half the sequence
+ * space of v3Expected ([MS-RDPEUDP2] 3.1.1.1.3). */
+WINPR_ATTR_NODISCARD
+static UINT64 v3_full(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	const UINT16 ahead = seq16_diff(seq, udp->v3Expected);
+	if (ahead < 0x8000)
+		return udp->v3ExpectedFull + ahead;
+	return udp->v3ExpectedFull - (0x10000u - ahead);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL v3_received(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	return udp->v3Received[seq % RDPUDP_RECEIVE_SLOTS] == v3_full(udp, seq);
+}
+
+/* Returns the arrival time of seq, or 0 if it was not received or the slot was reused. */
+WINPR_ATTR_NODISCARD
+static UINT64 v3_arrival(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	return v3_received(udp, seq) ? udp->v3Arrival[seq % RDPUDP_RECEIVE_SLOTS] : 0;
+}
+
+static void v3_mark_received(rdpUdp* udp, UINT16 seq, UINT64 arrival)
+{
+	WINPR_ASSERT(udp);
+	udp->v3Received[seq % RDPUDP_RECEIVE_SLOTS] = v3_full(udp, seq);
+	udp->v3Arrival[seq % RDPUDP_RECEIVE_SLOTS] = arrival;
+}
+
+/* Advances the lower edge of the receive window to seq; preceding slots do not need clearing. */
+static void v3_set_expected(rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	udp->v3ExpectedFull = v3_full(udp, seq);
+	udp->v3Expected = seq;
+}
+
 /* [MS-RDPEUDP2] has 24 bit little endian fields, wStream has no helper for those */
 static void stream_write_uint24(wStream* s, UINT32 value)
 {
@@ -327,25 +551,88 @@ static void stream_write_uint24(wStream* s, UINT32 value)
 }
 
 WINPR_ATTR_NODISCARD
-static UINT64 now_ms(void)
+static UINT64 now_ns(const rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
+	if (udp->clock)
+		return udp->clock(udp->clockCustom);
+	return winpr_GetTickCount64NS();
+}
+
+WINPR_ATTR_NODISCARD
+static UINT64 now_ms(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (udp->clock)
+		return udp->clock(udp->clockCustom) / 1000000ULL;
 	return GetTickCount64();
 }
 
+/* [MS-RDPEUDP] 3.1.6.1 specifies 500ms for v1 and 300ms for v2. [MS-RDPEUDP2] 3.1.1.2.3
+ * requires a loss timeout exceeding the delayed ACK time (20ms, sent in DelayAckInfo).
+ * Servers typically have an RTT sample from the handshake; otherwise (e.g. SYN+ACK
+ * resent), 300ms is used to prevent premature retransmissions of TLS flights on
+ * long-RTT paths. After the first sample, rto_initial tracks the samples. */
 WINPR_ATTR_NODISCARD
 static UINT32 rto_floor(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
+	if (udp->server)
+		return udp->rttSampled ? 100 : 300;
 	return (udp->version == RDPUDP_PROTOCOL_VERSION_1) ? 500 : 300;
+}
+
+/* Server RTO: srtt + 4 * rttvar ([RFC6298] 2.3), with a minimum variation term.
+ * On LANs, mstsc/Windows retransmit after roughly RTT + 80-90ms, with the margin
+ * increasing with RTT. This floor also accounts for receivers that delay ACKs
+ * (mstsc up to ~70ms). */
+#define RDPUDP2_RTO_MIN_VARIATION_MS 80
+
+WINPR_ATTR_NODISCARD
+static UINT64 rto_base(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	UINT64 rto = 0;
+	if (udp->server && udp->rttSampled)
+	{
+		const UINT64 variation = 4ull * udp->rttvar;
+		const UINT64 margin =
+		    (variation > RDPUDP2_RTO_MIN_VARIATION_MS) ? variation : RDPUDP2_RTO_MIN_VARIATION_MS;
+		rto = udp->srtt + margin;
+	}
+	else
+	{
+		const UINT32 floor = rto_floor(udp);
+		const UINT64 rtt2 = (UINT64)udp->srtt * 2ull;
+		rto = (rtt2 > floor) ? rtt2 : floor;
+	}
+	return rto;
+}
+
+/* RDP-UDP2 backoff cap. If RTT exceeds RDPUDP2_MAX_RTO_MS, the cap is raised
+ * to ensure datagrams aren't retransmitted before their ACKs can arrive. */
+WINPR_ATTR_NODISCARD
+static UINT64 rto_v3_cap(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	const UINT64 base = rto_base(udp);
+	return (base > RDPUDP2_MAX_RTO_MS) ? base : RDPUDP2_MAX_RTO_MS;
 }
 
 WINPR_ATTR_NODISCARD
 static UINT32 rto_initial(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	const UINT32 floor = rto_floor(udp);
-	const UINT64 rtt2 = (UINT64)udp->srtt * 2ull;
-	const UINT64 rto = (rtt2 > floor) ? rtt2 : floor;
+	UINT64 rto = rto_base(udp);
+	if (udp->server)
+	{
+		/* srtt and margin are < 2^35; shift will not overflow 64 bits */
+		WINPR_ASSERT(udp->rtoBackoff <= RDPUDP2_MAX_RTO_BACKOFF);
+		rto <<= udp->rtoBackoff;
+		const UINT64 cap = rto_v3_cap(udp);
+		if (rto > cap)
+			rto = cap;
+	}
 	return (rto > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : WINPR_ASSERTING_INT_CAST(UINT32, rto);
 }
 
@@ -390,8 +677,7 @@ static void rdpudp_fail(rdpUdp* udp, const char* why)
  * retransmit timer recovers, and the peer timeout ends a path that stays broken. A firewall rule
  * that drops the datagram is one of them, send() fails with EPERM then, which WinPR does not map
  * and reports as 0; TCP never sees an error for that, it retransmits. */
-WINPR_ATTR_NODISCARD
-static BOOL rdpudp_socket_error_is_transient(int error)
+BOOL rdpudp_socket_error_is_transient(int error)
 {
 	switch (error)
 	{
@@ -419,6 +705,17 @@ static BOOL rdpudp_send_raw(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data);
+	if (udp->sendFn)
+	{
+		if (!udp->sendFn(udp->sendCustom, data, length))
+		{
+			rdpudp_fail(udp, "sending failed");
+			return FALSE;
+		}
+		udp->lastSent = now_ms(udp);
+		return TRUE;
+	}
+
 	const int rc = _send(udp->sockfd, (const char*)data, WINPR_ASSERTING_INT_CAST(int, length), 0);
 	if (rc < 0)
 	{
@@ -432,7 +729,7 @@ static BOOL rdpudp_send_raw(rdpUdp* udp, const BYTE* data, size_t length)
 		WLog_Print(udp->log, WLOG_DEBUG, "send failed with %d, the datagram counts as lost", error);
 		return TRUE;
 	}
-	udp->lastSent = now_ms();
+	udp->lastSent = now_ms(udp);
 	return TRUE;
 }
 
@@ -475,7 +772,7 @@ static void v3_write_ack(rdpUdp* udp, wStream* s, size_t room)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(s);
-	const UINT64 now = winpr_GetTickCount64NS();
+	const UINT64 now = now_ns(udp);
 	/* A sequence number the peer gave up on never arrived. An older packet's arrival time would
 	 * place its receipt before it was sent, so it is reported as received now. */
 	const UINT64 arrival = udp->v3InOrderReceived ? udp->v3InOrderArrival : now;
@@ -499,7 +796,7 @@ static void v3_write_ack(rdpUdp* udp, wStream* s, size_t room)
 		while (count < limit)
 		{
 			const UINT16 previous = seq16_diff(current, 1);
-			const UINT64 previousArrival = udp->v3Arrival[previous % RDPUDP_RECEIVE_SLOTS];
+			const UINT64 previousArrival = v3_arrival(udp, previous);
 			if (previousArrival == 0)
 				break; /* given up on by AckOfAcks, it never arrived */
 			/* packets that overtook each other count as arriving together */
@@ -598,7 +895,7 @@ static BOOL v3_send_ack_vector(rdpUdp* udp, UINT16 base, const BYTE* vec, size_t
 	    v3_packet_init(&sbuffer, buffer, sizeof(buffer), RDPUDP2_OVERHEADSIZE | RDPUDP2_ACKVEC);
 	if (!s)
 		return FALSE;
-	const UINT64 now = winpr_GetTickCount64NS();
+	const UINT64 now = now_ns(udp);
 	const BYTE control = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | count);
 	/* the Stream_Write macros evaluate their value more than once */
 	const BYTE ackGap = v3_ack_gap(udp->v3LatestArrival, now);
@@ -693,10 +990,10 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	size_t pos = 0;
 	while ((pos < span) && (count < RDPUDP2_MAX_ACKVEC))
 	{
-		const BOOL state = udp->v3Received[seq16_add(base, pos) % RDPUDP_RECEIVE_SLOTS];
+		const BOOL state = v3_received(udp, seq16_add(base, pos));
 		size_t run = 1;
 		while ((pos + run < span) && (run < 63) &&
-		       (udp->v3Received[seq16_add(base, pos + run) % RDPUDP_RECEIVE_SLOTS] == state))
+		       (v3_received(udp, seq16_add(base, pos + run)) == state))
 			run++;
 		if (run >= 7)
 		{
@@ -707,7 +1004,7 @@ static BOOL v3_send_ack(rdpUdp* udp)
 		BYTE bits = 0;
 		for (size_t bit = 0; (bit < 7) && (pos + bit < span); bit++)
 		{
-			if (udp->v3Received[seq16_add(base, pos + bit) % RDPUDP_RECEIVE_SLOTS])
+			if (v3_received(udp, seq16_add(base, pos + bit)))
 				bits |= WINPR_ASSERTING_INT_CAST(BYTE, 1 << bit);
 		}
 		vec[count++] = bits; /* state map, bit 0 first */
@@ -715,7 +1012,7 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	}
 
 	/* when the highest sequence number received arrived */
-	const UINT64 highest = udp->v3Arrival[udp->v3Highest % RDPUDP_RECEIVE_SLOTS];
+	const UINT64 highest = v3_arrival(udp, udp->v3Highest);
 	return v3_send_ack_vector(udp, base, vec, count, highest);
 }
 
@@ -725,26 +1022,128 @@ WINPR_ATTR_NODISCARD
 static UINT32 sender_base(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	UINT32 base = (udp->version == RDPUDP_PROTOCOL_VERSION_3) ? udp->nextCoded : udp->nextSource;
-	BOOL found = FALSE;
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
+	if (udp->inFlight > 0)
+		return udp->sendBase;
+	return (udp->version == RDPUDP_PROTOCOL_VERSION_3) ? udp->nextCoded : udp->nextSource;
+}
+
+/* Server: the keepalive while v3Resync holds back every ACK. Sending nothing would leave the
+ * peer without a datagram: on an idle tunnel one lost keepalive starts the resync, the peer then
+ * hears nothing for RDPUDP2_RESYNC_MS, stops acknowledging as well, and both ends wait for an
+ * AckOfAcks that only data carries until the peer timeout ends the tunnel. An AckOfAcks alone
+ * ([MS-RDPEUDP2] 2.2.1.2.4) names no position of the peer's, so it is safe after a silence, and
+ * it ends the resync of a peer that waits for one. A FreeRDP peer answers each with an ACK
+ * (v3_process_datagram). */
+WINPR_ATTR_NODISCARD
+static BOOL v3_send_base_keepalive(rdpUdp* udp)
+{
+	BYTE buffer[16] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(udp);
+	wStream* s = v3_packet_init(&sbuffer, buffer, sizeof(buffer), RDPUDP2_AOA);
+	if (!s)
+		return FALSE;
+	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
+	Stream_Write_UINT16(s, base); /* AckOfAcks */
+	return v3_send_packet(udp, s, RDPUDP2_PACKET_STANDARD);
+}
+
+/* The sequence number the next new or resent datagram gets */
+WINPR_ATTR_NODISCARD
+static UINT32 next_send_seq(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	return (udp->version == RDPUDP_PROTOCOL_VERSION_3) ? udp->nextCoded : udp->nextSource;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT32 send_seq_add(const rdpUdp* udp, UINT32 seq, size_t n)
+{
+	WINPR_ASSERT(udp);
+	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
+		return seq16_add(WINPR_ASSERTING_INT_CAST(UINT16, seq), n);
+	return seq32_add(seq, WINPR_ASSERTING_INT_CAST(UINT32, n));
+}
+
+WINPR_ATTR_NODISCARD
+static rdpudp_pending* pending_find(rdpUdp* udp, UINT32 seq)
+{
+	WINPR_ASSERT(udp);
+	const UINT16 pos = udp->pendingIndex[seq & 0xFFFF];
+	if (pos == 0)
+		return nullptr;
+	WINPR_ASSERT(pos <= udp->inFlight);
+	rdpudp_pending* p = &udp->pending[pos - 1];
+	return (p->seq == seq) ? p : nullptr;
+}
+
+/* Moves sendBase up to the oldest datagram still in flight. Every datagram in flight lies
+ * between sendBase and the next sequence number, so this ends there at the latest. */
+static void send_base_advance(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (udp->inFlight == 0)
 	{
-		const rdpudp_pending* p = &udp->pending[x];
-		if (!p->used)
-			continue;
-		if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
-		{
-			if (!found || seq16_after(WINPR_ASSERTING_INT_CAST(UINT16, base),
-			                          WINPR_ASSERTING_INT_CAST(UINT16, p->seq)))
-				base = p->seq;
-		}
-		else if (!found || seq32_after(base, p->seq))
-		{
-			base = p->seq;
-		}
-		found = TRUE;
+		udp->sendBase = next_send_seq(udp);
+		return;
 	}
-	return base;
+	while (!pending_find(udp, udp->sendBase))
+	{
+		WINPR_ASSERT(udp->sendBase != next_send_seq(udp));
+		udp->sendBase = send_seq_add(udp, udp->sendBase, 1);
+	}
+}
+
+/* Frees a datagram in flight; the last entry moves into its place. */
+static void pending_remove(rdpUdp* udp, rdpudp_pending* p)
+{
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
+	WINPR_ASSERT(udp->inFlight > 0);
+	const size_t pos = WINPR_ASSERTING_INT_CAST(size_t, p - udp->pending);
+	const size_t last = udp->inFlight - 1;
+	WINPR_ASSERT(pos <= last);
+	udp->pendingIndex[p->seq & 0xFFFF] = 0;
+	pending_clear(p);
+	if (pos != last)
+	{
+		*p = udp->pending[last];
+		memset(&udp->pending[last], 0, sizeof(udp->pending[last]));
+		udp->pendingIndex[p->seq & 0xFFFF] = WINPR_ASSERTING_INT_CAST(UINT16, pos + 1);
+	}
+	udp->inFlight = last;
+	send_base_advance(udp);
+}
+
+/* Earliest time run_timers has to look at the datagrams in flight again */
+static void pending_due_at(rdpUdp* udp, UINT64 at)
+{
+	WINPR_ASSERT(udp);
+	if (at < udp->pendingDue)
+		udp->pendingDue = at;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT64 report_resend_interval(const rdpUdp* udp);
+
+/* The earlier of due and the time run_timers has to act on this datagram */
+WINPR_ATTR_NODISCARD
+static UINT64 pending_next_due(const rdpUdp* udp, const rdpudp_pending* p, UINT64 due)
+{
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
+	if (p->lost)
+		return 0;
+	if (p->due < due)
+		due = p->due;
+	if (p->reportHeld)
+	{
+		const UINT64 at = p->lastSent + report_resend_interval(udp);
+		if (at < due)
+			due = at;
+	}
+	return due;
 }
 
 WINPR_ATTR_NODISCARD
@@ -762,8 +1161,12 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp) &&
 	                     (udp->v3BehindCount == 0) && !udp->v3Resync;
 	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
-	/* repeated on a resend, the first announcement may have been lost with it */
-	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) || (p->retransmits > 0);
+	/* Include AoA on retransmissions if the original announcement was lost, and in all data
+	 * until the peer acknowledges ([MS-RDPEUDP2] 3.1.5.3, matching Windows behavior). The peer
+	 * determines the sequence space start from the first AckOfAcks; otherwise, it uses the
+	 * first arriving datagram and assumes preceding packets were received. */
+	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) ||
+	                     (p->retransmits > 0) || !udp->peerAcked;
 
 	/* Windows sets NOACK on every DATA packet without an ACK */
 	UINT16 flags = RDPUDP2_DATA | RDPUDP2_DELAYACKINFO;
@@ -998,7 +1401,7 @@ static BOOL ack_when_due(rdpUdp* udp)
 	{
 		if ((udp->state != RDPUDP_STATE_ESTABLISHED) || !udp->v3BaseKnown)
 			return TRUE;
-		const UINT64 now = now_ms();
+		const UINT64 now = now_ms(udp);
 		if (udp->v3AckDue == 0)
 			udp->v3AckDue = now + v3_ack_delay(udp);
 		if (now < udp->v3AckDue)
@@ -1025,7 +1428,9 @@ WINPR_ATTR_NODISCARD
 static size_t window_limit(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	size_t limit = RDPUDP_MAX_IN_FLIGHT;
+	if (udp->server)
+		return (udp->cwnd < RDPUDP_MAX_IN_FLIGHT) ? udp->cwnd : RDPUDP_MAX_IN_FLIGHT;
+	size_t limit = RDPUDP_CLIENT_MAX_IN_FLIGHT;
 	if ((udp->version != RDPUDP_PROTOCOL_VERSION_3) && (udp->peerWindow > 0) &&
 	    (udp->peerWindow < limit))
 		limit = udp->peerWindow;
@@ -1038,23 +1443,15 @@ static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data);
-	rdpudp_pending* p = nullptr;
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
-	{
-		if (!udp->pending[x].used)
-		{
-			p = &udp->pending[x];
-			break;
-		}
-	}
-	if (!p)
+	if ((udp->inFlight >= RDPUDP_MAX_IN_FLIGHT) ||
+	    (udp->pendingIndex[next_send_seq(udp) & 0xFFFF] != 0))
 	{
 		free(data);
 		return FALSE;
 	}
+	rdpudp_pending* p = &udp->pending[udp->inFlight];
 
 	/* the pending slot owns the payload from here, pending_clear frees it */
-	p->used = TRUE;
 	p->payload = data;
 	p->length = length;
 	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
@@ -1070,14 +1467,37 @@ static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 		p->seq = udp->nextSource++;
 	}
 
-	const UINT64 now = now_ms();
+	const UINT64 now = now_ms(udp);
 	p->sent = now;
+	if (udp->server)
+		p->lastSent = now;
 	p->rto = rto_initial(udp);
 	p->due = now + p->rto;
 	p->retransmits = 0;
+	p->timeouts = 0;
+	if (udp->inFlight == 0)
+		udp->sendBase = p->seq;
 	udp->inFlight++;
+	udp->pendingIndex[p->seq & 0xFFFF] = WINPR_ASSERTING_INT_CAST(UINT16, udp->inFlight);
+	pending_due_at(udp, p->due);
 
 	return rdpudp_transmit(udp, p);
+}
+
+/* Check if another datagram can be sent without exceeding RDPUDP2_MAX_SPAN from the
+ * oldest unacked packet, and without taking the index entry of one still in flight. */
+WINPR_ATTR_NODISCARD
+static BOOL span_has_room(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (udp->inFlight == 0)
+		return TRUE;
+	if (udp->pendingIndex[next_send_seq(udp) & 0xFFFF] != 0)
+		return FALSE;
+	if (!udp->server)
+		return TRUE;
+	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
+	return seq16_diff(WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded), base) < RDPUDP2_MAX_SPAN;
 }
 
 WINPR_ATTR_NODISCARD
@@ -1085,7 +1505,7 @@ static BOOL flush_send_queue(rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
 	while ((udp->state == RDPUDP_STATE_ESTABLISHED) && (udp->inFlight < window_limit(udp)) &&
-	       (Queue_Count(udp->sendQueue) > 0))
+	       (Queue_Count(udp->sendQueue) > 0) && span_has_room(udp))
 	{
 		rdpudp_chunk* chunk = Queue_Dequeue(udp->sendQueue);
 		if (!chunk)
@@ -1108,7 +1528,6 @@ BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length)
 		return FALSE;
 	if ((udp->state != RDPUDP_STATE_ESTABLISHED) && (udp->state != RDPUDP_STATE_SYN_SENT))
 		return FALSE;
-
 	rdpudp_chunk* chunk = calloc(1, sizeof(rdpudp_chunk));
 	if (!chunk)
 		return FALSE;
@@ -1137,12 +1556,163 @@ static void sample_rtt(rdpUdp* udp, const rdpudp_pending* p)
 	/* Karn: a retransmitted packet says nothing reliable about the round trip */
 	if (p->retransmits > 0)
 		return;
-	const UINT64 sample64 = now_ms() - p->sent;
+	const UINT64 sample64 = now_ms(udp) - p->sent;
 	const UINT32 sample =
 	    (sample64 > UINT32_MAX) ? UINT32_MAX : WINPR_ASSERTING_INT_CAST(UINT32, sample64);
-	udp->srtt = (udp->srtt == 0)
-	                ? sample
-	                : WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)udp->srtt * 7 + sample) / 8);
+	if (!udp->server)
+	{
+		udp->srtt = (udp->srtt == 0)
+		                ? sample
+		                : WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)udp->srtt * 7 + sample) / 8);
+		return;
+	}
+	udp->rtoBackoff = 0;
+	if (sample < udp->rttMin)
+		udp->rttMin = sample;
+	if (sample < udp->rttMinNext)
+		udp->rttMinNext = sample;
+	if (now_ms(udp) - udp->rttMinStart >= RDPUDP2_RTT_MIN_WINDOW_MS)
+	{
+		/* Update minimum RTT to avoid comparing against stale values if the route slows down. */
+		udp->rttMin = udp->rttMinNext;
+		udp->rttMinNext = UINT32_MAX;
+		udp->rttMinStart = now_ms(udp);
+	}
+	if (!udp->rttSampled)
+	{
+		/* Initialize SRTT and RTTVAR according to RFC 6298, Section 2.2 */
+		udp->srtt = sample;
+		udp->rttvar = sample / 2;
+		udp->rttSampled = TRUE;
+		return;
+	}
+	/* [RFC6298] 2.3: Update the RTT variation first, using the previous smoothed RTT. */
+	const UINT32 delta = (udp->srtt > sample) ? udp->srtt - sample : sample - udp->srtt;
+	udp->rttvar = WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)udp->rttvar * 3 + delta) / 4);
+	udp->srtt = WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)udp->srtt * 7 + sample) / 8);
+}
+
+/* Check if smoothed RTT indicates queue buildup on the path. */
+WINPR_ATTR_NODISCARD
+static BOOL cc_queue_is_building(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (!udp->rttSampled || (udp->rttMin == UINT32_MAX))
+		return FALSE;
+	/* Use variation to widen the allowance, as jitter can cause samples to drop far below
+	 * the smoothed value. */
+	UINT64 allowance =
+	    (udp->rttMin / 2 > RDPUDP2_QUEUE_DELAY_MS) ? udp->rttMin / 2 : RDPUDP2_QUEUE_DELAY_MS;
+	if (4ull * udp->rttvar > allowance)
+		allowance = 4ull * udp->rttvar;
+	return udp->srtt > udp->rttMin + allowance;
+}
+
+/* End the current round after one smoothed RTT; shrink window to 70% if congestion was
+ * detected. */
+static void cc_round(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	const UINT64 now = now_ms(udp);
+	const UINT32 rtt = (udp->srtt > 0) ? udp->srtt : rto_floor(udp);
+	if (udp->ccRoundStart == 0)
+		udp->ccRoundStart = now;
+	if (now - udp->ccRoundStart < rtt)
+		return;
+
+	/* Use 64-bit sum to prevent overflow. */
+	const UINT64 total = (UINT64)udp->ccRoundAcked + udp->ccRoundLost;
+	BOOL lossy = FALSE;
+	if (total >= RDPUDP2_ROUND_MIN_SAMPLES)
+	{
+		/* Congested only when loss is high and rose above the smoothed loss of earlier
+		 * rounds: a steady background loss is repaired, not a reason to slow down. */
+		const UINT32 loss = WINPR_ASSERTING_INT_CAST(UINT32, udp->ccRoundLost * 1000ull / total);
+		lossy = (loss >= RDPUDP2_CONGESTED_LOSS_PERCENT * 10u) &&
+		        (loss >= udp->ccLossAvg + RDPUDP2_LOSS_RISE_PERCENT * 10u);
+		const INT64 delta = (INT64)loss - (INT64)udp->ccLossAvg;
+		udp->ccLossAvg = WINPR_ASSERTING_INT_CAST(
+		    UINT32, (INT64)udp->ccLossAvg + delta / (1 << RDPUDP2_LOSS_AVG_SHIFT));
+	}
+	const BOOL queued = cc_queue_is_building(udp);
+	if (lossy || queued)
+	{
+		const UINT32 reduced = WINPR_ASSERTING_INT_CAST(UINT32, udp->cwnd * 7ull / 10);
+		udp->ssthresh = (reduced > RDPUDP2_MIN_CWND) ? reduced : RDPUDP2_MIN_CWND;
+		udp->cwnd = udp->ssthresh;
+		udp->ccAcked = 0;
+		WLog_Print(udp->log, WLOG_DEBUG,
+		           "congestion (%" PRIu32 " of %" PRIu64 " lost, round trip %" PRIu32
+		           " ms, lowest %" PRIu32 " ms), congestion window %" PRIu32,
+		           udp->ccRoundLost, total, udp->srtt, udp->rttMin, udp->cwnd);
+	}
+	if ((udp->reorderThreshold > RDPUDP2_REORDER_THRESHOLD) &&
+	    (++udp->reorderCalmRounds >= RDPUDP2_REORDER_DECAY_ROUNDS))
+	{
+		udp->reorderThreshold--;
+		udp->reorderCalmRounds = 0;
+	}
+	udp->ccRoundStart = now;
+	udp->ccRoundAcked = 0;
+	udp->ccRoundLost = 0;
+}
+
+static void cc_on_ack(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	udp->ccRoundAcked++;
+	if (udp->cwnd < udp->ssthresh)
+		udp->cwnd++;
+	else if (!cc_queue_is_building(udp) && (++udp->ccAcked >= RDPUDP2_GROWTH_ACKS))
+	{
+		udp->ccAcked = 0;
+		udp->cwnd++;
+	}
+	if (udp->cwnd > RDPUDP_MAX_IN_FLIGHT)
+		udp->cwnd = RDPUDP_MAX_IN_FLIGHT;
+	cc_round(udp);
+}
+
+/* Record a missing or timed-out datagram for the current round. */
+static void cc_on_loss(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	udp->ccRoundLost++;
+	cc_round(udp);
+}
+
+/* Server: duration a chunk is exempt from reports after sending, and the duration of the
+ * report-driven retransmit budget. */
+WINPR_ATTR_NODISCARD
+static UINT64 report_resend_interval(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	return (udp->srtt > RDPUDP2_REPORT_MIN_ROUND_MS) ? udp->srtt : RDPUDP2_REPORT_MIN_ROUND_MS;
+}
+
+/* Server: mark reported chunk as lost if the round trip budget allows; otherwise, keep
+ * pending for the next vector or timer. Only marking triggers cc_on_loss, ensuring loss
+ * is counted once per retransmit. Held-back chunks are counted when acted upon;
+ * duplicate reports are ignored. */
+static void handle_reported_loss(rdpUdp* udp, rdpudp_pending* p)
+{
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
+	const UINT64 now = now_ms(udp);
+	if (now - udp->reportRoundStart >= report_resend_interval(udp))
+	{
+		udp->reportRoundStart = now;
+		udp->reportRoundUsed = 0;
+	}
+	const UINT32 share = udp->cwnd / 4;
+	const UINT32 budget = (share > RDPUDP2_REPORT_MIN_BUDGET) ? share : RDPUDP2_REPORT_MIN_BUDGET;
+	p->reportHeld = FALSE;
+	if (udp->reportRoundUsed >= budget)
+		return;
+	udp->reportRoundUsed++;
+	p->lost = TRUE;
+	pending_due_at(udp, 0);
+	cc_on_loss(udp);
 }
 
 static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
@@ -1150,20 +1720,18 @@ static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(p);
 	sample_rtt(udp, p);
-	pending_clear(p);
-	if (udp->inFlight > 0)
-		udp->inFlight--;
+	pending_remove(udp, p);
+	udp->peerAcked = TRUE;
+	if (udp->server)
+		cc_on_ack(udp);
 }
 
 static void acknowledge_seq(rdpUdp* udp, UINT32 seq)
 {
 	WINPR_ASSERT(udp);
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
-	{
-		rdpudp_pending* p = &udp->pending[x];
-		if (p->used && (p->seq == seq))
-			acknowledge(udp, p);
-	}
+	rdpudp_pending* p = pending_find(udp, seq);
+	if (p)
+		acknowledge(udp, p);
 }
 
 /* ------------------------------------------------------------------------------------------ */
@@ -1174,7 +1742,7 @@ WINPR_ATTR_NODISCARD
 static BOOL deliver(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
-	udp->lastDelivery = now_ms();
+	udp->lastDelivery = now_ms(udp);
 	if (length == 0)
 		return TRUE;
 	WINPR_ASSERT(data);
@@ -1213,7 +1781,7 @@ static BOOL store_slot(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t length)
 	slot->seq = seq;
 	slot->present = TRUE;
 	if (udp->buffered++ == 0)
-		udp->bufferingSince = now_ms();
+		udp->bufferingSince = now_ms(udp);
 	return TRUE;
 }
 
@@ -1372,13 +1940,11 @@ static BOOL v1_process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 static void v3_advance_window(rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	while (udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS])
+	while (v3_received(udp, udp->v3Expected))
 	{
-		const size_t slot = udp->v3Expected % RDPUDP_RECEIVE_SLOTS;
-		udp->v3InOrderArrival = udp->v3Arrival[slot];
+		udp->v3InOrderArrival = v3_arrival(udp, udp->v3Expected);
 		udp->v3InOrderReceived = TRUE;
-		udp->v3Received[slot] = FALSE;
-		udp->v3Expected++;
+		v3_set_expected(udp, seq16_add(udp->v3Expected, 1));
 	}
 }
 
@@ -1391,14 +1957,31 @@ static void v3_resync_base(rdpUdp* udp, UINT16 base)
 {
 	WINPR_ASSERT(udp);
 	udp->v3Resync = FALSE;
+	/* Server: a base slightly behind ours indicates the peer's sequence numbers haven't wrapped,
+	 * meaning our current position is still valid. The discrepancy likely stems from lost
+	 * ACKs during the silence or a reordered/duplicate packet. Moving the window back to this
+	 * base would place it below what was already acknowledged, which causes mstsc to drop the
+	 * connection upon the next ACK vector. A legitimate move wouldn't land here because the
+	 * peer keeps numbers within RDPUDP2_STALE_AOA_REACH of the oldest unacknowledged one,
+	 * and timeouts occur before the sequence space can wrap. The window remains, and
+	 * acknowledging resumes. */
+	if (udp->server && seq16_after(udp->v3Expected, base) &&
+	    (seq16_diff(udp->v3Expected, base) <= RDPUDP2_STALE_AOA_REACH))
+	{
+		udp->ackPending = TRUE;
+		udp->v3WindowPending = TRUE;
+		return;
+	}
 	if (base == udp->v3Expected)
 		return;
 
 	WLog_Print(udp->log, WLOG_DEBUG,
 	           "heard from the peer again, its AckOfAcks 0x%04" PRIx16 " replaces 0x%04" PRIx16,
 	           base, udp->v3Expected);
+	/* Rare (once per silence). The base may move either way, so we reset the slots. */
 	memset(udp->v3Received, 0, sizeof(udp->v3Received));
 	memset(udp->v3Arrival, 0, sizeof(udp->v3Arrival));
+	udp->v3ExpectedFull += 0x10000;
 	udp->v3Expected = base;
 	udp->v3Highest = seq16_diff(base, 1);
 	udp->v3InOrderReceived = FALSE;
@@ -1432,16 +2015,12 @@ static void v3_advance_base(rdpUdp* udp, UINT16 base)
 	if (!seq16_after(base, udp->v3Expected))
 		return;
 
-	/* The peer stopped resending everything below base. This only gives up transport sequence
-	 * numbers: a chunk of the stream sent there comes back under a later one, with its channel
-	 * sequence number unchanged. */
-	while (udp->v3Expected != base)
-	{
-		const size_t slot = udp->v3Expected % RDPUDP_RECEIVE_SLOTS;
-		udp->v3Received[slot] = FALSE;
-		udp->v3Arrival[slot] = 0; /* never arrived, no arrival gap to report for it */
-		udp->v3Expected++;
-	}
+	/* The peer has stopped resending all packets below the base. This only discards transport
+	 * sequence numbers; any stream data sent in that range that is resent will use a later
+	 * transport sequence number, while its channel sequence number remains unchanged. Slots
+	 * below the base retain their stamps, but since no number in the current window can
+	 * match them, nothing is explicitly cleared regardless of how far the base moves. */
+	v3_set_expected(udp, base);
 	udp->v3InOrderReceived = FALSE;
 	const UINT16 last = seq16_diff(base, 1);
 	if (seq16_after(last, udp->v3Highest))
@@ -1451,56 +2030,184 @@ static void v3_advance_base(rdpUdp* udp, UINT16 base)
 	udp->v3WindowPending = TRUE;
 }
 
+/* The data sequence number of the last datagram this end sent. Only data packets take one, all
+ * from nextCoded. */
+WINPR_ATTR_NODISCARD
+static UINT16 v3_last_sent(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	return seq16_diff(WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded), 1);
+}
+
+/* TRUE if seq is past the last datagram this end sent. */
+WINPR_ATTR_NODISCARD
+static BOOL v3_not_sent(const rdpUdp* udp, UINT16 seq)
+{
+	return seq16_after(seq, v3_last_sent(udp));
+}
+
+/* Returns TRUE if seq is between sendBase and the next sequence number, with datagrams in
+ * flight. Unlike serial arithmetic this is exact, because everything in flight lies within
+ * RDPUDP2_MAX_RESEND_SPAN. */
+WINPR_ATTR_NODISCARD
+static BOOL v3_from_send_base(const rdpUdp* udp, UINT16 seq)
+{
+	WINPR_ASSERT(udp);
+	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, udp->sendBase);
+	return seq16_diff(seq, base) <=
+	       seq16_diff(WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded), base);
+}
+
 static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t count)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(s);
-	UINT16 seq = base;
+	/* count is from the wire, bounded by the 7-bit codedAckVecSize; v3_process_datagram
+	 * verified the available bytes. */
+	WINPR_ASSERT(count <= RDPUDP2_MAX_ACKVEC);
+	WINPR_ASSERT(Stream_GetRemainingLength(s) >= count);
+
+	/* 127 entries; each covers up to 63 (run length) or 7 (state map) datagrams. */
+	BYTE received[RDPUDP2_MAX_ACKVEC * 63] = WINPR_C_ARRAY_INIT;
+	size_t covered = 0;
+	size_t highest = 0; /* The index one past the last datagram reported as received */
 	for (size_t x = 0; x < count; x++)
 	{
 		const BYTE entry = Stream_Get_UINT8(s);
 		if (entry & 0x80)
 		{
 			/* run length: received flag and length */
-			const BOOL received = (entry & 0x40) != 0;
+			const BOOL got = (entry & 0x40) != 0;
 			const BYTE run = entry & 0x3F;
-			for (BYTE y = 0; y < run; y++)
+			for (BYTE y = 0; (y < run) && (covered < ARRAYSIZE(received)); y++)
 			{
-				if (received)
-					acknowledge_seq(udp, seq);
-				seq++;
+				received[covered++] = got ? 1 : 0;
+				if (got)
+					highest = covered;
 			}
 		}
 		else
 		{
 			/* state map of 7 packets, bit 0 first */
-			for (BYTE bit = 0; bit < 7; bit++)
+			for (BYTE bit = 0; (bit < 7) && (covered < ARRAYSIZE(received)); bit++)
 			{
-				if (entry & (1 << bit))
-					acknowledge_seq(udp, seq);
-				seq++;
+				const BOOL got = (entry & (1 << bit)) != 0;
+				received[covered++] = got ? 1 : 0;
+				if (got)
+					highest = covered;
 			}
 		}
 	}
 
-	/* everything below the base has been received */
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
+	if (udp->server)
 	{
-		rdpudp_pending* p = &udp->pending[x];
-		if (p->used && seq16_after(base, WINPR_ASSERTING_INT_CAST(UINT16, p->seq)))
+		/* A real peer only reports datagrams this end sent, whatever loss or reordering did to
+		 * them, so a base or a received entry past the last one sent is forged. */
+		const UINT16 last = v3_last_sent(udp);
+		const size_t sentFromBase = seq16_after(base, last) ? 0 : seq16_diff(last, base) + 1u;
+		if (v3_not_sent(udp, seq16_diff(base, 1)) || (highest > sentFromBase))
+		{
+			WLog_Print(udp->log, WLOG_DEBUG,
+			           "ignoring an ACK vector at base 0x%04" PRIx16
+			           " that reports datagrams never sent (last sent 0x%04" PRIx16 ")",
+			           base, last);
+			return;
+		}
+	}
+
+	/* All packets below the base are received, unless the vector reports the base as received.
+	 * The base is typically the receiver's first missing packet ([MS-RDPEUDP2] 3.1.5.7).
+	 * If the base is reported as received, it may be a report on a packet behind the
+	 * receiver's window (sent by FreeRDP clients, see v3_process_datagram and 4.2.2),
+	 * which says nothing about packets below it. After silence, this may refer to a
+	 * stale window. For servers, this doesn't apply if the base is behind all in-flight
+	 * packets (see v3_process_ack). */
+	const BOOL baseIsMissing = (covered == 0) || !received[0];
+	const BOOL baseInRange =
+	    baseIsMissing && (!udp->server || (udp->inFlight == 0) || v3_from_send_base(udp, base));
+	while (baseInRange && (udp->inFlight > 0) &&
+	       seq16_after(base, WINPR_ASSERTING_INT_CAST(UINT16, udp->sendBase)))
+		acknowledge(udp, pending_find(udp, udp->sendBase));
+
+	const size_t sent = seq16_diff(WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded), base);
+	for (size_t offset = 0; (offset < covered) && (offset < sent) && (udp->inFlight > 0); offset++)
+	{
+		rdpudp_pending* p = pending_find(udp, seq16_add(base, offset));
+		if (!p)
+			continue;
+		if (received[offset])
 			acknowledge(udp, p);
+		else if (udp->server && (highest > offset + udp->reorderThreshold) && !p->lost)
+		{
+			/* Missing despite later datagrams arriving, so it's lost. Retransmit now, or after
+			 * one report round since last send. */
+			if (now_ms(udp) - p->lastSent >= report_resend_interval(udp))
+				handle_reported_loss(udp, p);
+			else
+			{
+				p->reportHeld = TRUE;
+				pending_due_at(udp, p->lastSent + report_resend_interval(udp));
+			}
+		}
+	}
+
+	if (!udp->server)
+		return;
+
+	/* The original copy of a retransmitted datagram arrived; it was delayed, not lost. */
+	const UINT64 vectorTime = now_ms(udp);
+	for (size_t x = 0; x < RDPUDP2_RESENT_HISTORY; x++)
+	{
+		if (!udp->resent[x].valid)
+			continue;
+		const UINT16 seq = udp->resent[x].seq;
+		if (seq16_after(base, seq) || (vectorTime - udp->resent[x].at > RDPUDP2_RESENT_MAX_AGE_MS))
+		{
+			udp->resent[x].valid = FALSE;
+			continue;
+		}
+		const size_t offset = seq16_diff(seq, base);
+		if ((offset >= covered) || !received[offset])
+			continue;
+		udp->resent[x].valid = FALSE;
+		if (udp->ccRoundLost > 0)
+			udp->ccRoundLost--;
+		if (!udp->resent[x].reported)
+			continue;
+		if (udp->reorderThreshold < RDPUDP2_MAX_REORDER_THRESHOLD)
+		{
+			udp->reorderThreshold *= 2;
+			if (udp->reorderThreshold > RDPUDP2_MAX_REORDER_THRESHOLD)
+				udp->reorderThreshold = RDPUDP2_MAX_REORDER_THRESHOLD;
+			WLog_Print(udp->log, WLOG_DEBUG,
+			           "datagram 0x%04" PRIx16
+			           " arrived after its resend, reordering threshold: %" PRIu32,
+			           seq, udp->reorderThreshold);
+		}
+		udp->reorderCalmRounds = 0;
 	}
 }
 
 static void v3_process_ack(rdpUdp* udp, UINT16 ack)
 {
 	WINPR_ASSERT(udp);
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
+	/* a real peer cannot acknowledge a datagram this end never sent */
+	if (udp->server && v3_not_sent(udp, ack))
 	{
-		rdpudp_pending* p = &udp->pending[x];
-		if (p->used && !seq16_after(WINPR_ASSERTING_INT_CAST(UINT16, p->seq), ack))
-			acknowledge(udp, p);
+		WLog_Print(udp->log, WLOG_DEBUG,
+		           "ignoring an ACK of 0x%04" PRIx16 ", past the last datagram sent 0x%04" PRIx16,
+		           ack, v3_last_sent(udp));
+		return;
 	}
+	/* ACKs preceding all in-flight packets are ignored. If an ACK is more than half the sequence
+	 * space behind sendBase, wrap-around arithmetic could misinterpret it as being ahead,
+	 * incorrectly acknowledging packets the peer never received. */
+	if (udp->server && (udp->inFlight > 0) && !v3_from_send_base(udp, ack))
+		return;
+	/* cumulative: everything up to and including ack */
+	while ((udp->inFlight > 0) &&
+	       !seq16_after(WINPR_ASSERTING_INT_CAST(UINT16, udp->sendBase), ack))
+		acknowledge(udp, pending_find(udp, udp->sendBase));
 }
 
 /* Hands up the chunks that are next in the stream, in channel sequence order. */
@@ -1532,6 +2239,8 @@ static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 channelSeq, const BYTE* 
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(!udp->server || (length <= RDPUDP_MAX_CHUNK));
+
 	/* A retransmission travels under a new data sequence number with its original channel
 	 * sequence, so the channel sequence alone says where a chunk belongs and whether it has
 	 * been handed up already. */
@@ -1659,10 +2368,33 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	if (haveAoA)
 		v3_advance_base(udp, aoa);
 
+	/* An AckOfAcks with nothing else is the keepalive of a peer that has not heard from this end
+	 * for RDPUDP2_RESYNC_MS (v3_send_base_keepalive), and is close to its peer timeout. It gets
+	 * an ACK now instead of with the next keepalive: one answer every keepalive interval could
+	 * come too late, or be the one datagram that is lost. */
+	if (haveAoA && !haveData && !(flags & (RDPUDP2_ACK | RDPUDP2_ACKVEC)) && udp->v3BaseKnown &&
+	    !udp->v3Resync)
+	{
+		udp->ackPending = TRUE;
+		udp->v3WindowPending = TRUE;
+	}
+
 	if (!haveData)
 		return TRUE;
 
-	udp->v3LatestArrival = winpr_GetTickCount64NS();
+	/* The receiver cannot take more: the packet counts as lost and the peer resends it. */
+	if (udp->receiveHold)
+		return TRUE;
+
+	/* Server: The base is derived only from AckOfAcks. Before version 3.34, FreeRDP clients
+	 * sent AckOfAcks only on the first data packet and resends (now they repeat it until
+	 * acknowledged, see v3_send_data). Using a later packet as the base could cause a lost
+	 * first packet to be below the base, leading to a false cumulative ACK. Ignoring the
+	 * packet ensures it is resent with an AckOfAcks. */
+	if (udp->server && !udp->v3BaseKnown && !haveAoA)
+		return TRUE;
+
+	udp->v3LatestArrival = now_ns(udp);
 	udp->v3UnackedPackets++;
 	udp->receivedData = TRUE;
 	if (!udp->v3BaseKnown)
@@ -1690,7 +2422,44 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	 * packet itself. The peer has the acknowledgments for everything below its AckOfAcks, the
 	 * receiver does not report those again (2.2.1.2.4), and Windows ends the connection on an ACK
 	 * vector for such a packet. Only its chunk counts. */
-	const BOOL acknowledged = haveAoA && seq16_after(aoa, dataSeq);
+	BOOL acknowledged = haveAoA && seq16_after(aoa, dataSeq);
+
+	/* mstsc sometimes resends old data packets and closes the connection if it receives an ACK
+	 * vector for a packet already covered by a cumulative ACK. To avoid this, the server does
+	 * not report packets behind its window. If the server's state becomes incorrect after a
+	 * silence, it waits for the next AckOfAcks to resync. An ACK vector based on a stale
+	 * window could falsely indicate that unseen packets arrived (as v3_process_ack_vector
+	 * treats everything below the base as received). Unacknowledged, the packet will be
+	 * resent with an AckOfAcks. */
+	if (udp->server && behind)
+	{
+		WLog_Print(udp->log, WLOG_DEBUG,
+		           "data packet 0x%04" PRIx16 " is behind the window at 0x%04" PRIx16
+		           ", skipping ACK vector",
+		           dataSeq, udp->v3Expected);
+		acknowledged = TRUE;
+	}
+
+	if (udp->server && (packetType != RDPUDP2_PACKET_DUMMY) && (Stream_GetRemainingLength(s) >= 2))
+	{
+		/* The server validates the chunk before marking the packet for ACK or ACK vector, as the
+		 * peer never resends acked packets. Chunks out of reach wait for retransmission. Oversized
+		 * chunks are dropped as if lost; this prevents a single spoofed datagram from killing the
+		 * connection, while a client repeatedly sending them will stall its own stream until the
+		 * stall check triggers. */
+		UINT16 nextChannel = 0;
+		Stream_Peek_UINT16(s, nextChannel); /* Peek the channel sequence number */
+		const UINT16 chunkAhead = seq16_diff(nextChannel, udp->v3NextChannel);
+		if ((chunkAhead >= udp->chunkReach) && (chunkAhead < 0x8000))
+			return TRUE;
+		if (Stream_GetRemainingLength(s) > 2ull + RDPUDP_MAX_CHUNK)
+		{
+			WLog_Print(udp->log, WLOG_DEBUG, "discarding a chunk of %" PRIuz " bytes",
+			           Stream_GetRemainingLength(s) - 2);
+			return TRUE;
+		}
+	}
+
 	if (behind && !acknowledged)
 	{
 		/* a run of consecutive ones goes in one ACK vector, see v3_send_ack */
@@ -1726,7 +2495,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 		 * peer sends it again: acknowledged, it would be gone for good. */
 		channelSeq = Stream_Get_UINT16(s); /* ChannelSeqNum */
 		const UINT16 chunkAhead = seq16_diff(channelSeq, udp->v3NextChannel);
-		if ((chunkAhead >= RDPUDP_RECEIVE_REACH) && (chunkAhead < 0x8000))
+		if ((chunkAhead >= udp->chunkReach) && (chunkAhead < 0x8000))
 			return TRUE;
 	}
 
@@ -1734,8 +2503,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 	{
 		if (seq16_after(dataSeq, udp->v3Highest))
 			udp->v3Highest = dataSeq;
-		udp->v3Received[dataSeq % RDPUDP_RECEIVE_SLOTS] = TRUE;
-		udp->v3Arrival[dataSeq % RDPUDP_RECEIVE_SLOTS] = udp->v3LatestArrival;
+		v3_mark_received(udp, dataSeq, udp->v3LatestArrival);
 		v3_advance_window(udp);
 	}
 
@@ -1777,7 +2545,7 @@ static BOOL send_syn(rdpUdp* udp)
 	if (version == RDPUDP_PROTOCOL_VERSION_3)
 		Stream_Write(s, udp->cookieHash, sizeof(udp->cookieHash));
 
-	udp->synSent = now_ms();
+	udp->synSent = now_ms(udp);
 	udp->synAttempts++;
 	WLog_Print(udp->log, WLOG_DEBUG, "sending SYN #%" PRIu32 " offering version 0x%04" PRIx16,
 	           udp->synAttempts, version);
@@ -1854,7 +2622,7 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 	udp->recvNext = seq32_add(peerInitial, 1);
 	udp->recvHighest = peerInitial;
 	udp->ackVectorStart = seq32_add(peerInitial, 1);
-	udp->lastDelivery = now_ms();
+	udp->lastDelivery = now_ms(udp);
 	udp->state = RDPUDP_STATE_ESTABLISHED;
 
 	if (version == RDPUDP_PROTOCOL_VERSION_3)
@@ -1882,12 +2650,62 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 	return flush_send_queue(udp);
 }
 
+/* A SYN datagram has snSourceAck = -1 and the SYN flag set without ACK. No RDP-UDP2 data
+ * phase datagram begins with four 0xFF bytes followed by these flags. */
+WINPR_ATTR_NODISCARD
+static BOOL is_syn(const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(data || (length == 0));
+	if (length < 8)
+		return FALSE;
+	const UINT16 flags = WINPR_ASSERTING_INT_CAST(UINT16, (data[6] << 8) | data[7]);
+	return (data[0] == 0xFF) && (data[1] == 0xFF) && (data[2] == 0xFF) && (data[3] == 0xFF) &&
+	       ((flags & (RDPUDP_FLAG_SYN | RDPUDP_FLAG_ACK)) == RDPUDP_FLAG_SYN);
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL process_datagram(rdpUdp* udp, BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data);
-	const UINT64 now = now_ms();
+
+	/* The client missed our SYN+ACK and resent its SYN. Since SYNs are padded to the MTU
+	 * ([MS-RDPEUDP] 3.1.5.1.1), a genuine SYN is never shorter than our reply; shorter packets
+	 * may be from a spoofed source attempting to induce asymmetric traffic. */
+	if (udp->server && is_syn(data, length))
+	{
+		if (length < udp->synAckLength)
+		{
+			WLog_Print(udp->log, WLOG_DEBUG, "discarding a duplicate SYN shorter than the MTU");
+			return TRUE;
+		}
+		WLog_Print(udp->log, WLOG_DEBUG, "received duplicate SYN, re-sending SYN+ACK");
+		udp->synAckResent = TRUE;
+		return rdpudp_send_raw(udp, udp->synAck, udp->synAckLength);
+	}
+
+	const UINT64 now = now_ms(udp);
+	if (udp->server && (udp->synAckSent != 0))
+	{
+		/* [RFC6298] 2.2: the first datagram after the SYN+ACK provides the initial RTT sample.
+		 * Without it, the first retransmission timer uses the minimum value, which may cause
+		 * premature retransmissions of initial TLS flights on slow paths. Per Karn's algorithm,
+		 * no sample is taken if the SYN+ACK was resent. Any datagram from the client's address is
+		 * used, even if invalid; the sample is clamped between 1 ms and
+		 * RDPUDP2_HANDSHAKE_RTT_MAX_MS, with subsequent data samples providing corrections. */
+		if (!udp->synAckResent && !udp->rttSampled && (now >= udp->synAckSent))
+		{
+			UINT64 sample = now - udp->synAckSent;
+			if (sample < 1)
+				sample = 1;
+			if (sample > RDPUDP2_HANDSHAKE_RTT_MAX_MS)
+				sample = RDPUDP2_HANDSHAKE_RTT_MAX_MS;
+			udp->srtt = WINPR_ASSERTING_INT_CAST(UINT32, sample);
+			udp->rttvar = udp->srtt / 2;
+			udp->rttSampled = TRUE;
+		}
+		udp->synAckSent = 0;
+	}
 	v3_note_silence(udp, now);
 	udp->lastReceived = now;
 
@@ -1912,7 +2730,7 @@ WINPR_ATTR_NODISCARD
 static BOOL run_timers(rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	const UINT64 now = now_ms();
+	const UINT64 now = now_ms(udp);
 
 	if (udp->state == RDPUDP_STATE_SYN_SENT)
 	{
@@ -1932,8 +2750,8 @@ static BOOL run_timers(rdpUdp* udp)
 	const BOOL v3 = udp->version == RDPUDP_PROTOCOL_VERSION_3;
 	if (now - udp->lastReceived > (v3 ? RDPUDP2_PEER_TIMEOUT_MS : RDPUDP_PEER_TIMEOUT_MS))
 	{
-		rdpudp_fail(udp, v3 ? "nothing heard from the server for 16 seconds"
-		                    : "nothing heard from the server for 65 seconds");
+		rdpudp_fail(udp, v3 ? "nothing heard from the peer for 16 seconds"
+		                    : "nothing heard from the peer for 65 seconds");
 		return FALSE;
 	}
 	v3_note_silence(udp, now);
@@ -1943,31 +2761,100 @@ static BOOL run_timers(rdpUdp* udp)
 	    (udp->bufferingSince > udp->lastDelivery) ? udp->bufferingSince : udp->lastDelivery;
 	if ((udp->buffered > 0) && (now - progress > RDPUDP_STALL_TIMEOUT_MS))
 	{
-		rdpudp_fail(udp, "the stream is stuck behind a chunk the server no longer resends");
+		rdpudp_fail(udp, "the stream is stuck behind a chunk the peer no longer resends");
 		return FALSE;
 	}
 
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
+	/* [RFC6298] 5.5: double the timeout once per expiry. If every timing-out datagram counted, a
+	 * single loss burst would max out the backoff and cause excessive wait times. */
+	BOOL backedOff = FALSE;
+	/* Datagrams in flight are only looked at once one of them is due. */
+	const BOOL scan = (now >= udp->pendingDue);
+	UINT64 nextDue = UINT64_MAX;
+	for (size_t x = 0; scan && (x < udp->inFlight); x++)
 	{
 		rdpudp_pending* p = &udp->pending[x];
-		if (!p->used || (now < p->due))
-			continue;
-		if (p->retransmits >= (v3 ? RDPUDP2_MAX_RETRANSMITS : RDPUDP_MAX_RETRANSMITS))
+		if (p->reportHeld && (now - p->lastSent >= report_resend_interval(udp)))
+			handle_reported_loss(udp, p);
+		if ((now < p->due) && !p->lost)
 		{
-			rdpudp_fail(udp, "a datagram went unacknowledged too many times");
-			return FALSE;
+			nextDue = pending_next_due(udp, p, nextDue);
+			continue;
+		}
+		/* Resends use new sequence numbers. If the gap between the newest and oldest in-flight
+		 * packets reaches the limit, the oldest is resent first to advance sendBase; others
+		 * are handled in the next scan, which occurs immediately. */
+		if (udp->server && v3 && (p->seq != udp->sendBase) &&
+		    (seq16_diff(WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded),
+		                WINPR_ASSERTING_INT_CAST(UINT16, udp->sendBase)) >=
+		     RDPUDP2_MAX_RESEND_SPAN))
+		{
+			rdpudp_pending* oldest = pending_find(udp, udp->sendBase);
+			WINPR_ASSERT(oldest);
+			oldest->lost = TRUE;
+			nextDue = 0;
+			continue;
+		}
+		const BOOL reported = p->lost;
+		if (p->lost)
+		{
+			/* Reported missing: retransmit immediately without increasing RTO. Reordering may cause
+			 * repeated reports, so this doesn't count toward the limit; peer timeout and stall
+			 * checks handle dead connections. */
+			p->lost = FALSE;
+		}
+		else
+		{
+			if (p->timeouts >= (v3 ? RDPUDP2_MAX_RETRANSMITS : RDPUDP_MAX_RETRANSMITS))
+			{
+				rdpudp_fail(udp, "a datagram went unacknowledged too many times");
+				return FALSE;
+			}
+			p->timeouts++;
+			UINT64 maxRto = v3 ? rto_v3_cap(udp) : RDPUDP_MAX_RTO_MS;
+			if (maxRto > RDPUDP_MAX_RTO_MS)
+				maxRto = RDPUDP_MAX_RTO_MS;
+			p->rto =
+			    (p->rto * 2ull > maxRto) ? WINPR_ASSERTING_INT_CAST(UINT32, maxRto) : p->rto * 2;
+			if (udp->server)
+			{
+				if (!backedOff && (udp->rtoBackoff < RDPUDP2_MAX_RTO_BACKOFF))
+					udp->rtoBackoff++;
+				backedOff = TRUE;
+				cc_on_loss(udp);
+			}
 		}
 		p->retransmits++;
-		p->rto = (p->rto * 2 > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : p->rto * 2;
 		p->due = now + p->rto;
+		if (udp->server)
+		{
+			p->lastSent = now;
+			p->reportHeld = FALSE;
+		}
 		if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 		{
 			/* [MS-RDPEUDP2] 3.1.5.1.3: a lost packet is resent under a new data sequence
 			 * number, the channel sequence number stays. The AckOfAcks then moves past the
 			 * old one, so the peer stops waiting for it. */
 			const UINT16 coded = WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded);
+			if (udp->pendingIndex[coded] != 0)
+			{
+				rdpudp_fail(udp, "a datagram is still in flight 65536 sequence numbers back");
+				return FALSE;
+			}
+			if (udp->server)
+			{
+				udp->resent[udp->resentNext].valid = TRUE;
+				udp->resent[udp->resentNext].reported = reported;
+				udp->resent[udp->resentNext].seq = WINPR_ASSERTING_INT_CAST(UINT16, p->seq);
+				udp->resent[udp->resentNext].at = now;
+				udp->resentNext = (udp->resentNext + 1) % RDPUDP2_RESENT_HISTORY;
+			}
+			udp->pendingIndex[p->seq & 0xFFFF] = 0;
+			udp->pendingIndex[coded] = WINPR_ASSERTING_INT_CAST(UINT16, x + 1);
 			p->seq = coded;
 			udp->nextCoded = seq16_add(coded, 1);
+			send_base_advance(udp);
 		}
 		else
 		{
@@ -1977,11 +2864,23 @@ static BOOL run_timers(rdpUdp* udp)
 		           p->retransmits);
 		if (!rdpudp_transmit(udp, p))
 			return FALSE;
+		nextDue = pending_next_due(udp, p, nextDue);
 	}
+	if (scan)
+		udp->pendingDue = nextDue;
 
-	if (now - udp->lastSent >= (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS))
+	/* A resend above may have set lastSent after now was read: nothing is due then. */
+	const BOOL baseKeepalive = v3 && udp->server && udp->v3Resync;
+	const UINT64 keepalive = baseKeepalive ? RDPUDP2_RESYNC_KEEPALIVE_MS
+	                                       : (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS);
+	if ((now >= udp->lastSent) && (now - udp->lastSent >= keepalive))
 	{
-		if (!rdpudp_send_ack(udp))
+		if (baseKeepalive)
+		{
+			if (!v3_send_base_keepalive(udp))
+				return FALSE;
+		}
+		else if (!rdpudp_send_ack(udp))
 			return FALSE;
 		udp->lastSent = now;
 	}
@@ -2004,10 +2903,20 @@ rdpUdp* rdpudp_new(wLog* log, const BYTE* cookieHash, rdpUdpReceiveFn receive, v
 
 	udp->log = log;
 	udp->sockfd = INVALID_SOCKET;
+	udp->ownsSocket = TRUE;
 	udp->state = RDPUDP_STATE_CLOSED;
 	udp->receive = receive;
 	udp->custom = custom;
 	udp->mtu = RDPUDP_MTU;
+	udp->cwnd = RDPUDP2_INITIAL_CWND;
+	udp->ssthresh = RDPUDP_MAX_IN_FLIGHT;
+	/* Set above half the sequence space to ensure that sequence numbers behind the window never
+	 * reach 0, which is used to mark an empty slot. */
+	udp->v3ExpectedFull = 0x10000;
+	udp->rttMin = UINT32_MAX;
+	udp->rttMinNext = UINT32_MAX;
+	udp->reorderThreshold = RDPUDP2_REORDER_THRESHOLD;
+	udp->chunkReach = RDPUDP_RECEIVE_REACH;
 	udp->offerV3 = (cookieHash != nullptr);
 	udp->version = udp->offerV3 ? RDPUDP_PROTOCOL_VERSION_3 : RDPUDP_PROTOCOL_VERSION_2;
 	if (cookieHash)
@@ -2038,10 +2947,10 @@ void rdpudp_free(rdpUdp* udp)
 	if (!udp)
 		return;
 
-	if (udp->sockfd != INVALID_SOCKET)
+	if (udp->ownsSocket && (udp->sockfd != INVALID_SOCKET))
 		closesocket(udp->sockfd);
 
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
+	for (size_t x = 0; x < udp->inFlight; x++)
 		pending_clear(&udp->pending[x]);
 	for (size_t x = 0; x < RDPUDP_RECEIVE_SLOTS; x++)
 		slot_clear(&udp->slots[x]);
@@ -2096,8 +3005,188 @@ BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen)
 		return FALSE;
 
 	udp->state = RDPUDP_STATE_SYN_SENT;
-	udp->lastReceived = now_ms();
+	udp->lastReceived = now_ms(udp);
 	return send_syn(udp);
+}
+
+/* [MS-RDPEUDP] 3.1.5.1.3: The SYN+ACK is a SYN that acknowledges the client's
+ * snInitialSequenceNumber and carries the negotiated MTU and version. Like the
+ * SYN, it is zero-padded to the MTU, but contains no cookieHash. */
+WINPR_ATTR_NODISCARD
+static BOOL build_syn_ack(rdpUdp* udp, UINT32 clientInitial)
+{
+	WINPR_ASSERT(udp);
+	/* rdpudp_accept clamps the MTU to the range [RDPUDP_MIN_MTU, RDPUDP_MTU], where
+	 * RDPUDP_MTU is the size of synAck. */
+	if ((udp->mtu < RDPUDP_MIN_MTU) || (udp->mtu > sizeof(udp->synAck)))
+		return FALSE;
+	memset(udp->synAck, 0, sizeof(udp->synAck));
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, udp->synAck, sizeof(udp->synAck));
+	if (!s)
+		return FALSE;
+
+	/* Write the RDPUDP_FEC_HEADER */
+	Stream_Write_UINT32_BE(
+	    s, clientInitial); /* Write the source acknowledgement sequence number (snSourceAck) */
+	Stream_Write_UINT16_BE(s, RDPUDP_RECEIVE_WINDOW);
+	Stream_Write_UINT16_BE(s, RDPUDP_FLAG_SYN | RDPUDP_FLAG_ACK | RDPUDP_FLAG_SYNEX);
+
+	/* Write the RDPUDP_SYNDATA_PAYLOAD */
+	Stream_Write_UINT32_BE(s, udp->initialSequence);
+	Stream_Write_UINT16_BE(s, udp->mtu); /* Set the upstream MTU (uUpStreamMtu) */
+	Stream_Write_UINT16_BE(s, udp->mtu); /* Downstream MTU */
+
+	/* Write the RDPUDP_SYNDATAEX_PAYLOAD */
+	Stream_Write_UINT16_BE(s, RDPUDP_VERSION_INFO_VALID);
+	Stream_Write_UINT16_BE(s, udp->version);
+
+	udp->synAckLength = udp->mtu;
+	return TRUE;
+}
+
+BOOL rdpudp_accept(rdpUdp* udp, rdpUdpSendFn send, void* sendCustom, const BYTE* syn, size_t length)
+{
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(send);
+	WINPR_ASSERT(syn);
+
+	if ((udp->state != RDPUDP_STATE_CLOSED) || !is_syn(syn, length))
+		return FALSE;
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, syn, length);
+	if (!s || !Stream_CheckAndLogRequiredLengthWLog(udp->log, s, 16))
+		return FALSE;
+
+	/* Parse the RDPUDP_FEC_HEADER */
+	Stream_Seek_UINT32(s); /* Skip snSourceAck, which is expected to be -1 */
+	const UINT16 window = Stream_Get_UINT16_BE(s);
+	const UINT16 flags = Stream_Get_UINT16_BE(s);
+
+	/* Parse RDPUDP_SYNDATA_PAYLOAD */
+	const UINT32 clientInitial = Stream_Get_UINT32_BE(s);
+	const UINT16 upMtu = Stream_Get_UINT16_BE(s);
+	const UINT16 downMtu = Stream_Get_UINT16_BE(s);
+
+	if ((flags & RDPUDP_FLAG_CORRELATION_ID) && !Stream_SafeSeek(s, 32))
+		return FALSE;
+
+	/* RDPUDP_SYNDATAEX_PAYLOAD. The listener already matched a version 3 SYN's cookieHash to this
+	 * connection; other versions lack a cookieHash and are indistinguishable. */
+	UINT16 version = RDPUDP_PROTOCOL_VERSION_1;
+	if ((flags & RDPUDP_FLAG_SYNEX) && (Stream_GetRemainingLength(s) >= 4))
+	{
+		const UINT16 synExFlags = Stream_Get_UINT16_BE(s);
+		const UINT16 udpVersion = Stream_Get_UINT16_BE(s);
+		if (synExFlags & RDPUDP_VERSION_INFO_VALID)
+			version = udpVersion;
+	}
+	if (version != RDPUDP_PROTOCOL_VERSION_3)
+	{
+		WLog_Print(udp->log, WLOG_WARN,
+		           "client offered RDP-UDP version 0x%04" PRIx16 ", only 0x%04" PRIx16
+		           " is implemented for a server",
+		           version, RDPUDP_PROTOCOL_VERSION_3);
+		return FALSE;
+	}
+
+	/* [MS-RDPEUDP] 3.1.1.3: neither end sends more than the smaller of the two MTUs. */
+	UINT16 mtu = (upMtu < downMtu) ? upMtu : downMtu;
+	if (mtu > RDPUDP_MTU)
+		mtu = RDPUDP_MTU;
+	if (mtu < RDPUDP_MIN_MTU)
+		mtu = RDPUDP_MIN_MTU;
+
+	/* [MS-RDPEUDP] 3.1.5.1.1: SYN is padded to the smaller MTU, and SYN+ACK is mtu bytes. A
+	 * shorter SYN may indicate a spoofed source, as our reply would be larger than the received
+	 * packet. */
+	if (length < mtu)
+	{
+		WLog_Print(udp->log, WLOG_WARN,
+		           "rejecting a SYN of %" PRIuz " bytes, which is shorter than the MTU of %" PRIu16,
+		           length, mtu);
+		return FALSE;
+	}
+
+	udp->server = TRUE;
+	udp->ownsSocket = FALSE;
+	udp->sendFn = send;
+	udp->sendCustom = sendCustom;
+	udp->chunkReach = RDPUDP_UNVERIFIED_REACH;
+
+	udp->mtu = mtu;
+	udp->version = version;
+	udp->peerWindow = window;
+	udp->lastReceived = now_ms(udp);
+	udp->lastDelivery = udp->lastReceived;
+	udp->state = RDPUDP_STATE_ESTABLISHED;
+
+	/* Same as client; see process_syn_ack */
+	udp->nextCoded = RDPUDP2_INITIAL_SEQUENCE;
+	udp->nextChannelSeq = 1;
+	udp->v3NextChannel = 1;
+	udp->v3MaxDelayedAcks = RDPUDP2_DEFAULT_DELAYED_ACKS;
+	udp->v3DelayedAckTimeout = UINT32_MAX;
+
+	if (!build_syn_ack(udp, clientInitial))
+		return FALSE;
+	WLog_Print(udp->log, WLOG_INFO,
+	           "accepted RDP-UDP client, protocol version 0x%04" PRIx16 ", MTU %" PRIu16, version,
+	           mtu);
+	udp->synAckSent = now_ms(udp);
+	if (udp->synAckSent == 0)
+		udp->synAckSent = 1; /* 0 indicates not sent; a test clock might start at 0 */
+	return rdpudp_send_raw(udp, udp->synAck, udp->synAckLength);
+}
+
+BOOL rdpudp_get_syn_cookie_hash(const BYTE* data, size_t length, BYTE hash[32])
+{
+	WINPR_ASSERT(hash);
+	/* SYN is padded to MTU, which is at least RDPUDP_MIN_MTU ([MS-RDPEUDP] 3.1.5.1.1) */
+	if ((length < RDPUDP_MIN_MTU) || !is_syn(data, length))
+		return FALSE;
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
+	if (!s || !Stream_SafeSeek(s, 6)) /* Skip snSourceAck and uReceiveWindowSize */
+		return FALSE;
+	const UINT16 flags = Stream_Get_UINT16_BE(s);
+	if (!(flags & RDPUDP_FLAG_SYNEX) || !Stream_SafeSeek(s, 8)) /* Skip RDPUDP_SYNDATA_PAYLOAD */
+		return FALSE;
+	if ((flags & RDPUDP_FLAG_CORRELATION_ID) && !Stream_SafeSeek(s, 32))
+		return FALSE;
+	if (Stream_GetRemainingLength(s) < 4 + 32)
+		return FALSE;
+	const UINT16 synExFlags = Stream_Get_UINT16_BE(s);
+	const UINT16 version = Stream_Get_UINT16_BE(s);
+	if (!(synExFlags & RDPUDP_VERSION_INFO_VALID) || (version != RDPUDP_PROTOCOL_VERSION_3))
+		return FALSE;
+	Stream_Read(s, hash, 32);
+	return TRUE;
+}
+
+BOOL rdpudp_receive(rdpUdp* udp, BYTE* data, size_t length)
+{
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data); /* process_datagram requires a buffer even for empty datagrams */
+
+	if (udp->state != RDPUDP_STATE_ESTABLISHED)
+		return FALSE;
+	if (!process_datagram(udp, data, length))
+	{
+		rdpudp_fail(udp, "failed to process a datagram");
+		return FALSE;
+	}
+	if (udp->state == RDPUDP_STATE_FAILED)
+		return FALSE;
+	if (!v3_ack_if_due(udp))
+		return FALSE;
+	if (!ack_when_due(udp))
+		return FALSE;
+	if (!run_timers(udp))
+		return FALSE;
+	return flush_send_queue(udp);
 }
 
 SOCKET rdpudp_get_socket(const rdpUdp* udp)
@@ -2133,10 +3222,30 @@ size_t rdpudp_get_max_payload(const rdpUdp* udp)
 	return udp->mtu - overhead;
 }
 
+size_t rdpudp_get_send_backlog(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	return Queue_Count(udp->sendQueue);
+}
+
+size_t rdpudp_get_send_window(const rdpUdp* udp)
+{
+	return window_limit(udp);
+}
+
+UINT32 rdpudp_get_rtt(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (!udp->rttSampled)
+		return 0;
+	/* Samples below clock resolution are still valid samples */
+	return (udp->srtt > 0) ? udp->srtt : 1;
+}
+
 UINT32 rdpudp_get_timeout(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
-	const UINT64 now = now_ms();
+	const UINT64 now = now_ms(udp);
 	UINT64 timeout = 50;
 
 	if (udp->state == RDPUDP_STATE_SYN_SENT)
@@ -2149,15 +3258,12 @@ UINT32 rdpudp_get_timeout(const rdpUdp* udp)
 		return WINPR_ASSERTING_INT_CAST(UINT32, timeout);
 	}
 
-	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
+	if (udp->inFlight > 0)
 	{
-		const rdpudp_pending* p = &udp->pending[x];
-		if (!p->used)
-			continue;
-		if (p->due <= now)
+		if (udp->pendingDue <= now)
 			return 0;
-		if (p->due - now < timeout)
-			timeout = p->due - now;
+		if (udp->pendingDue - now < timeout)
+			timeout = udp->pendingDue - now;
 	}
 
 	/* an acknowledgement that waits, see ack_when_due */
@@ -2179,7 +3285,10 @@ BOOL rdpudp_check(rdpUdp* udp)
 		return FALSE;
 
 	BYTE* buffer = udp->recvBuffer;
-	while (TRUE)
+	/* Process at most RDPUDP_INPUT_BUDGET datagrams per call. A peer sending faster than they are
+	 * processed would otherwise keep the socket from draining, and the retransmission timers
+	 * below would never run. The socket stays readable for the next call. */
+	for (size_t count = 0; udp->ownsSocket && (count < RDPUDP_INPUT_BUDGET); count++)
 	{
 		const int rc = _recv(udp->sockfd, (char*)buffer,
 		                     WINPR_ASSERTING_INT_CAST(int, sizeof(udp->recvBuffer)), 0);
@@ -2216,5 +3325,34 @@ BOOL rdpudp_check(rdpUdp* udp)
 	if (!flush_send_queue(udp))
 		return FALSE;
 
-	return run_timers(udp);
+	if (!run_timers(udp))
+		return FALSE;
+	/* Server: flush queued chunks that now fit the window instead of waiting for wakeup */
+	if (udp->server)
+		return flush_send_queue(udp);
+	return TRUE;
+}
+
+void rdpudp_set_peer_verified(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	udp->chunkReach = RDPUDP_RECEIVE_REACH;
+}
+
+void rdpudp_set_receive_hold(rdpUdp* udp, BOOL hold)
+{
+	WINPR_ASSERT(udp);
+	udp->receiveHold = hold;
+}
+
+void rdpudp_set_clock(rdpUdp* udp, rdpUdpClockFn clock, void* custom)
+{
+	WINPR_ASSERT(udp);
+	udp->clock = clock;
+	udp->clockCustom = custom;
+}
+
+UINT64 rdpudp_get_time(const rdpUdp* udp)
+{
+	return now_ms(udp);
 }

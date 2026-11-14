@@ -65,12 +65,80 @@ FREERDP_LOCAL HANDLE multitransport_get_event_handle(rdpMultitransport* multi);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_check(rdpMultitransport* multi);
 
-/** Sends an auto-detect response, a whole RDP_TUNNEL_SUBHEADER of type
- * TYPE_ID_AUTODETECT_RESPONSE, over the reliable UDP tunnel. */
+/** Sends a complete RDP_TUNNEL_SUBHEADER auto-detect PDU over the reliable UDP tunnel. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_send_autodetect_response(rdpMultitransport* multi,
                                                            const BYTE* data, size_t length);
 
+#if defined(WITH_RDPEUDP)
+/** Server: queues a DVC PDU for the reliable UDP tunnel. Use multitransport_flush_dvc() to
+ *  send the batch, or freerdp_multitransport_send_dvc() to send immediately. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_queue_dvc(rdpMultitransport* multi, const BYTE* data,
+                                            size_t length);
+
+/** Server: sends all DVC PDUs that have been queued using multitransport_queue_dvc(). */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_flush_dvc(rdpMultitransport* multi);
+
+/** Server: while \b hold is set the tunnel accepts no more data from the client, which sends it
+ *  again later. Data already on its way to the main loop still arrives. Any thread.
+ *  @param multi may be \b nullptr */
+FREERDP_LOCAL void multitransport_hold_tunnel_data(rdpMultitransport* multi, BOOL hold);
+
+/** Server: \b TRUE if the tunnel thread has failed the tunnel, also before the main loop has
+ *  handled that and told the channel code. Any thread.
+ *  @param multi may be \b nullptr */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_tunnel_has_failed(rdpMultitransport* multi);
+
+/** Server: Sends a Bandwidth Measure Start or Stop over the tunnel if the transport
+ *  selects it. These must remain ordered with channel data, as the client measures
+ *  the data in between. If the tunnel is not ready, the request fails rather than
+ *  falling back to TCP.
+ *  @param rc Set to FALSE on error or if the tunnel is not ready.
+ *  @return TRUE for RDP_TRANSPORT_UDP_R. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_server_send_autodetect(rdpMultitransport* multi,
+                                                         RDP_TRANSPORT_TYPE transport,
+                                                         UINT16 sequenceNumber, UINT16 requestType,
+                                                         BOOL* rc);
+
+/** Server: appends the multitransport event handle to the events array if the server
+ *  offers a tunnel.
+ *  @return the new number of handles in use */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL DWORD multitransport_server_add_event(rdpMultitransport* multi, HANDLE* events,
+                                                    DWORD used, DWORD count);
+
+/** Stops the tunnel of a disconnecting server peer. LinkChanged reports
+ *  FREERDP_UDP_LINK_NONE first, while the application context remains valid. */
+FREERDP_LOCAL void multitransport_server_disconnect(rdpContext* context);
+
+#else
+
+WINPR_ATTR_NODISCARD
+static inline BOOL multitransport_server_send_autodetect(
+    WINPR_ATTR_UNUSED rdpMultitransport* multi, WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+    WINPR_ATTR_UNUSED UINT16 sequenceNumber, WINPR_ATTR_UNUSED UINT16 requestType,
+    WINPR_ATTR_UNUSED BOOL* rc)
+{
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static inline DWORD multitransport_server_add_event(WINPR_ATTR_UNUSED rdpMultitransport* multi,
+                                                    WINPR_ATTR_UNUSED HANDLE* events, DWORD used,
+                                                    WINPR_ATTR_UNUSED DWORD count)
+{
+	return used;
+}
+
+static inline void multitransport_server_disconnect(WINPR_ATTR_UNUSED rdpContext* context)
+{
+}
+
+#endif
 /** TRUE when the connection was ended because its UDP tunnel broke down. Cleared by
  * multitransport_reset(). */
 WINPR_ATTR_NODISCARD

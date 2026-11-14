@@ -40,6 +40,7 @@
 #include "rdp.h"
 #include "peer.h"
 #include "multitransport.h"
+#include "multitransport_internal.h"
 
 #define TAG FREERDP_TAG("core.peer")
 
@@ -310,7 +311,10 @@ static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
-	return transport_get_event_handles(client->context->rdp->transport, events, count);
+	rdpRdp* rdp = client->context->rdp;
+	return multitransport_server_add_event(
+	    rdp->multitransport, events, transport_get_event_handles(rdp->transport, events, count),
+	    count);
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
@@ -703,6 +707,16 @@ static state_run_t peer_unexpected_client_message(rdpRdp* rdp, UINT32 flag)
 	return STATE_RUN_SUCCESS; /* we ignore this as per spec input PDU are already allowed */
 }
 
+/* Once a tunnel is offered, the Initiate Multitransport Response may arrive in any
+ * finalization state. Failures handling this response must be preserved; other failures
+ * in these states are ignored. */
+static state_run_t peer_unexpected_finalize_message(rdpRdp* rdp, state_run_t ret, UINT32 flag)
+{
+	if (state_run_failed(ret) && multitransport_server_response_failed(rdp->multitransport))
+		return ret;
+	return peer_unexpected_client_message(rdp, flag);
+}
+
 state_run_t rdp_peer_handle_state_demand_active(freerdp_peer* client)
 {
 	state_run_t ret = STATE_RUN_FAILED;
@@ -1081,7 +1095,7 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 					ret = STATE_RUN_FAILED;
 			}
 			else
-				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_SYNCHRONIZE_PDU);
+				ret = peer_unexpected_finalize_message(rdp, ret, FINALIZE_CS_SYNCHRONIZE_PDU);
 			break;
 		case CONNECTION_STATE_FINALIZATION_COOPERATE:
 			ret = peer_recv_pdu(client, s);
@@ -1092,7 +1106,7 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 					ret = STATE_RUN_FAILED;
 			}
 			else
-				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU);
+				ret = peer_unexpected_finalize_message(rdp, ret, FINALIZE_CS_CONTROL_COOPERATE_PDU);
 			break;
 		case CONNECTION_STATE_FINALIZATION_REQUEST_CONTROL:
 			ret = peer_recv_pdu(client, s);
@@ -1105,7 +1119,7 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 					ret = STATE_RUN_FAILED;
 			}
 			else
-				ret = peer_unexpected_client_message(rdp, FINALIZE_CS_CONTROL_REQUEST_PDU);
+				ret = peer_unexpected_finalize_message(rdp, ret, FINALIZE_CS_CONTROL_REQUEST_PDU);
 			break;
 		case CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST:
 			if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled) &&
@@ -1120,8 +1134,8 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 						ret = STATE_RUN_FAILED;
 				}
 				else
-					ret = peer_unexpected_client_message(rdp,
-					                                     CONNECTION_STATE_FINALIZATION_FONT_LIST);
+					ret = peer_unexpected_finalize_message(rdp, ret,
+					                                       CONNECTION_STATE_FINALIZATION_FONT_LIST);
 			}
 			else
 			{
@@ -1260,6 +1274,7 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 
+	multitransport_server_disconnect(client->context);
 	transport = freerdp_get_transport(client->context);
 	transport_disconnect(transport);
 }

@@ -143,6 +143,11 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_get_peer_address(rdpTransport* transport,
                                               struct sockaddr_storage* address, size_t* length);
 
+/** Local address of the main connection; only available for direct TCP. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL transport_get_local_address(rdpTransport* transport,
+                                               struct sockaddr_storage* address, size_t* length);
+
 #if defined(WITH_FREERDP_DEPRECATED)
 FREERDP_LOCAL void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 #endif
