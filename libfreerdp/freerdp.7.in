@@ -91,6 +91,7 @@ A JSON bool value
 .PP
 .RS 4
 Enable hardware accelerated decoding\&.
+On Linux, when the accelerator of \fIhwDeviceType\fR can not be set up, H264 is decoded with a V4L2 stateful decoder (\fIh264_v4l2m2m\fR) where FFMPEG and the device have one\&.
 .br
 
 Default

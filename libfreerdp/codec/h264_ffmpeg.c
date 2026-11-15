@@ -22,6 +22,9 @@
 
 #include <winpr/wlog.h>
 #include <winpr/json.h>
+#include <winpr/sysinfo.h>
+#include <winpr/synch.h>
+#include <winpr/interlocked.h>
 
 #include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
@@ -329,6 +332,12 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 #define av_err2str(errnum) error_string((char[64])WINPR_C_ARRAY_INIT, 64, errnum)
 #endif
 
+/* how long a V4L2 decoder may take to return the frame of a packet */
+#define V4L2M2M_FRAME_TIMEOUT_MS 500
+
+/* set once a V4L2 decoder failed after it was opened: it is not tried again in this process */
+static volatile LONG g_v4l2m2mFailed = 0;
+
 typedef struct
 {
 	const AVCodec* codecDecoder;
@@ -356,6 +365,7 @@ typedef struct
 	char* device;
 	BOOL useHwDecoder;
 	BOOL useHwEncoder;
+	BOOL v4l2m2m;
 #endif
 } H264_CONTEXT_LIBAVCODEC;
 
@@ -618,6 +628,40 @@ static int hw_supports_target_format(AVBufferRef* hwframectx, enum AVPixelFormat
 }
 #endif
 
+#if defined(WITH_FFMPEG_HWACCEL)
+/* The V4L2 device failed or returned no frame in time. RDP needs the picture of this packet with
+ * this packet, so a device that holds frames back for later input is of no use either, and with a
+ * stream that is not of the size it was opened for ffmpeg drops the frame. Decode this packet and
+ * all later ones in software: nothing is lost if the packet starts a sequence, which it does in
+ * the cases above. Otherwise there is a picture again from the next key frame.
+ *
+ * Returns the result of sending the packet to the software decoder, or reason if there is none. */
+static int libavcodec_v4l2m2m_fallback(H264_CONTEXT* h264, H264_CONTEXT_LIBAVCODEC* sys,
+                                       const AVPacket* packet, int reason)
+{
+	const AVCodec* codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+	AVCodecContext* context = codec ? avcodec_alloc_context3(codec) : nullptr;
+	if (!context || (avcodec_open2(context, codec, nullptr) < 0))
+	{
+		avcodec_free_context(&context);
+		return reason;
+	}
+
+	WLog_Print(h264->log, WLOG_WARN, "%s failed (%s), falling back to software",
+	           sys->codecDecoder->name,
+	           (reason == AVERROR(EAGAIN)) ? "no frame in time" : av_err2str(reason));
+	const LONG before = InterlockedExchange(&g_v4l2m2mFailed, 1);
+	WINPR_UNUSED(before);
+
+	av_frame_unref(sys->cpuVideoFrame);
+	avcodec_free_context(&sys->codecDecoderContext);
+	sys->codecDecoderContext = context;
+	sys->codecDecoder = codec;
+	sys->v4l2m2m = FALSE;
+	return avcodec_send_packet(context, packet);
+}
+#endif
+
 static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
                                  const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize)
 {
@@ -662,6 +706,11 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
 	status = avcodec_send_packet(sys->codecDecoderContext, packet);
 
+#if defined(WITH_FFMPEG_HWACCEL)
+	if (sys->v4l2m2m && (status < 0))
+		status = libavcodec_v4l2m2m_fallback(h264, sys, packet, status);
+#endif
+
 	if (status < 0)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "Failed to decode video frame (status=%d)", status);
@@ -671,9 +720,27 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	sys->videoFrame->format = h264->hevc444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
 
 #if defined(WITH_FFMPEG_HWACCEL)
-	status = avcodec_receive_frame(sys->codecDecoderContext, (sys->useHwDecoder && sys->hwctx)
-	                                                             ? sys->hwVideoFrame
-	                                                             : sys->videoFrame);
+	AVFrame* frame = (sys->useHwDecoder && sys->hwctx) ? sys->hwVideoFrame : sys->videoFrame;
+	if (sys->v4l2m2m)
+		frame = sys->cpuVideoFrame;
+	status = avcodec_receive_frame(sys->codecDecoderContext, frame);
+
+	/* A V4L2 device hands the frame back a few milliseconds after its packet went in, so here
+	 * EAGAIN is 'not yet' and not 'no picture in this packet' */
+	for (const UINT64 start = GetTickCount64();
+	     sys->v4l2m2m && (status == AVERROR(EAGAIN)) &&
+	     (GetTickCount64() - start < V4L2M2M_FRAME_TIMEOUT_MS);)
+	{
+		USleep(200);
+		status = avcodec_receive_frame(sys->codecDecoderContext, frame);
+	}
+
+	if (sys->v4l2m2m && (status < 0))
+	{
+		status = libavcodec_v4l2m2m_fallback(h264, sys, packet, status);
+		if (!sys->v4l2m2m && (status >= 0))
+			status = avcodec_receive_frame(sys->codecDecoderContext, sys->videoFrame);
+	}
 #else
 	status = avcodec_receive_frame(sys->codecDecoderContext, sys->videoFrame);
 #endif
@@ -701,10 +768,12 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	}
 
 #if defined(WITH_FFMPEG_HWACCEL)
+	AVFrame* target = sys->videoFrame;
 
-	if (sys->hwctx)
+	if (sys->v4l2m2m)
+		target = sys->cpuVideoFrame; /* NV12 on most devices */
+	else if (sys->hwctx)
 	{
-		AVFrame* target = sys->videoFrame;
 		if (sys->hwFrameSupportsNativeFormat < 0)
 		{
 			const int res = hw_supports_target_format(sys->codecDecoderContext->hw_frames_ctx,
@@ -746,31 +815,35 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 			           status, av_err2str(status));
 			goto fail;
 		}
+	}
 
-		if (gotFrame && (target != sys->videoFrame))
+	if (gotFrame && (target != sys->videoFrame))
+	{
+		if (!sys->swsctx)
 		{
+			sys->swsctx = sws_getContext(target->width, target->height, target->format,
+			                             target->width, target->height, sys->videoFrame->format,
+			                             SWS_BILINEAR, nullptr, nullptr, nullptr);
 			if (!sys->swsctx)
-			{
-				sys->swsctx = sws_getContext(target->width, target->height, target->format,
-				                             target->width, target->height, sys->videoFrame->format,
-				                             SWS_BILINEAR, nullptr, nullptr, nullptr);
-				if (!sys->swsctx)
-					goto fail;
-			}
+				goto fail;
+		}
 
 #if LIBSWSCALE_VERSION_INT >= AV_VERSION_INT(6, 4, 100)
-			status = sws_scale_frame(sys->swsctx, sys->videoFrame, target);
+		status = sws_scale_frame(sys->swsctx, sys->videoFrame, target);
 #else
 #error "Need SWScale >= 6.4.100"
 #endif
 
-			if (status < 0)
-			{
-				WLog_Print(h264->log, WLOG_ERROR, "Failed to convert video frame (status=%d) (%s)",
-				           status, av_err2str(status));
-				goto fail;
-			}
+		if (status < 0)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to convert video frame (status=%d) (%s)",
+			           status, av_err2str(status));
+			goto fail;
 		}
+
+		/* the buffer goes back to the device, which waits for it when the stream changes */
+		if (sys->v4l2m2m)
+			av_frame_unref(target);
 	}
 
 #endif
@@ -1352,6 +1425,43 @@ static const char* bool_to_string(BOOL val)
 }
 #endif
 
+#if defined(WITH_FFMPEG_HWACCEL)
+/* SoCs without a hwaccel device type (Qualcomm, Rockchip, Raspberry Pi, ...) decode through a V4L2
+ * stateful device, which libavcodec has as a decoder of its own. It must know the frame size
+ * when it is opened, so there is nothing to try before h264_context_reset. */
+static void libavcodec_try_v4l2m2m(H264_CONTEXT* h264, H264_CONTEXT_LIBAVCODEC* sys)
+{
+	const AVCodec* codec = avcodec_find_decoder_by_name("h264_v4l2m2m");
+	if (!codec || h264->hevc || h264->hevc444 || (h264->width == 0) || (h264->height == 0))
+		return;
+
+	if (InterlockedCompareExchange(&g_v4l2m2mFailed, 0, 0) != 0)
+		return;
+
+	AVCodecContext* context = avcodec_alloc_context3(codec);
+	if (!context)
+		return;
+
+	context->width = WINPR_ASSERTING_INT_CAST(int, h264->width);
+	context->height = WINPR_ASSERTING_INT_CAST(int, h264->height);
+
+	const int rc = avcodec_open2(context, codec, nullptr);
+	if (rc < 0)
+	{
+		WLog_Print(h264->log, WLOG_DEBUG, "%s not usable for %" PRIu32 "x%" PRIu32 ": %s",
+		           codec->name, h264->width, h264->height, av_err2str(rc));
+		avcodec_free_context(&context);
+		return;
+	}
+
+	WLog_Print(h264->log, WLOG_INFO, "Using %s for accelerated H264 decoding", codec->name);
+	avcodec_free_context(&sys->codecDecoderContext);
+	sys->codecDecoderContext = context;
+	sys->codecDecoder = codec;
+	sys->v4l2m2m = TRUE;
+}
+#endif
+
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
 	WINPR_ASSERT(h264);
@@ -1448,9 +1558,13 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 		fail_hwdevice_create:;
 		}
+
+		if (sys->useHwDecoder && !sys->hwctx)
+			libavcodec_try_v4l2m2m(h264, sys);
 #endif
 
-		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, nullptr) < 0)
+		if (!avcodec_is_open(sys->codecDecoderContext) &&
+		    (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, nullptr) < 0))
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "Failed to open libav codec");
 			goto EXCEPTION;
