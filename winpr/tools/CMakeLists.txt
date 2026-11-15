@@ -119,6 +119,10 @@ installwithrpath(
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
 
+if(BUILD_TESTING AND OPENSSL_FOUND)
+  add_subdirectory(makecert/test)
+endif()
+
 # Add all command line utilities
 option(WITH_WINPR_TOOLS_CLI "Build winpr-tools cli programs" ON)
 if(WITH_WINPR_TOOLS_CLI)
