@@ -1090,7 +1090,8 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 		default:
 			WLog_ERR(TAG, "Unknown RAIL PDU %s received.",
 			         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)));
-			return ERROR_INVALID_DATA;
+			error = ERROR_INVALID_DATA;
+			goto fail;
 	}
 
 	if (error == ERROR_BAD_CONFIGURATION)

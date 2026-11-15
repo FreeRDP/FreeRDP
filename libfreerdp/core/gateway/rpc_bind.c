@@ -212,14 +212,13 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	bind_pdu.max_xmit_frag = rpc->max_xmit_frag;
 	bind_pdu.max_recv_frag = rpc->max_recv_frag;
 	bind_pdu.assoc_group_id = 0;
-	bind_pdu.p_context_elem.n_context_elem = 2;
 	bind_pdu.p_context_elem.reserved = 0;
 	bind_pdu.p_context_elem.reserved2 = 0;
-	bind_pdu.p_context_elem.p_cont_elem =
-	    calloc(bind_pdu.p_context_elem.n_context_elem, sizeof(p_cont_elem_t));
+	bind_pdu.p_context_elem.p_cont_elem = rts_context_elem_new(2);
 
 	if (!bind_pdu.p_context_elem.p_cont_elem)
 		goto fail;
+	bind_pdu.p_context_elem.n_context_elem = 2;
 
 	{
 		p_cont_elem_t* p_cont_elem = &bind_pdu.p_context_elem.p_cont_elem[0];
@@ -291,13 +290,9 @@ fail:
 	if (status <= 0)
 		rpc_client_call_discard(rpc->log, rpc->client, bind_pdu.header.call_id);
 
-	if (bind_pdu.p_context_elem.p_cont_elem)
-	{
-		rts_syntax_id_free(bind_pdu.p_context_elem.p_cont_elem[0].transfer_syntaxes);
-		rts_syntax_id_free(bind_pdu.p_context_elem.p_cont_elem[1].transfer_syntaxes);
-	}
-
-	free(bind_pdu.p_context_elem.p_cont_elem);
+	rts_context_elem_free(bind_pdu.p_context_elem.p_cont_elem,
+	                      bind_pdu.p_context_elem.n_context_elem);
+	bind_pdu.p_context_elem.n_context_elem = 0;
 	bind_pdu.p_context_elem.p_cont_elem = nullptr;
 
 	Stream_Free(buffer, TRUE);

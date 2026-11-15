@@ -593,17 +593,19 @@ static BOOL rts_write_syntax_id(wStream* s, const p_syntax_id_t* syntax_id)
 	return TRUE;
 }
 
-static void rts_context_elem_free(p_cont_elem_t* ptr)
+void rts_context_elem_free(p_cont_elem_t* ptr, size_t count)
 {
 	if (!ptr)
 		return;
-
-	rts_syntax_id_free(ptr->transfer_syntaxes);
+	for (size_t x = 0; x < count; x++)
+	{
+		p_cont_elem_t* cur = &ptr[x];
+		rts_syntax_id_free(cur->transfer_syntaxes);
+	}
 	free(ptr);
 }
 
-WINPR_ATTR_MALLOC(rts_context_elem_free, 1)
-static p_cont_elem_t* rts_context_elem_new(size_t count)
+p_cont_elem_t* rts_context_elem_new(size_t count)
 {
 	p_cont_elem_t* ctx = calloc(count, sizeof(p_cont_elem_t));
 	return ctx;
@@ -674,15 +676,18 @@ static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 
 	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
-	Stream_Read_UINT8(s, list->n_context_elem); /* number of items */
+
+	const UINT8 n_context_elem = Stream_Get_UINT8(s); /* number of items */
 	Stream_Read_UINT8(s, list->reserved);       /* alignment pad, m.b.z. */
 	Stream_Read_UINT16(s, list->reserved2);     /* alignment pad, m.b.z. */
 
-	if (list->n_context_elem > 0)
+	if (n_context_elem > 0)
 	{
-		list->p_cont_elem = rts_context_elem_new(list->n_context_elem);
+		list->p_cont_elem = rts_context_elem_new(n_context_elem);
 		if (!list->p_cont_elem)
 			return FALSE;
+		list->n_context_elem = n_context_elem;
+
 		for (BYTE x = 0; x < list->n_context_elem; x++)
 		{
 			p_cont_elem_t* element = &list->p_cont_elem[x];
@@ -697,7 +702,7 @@ static void rts_free_context_list(p_cont_list_t* list)
 {
 	if (!list)
 		return;
-	rts_context_elem_free(list->p_cont_elem);
+	rts_context_elem_free(list->p_cont_elem, list->n_context_elem);
 	memset(list, 0, sizeof(p_cont_list_t));
 }
 

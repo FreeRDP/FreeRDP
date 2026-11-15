@@ -241,6 +241,9 @@ fail:
 static bool RunDecoderTest(const char* name, uint32_t format, uint32_t width, uint32_t height,
                            uint32_t step, uint32_t bpp)
 {
+	if ((width == 0) || (height == 0))
+		return false;
+
 	bool rc = false;
 	void* data = nullptr;
 	void* decdata = nullptr;

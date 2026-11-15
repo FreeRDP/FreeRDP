@@ -956,18 +956,6 @@ static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
 	return TRUE;
 }
 
-/* The 8.1 capability set turns AVC420 on with a flag; from 10.0 on AVC420 is part of the set
- * unless the AVC codecs are disabled (the 8.1 flag is not defined there, so a 10.x client never
- * sets it). */
-WINPR_ATTR_NODISCARD
-static BOOL shadow_client_caps_allow_avc420(const RDPGFX_CAPSET* caps)
-{
-	WINPR_ASSERT(caps);
-	if (caps->version == RDPGFX_CAPVERSION_81)
-		return (caps->flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) != 0;
-	return (caps->flags & RDPGFX_CAPS_FLAG_AVC_DISABLED) == 0;
-}
-
 WINPR_ATTR_NODISCARD
 static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpShadowClient* client,
                                             const RDPGFX_CAPS_CONFIRM_PDU* pdu)
@@ -980,9 +968,6 @@ static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpSha
 	UINT rc = context->CapsConfirm(context, pdu);
 	client->areGfxCapsReady = (rc == CHANNEL_RC_OK);
 	client->confirmedCaps = *pdu->capsSet;
-
-	rdpSettings* clientSettings = client->context.settings;
-	WINPR_ASSERT(clientSettings);
 
 	char buffer[128] = WINPR_C_ARRAY_INIT;
 	WLog_INFO(TAG, "selected GFX caps %s [0x%08" PRIx32 "] flags=%s",
