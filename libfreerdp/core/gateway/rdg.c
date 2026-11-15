@@ -2526,8 +2526,8 @@ BOOL rdg_detach_for_redirect(rdpRdg* rdg)
 		return FALSE;
 
 	if (!rdg->attached || !rdg->frontBio || rdg->transferEncoding.isWebsocketTransport ||
-	    (rdg->state != RDG_CLIENT_STATE_OPENED) || rdg->packetRemainingCount ||
-	    rdg->nextHeaderLengthRead || rdg->closeResponsePending)
+	    (rdg->state != RDG_CLIENT_STATE_OPENED) || rdg->nextHeaderLengthRead ||
+	    rdg->closeResponsePending)
 	{
 		WLog_Print(rdg->log, WLOG_INFO,
 		           "[RDG-REUSE] Cannot detach tunnel: attached=%d frontBioPresent=%d websocket=%d "
@@ -2591,6 +2591,28 @@ static BOOL rdg_send_redirect_close(rdpRdg* rdg)
 	Stream_Write_UINT32(&s, 0);
 	Stream_SealLength(&s);
 	return rdg_write_packet(rdg, &s);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdg_discard_redirect_payload(rdpRdg* rdg)
+{
+	if (!rdg->packetRemainingCount)
+		return TRUE;
+
+	WLog_Print(rdg->log, WLOG_INFO, "[RDG-REUSE] Discarding %u unread bytes from the old channel",
+	           (unsigned int)rdg->packetRemainingCount);
+	BYTE buffer[1024];
+	wStream discard = WINPR_C_ARRAY_INIT;
+	Stream_StaticInit(&discard, buffer, sizeof(buffer));
+	while (rdg->packetRemainingCount)
+	{
+		const UINT16 count = (UINT16)MIN(sizeof(buffer), rdg->packetRemainingCount);
+		if (!rdg_read_all_until(rdg->context, rdg->tlsOut, &discard, count, &rdg->transferEncoding,
+		                        rdg->redirectDeadline))
+			return FALSE;
+		rdg->packetRemainingCount -= count;
+	}
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -2695,6 +2717,19 @@ BOOL rdg_reopen_channel(rdpRdg* rdg)
 			WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] Failed to write/drain close request");
 			goto out;
 		}
+	}
+
+	/* The RDP redirect may end inside a gateway DATA packet. Its unread payload is
+	 * old channel data, not a new header. Drain it within the close phase budget. */
+	if (!rdg_discard_redirect_payload(rdg))
+	{
+		const BOOL timely = rdg_redirect_continue(rdg);
+		WLog_Print(rdg->log, WLOG_ERROR, "[RDG-REUSE] Old channel payload drain failed: %s",
+		           timely ? "read error or disconnect" : "timeout or cancellation");
+		goto out;
+	}
+	if (rdg->closeResponsePending)
+	{
 		if (!rdg_wait_for_redirect_channel(rdg, TRUE, rdg->redirectDeadline))
 		{
 			const BOOL timely = rdg_redirect_continue(rdg);

@@ -271,7 +271,14 @@ static void gateway_free(Gateway* gw)
 	free(gw);
 }
 
-static Gateway* gateway_new(BOOL buffered, BOOL chunked)
+static BOOL gateway_detach(Gateway* gw, BIO* old)
+{
+	const BOOL detached = rdg_detach_for_redirect(gw->rdg);
+	BIO_free_all(old);
+	return detached;
+}
+
+static Gateway* gateway_new_ex(BOOL buffered, BOOL chunked, BOOL detach)
 {
 	Gateway* gw = calloc(1, sizeof(Gateway));
 	if (!gw)
@@ -317,17 +324,60 @@ static Gateway* gateway_new(BOOL buffered, BOOL chunked)
 	gw->rdg->transferEncoding.httpTransferEncoding =
 	    chunked ? TransferEncodingChunked : TransferEncodingIdentity;
 	gw->rdg->state = RDG_CLIENT_STATE_OPENED;
-	BIO* old = rdg_get_front_bio_and_take_ownership(gw->rdg);
-	if (!rdg_detach_for_redirect(gw->rdg))
-	{
-		BIO_free_all(old);
+	if (detach && !gateway_detach(gw, rdg_get_front_bio_and_take_ownership(gw->rdg)))
 		goto fail;
-	}
-	BIO_free_all(old);
 	return gw;
 fail:
 	gateway_free(gw);
 	return nullptr;
+}
+
+static Gateway* gateway_new(BOOL buffered, BOOL chunked)
+{
+	return gateway_new_ex(buffered, chunked, TRUE);
+}
+
+static BOOL test_redirect_with_unread_data(BOOL chunked, BOOL truncated)
+{
+	BOOL rc = FALSE;
+	Gateway* gw = gateway_new_ex(TRUE, chunked, FALSE);
+	CHECK(gw);
+	/* Advertise 57 bytes, deliver four to the old RDP reader, and leave 53 pending. */
+	GatewayStep oldData = { .length = truncated ? 17 : 67,
+	                        .reply = { DATA, 0, 0, 0, 67, 0, 0, 0, 57, 0 } };
+	CHECK(enqueue_reply(gw, &oldData));
+	BIO* old = rdg_get_front_bio_and_take_ownership(gw->rdg);
+	BYTE redirect[4];
+	const int got = BIO_read(old, redirect, sizeof(redirect));
+	CHECK(gateway_detach(gw, old));
+	CHECK(got == sizeof(redirect) && gw->rdg->packetRemainingCount == 53);
+	GatewayStep* close = add_step(gw, CLOSE_CHANNEL);
+	CHECK(close);
+	if (truncated)
+	{
+		CHECK(freerdp_settings_set_uint32(gw->instance->context->settings,
+		                                  FreeRDP_GatewayResponseTimeout, 40));
+		const UINT64 start = GetTickCount64();
+		CHECK(!rdg_reopen_channel(gw->rdg));
+		const UINT64 elapsed = GetTickCount64() - start;
+		CHECK(elapsed >= 40 && elapsed < 1000);
+		CHECK(!gw->rdg->frontBio && (gw->stepIndex == 1));
+	}
+	else
+	{
+		gw->maxRead = 3;
+		gw->retryEvery = 3;
+		CHECK(add_reply(close, CLOSE_RESPONSE, S_OK));
+		CHECK(add_reply(add_step(gw, CHANNEL_CREATE), CHANNEL_RESPONSE, S_OK));
+		CHECK(rdg_reopen_channel(gw->rdg));
+		CHECK(gw->rdg->frontBio && (gw->rdg->packetRemainingCount == 0));
+		CHECK(gw->stepIndex == gw->stepCount);
+	}
+	CHECK(!gw->failed && (gw->rdg->redirectDeadline == 0));
+	rc = TRUE;
+fail:
+	gateway_free(gw);
+	return rc;
 }
 
 static BOOL test_reopen(BOOL buffered, BOOL chunked, BOOL crossed)
@@ -574,7 +624,8 @@ static int test_cases(void)
 	if (!test_missing_close_response() || !test_channel_result(S_FALSE) ||
 	    !test_channel_result(0x80004005) || !test_keepalive_failure() || !test_delayed_reply() ||
 	    !test_two_redirects() || !test_control_messages() || !test_already_closed() ||
-	    !test_transport_failure())
+	    !test_transport_failure() || !test_redirect_with_unread_data(FALSE, FALSE) ||
+	    !test_redirect_with_unread_data(TRUE, FALSE) || !test_redirect_with_unread_data(TRUE, TRUE))
 		return -1;
 	for (size_t o = 0; o < 2; o++)
 	{
