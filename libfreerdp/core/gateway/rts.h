@@ -145,4 +145,10 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_conditional_safe_seek(wStream* s, size_t size, BOOL silent, const char* fkt,
                                              const char* file, size_t line);
 
+FREERDP_LOCAL
+void rts_context_elem_free(p_cont_elem_t* ptr, size_t count);
+
+WINPR_ATTR_MALLOC(rts_context_elem_free, 1)
+FREERDP_LOCAL p_cont_elem_t* rts_context_elem_new(size_t count);
+
 #endif /* FREERDP_LIB_CORE_GATEWAY_RTS_H */
