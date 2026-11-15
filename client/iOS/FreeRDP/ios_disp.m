@@ -27,6 +27,8 @@
 
 #include "ios_disp.h"
 
+#import "RDPSession.h"
+
 #define TAG CLIENT_TAG("ios.disp")
 
 // layouts are sent only after the server announced its limits (as xfreerdp does)
@@ -39,6 +41,11 @@ static UINT ios_disp_caps(DispClientContext *disp, UINT32 maxNumMonitors,
 	WINPR_ASSERT(afc);
 
 	afc->dispActivated = TRUE;
+
+	// the view may have resized while the channel was not ready (connecting or reconnecting)
+	[afc->mfi->session performSelectorOnMainThread:@selector(sessionDidActivateDisplayControl)
+	                                    withObject:nil
+	                                 waitUntilDone:NO];
 
 	WLog_DBG(TAG,
 	         "DisplayControlCaps: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32

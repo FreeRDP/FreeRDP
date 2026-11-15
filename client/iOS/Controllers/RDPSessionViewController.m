@@ -33,6 +33,9 @@
 - (void)showConnectingViewWithText:(NSString *)text;
 - (void)hideConnectingView;
 - (void)endBackgroundTask;
+- (void)scheduleRemoteResize;
+- (void)cancelRemoteResize;
+- (void)sendRemoteResize;
 - (CGPoint)remotePositionForSessionViewPosition:(CGPoint)position;
 - (CGPoint)sessionViewPositionForRemotePosition:(CGPoint)position;
 - (CGPoint)clampedSessionViewCursorPosition:(CGPoint)position;
@@ -175,7 +178,10 @@
 
 	CGSize viewportSize = [_session_scrollview bounds].size;
 	if (!CGSizeEqualToSize(viewportSize, _last_session_viewport_size))
+	{
 		[self fitSessionViewToViewport];
+		[self scheduleRemoteResize];
+	}
 	else
 		[self centerSessionViewInViewport];
 }
@@ -265,6 +271,7 @@
 		{
 			[_session resume];
 			[self sessionBitmapContextDidChange:_session];
+			[self scheduleRemoteResize];
 		}
 		else
 			[_session connect];
@@ -472,6 +479,14 @@
 	[self hideConnectingView];
 }
 
+- (void)sessionDidActivateDisplayControl:(RDPSession *)session
+{
+	(void)session;
+	// a request made before the (re)connected channel was ready got dropped
+	_requested_remote_size = CGSizeZero;
+	[self scheduleRemoteResize];
+}
+
 - (void)sessionDidConnect:(RDPSession *)session
 {
 	// register keyboard notification handlers
@@ -519,6 +534,10 @@
 
 	[self hideConnectingView];
 
+	// not on every bitmap change: with dynamic resolution that happens whenever the view resizes
+	[_session setToolbarVisible:YES];
+	[self showSessionToolbar:[_session toolbarVisible]];
+
 	// check if session settings changed ...
 	// The 2nd width check is to ignore changes in resolution settings due to the RDVH display bug
 	// (refer to RDPSEssion.m for more details)
@@ -551,6 +570,7 @@
 {
 	[self hideConnectingView];
 	[self endBackgroundTask];
+	[self cancelRemoteResize];
 
 	// return to bookmark list
 	[[self navigationController] popViewControllerAnimated:YES];
@@ -573,11 +593,8 @@
 	_has_cursor_view_position = NO;
 	_has_user_moved_cursor = NO;
 	_last_session_viewport_size = CGSizeZero;
+	_requested_remote_size = CGSizeZero;
 	[self fitSessionViewToViewport];
-
-	// show toolbar
-	[_session setToolbarVisible:YES];
-	[self showSessionToolbar:[_session toolbarVisible]];
 }
 
 - (void)sessionBitmapContextDidChange:(RDPSession *)session
@@ -755,9 +772,9 @@
 {
 	// set remote resolution that matches the on-screen viewport.
 	CGSize size = [self sessionViewportFrame].size;
-	UIScreen *screen = [[self view] window] ? [[[self view] window] screen] : [UIScreen mainScreen];
-	CGFloat scale =
-	    [screen respondsToSelector:@selector(nativeScale)] ? [screen nativeScale] : [screen scale];
+	// not the main screen: the scene can move between displays (iphone duo, external display)
+	UIScreen *screen = [[[[self view] window] windowScene] screen];
+	CGFloat scale = screen ? [screen nativeScale] : [[self traitCollection] displayScale];
 	if (scale <= 0.0f)
 		scale = 1.0f;
 
@@ -973,11 +990,17 @@
 	    [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
 		    [self endBackgroundTask];
 	    }];
+
+	// ios lays the window out in other orientations for the app switcher snapshots
+	[self cancelRemoteResize];
 }
 
 - (void)applicationWillEnterForeground:(NSNotification *)notification
 {
 	[self endBackgroundTask];
+
+	// the device may have been rotated while the app was in the background
+	[self scheduleRemoteResize];
 }
 
 #pragma mark -
@@ -1217,6 +1240,47 @@
 
 	[[UIApplication sharedApplication] endBackgroundTask:_background_task];
 	_background_task = UIBackgroundTaskInvalid;
+}
+
+- (void)scheduleRemoteResize
+{
+	// a fixed resolution bookmark connects without the disp channel
+	if ([[_session params] intForKey:@"screen_resolution_type"] != TSXScreenOptionFitScreen)
+		return;
+
+	// wait until the size settles, e.g. while a window is dragged or the device unfolds
+	[self cancelRemoteResize];
+	[self performSelector:@selector(sendRemoteResize) withObject:nil afterDelay:0.5];
+}
+
+- (void)cancelRemoteResize
+{
+	[NSObject cancelPreviousPerformRequestsWithTarget:self
+	                                         selector:@selector(sendRemoteResize)
+	                                           object:nil];
+}
+
+- (void)sendRemoteResize
+{
+	UIWindowScene *scene = [[[self view] window] windowScene];
+	if (!scene || [scene activationState] == UISceneActivationStateBackground)
+		return;
+
+	// the disp channel sends even widths, so compare with the same value
+	CGSize size = [self sizeForFitScreenForSession:_session];
+	size.width = (UINT32)size.width & ~1u;
+
+	rdpSettings *settings = [_session getSessionParams];
+	if (size.width == freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) &&
+	    size.height == freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))
+		return;
+
+	// the desktop size changes only when the server applies the layout
+	if (CGSizeEqualToSize(size, _requested_remote_size))
+		return;
+
+	_requested_remote_size = size;
+	[_session sendMonitorLayoutWithSize:size];
 }
 
 - (CGRect)sessionViewportFrame

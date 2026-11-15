@@ -33,6 +33,7 @@ NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 - (void)sessionDidFailToConnect:(int)reason;
 - (void)sessionWillReconnect;
 - (void)sessionDidReconnect;
+- (void)sessionDidActivateDisplayControl;
 - (void)sessionBitmapContextWillChange;
 - (void)sessionBitmapContextDidChange;
 @end
@@ -554,6 +555,12 @@ out_free:
 {
 	if ([[self delegate] respondsToSelector:@selector(sessionDidReconnect:)])
 		[[self delegate] sessionDidReconnect:self];
+}
+
+- (void)sessionDidActivateDisplayControl
+{
+	if ([[self delegate] respondsToSelector:@selector(sessionDidActivateDisplayControl:)])
+		[[self delegate] sessionDidActivateDisplayControl:self];
 }
 
 - (void)sessionDidConnect
