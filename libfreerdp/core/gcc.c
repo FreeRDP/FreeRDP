@@ -36,6 +36,7 @@
 
 #include "utils.h"
 #include "gcc.h"
+#include "rdp.h"
 #include "nego.h"
 
 #include "../crypto/certificate.h"
@@ -1530,6 +1531,13 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Read_UINT32(s, serverVersion); /* version */
 	settings->RdpVersion = rdp_version_common(mcs->log, serverVersion, settings->RdpVersion);
+
+	/* the version the server announced, before the client's own capped it */
+	WINPR_ASSERT(mcs->context);
+	rdpRdp* rdp = mcs->context->rdp;
+	if (rdp && rdp->remoteSettings &&
+	    !freerdp_settings_set_uint32(rdp->remoteSettings, FreeRDP_RdpVersion, serverVersion))
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) >= 4)
 	{

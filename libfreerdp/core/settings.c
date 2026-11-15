@@ -1064,7 +1064,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_Decorations, TRUE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_RdpVersion, RDP_VERSION_10_12) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_RdpVersion, remote ? 0 : RDP_VERSION_10_12) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE) ||
