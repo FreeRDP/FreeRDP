@@ -272,18 +272,149 @@ static BOOL check_settings_smart_sizing_size(rdpSettings* settings)
 	return result;
 }
 
-#if defined(WITH_GFX_AV1)
-static BOOL check_settings_gfx_av1(rdpSettings* settings)
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+/* a pick: the AV codecs as given, and the codecs not picked are off */
+static BOOL check_gfx_codecs(const rdpSettings* settings, BOOL av1, BOOL av2)
 {
 	BOOL result = TRUE;
+	const FreeRDP_Settings_Keys_Bool off[] = { FreeRDP_GfxH264, FreeRDP_GfxAVC444,
+		                                       FreeRDP_GfxAVC444v2, FreeRDP_RemoteFxCodec,
+		                                       FreeRDP_GfxProgressive };
 
-	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	for (size_t x = 0; x < ARRAYSIZE(off); x++)
 	{
-		TEST_FAILURE("Expected GfxCodecAV1 = TRUE, but GfxCodecAV1 = FALSE!\n");
+		if (freerdp_settings_get_bool(settings, off[x]))
+		{
+			TEST_FAILURE("Expected %s = FALSE, the codec was not picked!\n",
+			             freerdp_settings_get_name_for_key(off[x]));
+			result = FALSE;
+		}
+	}
+#if defined(WITH_GFX_AV1)
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1) != av1)
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = %d!\n", av1);
 		result = FALSE;
 	}
-
+#else
+	WINPR_UNUSED(av1);
+#endif
+#if defined(WITH_GFX_AV2)
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV2) != av2)
+	{
+		TEST_FAILURE("Expected GfxCodecAV2 = %d!\n", av2);
+		result = FALSE;
+	}
+#else
+	WINPR_UNUSED(av2);
+#endif
 	return result;
+}
+
+/* the default: no codec picked, both AV codecs offered and the server chooses */
+static BOOL check_settings_gfx_av_default(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+#if defined(WITH_GFX_AV1)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = TRUE without a pick, but it is FALSE!\n");
+		result = FALSE;
+	}
+#endif
+#if defined(WITH_GFX_AV2)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV2))
+	{
+		TEST_FAILURE("Expected GfxCodecAV2 = TRUE without a pick, but it is FALSE!\n");
+		result = FALSE;
+	}
+#endif
+	return result;
+}
+
+#if defined(WITH_GFX_H264)
+/* AVC420 picked: the AV codecs are not picked, so they are not offered */
+static BOOL check_settings_gfx_avc420_only(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+	const FreeRDP_Settings_Keys_Bool off[] = {
+#if defined(WITH_GFX_AV1)
+		FreeRDP_GfxCodecAV1,
+#endif
+#if defined(WITH_GFX_AV2)
+		FreeRDP_GfxCodecAV2,
+#endif
+		FreeRDP_GfxAVC444, FreeRDP_RemoteFxCodec, FreeRDP_GfxProgressive
+	};
+	for (size_t x = 0; x < ARRAYSIZE(off); x++)
+	{
+		if (freerdp_settings_get_bool(settings, off[x]))
+		{
+			TEST_FAILURE("Expected %s = FALSE with /gfx:AVC420, but it is TRUE!\n",
+			             freerdp_settings_get_name_for_key(off[x]));
+			result = FALSE;
+		}
+	}
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxH264))
+	{
+		TEST_FAILURE("Expected GfxH264 = TRUE, but GfxH264 = FALSE!\n");
+		result = FALSE;
+	}
+	return result;
+}
+#endif
+#endif
+
+#if defined(WITH_GFX_AV1)
+/* AV1 picked: AV1 alone is offered, AV2 and the other codecs are not */
+static BOOL check_settings_gfx_av1(rdpSettings* settings)
+{
+	return check_gfx_codecs(settings, TRUE, FALSE);
+}
+
+static BOOL check_settings_gfx_av1_i420(rdpSettings* settings)
+{
+	BOOL result = check_gfx_codecs(settings, TRUE, FALSE);
+	if (freerdp_settings_get_uint32(settings, FreeRDP_GfxCodecAV1Profile) != 0)
+	{
+		TEST_FAILURE("Expected GfxCodecAV1Profile = 0 for AV1:i420!\n");
+		result = FALSE;
+	}
+	return result;
+}
+#endif
+
+#if defined(WITH_GFX_AV2)
+/* AV2 picked: AV2 alone is offered */
+static BOOL check_settings_gfx_av2(rdpSettings* settings)
+{
+	return check_gfx_codecs(settings, FALSE, TRUE);
+}
+
+/* AV2:off picks nothing: only AV2 goes, AV1 stays as it was */
+static BOOL check_settings_gfx_av2_off(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+#if defined(WITH_GFX_AV1)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = TRUE after AV2:off, but it is FALSE!\n");
+		result = FALSE;
+	}
+#endif
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV2))
+	{
+		TEST_FAILURE("Expected GfxCodecAV2 = FALSE after AV2:off, but it is TRUE!\n");
+		result = FALSE;
+	}
+	return result;
+}
+#endif
+
+#if defined(WITH_GFX_AV1) && defined(WITH_GFX_AV2)
+static BOOL check_settings_gfx_av1_av2(rdpSettings* settings)
+{
+	return check_gfx_codecs(settings, TRUE, TRUE);
 }
 #endif
 
@@ -587,6 +718,18 @@ static const test tests[] = {
 	  { "testfreerdp", "/network:auto", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 #endif
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+	{ 0,
+	  check_settings_gfx_av_default,
+	  { "testfreerdp", "/gfx", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#if defined(WITH_GFX_H264)
+	{ 0,
+	  check_settings_gfx_avc420_only,
+	  { "testfreerdp", "/gfx:AVC420", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#endif
 #if defined(WITH_GFX_AV1)
 	{ 0,
 	  check_settings_gfx_av1,
@@ -595,6 +738,34 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_gfx_av1,
 	  { "testfreerdp", "/gfx:AV1:on", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av1,
+	  { "testfreerdp", "/gfx:AV1:i444", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av1_i420,
+	  { "testfreerdp", "/gfx:AV1:i420", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#if defined(WITH_GFX_AV2)
+	{ 0,
+	  check_settings_gfx_av2,
+	  { "testfreerdp", "/gfx:AV2", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av2,
+	  { "testfreerdp", "/gfx:AV2:i420", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av2_off,
+	  { "testfreerdp", "/gfx:AV2:off", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#if defined(WITH_GFX_AV1) && defined(WITH_GFX_AV2)
+	{ 0,
+	  check_settings_gfx_av1_av2,
+	  { "testfreerdp", "/gfx:AV1,AV2", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 #endif
 	{ 0,

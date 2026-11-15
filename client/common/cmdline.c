@@ -2534,6 +2534,13 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 			BOOL GfxAVCMixed = FALSE;
 			BOOL RemoteFxCodec = FALSE;
 			BOOL GfxProgressive = FALSE;
+#if defined(WITH_GFX_AV1)
+			BOOL GfxAV1 = FALSE;
+#endif
+#if defined(WITH_GFX_AV2)
+			BOOL GfxAV2 = FALSE;
+#endif
+			/* A codec named and on is picked: then the codecs not picked are offered no more. */
 			BOOL codecSelected = FALSE;
 
 			for (size_t x = 0; x < count; x++)
@@ -2659,6 +2666,10 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 
 					if (enabled || (bval != PARSE_FAIL))
 					{
+						/* AV1:off alone turns AV1 off and leaves the others as they are */
+						GfxAV1 = enabled;
+						if (enabled)
+							codecSelected = TRUE;
 						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, enabled))
 							rc = COMMAND_LINE_ERROR;
 						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV1Profile,
@@ -2693,6 +2704,10 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 
 					if (enabled || (bval != PARSE_FAIL))
 					{
+						/* AV2:off alone turns AV2 off and leaves the others as they are */
+						GfxAV2 = enabled;
+						if (enabled)
+							codecSelected = TRUE;
 						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
 							rc = COMMAND_LINE_ERROR;
 						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile,
@@ -2752,6 +2767,14 @@ int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, GfxProgressive))
 					rc = COMMAND_LINE_ERROR;
+#if defined(WITH_GFX_AV1)
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, GfxAV1))
+					rc = COMMAND_LINE_ERROR;
+#endif
+#if defined(WITH_GFX_AV2)
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, GfxAV2))
+					rc = COMMAND_LINE_ERROR;
+#endif
 			}
 		}
 		CommandLineParserFree(ptr);
