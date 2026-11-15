@@ -756,8 +756,9 @@ owned by rdpRdp */
 	/** @brief What the peer announced in this connection: its core data and capability sets.
 	 *
 	 *  On a client these are the server's (its RDP version as it sent it, its OS type in the
-	 *  General Capability Set, ...), on a server the client's. The RDP version and the OS type
-	 *  are 0 until the peer sends them, other fields it has not sent hold their defaults; the
+	 *  General Capability Set, its trusted TLS certificate as RdpServerCertificate, ...), on a
+	 *  server the client's. The RDP version and the OS type are 0 and the certificate is
+	 *  nullptr until the peer sends them, other fields it has not sent hold their defaults; the
 	 *  settings start over with each connection (a reconnect or a redirection too). Read them
 	 *  with the freerdp_settings_get_* functions, on the thread that runs the connection.
 	 *

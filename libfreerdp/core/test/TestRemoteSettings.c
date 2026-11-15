@@ -85,6 +85,11 @@ static BOOL test_versions(UINT32 serverVersion, UINT32 clientVersion, UINT32 agr
 				goto fail;
 			}
 		}
+		if (freerdp_settings_get_pointer(remoteSettings, FreeRDP_RdpServerCertificate))
+		{
+			(void)fprintf(stderr, "RdpServerCertificate is set before the server sent one\n");
+			goto fail;
+		}
 		if (!freerdp_settings_set_uint32(context->settings, FreeRDP_RdpVersion, clientVersion))
 			goto fail;
 		if (!gcc_read_conference_create_response(s, context->rdp->mcs))

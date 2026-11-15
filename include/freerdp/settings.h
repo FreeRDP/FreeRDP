@@ -78,7 +78,8 @@ extern "C"
  * rdpSettings creation flags
  */
 #define FREERDP_SETTINGS_SERVER_MODE 0x00000001
-/** What a peer announced (freerdp_get_remote_settings): RdpVersion is 0 until it does */
+/** What a peer announced (freerdp_get_remote_settings): RdpVersion is 0 and
+ * RdpServerCertificate nullptr until it does */
 #define FREERDP_SETTINGS_REMOTE_MODE 0x00000002
 
 	/** \brief Free a settings struct with all data in it
