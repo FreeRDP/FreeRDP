@@ -2761,7 +2761,10 @@ static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, 
 	           "RdpdrServerSendDeviceWriteRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", length=%" PRIu32 ", offset=%" PRIu64 "",
 	           irp->DeviceId, irp->FileId, length, offset);
-	wStream* s = Stream_New(nullptr, 64 + length);
+	if (length > UINT32_MAX - 64)
+		return ERROR_INVALID_PARAMETER;
+
+	wStream* s = Stream_New(nullptr, 64ull + length);
 
 	if (!s)
 	{
