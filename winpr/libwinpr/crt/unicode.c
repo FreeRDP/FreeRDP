@@ -378,6 +378,8 @@ SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
 	}
 
 	const size_t wlen = _wcslen(wstr);
+	if (wlen == SIZE_MAX)
+		return -1;
 	return ConvertWCharNToUtf8(wstr, wlen + 1, str, len);
 }
 
@@ -456,6 +458,8 @@ SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr, size_t wlen)
 	}
 
 	const size_t len = strlen(str);
+	if (len == SIZE_MAX)
+		return -1;
 	return ConvertUtf8NToWChar(str, len + 1, wstr, wlen);
 }
 
