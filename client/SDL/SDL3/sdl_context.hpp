@@ -233,9 +233,6 @@ class SdlContext
 
 	void applyMonitorOffset(SDL_WindowID window, float& x, float& y) const;
 
-	[[nodiscard]] std::vector<SDL_DisplayID>
-	updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
-	                                  const std::vector<SDL_DisplayID>& ignore = {});
 	void updateMonitorDataFromOffsets();
 
 	rdpContext* _context = nullptr;

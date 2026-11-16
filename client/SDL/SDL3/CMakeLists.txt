@@ -35,6 +35,7 @@ set(SRCS
     sdl_pointer.hpp
     sdl_disp.cpp
     sdl_disp.hpp
+    sdl_display_offsets.hpp
     sdl_monitor.cpp
     sdl_monitor.hpp
     sdl_freerdp.hpp
