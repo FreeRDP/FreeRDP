@@ -23,6 +23,7 @@
 
 #include <winpr/winpr.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/helpers.h>
 
 #include "../crypto/tls.h"
 
@@ -114,21 +115,6 @@ char* freerdp_getApplicatonDetailsCombined(char separator);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL
 BOOL freerdp_areApplicationDetailsCustomized(void);
-
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL const char* guid2str(const GUID* guid, char* buffer, size_t len);
-
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL utils_is_valid_ip(const char* ipAddress);
-
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL utils_is_valid_ipV6(const char* ipAddress);
-
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL utils_is_valid_ipN(const char* ipAddress, size_t len);
-
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL utils_is_valid_ipV6N(const char* ipAddress, size_t len);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA,

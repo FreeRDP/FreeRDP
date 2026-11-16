@@ -2162,7 +2162,7 @@ void tls_print_certificate_name_mismatch_error(const rdpCertificate* cert, const
 
 	size_t count = dnscount;
 	char** names = dnsnames;
-	const BOOL isIP = utils_is_valid_ip(hostname);
+	const BOOL isIP = freerdp_is_valid_ip(hostname);
 	if (isIP)
 	{
 		count = ipcount;

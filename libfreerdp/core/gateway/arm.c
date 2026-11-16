@@ -652,7 +652,7 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 			return FALSE;
 		}
 
-		if (!utils_is_valid_ip(addr) && !winpr_str_is_valid_hostname(addr))
+		if (!freerdp_is_valid_ip(addr) && !winpr_str_is_valid_hostname(addr))
 		{
 			WLog_ERR(TAG, "TargetNetAddress[%" PRIuz "]: %s not an FQDN or IP", j, addr);
 			return FALSE;
@@ -697,7 +697,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 					return FALSE;
 				}
 
-				if (!utils_is_valid_ip(publicIp))
+				if (!freerdp_is_valid_ip(publicIp))
 				{
 					WLog_ERR(TAG, "publicIpAddress value %s: not a valid IP", publicIp);
 					return FALSE;
@@ -721,7 +721,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 					WLog_ERR(TAG, "Exceeded TargetNetAddresses, parsing failed");
 					return FALSE;
 				}
-				if (!utils_is_valid_ip(privateIp))
+				if (!freerdp_is_valid_ip(privateIp))
 				{
 					WLog_ERR(TAG, "privateIpAddress value %s: not a valid IP", privateIp);
 					return FALSE;

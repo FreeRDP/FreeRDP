@@ -1424,7 +1424,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	if (!freerdp_settings_set_string(settings, FreeRDP_CorrelationId,
-	                                 guid2str(&corrId, buffer, sizeof(buffer))))
+	                                 freerdp_guid2str(&corrId, buffer, sizeof(buffer))))
 		goto out_fail;
 
 	if (!settings_load_hkey_local_machine(settings))

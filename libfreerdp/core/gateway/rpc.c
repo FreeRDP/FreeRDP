@@ -543,8 +543,8 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 		if (guid)
 		{
 			char buffer[64] = WINPR_C_ARRAY_INIT;
-			const BOOL rc = http_context_append_pragma(http, "SessionId=%s",
-			                                           guid2str(guid, buffer, sizeof(buffer)));
+			const BOOL rc = http_context_append_pragma(
+			    http, "SessionId=%s", freerdp_guid2str(guid, buffer, sizeof(buffer)));
 			if (!rc)
 				return -1;
 		}
