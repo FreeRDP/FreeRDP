@@ -1469,6 +1469,11 @@ BOOL license_read_product_info(wLog* log, wStream* s, LICENSE_PRODUCT_INFO* prod
 {
 	WINPR_ASSERT(productInfo);
 
+	free(productInfo->pbCompanyName);
+	free(productInfo->pbProductId);
+	productInfo->pbCompanyName = nullptr;
+	productInfo->pbProductId = nullptr;
+
 	if (!license_check_stream_length(log, s, 8, "license product info::cbCompanyName", 0))
 		return FALSE;
 
@@ -1488,7 +1493,6 @@ BOOL license_read_product_info(wLog* log, wStream* s, LICENSE_PRODUCT_INFO* prod
 	                                 LICENSE_MAX_COMPANY_NAME_LENGTH))
 		return FALSE;
 
-	productInfo->pbProductId = nullptr;
 	productInfo->pbCompanyName = (BYTE*)malloc(productInfo->cbCompanyName);
 	if (!productInfo->pbCompanyName)
 		goto out_fail;
