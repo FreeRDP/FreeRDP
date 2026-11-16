@@ -382,7 +382,7 @@ void rail_ipc_attach(rdpClientRailIpc* ipc, RailClientContext* rail, rdpClientCo
 	LeaveCriticalSection(&ipc->lock);
 }
 
-static void rail_ipc_detach_int(rdpClientRailIpc* ipc, RailClientContext* rail,
+static void rail_ipc_detach_int(rdpClientRailIpc* ipc, WINPR_ATTR_UNUSED RailClientContext* rail,
                                 rdpClientContext* cctx)
 {
 	WINPR_ASSERT(ipc);
