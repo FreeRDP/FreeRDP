@@ -838,12 +838,13 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
 	return TRUE;
 }
 
-static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
+WINPR_ATTR_NODISCARD
+static BOOL write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 {
 	memset(attr, 0, sizeof(struct stat));
 
-	if (!fuse_file)
-		return;
+	if (!fuse_file || (fuse_file->size > INT64_MAX))
+		return FALSE;
 
 	attr->st_ino = fuse_file->ino;
 	if (fuse_file->is_directory)
@@ -861,6 +862,7 @@ static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 	attr->st_gid = getgid();
 	attr->st_atime = attr->st_mtime = attr->st_ctime =
 	    (fuse_file->has_last_write_time ? fuse_file->last_write_time_unix : time(nullptr));
+	return TRUE;
 }
 
 static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino, const char* name)
@@ -905,7 +907,12 @@ static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino,
 	}
 
 	entry.ino = fuse_file->ino;
-	write_file_attributes(fuse_file, &entry.attr);
+	if (!write_file_attributes(fuse_file, &entry.attr))
+	{
+		HashTable_Unlock(file_context->inode_table);
+		fuse_reply_err(fuse_req, ERANGE);
+		return;
+	}
 	entry.attr_timeout = 1.0;
 	entry.entry_timeout = 1.0;
 	HashTable_Unlock(file_context->inode_table);
@@ -947,7 +954,12 @@ static void cliprdr_file_fuse_getattr(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 		return;
 	}
 
-	write_file_attributes(fuse_file, &attr);
+	if (!write_file_attributes(fuse_file, &attr))
+	{
+		fuse_reply_err(fuse_req, ERANGE);
+		HashTable_Unlock(file_context->inode_table);
+		return;
+	}
 	HashTable_Unlock(file_context->inode_table);
 
 	fuse_reply_attr(fuse_req, &attr, 1.0);
@@ -1157,12 +1169,25 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	{
 		if (i == 0)
 		{
-			write_file_attributes(fuse_file, &attr);
+			if (!write_file_attributes(fuse_file, &attr))
+			{
+				HashTable_Unlock(file_context->inode_table);
+				fuse_reply_err(fuse_req, ERANGE);
+				free(buf);
+				return;
+			}
+
 			filename = ".";
 		}
 		else if (i == 1)
 		{
-			write_file_attributes(fuse_file->parent, &attr);
+			if (!write_file_attributes(fuse_file->parent, &attr))
+			{
+				HashTable_Unlock(file_context->inode_table);
+				fuse_reply_err(fuse_req, ERANGE);
+				free(buf);
+				return;
+			}
 			attr.st_ino = fuse_file->parent ? attr.st_ino : FUSE_ROOT_ID;
 			attr.st_mode = fuse_file->parent ? attr.st_mode : 0555;
 			filename = "..";
@@ -1191,7 +1216,14 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 
 		child = ArrayList_GetItem(fuse_file->children, j);
 
-		write_file_attributes(child, &attr);
+		if (!write_file_attributes(child, &attr))
+		{
+			HashTable_Unlock(file_context->inode_table);
+			fuse_reply_err(fuse_req, ERANGE);
+			free(buf);
+			return;
+		}
+
 		entry_size =
 		    fuse_add_direntry(fuse_req, buf + written_size, max_size - written_size,
 		                      child->filename, &attr, WINPR_ASSERTING_INT_CAST(off_t, i + 1));
@@ -1337,18 +1369,17 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 
 		fuse_request->fuse_file->size =
-		    *(WINPR_PACKED_ALIGN_CAST(const UINT64*, file_contents_response->requestedData));
-		if (fuse_request->fuse_file->size > INT64_MAX)
+		    winpr_Data_Get_UINT64(file_contents_response->requestedData);
+		fuse_request->fuse_file->has_size = TRUE;
+
+		entry.ino = fuse_request->fuse_file->ino;
+		if (!write_file_attributes(fuse_request->fuse_file, &entry.attr))
 		{
 			return cliprdr_fail_content_reponse(
 			    file_context, fuse_request, file_contents_response->streamId,
 			    "Received invalid file size for file \"%s\" from the client",
 			    fuse_request->fuse_file->filename);
 		}
-		fuse_request->fuse_file->has_size = TRUE;
-
-		entry.ino = fuse_request->fuse_file->ino;
-		write_file_attributes(fuse_request->fuse_file, &entry.attr);
 		entry.attr_timeout = 1.0;
 		entry.entry_timeout = 1.0;
 	}
@@ -1915,8 +1946,8 @@ static UINT cliprdr_file_context_server_file_range_request(
 
 	WINPR_ASSERT(fileContentsRequest);
 
-	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
-	                      ((UINT64)fileContentsRequest->nPositionLow);
+	const UINT64 offset = ((1ull * fileContentsRequest->nPositionHigh) << 32) |
+	                      (1ull * fileContentsRequest->nPositionLow);
 	if (offset > INT64_MAX)
 		return ERROR_INVALID_DATA;
 
@@ -2318,7 +2349,7 @@ static BOOL selection_handle_file(CliprdrFileContext* file_context,
 		fuse_file->is_readonly = TRUE;
 	if (file->dwFlags & FD_FILESIZE)
 	{
-		fuse_file->size = ((UINT64)file->nFileSizeHigh << 32) + file->nFileSizeLow;
+		fuse_file->size = (1ull * file->nFileSizeHigh << 32) + 1ull * file->nFileSizeLow;
 		fuse_file->has_size = TRUE;
 	}
 	if (file->dwFlags & FD_WRITESTIME)
