@@ -209,6 +209,180 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 	return 1;
 }
 
+/* A whole number from min to max, nothing else */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_u32(const char* text, UINT32 min, UINT32 max, UINT32* value)
+{
+	WINPR_ASSERT(value);
+	if (!text)
+		return FALSE;
+
+	char* end = nullptr;
+	errno = 0;
+	const unsigned long long parsed = strtoull(text, &end, 0);
+	if ((errno != 0) || !end || (*end != '\0') || (parsed < min) || (parsed > max))
+		return FALSE;
+	*value = (UINT32)parsed;
+	return TRUE;
+}
+
+/* The text after prefix, or nullptr when text does not start with it */
+WINPR_ATTR_NODISCARD
+static const char* shadow_server_after(const char* text, const char* prefix)
+{
+	const size_t length = strlen(prefix);
+	return (strncmp(text, prefix, length) == 0) ? &text[length] : nullptr;
+}
+
+/* A bit rate given in kbit/s (1 to 1000000), stored in the unit of its field: unit 1 for kbit/s,
+ * 1000 for bit/s */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_bitrate(const char* text, UINT32 unit, UINT32* value)
+{
+	UINT32 kbits = 0;
+	if (!shadow_server_parse_u32(text, 1, 1000000, &kbits))
+		return FALSE;
+	*value = kbits * unit;
+	return TRUE;
+}
+
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+/* vbr, cbr, cq or q: the order of FREERDP_AV1_RATECONTROL and FREERDP_AV2_RATECONTROL */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_av_mode(const char* text, UINT32* mode)
+{
+	const char* names[] = { "vbr", "cbr", "cq", "q" };
+	for (UINT32 x = 0; x < ARRAYSIZE(names); x++)
+	{
+		if (strcmp(text, names[x]) == 0)
+		{
+			*mode = x;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+#endif
+
+/* /codec:<codec>:<key>:<value>[,<codec>:<key>:<value>...], for the codecs built in:
+ *   h264: rate-control:vbr|cqp, bitrate:<kbit/s>, qp:<0-51>
+ *   av1, av2: rate-control:vbr|cbr|cq|q, bitrate:<kbit/s>
+ *   hevc: rate-control:vbr, bitrate:<kbit/s>
+ * Nothing changes unless the whole value is right. */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_codec(rdpShadowServer* server, const char* value)
+{
+	WINPR_ASSERT(server);
+
+	H264_RATECONTROL_MODE h264Mode = server->h264RateControlMode;
+	UINT32 h264BitRate = server->h264BitRate; /* bit/s */
+	UINT32 h264QP = server->h264QP;
+#if defined(WITH_GFX_AV1)
+	UINT32 av1Mode = (UINT32)server->AV1RateControlMode;
+	UINT32 av1BitRate = server->AV1BitRate; /* kbit/s */
+#endif
+#if defined(WITH_GFX_AV2)
+	UINT32 av2Mode = (UINT32)server->AV2RateControlMode;
+	UINT32 av2BitRate = server->AV2BitRate; /* kbit/s */
+#endif
+#if defined(WITH_GFX_AZURE)
+	FREERDP_HEVC_RATECONTROL hevcMode = server->HEVCRateControlMode;
+	UINT32 hevcBitRate = server->HEVCBitRate; /* bit/s: the H.264 context's */
+#endif
+
+	BOOL ok = (value != nullptr);
+	size_t count = 0;
+	char** args = ok ? CommandLineParseCommaSeparatedValues(value, &count) : nullptr;
+	if (ok && !args)
+		ok = FALSE;
+	for (size_t x = 0; ok && (x < count); x++)
+	{
+		const char* cur = args[x];
+		const char* rest = nullptr;
+		const char* v = nullptr;
+		if ((rest = shadow_server_after(cur, "h264:")) != nullptr)
+		{
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+			{
+				if (strcmp(v, "vbr") == 0)
+					h264Mode = H264_RATECONTROL_VBR;
+				else if (strcmp(v, "cqp") == 0)
+					h264Mode = H264_RATECONTROL_CQP;
+				else
+					ok = FALSE;
+			}
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1000, &h264BitRate);
+			else if ((v = shadow_server_after(rest, "qp:")) != nullptr)
+				ok = shadow_server_parse_u32(v, 0, 51, &h264QP);
+			else
+				ok = FALSE;
+		}
+#if defined(WITH_GFX_AV1)
+		else if ((rest = shadow_server_after(cur, "av1:")) != nullptr)
+		{
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+				ok = shadow_server_parse_av_mode(v, &av1Mode);
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1, &av1BitRate);
+			else
+				ok = FALSE;
+		}
+#endif
+#if defined(WITH_GFX_AV2)
+		else if ((rest = shadow_server_after(cur, "av2:")) != nullptr)
+		{
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+				ok = shadow_server_parse_av_mode(v, &av2Mode);
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1, &av2BitRate);
+			else
+				ok = FALSE;
+		}
+#endif
+#if defined(WITH_GFX_AZURE)
+		else if ((rest = shadow_server_after(cur, "hevc:")) != nullptr)
+		{
+			/* only vbr: the HEVC encoder hands its mode to the H.264 context, which knows VBR
+			 * and CQP only, and FREERDP_HEVC_CBR has CQP's value */
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+			{
+				if (strcmp(v, "vbr") == 0)
+					hevcMode = FREERDP_HEVC_VBR;
+				else
+					ok = FALSE;
+			}
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1000, &hevcBitRate);
+			else
+				ok = FALSE;
+		}
+#endif
+		else
+			ok = FALSE; /* an unknown codec, or one not built in */
+	}
+	CommandLineParserFree(args);
+
+	if (!ok)
+		return FALSE;
+	server->h264RateControlMode = h264Mode;
+	server->h264BitRate = h264BitRate;
+	server->h264QP = h264QP;
+#if defined(WITH_GFX_AV1)
+	server->AV1RateControlMode = (FREERDP_AV1_RATECONTROL)av1Mode;
+	server->AV1BitRate = av1BitRate;
+#endif
+#if defined(WITH_GFX_AV2)
+	server->AV2RateControlMode = (FREERDP_AV2_RATECONTROL)av2Mode;
+	server->AV2BitRate = av2BitRate;
+#endif
+#if defined(WITH_GFX_AZURE)
+	server->HEVCRateControlMode = hevcMode;
+	server->HEVCBitRate = hevcBitRate;
+#endif
+	return TRUE;
+}
+
 int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
                                      COMMAND_LINE_ARGUMENT_A* cargs)
 {
@@ -508,6 +682,11 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline,
 			                               arg->Value != nullptr))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+		CommandLineSwitchCase(arg, "codec")
+		{
+			if (!shadow_server_parse_codec(server, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
