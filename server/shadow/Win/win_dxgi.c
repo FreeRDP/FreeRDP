@@ -305,6 +305,12 @@ static int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem);
  * unlike a refused desktop, that state does not go away on its own */
 #define WIN_SHADOW_DXGI_INIT_RETRY_MS 60000
 
+/* How often the capture creates a fresh D3D11 device again after the device
+ * was removed or reset (driver crash, GPU change, TDR), and after a failure
+ * which classified itself in no other way: either state may clear soon, so
+ * retry at the same low rate as a refused desktop */
+#define WIN_SHADOW_DXGI_RESET_RETRY_MS 500
+
 /* The input desktop is one this process may not capture: the secure desktop (logon, lock
  * screen, UAC) for a process in the user's session. DuplicateOutput says E_ACCESSDENIED,
  * AcquireNextFrame and Map DXGI_ERROR_ACCESS_DENIED. */
@@ -328,6 +334,17 @@ static void win_shadow_dxgi_pause(winShadowSubsystem* subsystem, const char* wha
 		          what, GetDxgiErrorString(hr), hr);
 	subsystem->dxgiDenied = TRUE;
 	subsystem->dxgiRetryTime = GetTickCount64() + WIN_SHADOW_DXGI_DENIED_RETRY_MS;
+}
+
+/* A failure which classified itself in no other way must not spin the capture
+ * loop: retry at the reset rate. An earlier classification (a refused desktop,
+ * a failure which does not recover by itself) is kept. */
+static void win_shadow_dxgi_schedule_retry(winShadowSubsystem* subsystem)
+{
+	WINPR_ASSERT(subsystem);
+
+	if (GetTickCount64() >= subsystem->dxgiRetryTime)
+		subsystem->dxgiRetryTime = GetTickCount64() + WIN_SHADOW_DXGI_RESET_RETRY_MS;
 }
 
 static void win_shadow_dxgi_drop_duplication(winShadowSubsystem* subsystem)
@@ -637,6 +654,28 @@ int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem)
 	return 1;
 }
 
+/* The D3D11 device itself is gone (removed, reset, hung): a new output
+ * duplication on it can only fail, and unlike a refused desktop the device
+ * does not become usable again. Drop every object held on it and the device
+ * itself; the capture loop creates a fresh device once dxgiRetryTime has
+ * passed. */
+static void win_shadow_dxgi_reset_device(winShadowSubsystem* subsystem)
+{
+	WINPR_ASSERT(subsystem);
+
+	win_shadow_dxgi_drop_duplication(subsystem);
+
+	if (subsystem->dxgiResource)
+	{
+		subsystem->dxgiResource->lpVtbl->Release(subsystem->dxgiResource);
+		subsystem->dxgiResource = nullptr;
+	}
+
+	(void)win_shadow_dxgi_uninit(subsystem);
+
+	subsystem->dxgiRetryTime = GetTickCount64() + WIN_SHADOW_DXGI_RESET_RETRY_MS;
+}
+
 int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDstData,
                                      int* pnDstStep, int x, int y, int width, int height)
 {
@@ -701,15 +740,12 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 
 		WLog_ERR(TAG, "IDXGISurface::Map failure: %s 0x%08lX", GetDxgiErrorString(hr), hr);
 
-		if (hr == DXGI_ERROR_DEVICE_REMOVED)
+		if ((hr == DXGI_ERROR_DEVICE_REMOVED) || (hr == DXGI_ERROR_DEVICE_RESET))
 		{
-			win_shadow_dxgi_uninit(subsystem);
-
-			status = win_shadow_dxgi_init(subsystem);
-
-			if (status < 0)
-				return -1;
-
+			/* the device itself is gone: a new duplication on it can only
+			 * fail; drop it, the capture loop creates a fresh device once
+			 * dxgiRetryTime has passed */
+			win_shadow_dxgi_reset_device(subsystem);
 			return 0;
 		}
 		else if (hr == DXGI_ERROR_ACCESS_DENIED)
@@ -766,24 +802,20 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem)
 	if (subsystem->dxgiSurface)
 	{
 		if (subsystem->dxgiSurfaceMapped)
-		{
 			subsystem->dxgiSurface->lpVtbl->Unmap(subsystem->dxgiSurface);
-			subsystem->dxgiSurfaceMapped = FALSE;
-		}
 
 		subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
 		subsystem->dxgiSurface = nullptr;
 	}
+	subsystem->dxgiSurfaceMapped = FALSE;
 
 	if (subsystem->dxgiOutputDuplication)
 	{
 		if (subsystem->dxgiFrameAcquired)
-		{
 			subsystem->dxgiOutputDuplication->lpVtbl->ReleaseFrame(
 			    subsystem->dxgiOutputDuplication);
-			subsystem->dxgiFrameAcquired = FALSE;
-		}
 	}
+	subsystem->dxgiFrameAcquired = FALSE;
 
 	subsystem->pendingFrames = 0;
 
@@ -792,17 +824,82 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem)
 
 /* A new duplication of the output, on the calling thread's desktop: after a
  * switch between the user's desktop and the secure one (logon, lock screen,
- * UAC), or when an earlier attempt failed. The device is kept when there is
- * one. */
+ * UAC), or when an earlier attempt failed. A device that was removed or reset
+ * in between (driver crash, GPU change, TDR) is unusable for a new duplication
+ * and is replaced by a fresh one; a healthy device is kept. */
 int win_shadow_dxgi_restart_duplication(winShadowSubsystem* subsystem)
 {
 	WINPR_ASSERT(subsystem);
 
 	if (!subsystem->dxgiDevice)
-		return win_shadow_dxgi_init(subsystem);
+	{
+		const int status = win_shadow_dxgi_init(subsystem);
+
+		if (status < 0)
+		{
+			/* the initialization may have created the device and failed on
+			 * the frame objects afterwards */
+			if (subsystem->dxgiDevice)
+			{
+				if (FAILED(subsystem->dxgiDevice->lpVtbl->GetDeviceRemovedReason(
+				        subsystem->dxgiDevice)))
+				{
+					win_shadow_dxgi_reset_device(subsystem);
+				}
+				else
+				{
+					/* a live device stays for the classified retry, the
+					 * partial objects must not */
+					win_shadow_dxgi_drop_duplication(subsystem);
+					win_shadow_dxgi_schedule_retry(subsystem);
+				}
+			}
+			else
+			{
+				/* without a device a stray context may still be around */
+				(void)win_shadow_dxgi_uninit(subsystem);
+				win_shadow_dxgi_schedule_retry(subsystem);
+			}
+		}
+
+		return status;
+	}
+
+	/* the device kept from the last desktop may have died in between: a new
+	 * duplication on it can only fail with DXGI_ERROR_DEVICE_REMOVED while
+	 * the capture loop keeps retrying the dead device forever */
+	const HRESULT reason =
+	    subsystem->dxgiDevice->lpVtbl->GetDeviceRemovedReason(subsystem->dxgiDevice);
+
+	if (FAILED(reason))
+	{
+		WLog_WARN(TAG, "D3D11 device is no longer usable: %s (0x%08lX)", GetDxgiErrorString(reason),
+		          reason);
+		win_shadow_dxgi_reset_device(subsystem);
+		return -1;
+	}
 
 	win_shadow_dxgi_drop_duplication(subsystem);
-	return win_shadow_dxgi_init_duplication(subsystem);
+	const int status = win_shadow_dxgi_init_duplication(subsystem);
+
+	if (status < 0)
+	{
+		/* the device may have died while the outputs refused the
+		 * duplication: check once more before keeping it for the retry,
+		 * the device reset overrides any failure classification */
+		if (subsystem->dxgiDevice &&
+		    FAILED(subsystem->dxgiDevice->lpVtbl->GetDeviceRemovedReason(subsystem->dxgiDevice)))
+		{
+			win_shadow_dxgi_reset_device(subsystem);
+			return -1;
+		}
+
+		/* a partial initialization may leave frame objects behind */
+		win_shadow_dxgi_drop_duplication(subsystem);
+		win_shadow_dxgi_schedule_retry(subsystem);
+	}
+
+	return status;
 }
 
 int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
@@ -852,7 +949,15 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 		WLog_ERR(TAG, "IDXGIOutputDuplication::AcquireNextFrame failure: %s (0x%08lX)",
 		         GetDxgiErrorString(hr), hr);
 
-		if (hr == DXGI_ERROR_ACCESS_LOST)
+		if ((hr == DXGI_ERROR_DEVICE_REMOVED) || (hr == DXGI_ERROR_DEVICE_RESET))
+		{
+			/* the device is gone for good: do not ask it again (the removal
+			 * may race ahead and still report S_OK), drop it; the capture
+			 * loop creates a fresh device once dxgiRetryTime has passed */
+			win_shadow_dxgi_reset_device(subsystem);
+			return 0;
+		}
+		else if (hr == DXGI_ERROR_ACCESS_LOST)
 		{
 			win_shadow_dxgi_release_frame_data(subsystem);
 
@@ -874,10 +979,14 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 				subsystem->dxgiOutputDuplication = nullptr;
 			}
 
-			status = win_shadow_dxgi_init_duplication(subsystem);
+			status = win_shadow_dxgi_restart_duplication(subsystem);
 
 			if (status < 0)
-				return -1;
+			{
+				/* a device reset already scheduled the retry: defer this
+				 * frame instead of failing the capture pass */
+				return subsystem->dxgiDevice ? -1 : 0;
+			}
 
 			return 0;
 		}
