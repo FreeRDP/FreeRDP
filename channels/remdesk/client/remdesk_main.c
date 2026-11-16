@@ -312,7 +312,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 
 	expertBlobW = ConvertUtf8ToWCharAlloc(expertBlob, &cbExpertBlobW);
 
-	if (!expertBlobW)
+	if (!expertBlobW || (cbExpertBlobW > UINT32_MAX - cbRaConnectionStringW))
 		goto out;
 
 	cbExpertBlobW = cbExpertBlobW * sizeof(WCHAR);
@@ -371,6 +371,12 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	const char* raConnectionString =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteAssistanceRCTicket);
 	WCHAR* raConnectionStringW = ConvertUtf8ToWCharAlloc(raConnectionString, &length);
+	if (length > SIZE_MAX / sizeof(WCHAR) - REMDESK_CHANNEL_CTL_SIZE)
+	{
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
+	}
+
 	size_t cbRaConnectionStringW = length * sizeof(WCHAR);
 
 	if (!raConnectionStringW)
