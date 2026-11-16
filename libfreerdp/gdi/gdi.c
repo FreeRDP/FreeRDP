@@ -1184,6 +1184,22 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 
 		case RDP_CODEC_ID_NONE:
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
+			if ((cmd->bmp.width == 0) || (cmd->bmp.height == 0) ||
+			    (FreeRDPGetBytesPerPixel(format) == 0))
+			{
+				WLog_ERR(TAG,
+				         "invalid dimensions of bitmap: got %" PRIu32 "x%" PRIu32
+				         ", color depth=%" PRIu32,
+				         cmd->bmp.width, cmd->bmp.height, FreeRDPGetBytesPerPixel(format));
+				goto out;
+			}
+			size = 1ull * cmd->bmp.width;
+			if (size > SIZE_MAX / cmd->bmp.height / FreeRDPGetBytesPerPixel(format))
+			{
+				WLog_ERR(TAG, "dimensions out of range");
+				goto out;
+			}
+
 			size = 1ull * cmd->bmp.width * cmd->bmp.height * FreeRDPGetBytesPerPixel(format);
 			if (size > cmd->bmp.bitmapDataLength)
 			{
