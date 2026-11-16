@@ -408,10 +408,13 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	{
 		case WAVE_FORMAT_DVI_ADPCM:
 		{
+			error = ERROR_INVALID_DATA;
 			if (format->nBlockAlign / 4ull < format->nChannels)
 				goto out;
 			if (format->nChannels == 0)
 				goto out;
+
+			error = CHANNEL_RC_OK;
 
 			/* maximum:
 			 * 1: nBlockAlign=0xFFFF - 4 * nChannels=1 == 0xFFFB
@@ -430,10 +433,13 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 
 		case WAVE_FORMAT_ADPCM:
 		{
+			error = ERROR_INVALID_DATA;
 			if (format->nBlockAlign / 7 < format->nChannels)
 				goto out;
 			if (format->nChannels == 0)
 				goto out;
+
+			error = CHANNEL_RC_OK;
 
 			/* maximum:
 			 * 1: nBlockAlign=0xFFFF - 7 * nChannels=1 == 0xFFF8
