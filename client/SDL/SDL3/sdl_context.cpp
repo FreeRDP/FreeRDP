@@ -2241,10 +2241,10 @@ bool SdlContext::toggleFullscreen()
 
 static bool window_info_equal(const WTS_WINDOW_INFO& a, const WTS_WINDOW_INFO& b)
 {
-	return (a.hwnd == b.hwnd) && (a.remoteWidth == b.remoteWidth) &&
-	       (a.remoteHeight == b.remoteHeight) && (a.viewWidth == b.viewWidth) &&
-	       (a.viewHeight == b.viewHeight) && (a.scrollX == b.scrollX) && (a.scrollY == b.scrollY) &&
-	       (a.scale == b.scale);
+	const bool scale = fabsf(a.scale - b.scale) <= FLT_EPSILON return (a.hwnd == b.hwnd) &&
+	                   (a.remoteWidth == b.remoteWidth) && (a.remoteHeight == b.remoteHeight) &&
+	                   (a.viewWidth == b.viewWidth) && (a.viewHeight == b.viewHeight) &&
+	                   (a.scrollX == b.scrollX) && (a.scrollY == b.scrollY) && scale;
 }
 
 /** @brief the handle for WTS_WINDOW_INFO::hwnd: the HWND, the X11 Window, nullptr on Wayland */
