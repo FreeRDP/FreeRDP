@@ -1347,6 +1347,7 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 		{
 			WLog_Print(license->log, WLOG_ERROR, "RSA public encrypt length=%" PRIdz " < 0 || > %d",
 			           length, UINT16_MAX);
+			winpr_znfree(EncryptedPremasterSecret, info->ModulusLength);
 			return FALSE;
 		}
 		license->EncryptedPremasterSecret->length = (UINT16)length;
