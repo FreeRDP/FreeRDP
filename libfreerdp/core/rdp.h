@@ -211,6 +211,7 @@ struct rdp_rdp
 	WINPR_JSON* wellknown;
 	FreeRDPTimer* timer;
 	WINPR_ATTR_NODISCARD pGetCommonAccessToken GetCommonAccessToken;
+	BOOL is_redirecting;
 };
 
 WINPR_ATTR_NODISCARD

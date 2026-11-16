@@ -654,10 +654,12 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 	return FALSE;
 }
 
-BOOL rdp_client_redirect(rdpRdp* rdp)
+WINPR_ATTR_NODISCARD
+static BOOL rdp_client_redirect_int(rdpRdp* rdp)
 {
+	WINPR_ASSERT(rdp);
+
 	BOOL status = 0;
-	rdpSettings* settings = nullptr;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -672,7 +674,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	WINPR_ASSERT(rdp);
 
-	settings = rdp->settings;
+	rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
 	if ((settings->RedirectionFlags & LB_LOAD_BALANCE_INFO) == 0)
@@ -733,6 +735,21 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		status = rdp_client_reconnect_channels(rdp, TRUE);
 
 	return status;
+}
+
+BOOL rdp_client_redirect(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	if (rdp->is_redirecting)
+	{
+		WLog_Print(rdp->log, WLOG_ERROR, "recursive redirection detected, aborting");
+		return FALSE;
+	}
+	rdp->is_redirecting = TRUE;
+	const BOOL rc = rdp_client_redirect_int(rdp);
+	rdp->is_redirecting = FALSE;
+	return rc;
 }
 
 /* A redirection that carried a one-time RDSTLS token (LB_PASSWORD_IS_PK_ENCRYPTED) cannot be
