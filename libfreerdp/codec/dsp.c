@@ -579,9 +579,13 @@ static BOOL valid_mp3_format(const FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 		return FALSE;
 	if (context->common.format.nChannels < 1)
 		return FALSE;
+	if (context->common.format.nChannels > 128) // Arbitrary upper bound, way out of anything in use
+		return FALSE;
 	if (context->common.format.wBitsPerSample == 0)
 		return FALSE;
 	if (context->common.format.nSamplesPerSec == 0)
+		return FALSE;
+	if (context->common.format.nSamplesPerSec > SIZE_MAX / 4ull / context->common.format.nChannels)
 		return FALSE;
 	return TRUE;
 }
@@ -590,12 +594,18 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                    const BYTE* WINPR_RESTRICT src, size_t size,
                                    wStream* WINPR_RESTRICT out)
 {
+	/* constant from lame source. This is the definition used in hip_decode1_headersB as output
+	 * buffer length.
+	 */
+	const size_t OUTSIZE_CLIPPED = (4096 * sizeof(short));
+
 	if (!context || !src || !out)
 		return FALSE;
 	if (!valid_mp3_format(context))
 		return FALSE;
-	const size_t buffer_size =
-	    2ull * context->common.format.nChannels * context->common.format.nSamplesPerSec;
+
+	const size_t buffer_size = MAX(OUTSIZE_CLIPPED, 2ull * context->common.format.nChannels *
+	                                                    context->common.format.nSamplesPerSec);
 
 	if (!Stream_EnsureCapacity(context->common.buffer, 2ull * buffer_size))
 		return FALSE;
