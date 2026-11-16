@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/helpers.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
@@ -72,7 +73,6 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 #define TARGET_MAX (100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
 	char* colon = nullptr;
-	size_t len = 0;
 	DWORD routing_token_length = 0;
 	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
@@ -87,7 +87,16 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 		return FALSE;
 	}
 
-	len = routing_token_length - prefix_len;
+	const size_t len = routing_token_length - prefix_len;
+	const char* name = &routing_token[prefix_len];
+	if (!winpr_str_is_valid_hostnameN(name, len) && !freerdp_is_valid_ipN(name, len))
+	{
+		PROXY_LOG_ERR(
+		    TAG, ps,
+		    "invalid routing token content, contains symbols not allowed as hostname: %.*s",
+		    (int)len, name);
+		return FALSE;
+	}
 
 	if (!freerdp_settings_set_string_len(settings, targetID, routing_token + prefix_len, len))
 		return FALSE;
