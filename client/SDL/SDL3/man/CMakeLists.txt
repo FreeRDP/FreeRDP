@@ -6,6 +6,7 @@ set(DEPS
     ../../../common/man/freerdp-global-config.1
     ../../common/man/sdl-global-config.1
     ../../common/man/sdl-freerdp-examples.1
+    ../../../common/man/freerdp-examples.1
     ../../../common/man/freerdp-global-links.1
 )
 

@@ -5,6 +5,7 @@ set(DEPS
     ../../common/man/freerdp-global-envvar.1
     ../../common/man/freerdp-global-config.1
     xfreerdp-global-config.1
+    ../../common/man/freerdp-examples.1
     xfreerdp-examples.1
     ../../common/man/freerdp-global-links.1
 )
