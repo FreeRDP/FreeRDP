@@ -55,6 +55,20 @@ BOOL freerdp_hevc_context_set_option(FREERDP_HEVC_CONTEXT* hevc, FREERDP_HEVC_CO
                                      UINT32 value)
 {
 	WINPR_ASSERT(hevc);
+	if (option == FREERDP_HEVC_CONTEXT_OPTION_RATECONTROL)
+	{
+		/* The H.264 context encodes HEVC and knows VBR and CQP only. Its values are not ours:
+		 * FREERDP_HEVC_CBR has the value of H264_RATECONTROL_CQP. */
+		if (value != FREERDP_HEVC_VBR)
+		{
+			WLog_Print(hevc->log, WLOG_WARN,
+			           "HEVC rate control %" PRIu32 " is not supported, only FREERDP_HEVC_VBR",
+			           value);
+			return FALSE;
+		}
+		return h264_context_set_option(hevc->context, H264_CONTEXT_OPTION_RATECONTROL,
+		                               H264_RATECONTROL_VBR);
+	}
 	return h264_context_set_option(hevc->context, hevc2h264option(option), value);
 }
 

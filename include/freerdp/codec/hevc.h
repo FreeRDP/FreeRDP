@@ -34,17 +34,18 @@ extern "C"
 	typedef enum
 	{
 		FREERDP_HEVC_VBR, /**< Variable Bit Rate (VBR) mode */
-		FREERDP_HEVC_CBR, /**< Constant Bit Rate (CBR) mode */
-		FREERDP_HEVC_CQ,  /**< Constrained Quality (CQ)  mode */
-		FREERDP_HEVC_Q    /**< Constant Quality (Q) mode */
+		FREERDP_HEVC_CBR, /**< Constant Bit Rate (CBR) mode, not supported by the encoder */
+		FREERDP_HEVC_CQ,  /**< Constrained Quality (CQ) mode, not supported by the encoder */
+		FREERDP_HEVC_Q    /**< Constant Quality (Q) mode, not supported by the encoder */
 	} FREERDP_HEVC_RATECONTROL;
 
 	/** @since version 3.34,0 */
 	typedef enum
 	{
 		FREERDP_HEVC_CONTEXT_OPTION_PROFILE,     /**< 0: 4:2:0, 1: 4:4:4 */
-		FREERDP_HEVC_CONTEXT_OPTION_RATECONTROL, /**< a FREERDP_HEVC_RATECONTROL value */
-		FREERDP_HEVC_CONTEXT_OPTION_BITRATE,     /**< target bitrate in kbit/s */
+		FREERDP_HEVC_CONTEXT_OPTION_RATECONTROL, /**< FREERDP_HEVC_VBR, the only mode the encoder
+		                                            has */
+		FREERDP_HEVC_CONTEXT_OPTION_BITRATE,     /**< target bitrate in bit/s */
 		FREERDP_HEVC_CONTEXT_OPTION_USAGETYPE, /**< the encoder's usage (good quality, realtime) */
 		FREERDP_HEVC_CONTEXT_OPTION_HW_ACCEL   /**< hardware acceleration support */
 	} FREERDP_HEVC_CONTEXT_OPTION;
