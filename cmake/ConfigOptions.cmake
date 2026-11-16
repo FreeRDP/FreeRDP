@@ -147,9 +147,6 @@ option(WITH_RDPEUDP "[experimental] Client UDP multitransport (MS-RDPEUDP, MS-RD
 option(WITH_FFMPEG "Enable FFMPEG for audio/video encoding/decoding" ON)
 cmake_dependent_option(WITH_DSP_FFMPEG "Use FFMPEG for audio encoding/decoding" ON "WITH_FFMPEG" OFF)
 cmake_dependent_option(WITH_VIDEO_FFMPEG "Use FFMPEG for video encoding/decoding" ON "WITH_FFMPEG" OFF)
-cmake_dependent_option(
-  WITH_FFMPEG_HWACCEL "[experimental] Use FFMPEG hardware acceleration" OFF "WITH_VIDEO_FFMPEG" OFF
-)
 
 if(WITH_VIDEOTOOLBOX OR WITH_VAAPI OR WITH_VAAPI_H264_ENCODING)
   message(
@@ -158,6 +155,9 @@ if(WITH_VIDEOTOOLBOX OR WITH_VAAPI OR WITH_VAAPI_H264_ENCODING)
   )
   set(WITH_FFMPEG_HWACCEL ON CACHE BOOL "externally set")
 endif()
+cmake_dependent_option(
+  WITH_FFMPEG_HWACCEL "[experimental] Use FFMPEG hardware acceleration" OFF "WITH_VIDEO_FFMPEG" OFF
+)
 
 option(WITH_CAIRO "Use CAIRO image library for screen resizing" OFF)
 option(WITH_SWSCALE "Use SWScale image library for screen resizing" ON)
