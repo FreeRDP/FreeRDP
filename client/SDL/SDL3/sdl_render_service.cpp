@@ -56,6 +56,10 @@ namespace
 		{
 		}
 
+		~SdlRenderService()
+		{
+		}
+
 		HRESULT WINPR_COM_CALL QueryInterface(const IID* riid, void** ppvObject) override
 		{
 			return queryInterface(this, &IID_IWTSBitmapRenderService, riid, ppvObject);
@@ -100,8 +104,6 @@ namespace
 		SdlRenderService& operator=(SdlRenderService&&) = delete;
 
 	  private:
-		~SdlRenderService() = default;
-
 		std::atomic<ULONG> _refCount{ 1 };
 		std::mutex _lock;
 		SdlContext* _sdl; /* nullptr once detached */
