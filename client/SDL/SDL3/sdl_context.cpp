@@ -40,6 +40,7 @@
 #include <freerdp/client/aad_helper.h>
 #include <freerdp/client/geometry.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/client/monitor.h>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 static constexpr auto sdl_connection_dialog = "sdl-connection-dialog";
@@ -248,7 +249,11 @@ BOOL SdlContext::preConnect(freerdp* instance)
 					scale = monitor->attributes.desktopScaleFactor;
 			}
 			if ((scale == 0) && !sdl->monitorIds().empty())
-				scale = sdl->getDisplay(sdl->monitorIds().front()).attributes.desktopScaleFactor;
+			{
+				auto monitor = sdl->getDisplay(sdl->monitorIds().front());
+				sdl->applyMonitorScaleOverride(monitor);
+				scale = monitor.attributes.desktopScaleFactor;
+			}
 			if ((scale >= 100) && (scale <= 500))
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, scale))
@@ -611,7 +616,11 @@ bool SdlContext::updateWindowList()
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
-		list.push_back(win.second.monitor(_windows.size() == 1));
+	{
+		auto monitor = win.second.monitor(_windows.size() == 1);
+		applyMonitorScaleOverride(monitor);
+		list.push_back(monitor);
+	}
 
 #if defined(__EMSCRIPTEN__)
 	if ((list.size() == 1) && (list.at(0).width > 0) && (list.at(0).height > 0))
@@ -643,6 +652,7 @@ bool SdlContext::updateWindow(SDL_WindowID id)
 
 	auto& w = _windows.at(id);
 	auto m = w.monitor(true);
+	applyMonitorScaleOverride(m);
 	auto r = w.rect();
 	m.width = r.w;
 	m.height = r.h;
@@ -1809,6 +1819,11 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 		}
 	}
 	return 0;
+}
+
+void SdlContext::applyMonitorScaleOverride(rdpMonitor& monitor) const
+{
+	freerdp_client_apply_monitor_scale(context()->settings, &monitor);
 }
 
 CriticalSection& SdlContext::lock()
