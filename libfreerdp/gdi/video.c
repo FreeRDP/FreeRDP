@@ -105,17 +105,18 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
 	if ((gdi->width < 0) || (gdi->height < 0))
 		goto fail;
 
+	/* the surface position is server controlled, it must start inside the desktop
+	 * or the clipping below (and the destination offset) would wrap around */
+	if ((surface->x >= (UINT32)gdi->width) || (surface->y >= (UINT32)gdi->height))
+		goto fail;
+
 	{
 		const UINT32 nXSrc = surface->x;
 		const UINT32 nYSrc = surface->y;
 		const UINT32 nXDst = nXSrc;
 		const UINT32 nYDst = nYSrc;
-		const UINT32 width = (destinationWidth + surface->x < (UINT32)gdi->width)
-		                         ? destinationWidth
-		                         : (UINT32)gdi->width - surface->x;
-		const UINT32 height = (destinationHeight + surface->y < (UINT32)gdi->height)
-		                          ? destinationHeight
-		                          : (UINT32)gdi->height - surface->y;
+		const UINT32 width = MIN(destinationWidth, (UINT32)gdi->width - surface->x);
+		const UINT32 height = MIN(destinationHeight, (UINT32)gdi->height - surface->y);
 
 		WINPR_ASSERT(gdi->primary_buffer);
 		WINPR_ASSERT(gdi->primary);
