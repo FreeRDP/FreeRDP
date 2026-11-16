@@ -29,6 +29,7 @@ set(SRCS
     sdl_utils.hpp
     sdl_input.cpp
     sdl_input.hpp
+    sdl_input_mapping.hpp
     sdl_touch.cpp
     sdl_touch.hpp
     sdl_pointer.cpp
@@ -203,6 +204,12 @@ if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
   set_target_properties(TestSDLDisplayOffsets PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
   add_test(NAME TestSDLDisplayOffsets COMMAND ${TESTING_OUTPUT_DIRECTORY}/TestSDLDisplayOffsets)
   set_property(TARGET TestSDLDisplayOffsets PROPERTY FOLDER "FreeRDP/Client/Test")
+
+  add_executable(TestSDLInputMapping test/TestSDLInputMapping.cpp)
+  target_link_libraries(TestSDLInputMapping PRIVATE SDL3::Headers)
+  set_target_properties(TestSDLInputMapping PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  add_test(NAME TestSDLInputMapping COMMAND ${TESTING_OUTPUT_DIRECTORY}/TestSDLInputMapping)
+  set_property(TARGET TestSDLInputMapping PROPERTY FOLDER "FreeRDP/Client/Test")
 endif()
 
 add_subdirectory(man)
