@@ -218,13 +218,15 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 		         bitmapData->height);
 		return FALSE;
 	}
-	if (bitmapData->destLeft > bitmapData->destRight)
+	if ((bitmapData->destLeft > bitmapData->destRight) ||
+	    (bitmapData->destRight < bitmapData->destLeft))
 	{
 		WLog_ERR(TAG, "Invalid BITMAP_DATA: left=%" PRIu16 " > right=%" PRIu16,
 		         bitmapData->destLeft, bitmapData->destRight);
 		return FALSE;
 	}
-	if (bitmapData->destTop > bitmapData->destBottom)
+	if ((bitmapData->destTop > bitmapData->destBottom) ||
+	    (bitmapData->destBottom < bitmapData->destTop))
 	{
 		WLog_ERR(TAG, "Invalid BITMAP_DATA: top=%" PRIu16 " > bottom=%" PRIu16, bitmapData->destTop,
 		         bitmapData->destBottom);
