@@ -1763,6 +1763,12 @@ smartcard_Transmit_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 
 	scard_log_status_error_wlog(smartcard->log, "SCardTransmit", ret.ReturnCode);
 
+	if (ret.ReturnCode != SCARD_S_SUCCESS)
+	{
+		free(ret.pbRecvBuffer);
+		return ret.ReturnCode;
+	}
+
 	status = smartcard_pack_transmit_return(out, &ret);
 	free(ret.pbRecvBuffer);
 
