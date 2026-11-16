@@ -2981,22 +2981,41 @@ WINPR_ATTR_NODISCARD static BOOL update_send_window_update(rdpContext* context,
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
 
-WINPR_ATTR_NODISCARD static UINT16
+WINPR_ATTR_NODISCARD static BOOL
 update_calculate_window_icon_order(WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo,
-                                   const WINDOW_ICON_ORDER* iconOrder)
+                                   const WINDOW_ICON_ORDER* iconOrder, UINT16* pOrderSize)
 {
 	UINT16 orderSize = 23;
 
 	WINPR_ASSERT(iconOrder);
+	WINPR_ASSERT(pOrderSize);
+
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
 	WINPR_ASSERT(iconInfo);
 
-	orderSize += iconInfo->cbBitsColor + iconInfo->cbBitsMask;
+	*pOrderSize = 0;
+
+	if (iconInfo->cbBitsColor > 1ul * UINT16_MAX - orderSize)
+		return FALSE;
+
+	orderSize += iconInfo->cbBitsColor;
+
+	if (iconInfo->cbBitsMask > 1ul * UINT16_MAX - orderSize)
+		return FALSE;
 
 	if (iconInfo->bpp <= 8)
-		orderSize += 2 + iconInfo->cbColorTable;
+	{
+		if (iconInfo->cbColorTable > 1ul * UINT16_MAX - orderSize)
+			return FALSE;
+		orderSize += iconInfo->cbColorTable;
 
-	return orderSize;
+		if (2 > UINT16_MAX - orderSize)
+			return FALSE;
+		orderSize += 2;
+	}
+
+	*pOrderSize = orderSize;
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD static BOOL update_send_window_icon(rdpContext* context,
@@ -3007,7 +3026,9 @@ WINPR_ATTR_NODISCARD static BOOL update_send_window_icon(rdpContext* context,
 
 	WINPR_ASSERT(iconOrder);
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
-	UINT16 orderSize = update_calculate_window_icon_order(orderInfo, iconOrder);
+	UINT16 orderSize = 0;
+	if (!update_calculate_window_icon_order(orderInfo, iconOrder, &orderSize))
+		return FALSE;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(orderInfo);
