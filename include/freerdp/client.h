@@ -42,6 +42,10 @@
 #include <freerdp/client/encomsp.h>
 #endif
 
+#if defined(CHANNEL_RAIL_CLIENT)
+#include <freerdp/client/rail.h>
+#endif
+
 /** @brief Opaqye handle for AAD wrapper
  * @since version 3.16.0
  */
@@ -119,6 +123,7 @@ extern "C"
 	 * @since version 3.32.0
 	 */
 	typedef struct rdp_client_oauth2 rdpClientOAuth2;
+	typedef struct rdp_client_rail_ipc rdpClientRailIpc;
 
 	struct rdp_client_context
 	{
@@ -158,7 +163,12 @@ extern "C"
 		ALIGN64 pPostDisconnect PostDisconnect;     /**< (offset 20) @since version 3.33.0 */
 		ALIGN64 pPostDisconnect PostFinalDisconnect; /**< (offset 21) @since version 3.33.0 */
 		ALIGN64 HANDLE pipethread;                   /**< (offset 22) @since version 3.33.0 */
-		UINT64 reserved[129 - 23];                   /**< (offset 23) */
+#if defined(CHANNEL_RAIL_CLIENT)
+		ALIGN64 rdpClientRailIpc* railIpc; /**< (offset 23) @since version 3.34.0 */
+#else
+	    UINT64 reserved4[1];
+#endif
+		UINT64 reserved[129 - 24]; /**< (offset 24) */
 	};
 
 	typedef BOOL (*window_events_fkt_t)(freerdp* instance);

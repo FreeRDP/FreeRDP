@@ -631,6 +631,9 @@ LONG WINAPI Emulate_SCardListReadersA(SmartcardEmulationContext* smartcard, SCAR
 LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext,
                                       LPCWSTR mszGroups, LPWSTR mszReaders, LPDWORD pcchReaders)
 {
+	if (!InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, nullptr, nullptr))
+		return SCARD_E_NOT_READY;
+
 	HashTable_Lock(smartcard->contexts);
 	LONG status = Emulate_SCardIsValidContext(smartcard, hContext);
 
@@ -642,8 +645,6 @@ LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCAR
 
 	WINPR_UNUSED(mszGroups); /* Not required */
 
-	if (!InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, nullptr, nullptr))
-		return FALSE;
 	if (SCARD_S_SUCCESS == status)
 	{
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
