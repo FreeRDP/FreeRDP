@@ -20,6 +20,7 @@ if(BUILD_TESTING_INTERNAL)
     TestMcs.c
     TestUpdateBitmap.c
     TestRdpPacketLengths.c
+    TestTransportWriteFail.c
   )
   if(WITH_RDPEUDP)
     list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c)
