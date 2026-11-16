@@ -183,6 +183,7 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		WLog_Print(serial->log, WLOG_WARN, "CreateFile failure: %s last-error: 0x%08" PRIX32 "",
 		           serial->device.name, GetLastError());
+		serial->hComm = nullptr;
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;
 	}
