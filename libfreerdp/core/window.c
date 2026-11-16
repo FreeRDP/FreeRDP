@@ -923,9 +923,8 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 				dump_window_state_order(up->log, "WindowUpdate", orderInfo, &windowState);
 				IFCALLRET(window->WindowUpdate, result, context, orderInfo, &windowState);
 			}
-
-			update_free_window_state(&windowState);
 		}
+		update_free_window_state(&windowState);
 	}
 
 	return result;
