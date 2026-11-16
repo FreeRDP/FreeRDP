@@ -300,6 +300,11 @@ static int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem);
 /* How often a paused capture tries to duplicate the output again */
 #define WIN_SHADOW_DXGI_DENIED_RETRY_MS 250
 
+/* How often a paused capture repeats in the log that it stays paused, when it says so at all: a
+ * desktop another process holds stays paused for as long as that process runs, and a single line
+ * at the start reads like a capture which died */
+#define WIN_SHADOW_DXGI_PAUSED_LOG_MS 30000
+
 /* How often the capture tries again after a failure which does not recover by
  * itself (no D3D11 device, no output of the adapter duplicatable at all):
  * unlike a refused desktop, that state does not go away on its own */
@@ -320,20 +325,46 @@ static BOOL win_shadow_dxgi_is_denied(HRESULT hr)
 	return (hr == DXGI_ERROR_ACCESS_DENIED) || (hr == E_ACCESSDENIED);
 }
 
-/* Pause the capture: said once, then quiet until it resumes; the capture loop tries again
- * after WIN_SHADOW_DXGI_DENIED_RETRY_MS (and at once when the input desktop changes) */
-static void win_shadow_dxgi_pause(winShadowSubsystem* subsystem, const char* what, HRESULT hr)
+/* Another process holds the duplication of the output: DXGI hands out one duplication interface
+ * per process and output, and four applications at a time in a session, so a remote control or a
+ * screen capture tool running next to the shadow server makes DuplicateOutput fail with
+ * DXGI_ERROR_NOT_CURRENTLY_AVAILABLE. Unlike a refused desktop this is no privilege problem, and
+ * unlike a virtual or an indirect display output it clears by itself: the duplication is
+ * available again once that process lets go of it. */
+WINPR_ATTR_NODISCARD
+static BOOL win_shadow_dxgi_is_busy(HRESULT hr)
+{
+	return hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+}
+
+/* Why the capture is paused, as the log names it: the same paused state has causes which need
+ * very different reactions from whoever reads the log */
+static const char* const WIN_SHADOW_DXGI_DENIED_WHY =
+    "this process may not capture the current desktop (the secure desktop?)";
+static const char* const WIN_SHADOW_DXGI_BUSY_WHY =
+    "another process holds the desktop duplication (a remote control or a screen capture tool?)";
+
+/* Pause the capture: said once, then repeated every WIN_SHADOW_DXGI_PAUSED_LOG_MS when remind is
+ * set, so a pause which lasts as long as another process holds the duplication stays visible
+ * instead of being a single line at startup; the capture loop tries again after
+ * WIN_SHADOW_DXGI_DENIED_RETRY_MS (and at once when the input desktop changes) */
+static void win_shadow_dxgi_pause(winShadowSubsystem* subsystem, const char* what, const char* why,
+                                  BOOL remind, HRESULT hr)
 {
 	WINPR_ASSERT(subsystem);
 	WINPR_ASSERT(what);
+	WINPR_ASSERT(why);
 
-	if (!subsystem->dxgiDenied)
-		WLog_WARN(TAG,
-		          "%s: %s (0x%08lX): this process may not capture the current desktop (the "
-		          "secure desktop?), capture paused until it can",
-		          what, GetDxgiErrorString(hr), hr);
+	const UINT64 now = GetTickCount64();
+
+	if (!subsystem->dxgiDenied || (remind && (now >= subsystem->dxgiPausedLogTime)))
+	{
+		WLog_WARN(TAG, "%s: %s (0x%08lX): %s, capture paused until it can", what,
+		          GetDxgiErrorString(hr), hr, why);
+		subsystem->dxgiPausedLogTime = now + WIN_SHADOW_DXGI_PAUSED_LOG_MS;
+	}
 	subsystem->dxgiDenied = TRUE;
-	subsystem->dxgiRetryTime = GetTickCount64() + WIN_SHADOW_DXGI_DENIED_RETRY_MS;
+	subsystem->dxgiRetryTime = now + WIN_SHADOW_DXGI_DENIED_RETRY_MS;
 }
 
 /* A failure which classified itself in no other way must not spin the capture
@@ -378,7 +409,9 @@ static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	HRESULT hr;
 	HRESULT refusedHr = E_FAIL;
 	HRESULT deniedHr = E_FAIL;
+	HRESULT busyHr = E_FAIL;
 	BOOL denied = FALSE;
+	BOOL busy = FALSE;
 	BOOL refused = FALSE;
 	BOOL duplicated = FALSE;
 	UINT refusedIndex = 0;
@@ -502,6 +535,12 @@ static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 				denied = TRUE;
 				deniedHr = hr;
 			}
+
+			if (win_shadow_dxgi_is_busy(hr))
+			{
+				busy = TRUE;
+				busyHr = hr;
+			}
 		}
 	}
 
@@ -517,7 +556,18 @@ static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		{
 			/* the outputs deny the duplication while this process may not see
 			 * the desktop: the capture loop tries again from dxgiRetryTime on */
-			win_shadow_dxgi_pause(subsystem, "IDXGIOutput1::DuplicateOutput", deniedHr);
+			win_shadow_dxgi_pause(subsystem, "IDXGIOutput1::DuplicateOutput",
+			                      WIN_SHADOW_DXGI_DENIED_WHY, FALSE, deniedHr);
+			return -1;
+		}
+
+		if (busy)
+		{
+			/* another process holds the duplication of every output: it is back
+			 * once that process lets go, so retry at the rate of a refused desktop
+			 * rather than at the rate of a state which cannot clear by itself */
+			win_shadow_dxgi_pause(subsystem, "IDXGIOutput1::DuplicateOutput",
+			                      WIN_SHADOW_DXGI_BUSY_WHY, TRUE, busyHr);
 			return -1;
 		}
 
@@ -679,7 +729,6 @@ static void win_shadow_dxgi_reset_device(winShadowSubsystem* subsystem)
 int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDstData,
                                      int* pnDstStep, int x, int y, int width, int height)
 {
-	int status;
 	HRESULT hr;
 	D3D11_BOX Box;
 	DXGI_MAPPED_RECT mappedRect;
@@ -733,7 +782,8 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 	{
 		if (win_shadow_dxgi_is_denied(hr))
 		{
-			win_shadow_dxgi_pause(subsystem, "IDXGISurface::Map", hr);
+			win_shadow_dxgi_pause(subsystem, "IDXGISurface::Map", WIN_SHADOW_DXGI_DENIED_WHY, FALSE,
+			                      hr);
 			win_shadow_dxgi_drop_duplication(subsystem);
 			return 0;
 		}
@@ -747,43 +797,6 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 			 * dxgiRetryTime has passed */
 			win_shadow_dxgi_reset_device(subsystem);
 			return 0;
-		}
-		else if (hr == DXGI_ERROR_ACCESS_DENIED)
-		{
-			/* The console desktop switched to the secure desktop (lock
-			 * screen, UAC prompt, ...). Re-create the duplication with a
-			 * bounded retry loop instead of killing the capture thread. */
-			if (subsystem->dxgiSurface)
-			{
-				subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
-				subsystem->dxgiSurface = nullptr;
-				subsystem->dxgiSurfaceMapped = FALSE;
-			}
-
-			if (subsystem->dxgiStage)
-			{
-				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
-				subsystem->dxgiStage = nullptr;
-			}
-
-			if (subsystem->dxgiOutputDuplication)
-			{
-				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
-				subsystem->dxgiOutputDuplication = nullptr;
-			}
-
-			for (int attempt = 0; attempt < 240; ++attempt)
-			{
-				if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
-					return -1;
-
-				Sleep(500);
-				status = win_shadow_dxgi_init_duplication(subsystem);
-				if (status >= 0)
-					return 0;
-			}
-
-			return -1;
 		}
 
 		return -1;
@@ -941,7 +954,8 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 		{
 			/* the duplication is no good any more: drop it, the capture loop makes a new one
 			 * (on the new input desktop when this process may open it) */
-			win_shadow_dxgi_pause(subsystem, "IDXGIOutputDuplication::AcquireNextFrame", hr);
+			win_shadow_dxgi_pause(subsystem, "IDXGIOutputDuplication::AcquireNextFrame",
+			                      WIN_SHADOW_DXGI_DENIED_WHY, FALSE, hr);
 			win_shadow_dxgi_drop_duplication(subsystem);
 			return 0;
 		}
@@ -989,45 +1003,6 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 			}
 
 			return 0;
-		}
-		else if (hr == DXGI_ERROR_ACCESS_DENIED)
-		{
-			/* The console desktop switched to the secure desktop (lock
-			 * screen, UAC prompt, ...); the duplication stays denied while
-			 * that desktop is active. Release it and re-create with a
-			 * bounded retry loop instead of killing the capture thread. */
-			win_shadow_dxgi_release_frame_data(subsystem);
-
-			if (subsystem->dxgiDesktopImage)
-			{
-				subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
-				subsystem->dxgiDesktopImage = nullptr;
-			}
-
-			if (subsystem->dxgiStage)
-			{
-				subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
-				subsystem->dxgiStage = nullptr;
-			}
-
-			if (subsystem->dxgiOutputDuplication)
-			{
-				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
-				subsystem->dxgiOutputDuplication = nullptr;
-			}
-
-			for (int attempt = 0; attempt < 240; ++attempt)
-			{
-				if (WaitForSingleObject(subsystem->base.server->StopEvent, 0) == WAIT_OBJECT_0)
-					return -1;
-
-				Sleep(500);
-				status = win_shadow_dxgi_init_duplication(subsystem);
-				if (status >= 0)
-					return 0;
-			}
-
-			return -1;
 		}
 		else if (hr == DXGI_ERROR_INVALID_CALL)
 		{

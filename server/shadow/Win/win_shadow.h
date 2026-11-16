@@ -87,8 +87,11 @@ struct win_shadow_subsystem
 	 * in the user's session): capture is paused */
 	BOOL dxgiDenied;
 	/* the earliest time the capture loop may create a missing duplication again: soon after a
-	 * refused desktop, at a low rate after a failure which does not recover by itself */
+	 * refused desktop or a duplication another process holds, at a low rate after a failure
+	 * which does not recover by itself */
 	UINT64 dxgiRetryTime;
+	/* when the paused capture last said in the log that it is still paused */
+	UINT64 dxgiPausedLogTime;
 #endif
 };
 

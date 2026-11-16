@@ -632,9 +632,10 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 				 * starts with the whole desktop image. A missing duplication is
 				 * retried from dxgiRetryTime on, not on every pass: every
 				 * WIN_SHADOW_DXGI_DENIED_RETRY_MS while a desktop this process
-				 * may not capture is active, every WIN_SHADOW_DXGI_INIT_RETRY_MS
-				 * after a failure which does not recover by itself (no D3D11
-				 * device, no duplicatable output) */
+				 * may not capture is active or another process holds the
+				 * duplication, every WIN_SHADOW_DXGI_INIT_RETRY_MS after a
+				 * failure which does not recover by itself (no D3D11 device, no
+				 * duplicatable output) */
 				const BOOL followed = win_shadow_follow_input_desktop();
 				const BOOL retry = !subsystem->dxgiOutputDuplication &&
 				                   (GetTickCount64() >= subsystem->dxgiRetryTime);
