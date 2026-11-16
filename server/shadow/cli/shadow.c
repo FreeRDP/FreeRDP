@@ -135,6 +135,11 @@ int main(int argc, char** argv)
 		  "Allow GFX AVC420 codec" },
 		{ "gfx-avc444", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX AVC444 codec" },
+		{ "codec", COMMAND_LINE_VALUE_REQUIRED, "<codec>:<key>:<value>[,<codec>:<key>:<value>...]",
+		  nullptr, nullptr, -1, nullptr,
+		  "Encoder settings, bit rates in kbit/s: h264:rate-control:vbr|cqp, h264:bitrate, "
+		  "h264:qp:<0-51>; av1 and av2: rate-control:vbr|cbr|cq|q, bitrate; hevc: "
+		  "rate-control:vbr, bitrate (a codec not built in is refused)" },
 #if defined(WITH_GFX_AZURE)
 		{ "gfx-hevc", COMMAND_LINE_VALUE_OPTIONAL, "[on|off|i420|i444]", BoolValueTrue, nullptr, -1,
 		  nullptr, "Allow GFX pipeline HEVC codec extension" },
