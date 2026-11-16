@@ -1387,7 +1387,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		size_t offset = 0;
 		UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 		const UINT32* MonitorIds = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
+
 		/* String size: 10 char UINT32 max string length, 1 char separator, one element nullptr */
+		if (count > UINT32_MAX / 11 - 1)
+			return FALSE;
 		size_t size = count * (10 + 1) + 1;
 
 		char* str = calloc(size, sizeof(char));
