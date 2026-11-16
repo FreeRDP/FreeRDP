@@ -823,10 +823,10 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return FALSE;
 
 	/* Create input frame */
-	if (!ffmpeg_fill_frame(context->frame, format, data, length))
+	if (!ffmpeg_fill_frame(context->frame, &fmt, data, length))
 		return FALSE;
 
-	ffmpeg_setup_resample_frame(context, format);
+	ffmpeg_setup_resample_frame(context, &fmt);
 	/* Resample to desired format. */
 	if (!ffmpeg_resample_frame(context->rcontext, context->frame, context->resampled))
 		return FALSE;

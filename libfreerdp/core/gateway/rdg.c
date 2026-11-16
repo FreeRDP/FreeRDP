@@ -197,7 +197,8 @@ static const t_flag_mapping extended_auth[] = {
 	{ HTTP_EXTENDED_AUTH_NONE, "HTTP_EXTENDED_AUTH_NONE" },
 	{ HTTP_EXTENDED_AUTH_SC, "HTTP_EXTENDED_AUTH_SC" },
 	{ HTTP_EXTENDED_AUTH_PAA, "HTTP_EXTENDED_AUTH_PAA" },
-	{ HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM" }
+	{ HTTP_EXTENDED_AUTH_SSPI_NTLM, "HTTP_EXTENDED_AUTH_SSPI_NTLM" },
+	{ HTTP_EXTENDED_AUTH_BEARER, "HTTP_EXTENDED_AUTH_BEARER" }
 };
 
 static const t_flag_mapping capabilities_enum[] = {
@@ -1064,9 +1065,16 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 
 	WINPR_ASSERT(rdg);
 
-	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
+	if (rdg->state != RDG_CLIENT_STATE_HANDSHAKE)
 	{
-		WLog_Print(rdg->log, WLOG_ERROR, "EXTAUTH_SSPI_NTLM but rdpRdg::extAuth=false");
+		return FALSE;
+	}
+
+	/* rdpRdg::auth only exists for (and until the end of) the SSPI_NTLM exchange */
+	if ((rdg->extAuth != HTTP_EXTENDED_AUTH_SSPI_NTLM) || !rdg->auth)
+	{
+		WLog_Print(rdg->log, WLOG_ERROR, "EXTAUTH_SSPI_NTLM but rdpRdg::extAuth=%s",
+		           extended_auth_to_string(rdg->extAuth));
 		return FALSE;
 	}
 

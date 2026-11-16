@@ -256,6 +256,43 @@ fail:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL TestStream_ExtentOverflow(void)
+{
+	const size_t capacity = 256;
+	const size_t position = 20;
+	/* position + size or capacity + size exceed SIZE_MAX */
+	const size_t sizes[] = { SIZE_MAX - capacity + 1, SIZE_MAX - position, SIZE_MAX };
+	BOOL result = FALSE;
+
+	wStream* s = Stream_New(nullptr, capacity);
+	if (!s)
+	{
+		printf("%s: Stream_New failed\n", __func__);
+		return FALSE;
+	}
+
+	if (!Stream_SetPosition(s, position))
+		goto fail;
+
+	for (size_t i = 0; i < ARRAYSIZE(sizes); i++)
+	{
+		if (Stream_EnsureRemainingCapacity(s, sizes[i]))
+		{
+			printf("%s: size %" PRIuz " must be rejected\n", __func__, sizes[i]);
+			goto fail;
+		}
+
+		if ((Stream_Capacity(s) != capacity) || (Stream_GetPosition(s) != position))
+			goto fail;
+	}
+
+	result = TRUE;
+fail:
+	Stream_Free(s, TRUE);
+	return result;
+}
+
 #define Stream_Peek_UINT8_BE Stream_Peek_UINT8
 #define Stream_Read_UINT8_BE Stream_Read_UINT8
 #define Stream_Peek_Get_UINT8_BE Stream_Peek_Get_UINT8
@@ -927,5 +964,8 @@ int TestStream(int argc, char* argv[])
 		if (!TestStream_WriteAndRead(val))
 			return 14;
 	}
+
+	if (!TestStream_ExtentOverflow())
+		return 16;
 	return 0;
 }

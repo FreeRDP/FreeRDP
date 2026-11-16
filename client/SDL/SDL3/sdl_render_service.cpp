@@ -56,9 +56,7 @@ namespace
 		{
 		}
 
-		~SdlRenderService()
-		{
-		}
+		~SdlRenderService() = default;
 
 		HRESULT WINPR_COM_CALL QueryInterface(const IID* riid, void** ppvObject) override
 		{

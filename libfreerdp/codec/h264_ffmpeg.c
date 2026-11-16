@@ -1456,7 +1456,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			goto EXCEPTION;
 		}
 
-		sys->codecParser = av_parser_init(codecId);
+		sys->codecParser = av_parser_init((int)codecId);
 
 		if (!sys->codecParser)
 		{

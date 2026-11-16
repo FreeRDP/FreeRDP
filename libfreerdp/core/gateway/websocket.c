@@ -279,6 +279,7 @@ static int websocket_read_wstream(BIO* bio, websocket_context* encodingContext)
 	if (!Stream_SafeSeek(s, (size_t)status))
 		return -1;
 
+	Stream_SealLength(s);
 	return status;
 }
 

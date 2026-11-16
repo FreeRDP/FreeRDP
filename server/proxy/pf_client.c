@@ -1383,7 +1383,7 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = server_message_free;
 
-	pc->interceptContextMap = HashTable_New(FALSE);
+	pc->interceptContextMap = HashTable_New(TRUE);
 	if (!pc->interceptContextMap)
 		return FALSE;
 

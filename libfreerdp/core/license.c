@@ -898,8 +898,10 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT16 sec_
 
 	DEBUG_LICENSE("Sending %s Packet", license_request_type_string(type));
 	const size_t length = Stream_GetPosition(s);
-	WINPR_ASSERT(length >= license->PacketHeaderLength);
-	WINPR_ASSERT(length <= UINT16_MAX + license->PacketHeaderLength);
+	if (length < license->PacketHeaderLength)
+		return FALSE;
+	if (length > UINT16_MAX + license->PacketHeaderLength)
+		return FALSE;
 
 	const UINT16 wMsgSize = (UINT16)(length - license->PacketHeaderLength);
 	if (!Stream_SetPosition(s, license->PacketHeaderLength))

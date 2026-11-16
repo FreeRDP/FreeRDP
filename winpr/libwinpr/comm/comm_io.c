@@ -79,10 +79,11 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	struct timeval tmaxTimeout;
 	struct timeval* pTmaxTimeout = nullptr;
 	struct termios currentTermios;
-	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
 
 	if (!CommIsHandled(hDevice))
-		goto return_false;
+		return FALSE;
+
+	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
 
 	if (lpOverlapped != nullptr)
 	{
@@ -375,10 +376,11 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	struct timeval tmaxTimeout;
 	struct timeval* pTmaxTimeout = nullptr;
-	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
 	if (!CommIsHandled(hDevice))
-		goto return_false;
+		return FALSE;
+
+	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
 	if (lpOverlapped != nullptr)
 	{

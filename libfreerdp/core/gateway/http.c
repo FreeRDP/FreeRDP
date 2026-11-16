@@ -1211,7 +1211,7 @@ out_error:
 }
 
 static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL readContentLength,
-                                    size_t payloadOffset, size_t bodyLength)
+                                    size_t bodyLength)
 {
 	BOOL rc = FALSE;
 
@@ -1253,8 +1253,6 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 			}
 		} while (ctx.state != ChunkStateEnd);
 		response->BodyLength = WINPR_ASSERTING_INT_CAST(uint32_t, full_len);
-		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 	}
 	else
 	{
@@ -1302,9 +1300,6 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 		if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
 			goto out_error;
 		Stream_Write_UINT16(response->data, 0);
-
-		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 	}
 
 	rc = TRUE;
@@ -1421,8 +1416,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		}
 
 		/* Fetch remaining body! */
-		if (!http_response_recv_body(tls, response, readContentLength,
-		                             WINPR_ASSERTING_INT_CAST(size_t, payloadOffset), bodyLength))
+		if (!http_response_recv_body(tls, response, readContentLength, bodyLength))
 			goto out_error;
 	}
 	Stream_SealLength(response->data);
@@ -1431,6 +1425,11 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 	if (!Stream_EnsureRemainingCapacity(response->data, 2))
 		goto out_error;
 	Stream_Write_UINT16(response->data, 0);
+
+	/* The stream buffer may have been reallocated by any of the writes above,
+	 * so only take the pointer to the body now that no more writes follow. */
+	if (response->BodyLength > 0)
+		response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 
 	return response;
 out_error:

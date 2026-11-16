@@ -108,9 +108,11 @@ BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 	const size_t pos = Stream_GetPosition(s);
 	if (pos > SIZE_MAX - size)
 		return FALSE;
-	if (pos + size > Stream_Capacity(s))
-		return Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
-	return TRUE;
+	if (pos + size <= Stream_Capacity(s))
+		return TRUE;
+	if (Stream_Capacity(s) > SIZE_MAX - size)
+		return FALSE;
+	return Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
 }
 
 wStream* Stream_New(BYTE* buffer, size_t size)

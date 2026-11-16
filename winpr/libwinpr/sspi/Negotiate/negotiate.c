@@ -1159,14 +1159,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 		if (IsSecurityStatusError(status))
 		{
-			if (!init_context.spnego)
-				return status;
-
-			/* Clean up any partially created sub context before falling back to
-			 * another mechanism (mirrors the mech change handling in
-			 * negotiate_InitializeSecurityContextW) */
+			/* Clean up any partially created sub context before giving up or
+			 * falling back to another mechanism (mirrors the mech change handling
+			 * in negotiate_InitializeSecurityContextW). The sub context is only
+			 * reachable through init_context here, so it would otherwise leak. */
 			if (init_context.mech)
 				init_context.mech->pkg->table->DeleteSecurityContext(&init_context.sub_context);
+
+			if (!init_context.spnego)
+				return status;
 
 			init_context.mic = TRUE;
 			first_mech = init_context.mech;

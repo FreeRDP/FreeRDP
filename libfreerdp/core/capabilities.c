@@ -2060,6 +2060,7 @@ static BOOL rdp_read_bitmap_cache_cell_info(wLog* log, wStream* s,
 		WLog_Print(log, WLOG_ERROR,
 		           "BITMAP_CACHE_V2_CELL_INFO::numEntries (%" PRIu32 ") > limit(%" PRIuz ")",
 		           cellInfo->numEntries, limit);
+		return FALSE;
 	}
 	cellInfo->persistent = (info & 0x80000000) ? 1 : 0;
 	return TRUE;

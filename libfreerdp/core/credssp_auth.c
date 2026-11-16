@@ -308,6 +308,37 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 	return TRUE;
 }
 
+/* With smartcard logon the password of the identity is the PIN of the card. Kerberos needs it
+ * for PKINIT, but it must never be used as NTLM password: NTLM can not authenticate with a
+ * smartcard and a peer could recover the PIN offline from the NTLM response. */
+static BOOL credssp_auth_client_disable_ntlm(rdpCredsspAuth* auth)
+{
+	WINPR_ASSERT(auth);
+	WINPR_ASSERT(auth->rdp_ctx);
+
+	const rdpSettings* settings = auth->rdp_ctx->settings;
+	WINPR_ASSERT(settings);
+
+	const char* pkg = credssp_auth_pkg_name(auth);
+	if (pkg && (_stricmp(pkg, CREDSSP_AUTH_PKG_NTLM) == 0))
+	{
+		WLog_ERR(TAG, "%s authentication is not supported with smartcard logon", pkg);
+		return FALSE;
+	}
+
+	char* list = nullptr;
+	size_t len = 0;
+	const char* cur = settings->AuthenticationPackageList;
+	const BOOL empty = utils_str_is_empty(cur);
+	if (winpr_asprintf(&list, &len, "%s%s!ntlm", empty ? "" : cur, empty ? "" : ",") < 0)
+		return FALSE;
+
+	free(auth->package_list);
+	auth->package_list = ConvertUtf8ToWCharAlloc(list, nullptr);
+	free(list);
+	return auth->package_list != nullptr;
+}
+
 BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* target_hostname, const SEC_WINNT_AUTH_IDENTITY* identity,
                                const char* pkinit)
@@ -318,8 +349,15 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
 	WINPR_ASSERT(auth->info);
+	WINPR_ASSERT(auth->rdp_ctx);
+	WINPR_ASSERT(auth->rdp_ctx->settings);
 
 	WINPR_ASSERT(auth->state == AUTH_STATE_INITIAL);
+
+	/* Checked here and not in credssp_auth_init as the authentication callbacks might have
+	 * changed the logon to smartcard in between */
+	if (auth->rdp_ctx->settings->SmartcardLogon && !credssp_auth_client_disable_ntlm(auth))
+		return FALSE;
 
 	/* Construct the service principal name */
 	if (!credssp_auth_set_spn(auth, target_service, target_hostname))
