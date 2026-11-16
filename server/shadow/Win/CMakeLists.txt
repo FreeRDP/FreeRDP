@@ -25,6 +25,10 @@ if(WITH_SHADOW_WIN_DXGI)
   add_compile_definitions(WITH_DXGI_1_2)
   list(APPEND SRCS win_dxgi.c)
 else()
+  # win_shadow.h gates the loopback client members on WITH_WDS_API, and
+  # win_wds.h defines it only for the translation unit that includes it
+  # first: the backend needs it for all of them or it does not compile.
+  add_compile_definitions(WITH_WDS_API)
   list(APPEND SRCS win_rdp.c win_wds.c)
 endif()
 add_library(freerdp-shadow-subsystem-impl STATIC ${SRCS})
