@@ -39,6 +39,7 @@
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
 #include "sdl_rail.hpp"
+#include "sdl_wheel.hpp"
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
@@ -163,6 +164,9 @@ class SdlContext
 	[[nodiscard]] bool credentialsRead() const;
 	void setCredentialsRead();
 
+	/* the wheel rotation not yet sent, one axis each */
+	[[nodiscard]] SdlWheelAxis& wheelAxis(bool horizontal);
+
   private:
 	[[nodiscard]] bool resizeToScale(SdlWindow* window);
 	[[nodiscard]] bool useLocalScale() const;
@@ -271,4 +275,6 @@ class SdlContext
 	std::optional<bool> _allowScreenSaver;
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
+	SdlWheelAxis _wheelX;
+	SdlWheelAxis _wheelY;
 };

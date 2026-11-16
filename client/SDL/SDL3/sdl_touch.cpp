@@ -125,8 +125,9 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
 
 	const bool flipped = (ev.direction == SDL_MOUSEWHEEL_FLIPPED) &&
 	                     !SdlPref::instance()->get_bool("UseLocalMouseScrollDirection");
-	const auto x = static_cast<INT32>(ev.x * (flipped ? -1.0f : 1.0f) * 120.0f);
-	const auto y = static_cast<INT32>(ev.y * (flipped ? -1.0f : 1.0f) * 120.0f);
+	const float sign = flipped ? -1.0f : 1.0f;
+	const auto x = sdl->wheelAxis(true).add(ev.x * sign);
+	const auto y = sdl->wheelAxis(false).add(ev.y * sign);
 
 	/* [MS-RDPBCGR] 2.2.8.1.1.3.1.1.3 Pointer Event: a wheel rotation event carries no flags
 	 * besides PTR_FLAGS_WHEEL_NEGATIVE and the rotation itself, so the two axes cannot share
