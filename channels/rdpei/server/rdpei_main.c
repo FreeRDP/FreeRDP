@@ -712,7 +712,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 			return ERROR_READ_FAULT;
 
 		WLog_DBG(TAG, "channel connection closed");
-		return CHANNEL_RC_OK;
+		return ERROR_INTERNAL_ERROR;
 	}
 	priv->expectedBytes -= bytesReturned;
 	Stream_Seek(s, bytesReturned);
