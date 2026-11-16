@@ -737,7 +737,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 			    &context->DnsComputerName, credentials->ntlmSettingsV2->dnsComputerName,
 			    strlen(credentials->ntlmSettingsV2->dnsComputerName));
 			if (SEC_E_OK != rc)
+			{
+				ntlm_ContextFree(context);
 				return rc;
+			}
 		}
 
 		if (credentials->ntlmSettingsV2->dnsDomainName)
@@ -746,7 +749,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 			    &context->DnsDomainName, credentials->ntlmSettingsV2->dnsDomainName,
 			    strlen(credentials->ntlmSettingsV2->dnsDomainName));
 			if (SEC_E_OK != rc)
+			{
+				ntlm_ContextFree(context);
 				return rc;
+			}
 		}
 
 		if (credentials->ntlmSettingsV2->netBiosComputerName)
@@ -755,7 +761,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 			    &context->NbComputerName, credentials->ntlmSettingsV2->netBiosComputerName,
 			    strlen(credentials->ntlmSettingsV2->netBiosComputerName));
 			if (SEC_E_OK != rc)
+			{
+				ntlm_ContextFree(context);
 				return rc;
+			}
 		}
 
 		if (credentials->ntlmSettingsV2->netBiosDomainName)
@@ -764,11 +773,17 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 			    &context->NbDomainName, credentials->ntlmSettingsV2->netBiosDomainName,
 			    strlen(credentials->ntlmSettingsV2->netBiosDomainName));
 			if (SEC_E_OK != rc)
+			{
+				ntlm_ContextFree(context);
 				return rc;
+			}
 		}
 
 		if (!ntlm_SetContextTargetName(context, credentials->ntlmSettingsV2->targetName))
+		{
+			ntlm_ContextFree(context);
 			return SEC_E_INVALID_HANDLE;
+		}
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetPackageId(phNewContext, SSPI_PACKAGE_NTLM);
 	}
