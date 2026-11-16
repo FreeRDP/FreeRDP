@@ -45,7 +45,8 @@ struct rdp_offscreen_cache
 	rdpContext* context;
 };
 
-static void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBitmap* bitmap);
+WINPR_ATTR_NODISCARD
+static BOOL offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBitmap* bitmap);
 static void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index);
 
 static BOOL
@@ -75,7 +76,11 @@ update_gdi_create_offscreen_bitmap(rdpContext* context,
 	}
 
 	offscreen_cache_delete(cache->offscreen, createOffscreenBitmap->id);
-	offscreen_cache_put(cache->offscreen, createOffscreenBitmap->id, bitmap);
+	if (!offscreen_cache_put(cache->offscreen, createOffscreenBitmap->id, bitmap))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
 	if (cache->offscreen->currentSurface == createOffscreenBitmap->id)
 	{
@@ -146,18 +151,19 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 	return bitmap;
 }
 
-void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBitmap* bitmap)
+BOOL offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBitmap* bitmap)
 {
 	WINPR_ASSERT(offscreenCache);
 
 	if (index >= offscreenCache->maxEntries)
 	{
 		WLog_ERR(TAG, "invalid offscreen bitmap index: 0x%08" PRIX32 "", index);
-		return;
+		return FALSE;
 	}
 
 	offscreen_cache_delete(offscreenCache, index);
 	offscreenCache->entries[index] = bitmap;
+	return TRUE;
 }
 
 void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
