@@ -30,6 +30,9 @@
 - (void)centerSessionViewInViewport;
 - (void)setKeyboardOverlap:(CGFloat)overlap;
 - (CGRect)sessionViewportFrame;
+- (void)installHingeInteraction;
+- (BOOL)hasHinge;
+- (BOOL)isHingeOpen;
 - (void)showConnectingViewWithText:(NSString *)text;
 - (void)hideConnectingView;
 - (void)endBackgroundTask;
@@ -167,6 +170,8 @@
 	[_session_scrollview setAlwaysBounceHorizontal:NO];
 	[_session_scrollview setAlwaysBounceVertical:NO];
 	[_session_scrollview setBounces:NO];
+
+	[self installHingeInteraction];
 }
 
 - (void)viewDidLayoutSubviews
@@ -1244,7 +1249,7 @@
 
 - (void)scheduleRemoteResize
 {
-	// a fixed resolution bookmark connects without the disp channel
+	// a fixed resolution bookmark keeps its remote size
 	if ([[_session params] intForKey:@"screen_resolution_type"] != TSXScreenOptionFitScreen)
 		return;
 
@@ -1266,17 +1271,18 @@
 	if (!scene || [scene activationState] == UISceneActivationStateBackground)
 		return;
 
-	// the disp channel sends even widths, so compare with the same value
 	CGSize size = [self sizeForFitScreenForSession:_session];
 	size.width = (UINT32)size.width & ~1u;
+    size.height = (UINT32)size.height & ~1u;
 
+    // ignore same size
+	if (CGSizeEqualToSize(size, _requested_remote_size))
+		return;
+
+	// ignore same size
 	rdpSettings *settings = [_session getSessionParams];
 	if (size.width == freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) &&
 	    size.height == freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))
-		return;
-
-	// the desktop size changes only when the server applies the layout
-	if (CGSizeEqualToSize(size, _requested_remote_size))
 		return;
 
 	_requested_remote_size = size;
@@ -1290,7 +1296,63 @@
 		return [[self view] bounds];
 
 	// if 'Avoid Screen Edges' enabled (only for iphone)
-	return UIEdgeInsetsInsetRect([[self view] bounds], [[self view] safeAreaInsets]);
+	UIEdgeInsets insets = [[self view] safeAreaInsets];
+	CGRect bounds = [[self view] bounds];
+    
+	// landscape or iphone duo --> fill the home indicator area
+	if ([self hasHinge] || bounds.size.width > bounds.size.height)
+		insets.bottom = 0.0f;
+    
+	// opened iphone duo --> set gap at right side band
+	if ([self isHingeOpen] && insets.right > insets.left)
+		insets.left = insets.right;
+    
+	return UIEdgeInsetsInsetRect(bounds, insets);
+}
+
+- (void)installHingeInteraction
+{
+#if defined(__IPHONE_27_1) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_27_1)
+	if (@available(iOS 27.1, *))
+	{
+		__block RDPSessionViewController *weakSelf = self;
+		UIHingeInteraction *interaction = [[UIHingeInteraction alloc]
+		    initWithUpdateHandler:^(UIHingeInteraction *hingeInteraction,
+		                            UIHingeInteractionUpdate *update) {
+			    (void)hingeInteraction;
+			    UIHinge *hinge = [update hinge];
+
+                // this device is not iphone duo
+			    if (!hinge)
+				    return;
+            
+                weakSelf->_has_hinge = YES;
+            
+                UIHingeStatus hingeStatus = [hinge status];
+			    BOOL open = (hingeStatus == UIHingeStatusPartiallyOpen || hingeStatus == UIHingeStatusFullyOpen);
+			    if (weakSelf->_hinge_open == open)
+				    return;
+            
+			    weakSelf->_hinge_open = open;
+			    [[weakSelf view] setNeedsLayout];
+		    }];
+        
+		[[self view] addInteraction:interaction];
+		[interaction release];
+	}
+#endif
+}
+
+// return YES (iphone duo)
+// return NO (other devices)
+- (BOOL)hasHinge
+{
+	return _has_hinge;
+}
+
+- (BOOL)isHingeOpen
+{
+	return _hinge_open;
 }
 
 - (void)fitSessionViewToViewport

@@ -58,6 +58,11 @@
 	CGFloat _keyboard_height_landscape;
 	CGSize _last_session_viewport_size;
 
+	// iphone duo: the session also fills the home indicator area in portrait
+	BOOL _has_hinge;
+	// iphone duo: unfolded (hinge partially or fully open)
+	BOOL _hinge_open;
+
 	// sent but not applied by the server yet
 	CGSize _requested_remote_size;
 

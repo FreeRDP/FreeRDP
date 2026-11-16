@@ -216,10 +216,8 @@ static void freeArguments(int argc, char **argv)
 		if (!addArgument(&argc, &argv, "/h:%d", [_params intForKey:@"height"]))
 			goto out_free;
 
-	// only an automatic resolution enabled
-	if ([_params intForKey:@"screen_resolution_type"] == TSXScreenOptionFitScreen)
-		if (!addArgument(&argc, &argv, "/disp"))
-			goto out_free;
+	if (!addArgument(&argc, &argv, "/disp"))
+		goto out_free;
 
 	// security
 	switch ([_params intForKey:@"security"])

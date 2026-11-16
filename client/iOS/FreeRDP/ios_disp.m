@@ -3,6 +3,7 @@
  * iOS Display Update Virtual Channel
  *
  * Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+ * Copyright 2026 Byungho Kim <bho3538@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
