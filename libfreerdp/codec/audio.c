@@ -165,6 +165,10 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 	Stream_Read_UINT16(s, format->wBitsPerSample);
 	Stream_Read_UINT16(s, format->cbSize);
 
+	/* if the format does not have an alignment ensure it is 1 */
+	if (format->nBlockAlign == 0)
+		format->nBlockAlign = 1;
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, format->cbSize))
 		return FALSE;
 
