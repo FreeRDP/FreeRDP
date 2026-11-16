@@ -483,8 +483,8 @@ static void license_print_product_info(wLog* log, const LICENSE_PRODUCT_INFO* pr
 	WLog_Print(log, WLOG_INFO, "\tdwVersion: 0x%08" PRIX32 "", productInfo->dwVersion);
 	WLog_Print(log, WLOG_INFO, "\tCompanyName: %s", CompanyName);
 	WLog_Print(log, WLOG_INFO, "\tProductId: %s", ProductId);
-	free(CompanyName);
-	free(ProductId);
+	winpr_zfree(CompanyName);
+	winpr_zfree(ProductId);
 }
 
 static void license_print_scope_list(wLog* log, const SCOPE_LIST* scopeList)
@@ -695,9 +695,9 @@ static BOOL saveCal(wLog* log, const rdpSettings* settings, const BYTE* data, si
 		           filepath);
 
 out:
-	free(filepathNew);
-	free(filepath);
-	free(licenseStorePath);
+	winpr_zfree(filepathNew);
+	winpr_zfree(filepath);
+	winpr_zfree(licenseStorePath);
 	return ret;
 }
 
@@ -764,16 +764,17 @@ static BYTE* loadCalFile(wLog* log, const rdpSettings* settings, const char* hos
 	*dataLen = (size_t)length;
 
 	(void)fclose(fp);
-	free(calPath);
-	free(licenseStorePath);
+	winpr_zfree(calPath);
+	winpr_zfree(licenseStorePath);
 	return ret;
 
 fail:
-	free(ret);
+	if (ret)
+		winpr_znfree(ret, (size_t)length);
 	if (fp)
 		(void)fclose(fp);
-	free(calPath);
-	free(licenseStorePath);
+	winpr_zfree(calPath);
+	winpr_zfree(licenseStorePath);
 	return nullptr;
 }
 
@@ -1461,18 +1462,25 @@ static BOOL license_decrypt_and_check_MAC(rdpLicense* license, const BYTE* input
 /**
  * Read Product Information (PRODUCT_INFO).
  * msdn{cc241915}
- * @param s stream
  * @param productInfo product information
  */
+
+static void clear_productinfo(LICENSE_PRODUCT_INFO* productInfo)
+{
+	WINPR_ASSERT(productInfo);
+	winpr_znfree(productInfo->pbCompanyName, productInfo->cbCompanyName);
+	winpr_znfree(productInfo->pbProductId, productInfo->cbProductId);
+	productInfo->pbCompanyName = nullptr;
+	productInfo->cbCompanyName = 0;
+	productInfo->pbProductId = nullptr;
+	productInfo->cbProductId = 0;
+}
 
 BOOL license_read_product_info(wLog* log, wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 {
 	WINPR_ASSERT(productInfo);
 
-	free(productInfo->pbCompanyName);
-	free(productInfo->pbProductId);
-	productInfo->pbCompanyName = nullptr;
-	productInfo->pbProductId = nullptr;
+	clear_productinfo(productInfo);
 
 	if (!license_check_stream_length(log, s, 8, "license product info::cbCompanyName", 0))
 		return FALSE;
@@ -1522,10 +1530,7 @@ BOOL license_read_product_info(wLog* log, wStream* s, LICENSE_PRODUCT_INFO* prod
 	return TRUE;
 
 out_fail:
-	free(productInfo->pbCompanyName);
-	free(productInfo->pbProductId);
-	productInfo->pbCompanyName = nullptr;
-	productInfo->pbProductId = nullptr;
+	clear_productinfo(productInfo);
 	return FALSE;
 }
 
@@ -1602,9 +1607,8 @@ void license_free_product_info(LICENSE_PRODUCT_INFO* productInfo)
 {
 	if (productInfo)
 	{
-		free(productInfo->pbCompanyName);
-		free(productInfo->pbProductId);
-		free(productInfo);
+		clear_productinfo(productInfo);
+		winpr_znfree(productInfo, sizeof(LICENSE_PRODUCT_INFO));
 	}
 }
 
@@ -1615,8 +1619,8 @@ BOOL license_read_binary_blob_data(wLog* log, LICENSE_BLOB* blob, UINT16 wBlobTy
 	WINPR_ASSERT(length <= UINT16_MAX);
 	WINPR_ASSERT(data || (length == 0));
 
+	winpr_znfree(blob->data, blob->length);
 	blob->length = (UINT16)length;
-	free(blob->data);
 	blob->data = nullptr;
 
 	if ((blob->type != wBlobType) && (blob->type != BB_ANY_BLOB))
@@ -1764,8 +1768,8 @@ void license_free_binary_blob(LICENSE_BLOB* blob)
 {
 	if (blob)
 	{
-		free(blob->data);
-		free(blob);
+		winpr_znfree(blob->data, blob->length);
+		winpr_znfree(blob, sizeof(LICENSE_BLOB));
 	}
 }
 
@@ -2619,14 +2623,14 @@ BOOL license_answer_license_request(rdpLicense* license)
 		if (!license_encrypt_and_MAC(license, license->HardwareId, sizeof(license->HardwareId),
 		                             license->EncryptedHardwareId, signature, sizeof(signature)))
 		{
-			free(license_data);
+			winpr_znfree(license_data, license_size);
 			return FALSE;
 		}
 
 		calBlob = license_new_binary_blob(BB_DATA_BLOB);
 		if (!calBlob)
 		{
-			free(license_data);
+			winpr_znfree(license_data, license_size);
 			return FALSE;
 		}
 		calBlob->data = license_data;
@@ -2733,7 +2737,7 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	           sizeof(license->HardwareId));
 	status = security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), buffer, length,
 	                           license->MACData, sizeof(license->MACData));
-	free(buffer);
+	winpr_znfree(buffer, length);
 
 	if (!status)
 	{
@@ -2985,7 +2989,7 @@ void license_free(rdpLicense* license)
 		license_free_binary_blob(license->EncryptedHardwareId);
 		license_free_binary_blob(license->EncryptedLicenseInfo);
 		license_free_scope_list(license->ScopeList);
-		free(license);
+		winpr_znfree(license, sizeof(rdpLicense));
 	}
 }
 
