@@ -71,6 +71,7 @@ struct rdpsnd_plugin
 	BYTE cBlockNo;
 	UINT16 wQualityMode;
 	UINT16 wCurrentFormatNo;
+	BOOL FormatUpdateSinceOpened;
 
 	AUDIO_FORMAT* ServerFormats;
 	UINT16 NumberOfServerFormats;
@@ -177,6 +178,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	rdpsnd->NumberOfClientFormats = 0;
 	rdpsnd->ClientFormats = nullptr;
 
+	rdpsnd->FormatUpdateSinceOpened = TRUE;
 	if (!rdpsnd->NumberOfServerFormats)
 		return;
 
@@ -434,7 +436,8 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT16 wFormatNo,
 		return FALSE;
 	WINPR_ASSERT(format);
 
-	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo))
+	if (!rdpsnd->isOpen || (wFormatNo != rdpsnd->wCurrentFormatNo) ||
+	    rdpsnd->FormatUpdateSinceOpened)
 	{
 		BOOL rc = 0;
 		BOOL supported = 0;
@@ -472,6 +475,7 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT16 wFormatNo,
 
 		rdpsnd->isOpen = TRUE;
 		rdpsnd->wCurrentFormatNo = wFormatNo;
+		rdpsnd->FormatUpdateSinceOpened = FALSE;
 		rdpsnd->startPlayTime = 0;
 		rdpsnd->totalPlaySize = 0;
 	}
