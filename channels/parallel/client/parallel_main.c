@@ -220,7 +220,6 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT32 len = 0;
 	UINT32 Length = 0;
 	UINT64 Offset = 0;
 
@@ -239,26 +238,30 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
 		return ERROR_INVALID_DATA;
-	len = Length;
 
 	if (parallel->file < 0)
 	{
 		WLog_ERR(TAG, "Device not open, aborting");
 		return ERROR_DEVICE_NOT_AVAILABLE;
 	}
-	while (len > 0)
-	{
-		const ssize_t status = write(parallel->file, ptr, len);
 
-		if ((status < 0) || (status > len))
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* sub = Stream_StaticConstInit(&sbuffer, ptr, Length);
+	while (Stream_GetRemainingLength(sub) > 0)
+	{
+		const size_t len = Stream_GetRemainingLength(sub);
+		const void* cptr = Stream_Pointer(sub);
+		const ssize_t status = write(parallel->file, cptr, len);
+
+		if ((status < 0) || ((size_t)status > len))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
 			Length = 0;
 			break;
 		}
 
-		Stream_Seek(irp->input, WINPR_ASSERTING_INT_CAST(size_t, status));
-		len -= status;
+		if (!Stream_SafeSeek(irp->input, WINPR_ASSERTING_INT_CAST(size_t, status)))
+			return ERROR_INVALID_BLOCK_LENGTH;
 	}
 
 	Stream_Write_UINT32(irp->output, Length);

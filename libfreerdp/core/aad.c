@@ -1045,11 +1045,11 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const c
 	free(str);
 
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
-	free(response);
 
 	if (!json)
 		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON: %s",
 		           WINPR_JSON_GetErrorPtr());
+	free(response);
 
 	return json;
 }
@@ -1088,11 +1088,11 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_context(rdpContext* context, wLog* l
 	free(str);
 
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
-	free(response);
 
 	if (!json)
 		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON: %s",
 		           WINPR_JSON_GetErrorPtr());
+	free(response);
 
 	return json;
 }

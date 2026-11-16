@@ -223,7 +223,7 @@ wStream* cliprdr_packet_file_contents_request_new(const CLIPRDR_FILE_CONTENTS_RE
 
 wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
-	if (!response || (response->cbRequested > SIZE_MAX - 4))
+	if (!response || (response->cbRequested > UINT32_MAX - 4))
 		return nullptr;
 
 	wStream* s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, response->common.msgFlags,

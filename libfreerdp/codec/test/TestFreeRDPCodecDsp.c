@@ -209,6 +209,150 @@ fail:
 	return rc;
 }
 
+/* Input in whatever amounts the capture device delivers, in buffers that end with the last sample.
+ * Every packet must consist of whole blocks of 65 bytes that decode to 320 samples each. */
+static BOOL test_gsm_chunks(void)
+{
+	const AUDIO_FORMAT format = { .wFormatTag = WAVE_FORMAT_GSM610,
+		                          .nChannels = 1,
+		                          .nSamplesPerSec = 8000,
+		                          .nAvgBytesPerSec = 1625,
+		                          .nBlockAlign = 65,
+		                          .wBitsPerSample = 0 };
+	const AUDIO_FORMAT pcm = { .wFormatTag = WAVE_FORMAT_PCM,
+		                       .nChannels = 1,
+		                       .nSamplesPerSec = 8000,
+		                       .nAvgBytesPerSec = 16000,
+		                       .nBlockAlign = 2,
+		                       .wBitsPerSample = 16 };
+	const size_t chunks[] = { 320, 100, 160, 333, 7, 1000, 640, 1, 479, 800 };
+	size_t in_frames = 0;
+	size_t out_frames = 0;
+	UINT64 signal = 0;
+	UINT64 noise = 0;
+	BOOL rc = FALSE;
+
+	if (!freerdp_dsp_supports_format(&format, TRUE))
+		return TRUE;
+
+	FREERDP_DSP_CONTEXT* encoder = freerdp_dsp_context_new(TRUE);
+	FREERDP_DSP_CONTEXT* decoder = freerdp_dsp_context_new(FALSE);
+	wStream* encoded = Stream_New(nullptr, 16);
+	wStream* decoded = Stream_New(nullptr, 4096);
+	if (!encoder || !decoder || !encoded || !decoded)
+		goto fail;
+	if (!freerdp_dsp_context_reset(encoder, &format, 320))
+		goto fail;
+	if (!freerdp_dsp_context_reset(decoder, &format, 0))
+		goto fail;
+
+	for (size_t x = 0; x < ARRAYSIZE(chunks); x++)
+	{
+		INT16* samples = calloc(chunks[x], sizeof(INT16));
+		if (!samples)
+			goto fail;
+
+		/* 200 Hz triangle wave */
+		for (size_t y = 0; y < chunks[x]; y++)
+		{
+			const INT32 phase = (INT32)((in_frames + y) % 40);
+			samples[y] = (INT16)(((phase < 20) ? phase : 40 - phase) * 800 - 8000);
+		}
+
+		Stream_ResetPosition(encoded);
+		const BOOL res = freerdp_dsp_encode(encoder, &pcm, (const BYTE*)samples,
+		                                    chunks[x] * sizeof(INT16), encoded);
+		free(samples);
+		if (!res)
+			goto fail;
+		in_frames += chunks[x];
+
+		const size_t length = Stream_GetPosition(encoded);
+		if ((length % 65) != 0)
+		{
+			(void)fprintf(stderr, "[%s] packet of %" PRIuz " bytes\n", __func__, length);
+			goto fail;
+		}
+
+		Stream_ResetPosition(decoded);
+		if (!freerdp_dsp_decode(decoder, &format, Stream_Buffer(encoded), length, decoded))
+			goto fail;
+		if (Stream_GetPosition(decoded) != length / 65 * 320 * sizeof(INT16))
+			goto fail;
+
+		const INT16* result = Stream_BufferAs(decoded, INT16);
+		for (size_t y = 0; y < length / 65 * 320; y++)
+		{
+			const INT32 phase = (INT32)((out_frames + y) % 40);
+			const INT32 expect = ((phase < 20) ? phase : 40 - phase) * 800 - 8000;
+			const INT32 diff = expect - result[y];
+			signal += (UINT64)(expect * expect);
+			noise += (UINT64)(diff * diff);
+		}
+		out_frames += length / 65 * 320;
+	}
+
+	/* everything but less than one block went out and is still the same sound */
+	rc = (out_frames <= in_frames) && (in_frames - out_frames < 320) && (noise < signal / 4);
+	if (!rc)
+		(void)fprintf(stderr,
+		              "[%s] %" PRIuz " frames in, %" PRIuz " out, signal %" PRIu64 " noise %" PRIu64
+		              "\n",
+		              __func__, in_frames, out_frames, signal, noise);
+
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] failed\n", __func__);
+	Stream_Free(encoded, TRUE);
+	Stream_Free(decoded, TRUE);
+	freerdp_dsp_context_free(encoder);
+	freerdp_dsp_context_free(decoder);
+	return rc;
+}
+
+/* A packet that ends in the middle of a block must not make the decoder read 33 bytes where only
+ * 32 are left in the next one. */
+static BOOL test_gsm_split_block(void)
+{
+	const AUDIO_FORMAT format = { .wFormatTag = WAVE_FORMAT_GSM610,
+		                          .nChannels = 1,
+		                          .nSamplesPerSec = 8000,
+		                          .nAvgBytesPerSec = 1625,
+		                          .nBlockAlign = 65,
+		                          .wBitsPerSample = 0 };
+	const size_t packets[] = { 33, 65, 32 };
+	BOOL rc = FALSE;
+
+	if (!freerdp_dsp_supports_format(&format, FALSE))
+		return TRUE;
+
+	FREERDP_DSP_CONTEXT* decoder = freerdp_dsp_context_new(FALSE);
+	wStream* decoded = Stream_New(nullptr, 4096);
+	if (!decoder || !decoded)
+		goto fail;
+	if (!freerdp_dsp_context_reset(decoder, &format, 0))
+		goto fail;
+
+	for (size_t x = 0; x < ARRAYSIZE(packets); x++)
+	{
+		BYTE* data = calloc(packets[x], sizeof(BYTE));
+		if (!data)
+			goto fail;
+		const BOOL res = freerdp_dsp_decode(decoder, &format, data, packets[x], decoded);
+		free(data);
+		if (!res)
+			goto fail;
+	}
+	rc = (Stream_GetPosition(decoded) == 4ull * 160ull * sizeof(INT16));
+
+fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] failed\n", __func__);
+	Stream_Free(decoded, TRUE);
+	freerdp_dsp_context_free(decoder);
+	return rc;
+}
+
 int TestFreeRDPCodecDsp(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 {
 	int rc = 0;
@@ -220,6 +364,10 @@ int TestFreeRDPCodecDsp(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv
 	if (!test_opus_chunks())
 		rc = -1;
 	if (!test_opus_other_format())
+		rc = -1;
+	if (!test_gsm_chunks())
+		rc = -1;
+	if (!test_gsm_split_block())
 		rc = -1;
 	return rc;
 }

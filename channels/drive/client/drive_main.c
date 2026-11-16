@@ -988,6 +988,13 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	if (name[0] && path[0])
 	{
 		size_t pathLength = strnlen(path, MAX_PATH);
+		if (pathLength == MAX_PATH)
+		{
+			WLog_ERR(TAG, "Path is longer than %d bytes, which is currently not supported.",
+			         MAX_PATH);
+			return ERROR_INVALID_PARAMETER;
+		}
+
 		drive = (DRIVE_DEVICE*)calloc(1, sizeof(DRIVE_DEVICE));
 
 		if (!drive)

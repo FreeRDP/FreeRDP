@@ -309,7 +309,7 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context)
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	return http_context_set_header(context, "RDG-Connection-Id", "{%s}",
-	                               guid2str(&RdgConnectionId, buffer, sizeof(buffer)));
+	                               freerdp_guid2str(&RdgConnectionId, buffer, sizeof(buffer)));
 }
 
 BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCorrelationId)
@@ -319,7 +319,7 @@ BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCo
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	return http_context_set_header(context, "RDG-Correlation-Id", "{%s}",
-	                               guid2str(RdgCorrelationId, buffer, sizeof(buffer)));
+	                               freerdp_guid2str(RdgCorrelationId, buffer, sizeof(buffer)));
 }
 
 BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)

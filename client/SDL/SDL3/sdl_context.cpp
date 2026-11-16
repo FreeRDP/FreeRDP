@@ -2241,10 +2241,11 @@ bool SdlContext::toggleFullscreen()
 
 static bool window_info_equal(const WTS_WINDOW_INFO& a, const WTS_WINDOW_INFO& b)
 {
+	const bool scale = fabsf(a.scale - b.scale) <= FLT_EPSILON;
 	return (a.hwnd == b.hwnd) && (a.remoteWidth == b.remoteWidth) &&
 	       (a.remoteHeight == b.remoteHeight) && (a.viewWidth == b.viewWidth) &&
 	       (a.viewHeight == b.viewHeight) && (a.scrollX == b.scrollX) && (a.scrollY == b.scrollY) &&
-	       (a.scale == b.scale);
+	       scale;
 }
 
 /** @brief the handle for WTS_WINDOW_INFO::hwnd: the HWND, the X11 Window, nullptr on Wayland */
@@ -2389,6 +2390,9 @@ Uint64 SdlContext::rendererAdd(UINT64 mappingId, IWTSBitmapRendererCallback* cal
 bool SdlContext::rendererFrame(Uint64 id, const BYTE* data, UINT32 width, UINT32 height,
                                LONG stride)
 {
+	if (stride <= 0)
+		return false;
+
 	{
 		std::scoped_lock lock(_rendererLock);
 		auto it = _renderers.find(id);
@@ -2399,8 +2403,23 @@ bool SdlContext::rendererFrame(Uint64 id, const BYTE* data, UINT32 width, UINT32
 		const size_t row = static_cast<size_t>(width) * 4;
 		r.pixels.resize(row * height);
 		for (UINT32 y = 0; y < height; y++)
-			memcpy(&r.pixels[y * row], data + static_cast<size_t>(y) * static_cast<size_t>(stride),
-			       row);
+		{
+			const auto offset = row * y;
+			const auto end = offset + row;
+			const auto dataoffset = 1ull * y * static_cast<size_t>(stride);
+
+			try
+			{
+				auto& ptr = r.pixels.at(offset);
+				std::ignore = r.pixels.at(end);
+				memcpy(&ptr, &data[dataoffset], row);
+			}
+			catch (std::out_of_range& ex)
+			{
+				SDL_Log("failed to render: %s", ex.what());
+				return false;
+			}
+		}
 		r.pitch = static_cast<int>(row);
 		r.width = static_cast<int>(width);
 		r.height = static_cast<int>(height);

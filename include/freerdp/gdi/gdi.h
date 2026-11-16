@@ -520,6 +520,7 @@ extern "C"
 		GeometryClientContext* geometry;
 
 		wLog* log;
+		UINT32 geometryInstances; /**< open geometry channel instances @since version 3.34.0 */
 	};
 	typedef struct rdp_gdi rdpGdi;
 

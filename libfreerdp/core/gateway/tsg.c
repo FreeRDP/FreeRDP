@@ -1085,7 +1085,7 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 		return FALSE;
 
 	char uuid[64] = WINPR_C_ARRAY_INIT;
-	if (!guid2str(&caps->nonce, uuid, sizeof(uuid)))
+	if (!freerdp_guid2str(&caps->nonce, uuid, sizeof(uuid)))
 		goto fail;
 
 	if (caps->certChainLen > 0)

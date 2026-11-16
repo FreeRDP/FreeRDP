@@ -32,6 +32,10 @@ void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom)
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(geom);
 
+	/* The geometry channel allows multiple instances, they all share the context of the plugin */
+	if (gdi->geometry != geom)
+		gdi->geometryInstances = 0;
+	gdi->geometryInstances++;
 	gdi->geometry = geom;
 
 	if (gdi->video)
@@ -48,8 +52,28 @@ void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom)
 {
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(geom);
-	WINPR_UNUSED(gdi);
-	WINPR_UNUSED(geom);
+
+	if (gdi->geometry != geom)
+		return;
+
+	if (gdi->geometryInstances > 0)
+		gdi->geometryInstances--;
+	if (gdi->geometryInstances > 0)
+		return;
+
+	/* The context is owned by the geometry plugin and freed with it (e.g. on a redirect or
+	 * reconnect, which the gdi survives), so drop our reference and the one of the video channel.
+	 */
+	gdi->geometry = nullptr;
+
+	if (gdi->video)
+	{
+		VideoClientContext* video = gdi->video;
+
+		WINPR_ASSERT(video);
+		WINPR_ASSERT(video->setGeometry);
+		video->setGeometry(video, nullptr);
+	}
 }
 
 static VideoSurface* gdiVideoCreateSurface(WINPR_ATTR_UNUSED VideoClientContext* video, UINT32 x,

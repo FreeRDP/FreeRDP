@@ -481,8 +481,8 @@ static BOOL pf_client_send_channel_data(pClientContext* pc, const proxyChannelDa
 	if (count > PF_CLIENT_MAX_SERVER_MESSAGES)
 	{
 		PROXY_LOG_INFO(TAG, pc,
-		               "Remote not responding, %" PRIuz "[%" PRIu64
-		               " max] packets queued. Assuming dead, terminating connection",
+		               "Remote not responding, %" PRIuz
+		               "[%lu max] packets queued. Assuming dead, terminating connection",
 		               count, PF_CLIENT_MAX_SERVER_MESSAGES);
 		return FALSE;
 	}

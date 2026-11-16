@@ -1230,11 +1230,11 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	else
 	{
 		UINT32 startOffsetX = 0;
-		RECTANGLE_16 rect = WINPR_C_ARRAY_INIT;
-		rect.left = (UINT16)MIN(UINT16_MAX, cmd->left);
-		rect.top = (UINT16)MIN(UINT16_MAX, cmd->top);
-		rect.right = (UINT16)MIN(UINT16_MAX, cmd->left + cmd->width);
-		rect.bottom = (UINT16)MIN(UINT16_MAX, cmd->top + cmd->height);
+		RECTANGLE_16 rect = { .left = (UINT16)MIN(UINT16_MAX, cmd->left),
+			                  .top = (UINT16)MIN(UINT16_MAX, cmd->top),
+			                  .right = (UINT16)MIN(UINT16_MAX, cmd->left + cmd->width),
+			                  .bottom = (UINT16)MIN(UINT16_MAX, cmd->top + cmd->height) };
+		UINT64 remaining = 1ull * cmd->width * cmd->height;
 
 		while (rect.top < rect.bottom)
 		{
@@ -1263,6 +1263,15 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 				}
 			}
 
+			if (count > remaining)
+			{
+				WLog_ERR(TAG,
+				         "alpha codec run length %" PRIu32 " exceeds the remaining %" PRIu64
+				         " pixels of the %" PRIu32 "x%" PRIu32 " destination rectangle",
+				         count, remaining, cmd->width, cmd->height);
+				return ERROR_INVALID_DATA;
+			}
+			remaining -= count;
 			if (!gdi_apply_alpha(surface->data, surface->format, surface->scanline, &rect,
 			                     startOffsetX, count, a))
 				return ERROR_INTERNAL_ERROR;

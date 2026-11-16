@@ -491,6 +491,8 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 }
 
 #if defined(WITH_GSM)
+#define GSM_FRAME_SAMPLES 160
+
 static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT src, size_t size,
                                       wStream* WINPR_RESTRICT out)
@@ -500,14 +502,15 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 	while (offset < size)
 	{
 		/* gsm_decode(GSM_OPT_WAV49) requires alternating fixed 33/32 bytes as input.
+		 * It keeps track of that across calls, a previous call might have ended with 33 bytes.
 		 * abort if the data supplied was inconsistent.
 		 */
-		const BOOL large = (offset % 65) == 0;
+		const BOOL large = gsm_option(context->gsm, GSM_OPT_FRAME_INDEX, nullptr) == 0;
 		const size_t toadd = large ? 33 : 32;
 		if (size - offset < toadd)
 			return FALSE;
 
-		gsm_signal gsmBlockBuffer[160] = WINPR_C_ARRAY_INIT;
+		gsm_signal gsmBlockBuffer[GSM_FRAME_SAMPLES] = WINPR_C_ARRAY_INIT;
 		const int rc =
 		    gsm_decode(context->gsm,
 		               WINPR_CAST_CONST_PTR_AWAY(/* API does not modify */ &src[offset], gsm_byte*),
@@ -527,32 +530,44 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 	return TRUE;
 }
 
+/*
+ * gsm_encode() always reads GSM_FRAME_SAMPLES samples, but callers hand over what their capture
+ * device delivered. With GSM_OPT_WAV49 two frames of 32 and 33 bytes form one block (nBlockAlign)
+ * and every packet starts with a new block. Collect the samples, only encode whole blocks and keep
+ * the rest for the next call. Nothing is written until enough samples arrived.
+ */
 static BOOL freerdp_dsp_encode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT src, size_t size,
                                       wStream* WINPR_RESTRICT out)
 {
-	size_t offset = 0;
+	wStream* input = context->common.buffer;
+	const size_t blockSize = 2 * GSM_FRAME_SAMPLES * sizeof(gsm_signal);
+	const size_t blockBytes = 32 + 33;
 
-	while (offset < size)
+	if (!Stream_EnsureRemainingCapacity(input, size))
+		return FALSE;
+	Stream_Write(input, src, size);
+
+	const size_t blocks = Stream_GetPosition(input) / blockSize;
+	if (!Stream_EnsureRemainingCapacity(out, blocks * blockBytes))
+		return FALSE;
+
+	gsm_signal* signal = Stream_BufferAs(input, gsm_signal);
+	for (size_t x = 0; x < blocks; x++)
 	{
-		const gsm_signal* signal = WINPR_PACKED_ALIGN_CAST(const gsm_signal*, &src[offset]);
+		gsm_encode(context->gsm, signal, Stream_Pointer(out));
+		Stream_Seek(out, 32);
+		signal += GSM_FRAME_SAMPLES;
 
-		if (!Stream_EnsureRemainingCapacity(out, sizeof(gsm_frame)))
-			return FALSE;
-
-		gsm_encode(context->gsm,
-		           WINPR_CAST_CONST_PTR_AWAY(/* API does not modify */ signal, gsm_signal*),
-		           Stream_Pointer(out));
-
-		if ((offset % 65) == 0)
-			Stream_Seek(out, 33);
-		else
-			Stream_Seek(out, 32);
-
-		offset += 160;
+		gsm_encode(context->gsm, signal, Stream_Pointer(out));
+		Stream_Seek(out, 33);
+		signal += GSM_FRAME_SAMPLES;
 	}
 
-	return TRUE;
+	const size_t used = blocks * blockSize;
+	const size_t left = Stream_GetPosition(input) - used;
+	memmove(Stream_Buffer(input), Stream_Buffer(input) + used, left);
+	return Stream_SetPosition(input, left);
 }
 #endif
 
@@ -1728,6 +1743,17 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 			Stream_ResetPosition(context->common.buffer);
 		}
 		break;
+#if defined(WITH_GSM)
+		case WAVE_FORMAT_GSM610:
+		{
+			/* start with a new block */
+			int index = 0;
+			if (gsm_option(context->gsm, GSM_OPT_FRAME_INDEX, &index) < 0)
+				return FALSE;
+			Stream_ResetPosition(context->common.buffer);
+		}
+		break;
+#endif
 		default:
 			break;
 	}

@@ -1973,7 +1973,7 @@ BOOL freerdp_certificate_matches_hostname(const rdpCertificate* cert, const char
 
 	BOOL hostname_match = FALSE;
 	BOOL skip = FALSE;
-	if (utils_is_valid_ipN(hostname, hostlen))
+	if (freerdp_is_valid_ipN(hostname, hostlen))
 	{
 		for (size_t index = 0; index < ip_names_count; index++)
 		{
