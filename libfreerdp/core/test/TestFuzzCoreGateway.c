@@ -100,8 +100,13 @@ static void fuzz_http(rdpContext* context, wStream* s)
 		if (response)
 		{
 			(void)http_response_get_status_code(response);
-			(void)http_response_get_body_length(response);
-			(void)http_response_get_body(response);
+			{
+				/* read the body like the gateway code does, it must be valid memory */
+				const size_t length = http_response_get_body_length(response);
+				const char* body = http_response_get_body(response);
+				if (body)
+					(void)strnlen(body, length);
+			}
 			(void)http_response_get_auth_token(response, "NTLM");
 			(void)http_response_get_auth_token(response, "Negotiate");
 			(void)http_response_get_setcookie(response, "RdgAuthToken");
