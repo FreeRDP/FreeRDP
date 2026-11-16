@@ -1218,7 +1218,7 @@ static size_t codecFlagToIndex(FreeRDP_CodecFlags codec)
 {
 	for (size_t index = 0; index < 32; index++)
 	{
-		const size_t mask = 1 << index;
+		const size_t mask = 1ull << index;
 		if (codec == mask)
 			return index;
 	}
