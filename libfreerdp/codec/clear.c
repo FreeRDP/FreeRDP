@@ -79,6 +79,15 @@ struct S_CLEAR_CONTEXT
 	wLog* log;
 	wStream* bs;           /* clear_compress() output, owned by this context, Compressor only */
 	UINT32* VBarHashSlots; /* clear_compress() V-Bar lookup index, Compressor only, see above */
+
+	/* Compressor only: NSCodec subcodec input (BGRX32, bottom-up, padded) and output */
+	BYTE* NscBuffer;
+	size_t NscBufferSize;
+	wStream* nscStream;
+
+	/* Compressor only: open-addressed set of the colors seen by clear_count_colors() */
+	UINT32* ColorSet;
+	size_t ColorSetSize;
 };
 
 static const UINT32 CLEAR_LOG2_FLOOR[256] = {
@@ -1570,6 +1579,157 @@ static BOOL clear_compress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	return TRUE;
 }
 
+static BOOL clear_write_uint32_at(wStream* WINPR_RESTRICT s, size_t pos, UINT32 value)
+{
+	const size_t end = Stream_GetPosition(s);
+	if (!Stream_SetPosition(s, pos))
+		return FALSE;
+	Stream_Write_UINT32(s, value);
+	return Stream_SetPosition(s, end);
+}
+
+static BOOL clear_compress_finish(CLEAR_CONTEXT* WINPR_RESTRICT clear, wStream* WINPR_RESTRICT s,
+                                  BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
+{
+	clear->seqNumber = (clear->seqNumber + 1) % 256;
+
+	*ppDstData = Stream_Buffer(s);
+	*pDstSize = WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s));
+	return TRUE;
+}
+
+/* Count the distinct RGB colors of the rectangle, stopping once more than maxColors are found.
+ * Returns maxColors + 1 in that case, or UINT32_MAX on allocation failure. */
+static UINT32 clear_count_colors(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                 const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                                 UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight, UINT32 maxColors)
+{
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+
+	/* a power of two, at least twice the number of colors it may hold */
+	UINT32 bits = 6;
+	while ((1ull << bits) < 2ull * (maxColors + 1ull))
+		bits++;
+	const size_t setSize = 1ull << bits;
+
+	if (setSize > clear->ColorSetSize)
+	{
+		UINT32* tmp = realloc(clear->ColorSet, setSize * sizeof(UINT32));
+		if (!tmp)
+			return UINT32_MAX;
+		clear->ColorSet = tmp;
+		clear->ColorSetSize = setSize;
+	}
+	ZeroMemory(clear->ColorSet, setSize * sizeof(UINT32));
+
+	const size_t mask = setSize - 1;
+	UINT32 count = 0;
+	for (UINT32 y = 0; y < nHeight; y++)
+	{
+		const BYTE* pLine = &pSrcData[1ull * y * nSrcStep];
+		for (UINT32 x = 0; x < nWidth; x++)
+		{
+			BYTE r = 0;
+			BYTE g = 0;
+			BYTE b = 0;
+			const UINT32 color = FreeRDPReadColor(&pLine[1ull * x * bpp], SrcFormat);
+			FreeRDPSplitColor(color, SrcFormat, &r, &g, &b, nullptr, nullptr);
+
+			/* bit 24 set so that no color is stored as 0, the empty slot marker */
+			const UINT32 key = 0x01000000u | ((UINT32)r << 16) | ((UINT32)g << 8) | b;
+			size_t slot = (key * 2654435761u) >> (32 - bits);
+			while ((clear->ColorSet[slot] != 0) && (clear->ColorSet[slot] != key))
+				slot = (slot + 1) & mask;
+
+			if (clear->ColorSet[slot] == 0)
+			{
+				clear->ColorSet[slot] = key;
+				if (++count > maxColors)
+					return count;
+			}
+		}
+	}
+
+	return count;
+}
+
+/* Encode the rectangle with NSCodec into clear->nscStream: color loss level 3, no chroma
+ * subsampling, no alpha plane. */
+static BOOL clear_compress_nscodec(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                   const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                                   UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight)
+{
+	const UINT32 nscStep = nWidth * FreeRDPGetBytesPerPixel(PIXEL_FORMAT_BGRX32);
+
+	/* the SSE2 NSCodec encoder reads pixels by groups of 8, up to 7 past the end of a row */
+	const size_t size = 1ull * nscStep * nHeight + 32;
+	if (size > clear->NscBufferSize)
+	{
+		BYTE* tmp = winpr_aligned_recalloc(clear->NscBuffer, size, sizeof(BYTE), 32);
+		if (!tmp)
+			return FALSE;
+		clear->NscBuffer = tmp;
+		clear->NscBufferSize = size;
+	}
+
+	/* nsc_compose_message() reads the image bottom-up, the subcodec is top-down */
+	if (!freerdp_image_copy_no_overlap(clear->NscBuffer, PIXEL_FORMAT_BGRX32, nscStep, 0, 0, nWidth,
+	                                   nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0, nullptr,
+	                                   FREERDP_FLIP_VERTICAL))
+		return FALSE;
+
+	if (!nsc_context_set_parameters(clear->nsc, NSC_COLOR_FORMAT, PIXEL_FORMAT_BGRX32))
+		return FALSE;
+
+	Stream_ResetPosition(clear->nscStream);
+	return nsc_compose_message(clear->nsc, clear->nscStream, clear->NscBuffer, nWidth, nHeight,
+	                           nscStep);
+}
+
+/* Encode the whole rectangle as a single NSCodec subcodec if it has many colors (more than 40%
+ * of its pixels) and NSCodec beats maxSize bytes. Returns the number of bytes written to s, 0
+ * when NSCodec is not used, or a negative value on error. */
+static SSIZE_T clear_compress_subcodecs(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                        wStream* WINPR_RESTRICT s,
+                                        const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                                        UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight,
+                                        size_t maxSize)
+{
+	const UINT64 nPixels = 1ull * nWidth * nHeight;
+
+	/* the NSCodec stream header alone is 20 bytes */
+	if (nPixels <= 9)
+		return 0;
+
+	const UINT32 maxColors = WINPR_ASSERTING_INT_CAST(UINT32, nPixels * 2 / 5);
+	const UINT32 colors =
+	    clear_count_colors(clear, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight, maxColors);
+	if (colors == UINT32_MAX)
+		return -1;
+	if (colors <= maxColors)
+		return 0;
+
+	if (!clear_compress_nscodec(clear, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight))
+		return -1;
+
+	const size_t nscSize = Stream_GetPosition(clear->nscStream);
+	const size_t subcodecSize = 13 + nscSize;
+	if ((nscSize >= 3 * nPixels) || (subcodecSize >= maxSize))
+		return 0;
+
+	if (!Stream_EnsureRemainingCapacity(s, subcodecSize))
+		return -1;
+
+	Stream_Write_UINT16(s, 0); /* xStart */
+	Stream_Write_UINT16(s, 0); /* yStart */
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, nWidth));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, nHeight));
+	Stream_Write_UINT32(s, WINPR_ASSERTING_INT_CAST(UINT32, nscSize)); /* bitmapDataByteCount */
+	Stream_Write_UINT8(s, 1);                                          /* subcodecId: NSCodec */
+	Stream_Write(s, Stream_Buffer(clear->nscStream), nscSize);
+	return WINPR_ASSERTING_INT_CAST(SSIZE_T, subcodecSize);
+}
+
 BOOL clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTRICT pSrcData,
                     UINT32 SrcFormat, UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight,
                     BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
@@ -1600,7 +1760,8 @@ BOOL clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTR
 	Stream_Write_UINT32(s, 0); /* residualByteCount, backpatched below */
 	const size_t bandsByteCountPos = Stream_GetPosition(s);
 	Stream_Write_UINT32(s, 0); /* bandsByteCount, backpatched below */
-	Stream_Write_UINT32(s, 0); /* subcodecByteCount: subcodec layer not implemented yet */
+	const size_t subcodecByteCountPos = Stream_GetPosition(s);
+	Stream_Write_UINT32(s, 0); /* subcodecByteCount, backpatched below */
 
 	const size_t residualStart = Stream_GetPosition(s);
 
@@ -1609,6 +1770,24 @@ BOOL clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTR
 
 	UINT32 residualByteCount =
 	    WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s) - residualStart);
+
+	/* Content with many colors is sent as a single NSCodec subcodec replacing the residual
+	 * layer, when that is smaller. The subcodec layer touches no cache. */
+	if (!Stream_SetPosition(s, residualStart))
+		return FALSE;
+	const SSIZE_T subcodecByteCount = clear_compress_subcodecs(
+	    clear, s, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight, residualByteCount);
+	if (subcodecByteCount < 0)
+		return FALSE;
+	if (subcodecByteCount > 0)
+	{
+		if (!clear_write_uint32_at(s, subcodecByteCountPos,
+		                           WINPR_ASSERTING_INT_CAST(UINT32, subcodecByteCount)))
+			return FALSE;
+		return clear_compress_finish(clear, s, ppDstData, pDstSize);
+	}
+	if (!Stream_SetPosition(s, residualStart + residualByteCount))
+		return FALSE;
 
 	/* Bands and residual both cover 100% of the rectangle on their own (this encoder never
 	 * trims a band down to a partial region), so there is no benefit to sending both - it would
@@ -1638,14 +1817,11 @@ BOOL clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTR
 		residualByteCount = 0;
 	}
 
-	winpr_Data_Write_UINT32(Stream_Buffer(s) + residualByteCountPos, residualByteCount);
-	winpr_Data_Write_UINT32(Stream_Buffer(s) + bandsByteCountPos, bandsByteCount);
+	if (!clear_write_uint32_at(s, residualByteCountPos, residualByteCount) ||
+	    !clear_write_uint32_at(s, bandsByteCountPos, bandsByteCount))
+		return FALSE;
 
-	clear->seqNumber = (clear->seqNumber + 1) % 256;
-
-	*ppDstData = Stream_Buffer(s);
-	*pDstSize = WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s));
-	return TRUE;
+	return clear_compress_finish(clear, s, ppDstData, pDstSize);
 }
 
 BOOL clear_context_reset(CLEAR_CONTEXT* WINPR_RESTRICT clear)
@@ -1689,6 +1865,14 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 		if (!clear->bs)
 			goto error_nsc;
 
+		clear->nscStream = Stream_New(nullptr, 1024);
+		if (!clear->nscStream)
+			goto error_nsc;
+
+		if (!nsc_context_set_parameters(clear->nsc, NSC_COLOR_LOSS_LEVEL, 3) ||
+		    !nsc_context_set_parameters(clear->nsc, NSC_ALLOW_SUBSAMPLING, 0))
+			goto error_nsc;
+
 		clear->VBarHashSlots =
 		    (UINT32*)winpr_aligned_calloc(CLEAR_VBAR_HASH_SIZE, sizeof(UINT32), 32);
 		if (!clear->VBarHashSlots)
@@ -1719,6 +1903,9 @@ void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear)
 	clear_reset_vbar_storage(clear, TRUE);
 	clear_reset_glyph_cache(clear);
 	winpr_aligned_free(clear->VBarHashSlots);
+	winpr_aligned_free(clear->NscBuffer);
+	Stream_Free(clear->nscStream, TRUE);
+	free(clear->ColorSet);
 
 	winpr_aligned_free(clear);
 }
