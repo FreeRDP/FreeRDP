@@ -686,13 +686,10 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 static UINT cliprdr_client_format_list(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_LIST* formatList)
 {
-	wStream* s = nullptr;
-	cliprdrPlugin* cliprdr = nullptr;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatList);
 
-	cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
 	{
@@ -723,7 +720,7 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 		}
 	}
 
-	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames, FALSE);
+	wStream* s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames, FALSE);
 	cliprdr_free_format_list(&filterList);
 
 	if (!s)
