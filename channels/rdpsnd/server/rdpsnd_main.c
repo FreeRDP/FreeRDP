@@ -418,6 +418,8 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 			 * 2: 4 * 0xFFFB = 0x3FFEC
 			 */
 			const size_t bs = 4ULL * (format->nBlockAlign - 4ULL * format->nChannels);
+			if (bs == 0)
+				goto out;
 
 			context->priv->out_frames -= context->priv->out_frames % bs;
 
