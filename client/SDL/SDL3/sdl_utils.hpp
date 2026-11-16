@@ -47,6 +47,12 @@ enum
 	SDL_EVENT_USER_POINTER_SET,
 	SDL_EVENT_USER_RAIL_MOVE,
 	SDL_EVENT_USER_QUIT,
+	/* a mapped renderer (rdpContext::bitmapRenderService) got a frame. Before the dialogs:
+	 * sdl_run() only takes the events up to SDL_EVENT_USER_RETRY_DIALOG, the *_RESULT ones are
+	 * for the dialogs' wait loops */
+	SDL_EVENT_USER_RENDERER,
+	/* RemoteApp windows' info (rdpContext::windowInfoService) to refresh */
+	SDL_EVENT_USER_WINDOW_INFO,
 	SDL_EVENT_USER_CERT_DIALOG,
 	SDL_EVENT_USER_SHOW_DIALOG,
 	SDL_EVENT_USER_AUTH_DIALOG,
