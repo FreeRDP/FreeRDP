@@ -549,11 +549,11 @@ static BOOL arm_pick_base64Utf16Field(wLog* log, const WINPR_JSON* json, const c
 
 	WINPR_JSON* node = WINPR_JSON_GetObjectItemCaseSensitive(json, name);
 	if (!node || !WINPR_JSON_IsString(node))
-		return TRUE;
+		return FALSE;
 
 	const char* nodeValue = WINPR_JSON_GetStringValue(node);
 	if (!nodeValue)
-		return TRUE;
+		return FALSE;
 
 	BYTE* output1 = nullptr;
 	size_t len1 = 0;
