@@ -1291,7 +1291,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	if (_fseeki64(fp, 0, SEEK_SET) < 0)
 		goto fail;
 
-	if (fileSize.i64 < 1)
+	if ((fileSize.i64 < 1) || (fileSize.i64 > INT32_MAX))
 	{
 		WLog_ERR(TAG, "Failed to read ASSISTANCE file %s ", name);
 		goto fail;
