@@ -27,6 +27,9 @@
 #include <winpr/sysinfo.h>
 #include <winpr/crypto.h>
 #include <winpr/print.h>
+#include <winpr/wlog.h>
+
+#define TAG "com.winpr.tools.makecert"
 
 #ifdef WITH_OPENSSL
 #include <openssl/crypto.h>
@@ -806,6 +809,39 @@ static int add_entry(X509_NAME* name, const char* value, const char* txt)
 	return 0;
 }
 
+/* A common name holds at most 64 characters (X.520 ub-common-name): OpenSSL refuses a longer one */
+#define MAKECERT_CN_MAX 64
+
+/* The common name as it is (the host name, or -n without CN=), not a list of records. A longer
+ * name, such as the fully qualified name of a cloud machine, keeps its first label (the host
+ * name). A first label longer than a label may be is no host name: an error. */
+WINPR_ATTR_NODISCARD
+static int add_common_name(X509_NAME* name, const char* value)
+{
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(value);
+
+	size_t length = strlen(value);
+	if (length == 0)
+	{
+		WLog_WARN(TAG, "no name for the certificate: it gets no common name");
+		return 0;
+	}
+	if ((length > MAKECERT_CN_MAX) && winpr_str_is_valid_hostname(value))
+	{
+		const char* dot = strchr(value, '.');
+		if (dot && (dot > value))
+			length = WINPR_ASSERTING_INT_CAST(size_t, dot - value);
+		WLog_WARN(TAG, "the name %s is longer than a common name may be: %.*s instead", value,
+		          WINPR_ASSERTING_INT_CAST(int, length), value);
+	}
+
+	if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)value,
+	                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+		return -1;
+	return 1;
+}
+
 int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 {
 	COMMAND_LINE_ARGUMENT_A args[] = {
@@ -1078,14 +1114,14 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		if (!haveCN)
 		{
-			const int rc = add_entry(name, context->common_name, "CN");
+			const int rc = add_common_name(name, context->common_name);
 			if (rc < 0)
 				return rc;
 		}
 	}
 	else
 	{
-		const int rc = add_entry(name, context->common_name, "CN");
+		const int rc = add_common_name(name, context->common_name);
 		if (rc < 0)
 			return rc;
 	}
