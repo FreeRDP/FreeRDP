@@ -4293,6 +4293,9 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, FreeRDP_Setti
 		case FreeRDP_MonitorIds:
 			return (void*)settings->MonitorIds;
 
+		case FreeRDP_MonitorScales:
+			return (void*)settings->MonitorScales;
+
 		case FreeRDP_OrderSupport:
 			return (void*)settings->OrderSupport;
 
@@ -4419,6 +4422,10 @@ BOOL freerdp_settings_set_pointer(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_MonitorIds:
 			settings->MonitorIds = (UINT32*)cnv.v;
+			break;
+
+		case FreeRDP_MonitorScales:
+			settings->MonitorScales = (rdpMonitorScale*)cnv.v;
 			break;
 
 		case FreeRDP_OrderSupport:

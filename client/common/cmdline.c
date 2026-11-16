@@ -3131,6 +3131,70 @@ static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL parse_monitor_scale_factor(const char* value, UINT32* result)
+{
+	WINPR_ASSERT(result);
+
+	if (!value || (*value < '0') || (*value > '9'))
+		return FALSE;
+
+	char* end = nullptr;
+	errno = 0;
+	const unsigned long long rc = strtoull(value, &end, 10);
+	if ((errno != 0) || !end || (*end != '\0') || (rc > UINT32_MAX))
+		return FALSE;
+
+	*result = (UINT32)rc;
+	return TRUE;
+}
+
+/* Parse one /monitors entry: <id>[:<desktop>[:<device>]]. Omitted factors are 0 and keep the
+ * detected value; an omitted device factor defaults to 100 if a desktop factor is given. */
+WINPR_ATTR_NODISCARD
+static BOOL parse_monitor_entry(char* value, UINT32* id, rdpMonitorScale* scale)
+{
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(id);
+	WINPR_ASSERT(scale);
+
+	char* desktop = strchr(value, ':');
+	char* device = nullptr;
+	if (desktop)
+	{
+		*desktop++ = '\0';
+		device = strchr(desktop, ':');
+		if (device)
+			*device++ = '\0';
+	}
+
+	LONGLONG val = 0;
+	if (!value_to_int(value, &val, 0, UINT16_MAX))
+		return FALSE;
+	*id = (UINT32)val;
+
+	*scale = (rdpMonitorScale){ 0 };
+	if (!desktop)
+		return TRUE;
+
+	if (!parse_monitor_scale_factor(desktop, &scale->desktopScaleFactor) ||
+	    (scale->desktopScaleFactor < 100) || (scale->desktopScaleFactor > 500))
+	{
+		WLog_ERR(TAG, "/monitors: desktop scale must be 100..500, got '%s'", desktop);
+		return FALSE;
+	}
+
+	scale->deviceScaleFactor = 100;
+	if (device && (!parse_monitor_scale_factor(device, &scale->deviceScaleFactor) ||
+	               ((scale->deviceScaleFactor != 100) && (scale->deviceScaleFactor != 140) &&
+	                (scale->deviceScaleFactor != 180))))
+	{
+		WLog_ERR(TAG, "/monitors: device scale must be 100, 140 or 180, got '%s'", device);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
 static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3138,8 +3202,8 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
+		int rc = COMMAND_LINE_ERROR;
 		size_t count = 0;
-		UINT32* MonitorIds = nullptr;
 		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 		if (!ptr)
@@ -3149,23 +3213,36 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			count = 16;
 
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, count))
-		{
-			CommandLineParserFree(ptr);
-			return COMMAND_LINE_ERROR;
-		}
+			goto fail;
 
-		MonitorIds = freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorIds, 0);
+		BOOL scaled = FALSE;
 		for (UINT32 i = 0; i < count; i++)
 		{
-			LONGLONG val = 0;
+			UINT32 id = 0;
+			rdpMonitorScale scale = { 0 };
 
-			if (!value_to_int(ptr[i], &val, 0, UINT16_MAX))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!parse_monitor_entry(ptr[i], &id, &scale))
+			{
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				goto fail;
+			}
 
-			MonitorIds[i] = (UINT32)val;
+			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorIds, i, &id) ||
+			    !freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorScales, i, &scale))
+				goto fail;
+			if ((scale.desktopScaleFactor != 0) || (scale.deviceScaleFactor != 0))
+				scaled = TRUE;
 		}
 
+		/* The per-monitor scale factors travel in the monitor attributes (CS_MONITOR_EX), which
+		 * are only sent when this is set. */
+		if (scaled && !freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, TRUE))
+			goto fail;
+
+		rc = 0;
+	fail:
 		CommandLineParserFree(ptr);
+		return rc;
 	}
 
 	return 0;

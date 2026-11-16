@@ -1012,6 +1012,47 @@ BOOL freerdp_target_net_addresses_resize(rdpSettings* settings, size_t count)
 	return TRUE;
 }
 
+/* MonitorScales has one entry per MonitorIds entry and shares NumMonitorIds. A new monitor ID
+ * list therefore starts without scale overrides. */
+static BOOL monitor_ids_set(rdpSettings* settings, const UINT32* ids, size_t count)
+{
+	WINPR_ASSERT(settings);
+
+	free(settings->MonitorScales);
+	settings->MonitorScales = nullptr;
+	if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_MonitorIds, FreeRDP_NumMonitorIds, ids,
+	                                       count, sizeof(UINT32)))
+		return FALSE;
+	if (count == 0)
+		return TRUE;
+	settings->MonitorScales = calloc(count, sizeof(rdpMonitorScale));
+	return settings->MonitorScales != nullptr;
+}
+
+static BOOL monitor_scales_set(rdpSettings* settings, const rdpMonitorScale* scales, size_t count)
+{
+	WINPR_ASSERT(settings);
+
+	const UINT32 ids = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if ((count == 0) || !settings->MonitorScales)
+	{
+		if (settings->MonitorScales)
+			memset(settings->MonitorScales, 0, ids * sizeof(rdpMonitorScale));
+		return (count == 0) || !scales;
+	}
+	if (count != ids)
+	{
+		WLog_ERR(TAG, "FreeRDP_MonitorScales::len must be %" PRIu32 ", but have %" PRIuz, ids,
+		         count);
+		return FALSE;
+	}
+	if (scales)
+		memcpy(settings->MonitorScales, scales, count * sizeof(rdpMonitorScale));
+	else
+		memset(settings->MonitorScales, 0, count * sizeof(rdpMonitorScale));
+	return TRUE;
+}
+
 void freerdp_server_license_issuers_free(rdpSettings* settings)
 {
 	WINPR_ASSERT(settings);
@@ -1567,6 +1608,8 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_ChannelDefArray,
 			                                         FreeRDP_ChannelDefArraySize, data, len,
 			                                         sizeof(CHANNEL_DEF));
+		case FreeRDP_MonitorScales:
+			return monitor_scales_set(settings, data, len);
 		case FreeRDP_MonitorDefArray:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_MonitorDefArraySize,
 			                                         data, len, sizeof(rdpMonitor));
@@ -1642,8 +1685,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			                                         sizeof(char));
 
 		case FreeRDP_MonitorIds:
-			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_NumMonitorIds, data, len,
-			                                         sizeof(UINT32));
+			return monitor_ids_set(settings, data, len);
 
 		case FreeRDP_ReceivedCapabilityDataSizes:
 			if (!freerdp_capability_buffer_resize(settings, len, FALSE))
@@ -1726,6 +1768,11 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings,
 			if (offset >= max)
 				goto fail;
 			return &settings->OrderSupport[offset];
+		case FreeRDP_MonitorScales:
+			max = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+			if (!settings->MonitorScales || (offset >= max))
+				goto fail;
+			return &settings->MonitorScales[offset];
 		case FreeRDP_MonitorIds:
 			max = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 			if (offset >= max)
@@ -1956,6 +2003,12 @@ BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, FreeRDP_Settings_
 			if ((offset >= maxOffset) || !data)
 				goto fail;
 			settings->FragCache[offset] = *(const GLYPH_CACHE_DEFINITION*)data;
+			return TRUE;
+		case FreeRDP_MonitorScales:
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+			if (!settings->MonitorScales || (offset >= maxOffset) || !data)
+				goto fail;
+			settings->MonitorScales[offset] = *(const rdpMonitorScale*)data;
 			return TRUE;
 		case FreeRDP_MonitorIds:
 			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
@@ -3288,6 +3341,31 @@ static BOOL monitor_def_array_from_json(rdpSettings* settings, FreeRDP_Settings_
 	return TRUE;
 }
 
+static BOOL monitor_scales_from_json(rdpSettings* settings, const WINPR_JSON* json)
+{
+	if (WINPR_JSON_IsNull(json))
+		return freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorScales, nullptr, 0);
+	if (!json || !WINPR_JSON_IsArray(json))
+		return FALSE;
+	const size_t count = WINPR_JSON_GetArraySize(json);
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorScales, nullptr, count))
+		return FALSE;
+	for (size_t x = 0; x < count; x++)
+	{
+		rdpMonitorScale* scale =
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorScales, x);
+		if (!scale)
+			return FALSE;
+		const WINPR_JSON* obj = WINPR_JSON_GetArrayItem(json, x);
+		errno = 0;
+		scale->desktopScaleFactor = (UINT32)uint_from_json(obj, "desktopScaleFactor", UINT32_MAX);
+		scale->deviceScaleFactor = (UINT32)uint_from_json(obj, "deviceScaleFactor", UINT32_MAX);
+		if (errno != 0)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL client_cookie_to_json(WINPR_JSON* json, const ARC_CS_PRIVATE_PACKET* cs)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
@@ -3447,6 +3525,26 @@ static BOOL monitor_def_array_to_json(WINPR_JSON* json, const rdpMonitor* monito
 	return TRUE;
 }
 
+static BOOL monitor_scales_to_json(WINPR_JSON* json, const rdpMonitorScale* scales, size_t count)
+{
+	for (size_t x = 0; x < count; x++)
+	{
+		const rdpMonitorScale* scale = &scales[x];
+		WINPR_JSON* obj = WINPR_JSON_CreateObject();
+		if (!obj)
+			return FALSE;
+		if (!WINPR_JSON_AddItemToArray(json, obj))
+		{
+			WINPR_JSON_Delete(obj);
+			return FALSE;
+		}
+		if (!WINPR_JSON_AddIntegerToObject(obj, "desktopScaleFactor", scale->desktopScaleFactor) ||
+		    !WINPR_JSON_AddIntegerToObject(obj, "deviceScaleFactor", scale->deviceScaleFactor))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL channel_def_to_json(WINPR_JSON* json, const CHANNEL_DEF* channel)
 {
 	WINPR_ASSERT(channel);
@@ -3600,6 +3698,9 @@ static BOOL serialize_pointer(const rdpSettings* settings, WINPR_JSON* json,
 			    freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 			return fill_uint32_array(jval, val, len);
 		}
+		case FreeRDP_MonitorScales:
+			return monitor_scales_to_json(
+			    jval, val, freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds));
 		case FreeRDP_MonitorDefArray:
 		{
 			const uint32_t len = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
@@ -4267,6 +4368,8 @@ static BOOL deserialize_pointer(const WINPR_JSON* json, rdpSettings* settings,
 			return client_cookie_array_from_json(settings, id, jval);
 		case FreeRDP_ServerAutoReconnectCookie:
 			return server_cookie_array_from_json(settings, id, jval);
+		case FreeRDP_MonitorScales:
+			return monitor_scales_from_json(settings, jval);
 		case FreeRDP_MonitorDefArray:
 			return monitor_def_array_from_json(settings, id, jval);
 		case FreeRDP_ChannelDefArray:

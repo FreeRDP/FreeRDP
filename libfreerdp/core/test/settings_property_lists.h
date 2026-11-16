@@ -501,6 +501,7 @@ static const size_t pointer_list_indices[] = {
 	FreeRDP_LoadBalanceInfo,
 	FreeRDP_MonitorDefArray,
 	FreeRDP_MonitorIds,
+	FreeRDP_MonitorScales,
 	FreeRDP_OrderSupport,
 	FreeRDP_Password51,
 	FreeRDP_RdpServerCertificate,

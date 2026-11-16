@@ -633,6 +633,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_LoadBalanceInfo, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_LoadBalanceInfo" },
 	{ FreeRDP_MonitorDefArray, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_MonitorDefArray" },
 	{ FreeRDP_MonitorIds, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_MonitorIds" },
+	{ FreeRDP_MonitorScales, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_MonitorScales" },
 	{ FreeRDP_OrderSupport, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_OrderSupport" },
 	{ FreeRDP_Password51, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_Password51" },
 	{ FreeRDP_RdpServerCertificate, FREERDP_SETTINGS_TYPE_POINTER, "FreeRDP_RdpServerCertificate" },

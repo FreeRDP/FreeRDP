@@ -346,8 +346,12 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, nullptr, nullptr, nullptr, -1,
 	  nullptr, "[DEPRECATED, use /list:monitor] List detected monitors" },
 #endif
-	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", nullptr, nullptr, -1, nullptr,
-	  "[experimental] Select monitors to use (only effective in fullscreen or multimonitor mode)" },
+	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[:<desktop>[:<device>]][,...]", nullptr,
+	  nullptr, -1, nullptr,
+	  "[experimental] Select monitors to use (only effective in fullscreen or multimonitor mode). "
+	  "IDs are shown by /list:monitor. Optionally override the remote scale of a monitor: "
+	  "desktop 100..500, device 100, 140 or 180 (default 100). A monitor without a scale keeps "
+	  "the detected value. Cannot be combined with /scale-desktop or /scale-device" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "Send mouse motion events" },
 	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
