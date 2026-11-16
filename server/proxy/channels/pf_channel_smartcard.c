@@ -389,10 +389,19 @@ void pf_channel_smartcard_client_free(pClientContext* pc)
 
 BOOL pf_channel_smartcard_client_emulate(pClientContext* pc)
 {
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(pc->interceptContextMap);
+
+	/* Called from the peer thread as well, the client thread removes (and frees) the entry in
+	 * PostDisconnect. */
+	HashTable_Lock(pc->interceptContextMap);
 	pf_channel_client_context* scard = scard_get_client_context(pc);
-	if (!scard)
-		return FALSE;
-	return smartcard_call_is_configured(scard->callctx);
+	if (scard)
+		rc = smartcard_call_is_configured(scard->callctx);
+	HashTable_Unlock(pc->interceptContextMap);
+	return rc;
 }
 
 BOOL pf_channel_smartcard_client_reset(pClientContext* pc)
