@@ -391,11 +391,14 @@ static BOOL input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 	 * undefined bits set may have been received from a peer (proxy) */
 	const UINT32 mask =
 	    KBD_SYNC_SCROLL_LOCK | KBD_SYNC_NUM_LOCK | KBD_SYNC_CAPS_LOCK | KBD_SYNC_KANA_LOCK;
-	if (flags & ~mask)
+	if ((flags & ~mask) != 0)
+	{
 		WLog_WARN(TAG,
 		          "Problematic [MS-RDPBCGR] 2.2.8.1.2.2.5 Fast-Path Synchronize Event "
 		          "(TS_FP_SYNC_EVENT) flags=0x%08" PRIx32 ", ignoring undefined bits.",
 		          flags);
+		flags& = mask;
+	}
 	rdpRdp* rdp = input->context->rdp;
 	WINPR_ASSERT(rdp);
 
