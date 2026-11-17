@@ -927,6 +927,15 @@ extern "C"
 	FREERDP_API BOOL freerdp_utils_aad_apply_known_configuration_by_url(rdpSettings* settings,
 	                                                                    const char* url);
 
+	/** @brief return a list of configurations supported by build
+	 *
+	 *  @param pcount A pointer set to the number of elements in the list. Must not be NULL
+	 *  @return A pointer to the list
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char** freerdp_utils_aad_configuration_list(size_t* pcount);
+
 #ifdef __cplusplus
 }
 #endif

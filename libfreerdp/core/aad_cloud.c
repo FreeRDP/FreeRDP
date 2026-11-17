@@ -54,6 +54,7 @@ static INIT_ONCE aad_clouds_once = INIT_ONCE_STATIC_INIT;
 
 static FreeRDP_AadCloud* aad_clouds_configured = nullptr;
 static size_t aad_clouds_configured_count = 0;
+static const char** aad_clouds_configured_names = nullptr;
 
 static void aad_cloud_entry_free(FreeRDP_AadCloud* cloud)
 {
@@ -451,6 +452,17 @@ static BOOL CALLBACK aad_clouds_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
 		return FALSE;
 	aad_cloud_load_file(TRUE, &aad_clouds_configured, &aad_clouds_configured_count);
 	aad_cloud_load_file(FALSE, &aad_clouds_configured, &aad_clouds_configured_count);
+
+	if (aad_clouds_configured_count == 0)
+		return TRUE;
+
+	aad_clouds_configured_names = calloc(aad_clouds_configured_count, sizeof(const char*));
+	if (!aad_clouds_configured_names)
+		return FALSE;
+	for (size_t x = 0; x < aad_clouds_configured_count; x++)
+	{
+		aad_clouds_configured_names[x] = aad_clouds_configured[x].name;
+	}
 	return TRUE;
 }
 
@@ -529,4 +541,15 @@ BOOL freerdp_utils_aad_apply_cloud(rdpSettings* settings, const FreeRDP_AadCloud
 		return FALSE;
 
 	return freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAccessAadFormat, redirect);
+}
+
+const char** freerdp_utils_aad_configuration_list(size_t* pcount)
+{
+	WINPR_ASSERT(pcount);
+	*pcount = 0;
+	if (!InitOnceExecuteOnce(&aad_clouds_once, aad_clouds_init, nullptr, nullptr))
+		return nullptr;
+
+	*pcount = aad_clouds_configured_count;
+	return aad_clouds_configured_names;
 }

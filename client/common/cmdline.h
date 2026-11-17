@@ -323,7 +323,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", nullptr, nullptr, -1,
 	  nullptr, "Load balance info" },
 	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT,
-	  "[kbd|kbd-scancode|kbd-lang[:<value>]|smartcard[:[pkinit-anchors:<path>][,pkcs11-module:<"
+	  "[kbd|kbd-scancode|kbd-lang[:<value>]|clouds|smartcard[:[pkinit-anchors:<path>][,pkcs11-"
+	  "module:<"
 	  "name>]]|"
 	  "monitor|tune|timezones]",
 	  "List available options for subcommand", nullptr, -1, nullptr,

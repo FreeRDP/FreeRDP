@@ -1826,6 +1826,17 @@ static void freerdp_client_print_keyboard_list(void)
 	                                        RDP_KEYBOARD_LAYOUT_TYPE_IME);
 }
 
+static void freerdp_client_print_clouds_list(void)
+{
+	size_t count = 0;
+	const char** list = freerdp_utils_aad_configuration_list(&count);
+
+	for (size_t x = 0; x < count; x++)
+	{
+		printf("%" PRIuz ": '%s'\n", x, list[x]);
+	}
+}
+
 static void freerdp_client_print_timezone_list(void)
 {
 	DWORD index = 0;
@@ -1919,6 +1930,8 @@ static int evaluate_result(int argc, char* argv[], int rc, rdpSettings* settings
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
+		if (option_equals("clouds", arg->Value))
+			freerdp_client_print_clouds_list();
 		if (option_equals("timezones", arg->Value))
 			freerdp_client_print_timezone_list();
 		else if (option_equals("tune", arg->Value))
