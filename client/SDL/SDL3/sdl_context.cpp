@@ -991,13 +991,6 @@ void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) con
 
 void SdlContext::updateMonitorDataFromOffsets()
 {
-	for (auto& entry : _displays)
-	{
-		auto offsets = _offsets.at(entry.first);
-		entry.second.x = offsets.second.x;
-		entry.second.y = offsets.second.y;
-	}
-
 	for (auto& entry : _windows)
 	{
 		const auto& monitor = _displays.at(entry.first);
@@ -1512,18 +1505,32 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 	}
 	_displays.emplace(id, monitor);
 
-	/* Update actual display rectangles:
-	 *
-	 * 1. Get logical display bounds
-	 * 2. Use already known pixel width and height
-	 * 3. Iterate over each display and update the x and y offsets by adding all monitor
-	 * widths/heights from the primary
-	 */
-	_offsets.clear();
-	for (auto& entry : _displays)
+	/* The logical bounds and the primary are read here, on the thread SDL display functions
+	 * must be called from; updateDisplayOffsets() also runs when the selection is set during
+	 * connect, on another thread. */
+	_displayBounds.clear();
+	for (const auto& entry : _displays)
 	{
 		SDL_Rect bounds{};
 		std::ignore = SDL_GetDisplayBounds(entry.first, &bounds);
+		_displayBounds.emplace(entry.first, bounds);
+	}
+	_primaryDisplay = SDL_GetPrimaryDisplay();
+	updateDisplayOffsets();
+	updateMonitorDataFromOffsets();
+}
+
+void SdlContext::updateDisplayOffsets()
+{
+	/* Update actual display rectangles from the logical display bounds and the known pixel
+	 * width and height of each display. */
+	_offsets.clear();
+	for (const auto& entry : _displays)
+	{
+		SDL_Rect bounds{};
+		const auto found = _displayBounds.find(entry.first);
+		if (found != _displayBounds.end())
+			bounds = found->second;
 
 		SDL_Rect pixel{};
 		pixel.w = entry.second.width;
@@ -1531,8 +1538,15 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 		_offsets.emplace(entry.first, std::pair{ bounds, pixel });
 	}
 
-	sdl_display_offsets::update(_offsets, SDL_GetPrimaryDisplay());
-	updateMonitorDataFromOffsets();
+	if (_offsets.empty())
+		return;
+	sdl_display_offsets::update(_offsets, _primaryDisplay, _monitorIds);
+	for (auto& entry : _displays)
+	{
+		const auto& pixel = _offsets.at(entry.first).second;
+		entry.second.x = pixel.x;
+		entry.second.y = pixel.y;
+	}
 }
 
 void SdlContext::deleteDisplay(SDL_DisplayID id)
@@ -2010,6 +2024,10 @@ void SdlContext::setMonitorIds(const std::vector<SDL_DisplayID>& ids)
 	{
 		_monitorIds.push_back(id);
 	}
+	/* Only the selected displays are sent, so only they need to fit together. This runs during
+	 * connect, outside the thread that owns the windows; they are not touched here and are
+	 * created from the updated displays. */
+	updateDisplayOffsets();
 }
 
 const std::vector<SDL_DisplayID>& SdlContext::monitorIds() const

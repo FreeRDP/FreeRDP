@@ -193,4 +193,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sdl_config.hpp.in ${CMAKE_CURRENT_BIN
 installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 install_freerdp_desktop("${MODULE_NAME}" "${SDL_CLIENT_UUID}")
 
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+  add_executable(TestSDLDisplayOffsets test/TestSDLDisplayOffsets.cpp)
+  target_link_libraries(TestSDLDisplayOffsets PRIVATE freerdp SDL3::Headers)
+  set_target_properties(TestSDLDisplayOffsets PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  add_test(NAME TestSDLDisplayOffsets COMMAND ${TESTING_OUTPUT_DIRECTORY}/TestSDLDisplayOffsets)
+  set_property(TARGET TestSDLDisplayOffsets PROPERTY FOLDER "FreeRDP/Client/Test")
+endif()
+
 add_subdirectory(man)
