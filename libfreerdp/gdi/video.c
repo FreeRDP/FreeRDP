@@ -188,6 +188,11 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 
 	WINPR_ASSERT(size >= sizeof(VideoSurface));
 
+	const UINT32 alignedWidth = w + 32 - w % 16;
+	const UINT32 alignedHeight = h + 32 - h % 16;
+	if ((alignedWidth > UINT16_MAX) || (alignedHeight > UINT16_MAX))
+		return nullptr;
+
 	VideoSurface* ret = calloc(1, size);
 	if (!ret)
 		return nullptr;
@@ -197,8 +202,8 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 	ret->y = y;
 	ret->w = w;
 	ret->h = h;
-	ret->alignedWidth = ret->w + 32 - ret->w % 16;
-	ret->alignedHeight = ret->h + 32 - ret->h % 16;
+	ret->alignedWidth = alignedWidth;
+	ret->alignedHeight = alignedHeight;
 
 	ret->scanline = ret->alignedWidth * FreeRDPGetBytesPerPixel(ret->format);
 	ret->data = winpr_aligned_calloc(ret->scanline, ret->alignedHeight, 64);
