@@ -473,6 +473,13 @@ progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT sur
 	if (!surface || !tile)
 		return FALSE;
 
+	if ((tile->xIdx >= surface->gridWidth) || (tile->yIdx >= surface->gridHeight))
+	{
+		WLog_ERR(TAG, "Invalid tile index %" PRIu16 "x%" PRIu16 " for grid %" PRIu32 "x%" PRIu32,
+		         tile->xIdx, tile->yIdx, surface->gridWidth, surface->gridHeight);
+		return FALSE;
+	}
+
 	zIdx = (tile->yIdx * surface->gridWidth) + tile->xIdx;
 
 	if (zIdx >= surface->tilesSize)
