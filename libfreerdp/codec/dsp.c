@@ -251,6 +251,9 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return FALSE;
 	}
 
+	if (srcFormat->wBitsPerSample != 16)
+		return FALSE;
+
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
@@ -272,9 +275,9 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	const size_t sframes = size / sbytes;
 	const size_t rbytes = dstBytesPerFrame * dstChannels;
 	/* Integer rounding correct division */
-	const size_t rframes =
-	    (sframes * context->common.format.nSamplesPerSec + (srcFormat->nSamplesPerSec + 1) / 2) /
-	    srcFormat->nSamplesPerSec;
+	const size_t rframes = (sframes * context->common.format.nSamplesPerSec +
+	                        (context->common.format.nSamplesPerSec + 1) / 2) /
+	                       context->common.format.nSamplesPerSec;
 	const size_t rsize = rframes * rbytes;
 
 	if (!Stream_EnsureCapacity(context->common.resample, rsize))
@@ -1837,6 +1840,9 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	{
 		faacEncConfigurationPtr cfg = nullptr;
 
+		if (targetFormat->wBitsPerSample != 16)
+			return FALSE;
+
 		if (context->faac)
 			faacEncClose(context->faac);
 
@@ -1862,6 +1868,9 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	{
 		soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
 		soxr_error_t error = nullptr;
+
+		if (context->common.format.wBitsPerSample != 16)
+			return FALSE;
 
 		soxr_delete(context->sox);
 		context->sox =
