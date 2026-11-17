@@ -21,6 +21,8 @@
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
 
+#include <string.h>
+
 #include <winpr/assert.h>
 #include <winpr/cast.h>
 #include <winpr/sysinfo.h>
@@ -53,7 +55,7 @@
 /* The pointer has to stay below FLOATBAR_HIDE_THRESHOLD this long before the bar hides */
 #define FLOATBAR_HIDE_DELAY_MS 300
 /* Duration of a complete show or hide slide */
-#define FLOATBAR_ANIM_DURATION_MS 180
+#define FLOATBAR_ANIM_DURATION_MS 130
 /* Frame interval used while a slide is running */
 #define FLOATBAR_FRAME_MS 16
 
@@ -82,7 +84,17 @@ typedef struct
 	bool clicked;
 	OnClick onclick;
 	Window handle;
+	/* cached icon bitmap, rebuilt only when the icon changes (lock/unlock) */
+	Pixmap pattern;
+	const unsigned char* pattern_bits;
 } xfFloatbarButton;
+
+/* colors already allocated by xf_floatbar_get_color(), keyed by their rgb string */
+typedef struct
+{
+	const char* rgb;
+	unsigned long pixel;
+} xfFloatbarColor;
 
 struct xf_floatbar
 {
@@ -114,9 +126,15 @@ struct xf_floatbar
 	UINT64 hide_armed_ms;
 	/* width the buttons and the background were last drawn for */
 	int drawn_width;
+	/* one entry per floatbar color: background, border, foreground */
+	xfFloatbarColor colors[3];
+	/* cursors created once in xf_floatbar_init_resources() */
+	Cursor cursor_arrow;
+	Cursor cursor_resize;
 };
 
 static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button);
+static void xf_floatbar_init_resources(xfFloatbar* floatbar);
 
 WINPR_ATTR_MALLOC(xf_floatbar_button_free, 1)
 static xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type);
@@ -265,9 +283,10 @@ static void xf_floatbar_step_animation(xfFloatbar* floatbar, UINT64 now)
 
 		if (floatbar->anim_to_y > floatbar->anim_from_y)
 		{
-			/* showing: ease-out cubic */
+			/* showing: ease-out quartic, starts at full speed and settles softly */
 			const double inv = 1.0 - t;
-			progress = 1.0 - inv * inv * inv;
+			const double inv2 = inv * inv;
+			progress = 1.0 - inv2 * inv2;
 		}
 		else
 		{
@@ -310,8 +329,9 @@ BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar)
 		return TRUE;
 	}
 
-	xf_floatbar_update_target(floatbar, xf_floatbar_now_ms());
-	xf_floatbar_step_animation(floatbar, xf_floatbar_now_ms());
+	const UINT64 now = xf_floatbar_now_ms();
+	xf_floatbar_update_target(floatbar, now);
+	xf_floatbar_step_animation(floatbar, now);
 	return TRUE;
 }
 
@@ -405,6 +425,7 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	                      ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
 	                          FocusChangeMask | LeaveWindowMask | EnterWindowMask |
 	                          StructureNotifyMask | PropertyChangeMask);
+	xf_floatbar_init_resources(floatbar);
 	floatbar->created = TRUE;
 	return TRUE;
 }
@@ -571,6 +592,16 @@ static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value
 
 	WINPR_ASSERT(floatbar);
 	WINPR_ASSERT(floatbar->xfc);
+	WINPR_ASSERT(rgb_value);
+
+	/* allocate each color once, painting then needs no round trip to the X server */
+	for (size_t i = 0; i < ARRAYSIZE(floatbar->colors); i++)
+	{
+		const xfFloatbarColor* entry = &floatbar->colors[i];
+
+		if (entry->rgb && (strcmp(entry->rgb, rgb_value) == 0))
+			return entry->pixel;
+	}
 
 	Display* display = floatbar->xfc->display;
 	WINPR_ASSERT(display);
@@ -578,7 +609,31 @@ static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value
 	Colormap cmap = DefaultColormap(display, XDefaultScreen(display));
 	XParseColor(display, cmap, rgb_value, &color);
 	XAllocColor(display, cmap, &color);
+
+	for (size_t i = 0; i < ARRAYSIZE(floatbar->colors); i++)
+	{
+		xfFloatbarColor* entry = &floatbar->colors[i];
+
+		if (!entry->rgb)
+		{
+			entry->rgb = rgb_value;
+			entry->pixel = color.pixel;
+			break;
+		}
+	}
+
 	return color.pixel;
+}
+
+/* Create the cursors once, so pointer motion does not create and free one each time */
+static void xf_floatbar_init_resources(xfFloatbar* floatbar)
+{
+	WINPR_ASSERT(floatbar);
+	WINPR_ASSERT(floatbar->xfc);
+	WINPR_ASSERT(floatbar->xfc->display);
+
+	floatbar->cursor_arrow = XCreateFontCursor(floatbar->xfc->display, XC_arrow);
+	floatbar->cursor_resize = XCreateFontCursor(floatbar->xfc->display, XC_sb_h_double_arrow);
 }
 
 static void xf_floatbar_event_expose(xfFloatbar* floatbar)
@@ -774,8 +829,18 @@ static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, Window window)
 			break;
 	}
 
-	pattern = XCreateBitmapFromData(xfc->display, button->handle, (const char*)bits,
-	                                FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH);
+	/* rebuild the icon bitmap only when the icon itself changed */
+	if (button->pattern_bits != bits)
+	{
+		if (button->pattern)
+			LogDynAndXFreePixmap(xfc->log, xfc->display, button->pattern);
+
+		button->pattern = XCreateBitmapFromData(xfc->display, button->handle, (const char*)bits,
+		                                        FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH);
+		button->pattern_bits = bits;
+	}
+
+	pattern = button->pattern;
 
 	if (!(button->focus))
 		LogDynAndXSetForeground(floatbar->xfc->log, xfc->display, gc,
@@ -788,7 +853,6 @@ static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, Window window)
 	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
 	XCopyPlane(xfc->display, pattern, button->handle, gc, 0, 0, FLOATBAR_BUTTON_WIDTH,
 	           FLOATBAR_BUTTON_WIDTH, 0, 0, 1);
-	LogDynAndXFreePixmap(xfc->log, xfc->display, pattern);
 	LogDynAndXFreeGC(xfc->log, xfc->display, gc);
 }
 
@@ -935,7 +999,7 @@ static void xf_floatbar_event_motionnotify(xfFloatbar* floatbar, const XMotionEv
 	WINPR_ASSERT(xfc->display);
 
 	mode = floatbar->mode;
-	cursor = XCreateFontCursor(xfc->display, XC_arrow);
+	cursor = floatbar->cursor_arrow;
 
 	if ((event->state & Button1Mask) && (mode > XF_FLOATBAR_MODE_DRAGGING))
 	{
@@ -948,11 +1012,10 @@ static void xf_floatbar_event_motionnotify(xfFloatbar* floatbar, const XMotionEv
 	else
 	{
 		if (event->x <= FLOATBAR_BORDER || event->x >= floatbar->width - FLOATBAR_BORDER)
-			cursor = XCreateFontCursor(xfc->display, XC_sb_h_double_arrow);
+			cursor = floatbar->cursor_resize;
 	}
 
 	XDefineCursor(xfc->display, xfc->window->handle, cursor);
-	XFreeCursor(xfc->display, cursor);
 	floatbar->last_motion_x_root = event->x_root;
 }
 
@@ -1131,6 +1194,9 @@ void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 		LogDynAndXDestroyWindow(xfc->log, xfc->display, button->handle);
 	}
 
+	if (button->pattern)
+		LogDynAndXFreePixmap(xfc->log, xfc->display, button->pattern);
+
 	free(button);
 }
 
@@ -1159,6 +1225,12 @@ void xf_floatbar_free(xfFloatbar* floatbar)
 		WINPR_ASSERT(xfc->display);
 		LogDynAndXUnmapWindow(xfc->log, xfc->display, floatbar->handle);
 		LogDynAndXDestroyWindow(xfc->log, xfc->display, floatbar->handle);
+	}
+
+	if (floatbar->created)
+	{
+		XFreeCursor(xfc->display, floatbar->cursor_arrow);
+		XFreeCursor(xfc->display, floatbar->cursor_resize);
 	}
 
 	free(floatbar);
