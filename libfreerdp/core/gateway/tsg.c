@@ -3266,10 +3266,6 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
-	}
 
 	return status >= 0 ? status : -1;
 }

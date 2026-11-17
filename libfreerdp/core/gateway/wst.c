@@ -575,10 +575,6 @@ static int wst_bio_write(BIO* bio, const char* buf, int num)
 		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
-	}
 
 	return status;
 }
@@ -593,15 +589,12 @@ static int wst_bio_read(BIO* bio, char* buf, int size)
 	rdpWst* wst = (rdpWst*)BIO_get_data(bio);
 	WINPR_ASSERT(wst);
 
-	while (status <= 0)
+	status = websocket_context_read(wst->wscontext, wst->tls->bio, (BYTE*)buf, (size_t)size);
+	if (status <= 0)
 	{
-		status = websocket_context_read(wst->wscontext, wst->tls->bio, (BYTE*)buf, (size_t)size);
-		if (status <= 0)
-		{
-			if (!BIO_should_retry(wst->tls->bio))
-				return -1;
-			return 0;
-		}
+		/* The retry flags of the underlying BIO tell a blocked read from a closed
+		 * or broken connection, mirror them on this BIO below. */
+		status = BIO_should_retry(wst->tls->bio) ? 0 : -1;
 	}
 
 	if (status < 0)
