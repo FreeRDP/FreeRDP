@@ -979,7 +979,7 @@ BOOL rpc_client_call_add(wLog* log, RpcClient* client, RpcClientCall* call)
 		return FALSE;
 
 	const BOOL rc = HashTable_Insert(client->ClientCallList, &call->CallId, call);
-	WLog_Print(log, WLOG_INFO, "adding 0x%08" PRIx32 ": %s {%" PRIuz "}", call->CallId,
+	WLog_Print(log, WLOG_TRACE, "adding 0x%08" PRIx32 ": %s {%" PRIuz "}", call->CallId,
 	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
 	return rc;
 }
@@ -989,7 +989,7 @@ void rpc_client_call_discard(wLog* log, RpcClient* client, UINT32 CallId)
 	WINPR_ASSERT(client);
 
 	const BOOL rc = HashTable_Remove(client->ClientCallList, &CallId);
-	WLog_Print(log, WLOG_INFO, "discard 0x%08" PRIx32 ": %s {%" PRIuz "}", CallId,
+	WLog_Print(log, WLOG_TRACE, "discard 0x%08" PRIx32 ": %s {%" PRIuz "}", CallId,
 	           rc ? "success" : "failed", HashTable_Count(client->ClientCallList));
 }
 
@@ -999,8 +999,6 @@ static RPC_CLIENT_CALL_STATE next(RPC_CLIENT_CALL_STATE state)
 	switch (state)
 	{
 		case RPC_CLIENT_CALL_STATE_INITIAL:
-			return RPC_CLIENT_CALL_STATE_SEND_PDUS;
-		case RPC_CLIENT_CALL_STATE_SEND_PDUS:
 			return RPC_CLIENT_CALL_STATE_DISPATCHED;
 		case RPC_CLIENT_CALL_STATE_DISPATCHED:
 			return RPC_CLIENT_CALL_STATE_RECEIVE_PDU;
@@ -1025,6 +1023,7 @@ void rpc_client_call_advance(wLog* log, RpcClient* client, UINT32 CallId,
 	RpcClientCall* call = rpc_client_call_find_by_id(log, client, CallId);
 	if (call)
 	{
+		RPC_CLIENT_CALL_STATE state = call->State;
 		if (success)
 			call->State = next(call->State);
 		else
@@ -1032,8 +1031,9 @@ void rpc_client_call_advance(wLog* log, RpcClient* client, UINT32 CallId,
 
 		if (call->State != expected)
 			WLog_Print(log, WLOG_WARN,
-			           "unexpected call state: got %s [0x%08" PRIx32 "], expected %s [0x%08" PRIx32
-			           "]",
+			           "unexpected call state: old %s [0x%08" PRIx32 "], got %s [0x%08" PRIx32
+			           "], expected %s [0x%08" PRIx32 "]",
+			           rpc_client_call_state_str(state), state,
 			           rpc_client_call_state_str(call->State), call->State,
 			           rpc_client_call_state_str(expected), expected);
 	}
