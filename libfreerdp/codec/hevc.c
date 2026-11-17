@@ -62,8 +62,7 @@ BOOL freerdp_hevc_context_set_option(FREERDP_HEVC_CONTEXT* hevc, FREERDP_HEVC_CO
 		if (value != FREERDP_HEVC_VBR)
 		{
 			WLog_Print(hevc->log, WLOG_WARN,
-			           "HEVC rate control %" PRIu32 " is not supported, only FREERDP_HEVC_VBR",
-			           value);
+			           "HEVC rate control is only supported in FREERDP_HEVC_VBR mode");
 			return FALSE;
 		}
 		return h264_context_set_option(hevc->context, H264_CONTEXT_OPTION_RATECONTROL,
