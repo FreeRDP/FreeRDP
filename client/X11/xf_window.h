@@ -126,8 +126,10 @@ void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow);
 WINPR_ATTR_NODISCARD
 BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height);
-UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
-BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId);
+UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface, BOOL alreadyLocked,
+                                   BOOL keepX11Lock);
+BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId,
+                                    BOOL alreadyLocked, BOOL keepX11Lock);
 
 void xf_AppWindowDestroyImage(xfAppWindow* appWindow);
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);
@@ -137,17 +139,21 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 
-#define xf_AppWindowFromX11Window(xfc, wnd) \
-	xf_AppWindowFromX11WindowFrom((xfc), (wnd), __FILE__, __func__, __LINE__)
+#define xf_AppWindowFromX11Window(xfc, wnd, haveX11Lock) \
+	xf_AppWindowFromX11WindowFrom((xfc), (wnd), (haveX11Lock), __FILE__, __func__, __LINE__)
 WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
-xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const char* file,
-                                           const char* fkt, size_t line);
+xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, BOOL haveX11Lock,
+                                           const char* file, const char* fkt, size_t line);
 
-#define xf_AppWindowsLock(xfc) xfAppWindowsLockFrom((xfc), __FILE__, __func__, __LINE__)
-void xfAppWindowsLockFrom(xfContext* xfc, const char* file, const char* fkt, size_t line);
+#define xf_AppWindowsLock(xfc, haveX11Lock) \
+	xfAppWindowsLockFrom((xfc), (haveX11Lock), __FILE__, __func__, __LINE__)
+void xfAppWindowsLockFrom(xfContext* xfc, BOOL haveX11Lock, const char* file, const char* fkt,
+                          size_t line);
 
-#define xf_AppWindowsUnlock(xfc) xfAppWindowsUnlockFrom((xfc), __FILE__, __func__, __LINE__)
-void xfAppWindowsUnlockFrom(xfContext* xfc, const char* file, const char* fkt, size_t line);
+#define xf_AppWindowsUnlock(xfc, keepX11Lock) \
+	xfAppWindowsUnlockFrom((xfc), (keepX11Lock), __FILE__, __func__, __LINE__)
+void xfAppWindowsUnlockFrom(xfContext* xfc, BOOL keepX11Lock, const char* file, const char* fkt,
+                            size_t line);
 
 const char* window_styles_to_string(UINT32 style, char* buffer, size_t length);
 const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t length);
