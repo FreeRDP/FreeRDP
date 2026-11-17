@@ -417,6 +417,62 @@ fail:
 	return rc;
 }
 
+/* a top level name that could leave basePath or start another line must fail the conversion */
+WINPR_ATTR_NODISCARD
+static BOOL test_file_descriptors_to_uri_list_reject(void)
+{
+	BOOL rc = FALSE;
+	char basePath[] = "/tmp/frdp-test";
+	const char* names[] = { "..", "../../etc/passwd", ".", "", "a/b.txt", "a.txt\r\nfile:///x" };
+
+	struct
+	{
+		UINT32 count;
+		FILEDESCRIPTORW dsc[2];
+	} data = WINPR_C_ARRAY_INIT;
+
+	wClipboard* clipboard = ClipboardCreate();
+	if (!clipboard)
+		return FALSE;
+
+	wClipboardDelegate* delegate = ClipboardGetDelegate(clipboard);
+	if (!delegate)
+		goto fail;
+	delegate->basePath = basePath;
+
+	const UINT32 srcId = ClipboardRegisterFormat(clipboard, "FileGroupDescriptorW");
+	const UINT32 dstId = ClipboardRegisterFormat(clipboard, "text/uri-list");
+
+	/* data must be little endian */
+	winpr_Data_Write_UINT32(&data.count, ARRAYSIZE(data.dsc));
+	if (!set_descriptor_name(&data.dsc[0], "a.txt", nullptr))
+		goto fail;
+
+	for (size_t x = 0; x < ARRAYSIZE(names); x++)
+	{
+		if (!set_descriptor_name(&data.dsc[1], names[x], nullptr))
+			goto fail;
+		if (!test_ClipboardSetData(clipboard, srcId, &data, sizeof(data)))
+			goto fail;
+
+		UINT32 size = 0;
+		char* uris = ClipboardGetData(clipboard, dstId, &size);
+		if (uris)
+		{
+			test_log("name '%s' was not rejected, got text/uri-list: '%s'", names[x], uris);
+			free(uris);
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	if (!rc)
+		test_log("FileGroupDescriptorW -> text/uri-list rejection failed");
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
 /* image/bmp from the clipboard has a plain BITMAPINFOHEADER and is stored bottom-up */
 WINPR_ATTR_NODISCARD
 static BOOL test_is_plain_bmp(const BYTE* bmp, size_t size)
@@ -642,6 +698,9 @@ int TestClipboardFormats(int argc, char* argv[])
 		return -1;
 
 	if (!test_file_descriptors_to_uri_list())
+		return -1;
+
+	if (!test_file_descriptors_to_uri_list_reject())
 		return -1;
 
 	wClipboard* clipboard = ClipboardCreate();
