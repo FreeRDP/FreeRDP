@@ -217,6 +217,17 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format);
 
+	/** @brief check an \ref AUDIO_FORMAT for validity. Does not check every detail but
+	 *  rejects inconsistent data.
+	 *
+	 *  @param format The format to check, must not be NULL
+	 *  @return TRUE if the format does pass common validity constraints (sample rate, ...)
+	 *
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL audio_format_is_valid(const AUDIO_FORMAT* format);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format);
 

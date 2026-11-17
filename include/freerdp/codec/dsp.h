@@ -35,7 +35,6 @@ extern "C"
 	FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(freerdp_dsp_context_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder);
 
 	WINPR_ATTR_NODISCARD
