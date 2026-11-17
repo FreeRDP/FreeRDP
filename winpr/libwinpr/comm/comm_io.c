@@ -238,9 +238,16 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if (pComm->fd_read_event > biggestFd)
 		biggestFd = pComm->fd_read_event;
 
+	/* an fd_set only holds descriptors below FD_SETSIZE and the port may have been opened
+	 * after many other files (e.g. on a redirected drive), so this is not a programming error */
+	if ((pComm->fd_read_event >= FD_SETSIZE) || (pComm->fd_read >= FD_SETSIZE))
+	{
+		CommLog_Print(WLOG_WARN, "CommReadFile failed, descriptor above FD_SETSIZE=%d", FD_SETSIZE);
+		SetLastError(ERROR_IO_DEVICE);
+		goto return_false;
+	}
+
 	FD_ZERO(&read_set);
-	WINPR_ASSERT(pComm->fd_read_event < FD_SETSIZE);
-	WINPR_ASSERT(pComm->fd_read < FD_SETSIZE);
 	FD_SET(pComm->fd_read_event, &read_set);
 	FD_SET(pComm->fd_read, &read_set);
 	nbFds = select(biggestFd + 1, &read_set, nullptr, nullptr, pTmaxTimeout);
@@ -450,10 +457,17 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		if (pComm->fd_write_event > biggestFd)
 			biggestFd = pComm->fd_write_event;
 
+		/* see CommReadFile() */
+		if ((pComm->fd_write_event >= FD_SETSIZE) || (pComm->fd_write >= FD_SETSIZE))
+		{
+			CommLog_Print(WLOG_WARN, "CommWriteFile failed, descriptor above FD_SETSIZE=%d",
+			              FD_SETSIZE);
+			SetLastError(ERROR_IO_DEVICE);
+			goto return_false;
+		}
+
 		FD_ZERO(&event_set);
 		FD_ZERO(&write_set);
-		WINPR_ASSERT(pComm->fd_write_event < FD_SETSIZE);
-		WINPR_ASSERT(pComm->fd_write < FD_SETSIZE);
 		FD_SET(pComm->fd_write_event, &event_set);
 		FD_SET(pComm->fd_write, &write_set);
 		nbFds = select(biggestFd + 1, &event_set, &write_set, nullptr, pTmaxTimeout);
