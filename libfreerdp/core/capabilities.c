@@ -432,6 +432,17 @@ static BOOL rdp_read_bitmap_capability_set(wLog* log, wStream* s, rdpSettings* s
 	settings->DesktopResize = desktopResizeFlag;
 	settings->DesktopWidth = desktopWidth;
 	settings->DesktopHeight = desktopHeight;
+	if (settings->DesktopWidth == 0)
+	{
+		WLog_Print(log, WLOG_ERROR, "Invalid DesktopWidth=0");
+		return FALSE;
+	}
+	if (settings->DesktopHeight == 0)
+	{
+		WLog_Print(log, WLOG_ERROR, "Invalid DesktopHeight=0");
+		return FALSE;
+	}
+
 	settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) != 0;
 	settings->DrawAllowDynamicColorFidelity =
 	    (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) != 0;
