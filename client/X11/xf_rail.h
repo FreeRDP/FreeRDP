@@ -124,7 +124,8 @@ typedef struct xf_rail_icon_cache xfRailIconCache;
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
 
-BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
+BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect,
+                           BOOL haveX11Lock, BOOL haveWindowLock);
 
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command);
@@ -149,17 +150,19 @@ WINPR_ATTR_NODISCARD
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId);
 
-#define xf_rail_return_window(window, alreadyLocked) \
-	xf_rail_return_windowFrom((window), (alreadyLocked), __FILE__, __func__, __LINE__)
-void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, const char* file,
-                               const char* fkt, size_t line);
+#define xf_rail_return_window(window, alreadyLocked, keepX11Lock)                           \
+	xf_rail_return_windowFrom((window), (alreadyLocked), (keepX11Lock), __FILE__, __func__, \
+	                          __LINE__)
+void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, BOOL keepX11Lock,
+                               const char* file, const char* fkt, size_t line);
 
-#define xf_rail_get_window(xfc, id, alreadyLocked) \
-	xf_rail_get_windowFrom((xfc), (id), (alreadyLocked), __FILE__, __func__, __LINE__)
+#define xf_rail_get_window(xfc, id, alreadyLocked, haveX11Lock)                             \
+	xf_rail_get_windowFrom((xfc), (id), (alreadyLocked), (haveX11Lock), __FILE__, __func__, \
+	                       __LINE__)
 
 WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
-xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
-                                    const char* fkt, size_t line);
+xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, BOOL haveX11Lock,
+                                    const char* file, const char* fkt, size_t line);
 
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);

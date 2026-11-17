@@ -1539,8 +1539,8 @@ static xfAppWindow* get_windowUnlocked(xfContext* xfc, UINT64 id)
 	return HashTable_GetItemValue(xfc->railWindows, &id);
 }
 
-xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
-                                    const char* fkt, size_t line)
+xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, BOOL haveX11Lock,
+                                    const char* file, const char* fkt, size_t line)
 {
 	if (!xfc)
 		return nullptr;
@@ -1549,18 +1549,18 @@ xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocke
 		return nullptr;
 
 	if (!alreadyLocked)
-		xfAppWindowsLockFrom(xfc, file, fkt, line);
+		xfAppWindowsLockFrom(xfc, haveX11Lock, file, fkt, line);
 
 	xfAppWindow* window = get_windowUnlocked(xfc, id);
 
 	if (!window && !alreadyLocked)
-		xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+		xfAppWindowsUnlockFrom(xfc, haveX11Lock, file, fkt, line);
 
 	return window;
 }
 
-xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const char* file,
-                                           const char* fkt, size_t line)
+xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, BOOL haveX11Lock,
+                                           const char* file, const char* fkt, size_t line)
 {
 	ULONG_PTR* pKeys = nullptr;
 
@@ -1568,7 +1568,7 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 	if (!xfc->railWindows)
 		return nullptr;
 
-	xfAppWindowsLockFrom(xfc, file, fkt, line);
+	xfAppWindowsLockFrom(xfc, haveX11Lock, file, fkt, line);
 	size_t count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
 	for (size_t index = 0; index < count; index++)
@@ -1577,7 +1577,7 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 
 		if (!appWindow)
 		{
-			xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+			xfAppWindowsUnlockFrom(xfc, haveX11Lock, file, fkt, line);
 			free(pKeys);
 			return nullptr;
 		}
@@ -1589,12 +1589,13 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 		}
 	}
 
-	xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+	xfAppWindowsUnlockFrom(xfc, haveX11Lock, file, fkt, line);
 	free(pKeys);
 	return nullptr;
 }
 
-UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
+UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface, BOOL alreadyLocked,
+                                   BOOL keepX11Lock)
 {
 	XImage* image = nullptr;
 	UINT rc = ERROR_INTERNAL_ERROR;
@@ -1602,7 +1603,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
 
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, alreadyLocked, keepX11Lock);
 	if (!appWindow)
 	{
 		WLog_VRB(TAG, "Failed to find a window for id=0x%08" PRIx64, surface->windowId);
@@ -1624,7 +1625,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	{
 		appWindow->surfaceStale = TRUE;
 		region16_clear(&surface->invalidRegion);
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, alreadyLocked, keepX11Lock);
 		return CHANNEL_RC_OK;
 	}
 
@@ -1735,13 +1736,14 @@ fail:
 	 * output mapped surfaces. Otherwise the damage accumulates across frames until
 	 * the whole window is uploaded again on every single update. */
 	region16_clear(&surface->invalidRegion);
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, alreadyLocked, keepX11Lock);
 	LogDynAndXFlush(xfc->log, xfc->display);
 
 	return rc;
 }
 
-BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId)
+BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId,
+                                    BOOL alreadyLocked, BOOL keepX11Lock)
 {
 	WINPR_ASSERT(xfc);
 
@@ -1768,7 +1770,7 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 
 	gdiGfxSurface* surface = gfx->GetSurfaceData(gfx, (UINT16)surfaceId);
 	if (surface && surface->windowMapped && (surface->windowId == windowId))
-		rc = xf_AppUpdateWindowFromSurface(xfc, surface);
+		rc = xf_AppUpdateWindowFromSurface(xfc, surface, alreadyLocked, keepX11Lock);
 	LeaveCriticalSection(&gfx->mux);
 	return rc == CHANNEL_RC_OK;
 }
@@ -1813,15 +1815,15 @@ void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window)
 	if (window->ownerWindowId == 0)
 		return;
 
-	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId, TRUE);
+	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId, TRUE, FALSE);
 	if (!parent)
 		return;
 
 	(void)LogDynAndXSetTransientForHint(xfc->log, xfc->display, window->handle, parent->handle);
-	xf_rail_return_window(parent, TRUE);
+	xf_rail_return_window(parent, TRUE, FALSE);
 }
 
-void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
+void xfAppWindowsLockFrom(xfContext* xfc, BOOL haveX11Lock, WINPR_ATTR_UNUSED const char* file,
                           WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT(xfc);
@@ -1831,8 +1833,9 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 	if (WLog_IsLevelActive(xfc->log, level))
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] locking [%s]", fkt);
 #endif
+	if (!haveX11Lock)
+		xf_lock_x11(xfc);
 
-	xf_lock_x11(xfc);
 	if (xfc->railWindows)
 		HashTable_Lock(xfc->railWindows);
 
@@ -1845,7 +1848,7 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 #endif
 }
 
-void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
+void xfAppWindowsUnlockFrom(xfContext* xfc, BOOL keepX11Lock, WINPR_ATTR_UNUSED const char* file,
                             WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT(xfc);
@@ -1856,10 +1859,18 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] unocking [%s]", fkt);
 
 	WINPR_ASSERT(xfc->isRailWindowsLocked);
-	xfc->isRailWindowsLocked = FALSE;
 #endif
 
 	if (xfc->railWindows)
 		HashTable_Unlock(xfc->railWindows);
-	xf_unlock_x11(xfc);
+
+	if (!keepX11Lock)
+		xf_unlock_x11(xfc);
+
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
+	xfc->isRailWindowsLocked = FALSE;
+	xfc->whereFile = nullptr;
+	xfc->whereFkt = nullptr;
+	xfc->whereLine = 0;
+#endif
 }

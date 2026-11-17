@@ -103,7 +103,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
 			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
 			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
-			(void)xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
+			(void)xf_rail_paint_surface(xfc, surface->gdi.windowId, rect, TRUE, FALSE);
 		}
 		else
 #ifdef WITH_XRENDER
@@ -473,7 +473,7 @@ static void xf_DetachWindowFromSurface(RdpgfxClientContext* context, const gdiGf
 	xfContext* xfc = (xfContext*)gdi->context;
 	WINPR_ASSERT(xfc);
 
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE, FALSE);
 	if (appWindow && (appWindow->surfaceId == surface->surfaceId))
 	{
 		/* With software GDI the window image wraps the surface data */
@@ -481,7 +481,7 @@ static void xf_DetachWindowFromSurface(RdpgfxClientContext* context, const gdiGf
 		appWindow->surfaceId = UINT32_MAX;
 		appWindow->surfaceStale = FALSE;
 	}
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, FALSE, FALSE);
 }
 
 /**
@@ -567,7 +567,7 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 	WINPR_ASSERT(gdi->context);
 
 	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
-		return xf_AppUpdateWindowFromSurface(xfc, surface);
+		return xf_AppUpdateWindowFromSurface(xfc, surface, FALSE, FALSE);
 
 	WLog_WARN(TAG, "function not implemented");
 	return CHANNEL_RC_OK;

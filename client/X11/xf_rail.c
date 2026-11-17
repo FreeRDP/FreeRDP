@@ -238,7 +238,7 @@ BOOL xf_rail_schedule_workarea(xfContext* xfc)
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
 	RAIL_ACTIVATE_ORDER activate = WINPR_C_ARRAY_INIT;
-	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
+	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow, FALSE);
 
 	if (!appWindow)
 	{
@@ -252,7 +252,7 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 
 	WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 	activate.windowId = (UINT32)appWindow->windowId;
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, FALSE, FALSE);
 
 	activate.enabled = enabled;
 	const UINT rc = xfc->rail->ClientActivate(xfc->rail, &activate);
@@ -392,12 +392,13 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	return TRUE;
 }
 
-BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect)
+BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect,
+                           BOOL haveX11Lock, BOOL haveWindowLock)
 {
 	BOOL rc = FALSE;
 	BOOL redraw = FALSE;
 	REGION16 windowInvalidRegion = WINPR_C_ARRAY_INIT;
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, windowId, haveWindowLock, haveX11Lock);
 
 	WINPR_ASSERT(rect);
 
@@ -437,9 +438,9 @@ fail:
 {
 	const UINT32 surfaceId = appWindow->surfaceId;
 	region16_uninit(&windowInvalidRegion);
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, haveWindowLock, haveX11Lock);
 	if (redraw)
-		xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
+		xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId, haveWindowLock, haveX11Lock);
 }
 	return rc;
 }
@@ -452,7 +453,7 @@ static BOOL rail_paint_fn(const void* pvkey, WINPR_ATTR_UNUSED void* value, void
 	WINPR_ASSERT(arg);
 
 	const UINT64 key = *(const UINT64*)pvkey;
-	return xf_rail_paint_surface(arg->xfc, key, arg->rect);
+	return xf_rail_paint_surface(arg->xfc, key, arg->rect, TRUE, TRUE);
 }
 
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
@@ -462,10 +463,12 @@ BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(rect);
 
-	if (!xfc->railWindows)
-		return TRUE;
-
-	return HashTable_Foreach(xfc->railWindows, rail_paint_fn, &arg);
+	BOOL rc = FALSE;
+	xf_AppWindowsLock(xfc, TRUE);
+	if (xfc->railWindows)
+		rc = HashTable_Foreach(xfc->railWindows, rail_paint_fn, &arg);
+	xf_AppWindowsUnlock(xfc, TRUE);
+	return rc;
 }
 
 #define window_state_log_style(log, windowState) \
@@ -506,7 +509,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	BOOL position_or_size_updated = FALSE;
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, orderInfo->windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, orderInfo->windowId, FALSE, FALSE);
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
@@ -808,9 +811,9 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	}*/
 	rc = TRUE;
 fail:
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, FALSE, FALSE);
 	if (redraw)
-		xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
+		xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId, FALSE, FALSE);
 	return rc;
 }
 
@@ -966,7 +969,7 @@ static BOOL xf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	BOOL rc = FALSE;
 	xfContext* xfc = (xfContext*)context;
 	BOOL replaceIcon = 0;
-	xfAppWindow* railWindow = xf_rail_get_window(xfc, orderInfo->windowId, FALSE);
+	xfAppWindow* railWindow = xf_rail_get_window(xfc, orderInfo->windowId, FALSE, FALSE);
 
 	if (!railWindow)
 		return TRUE;
@@ -993,7 +996,7 @@ static BOOL xf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 		xf_rail_set_window_icon(xfc, railWindow, icon, replaceIcon);
 		rc = TRUE;
 	}
-	xf_rail_return_window(railWindow, FALSE);
+	xf_rail_return_window(railWindow, FALSE, FALSE);
 	return rc;
 }
 
@@ -1006,7 +1009,7 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
 	WINPR_ASSERT(orderInfo);
 
 	BOOL replaceIcon = 0;
-	xfAppWindow* railWindow = xf_rail_get_window(xfc, orderInfo->windowId, FALSE);
+	xfAppWindow* railWindow = xf_rail_get_window(xfc, orderInfo->windowId, FALSE, FALSE);
 
 	if (!railWindow)
 		return TRUE;
@@ -1028,7 +1031,7 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
 		xf_rail_set_window_icon(xfc, railWindow, icon, replaceIcon);
 		rc = TRUE;
 	}
-	xf_rail_return_window(railWindow, FALSE);
+	xf_rail_return_window(railWindow, FALSE, FALSE);
 	return rc;
 }
 
@@ -1274,7 +1277,7 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	WINPR_ASSERT(localMoveSize);
 
 	xfContext* xfc = (xfContext*)context->custom;
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, localMoveSize->windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, localMoveSize->windowId, FALSE, FALSE);
 
 	if (!appWindow)
 		return ERROR_INTERNAL_ERROR;
@@ -1359,7 +1362,7 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	else
 		xf_EndLocalMoveSize(xfc, appWindow);
 
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, FALSE, FALSE);
 	return CHANNEL_RC_OK;
 }
 
@@ -1376,7 +1379,7 @@ static UINT xf_rail_server_min_max_info(RailClientContext* context,
 	WINPR_ASSERT(minMaxInfo);
 
 	xfContext* xfc = (xfContext*)context->custom;
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, minMaxInfo->windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, minMaxInfo->windowId, FALSE, FALSE);
 
 	if (appWindow)
 	{
@@ -1385,7 +1388,7 @@ static UINT xf_rail_server_min_max_info(RailClientContext* context,
 		                       minMaxInfo->minTrackHeight, minMaxInfo->maxTrackWidth,
 		                       minMaxInfo->maxTrackHeight);
 	}
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, FALSE, FALSE);
 
 	return CHANNEL_RC_OK;
 }
@@ -1464,6 +1467,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	if (!xfc || !rail)
 		return 0;
 
+	xf_lock_x11(xfc);
 	xfc->rail = rail;
 	xf_rail_register_update_callbacks(context->update);
 	rail->custom = (void*)xfc;
@@ -1476,7 +1480,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	xfc->railWindows = HashTable_New(TRUE);
 
 	if (!xfc->railWindows)
-		return 0;
+		goto fail;
 
 	if (!HashTable_SetHashFunction(xfc->railWindows, rail_window_key_hash))
 		goto fail;
@@ -1491,12 +1495,13 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	xfc->railIconCache = RailIconCache_New(xfc->log, xfc->common.context.settings);
 
 	if (!xfc->railIconCache)
-	{
-	}
+		goto fail;
 
+	xf_unlock_x11(xfc);
 	return 1;
 fail:
-	HashTable_Free(xfc->railWindows);
+	xf_unlock_x11(xfc);
+	xf_rail_uninit(xfc, rail);
 	return 0;
 }
 
@@ -1504,6 +1509,7 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
 	WINPR_UNUSED(rail);
 
+	xf_lock_x11(xfc);
 	if (xfc->rail)
 	{
 		xfc->rail->custom = nullptr;
@@ -1521,6 +1527,7 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 		RailIconCache_Free(xfc->railIconCache);
 		xfc->railIconCache = nullptr;
 	}
+	xf_unlock_x11(xfc);
 
 	return 1;
 }
@@ -1544,7 +1551,7 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
 	appWindow->width = WINPR_ASSERTING_INT_CAST(int, width);
 	appWindow->height = WINPR_ASSERTING_INT_CAST(int, height);
 
-	xf_AppWindowsLock(xfc);
+	xf_AppWindowsLock(xfc, FALSE);
 	if (!xf_AppWindowCreate(xfc, appWindow))
 		goto fail;
 
@@ -1553,7 +1560,7 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
 	return appWindow;
 fail:
 	rail_window_free(appWindow);
-	xf_AppWindowsUnlock(xfc);
+	xf_AppWindowsUnlock(xfc, FALSE);
 	return nullptr;
 }
 
@@ -1562,17 +1569,16 @@ BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)
 	if (!xfc)
 		return FALSE;
 
-	if (!xfc->railWindows)
-		return FALSE;
-
-	xf_lock_x11(xfc);
-	const BOOL res = HashTable_Remove(xfc->railWindows, &id);
-	xf_unlock_x11(xfc);
+	xf_AppWindowsLock(xfc, FALSE);
+	BOOL res = FALSE;
+	if (xfc->railWindows)
+		res = HashTable_Remove(xfc->railWindows, &id);
+	xf_AppWindowsUnlock(xfc, FALSE);
 	return res;
 }
 
-void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, const char* file,
-                               const char* fkt, size_t line)
+void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, BOOL keepX11Lock,
+                               const char* file, const char* fkt, size_t line)
 {
 	if (!window)
 		return;
@@ -1580,5 +1586,5 @@ void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, const ch
 	if (alreadyLocked)
 		return;
 
-	xfAppWindowsUnlockFrom(window->xfc, file, fkt, line);
+	xfAppWindowsUnlockFrom(window->xfc, keepX11Lock, file, fkt, line);
 }
