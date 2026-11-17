@@ -769,6 +769,9 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 
 				length -= size;
 
+				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, 3))
+					return FALSE;
+
 				Stream_Write_UINT16(s, 0x10); /* length */
 				Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
 				/* handle padding */
@@ -777,7 +780,9 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 				if (*pad == 8)
 					*pad = 0;
 
-				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, length + *pad))
+				const size_t offset =
+				    WINPR_ASSERTING_INT_CAST(size_t, (data - Stream_PointerAs(s, BYTE)));
+				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, length + *pad + offset))
 					return FALSE;
 
 				if (*pad)
