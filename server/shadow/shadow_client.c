@@ -3547,7 +3547,8 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			}
 		}
 
-		if ((WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
+		if ((WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0) ||
+		    (udp && (status == WAIT_TIMEOUT) && client->activated))
 		{
 			if (!shadow_client_drain_channels(client, TRUE))
 			{
