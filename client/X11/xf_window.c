@@ -1357,17 +1357,17 @@ BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 	return redraw;
 }
 
-void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, const RECTANGLE_16* rects,
+                       size_t nrects)
 {
-	XRectangle* xrects = nullptr;
-
-	if (nrects < 1)
-		return;
 
 #ifdef WITH_XEXT
-	xrects = (XRectangle*)calloc(WINPR_ASSERTING_INT_CAST(uint32_t, nrects), sizeof(XRectangle));
+	if (nrects > INT32_MAX)
+		nrects = INT32_MAX;
 
-	for (int i = 0; i < nrects; i++)
+	XRectangle* xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
+
+	for (size_t i = 0; i < nrects; i++)
 	{
 		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
 		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
@@ -1376,22 +1376,22 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
-	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects,
-	                        ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects,
+	                        (int)nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 }
 
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX,
-                                 UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, INT32 rectsOffsetX,
+                                 INT32 rectsOffsetY, const RECTANGLE_16* rects, size_t nrects)
 {
 	XRectangle* xrects = nullptr;
 
-	if (nrects < 1)
-		return;
+	if (nrects > INT32_MAX)
+		nrects = INT32_MAX;
 
 #ifdef WITH_XEXT
-	xrects = (XRectangle*)calloc(WINPR_ASSERTING_INT_CAST(uint32_t, nrects), sizeof(XRectangle));
+	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
 
 	for (int i = 0; i < nrects; i++)
 	{
@@ -1402,9 +1402,8 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
-	XShapeCombineRectangles(
-	    xfc->display, appWindow->handle, ShapeBounding, WINPR_ASSERTING_INT_CAST(int, rectsOffsetX),
-	    WINPR_ASSERTING_INT_CAST(int, rectsOffsetY), xrects, nrects, ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, rectsOffsetX,
+	                        rectsOffsetY, xrects, (int)nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 }
