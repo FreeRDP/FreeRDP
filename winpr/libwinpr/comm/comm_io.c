@@ -287,13 +287,14 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			WINPR_ASSERT(errno == EAGAIN);
 		}
 
-		if (event == WINPR_PURGE_RXABORT)
+		/* The eventfd is a counter: several WINPR_PURGE_RXABORT written by
+		 * concurrent purge() requests before this read add up. No other event
+		 * expected so far, so any non zero value is an abort. */
+		if (event != 0)
 		{
 			SetLastError(ERROR_CANCELLED);
 			goto return_false;
 		}
-
-		WINPR_ASSERT(event == WINPR_PURGE_RXABORT); /* no other expected event so far */
 #endif
 	}
 
@@ -499,13 +500,14 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				WINPR_ASSERT(errno == EAGAIN);
 			}
 
-			if (event == WINPR_PURGE_TXABORT)
+			/* The eventfd is a counter: several WINPR_PURGE_TXABORT written by
+			 * concurrent purge() requests before this read add up. No other event
+			 * expected so far, so any non zero value is an abort. */
+			if (event != 0)
 			{
 				SetLastError(ERROR_CANCELLED);
 				goto return_false;
 			}
-
-			WINPR_ASSERT(event == WINPR_PURGE_TXABORT); /* no other expected event so far */
 #endif
 		}
 
