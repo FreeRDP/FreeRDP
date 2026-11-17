@@ -29,6 +29,7 @@
 #include <winpr/error.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/log.h>
 
@@ -2999,7 +3000,6 @@ static BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 {
-	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount = 0;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
@@ -3046,21 +3046,24 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 	if (nCount == 0)
 		return FALSE;
 
+	/* The connections are established, from here on we wait for responses of the gateway */
+	const UINT32 timeoutMS = freerdp_settings_get_uint32(settings, FreeRDP_GatewayResponseTimeout);
+	UINT64 remainingMS = timeoutMS;
+
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
 		const DWORD polltimeout = 250;
-		DWORD status = WaitForMultipleObjects(nCount, events, FALSE, polltimeout);
-		if (status == WAIT_TIMEOUT)
-		{
-			if (timeout > 0)
-			{
-				if (looptimeout < polltimeout)
-					return FALSE;
-				looptimeout -= polltimeout;
-			}
-		}
-		else
-			looptimeout = timeout * 1000ULL;
+		const TSG_STATE state = tsg->state;
+		const UINT64 startMS = GetTickCount64();
+
+		/* ignore read events, they are not handled here. */
+		const DWORD status = WaitForMultipleObjects(nCount - 1, &events[1], FALSE, polltimeout);
+		const UINT64 waitedMS = GetTickCount64() - startMS;
+		if (status == WAIT_FAILED)
+			return FALSE;
+
+		if (freerdp_shall_disconnect_context(context))
+			return FALSE;
 
 		if (!tsg_check_event_handles(tsg))
 		{
@@ -3068,6 +3071,19 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 			transport_set_layer(transport, TRANSPORT_LAYER_CLOSED);
 			return FALSE;
 		}
+
+		/* Only progress of the tunnel setup restarts the timeout, not just any traffic from
+		 * the gateway. Only the time spent waiting counts, so a gateway message presented to
+		 * the user from within tsg_check_event_handles does not use it up. */
+		if (tsg->state != state)
+			remainingMS = timeoutMS;
+		else if (remainingMS <= waitedMS)
+		{
+			WLog_Print(tsg->log, WLOG_ERROR, "timeout [%" PRIu32 "ms] exceeded", timeoutMS);
+			return FALSE;
+		}
+		else
+			remainingMS -= waitedMS;
 	}
 
 	WLog_Print(tsg->log, WLOG_INFO, "TS Gateway Connection Success");
