@@ -657,8 +657,12 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 			break;
 	}
 
+	if (plaintext->cbBuffer > SIZE_MAX - auth->sizes.cbSecurityTrailer)
+		return FALSE;
+	const size_t len = 1ull * plaintext->cbBuffer + auth->sizes.cbSecurityTrailer;
+
 	/* Allocate consecutive memory for ciphertext and signature */
-	buf = calloc(1, plaintext->cbBuffer + auth->sizes.cbSecurityTrailer);
+	buf = calloc(1, len);
 	if (!buf)
 		return FALSE;
 
