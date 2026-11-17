@@ -1525,10 +1525,15 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			nCount += tmp;
 		}
 
+		DWORD timeout = INFINITE;
 		if (xfc->window)
+		{
+			/* advances the floatbar slide, wakes up in time for the next frame while sliding */
 			xf_floatbar_hide_and_show(xfc->window->floatbar);
+			timeout = xf_floatbar_get_wait_timeout(xfc->window->floatbar);
+		}
 
-		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, timeout);
 
 		if (waitStatus == WAIT_FAILED)
 			break;

@@ -23,6 +23,7 @@
 
 #include <winpr/assert.h>
 #include <winpr/cast.h>
+#include <winpr/sysinfo.h>
 
 #include "xf_floatbar.h"
 #include "xf_utils.h"
@@ -43,6 +44,18 @@
 #define FLOATBAR_COLOR_BACKGROUND "RGB:31/6c/a9"
 #define FLOATBAR_COLOR_BORDER "RGB:75/9a/c8"
 #define FLOATBAR_COLOR_FOREGROUND "RGB:FF/FF/FF"
+
+/* Pointer position (relative to the main window) at or above which the bar is shown */
+#define FLOATBAR_SHOW_TRIGGER 10
+/* Pointer position (relative to the main window) below which hiding is armed.
+ * The gap between the two thresholds is hysteresis: the bar keeps its state there. */
+#define FLOATBAR_HIDE_THRESHOLD (FLOATBAR_HEIGHT + 14)
+/* The pointer has to stay below FLOATBAR_HIDE_THRESHOLD this long before the bar hides */
+#define FLOATBAR_HIDE_DELAY_MS 300
+/* Duration of a complete show or hide slide */
+#define FLOATBAR_ANIM_DURATION_MS 180
+/* Frame interval used while a slide is running */
+#define FLOATBAR_FRAME_MS 16
 
 #define XF_FLOATBAR_FLAG_POSITION_MASK 0x00C0
 #define XF_FLOATBAR_FLAG_POSITION_LEFT 0x0040
@@ -91,6 +104,16 @@ struct xf_floatbar
 	char* title;
 	XFontSet fontSet;
 	BOOL entered;
+	/* slide animation state, positions are in window y coordinates */
+	int target_y;
+	BOOL animating;
+	int anim_from_y;
+	int anim_to_y;
+	UINT64 anim_start_ms;
+	/* time since the pointer went below FLOATBAR_HIDE_THRESHOLD, 0 if not armed */
+	UINT64 hide_armed_ms;
+	/* width the buttons and the background were last drawn for */
+	int drawn_width;
 };
 
 static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button);
@@ -149,6 +172,122 @@ BOOL xf_floatbar_set_root_y(xfFloatbar* floatbar, int y)
 	return TRUE;
 }
 
+static UINT64 xf_floatbar_now_ms(void)
+{
+	return winpr_GetTickCount64NS() / 1000000ULL;
+}
+
+/* Set the bar to a position immediately and cancel any running slide */
+static void xf_floatbar_snap(xfFloatbar* floatbar, int y)
+{
+	WINPR_ASSERT(floatbar);
+	floatbar->y = y;
+	floatbar->target_y = y;
+	floatbar->animating = FALSE;
+	floatbar->hide_armed_ms = 0;
+}
+
+static int xf_floatbar_hidden_y(void)
+{
+	return -FLOATBAR_HEIGHT + 1;
+}
+
+/* Decide whether the bar should be shown or hidden from the last known pointer position.
+ * Showing is immediate, hiding waits until the pointer stayed away for FLOATBAR_HIDE_DELAY_MS.
+ */
+static void xf_floatbar_update_target(xfFloatbar* floatbar, UINT64 now)
+{
+	WINPR_ASSERT(floatbar);
+
+	if (floatbar->last_motion_y_root <= FLOATBAR_SHOW_TRIGGER)
+	{
+		floatbar->target_y = 0;
+		floatbar->hide_armed_ms = 0;
+	}
+	else if (floatbar->last_motion_y_root > FLOATBAR_HIDE_THRESHOLD)
+	{
+		if (floatbar->hide_armed_ms == 0)
+			floatbar->hide_armed_ms = now;
+
+		if (now - floatbar->hide_armed_ms >= FLOATBAR_HIDE_DELAY_MS)
+			floatbar->target_y = xf_floatbar_hidden_y();
+	}
+	else
+	{
+		/* between the thresholds: keep the current state */
+		floatbar->hide_armed_ms = 0;
+	}
+}
+
+/* Advance the slide to the position for time now. Uses time based interpolation with
+ * ease-out when showing and ease-in when hiding, so the speed does not depend on how
+ * often this is called.
+ */
+static void xf_floatbar_step_animation(xfFloatbar* floatbar, UINT64 now)
+{
+	int y = 0;
+	xfContext* xfc = nullptr;
+
+	WINPR_ASSERT(floatbar);
+	xfc = floatbar->xfc;
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->display);
+
+	if (!floatbar->animating)
+	{
+		if (floatbar->y == floatbar->target_y)
+			return;
+
+		floatbar->animating = TRUE;
+		floatbar->anim_from_y = floatbar->y;
+		floatbar->anim_to_y = floatbar->target_y;
+		floatbar->anim_start_ms = now;
+	}
+	else if (floatbar->anim_to_y != floatbar->target_y)
+	{
+		/* target changed while sliding, restart from the current position */
+		floatbar->anim_from_y = floatbar->y;
+		floatbar->anim_to_y = floatbar->target_y;
+		floatbar->anim_start_ms = now;
+	}
+
+	const UINT64 elapsed = now - floatbar->anim_start_ms;
+
+	if (elapsed >= FLOATBAR_ANIM_DURATION_MS)
+	{
+		y = floatbar->anim_to_y;
+		floatbar->animating = FALSE;
+	}
+	else
+	{
+		const double t = (double)elapsed / FLOATBAR_ANIM_DURATION_MS;
+		double progress = 0.0;
+
+		if (floatbar->anim_to_y > floatbar->anim_from_y)
+		{
+			/* showing: ease-out cubic */
+			const double inv = 1.0 - t;
+			progress = 1.0 - inv * inv * inv;
+		}
+		else
+		{
+			/* hiding: ease-in cubic */
+			progress = t * t * t;
+		}
+
+		const int delta = floatbar->anim_to_y - floatbar->anim_from_y;
+		y = floatbar->anim_from_y + (int)((double)delta * progress);
+	}
+
+	if (y != floatbar->y)
+	{
+		floatbar->y = y;
+		LogDynAndXMoveWindow(xfc->log, xfc->display, floatbar->handle, floatbar->x, floatbar->y);
+		/* the caller waits for events, make sure the move reaches the server now */
+		LogDynAndXFlush(xfc->log, xfc->display);
+	}
+}
+
 BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar)
 {
 	xfContext* xfc = nullptr;
@@ -163,24 +302,43 @@ BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->display);
 
-	if (!floatbar->locked)
+	if (floatbar->locked || (floatbar->mode != XF_FLOATBAR_MODE_NONE))
 	{
-		if ((floatbar->mode == XF_FLOATBAR_MODE_NONE) && (floatbar->last_motion_y_root > 10) &&
-		    (floatbar->y > (FLOATBAR_HEIGHT * -1)))
-		{
-			floatbar->y = floatbar->y - 1;
-			LogDynAndXMoveWindow(xfc->log, xfc->display, floatbar->handle, floatbar->x,
-			                     floatbar->y);
-		}
-		else if (floatbar->y < 0 && (floatbar->last_motion_y_root < 10))
-		{
-			floatbar->y = floatbar->y + 1;
-			LogDynAndXMoveWindow(xfc->log, xfc->display, floatbar->handle, floatbar->x,
-			                     floatbar->y);
-		}
+		/* Locked or dragged bars do not move, stop any running slide */
+		floatbar->animating = FALSE;
+		floatbar->hide_armed_ms = 0;
+		return TRUE;
 	}
 
+	xf_floatbar_update_target(floatbar, xf_floatbar_now_ms());
+	xf_floatbar_step_animation(floatbar, xf_floatbar_now_ms());
 	return TRUE;
+}
+
+DWORD xf_floatbar_get_wait_timeout(xfFloatbar* floatbar)
+{
+	if (!floatbar || !floatbar->created)
+		return INFINITE;
+
+	if (floatbar->locked || (floatbar->mode != XF_FLOATBAR_MODE_NONE))
+		return INFINITE;
+
+	if (floatbar->animating)
+		return FLOATBAR_FRAME_MS;
+
+	/* a pending hide needs a wakeup even if no pointer event arrives */
+	if ((floatbar->hide_armed_ms != 0) && (floatbar->target_y != xf_floatbar_hidden_y()))
+	{
+		const UINT64 now = xf_floatbar_now_ms();
+		const UINT64 armed = now - floatbar->hide_armed_ms;
+
+		if (armed >= FLOATBAR_HIDE_DELAY_MS)
+			return FLOATBAR_FRAME_MS;
+
+		return WINPR_ASSERTING_INT_CAST(DWORD, FLOATBAR_HIDE_DELAY_MS - armed);
+	}
+
+	return INFINITE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -221,16 +379,23 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	if (floatbar->x < 0)
 		floatbar->x = 0;
 
-	floatbar->y = 0;
+	{
+		int y = 0;
 
-	if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)
-		floatbar->y = -FLOATBAR_HEIGHT + 1;
+		if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)
+			y = xf_floatbar_hidden_y();
 
-	floatbar->handle = LogDynAndXCreateWindow(
-	    xfc->log, xfc->display, floatbar->root_window, floatbar->x, 0, FLOATBAR_DEFAULT_WIDTH,
-	    FLOATBAR_HEIGHT, 0, CopyFromParent, InputOutput, CopyFromParent, 0, nullptr);
+		xf_floatbar_snap(floatbar, y);
+	}
+
+	/* create the window at its logical position, not at 0 and then move it */
+	floatbar->handle =
+	    LogDynAndXCreateWindow(xfc->log, xfc->display, floatbar->root_window, floatbar->x,
+	                           floatbar->y, FLOATBAR_DEFAULT_WIDTH, FLOATBAR_HEIGHT, 0,
+	                           CopyFromParent, InputOutput, CopyFromParent, 0, nullptr);
 	floatbar->width = FLOATBAR_DEFAULT_WIDTH;
 	floatbar->height = FLOATBAR_HEIGHT;
+	floatbar->drawn_width = 0;
 	floatbar->mode = XF_FLOATBAR_MODE_NONE;
 	floatbar->buttons[0] = xf_floatbar_new_button(floatbar, XF_FLOATBAR_BUTTON_CLOSE);
 	floatbar->buttons[1] = xf_floatbar_new_button(floatbar, XF_FLOATBAR_BUTTON_RESTORE);
@@ -281,7 +446,7 @@ BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen)
 
 		/* If default is hidden (and not sticky) don't show on fullscreen state changes */
 		if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)
-			floatbar->y = -FLOATBAR_HEIGHT + 1;
+			xf_floatbar_snap(floatbar, xf_floatbar_hidden_y());
 
 		xf_floatbar_hide_and_show(floatbar);
 	}
@@ -421,6 +586,7 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	GC gc = nullptr;
 	GC shape_gc = nullptr;
 	Pixmap pmap = 0;
+	Pixmap buffer = 0;
 	XPoint shape[5] = WINPR_C_ARRAY_INIT;
 	XPoint border[5] = WINPR_C_ARRAY_INIT;
 
@@ -436,6 +602,11 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	                              WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height), 1);
 	gc = LogDynAndXCreateGC(floatbar->xfc->log, display, floatbar->handle, 0, 0);
 	shape_gc = LogDynAndXCreateGC(floatbar->xfc->log, display, pmap, 0, 0);
+	/* draw into an off-screen buffer and copy it once, avoids flicker */
+	buffer = LogDynAndXCreatePixmap(floatbar->xfc->log, display, floatbar->handle,
+	                                WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->width),
+	                                WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height),
+	                                (unsigned int)DefaultDepth(display, XDefaultScreen(display)));
 	/* points for drawing the floatbar */
 	shape[0].x = 0;
 	shape[0].y = 0;
@@ -470,11 +641,11 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	/* draw the float bar */
 	LogDynAndXSetForeground(floatbar->xfc->log, display, gc,
 	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BACKGROUND));
-	XFillPolygon(display, floatbar->handle, gc, shape, 4, 0, CoordModeOrigin);
+	XFillPolygon(display, buffer, gc, shape, 4, 0, CoordModeOrigin);
 	/* draw an border for the floatbar */
 	LogDynAndXSetForeground(floatbar->xfc->log, display, gc,
 	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
-	XDrawLines(display, floatbar->handle, gc, border, 5, CoordModeOrigin);
+	XDrawLines(display, buffer, gc, border, 5, CoordModeOrigin);
 	/* draw the host name connected to (limit to maximum file name) */
 	const size_t len = strnlen(floatbar->title, MAX_PATH);
 	LogDynAndXSetForeground(floatbar->xfc->log, display, gc,
@@ -484,13 +655,17 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	const int fx = floatbar->width / 2 - (int)len * 2;
 	if (floatbar->fontSet != nullptr)
 	{
-		XmbDrawString(display, floatbar->handle, floatbar->fontSet, gc, fx, 15, floatbar->title,
-		              (int)len);
+		XmbDrawString(display, buffer, floatbar->fontSet, gc, fx, 15, floatbar->title, (int)len);
 	}
 	else
 	{
-		XDrawString(display, floatbar->handle, gc, fx, 15, floatbar->title, (int)len);
+		XDrawString(display, buffer, gc, fx, 15, floatbar->title, (int)len);
 	}
+
+	LogDynAndXCopyArea(floatbar->xfc->log, display, buffer, floatbar->handle, gc, 0, 0,
+	                   WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->width),
+	                   WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height), 0, 0);
+	LogDynAndXFreePixmap(floatbar->xfc->log, display, buffer);
 	LogDynAndXFreeGC(floatbar->xfc->log, display, gc);
 	LogDynAndXFreeGC(floatbar->xfc->log, display, shape_gc);
 }
@@ -548,8 +723,10 @@ static void xf_floatbar_button_update_positon(xfFloatbar* floatbar)
 		WINPR_ASSERT(xfc);
 		WINPR_ASSERT(xfc->display);
 		LogDynAndXMoveWindow(xfc->log, xfc->display, button->handle, button->x, button->y);
-		xf_floatbar_event_expose(floatbar);
 	}
+
+	floatbar->drawn_width = floatbar->width;
+	xf_floatbar_event_expose(floatbar);
 }
 
 static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, Window window)
@@ -825,6 +1002,13 @@ static void xf_floatbar_event_focusout(xfFloatbar* floatbar)
 	}
 }
 
+/* y is relative to the floatbar window, convert it to the main window */
+static void xf_floatbar_set_pointer_y(xfFloatbar* floatbar, int y)
+{
+	WINPR_ASSERT(floatbar);
+	floatbar->last_motion_y_root = y + floatbar->y;
+}
+
 BOOL xf_floatbar_check_event(xfFloatbar* floatbar, const XEvent* event)
 {
 	if (!floatbar || !floatbar->xfc || !event)
@@ -868,6 +1052,9 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 			break;
 
 		case MotionNotify:
+			if (event->xany.window == floatbar->handle)
+				xf_floatbar_set_pointer_y(floatbar, event->xmotion.y);
+
 			xf_floatbar_event_motionnotify(floatbar, &event->xmotion);
 			break;
 
@@ -889,6 +1076,9 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 
 		case EnterNotify:
 			floatbar->entered = TRUE;
+			if (event->xany.window == floatbar->handle)
+				xf_floatbar_set_pointer_y(floatbar, event->xcrossing.y);
+
 			WINPR_FALLTHROUGH
 		case FocusIn:
 			if (event->xany.window != floatbar->handle)
@@ -908,7 +1098,9 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 			break;
 
 		case ConfigureNotify:
-			if (event->xany.window == floatbar->handle)
+			/* a plain move (the slide) does not change the layout, only a resize does */
+			if ((event->xany.window == floatbar->handle) &&
+			    (event->xconfigure.width != floatbar->drawn_width))
 				xf_floatbar_button_update_positon(floatbar);
 
 			break;
