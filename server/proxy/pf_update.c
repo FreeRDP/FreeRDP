@@ -46,7 +46,8 @@ static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTAN
 	WINPR_ASSERT(ps->pdata);
 
 	pClientContext* pc = proxy_data_get_client_context(ps->pdata);
-	WINPR_ASSERT(pc);
+	if (!pc)
+		return FALSE;
 
 	/* The proxy client thread owns the connection to the server, only it may send on it */
 	RECTANGLE_16* copy = nullptr;
@@ -70,7 +71,8 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const REC
 	WINPR_ASSERT(ps->pdata);
 
 	pClientContext* pc = proxy_data_get_client_context(ps->pdata);
-	WINPR_ASSERT(pc);
+	if (!pc)
+		return FALSE;
 
 	/* The proxy client thread owns the connection to the server, only it may send on it */
 	RECTANGLE_16* copy = nullptr;
