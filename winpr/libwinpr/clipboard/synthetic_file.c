@@ -775,6 +775,27 @@ static BOOL descriptor_is_nested(wLog* log, const FILEDESCRIPTORW* dsc)
 	return found != nullptr;
 }
 
+/** @return TRUE if the name of a top level entry is a single path component: it is appended to
+ *  basePath and handed to local applications as a file:// URI, so it must neither be able to
+ *  leave that directory ("..", '/') nor to start another line of the list (control characters).
+ */
+WINPR_ATTR_NODISCARD
+static BOOL name_is_single_component(const char* name)
+{
+	WINPR_ASSERT(name);
+
+	if ((name[0] == '\0') || (strcmp(name, ".") == 0) || (strcmp(name, "..") == 0))
+		return FALSE;
+
+	for (const char* cur = name; *cur; cur++)
+	{
+		const unsigned char c = (unsigned char)*cur;
+		if ((c < 0x20) || (c == '/'))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static FILETIME readft(wStream* s)
 {
@@ -903,9 +924,18 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, const v
 		const char* stop_at = nullptr;
 		const char* previous_at = nullptr;
 
-		if (ConvertWCharNToUtf8(dsc.cFileName, ARRAYSIZE(dsc.cFileName), curName,
-		                        ARRAYSIZE(curName)) < 0)
+		const SSIZE_T curLen = ConvertWCharNToUtf8(dsc.cFileName, ARRAYSIZE(dsc.cFileName), curName,
+		                                           ARRAYSIZE(curName));
+		/* curName has no terminator if an unterminated cFileName fills it completely */
+		if ((curLen < 0) || ((size_t)curLen >= ARRAYSIZE(curName)))
 			goto loop_fail;
+
+		if (!name_is_single_component(curName))
+		{
+			WLog_Print(log, WLOG_WARN,
+			           "rejecting file list, invalid top level name at index %" PRIuz, x);
+			goto loop_fail;
+		}
 
 		HRESULT hr = PathCchConvertStyleA(curName, ARRAYSIZE(curName), PATH_STYLE_UNIX);
 		if (FAILED(hr))

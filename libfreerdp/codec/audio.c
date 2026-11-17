@@ -184,12 +184,15 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 		Stream_Read(s, format->data, format->cbSize);
 	}
 
-	return TRUE;
+	return audio_format_is_valid(format);
 }
 
 BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 {
 	if (!s || !format)
+		return FALSE;
+
+	if (!audio_format_is_valid(format))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, 18ull + format->cbSize))
@@ -215,6 +218,9 @@ BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	if (!srcFormat || !dstFormat)
 		return FALSE;
 
+	if (!audio_format_is_valid(srcFormat))
+		return FALSE;
+
 	*dstFormat = *srcFormat;
 
 	if (srcFormat->cbSize > 0)
@@ -230,9 +236,37 @@ BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	return TRUE;
 }
 
+BOOL audio_format_is_valid(const AUDIO_FORMAT* format)
+{
+	if (!format)
+		return FALSE;
+	if (format->wFormatTag == WAVE_FORMAT_UNKNOWN)
+		return FALSE;
+	if (format->nBlockAlign == 0)
+		return FALSE;
+	if (format->nChannels == 0)
+		return FALSE;
+	if (format->nChannels > 128)
+		return FALSE;
+	if (format->wBitsPerSample == 0)
+		return FALSE;
+	if (format->wBitsPerSample > 1024)
+		return FALSE;
+	if (format->nSamplesPerSec == 0)
+		return FALSE;
+	if (format->nSamplesPerSec > 1000000)
+		return FALSE;
+	return TRUE;
+}
+
 BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 {
 	if (!with || !what)
+		return FALSE;
+
+	if (!audio_format_is_valid(with))
+		return FALSE;
+	if (!audio_format_is_valid(what))
 		return FALSE;
 
 	if (with->wFormatTag != WAVE_FORMAT_UNKNOWN)

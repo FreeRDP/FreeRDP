@@ -1605,6 +1605,10 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL encode)
 {
+	WINPR_ASSERT(format);
+	if (!audio_format_is_valid(format))
+		return FALSE;
+
 #if defined(WITH_MEDIACODEC)
 	if (format && (format->wFormatTag == WAVE_FORMAT_AAC_MS))
 		return mediacodec_aac_dsp_supports_format(format, encode);
@@ -1693,6 +1697,8 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                WINPR_ATTR_UNUSED UINT32 FramesPerPacket)
 {
 	if (!context || !targetFormat)
+		return FALSE;
+	if (!audio_format_is_valid(targetFormat))
 		return FALSE;
 
 	if (targetFormat->wFormatTag == WAVE_FORMAT_AAC_MS)

@@ -473,6 +473,13 @@ progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT sur
 	if (!surface || !tile)
 		return FALSE;
 
+	if ((tile->xIdx >= surface->gridWidth) || (tile->yIdx >= surface->gridHeight))
+	{
+		WLog_ERR(TAG, "Invalid tile index %" PRIu16 "x%" PRIu16 " for grid %" PRIu32 "x%" PRIu32,
+		         tile->xIdx, tile->yIdx, surface->gridWidth, surface->gridHeight);
+		return FALSE;
+	}
+
 	zIdx = (tile->yIdx * surface->gridWidth) + tile->xIdx;
 
 	if (zIdx >= surface->tilesSize)
@@ -1225,6 +1232,22 @@ static inline int16_t rawShift(wBitStream* raw, UINT32 numBits)
 	return input;
 }
 
+WINPR_ATTR_NODISCARD
+static inline BOOL progressive_rfx_upgrade_coefficient(INT16* WINPR_RESTRICT coefficient,
+                                                       int32_t input, UINT32 shift)
+{
+	/* input, shift and the coefficient all originate from the peer,
+	 * the upgraded value might not fit the coefficient range. */
+	const int64_t val = *coefficient + input * (1LL << shift);
+	if ((val > INT16_MAX) || (val < INT16_MIN))
+	{
+		WLog_ERR(TAG, "upgrade: %d <= %" PRId64 " <= %d", INT16_MIN, val, INT16_MAX);
+		return FALSE;
+	}
+	*coefficient = WINPR_ASSERTING_INT_CAST(INT16, val);
+	return TRUE;
+}
+
 static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRICT state,
                                                 INT16* WINPR_RESTRICT buffer,
                                                 INT16* WINPR_RESTRICT sign, UINT32 length,
@@ -1243,10 +1266,8 @@ static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 		{
 			input = rawShift(raw, numBits);
 
-			const int32_t shifted = input << shift;
-			const int32_t val = buffer[index] + shifted;
-			const int16_t ival = WINPR_ASSERTING_INT_CAST(int16_t, val);
-			buffer[index] = ival;
+			if (!progressive_rfx_upgrade_coefficient(&buffer[index], input, shift))
+				return -1;
 		}
 
 		return 1;
@@ -1272,9 +1293,8 @@ static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			sign[index] = WINPR_ASSERTING_INT_CAST(int16_t, input);
 		}
 
-		const int32_t val = input << shift;
-		const int32_t ival = buffer[index] + val;
-		buffer[index] = WINPR_ASSERTING_INT_CAST(INT16, ival);
+		if (!progressive_rfx_upgrade_coefficient(&buffer[index], input, shift))
+			return -1;
 	}
 
 	return 1;

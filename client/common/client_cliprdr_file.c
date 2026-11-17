@@ -2488,7 +2488,13 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	else
 		clip_data_entry = file_context->clip_data_entry_without_id;
 
-	WINPR_ASSERT(clip_data_entry);
+	/* The entry is prepared when the server format list arrives. It is gone if the clipboard
+	 * owner or the server capabilities changed since then. */
+	if (!clip_data_entry)
+	{
+		WLog_Print(file_context->log, WLOG_WARN, "No clipDataEntry for the server file list");
+		goto fail;
+	}
 
 	if (!clear_entry_selection(clip_data_entry))
 		goto fail;

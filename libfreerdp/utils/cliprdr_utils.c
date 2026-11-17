@@ -68,6 +68,10 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
 		return ERROR_BAD_ARGUMENTS;
 
+	*file_descriptor_array = nullptr;
+	*file_descriptor_count = 0;
+
+	FILEDESCRIPTORW* array = nullptr;
 	wStream* s = Stream_StaticConstInit(&sbuffer, format_data, format_data_length);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
@@ -86,9 +90,8 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 		goto out;
 	}
 
-	*file_descriptor_count = count;
-	*file_descriptor_array = calloc(count, sizeof(FILEDESCRIPTORW));
-	if (!*file_descriptor_array)
+	array = calloc(count, sizeof(FILEDESCRIPTORW));
+	if (!array)
 	{
 		result = ERROR_NOT_ENOUGH_MEMORY;
 		goto out;
@@ -96,17 +99,23 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 
 	for (UINT32 i = 0; i < count; i++)
 	{
-		FILEDESCRIPTORW* file = &((*file_descriptor_array)[i]);
+		FILEDESCRIPTORW* file = &array[i];
 
 		if (!cliprdr_read_filedescriptor(s, file))
+		{
+			result = ERROR_INVALID_DATA;
 			goto out;
+		}
 	}
 
 	if (Stream_GetRemainingLength(s) > 0)
 		WLog_WARN(TAG, "packed file list has %" PRIuz " excess bytes",
 		          Stream_GetRemainingLength(s));
+	*file_descriptor_count = count;
+	*file_descriptor_array = array;
 out:
-
+	if (!*file_descriptor_array && array)
+		free(array);
 	return result;
 }
 

@@ -1355,7 +1355,13 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		sockfd = freerdp_vsock_connect(context, vsock, port);
 	else
 	{
-		if (!settings->GatewayEnabled)
+		/* TargetNetAddresses are alternate addresses of the RDP server. With a gateway or a
+		 * proxy hostname:port is the gateway or the proxy, not the server, so it must not be
+		 * replaced by one of them (the proxy handshake and credentials would go to the server). */
+		const UINT32 proxyType = freerdp_settings_get_uint32(settings, FreeRDP_ProxyType);
+		const BOOL viaProxy = (proxyType != PROXY_TYPE_NONE) && (proxyType != PROXY_TYPE_IGNORE);
+
+		if (!settings->GatewayEnabled && !viaProxy)
 		{
 			if (!freerdp_tcp_is_hostname_resolvable(context, hostname) ||
 			    settings->RemoteAssistanceMode)

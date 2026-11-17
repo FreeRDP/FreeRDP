@@ -466,6 +466,8 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 				{
 					WLog_ERR(TAG, "received excessive payload size %" PRIuz ", aborting",
 					         encodingContext->payloadLength);
+					/* fatal, callers must not take a stale retry flag for a blocked read */
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 					return -1;
 				}
 				encodingContext->state =
@@ -476,6 +478,8 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 			{
 				WLog_WARN(
 				    TAG, "Websocket Server sends data with masking key. This is against RFC 6455.");
+				/* fatal, callers must not take a stale retry flag for a blocked read */
+				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				return -1;
 			}
 			case WebSocketStatePayload:

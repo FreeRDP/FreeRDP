@@ -617,6 +617,27 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
 	return TRUE;
 }
 
+/* 8bpp data is resolved through the palette for every single pixel, so check the palette once
+ * per image instead of logging an error for each pixel with an unusable palette. */
+static BOOL freerdp_image_palette_is_valid(const gdiPalette* WINPR_RESTRICT palette)
+{
+	if (!palette)
+	{
+		WLog_ERR(TAG, "%s data requires a palette", FreeRDPGetColorFormatName(PIXEL_FORMAT_RGB8));
+		return FALSE;
+	}
+
+	if (FreeRDPGetBitsPerPixel(palette->format) <= 8)
+	{
+		WLog_ERR(TAG, "%s data requires a palette with a true color format, got %s",
+		         FreeRDPGetColorFormatName(PIXEL_FORMAT_RGB8),
+		         FreeRDPGetColorFormatName(palette->format));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL freerdp_image_copy_from_pointer_data_xbpp(
     BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT xorMask, UINT32 xorMaskLength,
@@ -644,10 +665,10 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 	xorStep = 1ULL * nWidth * xorBytesPerPixel;
 	xorStep += (xorStep % 2);
 
-	if (xorBpp == 8 && !palette)
+	if (xorBpp == 8 && !freerdp_image_palette_is_valid(palette))
 	{
-		WLog_ERR(TAG, "null palette in conversion from %" PRIu32 " bpp to %" PRIu32 " bpp", xorBpp,
-		         dstBitsPerPixel);
+		WLog_ERR(TAG, "invalid palette in conversion from %" PRIu32 " bpp to %" PRIu32 " bpp",
+		         xorBpp, dstBitsPerPixel);
 		return FALSE;
 	}
 
@@ -1020,6 +1041,9 @@ BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep
 	if (FreeRDPGetBitsPerPixel(SrcFormat) == 0)
 		return FALSE;
 	if (FreeRDPGetBitsPerPixel(DstFormat) == 0)
+		return FALSE;
+	if ((SrcFormat == PIXEL_FORMAT_RGB8) && (SrcFormat != DstFormat) &&
+	    !freerdp_image_palette_is_valid(palette))
 		return FALSE;
 
 	WINPR_ASSERT(1ull * nXDst + nWidth <= UINT32_MAX);
@@ -2007,6 +2031,9 @@ BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstForma
 	if (FreeRDPGetBitsPerPixel(SrcFormat) == 0)
 		return FALSE;
 	if (FreeRDPGetBitsPerPixel(DstFormat) == 0)
+		return FALSE;
+	if ((SrcFormat == PIXEL_FORMAT_RGB8) && (SrcFormat != DstFormat) &&
+	    !freerdp_image_palette_is_valid(palette))
 		return FALSE;
 
 	if ((nWidth == 0) || (nHeight == 0))

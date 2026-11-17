@@ -122,14 +122,20 @@ int TestMakecertCommonName(int argc, char* argv[])
 	char* temp = GetKnownPath(KNOWN_PATH_TEMP);
 	char* dir = nullptr;
 	if (!temp || !host_name(host, sizeof(host)))
+	{
+		(void)fprintf(stderr, "%s: temp directory %s or host %s: failed to create\n", temp, host);
 		goto fail;
+	}
 	{
 		char sub[64] = { 0 };
 		(void)_snprintf(sub, sizeof(sub), "TestMakecertCommonName-%" PRIu32, GetCurrentProcessId());
 		dir = GetCombinedPath(temp, sub);
 	}
 	if (!dir || !winpr_PathMakePath(dir, nullptr))
+	{
+		(void)fprintf(stderr, "%s: test directory %s: failed to create\n", dir);
 		goto fail;
+	}
 
 	{
 		/* as the shadow server makes its certificate: no -n, the host name */

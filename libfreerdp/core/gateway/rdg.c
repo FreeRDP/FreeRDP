@@ -2101,10 +2101,6 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
-	}
 
 	return status;
 }
