@@ -364,3 +364,9 @@ change_kind = function-subtype-change
 name = client_auto_reconnect_ex
 parameter = '1
 
+
+# clear_compress was never implemented (it only logged an error), its signature changed
+# when the CLEAR compressor was implemented
+[suppress_function]
+change_kind = function-subtype-change
+name = clear_compress
