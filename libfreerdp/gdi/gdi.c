@@ -1506,6 +1506,10 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 
 	gdi->hdc->format = gdi->dstFormat;
 
+	/* The palette is all black until the first palette update, but must always have a valid
+	 * format: 8bpp data received before that update is resolved through it for every pixel. */
+	gdi->palette.format = gdi->dstFormat;
+
 	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;
 
