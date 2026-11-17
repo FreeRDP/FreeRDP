@@ -44,7 +44,7 @@ extern "C"
 	{
 		FREERDP_HEVC_CONTEXT_OPTION_PROFILE,     /**< 0: 4:2:0, 1: 4:4:4 */
 		FREERDP_HEVC_CONTEXT_OPTION_RATECONTROL, /**< a FREERDP_HEVC_RATECONTROL value */
-		FREERDP_HEVC_CONTEXT_OPTION_BITRATE,     /**< target bitrate in kbit/s */
+		FREERDP_HEVC_CONTEXT_OPTION_BITRATE,     /**< target bitrate in bit/s */
 		FREERDP_HEVC_CONTEXT_OPTION_USAGETYPE, /**< the encoder's usage (good quality, realtime) */
 		FREERDP_HEVC_CONTEXT_OPTION_HW_ACCEL   /**< hardware acceleration support */
 	} FREERDP_HEVC_CONTEXT_OPTION;
