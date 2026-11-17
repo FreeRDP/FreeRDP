@@ -115,9 +115,10 @@ WINPR_ATTR_NODISCARD
 BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
 
 // void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);
-void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX,
-                                 UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects);
+void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, const RECTANGLE_16* rects,
+                       size_t nrects);
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, INT32 rectsOffsetX,
+                                 INT32 rectsOffsetY, const RECTANGLE_16* rects, size_t nrects);
 void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow);

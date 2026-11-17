@@ -1608,16 +1608,17 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 			goto fail;
 	}
 
-	if (surface->width > UINT32_MAX / 4 - 2 * 16)
+	if ((surface->width > UINT32_MAX / 4 - 64) || (surface->height > UINT32_MAX - 64))
 	{
 		free(surface);
 		goto fail;
 	}
 
-	/* Align to multiples of 16, but also add additional 16 bytes so SIMD implementations do not
-	 * accidentally read out of bound */
-	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16) + 16ul;
-	surface->data = (BYTE*)winpr_aligned_calloc(surface->scanline, surface->height, 16);
+	/* Align to multiples of 16, but also add additional 64 bytes so SIMD implementations do not
+	 * accidentally read out of bound.
+	 * Also add 4 extra lines for the same reason */
+	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16) + 64ul;
+	surface->data = (BYTE*)winpr_aligned_calloc(surface->scanline, surface->height + 4ull, 16);
 
 	if (!surface->data)
 	{

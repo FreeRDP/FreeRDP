@@ -225,6 +225,10 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 		WLog_ERR(TAG, "width==%" PRIu32 ", height=%" PRIu32, width, height);
 		return nullptr;
 	}
+
+	if (width > SIZE_MAX / height / 4)
+		return nullptr;
+
 	const size_t s = 4ULL * width * height;
 
 	WINPR_ASSERT(video);

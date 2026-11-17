@@ -369,15 +369,18 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	const UINT32 pad = WINPR_ASSERTING_INT_CAST(uint32_t, xfc->scanline_pad);
-	if (surface->gdi.width > UINT32_MAX / FreeRDPGetBytesPerPixel(surface->gdi.format) - 16 - pad)
+	if (surface->gdi.width > UINT32_MAX / FreeRDPGetBytesPerPixel(surface->gdi.format) - 64 - pad)
+		goto fail;
+	if (surface->gdi.height > UINT32_MAX - 64)
 		goto fail;
 
 	/* Align to multiples of 16, but also add additional 16 bytes so SIMD implementations do not
 	 * accidentally read out of bound */
 	surface->gdi.scanline = surface->gdi.width * FreeRDPGetBytesPerPixel(surface->gdi.format);
-	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, pad) + 16ul;
+	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, pad) + 64ul;
 
-	surface->gdi.data = (BYTE*)winpr_aligned_calloc(surface->gdi.scanline, surface->gdi.height, 16);
+	surface->gdi.data =
+	    (BYTE*)winpr_aligned_calloc(surface->gdi.scanline, surface->gdi.height + 4ull, 16);
 
 	if (!surface->gdi.data)
 	{

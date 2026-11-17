@@ -1445,13 +1445,15 @@ smartcard_ConnectA_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 	LONG status = 0;
 	SCARDHANDLE hCard = 0;
 	Connect_Return ret = WINPR_C_ARRAY_INIT;
-	ConnectA_Call* call = nullptr;
 
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(out);
 	WINPR_ASSERT(operation);
 
-	call = &operation->call.connectA;
+	ConnectA_Call* call = &operation->call.connectA;
+
+	if (LinkedList_Contains(smartcard->names, call->szReader))
+		return SCARD_E_UNKNOWN_READER;
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 	    (call->Common.dwShareMode != SCARD_SHARE_DIRECT))
@@ -1481,13 +1483,20 @@ smartcard_ConnectW_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 	LONG status = 0;
 	SCARDHANDLE hCard = 0;
 	Connect_Return ret = WINPR_C_ARRAY_INIT;
-	ConnectW_Call* call = nullptr;
 
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(out);
 	WINPR_ASSERT(operation);
 
-	call = &operation->call.connectW;
+	ConnectW_Call* call = &operation->call.connectW;
+
+	char* reader = ConvertWCharToUtf8Alloc(call->szReader, nullptr);
+	if (!reader)
+		return SCARD_E_UNKNOWN_READER;
+	const BOOL rc = LinkedList_Contains(smartcard->names, reader);
+	free(reader);
+	if (rc)
+		return SCARD_E_UNKNOWN_READER;
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 	    (call->Common.dwShareMode != SCARD_SHARE_DIRECT))
@@ -2431,6 +2440,13 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 }
 #endif
 
+static BOOL names_compare(const void* pa, const void* pb)
+{
+	const char* a = pa;
+	const char* b = pb;
+	return strcmp(a, b) == 0;
+}
+
 scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
 {
 	WINPR_ASSERT(context);
@@ -2453,6 +2469,9 @@ scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
 	ctx->names = LinkedList_New();
 	if (!ctx->names)
 		goto fail;
+
+	wObject* obj = LinkedList_Object(ctx->names);
+	obj->fnObjectEquals = names_compare;
 
 #if defined(WITH_SMARTCARD_EMULATE)
 	ctx->useEmulatedCard = freerdp_settings_get_bool(settings, FreeRDP_SmartcardEmulation);
@@ -2504,9 +2523,9 @@ scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
 		goto fail;
 
 	{
-		wObject* obj = HashTable_ValueObject(ctx->rgSCardContextList);
-		WINPR_ASSERT(obj);
-		obj->fnObjectFree = context_free;
+		wObject* hobj = HashTable_ValueObject(ctx->rgSCardContextList);
+		WINPR_ASSERT(hobj);
+		hobj->fnObjectFree = context_free;
 	}
 
 	if (!smartcard_transaction_watchdog_start(ctx))
