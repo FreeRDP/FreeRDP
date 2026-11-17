@@ -2645,6 +2645,8 @@ static BOOL tsg_recv_authorized(rdpTsg* tsg, const RPC_PDU* pdu)
 			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
 			return FALSE;
 		}
+
+		rc = TRUE;
 	}
 	else if (call->OpNum == TsProxyCreateChannelOpnum)
 	{
