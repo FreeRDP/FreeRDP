@@ -184,7 +184,13 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 		Stream_Read(s, format->data, format->cbSize);
 	}
 
-	return audio_format_is_valid(format);
+	if (!audio_format_is_valid(format))
+	{
+		free(format->data);
+		format->data = nullptr;
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)

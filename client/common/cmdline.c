@@ -4238,6 +4238,10 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				BOOL handled = FALSE;
 				const char* val = ptr[x];
 
+				// already handled
+				if (option_starts_with("cloud:", val))
+					continue;
+
 				if (option_starts_with("use-tenantid", val))
 				{
 					PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);

@@ -217,9 +217,6 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 {
 #ifdef WITH_XTEST
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
-	DWORD vkcode = 0;
-	DWORD keycode = 0;
-	DWORD scancode = 0;
 	BOOL extended = FALSE;
 
 	if (!client || !subsystem)
@@ -228,16 +225,16 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
 
-	scancode = code;
+	DWORD scancode = code;
 	if (extended)
 		scancode |= KBDEXT;
 
-	vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, WINPR_KBD_TYPE_IBM_ENHANCED);
+	DWORD vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, WINPR_KBD_TYPE_IBM_ENHANCED);
 
 	if (extended)
 		vkcode |= KBDEXT;
 
-	keycode = GetKeycodeFromVirtualKeyCode(vkcode, WINPR_KEYCODE_TYPE_XKB);
+	const DWORD keycode = GetKeycodeFromVirtualKeyCode(vkcode, WINPR_KEYCODE_TYPE_XKB);
 
 	if (keycode != 0)
 	{
@@ -278,22 +275,21 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	unsigned int button = 0;
 	BOOL down = FALSE;
-	rdpShadowServer* server = nullptr;
-	rdpShadowSurface* surface = nullptr;
 
 	if (!subsystem || !client)
 		return FALSE;
 
-	server = subsystem->server;
+	rdpShadowServer* server = subsystem->server;
 
 	if (!server)
 		return FALSE;
 
-	surface = server->surface;
+	rdpShadowSurface* surface = server->surface;
 
 	if (!surface)
 		return FALSE;
 
+	EnterCriticalSection(&surface->lock);
 	x11->lastMouseClient = client;
 	x += surface->x;
 	y += surface->y;
@@ -344,6 +340,7 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+	LeaveCriticalSection(&surface->lock);
 #else
 	WLog_WARN(TAG, "MouseEvent not supported by backend, ignoring");
 #endif
@@ -374,6 +371,7 @@ static BOOL x11_shadow_input_rel_mouse_event(rdpShadowSubsystem* subsystem, rdpS
 	if (!surface)
 		return FALSE;
 
+	EnterCriticalSection(&surface->lock);
 	x11->lastMouseClient = client;
 
 	XLockDisplay(x11->display);
@@ -402,6 +400,7 @@ static BOOL x11_shadow_input_rel_mouse_event(rdpShadowSubsystem* subsystem, rdpS
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+	LeaveCriticalSection(&surface->lock);
 #else
 	WLog_WARN(TAG, "RelMouseEvent not supported by backend, ignoring");
 #endif
@@ -417,22 +416,21 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	UINT button = 0;
 	BOOL down = FALSE;
-	rdpShadowServer* server = nullptr;
-	rdpShadowSurface* surface = nullptr;
 
 	if (!subsystem || !client)
 		return FALSE;
 
-	server = subsystem->server;
+	rdpShadowServer* server = subsystem->server;
 
 	if (!server)
 		return FALSE;
 
-	surface = server->surface;
+	rdpShadowSurface* surface = server->surface;
 
 	if (!surface)
 		return FALSE;
 
+	EnterCriticalSection(&surface->lock);
 	x11->lastMouseClient = client;
 	x += surface->x;
 	y += surface->y;
@@ -454,6 +452,7 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+	LeaveCriticalSection(&surface->lock);
 #else
 	WLog_WARN(TAG, "ExtendedMouseEvent not supported by backend, ignoring");
 #endif
@@ -561,10 +560,8 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	int x = 0;
 	int y = 0;
 	int n = 0;
-	rdpShadowServer* server = nullptr;
-	rdpShadowSurface* surface = nullptr;
-	server = subsystem->common.server;
-	surface = server->surface;
+	rdpShadowServer* server = subsystem->common.server;
+	rdpShadowSurface* surface = server->surface;
 
 	if (getImage)
 	{
@@ -633,8 +630,10 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	/* Convert to offset based on current surface */
 	if (surface)
 	{
+		EnterCriticalSection(&surface->lock);
 		x -= surface->x;
 		y -= surface->y;
+		LeaveCriticalSection(&surface->lock);
 	}
 
 	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))

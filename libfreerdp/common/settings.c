@@ -1031,6 +1031,8 @@ BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** issuers, 
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(issuers || (count == 0));
+	if (count > UINT32_MAX / sizeof(char*))
+		return FALSE;
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerLicenseProductIssuers, nullptr,
 	                                      count))

@@ -42,7 +42,7 @@ static const FreeRDP_AadCloud aad_clouds[] = {
 	  "https://www.wvd.azure.us/.default openid profile offline_access",
 	  /* the registered redirect of the AVD public client (#11032), the .us form is rejected
 	   * with AADSTS50011 */
-	  "https://login.microsoftonline.com/common/oauth2/Fnativeclient" }
+	  "https://login.microsoftonline.com/common/oauth2/nativeclient" }
 };
 
 #define AAD_CLOUDS_CONFIG_FILE "aad-clouds.json"
@@ -54,7 +54,7 @@ static INIT_ONCE aad_clouds_once = INIT_ONCE_STATIC_INIT;
 
 static FreeRDP_AadCloud* aad_clouds_configured = nullptr;
 static size_t aad_clouds_configured_count = 0;
-static const char** aad_clouds_configured_names = nullptr;
+static char** aad_clouds_configured_names = nullptr;
 
 static void aad_cloud_entry_free(FreeRDP_AadCloud* cloud)
 {
@@ -456,7 +456,7 @@ static BOOL CALLBACK aad_clouds_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	if (aad_clouds_configured_count == 0)
 		return TRUE;
 
-	aad_clouds_configured_names = calloc(aad_clouds_configured_count, sizeof(const char*));
+	aad_clouds_configured_names = (char**)calloc(aad_clouds_configured_count, sizeof(const char*));
 	if (!aad_clouds_configured_names)
 		return FALSE;
 	for (size_t x = 0; x < aad_clouds_configured_count; x++)
@@ -551,5 +551,11 @@ const char** freerdp_utils_aad_configuration_list(size_t* pcount)
 		return nullptr;
 
 	*pcount = aad_clouds_configured_count;
-	return aad_clouds_configured_names;
+	union
+	{
+		char** ppc;
+		const char** cppc;
+	} cnv;
+	cnv.ppc = aad_clouds_configured_names;
+	return cnv.cppc;
 }
