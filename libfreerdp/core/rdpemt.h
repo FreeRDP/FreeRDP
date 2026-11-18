@@ -91,6 +91,7 @@ FREERDP_LOCAL rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_start(rdpEmt* emt, const struct sockaddr* addr, size_t addrlen);
 
+#if defined(WITH_RDPEUDP_SERVER)
 /** @brief Server-side reliable tunnel for an Initiate Multitransport Request.
  * Waits on its flow (see rdpemt_get_flow()) for a client SYN carrying the cookie hash,
  * performs TLS using the main connection's cert/key, and accepts a Tunnel Create Request
@@ -102,6 +103,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie,
                                         struct x509_st* cert, struct evp_pkey_st* key, BOOL manual,
                                         rdpEmtEventFn callback, void* custom);
+#endif
 
 /** Server: applies main connection TLS settings; call before TLS handshake. The tunnel
  *  requires at least TLS 1.2.
@@ -121,9 +123,11 @@ FREERDP_LOCAL void rdpemt_set_receive_hold(rdpEmt* emt, rdpEmtHoldFn hold);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdpemt_has_failed(rdpEmt* emt);
 
+#if defined(WITH_RDPEUDP_SERVER)
 /** Server: flow from which the tunnel receives datagrams. Owned by the tunnel. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt);
+#endif
 
 /** Server: tunnel's view of the link. Thread-safe. */
 FREERDP_LOCAL void rdpemt_get_send_state(rdpEmt* emt, rdpUdpSendState* state);

@@ -33,7 +33,7 @@
 #include <freerdp/log.h>
 #include <freerdp/utils/gfx.h>
 #include <freerdp/channels/drdynvc.h>
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 #include <freerdp/server/udp.h>
 #endif
 
@@ -297,7 +297,7 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
 	                                 freerdp_settings_get_uint32(srvSettings, FreeRDP_ColorDepth)))
 		return FALSE;
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 	if (!freerdp_settings_set_uint32(
 	        settings, FreeRDP_MultitransportFlags,
 	        freerdp_settings_get_uint32(srvSettings, FreeRDP_MultitransportFlags)))
@@ -718,7 +718,7 @@ static BOOL shadow_client_refresh_request(rdpShadowClient* client)
 	return MessageQueue_Dispatch(MsgPipe->In, &message);
 }
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 /* UDP tunnel is unblocked. Skipped updates are sent with the next frame, but since
  * static screens don't produce frames, we request a refresh. */
 static void shadow_client_udp_write_unblocked(void* custom)
@@ -2599,7 +2599,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	if (!surface)
 		return FALSE;
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 	/* Link saturated. Accumulate dirty regions for a later frame to avoid queuing stale images. */
 	FreeRDP_UdpSendState sendState = WINPR_C_ARRAY_INIT;
 	sendState.size = sizeof(sendState);
@@ -3737,7 +3737,7 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 	FreeRDP_UdpPeerCallbacks callbacks = WINPR_C_ARRAY_INIT;
 	callbacks.size = sizeof(callbacks);
 	callbacks.WriteUnblocked = shadow_client_udp_write_unblocked;

@@ -25,7 +25,7 @@
 
 #include "sfreerdp.h"
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 
 /** Configures the reliable tunnel; Soft-Sync then migrates dynamic channels to it. */
 WINPR_ATTR_NODISCARD

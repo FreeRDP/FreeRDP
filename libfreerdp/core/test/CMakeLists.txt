@@ -23,7 +23,10 @@ if(BUILD_TESTING_INTERNAL)
     TestTransportWriteFail.c
   )
   if(WITH_RDPEUDP)
-    list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c TestServerTunnel.c TestUdpListener.c)
+    list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c)
+  endif()
+  if(WITH_RDPEUDP_SERVER)
+    list(APPEND TESTS TestServerTunnel.c TestUdpListener.c)
   endif()
 endif()
 
@@ -34,7 +37,7 @@ if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
 endif()
 
-if(WITH_RDPEUDP)
+if(WITH_RDPEUDP_SERVER)
   list(APPEND FUZZERS TestFuzzRdpUdpServer.c TestFuzzRdpUdpTunnel.c)
 endif()
 

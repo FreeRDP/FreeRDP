@@ -33,7 +33,7 @@ if(CHANNEL_AINPUT_SERVER)
   list(APPEND SRCS sf_ainput.c sf_ainput.h)
 endif()
 
-if(WITH_RDPEUDP)
+if(WITH_RDPEUDP_SERVER)
   list(APPEND SRCS sf_udp.c sf_udp.h)
 endif()
 

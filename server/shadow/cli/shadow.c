@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 		  "Allow RFX surface bits" },
 		{ "gfx", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX pipeline" },
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 		{ "multitransport", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 		  "[experimental] Offer clients the UDP multitransport tunnel" },
 #endif

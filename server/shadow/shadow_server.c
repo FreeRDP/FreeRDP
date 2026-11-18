@@ -689,7 +689,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!shadow_server_parse_codec(server, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 		CommandLineSwitchCase(arg, "multitransport")
 		{
 			if ((arg->Value != nullptr) &&

@@ -70,7 +70,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_send_autodetect_response(rdpMultitransport* multi,
                                                            const BYTE* data, size_t length);
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 /** Server: queues a DVC PDU for the reliable UDP tunnel. Use multitransport_flush_dvc() to
  *  send the batch, or freerdp_multitransport_send_dvc() to send immediately. */
 WINPR_ATTR_NODISCARD

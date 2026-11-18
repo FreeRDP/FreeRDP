@@ -173,16 +173,22 @@ if(WITH_RDPEUDP)
     rdpudp.h
     rdpemt.c
     rdpemt.h
-    udplistener.c
     udplistener.h
-    udplistener_internal.h
-    udplistener_relay.c
-    udpflow.c
-    udpsocket.c
-    multitransport_server.c
-    server_tunnel.c
-    server_tunnel.h
   )
+  if(WITH_RDPEUDP_SERVER)
+    list(
+      APPEND
+      ${MODULE_PREFIX}_SRCS
+      udplistener.c
+      udplistener_internal.h
+      udplistener_relay.c
+      udpflow.c
+      udpsocket.c
+      multitransport_server.c
+      server_tunnel.c
+      server_tunnel.h
+    )
+  endif()
 endif()
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})

@@ -23,7 +23,7 @@
 #include <freerdp/peer.h>
 
 /** @file
- *  @brief Pacing server output on the UDP tunnel for servers built with -DWITH_RDPEUDP=ON.
+ *  @brief Pacing server output on the UDP tunnel for servers built with -DWITH_RDPEUDP_SERVER=ON.
  *
  *  Servers do not need this file to utilize the tunnel; each peer shares a process-wide
  *  UDP listener on the TCP address and port and is assigned a worker thread. Because the
@@ -40,7 +40,7 @@ extern "C"
 	/** @brief UDP connection state for a peer
 	 *  @since version 3.34.0
 	 *  */
-	typedef enum
+	typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 	{
 		FREERDP_UDP_LINK_NONE, /**< No UDP connection exists or it failed; the peer remains on TCP.
 		                        */

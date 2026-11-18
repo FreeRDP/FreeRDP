@@ -73,7 +73,7 @@ struct server_info
 	const char* replay_dump;
 	const char* cert;
 	const char* key;
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 	BOOL udp;
 #endif
 };

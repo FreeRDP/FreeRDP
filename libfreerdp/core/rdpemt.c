@@ -952,11 +952,13 @@ static BOOL emt_receive(void* custom, const BYTE* data, size_t length)
 	return emt_run_tls(emt);
 }
 
+#if defined(WITH_RDPEUDP_SERVER)
 WINPR_ATTR_NODISCARD
 static BOOL emt_flow_send(void* custom, const BYTE* data, size_t length)
 {
 	return freerdp_udp_flow_send(custom, data, length);
 }
+#endif
 
 WINPR_ATTR_NODISCARD
 static BOOL emt_start_tls(rdpEmt* emt)
@@ -1091,6 +1093,7 @@ static BOOL emt_start_tls(rdpEmt* emt)
 	return emt_run_tls(emt);
 }
 
+#if defined(WITH_RDPEUDP_SERVER)
 /* Process pending client datagrams on the tunnel thread; the listener only demultiplexes. */
 WINPR_ATTR_NODISCARD
 static BOOL emt_server_process_datagrams(rdpEmt* emt)
@@ -1130,6 +1133,7 @@ static BOOL emt_server_process_datagrams(rdpEmt* emt)
 	}
 	return !emt->failed;
 }
+#endif
 
 WINPR_ATTR_NODISCARD
 static BOOL emt_setup_timed_out(const rdpEmt* emt)
@@ -1148,8 +1152,10 @@ static BOOL emt_poll(rdpEmt* emt)
 	if (emt->failed)
 		return FALSE;
 
+#if defined(WITH_RDPEUDP_SERVER)
 	if (emt->server && !emt_server_process_datagrams(emt))
 		return FALSE;
+#endif
 
 	if (emt->server && (rdpudp_get_state(emt->udp) == RDPUDP_STATE_CLOSED))
 	{
@@ -1254,6 +1260,7 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 		const SOCKET sockfd = rdpudp_get_socket(emt->udp);
 		LeaveCriticalSection(&emt->lock);
 
+#if defined(WITH_RDPEUDP_SERVER)
 		/* Server connections lack a socket; the flow signals incoming datagrams. */
 		if (emt->server)
 		{
@@ -1264,6 +1271,7 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 				WLog_Print(emt->log, WLOG_DEBUG, "failed to wait for the flow");
 		}
 		else
+#endif
 			emt_wait_readable(sockfd, timeout);
 
 		if (emt_stopping(emt))
@@ -1280,6 +1288,7 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 	return 0;
 }
 
+#if defined(WITH_RDPEUDP_SERVER)
 /* Worker for tunnels without a dedicated thread; see freerdp_udp_flow_check(). */
 WINPR_ATTR_NODISCARD
 static BOOL emt_manual_poll(void* custom)
@@ -1304,6 +1313,7 @@ static UINT32 emt_manual_get_timeout(void* custom)
 	LeaveCriticalSection(&emt->lock);
 	return timeout;
 }
+#endif
 
 /* [MS-RDPEUDP] 2.2.2.9: cookieHash is the SHA-256 hash of the securityCookie, sent with
  * each 32-bit word byte-swapped as required by Windows. */
@@ -1435,6 +1445,7 @@ BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT16 maxVersion, 
 	return TRUE;
 }
 
+#if defined(WITH_RDPEUDP_SERVER)
 rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, X509* cert,
                           EVP_PKEY* key, BOOL manual, rdpEmtEventFn callback, void* custom)
 {
@@ -1500,6 +1511,7 @@ fail:
 	WINPR_PRAGMA_DIAG_POP
 	return nullptr;
 }
+#endif
 
 BOOL rdpemt_start(rdpEmt* emt, const struct sockaddr* addr, size_t addrlen)
 {
@@ -1521,17 +1533,21 @@ void rdpemt_free(rdpEmt* emt)
 
 	/* not InterlockedExchange: WinPR's reads the old value non-atomically */
 	InterlockedIncrement(&emt->stop);
+#if defined(WITH_RDPEUDP_SERVER)
 	if (emt->flow)
 		udpflow_wake(emt->flow);
+#endif
 	if (emt->thread)
 	{
 		(void)WaitForSingleObject(emt->thread, INFINITE);
 		(void)CloseHandle(emt->thread);
 	}
 
+#if defined(WITH_RDPEUDP_SERVER)
 	/* Thread terminated and sending stopped; listener can now release the flow, potentially
 	 * closing the socket. */
 	freerdp_udp_flow_free(emt->flow);
+#endif
 
 	if (emt->sendQueue)
 	{
@@ -1604,11 +1620,13 @@ BOOL rdpemt_flush(rdpEmt* emt)
 	return rc;
 }
 
+#if defined(WITH_RDPEUDP_SERVER)
 rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt)
 {
 	WINPR_ASSERT(emt);
 	return emt->flow;
 }
+#endif
 
 void rdpemt_get_send_state(rdpEmt* emt, rdpUdpSendState* state)
 {

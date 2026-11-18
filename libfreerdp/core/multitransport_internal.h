@@ -137,6 +137,14 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_notify_state(rdpMultitransport* multi,
                                                FreeRDP_MultitransportTunnelState state);
 
+#else
+
+#define MT_SHARED static
+
+#endif
+
+#if defined(WITH_RDPEUDP_SERVER)
+
 /** Prepares the offer to be sent in the server's next request. */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL MT_REQUEST_MODE multitransport_server_request_mode(rdpMultitransport* multi);
@@ -174,8 +182,6 @@ FREERDP_LOCAL void multitransport_tunnel_check(rdpMultitransport* multi);
 FREERDP_LOCAL void multitransport_server_event_taken(rdpMultitransport* multi, const mt_event* ev);
 
 #else
-
-#define MT_SHARED static
 
 WINPR_ATTR_NODISCARD
 static inline MT_REQUEST_MODE

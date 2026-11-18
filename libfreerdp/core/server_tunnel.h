@@ -32,7 +32,7 @@
 typedef BOOL (*wtsTunnelReadPduFn)(rdpPeerChannel* channel, wStream* s, UINT8 Cmd, UINT8 Sp,
                                    UINT8 cbChId, BOOL fromTunnel);
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL wts_tunnel_new(WTSVirtualChannelManager* vcm, rdpContext* context,

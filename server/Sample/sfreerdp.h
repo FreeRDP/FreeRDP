@@ -68,7 +68,7 @@ struct test_peer_context
 	RdpsndServerContext* rdpsnd;
 	EncomspServerContext* encomsp;
 
-#if defined(WITH_RDPEUDP)
+#if defined(WITH_RDPEUDP_SERVER)
 	struct sf_udp* udp; /* Defined in sf_udp.c */
 #endif
 	rdpTransportIo io;
