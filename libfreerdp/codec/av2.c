@@ -816,6 +816,13 @@ BOOL freerdp_av2_context_reset(FREERDP_AV2_CONTEXT* av2, UINT32 width, UINT32 he
 		if (((av2->ecfg.rc_end_usage == AVM_Q) || (av2->ecfg.rc_end_usage == AVM_CQ)) &&
 		    (av2->qp > 0) && !av2_avm_control(av2, AVME_SET_QP, "AVME_SET_QP", (int)av2->qp))
 			return FALSE;
+
+		/* Reduced reference frame motion vectors: screen content decodes 3-4 % faster for about
+		 * the same bytes and quality (Apple M5, libavm 20261106.1). A sequence header field,
+		 * set by its key: the encoder_cfg field only counts with init_by_cfg_file. */
+		if (avm_codec_set_option(&av2->ctx, "reduced-ref-frame-mvs-mode", "1") != AVM_CODEC_OK)
+			WLog_Print(av2->log, WLOG_WARN, "reduced-ref-frame-mvs-mode refused: %s",
+			           avm_codec_error(&av2->ctx));
 		/* Each reference frame is kept whole, in 16 bits with a border: the setting that
 		 * decides most of the encoder's memory. libavm has no control for it, only the
 		 * option avmenc's --dpb-size sets, before the first frame. */
