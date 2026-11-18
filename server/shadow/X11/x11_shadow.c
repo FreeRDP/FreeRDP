@@ -31,6 +31,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/XKBlib.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -201,13 +202,179 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 
 #endif
 
+#if defined(WITH_XTEST)
+WINPR_ATTR_NODISCARD
+static BOOL isKeyPressed(Display* display, KeyCode code)
+{
+	char keys[32] = WINPR_C_ARRAY_INIT;
+	if (XQueryKeymap(display, keys) != 1)
+		return FALSE;
+
+	return (keys[code >> 3] >> (code & 7)) & 1;
+}
+
+static BOOL pressKey(Display* display, KeySym sym)
+{
+	WINPR_ASSERT(display);
+
+	KeyCode key = XKeysymToKeycode(display, sym);
+	if (key == AnyKey)
+	{
+		WLog_WARN(TAG, "No KeyCode mapped for KeySym=%lu", sym);
+		return FALSE;
+	}
+	if ((XTestFakeKeyEvent(display, key, True, CurrentTime) == 0) ||
+	    (XTestFakeKeyEvent(display, key, False, CurrentTime) == 0))
+	{
+		WLog_WARN(TAG, "Failed to synghesize KeyCode=%u event", key);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_MALLOC(XFree, 1)
+static char* nameForIndicator(Display* display, unsigned int pos)
+{
+	WINPR_ASSERT(display);
+
+	XkbDescPtr xkb = XkbAllocKeyboard();
+	if (!xkb)
+	{
+		WLog_WARN(TAG, "Failed to allocate XkbDescPtr");
+		return nullptr;
+	}
+
+	if (XkbGetNames(display, XkbIndicatorNamesMask, xkb) != Success)
+	{
+		WLog_WARN(TAG, "Failed to get XkbGetNames");
+		XkbFreeKeyboard(xkb, 0, True);
+		return nullptr;
+	}
+
+	char* name = nullptr;
+	if (pos >= XkbNumIndicators)
+		WLog_WARN(TAG, "invalid indicator bit position %u", pos);
+	else
+	{
+		Atom atom = xkb->names->indicators[pos];
+		if (atom != None)
+			name = XGetAtomName(display, atom);
+		else
+			WLog_WARN(TAG, "Failed to map indicator position %u to atom", pos);
+	}
+	XkbFreeKeyboard(xkb, 0, True);
+	return name;
+}
+#endif
+
 WINPR_ATTR_NODISCARD
 static BOOL x11_shadow_input_synchronize_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
                                                WINPR_ATTR_UNUSED rdpShadowClient* client,
                                                WINPR_ATTR_UNUSED UINT32 flags)
 {
-	/* TODO: Implement */
-	WLog_WARN(TAG, "not implemented");
+#ifdef WITH_XTEST
+	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
+
+	if (!client || !subsystem)
+		return FALSE;
+
+	XLockDisplay(x11->display);
+	XTestGrabControl(x11->display, True);
+
+	/* Ensure every key is released */
+	for (KeyCode x = 0; x < 255; x++)
+	{
+		if (!isKeyPressed(x11->display, x))
+			continue;
+		XTestFakeKeyEvent(x11->display, x, False, CurrentTime);
+	}
+
+	/* Set all modifiers to off */
+	unsigned int state = WINPR_C_ARRAY_INIT;
+	const Status rc = XkbGetIndicatorState(x11->display, XkbUseCoreKbd, &state);
+	if (rc != Success)
+	{
+		WLog_WARN(TAG, "XkbGetIndicatorState failed, not syncing modifiers");
+	}
+	else
+	{
+		/* Reset all indicators currently set */
+		for (unsigned x = 0; x < XkbNumIndicators; x++)
+		{
+			unsigned bit = 1 << x;
+			if ((state & bit) == 0)
+				continue;
+			char* name = nameForIndicator(x11->display, x);
+			if (!name)
+				continue;
+
+			if (_stricmp(name, "Scroll Lock") == 0)
+			{
+				pressKey(x11->display, XK_Scroll_Lock);
+			}
+			else if (_stricmp(name, "Num Lock") == 0)
+			{
+				pressKey(x11->display, XK_Num_Lock);
+			}
+			else if (_stricmp(name, "Caps Lock") == 0)
+			{
+				pressKey(x11->display, XK_Caps_Lock);
+			}
+			else if (_stricmp(name, "Kana Lock") == 0)
+			{
+				pressKey(x11->display, XK_Kana_Lock);
+			}
+			XFree(name);
+		}
+
+		unsigned state2 = 0;
+		const Status rc2 = XkbGetIndicatorState(x11->display, XkbUseCoreKbd, &state2);
+		if (rc2 != Success)
+		{
+			WLog_WARN(TAG, "XkbGetIndicatorState failed, can not check modifiers were cleared");
+		}
+		else if (state2 != 0)
+		{
+			WLog_WARN(TAG, "XkbGetIndicatorState clear check returned 0x%08u, should be 0x00000000",
+			          state2);
+		}
+
+		/* Set requested modifiers on */
+		if ((flags & KBD_SYNC_SCROLL_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Scroll_Lock);
+		}
+		if ((flags & KBD_SYNC_NUM_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Num_Lock);
+		}
+		if ((flags & KBD_SYNC_CAPS_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Caps_Lock);
+		}
+		if ((flags & KBD_SYNC_KANA_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Kana_Lock);
+		}
+
+		unsigned state3 = 0;
+		const Status rc3 = XkbGetIndicatorState(x11->display, XkbUseCoreKbd, &state2);
+		if (rc3 != Success)
+		{
+			WLog_WARN(TAG, "XkbGetIndicatorState failed, can not check modifiers were applied");
+		}
+		else if (state3 != 0)
+		{
+			WLog_DBG(TAG, "XkbGetIndicatorState apply check returned 0x%08u", state3);
+		}
+	}
+
+	XTestGrabControl(x11->display, False);
+	XFlush(x11->display);
+	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "SynchronizeEvent not supported by backend, ignoring");
+#endif
 	return TRUE;
 }
 
