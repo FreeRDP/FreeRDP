@@ -42,7 +42,7 @@ static const FreeRDP_AadCloud aad_clouds[] = {
 	  "https://www.wvd.azure.us/.default openid profile offline_access",
 	  /* the registered redirect of the AVD public client (#11032), the .us form is rejected
 	   * with AADSTS50011 */
-	  "https://login.microsoftonline.com/common/oauth2/Fnativeclient" }
+	  "https://login.microsoftonline.com/common/oauth2/nativeclient" }
 };
 
 #define AAD_CLOUDS_CONFIG_FILE "aad-clouds.json"
@@ -456,7 +456,7 @@ static BOOL CALLBACK aad_clouds_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	if (aad_clouds_configured_count == 0)
 		return TRUE;
 
-	aad_clouds_configured_names = calloc(aad_clouds_configured_count, sizeof(const char*));
+	aad_clouds_configured_names = (char**)calloc(aad_clouds_configured_count, sizeof(const char*));
 	if (!aad_clouds_configured_names)
 		return FALSE;
 	for (size_t x = 0; x < aad_clouds_configured_count; x++)
