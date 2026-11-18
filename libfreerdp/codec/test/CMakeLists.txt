@@ -19,6 +19,7 @@ set(TESTS
     TestFreeRDPCodecInterleaved.c
     TestFreeRDPCodecProgressive.c
     TestFreeRDPCodecRemoteFX.c
+    TestFreeRDPCodecAudio.c
 )
 
 if(NOT BUILD_TESTING_NO_H264)

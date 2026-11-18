@@ -234,6 +234,13 @@ extern "C"
 	FREERDP_API BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	                                   AUDIO_FORMAT* WINPR_RESTRICT dstFormat);
 
+	/** @brief check if a format matches a filter
+	 *
+	 *  @param with The filter: wFormatTag, nChannels, nSamplesPerSec and wBitsPerSample are
+	 *  compared when set, \b WAVE_FORMAT_UNKNOWN or 0 match any value
+	 *  @param what The format to check, must pass \ref audio_format_is_valid
+	 *  @return TRUE if \b what is valid and matches \b with
+	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what);
 
