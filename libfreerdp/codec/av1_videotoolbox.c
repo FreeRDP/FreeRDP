@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 
 #include <CoreFoundation/CoreFoundation.h>
@@ -349,7 +350,8 @@ static INT32 av1_vt_open(AV1_VT* vt, const BYTE* obu, size_t obuSize, const BYTE
 	memcpy(&av1c[4], obu, obuSize);
 
 	INT32 rc = AV1_VT_UNSUPPORTED;
-	CFDataRef record = CFDataCreate(kCFAllocatorDefault, av1c, (CFIndex)(4 + obuSize));
+	CFDataRef record =
+	    CFDataCreate(kCFAllocatorDefault, av1c, WINPR_ASSERTING_INT_CAST(CFIndex, 4 + obuSize));
 	free(av1c);
 	CFDictionaryRef atoms = record ? av1_vt_dictionary(CFSTR("av1C"), record) : nullptr;
 	CFDictionaryRef extensions =
@@ -366,7 +368,7 @@ static INT32 av1_vt_open(AV1_VT* vt, const BYTE* obu, size_t obuSize, const BYTE
 	else
 		pixelFormat = s.fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
 		                          : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
-	SInt32 pf = (SInt32)pixelFormat;
+	SInt32 pf = WINPR_ASSERTING_INT_CAST(SInt32, pixelFormat);
 	CFNumberRef pfNumber = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &pf);
 	CFDictionaryRef attributes =
 	    pfNumber ? av1_vt_dictionary(kCVPixelBufferPixelFormatTypeKey, pfNumber) : nullptr;
@@ -379,9 +381,9 @@ static INT32 av1_vt_open(AV1_VT* vt, const BYTE* obu, size_t obuSize, const BYTE
 		goto out;
 	}
 
-	OSStatus status =
-	    CMVideoFormatDescriptionCreate(kCFAllocatorDefault, AV1_VT_CODEC_TYPE, (int32_t)s.width,
-	                                   (int32_t)s.height, extensions, &vt->format);
+	OSStatus status = CMVideoFormatDescriptionCreate(
+	    kCFAllocatorDefault, AV1_VT_CODEC_TYPE, WINPR_ASSERTING_INT_CAST(int32_t, s.width),
+	    WINPR_ASSERTING_INT_CAST(int32_t, s.height), extensions, &vt->format);
 	if (status != noErr)
 	{
 		WLog_Print(vt->log, WLOG_WARN, "CMVideoFormatDescriptionCreate: %d", (int)status);
@@ -477,18 +479,20 @@ static INT32 av1_vt_picture(AV1_VT* vt, AV1_VT_PICTURE* pic)
 	vt->handedOut = buffer;
 
 	const size_t planes = CVPixelBufferGetPlaneCount(buffer);
-	pic->width = (UINT32)CVPixelBufferGetWidth(buffer);
-	pic->height = (UINT32)CVPixelBufferGetHeight(buffer);
+	pic->width = WINPR_ASSERTING_INT_CAST(UINT32, CVPixelBufferGetWidth(buffer));
+	pic->height = WINPR_ASSERTING_INT_CAST(UINT32, CVPixelBufferGetHeight(buffer));
 	pic->i444 = vt->i444;
 	pic->planes[0] = CVPixelBufferGetBaseAddressOfPlane(buffer, 0);
-	pic->strides[0] = (UINT32)CVPixelBufferGetBytesPerRowOfPlane(buffer, 0);
+	pic->strides[0] =
+	    WINPR_ASSERTING_INT_CAST(UINT32, CVPixelBufferGetBytesPerRowOfPlane(buffer, 0));
 
 	if (planes == 3)
 	{
 		for (size_t i = 1; i < 3; i++)
 		{
 			pic->planes[i] = CVPixelBufferGetBaseAddressOfPlane(buffer, i);
-			pic->strides[i] = (UINT32)CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
+			pic->strides[i] =
+			    WINPR_ASSERTING_INT_CAST(UINT32, CVPixelBufferGetBytesPerRowOfPlane(buffer, i));
 		}
 		return TRUE;
 	}
@@ -528,7 +532,7 @@ static INT32 av1_vt_picture(AV1_VT* vt, AV1_VT_PICTURE* pic)
 	}
 	pic->planes[1] = vt->chroma[0];
 	pic->planes[2] = vt->chroma[1];
-	pic->strides[1] = pic->strides[2] = (UINT32)cw;
+	pic->strides[1] = pic->strides[2] = WINPR_ASSERTING_INT_CAST(UINT32, cw);
 	return TRUE;
 }
 
@@ -558,7 +562,7 @@ INT32 av1_vt_decode(AV1_VT* vt, const BYTE* pSrcData, UINT32 SrcSize, AV1_VT_PIC
 			           start, SrcSize);
 			return AV1_VT_INVALID;
 		}
-		pos += (size_t)size;
+		pos += WINPR_ASSERTING_INT_CAST(size_t, size);
 		if ((type == OBU_FRAME_HEADER) || (type == OBU_TILE_GROUP) || (type == OBU_FRAME))
 			hasFrame = TRUE;
 	}
@@ -581,7 +585,7 @@ INT32 av1_vt_decode(AV1_VT* vt, const BYTE* pSrcData, UINT32 SrcSize, AV1_VT_PIC
 		if (!av1_vt_leb128(pSrcData, SrcSize, &pos, &size)) /* checked above */
 			return AV1_VT_INVALID;
 		const size_t payload = pos;
-		pos += (size_t)size;
+		pos += WINPR_ASSERTING_INT_CAST(size_t, size);
 
 		if ((type == OBU_TEMPORAL_DELIMITER) || (type == OBU_PADDING))
 			continue;
@@ -591,8 +595,8 @@ INT32 av1_vt_decode(AV1_VT* vt, const BYTE* pSrcData, UINT32 SrcSize, AV1_VT_PIC
 			if (!vt->session || (obuSize != vt->seqSize) ||
 			    (memcmp(vt->seq, &pSrcData[start], obuSize) != 0))
 			{
-				const INT32 rc =
-				    av1_vt_open(vt, &pSrcData[start], obuSize, &pSrcData[payload], (size_t)size);
+				const INT32 rc = av1_vt_open(vt, &pSrcData[start], obuSize, &pSrcData[payload],
+				                             WINPR_ASSERTING_INT_CAST(size_t, size));
 				if (rc != TRUE)
 					return rc;
 			}

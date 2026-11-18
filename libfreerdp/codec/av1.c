@@ -674,11 +674,13 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 	}
 
 	const BYTE* const planes[] = { pic->data[0], pic->data[1], pic->data[2] };
-	const UINT32 strides[] = { (UINT32)pic->stride[0], (UINT32)pic->stride[1],
-		                       (UINT32)pic->stride[1] };
+	const UINT32 strides[] = { WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[0]),
+		                       WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[1]),
+		                       WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[1]) };
 	return av1_convert_planar(av1, pic->p.layout == DAV1D_PIXEL_LAYOUT_I444, planes, strides,
-	                          (UINT32)pic->p.w, (UINT32)pic->p.h, pDstData, DstFormat, nDstStep,
-	                          nDstWidth, nDstHeight, regionRects, numRegionRect);
+	                          WINPR_ASSERTING_INT_CAST(UINT32, pic->p.w),
+	                          WINPR_ASSERTING_INT_CAST(UINT32, pic->p.h), pDstData, DstFormat,
+	                          nDstStep, nDstWidth, nDstHeight, regionRects, numRegionRect);
 }
 
 /* Return: TRUE if a picture was converted, FALSE if none was ready (EAGAIN), <0 on error. */
