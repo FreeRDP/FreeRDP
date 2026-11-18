@@ -27,6 +27,7 @@
 
 #include <freerdp/log.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/channels/cliprdr.h>
 
 #include "rdp.h"
 #include "client.h"
@@ -52,6 +53,27 @@ static INIT_ONCE g_ChannelHandlesOnce = INIT_ONCE_STATIC_INIT;
 static wHashTable* g_ChannelHandles = nullptr;
 
 static BOOL freerdp_channels_process_message_free(wMessage* message, DWORD type);
+
+static BOOL channel_dispatch_write(rdpChannels* channels, wMessageQueue* queue,
+                                   const wMessage* message)
+{
+	if (!MessageQueue_Dispatch(queue, message))
+		return FALSE;
+	(void)SetEvent(channels->workEvent);
+	return TRUE;
+}
+
+static wMessageQueue* channel_write_queue(const CHANNEL_OPEN_DATA* openData)
+{
+#if !defined(WITH_RDPEUDP)
+	const freerdp* instance = openData->channels->instance;
+	if ((instance->SendChannelData == freerdp_send_channel_data) &&
+	    (instance->SendChannelPacket == freerdp_send_channel_packet) &&
+	    (strcmp(openData->stats.channelName, CLIPRDR_SVC_CHANNEL_NAME) == 0))
+		return openData->channels->clipboardQueue;
+#endif
+	return openData->channels->queue;
+}
 
 static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels,
                                                                           const char* name)
@@ -249,6 +271,9 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 #endif
 
 	channels->instance = instance;
+	channels->workEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	if (!channels->workEvent)
+		goto error;
 	channels->queue = MessageQueue_New(nullptr);
 
 	if (!channels->queue)
@@ -265,6 +290,11 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = free;
 	obj->fnObjectNew = channel_event_entry_clone;
+	channels->clipboardQueue = MessageQueue_New(nullptr);
+	if (!channels->clipboardQueue)
+		goto error;
+	obj = MessageQueue_Object(channels->clipboardQueue);
+	obj->fnObjectFree = channel_queue_free;
 	return channels;
 error:
 	WINPR_PRAGMA_DIAG_PUSH
@@ -287,11 +317,18 @@ void freerdp_channels_free(rdpChannels* channels)
 #endif
 	DeleteCriticalSection(&channels->channelsLock);
 
+	if (channels->clipboardQueue)
+	{
+		MessageQueue_Free(channels->clipboardQueue);
+		channels->clipboardQueue = nullptr;
+	}
 	if (channels->queue)
 	{
 		MessageQueue_Free(channels->queue);
 		channels->queue = nullptr;
 	}
+	if (channels->workEvent)
+		(void)CloseHandle(channels->workEvent);
 
 	free(channels);
 }
@@ -415,6 +452,8 @@ UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 	WINPR_ASSERT(instance);
 
 	MessageQueue_Clear(channels->queue);
+	MessageQueue_Clear(channels->clipboardQueue);
+	(void)ResetEvent(channels->workEvent);
 
 	for (int index = 0; index < channels->clientDataCount; index++)
 	{
@@ -905,6 +944,75 @@ BOOL freerdp_channels_process_message_free(wMessage* message, DWORD type)
 	return TRUE;
 }
 
+static void channel_record_write(CHANNEL_OPEN_DATA* openData, UINT32 length, UINT32 chunkSize)
+{
+	openData->stats.bytesOut += length;
+	openData->stats.packetsOut++;
+	openData->stats.fragmentsOut += (1ull * length + chunkSize - 1ull) / chunkSize;
+}
+
+/* Leave a large clipboard write at the head of the queue between fragments. Its event stays
+ * signalled, so the connection loop can receive desktop updates before sending the next fragment.
+ * Only the built-in send callbacks are safe here: application overrides keep their existing calls.
+ */
+static BOOL channel_process_clipboard_fragment(freerdp* instance, const wMessage* message,
+                                               BOOL* handled, BOOL* complete)
+{
+	*handled = FALSE;
+	*complete = TRUE;
+#if defined(WITH_RDPEUDP)
+	/* Keep the existing path when static channels can migrate to a DVC mid-write. */
+	WINPR_UNUSED(instance);
+	WINPR_UNUSED(message);
+	return TRUE;
+#else
+	if ((message->id != 0) || !message->wParam)
+		return TRUE;
+
+	CHANNEL_OPEN_EVENT* item = message->wParam;
+	if ((item->DataSent > 0) && ((instance->SendChannelData != freerdp_send_channel_data) ||
+	                             (instance->SendChannelPacket != freerdp_send_channel_packet)))
+	{
+		/* Never restart a partially sent message through a replacement callback. */
+		*handled = TRUE;
+		return FALSE;
+	}
+	if ((instance->SendChannelData != freerdp_send_channel_data) ||
+	    (instance->SendChannelPacket != freerdp_send_channel_packet))
+		return TRUE;
+	CHANNEL_OPEN_DATA* openData = item->pChannelOpenData;
+	const UINT32 chunkSize =
+	    freerdp_settings_get_uint32(instance->context->settings, FreeRDP_VCChunkSize);
+	if ((openData->flags != 2) || !chunkSize ||
+	    ((item->DataSent == 0) && (item->DataLength <= chunkSize)) ||
+	    (strcmp(openData->stats.channelName, CLIPRDR_SVC_CHANNEL_NAME) != 0))
+		return TRUE;
+
+	rdpMcsChannel* channel =
+	    freerdp_channels_find_channel_by_name(instance->context->rdp, openData->stats.channelName);
+	if (!channel)
+		return TRUE;
+
+	*handled = TRUE;
+	WINPR_ASSERT(item->DataSent < item->DataLength);
+	const UINT32 left = item->DataLength - item->DataSent;
+	const UINT32 length = (left < chunkSize) ? left : chunkSize;
+	UINT32 flags = (item->DataSent == 0) ? CHANNEL_FLAG_FIRST : 0;
+	if (length == left)
+		flags |= CHANNEL_FLAG_LAST;
+	if (channel->options & CHANNEL_OPTION_SHOW_PROTOCOL)
+		flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+	if (item->DataSent == 0)
+		channel_record_write(openData, item->DataLength, chunkSize);
+	if (!instance->SendChannelPacket(instance, channel->ChannelId, item->DataLength, flags,
+	                                 (const BYTE*)item->Data + item->DataSent, length))
+		return FALSE;
+	item->DataSent += length;
+	*complete = (item->DataSent == item->DataLength);
+	return TRUE;
+#endif
+}
+
 static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* message)
 {
 	BOOL ret = TRUE;
@@ -941,15 +1049,11 @@ static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* messag
 
 		if (channel)
 		{
-			pChannelOpenData->stats.bytesOut += item->DataLength;
-			pChannelOpenData->stats.packetsOut++;
-
 			const UINT32 VCChunkSize =
 			    freerdp_settings_get_uint32(instance->context->settings, FreeRDP_VCChunkSize);
 			if (VCChunkSize == 0)
 				goto fail;
-			const uint64_t frags = (1ull * item->DataLength + VCChunkSize - 1ull) / VCChunkSize;
-			pChannelOpenData->stats.fragmentsOut += frags;
+			channel_record_write(pChannelOpenData, item->DataLength, VCChunkSize);
 			ret = instance->SendChannelData(instance, channel->ChannelId, item->Data,
 			                                item->DataLength);
 		}
@@ -968,16 +1072,33 @@ fail:
 /**
  * called only from main thread
  */
-static BOOL freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
+static BOOL freerdp_channels_process_sync(wMessageQueue* queue, freerdp* instance)
 {
 	BOOL status = TRUE;
 	wMessage message = WINPR_C_ARRAY_INIT;
 
-	WINPR_ASSERT(channels);
+	WINPR_ASSERT(queue);
 
-	while (MessageQueue_Peek(channels->queue, &message, TRUE))
+	while (MessageQueue_Peek(queue, &message, FALSE) > 0)
 	{
-		if (!freerdp_channels_process_message(instance, &message))
+		BOOL handled = FALSE;
+		BOOL complete = TRUE;
+		const BOOL rc = channel_process_clipboard_fragment(instance, &message, &handled, &complete);
+		if (handled && rc && !complete)
+			return status;
+
+		/* Remove the message before its completion callback, which may clear the queue. */
+		if (MessageQueue_Peek(queue, &message, TRUE) <= 0)
+			return FALSE;
+		if (handled)
+		{
+			if (!freerdp_channels_process_message_free(&message, CHANNEL_EVENT_WRITE_COMPLETE) ||
+			    !rc)
+				status = FALSE;
+			IFCALL(message.Free, &message);
+			return status;
+		}
+		else if (!freerdp_channels_process_message(instance, &message))
 			status = FALSE;
 	}
 
@@ -993,7 +1114,7 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, WINPR_ATTR_UNUSED freerdp* 
                               WINPR_ATTR_UNUSED int* write_count)
 {
 	void* pfd = nullptr;
-	pfd = GetEventWaitObject(MessageQueue_Event(channels->queue));
+	pfd = GetEventWaitObject(channels->workEvent);
 
 	if (pfd)
 	{
@@ -1027,7 +1148,7 @@ HANDLE freerdp_channels_get_event_handle(freerdp* instance)
 	rdpChannels* channels = instance->context->channels;
 	WINPR_ASSERT(channels);
 
-	return MessageQueue_Event(channels->queue);
+	return channels->workEvent;
 }
 
 static BOOL channels_process(const void* key, void* value, void* arg)
@@ -1053,15 +1174,23 @@ int freerdp_channels_process_pending_messages(freerdp* instance)
 	rdpChannels* channels = instance->context->channels;
 	WINPR_ASSERT(channels);
 
-	const DWORD status = WaitForSingleObject(MessageQueue_Event(channels->queue), 0);
+	const DWORD status = WaitForSingleObject(channels->workEvent, 0);
 	if (status == WAIT_OBJECT_0)
 	{
-		if (!freerdp_channels_process_sync(channels, instance))
+		if (!freerdp_channels_process_sync(channels->queue, instance))
+			return -1;
+		if (!freerdp_channels_process_sync(channels->clipboardQueue, instance))
 			return -1;
 	}
 
 	if (!HashTable_Foreach(channels->channelEvents, channels_process, instance->context))
 		return -1;
+
+	/* Reset before checking queue sizes: a producer dispatches before signalling, so work
+	 * arriving during this check either remains visible here or signals the event afterwards. */
+	(void)ResetEvent(channels->workEvent);
+	if (MessageQueue_Size(channels->queue) || MessageQueue_Size(channels->clipboardQueue))
+		(void)SetEvent(channels->workEvent);
 
 	return 1;
 }
@@ -1144,6 +1273,8 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 		return 0;
 
 	freerdp_channels_check_fds(channels, instance);
+	/* Cancel while the clipboard plugin still owns its pending write buffers. */
+	MessageQueue_Clear(channels->clipboardQueue);
 
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
@@ -1184,6 +1315,8 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	WINPR_ASSERT(instance);
 
 	MessageQueue_PostQuit(channels->queue, 0);
+	(void)SetEvent(channels->workEvent);
+	MessageQueue_Clear(channels->clipboardQueue);
 	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
@@ -1563,6 +1696,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 
 	pChannelOpenEvent->Data = pData;
 	pChannelOpenEvent->DataLength = dataLength;
+	pChannelOpenEvent->DataSent = 0;
 	pChannelOpenEvent->UserData = pUserData;
 	pChannelOpenEvent->pChannelOpenData = pChannelOpenData;
 
@@ -1572,7 +1706,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 		                       .lParam = nullptr,
 		                       .Free = channel_queue_message_free };
 
-	if (!MessageQueue_Dispatch(channels->queue, &message))
+	if (!channel_dispatch_write(channels, channel_write_queue(pChannelOpenData), &message))
 	{
 		free(pChannelOpenEvent);
 		return CHANNEL_RC_NO_MEMORY;
@@ -1613,6 +1747,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData
 
 	pChannelOpenEvent->Data = pData;
 	pChannelOpenEvent->DataLength = dataLength;
+	pChannelOpenEvent->DataSent = 0;
 	pChannelOpenEvent->UserData = pUserData;
 	pChannelOpenEvent->pChannelOpenData = pChannelOpenData;
 
@@ -1622,7 +1757,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData
 		                       .lParam = nullptr,
 		                       .Free = channel_queue_message_free };
 
-	if (!MessageQueue_Dispatch(channels->queue, &message))
+	if (!channel_dispatch_write(channels, channel_write_queue(pChannelOpenData), &message))
 	{
 		free(pChannelOpenEvent);
 		return CHANNEL_RC_NO_MEMORY;

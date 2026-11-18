@@ -77,6 +77,7 @@ typedef struct
 {
 	void* Data;
 	UINT32 DataLength;
+	UINT32 DataSent;
 	void* UserData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 } CHANNEL_OPEN_EVENT;
@@ -114,6 +115,8 @@ struct rdp_channels
 	freerdp* instance;
 
 	wMessageQueue* queue;
+	wMessageQueue* clipboardQueue;
+	HANDLE workEvent;
 
 	DrdynvcClientContext* drdynvc;
 	CRITICAL_SECTION channelsLock;
@@ -125,6 +128,12 @@ struct rdp_channels
 };
 
 FREERDP_LOCAL void freerdp_channels_free(rdpChannels* channels);
+
+FREERDP_LOCAL BOOL freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const BYTE* data,
+                                             size_t size);
+FREERDP_LOCAL BOOL freerdp_send_channel_packet(freerdp* instance, UINT16 channelId,
+                                               size_t totalSize, UINT32 flags, const BYTE* data,
+                                               size_t chunkSize);
 
 WINPR_ATTR_MALLOC(freerdp_channels_free, 1)
 FREERDP_LOCAL rdpChannels* freerdp_channels_new(freerdp* instance);

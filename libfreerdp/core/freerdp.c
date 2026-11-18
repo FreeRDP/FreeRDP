@@ -28,6 +28,7 @@
 #include <time.h>
 
 #include "rdp.h"
+#include "client.h"
 #include "input.h"
 #include "update.h"
 #include "surface.h"
@@ -599,8 +600,7 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 	return status;
 }
 
-static BOOL freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const BYTE* data,
-                                      size_t size)
+BOOL freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const BYTE* data, size_t size)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -608,8 +608,8 @@ static BOOL freerdp_send_channel_data(freerdp* instance, UINT16 channelId, const
 	return rdp_send_channel_data(instance->context->rdp, channelId, data, size);
 }
 
-static BOOL freerdp_send_channel_packet(freerdp* instance, UINT16 channelId, size_t totalSize,
-                                        UINT32 flags, const BYTE* data, size_t chunkSize)
+BOOL freerdp_send_channel_packet(freerdp* instance, UINT16 channelId, size_t totalSize,
+                                 UINT32 flags, const BYTE* data, size_t chunkSize)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
