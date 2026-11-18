@@ -221,7 +221,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	if (wNumberOfFormats == 0)
 	{
 		WLog_ERR(TAG, "client doesn't support any format!");
-		return ERROR_INTERNAL_ERROR;
+		return CHANNEL_RC_OK;
 	}
 
 	context->client_formats = audio_formats_new(wNumberOfFormats);
