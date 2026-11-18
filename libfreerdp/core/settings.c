@@ -1449,9 +1449,7 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 
 static void freerdp_settings_free_internal_ensure_reset(rdpSettings* settings)
 {
-	settings->ServerLicenseProductIssuersCount = 0;
-	settings->ServerLicenseProductIssuers = nullptr;
-
+	freerdp_server_license_issuers_free(settings);
 	settings->ReceivedCapabilitiesSize = 0;
 }
 
