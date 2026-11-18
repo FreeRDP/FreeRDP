@@ -879,6 +879,8 @@ typedef struct
 	size_t aoaSends;  /* Count of data datagrams that also carry AckOfAcks */
 	size_t baseSends; /* Datagrams with an AckOfAcks and nothing else */
 	UINT16 base;      /* The AckOfAcks of the last of those */
+	BOOL hasDataSeq;
+	UINT16 lastDataSeq; /* Sequence number of the most recent data datagram */
 } ServerSent;
 
 /* Server test clock in nanoseconds; advanced manually instead of sleeping. */
@@ -921,6 +923,8 @@ static BOOL server_on_send(void* custom, const BYTE* data, size_t length)
 	}
 	if (packet.hasData)
 	{
+		sent->hasDataSeq = TRUE;
+		sent->lastDataSeq = packet.dataSeq;
 		sent->lastChannel = packet.channelSeq;
 		if (packet.channelSeq == sent->watchedChannel)
 			sent->watchedSends++;
@@ -1453,6 +1457,159 @@ static BOOL server_keeps_its_window_when_acks_were_lost_in_a_silence(void)
 		              "after the silence: ACK %d of 0x%04" PRIx16 ", vector %d, %" PRIuz
 		              " delivered\n",
 		              sent.hasAck, sent.ack, sent.hasVector, sent.delivered);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A test client that receives datagrams after a round-trip time (rttMs, based on packets
+ * in flight at the time of sending) and acknowledges them in order. The application
+ * keeps 256 chunks queued behind the window. The simulation runs for ms milliseconds
+ * in 5 ms steps; *window is the maximum send window size during the final second. */
+typedef UINT32 (*ServerRttFn)(UINT32 inFlight);
+
+static BOOL server_run_paced(rdpUdp* udp, ServerSent* sent, ServerRttFn rttMs, UINT32 ms,
+                             UINT64 due[65536], UINT16* nextSeq, UINT16* acked, size_t* window)
+{
+	*window = 0;
+	for (UINT32 t = 0; t < ms; t += 5)
+	{
+		while (rdpudp_get_send_backlog(udp) < 256)
+		{
+			if (!rdpudp_send(udp, (const BYTE*)"abcd", 4))
+				return FALSE;
+		}
+		g_serverTime += 5ULL * 1000000ULL;
+		if (!rdpudp_check(udp))
+			return FALSE;
+		/* Record when the client receives the datagrams sent in this step */
+		while (sent->hasDataSeq && (UINT16)(sent->lastDataSeq + 1 - *nextSeq) != 0 &&
+		       (UINT16)(sent->lastDataSeq - *nextSeq) < 0x8000)
+		{
+			const UINT32 inFlight = (UINT16)(*nextSeq - *acked);
+			due[*nextSeq] = g_serverTime + 1000000ULL * rttMs(inFlight);
+			(*nextSeq)++;
+		}
+		/* Acknowledge received datagrams in sequence. */
+		UINT16 ack = *acked;
+		while ((ack != *nextSeq) && (due[ack] <= g_serverTime))
+			ack++;
+		if (ack != *acked)
+		{
+			*acked = ack;
+			if (!server_receive_ack(udp, (UINT16)(ack - 1)))
+				return FALSE;
+		}
+		if ((ms - t <= 1000) && (rdpudp_get_send_window(udp) > *window))
+			*window = rdpudp_get_send_window(udp);
+	}
+	return TRUE;
+}
+
+static UINT32 rtt_2ms(WINPR_ATTR_UNUSED UINT32 inFlight)
+{
+	return 2;
+}
+
+static UINT32 rtt_100ms(WINPR_ATTR_UNUSED UINT32 inFlight)
+{
+	return 100;
+}
+
+/* Simulates a bottleneck queue: 2 ms base delay plus 0.1 ms per datagram in flight. */
+static UINT32 rtt_queue(UINT32 inFlight)
+{
+	return 2 + inFlight / 10;
+}
+
+/* The same queuing delay, but on a path with a 100 ms base delay */
+static UINT32 rtt_queue_100ms(UINT32 inFlight)
+{
+	return 100 + inFlight / 10;
+}
+
+/* The path delay increases from 2 ms to 100 ms mid-session (e.g., new route, VPN, handover).
+ * Since reducing the window doesn't lower the RTT, this should be treated as the new base
+ * delay. This allows the window to regrow rather than staying restricted for 10-20s until
+ * the 1 ms minimum expires, which previously caused video to nearly stop in mstsc. */
+static BOOL server_takes_a_lasting_delay_step_as_the_new_base(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	static UINT64 due[65536];
+	UINT16 nextSeq = 100;
+	UINT16 acked = 100;
+	size_t before = 0;
+	size_t after = 0;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+	if (!server_receive_data_aoa(udp, 100, 1) ||
+	    !server_run_paced(udp, &sent, rtt_2ms, 3000, due, &nextSeq, &acked, &before) ||
+	    !server_run_paced(udp, &sent, rtt_100ms, 3000, due, &nextSeq, &acked, &after))
+		goto out;
+	rc = (before >= 1000) && (after * 2 >= before);
+	if (!rc)
+		(void)fprintf(stderr, "send window %" PRIuz " before the delay step, %" PRIuz " after\n",
+		              before, after);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* A queue built by the sender drains when the window is cut, reducing the round trip time
+ * and keeping the window limited by the delay. This persists because if the minimum RTT
+ * were updated to the lowest sample of the last few seconds, the standing queue would be
+ * mistaken for the base delay, allowing the window to grow by the allowance. */
+static BOOL server_keeps_cutting_for_its_own_queue(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	static UINT64 due[65536];
+	UINT16 nextSeq = 100;
+	UINT16 acked = 100;
+	size_t window = 0;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+	if (!server_receive_data_aoa(udp, 100, 1) ||
+	    !server_run_paced(udp, &sent, rtt_queue, 45000, due, &nextSeq, &acked, &window))
+		goto out;
+	/* 1000 in-flight packets would be 102 ms, far exceeding the 2 ms base plus 30 ms allowance */
+	rc = (window < 1000);
+	if (!rc)
+		(void)fprintf(stderr, "send window %" PRIuz " with a queue of its own\n", window);
+out:
+	rdpudp_free(udp);
+	return rc;
+}
+
+/* The path delay drops from 100ms to 2ms while the sender maintains its own queue, so no
+ * sample reflects the new delay and the minimum remains at 100ms; the queue fills the gap
+ * left by the path. The drain probe finds the new minimum, reducing the round trip time. */
+static BOOL server_follows_the_base_delay_down(void)
+{
+	BOOL rc = FALSE;
+	ServerSent sent = WINPR_C_ARRAY_INIT;
+	static UINT64 due[65536];
+	UINT16 nextSeq = 100;
+	UINT16 acked = 100;
+	size_t window = 0;
+	rdpUdp* udp = server_accept(&sent);
+	if (!udp)
+		return FALSE;
+	/* Simulate the 100 ms delay incurred during the handshake. */
+	g_serverTime += 100ULL * 1000000ULL;
+	if (!server_receive_data_aoa(udp, 100, 1) ||
+	    !server_run_paced(udp, &sent, rtt_queue_100ms, 5000, due, &nextSeq, &acked, &window) ||
+	    !server_run_paced(udp, &sent, rtt_queue, 30000, due, &nextSeq, &acked, &window))
+		goto out;
+	/* 2 ms base delay plus a 30 ms allowance, and some growth (35 ms with the probe,
+	 * 60 ms without). */
+	rc = (rdpudp_get_rtt(udp) < 48);
+	if (!rc)
+		(void)fprintf(stderr, "round trip %" PRIu32 " ms after the delay fell to 2 ms\n",
+		              rdpudp_get_rtt(udp));
 out:
 	rdpudp_free(udp);
 	return rc;
@@ -2289,6 +2446,10 @@ static const TestCase cases[] = {
 	{ "server_ends_a_silent_connection", server_ends_a_silent_connection },
 	{ "server_waits_for_the_fourth_keepalive", server_waits_for_the_fourth_keepalive },
 	{ "server_takes_no_data_while_held", server_takes_no_data_while_held },
+	{ "server_takes_a_lasting_delay_step_as_the_new_base",
+	  server_takes_a_lasting_delay_step_as_the_new_base },
+	{ "server_keeps_cutting_for_its_own_queue", server_keeps_cutting_for_its_own_queue },
+	{ "server_follows_the_base_delay_down", server_follows_the_base_delay_down },
 	{ "server_keepalive_after_a_silence_is_an_ack_of_acks",
 	  server_keepalive_after_a_silence_is_an_ack_of_acks },
 	{ "idle_tunnel_survives_lost_wake_ups", idle_tunnel_survives_lost_wake_ups },

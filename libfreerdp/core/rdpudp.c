@@ -130,9 +130,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * RDPUDP2_GROWTH_ACKS acks (~12% per RTT) if the queue is not building. It shrinks to
  * 70% once per RTT if congested: either the round's loss is at least
  * RDPUDP2_CONGESTED_LOSS_PERCENT and at least RDPUDP2_LOSS_RISE_PERCENT points above the
- * smoothed loss of earlier rounds, or smoothed RTT exceeds the lowest sample of the last
- * RDPUDP2_RTT_MIN_WINDOW_MS by more than the maximum of RDPUDP2_QUEUE_DELAY_MS, half the
- * minimum RTT, or 4 * rttvar.
+ * smoothed loss of earlier rounds, or smoothed RTT exceeds the lowest sample by more than
+ * the maximum of RDPUDP2_QUEUE_DELAY_MS, half the minimum RTT, or 4 * rttvar. The lowest
+ * sample only rises when the round trip stays unchanged over RDPUDP2_DELAY_REBASE_CUTS such
+ * cuts; this identifies the path's new base delay rather than a queue.
  *
  * Random loss is repaired without slowing down. A Windows 11 server maintained ~4 MB/s
  * under 2% loss and 100 ms delay, whereas halving the window on every loss dropped
@@ -170,7 +171,16 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_LOSS_AVG_SHIFT 3
 #define RDPUDP2_ROUND_MIN_SAMPLES 16
 #define RDPUDP2_QUEUE_DELAY_MS 30
-#define RDPUDP2_RTT_MIN_WINDOW_MS 10000
+/* Number of consecutive delay verdicts with an unchanged minimum round trip required to
+ * update the path's base delay. See cc_delay_is_ours. */
+#define RDPUDP2_DELAY_REBASE_CUTS 2
+/* The percentage threshold (plus or minus) that the lowest round trip of a round must
+ * remain within relative to the last verdict to be counted as unchanged. */
+#define RDPUDP2_DELAY_REBASE_PERCENT 90
+/* If an application-limited sender hasn't reached the minimum RTT for this long, the value
+ * may be stale (e.g., the base delay decreased or cross traffic subsided while the sender
+ * maintained its own queue). A drain probe then re-measures it; see cc_probe. */
+#define RDPUDP2_RTT_PROBE_MS 10000
 
 /* Max distance the newest data sequence number can lead the oldest unacked one.
  * Data received behind a gap is buffered until the gap closes. With mstsc (100 ms delay,
@@ -358,6 +368,13 @@ struct rdp_udp
 	                        cc_round */
 	UINT32 ccRoundAcked;
 	UINT32 ccRoundLost;
+	UINT32 ccRoundRttMin;    /* Minimum RTT sample of the current round; UINT32_MAX if none */
+	UINT32 ccDelayCuts;      /* Consecutive delay verdicts that found the round trip unchanged */
+	UINT32 ccDelayLastRtt;   /* Lowest RTT sample of the latest delay verdict's round; 0 if none */
+	BOOL ccDelayHold;        /* TRUE: the last round was cut, its effect is not in samples yet */
+	UINT64 rttMinSeen;       /* Timestamp of the last sample that reached rttMin */
+	UINT32 ccProbe;          /* 0: no probe; 1: draining; 2: measuring (drain probe round) */
+	UINT32 ccProbeCwnd;      /* The congestion window size to restore after the probe */
 	UINT32 ccLossAvg;        /* Smoothed loss of the rounds with enough samples, in 1/1000 */
 	UINT32 reorderThreshold; /* Sequence distance beyond which a missing datagram is
 	                          * considered lost */
@@ -372,10 +389,7 @@ struct rdp_udp
 	} resent[RDPUDP2_RESENT_HISTORY]; /* Data sequence numbers that have been superseded by a
 	                                     retransmission */
 	size_t resentNext;
-	UINT32 rttMin; /* Lowest RTT sample from the previous and current windows; UINT32_MAX if none
-	                  was recorded */
-	UINT32 rttMinNext; /* lowest RTT sample for the window currently being collected */
-	UINT64 rttMinStart;
+	UINT32 rttMin; /* Minimum RTT sample; only increased by cc_delay_is_ours. UINT32_MAX if none. */
 	/* RTT for the reported-loss budget (see report_allowed). Unlike ccRoundStart,
 	 * this is purely time-based and ignores peer traffic. */
 	UINT64 reportRoundStart;
@@ -1553,10 +1567,15 @@ static void sample_rtt(rdpUdp* udp, const rdpudp_pending* p)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(p);
-	/* Karn: a retransmitted packet says nothing reliable about the round trip */
-	if (p->retransmits > 0)
+	/* Karn's algorithm states that ACKs for retransmitted packets are ambiguous if the sequence
+	 * number is reused. Version 3 servers use new sequence numbers for retransmissions, so the
+	 * ACK corresponds to the most recent transmission. This ensures that round trips exceeding
+	 * the timeout are still measured rather than being ignored. */
+	const BOOL lastIsKnown = udp->server && (udp->version == RDPUDP_PROTOCOL_VERSION_3);
+	if ((p->retransmits > 0) && !lastIsKnown)
 		return;
-	const UINT64 sample64 = now_ms(udp) - p->sent;
+	const UINT64 sentAt = (p->retransmits > 0) ? p->lastSent : p->sent;
+	const UINT64 sample64 = now_ms(udp) - sentAt;
 	const UINT32 sample =
 	    (sample64 > UINT32_MAX) ? UINT32_MAX : WINPR_ASSERTING_INT_CAST(UINT32, sample64);
 	if (!udp->server)
@@ -1567,17 +1586,19 @@ static void sample_rtt(rdpUdp* udp, const rdpudp_pending* p)
 		return;
 	}
 	udp->rtoBackoff = 0;
+	if (sample < udp->ccRoundRttMin)
+		udp->ccRoundRttMin = sample;
 	if (sample < udp->rttMin)
-		udp->rttMin = sample;
-	if (sample < udp->rttMinNext)
-		udp->rttMinNext = sample;
-	if (now_ms(udp) - udp->rttMinStart >= RDPUDP2_RTT_MIN_WINDOW_MS)
 	{
-		/* Update minimum RTT to avoid comparing against stale values if the route slows down. */
-		udp->rttMin = udp->rttMinNext;
-		udp->rttMinNext = UINT32_MAX;
-		udp->rttMinStart = now_ms(udp);
+		/* The first sample, taken during the handshake, encountered no queue. */
+		if (udp->rttMin == UINT32_MAX)
+			udp->rttMinSeen = now_ms(udp);
+		udp->rttMin = sample;
 	}
+	/* A sample at the minimum confirms it is not too low. If the sender's queue is empty,
+	 * it also confirms that the minimum is not too high. */
+	if ((sample <= udp->rttMin) && (Queue_Count(udp->sendQueue) == 0))
+		udp->rttMinSeen = now_ms(udp);
 	if (!udp->rttSampled)
 	{
 		/* Initialize SRTT and RTTVAR according to RFC 6298, Section 2.2 */
@@ -1608,6 +1629,99 @@ static BOOL cc_queue_is_building(const rdpUdp* udp)
 	return udp->srtt > udp->rttMin + allowance;
 }
 
+/* Called for a round that is cut for delay alone. A sender-built queue evolves after a cut:
+ * it grows from datagrams sent before the cut, then drains. If the lowest round trip
+ * remains stable (within RDPUDP2_DELAY_REBASE_PERCENT) for RDPUDP2_DELAY_REBASE_CUTS
+ * consecutive verdicts, the path itself has slowed (e.g., new route, VPN, handover).
+ * The current lowest round trip becomes the new minimum, the window regrows via slow
+ * start as on a new path, and the round is not cut.
+ * @return TRUE to cut the window for this round */
+WINPR_ATTR_NODISCARD
+static BOOL cc_delay_is_ours(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (udp->ccRoundRttMin == UINT32_MAX)
+		return TRUE;
+	const UINT64 now = udp->ccRoundRttMin;
+	const UINT64 last = udp->ccDelayLastRtt;
+	udp->ccDelayLastRtt = udp->ccRoundRttMin;
+	const BOOL flat = (last > 0) && (100ull * now >= RDPUDP2_DELAY_REBASE_PERCENT * last) &&
+	                  (100ull * now <= (200ull - RDPUDP2_DELAY_REBASE_PERCENT) * last);
+	if (!flat)
+	{
+		udp->ccDelayCuts = 0;
+		return TRUE;
+	}
+	if (++udp->ccDelayCuts < RDPUDP2_DELAY_REBASE_CUTS)
+		return TRUE;
+	WLog_Print(udp->log, WLOG_DEBUG,
+	           "round trip stayed at %" PRIu32 " ms after %" PRIu32 " cuts (lowest was %" PRIu32
+	           " ms): new base delay, slow start from a window of %" PRIu32,
+	           udp->ccRoundRttMin, RDPUDP2_DELAY_REBASE_CUTS, udp->rttMin, udp->cwnd);
+	udp->rttMin = udp->ccRoundRttMin;
+	udp->rttMinSeen = now_ms(udp);
+	udp->ssthresh = RDPUDP_MAX_IN_FLIGHT;
+	udp->ccDelayCuts = 0;
+	udp->ccDelayLastRtt = 0;
+	return FALSE;
+}
+
+/* The drain probe: if no sample reaches the minimum RTT for RDPUDP2_RTT_PROBE_MS, one round
+ * with the smallest window drains the sender's queue. ACKs from the next round are for
+ * datagrams sent into the empty queue, and their lowest round trip is used to update the
+ * minimum RTT. The window is then restored. Neither round triggers a congestion verdict.
+ * @return TRUE if this round belongs to a probe */
+WINPR_ATTR_NODISCARD
+static BOOL cc_probe(rdpUdp* udp, UINT64 now)
+{
+	WINPR_ASSERT(udp);
+	switch (udp->ccProbe)
+	{
+		case 1:
+			udp->ccProbe = 2;
+			return TRUE;
+		case 2:
+			if (udp->ccRoundRttMin != UINT32_MAX)
+			{
+				WLog_Print(udp->log, WLOG_DEBUG,
+				           "drain probe: lowest round trip %" PRIu32 " ms (was %" PRIu32
+				           " ms), congestion window back to %" PRIu32,
+				           udp->ccRoundRttMin, udp->rttMin, udp->ccProbeCwnd);
+				udp->rttMin = udp->ccRoundRttMin;
+			}
+			else
+				WLog_Print(
+				    udp->log, WLOG_DEBUG,
+				    "drain probe: no round trip measured, congestion window back to %" PRIu32,
+				    udp->ccProbeCwnd);
+			udp->rttMinSeen = now;
+			udp->cwnd = udp->ccProbeCwnd;
+			udp->ccProbe = 0;
+			return TRUE;
+		default:
+			if ((udp->rttMin == UINT32_MAX) || (now - udp->rttMinSeen < RDPUDP2_RTT_PROBE_MS))
+				return FALSE;
+			udp->ccProbeCwnd = udp->cwnd;
+			udp->cwnd = RDPUDP2_MIN_CWND;
+			udp->ccProbe = 1;
+			udp->ccAcked = 0;
+			udp->ccDelayCuts = 0;
+			udp->ccDelayLastRtt = 0;
+			udp->ccDelayHold = FALSE;
+			return TRUE;
+	}
+}
+
+/* Initialize the state for the next congestion control round. */
+static void cc_round_reset(rdpUdp* udp, UINT64 now)
+{
+	WINPR_ASSERT(udp);
+	udp->ccRoundStart = now;
+	udp->ccRoundAcked = 0;
+	udp->ccRoundLost = 0;
+	udp->ccRoundRttMin = UINT32_MAX;
+}
+
 /* End the current round after one smoothed RTT; shrink window to 70% if congestion was
  * detected. */
 static void cc_round(rdpUdp* udp)
@@ -1619,6 +1733,11 @@ static void cc_round(rdpUdp* udp)
 		udp->ccRoundStart = now;
 	if (now - udp->ccRoundStart < rtt)
 		return;
+	if (cc_probe(udp, now))
+	{
+		cc_round_reset(udp, now);
+		return;
+	}
 
 	/* Use 64-bit sum to prevent overflow. */
 	const UINT64 total = (UINT64)udp->ccRoundAcked + udp->ccRoundLost;
@@ -1634,13 +1753,29 @@ static void cc_round(rdpUdp* udp)
 		udp->ccLossAvg = WINPR_ASSERTING_INT_CAST(
 		    UINT32, (INT64)udp->ccLossAvg + delta / (1 << RDPUDP2_LOSS_AVG_SHIFT));
 	}
-	const BOOL queued = cc_queue_is_building(udp);
+	BOOL queued = cc_queue_is_building(udp);
+	if (queued && !lossy)
+	{
+		/* Samples in the round after a window cut come from datagrams sent before the cut;
+		 * re-evaluate delay only once they reflect the effect of the reduction. */
+		if (udp->ccDelayHold)
+			queued = FALSE;
+		else
+			queued = cc_delay_is_ours(udp);
+	}
+	else
+	{
+		udp->ccDelayCuts = 0;
+		udp->ccDelayLastRtt = 0;
+	}
+	udp->ccDelayHold = FALSE;
 	if (lossy || queued)
 	{
 		const UINT32 reduced = WINPR_ASSERTING_INT_CAST(UINT32, udp->cwnd * 7ull / 10);
 		udp->ssthresh = (reduced > RDPUDP2_MIN_CWND) ? reduced : RDPUDP2_MIN_CWND;
 		udp->cwnd = udp->ssthresh;
 		udp->ccAcked = 0;
+		udp->ccDelayHold = TRUE;
 		WLog_Print(udp->log, WLOG_DEBUG,
 		           "congestion (%" PRIu32 " of %" PRIu64 " lost, round trip %" PRIu32
 		           " ms, lowest %" PRIu32 " ms), congestion window %" PRIu32,
@@ -1652,16 +1787,18 @@ static void cc_round(rdpUdp* udp)
 		udp->reorderThreshold--;
 		udp->reorderCalmRounds = 0;
 	}
-	udp->ccRoundStart = now;
-	udp->ccRoundAcked = 0;
-	udp->ccRoundLost = 0;
+	cc_round_reset(udp, now);
 }
 
 static void cc_on_ack(rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
 	udp->ccRoundAcked++;
-	if (udp->cwnd < udp->ssthresh)
+	if (udp->ccProbe != 0)
+	{
+		/* Keep the congestion window small until the probe completes. */
+	}
+	else if (udp->cwnd < udp->ssthresh)
 		udp->cwnd++;
 	else if (!cc_queue_is_building(udp) && (++udp->ccAcked >= RDPUDP2_GROWTH_ACKS))
 	{
@@ -2914,7 +3051,7 @@ rdpUdp* rdpudp_new(wLog* log, const BYTE* cookieHash, rdpUdpReceiveFn receive, v
 	 * reach 0, which is used to mark an empty slot. */
 	udp->v3ExpectedFull = 0x10000;
 	udp->rttMin = UINT32_MAX;
-	udp->rttMinNext = UINT32_MAX;
+	udp->ccRoundRttMin = UINT32_MAX;
 	udp->reorderThreshold = RDPUDP2_REORDER_THRESHOLD;
 	udp->chunkReach = RDPUDP_RECEIVE_REACH;
 	udp->offerV3 = (cookieHash != nullptr);
