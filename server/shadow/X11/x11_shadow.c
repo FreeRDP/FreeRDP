@@ -33,6 +33,7 @@
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
 
+#include <winpr/endian.h>
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
@@ -223,8 +224,13 @@ static BOOL pressKey(Display* display, KeySym sym)
 		WLog_WARN(TAG, "No KeyCode mapped for KeySym=%lu", sym);
 		return FALSE;
 	}
-	if ((XTestFakeKeyEvent(display, key, True, CurrentTime) == 0) ||
-	    (XTestFakeKeyEvent(display, key, False, CurrentTime) == 0))
+
+	Sleep(5);
+	const int rc1 = XTestFakeKeyEvent(display, key, True, CurrentTime);
+	Sleep(5);
+	const int rc2 = XTestFakeKeyEvent(display, key, False, CurrentTime);
+
+	if ((rc1 == 0) || (rc2 == 0))
 	{
 		WLog_WARN(TAG, "Failed to synghesize KeyCode=%u event", key);
 		return FALSE;
@@ -265,6 +271,17 @@ static char* nameForIndicator(Display* display, unsigned int pos)
 	XkbFreeKeyboard(xkb, 0, True);
 	return name;
 }
+
+WINPR_ATTR_NODISCARD
+static unsigned int utf16_to_utf32(WCHAR lehigh, WCHAR lelow)
+{
+	const WCHAR high = winpr_Data_Get_UINT16(&lehigh);
+	const WCHAR low = winpr_Data_Get_UINT16(&lelow);
+	unsigned int u32 = high;
+	if ((high >= 0xD800u) && (high <= 0xDBFFu) && (low >= 0xDC00u) && (low <= 0xDFFFu))
+		u32 = ((high - 0xD800u) << 10u) + (low - 0xDC00u) + 0x10000u;
+	return u32;
+}
 #endif
 
 WINPR_ATTR_NODISCARD
@@ -286,6 +303,7 @@ static BOOL x11_shadow_input_synchronize_event(WINPR_ATTR_UNUSED rdpShadowSubsys
 	{
 		if (!isKeyPressed(x11->display, x))
 			continue;
+		Sleep(5);
 		XTestFakeKeyEvent(x11->display, x, False, CurrentTime);
 	}
 
@@ -408,10 +426,10 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 		XLockDisplay(x11->display);
 		XTestGrabControl(x11->display, True);
 
-		if (flags & KBD_FLAGS_RELEASE)
-			XTestFakeKeyEvent(x11->display, keycode, False, CurrentTime);
-		else
-			XTestFakeKeyEvent(x11->display, keycode, True, CurrentTime);
+		Sleep(5);
+
+		const Bool down = ((flags & KBD_FLAGS_RELEASE) == 0);
+		XTestFakeKeyEvent(x11->display, keycode, down, CurrentTime);
 
 		XTestGrabControl(x11->display, False);
 		XFlush(x11->display);
@@ -427,10 +445,156 @@ WINPR_ATTR_NODISCARD
 static BOOL x11_shadow_input_unicode_keyboard_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
                                                     WINPR_ATTR_UNUSED rdpShadowClient* client,
                                                     WINPR_ATTR_UNUSED UINT16 flags,
-                                                    WINPR_ATTR_UNUSED UINT16 code)
+                                                    WINPR_ATTR_UNUSED UINT16 lecode)
 {
-	/* TODO: Implement */
-	WLog_WARN(TAG, "not implemented");
+#ifdef WITH_XTEST
+	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
+	BOOL down = FALSE;
+
+	if (!client || !subsystem)
+		return FALSE;
+
+	if ((flags & KBD_FLAGS_RELEASE) == 0)
+		down = TRUE;
+
+	// Ensure native endianness
+	const WCHAR becode = winpr_Data_Get_UINT16(&lecode);
+	const WCHAR surrogate = x11->surrogate;
+	if ((becode >= 0xD800) && (becode <= 0xDBFF))
+	{
+		if (!down)
+		{
+			if (surrogate != becode)
+				WLog_WARN(TAG,
+				          "Invalid high surrogate: mismatch between key down and key up, ignoring");
+			return TRUE;
+		}
+		x11->surrogate = lecode;
+		return TRUE;
+	}
+	else if (!down)
+		x11->surrogate = 0;
+
+	BOOL isSurrogate = FALSE;
+	if (surrogate != 0)
+	{
+		if ((becode >= 0xDC00) && (becode <= 0xDFFF))
+			isSurrogate = TRUE;
+		else
+			WLog_WARN(TAG, "Received invalid surrogate sequence, discarding.");
+	}
+
+	XLockDisplay(x11->display);
+	/* Unicode keysym encoding: 0x01000000 | code point. */
+	KeySym unicode_keysym = NoSymbol;
+	KeyCode keycode = AnyKey;
+
+	if (!isSurrogate && ((becode < 0x20) || (becode == 0x7f)))
+	{
+		switch (becode)
+		{
+			case 0x7f:
+				unicode_keysym = XK_Delete;
+				break;
+			case 0x08:
+				unicode_keysym = XK_BackSpace;
+				break;
+			case 0x09:
+				unicode_keysym = XK_Tab;
+				break;
+			case 0x0a:
+				unicode_keysym = XK_Linefeed;
+				break;
+			case 0x0d:
+				unicode_keysym = XK_Return;
+				break;
+			case 0x18:
+				unicode_keysym = XK_Cancel;
+				break;
+			case 0x1e:
+				unicode_keysym = XK_Escape;
+				break;
+
+			default:
+				WLog_WARN(TAG, "ASCII control 0x%02x unmapped, ignoring", becode);
+				break;
+				/*
+				0x00	NUL		Null character
+				0x01	SOH		Start of Heading
+				0x02	STX		Start of Text
+				0x03	ETX		End of Text
+				0x04	EOT		End of Transmission
+				0x05	ENQ		Enquiry
+				0x06	ACK		Acknowledge
+				0x07	BEL		Bell, Alert
+				0x09	HT		Horizontal Tab
+				0x0B	VT		Vertical Tabulation
+				0x0C	FF		Form Feed
+				0x0E	SO		Shift Out
+				0x0F	SI		Shift In
+				0x10	DLE		Data Link Escape
+				0x11	DC1		Device Control One (XON)
+				0x12	DC2		Device Control Two
+				0x13	DC3		Device Control Three (XOFF)
+				0x14	DC4		Device Control Four
+				0x15	NAK		Negative Acknowledge
+				0x16	SYN		Synchronous Idle
+				0x17	ETB		End of Transmission Block
+				0x19	EM		End of medium
+				0x1A	SUB		Substitute
+				0x1C	FS		File Separator
+				0x1D	GS		Group Separator
+				0x1E	RS		Record Separator
+				0x1F	US		Unit Separator
+				*/
+		}
+		if (unicode_keysym != NoSymbol)
+		{
+			keycode = XKeysymToKeycode(x11->display, unicode_keysym);
+			if (keycode == AnyKey)
+			{
+				keycode = 255;
+				XChangeKeyboardMapping(x11->display, keycode, 1, &unicode_keysym, 1);
+				XSync(x11->display, False);
+			}
+		}
+	}
+	else
+	{
+		if (isSurrogate)
+			unicode_keysym = utf16_to_utf32(surrogate, lecode) | 0x01000000u;
+		else
+		{
+			char buffer[32] = WINPR_C_ARRAY_INIT;
+			(void)ConvertWCharNToUtf8(&lecode, 1, buffer, sizeof(buffer));
+			unicode_keysym = XStringToKeysym(buffer);
+		}
+
+		if (unicode_keysym != NoSymbol)
+			keycode = XKeysymToKeycode(x11->display, unicode_keysym);
+
+		if (keycode == AnyKey)
+		{
+			/* Map this keycode to the Unicode keysym. */
+			keycode = 255;
+			XChangeKeyboardMapping(x11->display, keycode, 1, &unicode_keysym, 1);
+			XSync(x11->display, False);
+		}
+	}
+
+	if (keycode != AnyKey)
+	{
+		XTestGrabControl(x11->display, True);
+		Sleep(5);
+		XTestFakeKeyEvent(x11->display, keycode, down, CurrentTime);
+		XTestGrabControl(x11->display, False);
+		XSync(x11->display, False);
+		XFlush(x11->display);
+	}
+	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "UnicodeKeyboardEvent not supported by backend, ignoring");
+#endif
 	return TRUE;
 }
 
