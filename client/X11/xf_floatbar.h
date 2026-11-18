@@ -38,6 +38,9 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event);
 BOOL xf_floatbar_check_event(xfFloatbar* floatbar, const XEvent* event);
 BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen);
 BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar);
+/* Time in ms the event loop may block for before the floatbar needs another update,
+ * INFINITE if nothing is pending */
+DWORD xf_floatbar_get_wait_timeout(xfFloatbar* floatbar);
 BOOL xf_floatbar_set_root_y(xfFloatbar* floatbar, int y);
 
 BOOL xfc_is_floatbar_window(xfContext* xfc, Window window);
