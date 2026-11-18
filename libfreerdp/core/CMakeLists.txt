@@ -151,6 +151,8 @@ set(${MODULE_PREFIX}_SRCS
     rdstls.h
     aad.c
     aad.h
+    aad_cloud.c
+    aad_cloud.h
     timer.c
     timer.h
 )

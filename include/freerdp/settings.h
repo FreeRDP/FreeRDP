@@ -890,7 +890,6 @@ extern "C"
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty,
 	                                             size_t* plength);
 
@@ -902,8 +901,40 @@ extern "C"
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length);
+
+	/** @brief Helper utility to apply configuration settings for \ref AAD gateways from known
+	 * configurations
+	 *
+	 *  @param settings The settings to update, must not be NULL
+	 *  @param name The name of the \ref AAD gateway configuration. \ref commercial is the default.
+	 *  @return TRUE if successfully applied, FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_utils_aad_apply_known_configuration(rdpSettings* settings,
+	                                                             const char* name);
+
+	/** @brief Helper utility to apply configuration settings for \ref AAD gateways from known
+	 * gateway URL
+	 *
+	 *  @param settings The settings to update, must not be NULL
+	 *  @param url The url of the \ref AAD gateway. Must not be NULL.
+	 *  @return TRUE if successfully applied, FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_utils_aad_apply_known_configuration_by_url(rdpSettings* settings,
+	                                                                    const char* url);
+
+	/** @brief return a list of configurations supported by build
+	 *
+	 *  @param pcount A pointer set to the number of elements in the list. Must not be NULL
+	 *  @return A pointer to the list
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char** freerdp_utils_aad_configuration_list(size_t* pcount);
 
 #ifdef __cplusplus
 }

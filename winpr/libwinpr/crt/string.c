@@ -83,17 +83,24 @@ char* winpr_str_url_decode(const char* str, size_t len)
 	return dst;
 }
 
-char* winpr_str_url_encode(const char* str, size_t len)
+char* winpr_str_url_encode(const char* cstr, size_t len)
 {
 	char* dst = calloc(len + 1, sizeof(char) * 3);
 	if (!dst)
 		return nullptr;
-
-	if (!uriEscapeA(str, dst, URI_FALSE, URI_FALSE))
+	char* str = strndup(cstr, len);
+	if (!str)
 	{
 		free(dst);
 		return nullptr;
 	}
+	if (!uriEscapeA(str, dst, URI_FALSE, URI_FALSE))
+	{
+		free(dst);
+		free(str);
+		return nullptr;
+	}
+	free(str);
 	return dst;
 }
 
