@@ -101,7 +101,8 @@ FREERDP_LOCAL BOOL rdpemt_start(rdpEmt* emt, const struct sockaddr* addr, size_t
 WINPR_ATTR_MALLOC(rdpemt_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie,
-                                        struct x509_st* cert, struct evp_pkey_st* key, BOOL manual,
+                                        struct rdp_certificate* cert,
+                                        const struct rdp_private_key* key, BOOL manual,
                                         rdpEmtEventFn callback, void* custom);
 #endif
 

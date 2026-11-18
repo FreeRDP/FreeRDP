@@ -46,6 +46,7 @@
 #include <freerdp/crypto/certificate.h>
 
 #include "../crypto/certificate.h"
+#include "../crypto/privatekey.h"
 #include "rdpudp.h"
 #include "udplistener.h"
 #include "rdpemt.h"
@@ -1446,8 +1447,9 @@ BOOL rdpemt_set_tls_settings(rdpEmt* emt, UINT16 minVersion, UINT16 maxVersion, 
 }
 
 #if defined(WITH_RDPEUDP_SERVER)
-rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, X509* cert,
-                          EVP_PKEY* key, BOOL manual, rdpEmtEventFn callback, void* custom)
+rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, rdpCertificate* cert,
+                          const rdpPrivateKey* key, BOOL manual, rdpEmtEventFn callback,
+                          void* custom)
 {
 	WINPR_ASSERT(log);
 	WINPR_ASSERT(cookie);
@@ -1473,12 +1475,13 @@ rdpEmt* rdpemt_new_server(wLog* log, UINT32 requestId, const BYTE* cookie, X509*
 	}
 
 	/* Store references immediately so rdpemt_free can release them on failure. */
-	if (X509_up_ref(cert) != 1)
+	X509* x509 = freerdp_certificate_get_x509(cert);
+	if (!x509 || (X509_up_ref(x509) != 1))
 		goto fail;
-	emt->cert = cert;
-	if (EVP_PKEY_up_ref(key) != 1)
+	emt->cert = x509;
+	emt->key = freerdp_key_get_evp_pkey(key); /* Obtains a new reference */
+	if (!emt->key)
 		goto fail;
-	emt->key = key;
 
 	if (!emt_cookie_hash(emt->cookie, emt->cookieHash))
 		goto fail;

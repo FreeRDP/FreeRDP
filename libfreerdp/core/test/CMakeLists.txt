@@ -76,12 +76,12 @@ endif()
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
-# TestCore does not call winpr-tools APIs. The link was added with
-# TestFuzzServer's on-the-fly cert generation and broke -DWITH_WINPR_TOOLS=OFF.
+# TestCore optionally uses winpr-tools: TestUdpListener requires makecert to create a
+# certificate for its tunnel test; otherwise, that test is omitted.
 target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
-if(WITH_RDPEUDP AND BUILD_TESTING_INTERNAL)
-  # TestUdpListener makes a certificate for a tunnel's TLS session.
-  target_link_libraries(${MODULE_NAME} PRIVATE ${OPENSSL_LIBRARIES})
+if(WITH_WINPR_TOOLS AND WITH_RDPEUDP_SERVER AND BUILD_TESTING_INTERNAL)
+  target_link_libraries(${MODULE_NAME} PRIVATE winpr-tools)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_WINPR_TOOLS)
 endif()
 set(CORE_FUZZER_LIBS freerdp-client ${OPENSSL_LIBRARIES})
 if(WITH_WINPR_TOOLS)

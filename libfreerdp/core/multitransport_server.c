@@ -260,7 +260,7 @@ static BOOL multitransport_server_start_tunnel(rdpMultitransport* multi)
 		return FALSE;
 	}
 	rdpEmt* emt = rdpemt_new_server(WLog_Get(TAG), multi->reliableReqId, multi->reliableCookie,
-	                                x509, evp, multi->udpCallbacks.ManualWorker,
+	                                cert, key, multi->udpCallbacks.ManualWorker,
 	                                multitransport_server_tunnel_event, multi);
 	EVP_PKEY_free(evp);
 	if (!emt)
@@ -684,7 +684,7 @@ BOOL freerdp_peer_set_udp_callbacks(freerdp_peer* peer, const FreeRDP_UdpPeerCal
 	}
 
 	const rdpUdpPeerHooks hooks = { .LinkChanged = callbacks->LinkChanged,
-	                                .WriteUnblocked = callbacks->WriteUnblocked };
+		                            .WriteUnblocked = callbacks->WriteUnblocked };
 	return freerdp_peer_set_udp_hooks(peer, &hooks, custom);
 }
 
