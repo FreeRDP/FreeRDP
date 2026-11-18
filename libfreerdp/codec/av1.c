@@ -48,6 +48,10 @@
 #include "av1_webcodecs.h"
 #endif
 
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+#include "av1_videotoolbox.h"
+#endif
+
 #if defined(WITH_LIBAOM) || defined(WITH_DAV1D)
 
 #if defined(WITH_LIBYUV)
@@ -88,6 +92,10 @@ struct S_FREERDP_AV1_CONTEXT
 #endif
 #if defined(WITH_AV1_WEBCODECS)
 	int webcodecs; /* VideoDecoder handle, 0 if unused */
+#endif
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	AV1_VT* vt;    /* nullptr without a hardware AV1 decoder */
+	bool vtStream; /* the current stream is VideoToolbox's (else the software decoder's) */
 #endif
 	BYTE* yuvdata[3];
 	UINT32 yuvWidth;
@@ -577,6 +585,71 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 	return TRUE;
 }
 
+#if defined(WITH_DAV1D) || defined(WITH_AV1_VIDEOTOOLBOX)
+/* Convert a decoded 8 bit 4:2:0 or 4:4:4 picture to RGB, bounded to the destination surface */
+static INT32 av1_convert_planar(FREERDP_AV1_CONTEXT* av1, BOOL i444, const BYTE* const planes[3],
+                                const UINT32 strides[3], UINT32 dw, UINT32 dh, BYTE* pDstData,
+                                DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
+                                UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                                UINT32 numRegionRect)
+{
+	/* The decoded frame may be smaller than the destination surface, so
+	 * bound the converted region to it. Otherwise the colour conversion
+	 * reads past the decoded image planes. */
+	const UINT32 nWidth = (dw < nDstWidth) ? dw : nDstWidth;
+	const UINT32 nHeight = (dh < nDstHeight) ? dh : nDstHeight;
+	const prim_size_t roi = { .width = nWidth, .height = nHeight };
+
+	if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
+		return -2;
+
+	pstatus_t rec = -1;
+#if defined(WITH_LIBYUV)
+	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
+	 * DstFormat, so the fast path only applies for that layout; anything else must go
+	 * through the format-aware primitives conversion below. */
+	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
+	{
+		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
+		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
+		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
+		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
+		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
+		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
+
+		if (i444)
+			rec = J444ToARGB(planes[0], stride0, planes[1], stride1, planes[2], stride2, pDstData,
+			                 iDstStep, iWidth, iHeight);
+		else
+			rec = J420ToARGB(planes[0], stride0, planes[1], stride1, planes[2], stride2, pDstData,
+			                 iDstStep, iWidth, iHeight);
+	}
+	else
+#endif
+	{
+		primitives_t* primitives = primitives_get();
+		if (!primitives)
+		{
+			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
+			return -1;
+		}
+
+		const BYTE* pSrc[] = { planes[0], planes[1], planes[2] };
+		if (i444)
+			rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
+		else
+			rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
+			                                        &roi);
+	}
+	if (rec != 0)
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "YUV to RGB conversion failed: %d", rec);
+		return -1;
+	}
+	return TRUE;
+}
+#endif
+
 #if defined(WITH_DAV1D)
 static void av1_dav1d_data_free(WINPR_ATTR_UNUSED const uint8_t* buf,
                                 WINPR_ATTR_UNUSED void* cookie)
@@ -594,88 +667,20 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 		WLog_Print(av1->log, WLOG_ERROR, "dav1d picture bpc %d not supported", pic->p.bpc);
 		return -1;
 	}
-
-	/* The decoded frame may be smaller than the destination surface, so
-	 * bound the converted region to it. Otherwise the colour conversion
-	 * reads past the decoded image planes. */
-	const UINT32 dw = (UINT32)pic->p.w;
-	const UINT32 dh = (UINT32)pic->p.h;
-	const UINT32 nWidth = (dw < nDstWidth) ? dw : nDstWidth;
-	const UINT32 nHeight = (dh < nDstHeight) ? dh : nDstHeight;
-	const prim_size_t roi = { .width = nWidth, .height = nHeight };
-
-	if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
-		return -2;
-
-	const UINT32 strides[] = { (UINT32)pic->stride[0], (UINT32)pic->stride[1],
-		                       (UINT32)pic->stride[1] };
-
-	pstatus_t rec = -1;
-#if defined(WITH_LIBYUV)
-	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
-	 * DstFormat, so the fast path only applies for that layout; anything else must go
-	 * through the format-aware primitives conversion below. */
-	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
+	if ((pic->p.layout != DAV1D_PIXEL_LAYOUT_I420) && (pic->p.layout != DAV1D_PIXEL_LAYOUT_I444))
 	{
-		const uint8_t* y = pic->data[0];
-		const uint8_t* u = pic->data[1];
-		const uint8_t* v = pic->data[2];
-
-		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
-		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
-		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
-		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
-		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
-		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
-
-		switch (pic->p.layout)
-		{
-			case DAV1D_PIXEL_LAYOUT_I420:
-				rec = J420ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
-				                 iHeight);
-				break;
-			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = J444ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
-				                 iHeight);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
-				           pic->p.layout);
-				return -1;
-		}
-	}
-	else
-#endif
-	{
-		primitives_t* primitives = primitives_get();
-		if (!primitives)
-		{
-			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
-			return -1;
-		}
-
-		const BYTE* pSrc[] = { pic->data[0], pic->data[1], pic->data[2] };
-		switch (pic->p.layout)
-		{
-			case DAV1D_PIXEL_LAYOUT_I420:
-				rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
-				break;
-			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported",
-				           pic->p.layout);
-				return -1;
-		}
-	}
-	if (rec != 0)
-	{
-		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
+		WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported", pic->p.layout);
 		return -1;
 	}
-	return TRUE;
+
+	const BYTE* const planes[] = { pic->data[0], pic->data[1], pic->data[2] };
+	const UINT32 strides[] = { WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[0]),
+		                       WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[1]),
+		                       WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[1]) };
+	return av1_convert_planar(av1, pic->p.layout == DAV1D_PIXEL_LAYOUT_I444, planes, strides,
+	                          WINPR_ASSERTING_INT_CAST(UINT32, pic->p.w),
+	                          WINPR_ASSERTING_INT_CAST(UINT32, pic->p.h), pDstData, DstFormat,
+	                          nDstStep, nDstWidth, nDstHeight, regionRects, numRegionRect);
 }
 
 /* Return: TRUE if a picture was converted, FALSE if none was ready (EAGAIN), <0 on error. */
@@ -714,6 +719,37 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 
 	if (!areRectsValid(av1->log, nDstWidth, nDstHeight, regionRects, numRegionRect))
 		return -2;
+
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	if (av1->vt && av1->vtStream)
+	{
+		AV1_VT_PICTURE pic = WINPR_C_ARRAY_INIT;
+		const INT32 vrc = av1_vt_decode(av1->vt, pSrcData, SrcSize, &pic);
+		if (vrc == TRUE)
+			return av1_convert_planar(av1, pic.i444, pic.planes, pic.strides, pic.width, pic.height,
+			                          pDstData, DstFormat, nDstStep, nDstWidth, nDstHeight,
+			                          regionRects, numRegionRect);
+		if (vrc == FALSE)
+			return TRUE;
+		/* bad input: refused, the stream stays with VideoToolbox */
+		if (vrc == AV1_VT_INVALID)
+			return -1;
+
+		/* The software decoder takes the rest of this stream (until the next reset). */
+		av1->vtStream = false;
+		if (vrc != AV1_VT_UNSUPPORTED)
+		{
+			/* In the middle of the stream: the software decoder has none of its references,
+			 * it only picks up at a new sequence header. */
+			WLog_Print(av1->log, WLOG_WARN,
+			           "VideoToolbox AV1 decode failed (%" PRId32 "), software decoder from the "
+			           "next sequence header",
+			           vrc);
+			return vrc;
+		}
+		/* This temporal unit starts the stream, the software decoder starts with it. */
+	}
+#endif
 
 #if defined(WITH_AV1_WEBCODECS)
 	if (av1->webcodecs > 0)
@@ -901,6 +937,18 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 	}
 	else
 	{
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+		if (!av1->vt)
+		{
+			av1->vt = av1_vt_new(av1->log);
+			WLog_Print(av1->log, WLOG_INFO, "AV1 decoder: %s",
+			           av1->vt ? "VideoToolbox (hardware), software as fallback"
+			                   : "software (no VideoToolbox AV1 decoder)");
+		}
+		else
+			av1_vt_reset(av1->vt);
+		av1->vtStream = (av1->vt != nullptr);
+#endif
 #if defined(WITH_AV1_WEBCODECS)
 		if (av1->webcodecs == 0)
 		{
@@ -994,6 +1042,9 @@ void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1)
 	}
 #if defined(WITH_AV1_WEBCODECS)
 	av1_wc_close(av1->webcodecs);
+#endif
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	av1_vt_free(av1->vt);
 #endif
 	winpr_aligned_free(av1->yuvdata[0]);
 	winpr_aligned_free(av1->yuvdata[1]);
