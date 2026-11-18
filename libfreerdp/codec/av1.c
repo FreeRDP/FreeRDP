@@ -578,6 +578,71 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 }
 
 #if defined(WITH_DAV1D)
+/* Convert a decoded 8 bit 4:2:0 or 4:4:4 picture to RGB, bounded to the destination surface */
+static INT32 av1_convert_planar(FREERDP_AV1_CONTEXT* av1, BOOL i444, const BYTE* const planes[3],
+                                const UINT32 strides[3], UINT32 dw, UINT32 dh, BYTE* pDstData,
+                                DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
+                                UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                                UINT32 numRegionRect)
+{
+	/* The decoded frame may be smaller than the destination surface, so
+	 * bound the converted region to it. Otherwise the colour conversion
+	 * reads past the decoded image planes. */
+	const UINT32 nWidth = (dw < nDstWidth) ? dw : nDstWidth;
+	const UINT32 nHeight = (dh < nDstHeight) ? dh : nDstHeight;
+	const prim_size_t roi = { .width = nWidth, .height = nHeight };
+
+	if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
+		return -2;
+
+	pstatus_t rec = -1;
+#if defined(WITH_LIBYUV)
+	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
+	 * DstFormat, so the fast path only applies for that layout; anything else must go
+	 * through the format-aware primitives conversion below. */
+	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
+	{
+		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
+		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
+		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
+		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
+		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
+		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
+
+		if (i444)
+			rec = J444ToARGB(planes[0], stride0, planes[1], stride1, planes[2], stride2, pDstData,
+			                 iDstStep, iWidth, iHeight);
+		else
+			rec = J420ToARGB(planes[0], stride0, planes[1], stride1, planes[2], stride2, pDstData,
+			                 iDstStep, iWidth, iHeight);
+	}
+	else
+#endif
+	{
+		primitives_t* primitives = primitives_get();
+		if (!primitives)
+		{
+			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
+			return -1;
+		}
+
+		const BYTE* pSrc[] = { planes[0], planes[1], planes[2] };
+		if (i444)
+			rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
+		else
+			rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
+			                                        &roi);
+	}
+	if (rec != 0)
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "YUV to RGB conversion failed: %d", rec);
+		return -1;
+	}
+	return TRUE;
+}
+#endif
+
+#if defined(WITH_DAV1D)
 static void av1_dav1d_data_free(WINPR_ATTR_UNUSED const uint8_t* buf,
                                 WINPR_ATTR_UNUSED void* cookie)
 {
@@ -594,88 +659,18 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 		WLog_Print(av1->log, WLOG_ERROR, "dav1d picture bpc %d not supported", pic->p.bpc);
 		return -1;
 	}
-
-	/* The decoded frame may be smaller than the destination surface, so
-	 * bound the converted region to it. Otherwise the colour conversion
-	 * reads past the decoded image planes. */
-	const UINT32 dw = (UINT32)pic->p.w;
-	const UINT32 dh = (UINT32)pic->p.h;
-	const UINT32 nWidth = (dw < nDstWidth) ? dw : nDstWidth;
-	const UINT32 nHeight = (dh < nDstHeight) ? dh : nDstHeight;
-	const prim_size_t roi = { .width = nWidth, .height = nHeight };
-
-	if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
-		return -2;
-
-	const UINT32 strides[] = { (UINT32)pic->stride[0], (UINT32)pic->stride[1],
-		                       (UINT32)pic->stride[1] };
-
-	pstatus_t rec = -1;
-#if defined(WITH_LIBYUV)
-	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
-	 * DstFormat, so the fast path only applies for that layout; anything else must go
-	 * through the format-aware primitives conversion below. */
-	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
+	if ((pic->p.layout != DAV1D_PIXEL_LAYOUT_I420) && (pic->p.layout != DAV1D_PIXEL_LAYOUT_I444))
 	{
-		const uint8_t* y = pic->data[0];
-		const uint8_t* u = pic->data[1];
-		const uint8_t* v = pic->data[2];
-
-		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
-		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
-		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
-		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
-		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
-		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
-
-		switch (pic->p.layout)
-		{
-			case DAV1D_PIXEL_LAYOUT_I420:
-				rec = J420ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
-				                 iHeight);
-				break;
-			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = J444ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
-				                 iHeight);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
-				           pic->p.layout);
-				return -1;
-		}
-	}
-	else
-#endif
-	{
-		primitives_t* primitives = primitives_get();
-		if (!primitives)
-		{
-			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
-			return -1;
-		}
-
-		const BYTE* pSrc[] = { pic->data[0], pic->data[1], pic->data[2] };
-		switch (pic->p.layout)
-		{
-			case DAV1D_PIXEL_LAYOUT_I420:
-				rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
-				break;
-			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported",
-				           pic->p.layout);
-				return -1;
-		}
-	}
-	if (rec != 0)
-	{
-		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
+		WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported", pic->p.layout);
 		return -1;
 	}
-	return TRUE;
+
+	const BYTE* const planes[] = { pic->data[0], pic->data[1], pic->data[2] };
+	const UINT32 strides[] = { (UINT32)pic->stride[0], (UINT32)pic->stride[1],
+		                       (UINT32)pic->stride[1] };
+	return av1_convert_planar(av1, pic->p.layout == DAV1D_PIXEL_LAYOUT_I444, planes, strides,
+	                          (UINT32)pic->p.w, (UINT32)pic->p.h, pDstData, DstFormat, nDstStep,
+	                          nDstWidth, nDstHeight, regionRects, numRegionRect);
 }
 
 /* Return: TRUE if a picture was converted, FALSE if none was ready (EAGAIN), <0 on error. */
