@@ -1393,7 +1393,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, INT32 r
 #ifdef WITH_XEXT
 	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
 
-	for (int i = 0; i < nrects; i++)
+	for (size_t i = 0; i < nrects; i++)
 	{
 		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
 		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
