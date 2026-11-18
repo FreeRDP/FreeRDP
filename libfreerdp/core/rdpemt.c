@@ -1610,7 +1610,7 @@ rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt)
 	return emt->flow;
 }
 
-void rdpemt_get_send_state(rdpEmt* emt, FreeRDP_UdpSendState* state)
+void rdpemt_get_send_state(rdpEmt* emt, rdpUdpSendState* state)
 {
 	WINPR_ASSERT(emt);
 	WINPR_ASSERT(state);

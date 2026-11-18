@@ -652,45 +652,62 @@ static rdpMultitransport* multitransport_from_peer(const freerdp_peer* peer)
 	return peer->context->rdp->multitransport;
 }
 
-BOOL freerdp_peer_set_udp_callbacks(freerdp_peer* peer, const FreeRDP_UdpPeerCallbacks* callbacks,
-                                    void* custom)
+BOOL freerdp_peer_set_udp_hooks(freerdp_peer* peer, const rdpUdpPeerHooks* hooks, void* custom)
 {
 	rdpMultitransport* multi = multitransport_from_peer(peer);
 	if (!multi)
 		return FALSE;
 
-	/* Callback struct version 3.34.0 ends with ManualWorker */
-	const size_t required =
-	    offsetof(FreeRDP_UdpPeerCallbacks, ManualWorker) + sizeof(callbacks->ManualWorker);
-	if (callbacks && (callbacks->Size < required))
-	{
-		WLog_ERR(TAG,
-		         "FreeRDP_UdpPeerCallbacks size %" PRIuz " is too small, expected at least %" PRIuz,
-		         callbacks->Size, required);
-		return FALSE;
-	}
-
-	memset(&multi->udpCallbacks, 0, sizeof(multi->udpCallbacks));
-	if (callbacks)
-	{
-		const size_t size = (callbacks->Size < sizeof(multi->udpCallbacks))
-		                        ? callbacks->Size
-		                        : sizeof(multi->udpCallbacks);
-		memcpy(&multi->udpCallbacks, callbacks, size);
-		multi->udpCallbacks.Size = sizeof(multi->udpCallbacks);
-	}
-	multi->udpCustom = callbacks ? custom : nullptr;
+	if (hooks)
+		multi->udpCallbacks = *hooks;
+	else
+		memset(&multi->udpCallbacks, 0, sizeof(multi->udpCallbacks));
+	multi->udpCustom = hooks ? custom : nullptr;
 	return TRUE;
 }
 
-BOOL freerdp_peer_get_udp_send_state(freerdp_peer* peer, FreeRDP_UdpSendState* state)
+BOOL freerdp_peer_set_udp_callbacks(freerdp_peer* peer, const FreeRDP_UdpPeerCallbacks* callbacks,
+                                    void* custom)
+{
+	if (!callbacks)
+		return freerdp_peer_set_udp_hooks(peer, nullptr, nullptr);
+
+	/* The callback structure for version 3.34.0 ends with the WriteUnblocked field. */
+	const size_t required =
+	    offsetof(FreeRDP_UdpPeerCallbacks, WriteUnblocked) + sizeof(callbacks->WriteUnblocked);
+	if (callbacks->size < required)
+	{
+		WLog_ERR(TAG,
+		         "FreeRDP_UdpPeerCallbacks size %" PRIuz " is too small, expected at least %" PRIuz,
+		         callbacks->size, required);
+		return FALSE;
+	}
+
+	const rdpUdpPeerHooks hooks = { .LinkChanged = callbacks->LinkChanged,
+	                                .WriteUnblocked = callbacks->WriteUnblocked };
+	return freerdp_peer_set_udp_hooks(peer, &hooks, custom);
+}
+
+BOOL freerdp_peer_get_udp_send_state_full(freerdp_peer* peer, rdpUdpSendState* state)
 {
 	rdpMultitransport* multi = multitransport_from_peer(peer);
 	if (!multi || !state)
 		return FALSE;
-	/* State struct version 3.34.0 ends with rateBytesPerSecond */
-	const size_t required =
-	    offsetof(FreeRDP_UdpSendState, rateBytesPerSecond) + sizeof(state->rateBytesPerSecond);
+
+	EnterCriticalSection(&multi->lock);
+	const BOOL rc = multi->reliable != nullptr;
+	if (rc)
+		rdpemt_get_send_state(multi->reliable, state);
+	LeaveCriticalSection(&multi->lock);
+	return rc;
+}
+
+BOOL freerdp_peer_get_udp_send_state(freerdp_peer* peer, FreeRDP_UdpSendState* state)
+{
+	if (!state)
+		return FALSE;
+	/* The state structure version 3.34.0 ends with the rttMs field. */
+	const size_t required = offsetof(FreeRDP_UdpSendState, rttMs) + sizeof(state->rttMs);
 	if (state->size < required)
 	{
 		WLog_ERR(TAG,
@@ -700,20 +717,18 @@ BOOL freerdp_peer_get_udp_send_state(freerdp_peer* peer, FreeRDP_UdpSendState* s
 		return FALSE;
 	}
 
-	FreeRDP_UdpSendState full = WINPR_C_ARRAY_INIT;
-	EnterCriticalSection(&multi->lock);
-	const BOOL rc = multi->reliable != nullptr;
-	if (rc)
-		rdpemt_get_send_state(multi->reliable, &full);
-	LeaveCriticalSection(&multi->lock);
-	if (rc)
-	{
-		/* Update size to inform the caller how many bytes were filled */
-		const size_t size = (state->size < sizeof(full)) ? state->size : sizeof(full);
-		full.size = size;
-		memcpy(state, &full, size);
-	}
-	return rc;
+	rdpUdpSendState full = WINPR_C_ARRAY_INIT;
+	if (!freerdp_peer_get_udp_send_state_full(peer, &full))
+		return FALSE;
+
+	FreeRDP_UdpSendState out = WINPR_C_ARRAY_INIT;
+	out.writeBlocked = full.writeBlocked;
+	out.rttMs = full.rttMs;
+	/* Update size to inform the caller how many bytes were filled */
+	const size_t size = (state->size < sizeof(out)) ? state->size : sizeof(out);
+	out.size = size;
+	memcpy(state, &out, size);
+	return TRUE;
 }
 
 BOOL freerdp_peer_set_udp_send_limit(freerdp_peer* peer, size_t limit)

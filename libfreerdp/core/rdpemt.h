@@ -27,7 +27,7 @@
 #include <freerdp/config.h>
 #include <freerdp/api.h>
 #if defined(WITH_RDPEUDP)
-#include <freerdp/server/udp.h>
+#include "udplistener.h"
 #endif
 
 /** @brief A client side multitransport tunnel.
@@ -126,7 +126,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUdpFlow* rdpemt_get_flow(const rdpEmt* emt);
 
 /** Server: tunnel's view of the link. Thread-safe. */
-FREERDP_LOCAL void rdpemt_get_send_state(rdpEmt* emt, FreeRDP_UdpSendState* state);
+FREERDP_LOCAL void rdpemt_get_send_state(rdpEmt* emt, rdpUdpSendState* state);
 
 /** Server: maximum data queued for the link before the tunnel fails. Thread-safe.
  *  @param limit Limit in bytes; 0 for default. */

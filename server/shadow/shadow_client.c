@@ -3739,7 +3739,7 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 
 #if defined(WITH_RDPEUDP)
 	FreeRDP_UdpPeerCallbacks callbacks = WINPR_C_ARRAY_INIT;
-	callbacks.Size = sizeof(callbacks);
+	callbacks.size = sizeof(callbacks);
 	callbacks.WriteUnblocked = shadow_client_udp_write_unblocked;
 	if (!freerdp_peer_set_udp_callbacks(peer, &callbacks, client))
 	{

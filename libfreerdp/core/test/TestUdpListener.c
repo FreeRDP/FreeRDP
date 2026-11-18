@@ -1070,16 +1070,23 @@ static void test_peer_free(freerdp_peer* peer)
 	free(peer);
 }
 
-/* The peer's UDP settings: callbacks are taken from a struct of at least the 3.34.0 size and
- * cleared with nullptr, the send limit is kept for the next tunnel, and without a tunnel there is
- * no send state. */
+static void link_nothing(WINPR_ATTR_UNUSED void* custom,
+                         WINPR_ATTR_UNUSED FreeRDP_UdpLinkState state)
+{
+}
+
+/* Peer UDP settings: public callbacks (minimum size 3.34.0) replace internal hooks and
+ * are cleared with nullptr. The send limit is retained for the next tunnel, and no
+ * send state exists without a tunnel. */
 static BOOL peer_udp_settings_without_a_tunnel(void)
 {
 	FreeRDP_UdpPeerCallbacks callbacks = WINPR_C_ARRAY_INIT;
+	rdpUdpPeerHooks hooks = WINPR_C_ARRAY_INIT;
 	FreeRDP_UdpSendState state = WINPR_C_ARRAY_INIT;
+	rdpUdpSendState full = WINPR_C_ARRAY_INIT;
 	int custom = 0;
 	const size_t required =
-	    offsetof(FreeRDP_UdpPeerCallbacks, ManualWorker) + sizeof(callbacks.ManualWorker);
+	    offsetof(FreeRDP_UdpPeerCallbacks, WriteUnblocked) + sizeof(callbacks.WriteUnblocked);
 
 	TEST(!freerdp_peer_set_udp_callbacks(nullptr, nullptr, nullptr));
 	TEST(!freerdp_peer_set_udp_send_limit(nullptr, 1));
@@ -1091,29 +1098,39 @@ static BOOL peer_udp_settings_without_a_tunnel(void)
 	rdpMultitransport* multi = peer->context->rdp->multitransport;
 	TEST(multi);
 
-	callbacks.OfferTunnel = offer_nothing;
-	callbacks.ManualWorker = TRUE;
-	callbacks.Size = required - 1;
-	TEST(!freerdp_peer_set_udp_callbacks(peer, &callbacks, &custom));
-	TEST(!multi->udpCallbacks.OfferTunnel && !multi->udpCallbacks.ManualWorker);
+	TEST(sizeof(FreeRDP_UdpPeerCallbacks) == 64 * sizeof(UINT64));
+	TEST(sizeof(FreeRDP_UdpSendState) == 64 * sizeof(UINT64));
 
-	callbacks.Size = required;
-	TEST(freerdp_peer_set_udp_callbacks(peer, &callbacks, &custom));
+	hooks.OfferTunnel = offer_nothing;
+	hooks.ManualWorker = TRUE;
+	TEST(freerdp_peer_set_udp_hooks(peer, &hooks, &custom));
 	TEST((multi->udpCallbacks.OfferTunnel == offer_nothing) && multi->udpCallbacks.ManualWorker);
 	TEST(multi->udpCustom == &custom);
 
+	callbacks.LinkChanged = link_nothing;
+	callbacks.size = required - 1;
+	TEST(!freerdp_peer_set_udp_callbacks(peer, &callbacks, &custom));
+	TEST(multi->udpCallbacks.OfferTunnel == offer_nothing);
+
+	callbacks.size = required;
+	TEST(freerdp_peer_set_udp_callbacks(peer, &callbacks, &custom));
+	TEST((multi->udpCallbacks.LinkChanged == link_nothing) && !multi->udpCallbacks.OfferTunnel &&
+	     !multi->udpCallbacks.ManualWorker);
+	TEST(multi->udpCustom == &custom);
+
 	TEST(freerdp_peer_set_udp_callbacks(peer, nullptr, nullptr));
-	TEST(!multi->udpCallbacks.OfferTunnel && !multi->udpCallbacks.ManualWorker);
+	TEST(!multi->udpCallbacks.LinkChanged && !multi->udpCustom);
 
 	TEST(freerdp_peer_set_udp_send_limit(peer, 12345));
 	TEST(multi->udpSendLimit == 12345);
 	TEST(freerdp_peer_set_udp_send_limit(peer, 0));
 	TEST(multi->udpSendLimit == 0);
 
-	state.size = offsetof(FreeRDP_UdpSendState, rateBytesPerSecond);
+	state.size = offsetof(FreeRDP_UdpSendState, rttMs);
 	TEST(!freerdp_peer_get_udp_send_state(peer, &state));
 	state.size = sizeof(state);
 	TEST(!freerdp_peer_get_udp_send_state(peer, &state));
+	TEST(!freerdp_peer_get_udp_send_state_full(peer, &full));
 
 	test_peer_free(peer);
 	return TRUE;
@@ -1222,6 +1239,7 @@ static BOOL a_manual_tunnel_runs_on_the_application_thread(void)
 	freerdp_peer* peer = nullptr;
 	rdpMultitransport* multi = nullptr;
 	FreeRDP_UdpSendState state = WINPR_C_ARRAY_INIT;
+	rdpUdpSendState full = WINPR_C_ARRAY_INIT;
 	UINT16 port = 0;
 	SOCKET sockfd = INVALID_SOCKET;
 	struct sockaddr_in addr = WINPR_C_ARRAY_INIT;
@@ -1321,8 +1339,10 @@ static BOOL a_manual_tunnel_runs_on_the_application_thread(void)
 	LeaveCriticalSection(&multi->lock);
 	state.size = sizeof(state);
 	rc = freerdp_peer_get_udp_send_state(peer, &state) && (state.size == sizeof(state)) &&
-	     !state.writeBlocked && (state.queuedBytes == 0) && (state.rttMs > 0) &&
-	     (state.rateBytesPerSecond > 0) && freerdp_peer_set_udp_send_limit(peer, 1u << 20);
+	     !state.writeBlocked && (state.rttMs > 0) &&
+	     freerdp_peer_get_udp_send_state_full(peer, &full) && !full.writeBlocked &&
+	     (full.queuedBytes == 0) && (full.rttMs > 0) && (full.rateBytesPerSecond > 0) &&
+	     freerdp_peer_set_udp_send_limit(peer, 1u << 20);
 	if (!rc)
 		(void)printf("%s: no send state for a ready tunnel\n", __func__);
 out:

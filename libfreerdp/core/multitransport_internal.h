@@ -24,7 +24,7 @@
 #include <freerdp/config.h>
 #include <freerdp/multitransport.h>
 #if defined(WITH_RDPEUDP)
-#include <freerdp/server/udp.h>
+#include "udplistener.h"
 #endif
 
 #include "rdpemt.h"
@@ -74,8 +74,8 @@ struct rdp_multitransport
 	UINT64 serverOfferTime;    /* GetTickCount64() value at the time of the offer, used for the
 	                              response timeout. */
 
-	/* UDP callbacks; see include/freerdp/server/udp.h */
-	FreeRDP_UdpPeerCallbacks udpCallbacks;
+	/* UDP hooks; refer to freerdp_peer_set_udp_hooks(). */
+	rdpUdpPeerHooks udpCallbacks;
 	void* udpCustom;
 	size_t udpSendLimit;
 
