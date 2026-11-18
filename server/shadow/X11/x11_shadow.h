@@ -101,6 +101,7 @@ struct x11_shadow_subsystem
 	int xfixes_cursor_notify_event;
 #endif
 	UINT32 format;
+	WCHAR surrogate;
 };
 
 #ifdef __cplusplus
