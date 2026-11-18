@@ -24,6 +24,8 @@ BOOL ScanHostNameAndPort(NSString *address, NSString **host, unsigned short *por
 
 NSString *ScreenResolutionDescription(TSXScreenOptions type, int width, int height);
 BOOL ScanScreenResolution(NSString *description, int *width, int *height, TSXScreenOptions *type);
+BOOL IsFitScreenOption(TSXScreenOptions type);
+CGFloat FitScreenScale(TSXScreenOptions type);
 
 NSDictionary *SelectionForColorSetting(void);
 NSArray *ResolutionModes(void);

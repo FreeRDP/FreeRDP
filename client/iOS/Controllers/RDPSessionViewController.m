@@ -783,6 +783,9 @@
 	if (scale <= 0.0f)
 		scale = 1.0f;
 
+	// 'Automatic (75%/50%)': a smaller remote desktop drawn scaled up, so its text looks larger
+	scale *= FitScreenScale([[session params] intForKey:@"screen_resolution_type"]);
+
 	size.width = ceilf(size.width * scale);
 	size.height = ceilf(size.height * scale);
 
@@ -794,8 +797,9 @@
 		size.height = floorf(size.height * downscale);
 	}
 
-	size.width = MAX(64.0f, size.width);
-	size.height = MAX(64.0f, size.height);
+	size.width = (UINT32)MAX(200.0f, size.width) & ~1u;
+	size.height = (UINT32)MAX(200.0f, size.height) & ~1u;
+
 	return size;
 }
 
@@ -1250,7 +1254,7 @@
 - (void)scheduleRemoteResize
 {
 	// a fixed resolution bookmark keeps its remote size
-	if ([[_session params] intForKey:@"screen_resolution_type"] != TSXScreenOptionFitScreen)
+	if (!IsFitScreenOption([[_session params] intForKey:@"screen_resolution_type"]))
 		return;
 
 	// wait until the size settles, e.g. while a window is dragged or the device unfolds
@@ -1272,17 +1276,19 @@
 		return;
 
 	CGSize size = [self sizeForFitScreenForSession:_session];
-	size.width = (UINT32)size.width & ~1u;
-    size.height = (UINT32)size.height & ~1u;
 
-    // ignore same size
-	if (CGSizeEqualToSize(size, _requested_remote_size))
-		return;
+	// check pending resize (server will resize soon)
+	CGSize current = _requested_remote_size;
+	if (CGSizeEqualToSize(current, CGSizeZero))
+	{
+		// no pending
+		rdpSettings *settings = [_session getSessionParams];
+		current = CGSizeMake(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                     freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	}
 
 	// ignore same size
-	rdpSettings *settings = [_session getSessionParams];
-	if (size.width == freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) &&
-	    size.height == freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))
+	if (CGSizeEqualToSize(size, current))
 		return;
 
 	_requested_remote_size = size;
@@ -1298,15 +1304,15 @@
 	// if 'Avoid Screen Edges' enabled (only for iphone)
 	UIEdgeInsets insets = [[self view] safeAreaInsets];
 	CGRect bounds = [[self view] bounds];
-    
+
 	// landscape or iphone duo --> fill the home indicator area
 	if ([self hasHinge] || bounds.size.width > bounds.size.height)
 		insets.bottom = 0.0f;
-    
+
 	// opened iphone duo --> set gap at right side band
 	if ([self isHingeOpen] && insets.right > insets.left)
 		insets.left = insets.right;
-    
+
 	return UIEdgeInsetsInsetRect(bounds, insets);
 }
 
@@ -1322,21 +1328,22 @@
 			    (void)hingeInteraction;
 			    UIHinge *hinge = [update hinge];
 
-                // this device is not iphone duo
+			    // this device is not iphone duo
 			    if (!hinge)
 				    return;
-            
-                weakSelf->_has_hinge = YES;
-            
-                UIHingeStatus hingeStatus = [hinge status];
-			    BOOL open = (hingeStatus == UIHingeStatusPartiallyOpen || hingeStatus == UIHingeStatusFullyOpen);
+
+			    weakSelf->_has_hinge = YES;
+
+			    UIHingeStatus hingeStatus = [hinge status];
+			    BOOL open = (hingeStatus == UIHingeStatusPartiallyOpen ||
+			                 hingeStatus == UIHingeStatusFullyOpen);
 			    if (weakSelf->_hinge_open == open)
 				    return;
-            
+
 			    weakSelf->_hinge_open = open;
 			    [[weakSelf view] setNeedsLayout];
 		    }];
-        
+
 		[[self view] addInteraction:interaction];
 		[interaction release];
 	}
