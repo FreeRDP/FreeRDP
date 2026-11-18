@@ -1638,8 +1638,15 @@ static UINT32 clear_count_colors(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 			/* bit 24 set so that no color is stored as 0, the empty slot marker */
 			const UINT32 key = 0x01000000u | ((UINT32)r << 16) | ((UINT32)g << 8) | b;
 			size_t slot = (key * 2654435761u) >> (32 - bits);
-			while ((clear->ColorSet[slot] != 0) && (clear->ColorSet[slot] != key))
+
+			UINT32 cur = clear->ColorSet[slot];
+			while ((cur != 0) && (cur != key))
+			{
 				slot = (slot + 1) & mask;
+				if (slot >= clear->ColorSetSize)
+					return UINT32_MAX;
+				cur = clear->ColorSet[slot];
+			}
 
 			if (clear->ColorSet[slot] == 0)
 			{
