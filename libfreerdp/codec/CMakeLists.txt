@@ -174,6 +174,28 @@ if(WITH_GFX_AV1)
   endif()
 endif()
 
+# Hardware AV1 decoding on Apple silicon (M3, A17 Pro and later); dav1d or libaom stays the
+# fallback for older machines and streams the hardware doesn't take.
+set(_av1_software_decoder OFF)
+if((WITH_DAV1D AND DAV1D_FOUND) OR (WITH_AOM AND AOM_FOUND))
+  set(_av1_software_decoder ON)
+endif()
+if(WITH_GFX_AV1 AND _videotoolbox_platform_supported AND _av1_software_decoder)
+  option(WITH_AV1_VIDEOTOOLBOX "[AV1] decode with Apple VideoToolbox when the hardware can" ON)
+  if(WITH_AV1_VIDEOTOOLBOX)
+    add_compile_definitions(WITH_AV1_VIDEOTOOLBOX)
+    list(APPEND CODEC_SRCS av1_videotoolbox.c av1_videotoolbox.h)
+    find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
+    find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
+    find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+    list(APPEND CODEC_LIBS ${VIDEOTOOLBOX_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${COREVIDEO_FRAMEWORK}
+         ${COREFOUNDATION_FRAMEWORK}
+    )
+    message(STATUS "AV1 decoder: VideoToolbox first")
+  endif()
+endif()
+
 cmake_dependent_option(WITH_AVM "[AV2] compile with AVM" OFF "WITH_GFX_AV2" OFF)
 cmake_dependent_option(WITH_DAV2D "[AV2] compile with DAV2D" OFF "WITH_GFX_AV2" OFF)
 if(WITH_GFX_AV2)

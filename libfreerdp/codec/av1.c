@@ -48,6 +48,10 @@
 #include "av1_webcodecs.h"
 #endif
 
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+#include "av1_videotoolbox.h"
+#endif
+
 #if defined(WITH_LIBAOM) || defined(WITH_DAV1D)
 
 #if defined(WITH_LIBYUV)
@@ -88,6 +92,10 @@ struct S_FREERDP_AV1_CONTEXT
 #endif
 #if defined(WITH_AV1_WEBCODECS)
 	int webcodecs; /* VideoDecoder handle, 0 if unused */
+#endif
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	AV1_VT* vt;    /* nullptr without a hardware AV1 decoder */
+	bool vtStream; /* the current stream is VideoToolbox's (else the software decoder's) */
 #endif
 	BYTE* yuvdata[3];
 	UINT32 yuvWidth;
@@ -577,7 +585,7 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 	return TRUE;
 }
 
-#if defined(WITH_DAV1D)
+#if defined(WITH_DAV1D) || defined(WITH_AV1_VIDEOTOOLBOX)
 /* Convert a decoded 8 bit 4:2:0 or 4:4:4 picture to RGB, bounded to the destination surface */
 static INT32 av1_convert_planar(FREERDP_AV1_CONTEXT* av1, BOOL i444, const BYTE* const planes[3],
                                 const UINT32 strides[3], UINT32 dw, UINT32 dh, BYTE* pDstData,
@@ -709,6 +717,37 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 
 	if (!areRectsValid(av1->log, nDstWidth, nDstHeight, regionRects, numRegionRect))
 		return -2;
+
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	if (av1->vt && av1->vtStream)
+	{
+		AV1_VT_PICTURE pic = WINPR_C_ARRAY_INIT;
+		const INT32 vrc = av1_vt_decode(av1->vt, pSrcData, SrcSize, &pic);
+		if (vrc == TRUE)
+			return av1_convert_planar(av1, pic.i444, pic.planes, pic.strides, pic.width, pic.height,
+			                          pDstData, DstFormat, nDstStep, nDstWidth, nDstHeight,
+			                          regionRects, numRegionRect);
+		if (vrc == FALSE)
+			return TRUE;
+		/* bad input: refused, the stream stays with VideoToolbox */
+		if (vrc == AV1_VT_INVALID)
+			return -1;
+
+		/* The software decoder takes the rest of this stream (until the next reset). */
+		av1->vtStream = false;
+		if (vrc != AV1_VT_UNSUPPORTED)
+		{
+			/* In the middle of the stream: the software decoder has none of its references,
+			 * it only picks up at a new sequence header. */
+			WLog_Print(av1->log, WLOG_WARN,
+			           "VideoToolbox AV1 decode failed (%" PRId32 "), software decoder from the "
+			           "next sequence header",
+			           vrc);
+			return vrc;
+		}
+		/* This temporal unit starts the stream, the software decoder starts with it. */
+	}
+#endif
 
 #if defined(WITH_AV1_WEBCODECS)
 	if (av1->webcodecs > 0)
@@ -896,6 +935,18 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 	}
 	else
 	{
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+		if (!av1->vt)
+		{
+			av1->vt = av1_vt_new(av1->log);
+			WLog_Print(av1->log, WLOG_INFO, "AV1 decoder: %s",
+			           av1->vt ? "VideoToolbox (hardware), software as fallback"
+			                   : "software (no VideoToolbox AV1 decoder)");
+		}
+		else
+			av1_vt_reset(av1->vt);
+		av1->vtStream = (av1->vt != nullptr);
+#endif
 #if defined(WITH_AV1_WEBCODECS)
 		if (av1->webcodecs == 0)
 		{
@@ -989,6 +1040,9 @@ void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1)
 	}
 #if defined(WITH_AV1_WEBCODECS)
 	av1_wc_close(av1->webcodecs);
+#endif
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	av1_vt_free(av1->vt);
 #endif
 	winpr_aligned_free(av1->yuvdata[0]);
 	winpr_aligned_free(av1->yuvdata[1]);
