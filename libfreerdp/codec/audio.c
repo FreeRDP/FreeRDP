@@ -270,8 +270,8 @@ BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 	if (!with || !what)
 		return FALSE;
 
-	if (!audio_format_is_valid(with))
-		return FALSE;
+	/* with is a filter: a field that is WAVE_FORMAT_UNKNOWN or 0 matches any value (the
+	 * /sound:format: and /microphone:format: options, or a resampler that ignores the tag) */
 	if (!audio_format_is_valid(what))
 		return FALSE;
 
