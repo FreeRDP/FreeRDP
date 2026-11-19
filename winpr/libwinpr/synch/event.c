@@ -257,12 +257,12 @@ static BOOL EventCloseHandle(HANDLE handle)
 	return EventCloseHandle_(event);
 }
 
-/* local patch (field-desk android): implement auto-reset semantics on POSIX.
+/* Implement auto-reset semantics on POSIX.
  * Upstream leaves CleanupHandle nullptr, so an auto-reset event stays signaled
  * forever after the first SetEvent -> WaitForMultipleObjects returns spurious
- * ready on every call, breaking FreeRDP's transport event loop on Android
- * (connection aborted right after TLS handshake). Consume the signal after a
- * successful wait, exactly like Win32 auto-reset. */
+ * ready on every call, breaking FreeRDP's transport event loop (on Android
+ * the connection is aborted right after the TLS handshake). Consume the
+ * signal after a successful wait, exactly like Win32 auto-reset. */
 static DWORD EventCleanupHandle(HANDLE handle)
 {
 	WINPR_EVENT* event = (WINPR_EVENT*)handle;
