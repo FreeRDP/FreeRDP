@@ -229,8 +229,8 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		/* The server takes the scale of a single monitor from the core data only, so put the
 		 * display scale there too. Otherwise the session starts at 100% and is redone once the
 		 * display channel sends the layout. */
-		if (((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
-		      FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
+		const auto overrides = freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags);
+		if (((overrides & FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			UINT32 scale = 0;
@@ -248,35 +248,11 @@ BOOL SdlContext::preConnect(freerdp* instance)
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, scale))
 					return FALSE;
 			}
-		}
 
-		/* With several monitors the core data carries the primary's scale only, so send each
-		 * monitor's own scale too (TS_UD_CS_MONITOR_EX). Otherwise the server starts every
-		 * monitor at the primary's scale and relies on the display channel layout, which comes
-		 * at the end of the logon and is sometimes not applied. */
-		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) &&
-		    ((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
-		      FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
-		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
-		{
-			const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
-			bool valid = count > 0;
-			for (UINT32 x = 0; x < count; x++)
-			{
-				auto monitor = static_cast<const rdpMonitor*>(
-				    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
-				if (!monitor)
-				{
-					valid = false;
-					break;
-				}
-				const auto desktop = monitor->attributes.desktopScaleFactor;
-				const auto device = monitor->attributes.deviceScaleFactor;
-				if ((desktop < 100) || (desktop > 500) ||
-				    ((device != 100) && (device != 140) && (device != 180)))
-					valid = false;
-			}
-			if (!freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, valid))
+			/* With /multimon the server also takes each monitor's own scale from the monitor
+			 * attributes ([MS-RDPBCGR] 2.2.1.3.10), unless an override forces one value on all. */
+			if ((overrides == 0) &&
+			    !freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, TRUE))
 				return FALSE;
 		}
 
