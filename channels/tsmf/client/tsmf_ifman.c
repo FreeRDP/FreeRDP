@@ -627,9 +627,9 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 		return ERROR_NOT_FOUND;
 	}
 
-	if (!tsmf_stream_push_sample(stream, ifman->channel_callback, ifman->message_id,
-	                             SampleStartTime, SampleEndTime, ThrottleDuration, SampleExtensions,
-	                             cbData, Stream_Pointer(ifman->input)))
+	if (!tsmf_stream_push_sample(stream, ifman->message_id, SampleStartTime, SampleEndTime,
+	                             ThrottleDuration, SampleExtensions, cbData,
+	                             Stream_Pointer(ifman->input)))
 	{
 		WLog_ERR(TAG, "unable to push sample");
 		return ERROR_OUTOFMEMORY;
@@ -695,22 +695,23 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId = 0;
-	TSMF_STREAM* stream = nullptr;
-	TSMF_PRESENTATION* presentation = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 20))
 		return ERROR_INVALID_DATA;
 
-	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	TSMF_PRESENTATION* presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	if (!presentation)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(ifman->input, 16);
 	Stream_Read_UINT32(ifman->input, StreamId);
 
-	if (presentation)
+	if (presentation && (ifman->channel_callback == tsmf_presentation_get_callback(presentation)))
 	{
-		stream = tsmf_stream_find_by_id(presentation, StreamId);
+		TSMF_STREAM* stream = tsmf_stream_find_by_id(presentation, StreamId);
 
 		if (stream)
-			tsmf_stream_end(stream, ifman->message_id, ifman->channel_callback);
+			tsmf_stream_end(stream, ifman->message_id);
 	}
 
 	DEBUG_TSMF("StreamId %" PRIu32 "", StreamId);
