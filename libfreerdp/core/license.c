@@ -1488,46 +1488,46 @@ BOOL license_read_product_info(wLog* log, wStream* s, LICENSE_PRODUCT_INFO* prod
 		return FALSE;
 
 	Stream_Read_UINT32(s, productInfo->dwVersion);     /* dwVersion (4 bytes) */
-	Stream_Read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
+	const UINT32 cbCompanyName = Stream_Get_UINT32(s); /* cbCompanyName (4 bytes) */
 
 	/* Name must be >0, but there is no upper limit defined, use UINT32_MAX */
-	if ((productInfo->cbCompanyName < 2) || (productInfo->cbCompanyName % 2 != 0))
+	if ((cbCompanyName < 2) || (cbCompanyName % 2 != 0))
 	{
 		WLog_Print(log, WLOG_WARN, "license product info invalid cbCompanyName %" PRIu32,
-		           productInfo->cbCompanyName);
+		           cbCompanyName);
 		return FALSE;
 	}
 
-	if (!license_check_stream_length(log, s, productInfo->cbCompanyName,
-	                                 "license product info::CompanyName",
+	if (!license_check_stream_length(log, s, cbCompanyName, "license product info::CompanyName",
 	                                 LICENSE_MAX_COMPANY_NAME_LENGTH))
 		return FALSE;
 
-	productInfo->pbCompanyName = (BYTE*)malloc(productInfo->cbCompanyName);
+	productInfo->pbCompanyName = (BYTE*)malloc(cbCompanyName);
 	if (!productInfo->pbCompanyName)
 		goto out_fail;
+	productInfo->cbCompanyName = cbCompanyName;
 	Stream_Read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
 	if (!license_check_stream_length(log, s, 4, "license product info::cbProductId", 0))
 		goto out_fail;
 
-	Stream_Read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
+	const UINT32 cbProductId = Stream_Get_UINT32(s); /* cbProductId (4 bytes) */
 
-	if ((productInfo->cbProductId < 2) || (productInfo->cbProductId % 2 != 0))
+	if ((cbProductId < 2) || (cbProductId % 2 != 0))
 	{
 		WLog_Print(log, WLOG_WARN, "license product info invalid cbProductId %" PRIu32,
-		           productInfo->cbProductId);
+		           cbProductId);
 		goto out_fail;
 	}
 
-	if (!license_check_stream_length(log, s, productInfo->cbProductId,
-	                                 "license product info::ProductId",
+	if (!license_check_stream_length(log, s, cbProductId, "license product info::ProductId",
 	                                 LICENSE_MAX_PRODUCT_ID_LENGTH))
 		goto out_fail;
 
-	productInfo->pbProductId = (BYTE*)malloc(productInfo->cbProductId);
+	productInfo->pbProductId = (BYTE*)malloc(cbProductId);
 	if (!productInfo->pbProductId)
 		goto out_fail;
+	productInfo->cbProductId = cbProductId;
 	Stream_Read(s, productInfo->pbProductId, productInfo->cbProductId);
 	return TRUE;
 
