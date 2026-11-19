@@ -281,4 +281,35 @@ typedef struct
 
 #endif
 
+/* SCH_CREDENTIALS (schannel version 5), per [MS-SCHANNEL]. The Windows SDK only
+ * exposes it when SCHANNEL_USE_BLACKLISTS is defined, which also pulls in
+ * TLS_PARAMETERS and its UNICODE_STRING dependency. Provide a layout-compatible
+ * definition otherwise, so consumers get the type uniformly across platforms.
+ * The two Windows-only pointer members (the credential mapper list and the TLS
+ * parameters) are kept as opaque void* here. */
+#if !defined(SCHANNEL_USE_BLACKLISTS)
+
+#ifndef SCH_CREDENTIALS_VERSION
+#define SCH_CREDENTIALS_VERSION 0x00000005
+#endif
+
+typedef struct
+{
+	DWORD dwVersion;
+	DWORD dwCredFormat;
+	DWORD cCreds;
+	PCCERT_CONTEXT* paCred;
+	HCERTSTORE hRootStore;
+
+	DWORD cMappers;
+	void* aphMappers;
+
+	DWORD dwSessionLifespan;
+	DWORD dwFlags;
+	DWORD cTlsParameters;
+	void* pTlsParameters;
+} SCH_CREDENTIALS, *PSCH_CREDENTIALS;
+
+#endif /* !SCHANNEL_USE_BLACKLISTS */
+
 #endif /* WINPR_SSPI_SCHANNEL_H */
