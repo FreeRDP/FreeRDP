@@ -24,6 +24,7 @@ set(PUB_LIBS "")
 
 set(SRCS
     client.c
+    client_stats.c
     cmdline.c
     cmdline.h
     file.c
