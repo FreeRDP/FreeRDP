@@ -1392,7 +1392,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	{
-		const BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
+		const BOOL enable = TRUE;
 		{
 			const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportGraphicsPipeline,
 				                                        FreeRDP_SupportStatusInfoPdu,
