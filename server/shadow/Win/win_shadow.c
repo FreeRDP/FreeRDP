@@ -304,8 +304,13 @@ static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	}
 	else
 	{
-		width = (float)GetSystemMetrics(SM_CXSCREEN);
-		height = (float)GetSystemMetrics(SM_CYSCREEN);
+		/* Normalize against the captured framebuffer, not GetSystemMetrics:
+		 * this process is not marked DPI aware, so the metrics are
+		 * virtualized (scaled down) on a desktop with display scaling while
+		 * the client coordinates are physical pixels of the primary screen
+		 * the subsystem geometry describes. */
+		width = (float)((winShadowSubsystem*)subsystem)->width;
+		height = (float)((winShadowSubsystem*)subsystem)->height;
 		mi->dx = (LONG)((float)x * (65535.0f / width));
 		mi->dy = (LONG)((float)y * (65535.0f / height));
 		mi->dwFlags = MOUSEEVENTF_ABSOLUTE;
@@ -371,8 +376,10 @@ static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 
 		if (flags & PTR_FLAGS_MOVE)
 		{
-			width = (float)GetSystemMetrics(SM_CXSCREEN);
-			height = (float)GetSystemMetrics(SM_CYSCREEN);
+			/* same as above: the physical framebuffer, not virtualized
+			 * GetSystemMetrics values, is the coordinate domain */
+			width = (float)((winShadowSubsystem*)subsystem)->width;
+			height = (float)((winShadowSubsystem*)subsystem)->height;
 			mi->dx = (LONG)((float)x * (65535.0f / width));
 			mi->dy = (LONG)((float)y * (65535.0f / height));
 			mi->dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
@@ -871,6 +878,22 @@ static int win_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	winShadowSubsystem* subsystem = (winShadowSubsystem*)arg;
 	int status;
 	MONITOR_DEF* virtualScreen;
+
+	/* This binary carries no dpiAware manifest, so on a desktop with
+	 * display scaling the process is virtualized: geometry APIs
+	 * (GetSystemMetrics, display modes, the WDS capture coordinate space)
+	 * report scaled-down values while the client and injected input speak
+	 * physical pixels. Claim per-monitor awareness so all of them agree,
+	 * falling back to system-wide awareness on older Windows. */
+#if defined(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+	if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) &&
+	    !SetProcessDPIAware())
+		WLog_WARN(TAG, "DPI awareness setup failed: 0x%08lX", GetLastError());
+#else
+	if (!SetProcessDPIAware())
+		WLog_WARN(TAG, "DPI awareness setup failed: 0x%08lX", GetLastError());
+#endif
+
 	win_shadow_check_input_integrity();
 	subsystem->base.numMonitors = win_shadow_enum_monitors(subsystem->base.monitors, 16);
 	if (subsystem->base.numMonitors > 0)
