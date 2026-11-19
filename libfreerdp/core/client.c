@@ -975,7 +975,7 @@ static BOOL freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 
 	WINPR_ASSERT(channels);
 
-	while (MessageQueue_Peek(channels->queue, &message, TRUE))
+	if (MessageQueue_Peek(channels->queue, &message, TRUE))
 	{
 		if (!freerdp_channels_process_message(instance, &message))
 			status = FALSE;
