@@ -1186,6 +1186,10 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	MessageQueue_PostQuit(channels->queue, 0);
 	freerdp_channels_check_fds(channels, instance);
 
+	/* Clear all remaining messages from the queue. The wStream objects are owned by the channel
+	 * which is releasing the resources on CHANNEL_EVENT_TERMINATED */
+	MessageQueue_Clear(channels->queue);
+
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
 	{
