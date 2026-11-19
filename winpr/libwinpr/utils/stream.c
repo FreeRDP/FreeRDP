@@ -43,6 +43,8 @@
 
 BOOL Stream_ResizeToCapacity(wStream* s, size_t size)
 {
+	WINPR_ASSERT(s);
+
 	const size_t old_capacity = s->capacity;
 	const size_t new_capacity = size;
 	size_t position = Stream_GetPosition(s);
