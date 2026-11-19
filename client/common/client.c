@@ -1496,8 +1496,7 @@ static BOOL client_auto_reconnect_credentials_rejected(UINT32 error)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRetries,
-                                     UINT32 maxRetries)
+static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 maxRetries)
 {
 	WINPR_ASSERT(instance);
 
@@ -1505,20 +1504,21 @@ static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRe
 	while (retry)
 	{
 		/* Quit retrying if max retries has been exceeded */
-		if ((maxRetries > 0) && (numRetries >= maxRetries))
+		if ((maxRetries > 0) && (instance->CurrentReconnectCount >= maxRetries))
 		{
 			WLog_DBG(TAG, "AutoReconnect retries exceeded.");
 			return FALSE;
 		}
 
 		/* Attempt the next reconnect */
-		WLog_INFO(TAG, "Attempting reconnect (%" PRIu32 " of %" PRIu32 ")", numRetries, maxRetries);
+		WLog_INFO(TAG, "Attempting reconnect (%" PRIu32 " of %" PRIu32 ")",
+		          instance->CurrentReconnectCount, maxRetries);
 
-		const SSIZE_T delay =
-		    IFCALLRESULT(5000, instance->RetryDialog, instance, "connection", numRetries, nullptr);
+		const SSIZE_T delay = IFCALLRESULT(5000, instance->RetryDialog, instance, "connection",
+		                                   instance->CurrentReconnectCount, nullptr);
 		if (delay < 0)
 			return FALSE;
-		numRetries++;
+		instance->CurrentReconnectCount++;
 
 		if (freerdp_reconnect(instance))
 			return TRUE;
@@ -1568,15 +1568,13 @@ BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_even
 {
 	BOOL retry = TRUE;
 	UINT32 error = 0;
-	UINT32 numRetries = 0;
-	rdpSettings* settings = nullptr;
 
 	if (!instance)
 		return FALSE;
 
 	WINPR_ASSERT(instance->context);
 
-	settings = instance->context->settings;
+	rdpSettings* settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	const UINT32 maxRetries =
@@ -1626,7 +1624,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_even
 	HANDLE thread = nullptr;
 	if (window_events)
 		thread = CreateThread(nullptr, 0, handle_window_events, &arg, 0, nullptr);
-	const BOOL rc = client_auto_reconnect_do(instance, retry, numRetries, maxRetries);
+	const BOOL rc = client_auto_reconnect_do(instance, retry, maxRetries);
 	if (thread)
 	{
 		arg.running = FALSE;
