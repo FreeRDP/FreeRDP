@@ -484,6 +484,26 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 		gdi = context->gdi;
 		WINPR_ASSERT(gdi);
 
+		/* The inner framebuffer is owned by the WDS attendee client. It can be
+		 * absent before its first frame, or smaller than the surface while a
+		 * desktop resize is in flight: copying past its bounds crashes the
+		 * server inside freerdp_image_copy_no_overlap's memcpy. Clamp the copy
+		 * to what is actually there and skip the frame when nothing overlaps. */
+		if (!gdi || !gdi->primary_buffer || (gdi->width <= 0) || (gdi->height <= 0))
+		{
+			region16_clear(&(surface->invalidRegion));
+			return 0;
+		}
+		if (x + width > gdi->width)
+			width = gdi->width - x;
+		if (y + height > gdi->height)
+			height = gdi->height - y;
+		if ((width <= 0) || (height <= 0))
+		{
+			region16_clear(&(surface->invalidRegion));
+			return 1;
+		}
+
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * 4;
 		DstFormat = gdi->dstFormat;
