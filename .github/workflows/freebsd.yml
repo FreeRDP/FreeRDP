@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        freebsd-version: ["15.0", "14.4"]
-        ssl: ["openssl36", "openssl40"]
+        freebsd-version: ["15.1", "14.5"]
+        ssl: ["openssl30", "openssl36", "openssl41"]
     name: Build on FreeBSD ${{ matrix.freebsd-version }} with ${{ matrix.ssl || 'openssl' }}
     env:
       SSL: ${{ matrix.ssl }}
@@ -57,7 +57,7 @@ jobs:
             icu \
             fusefs-libs3 \
             ccache \
-            opencl-clang-llvm15 \
+            opencl-clang-llvm22 \
             faac \
             faad2 \
             opus-tools \
