@@ -93,10 +93,9 @@ static BOOL shw_end_paint(rdpContext* context)
  * thread. Resizing the GDI primary is what the other clients do here. */
 static BOOL shw_desktop_resize(rdpContext* context)
 {
-	rdpSettings* settings;
 	WINPR_ASSERT(context);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	const UINT32 width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
