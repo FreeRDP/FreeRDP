@@ -383,7 +383,6 @@ static inline pstatus_t generic_image_copy_no_overlap_dst_alpha(
 		case PIXEL_FORMAT_BGR24:
 			switch (DstFormat)
 			{
-				case PIXEL_FORMAT_BGRX32:
 				case PIXEL_FORMAT_BGRA32:
 					return generic_image_copy_bgr24_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
@@ -396,7 +395,6 @@ static inline pstatus_t generic_image_copy_no_overlap_dst_alpha(
 		case PIXEL_FORMAT_BGRA32:
 			switch (DstFormat)
 			{
-				case PIXEL_FORMAT_BGRX32:
 				case PIXEL_FORMAT_BGRA32:
 					return generic_image_copy_bgrx32_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
@@ -409,13 +407,8 @@ static inline pstatus_t generic_image_copy_no_overlap_dst_alpha(
 		case PIXEL_FORMAT_RGBA32:
 			switch (DstFormat)
 			{
-				case PIXEL_FORMAT_RGBX32:
 				case PIXEL_FORMAT_RGBA32:
 					return generic_image_copy_bgrx32_bgrx32(
-					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
-					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
-				case PIXEL_FORMAT_RGB24:
-					return generic_image_copy_bgr24_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
 					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
 				default:
