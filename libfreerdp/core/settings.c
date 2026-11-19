@@ -1394,8 +1394,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	{
 		const BOOL enable = TRUE;
 		{
-			const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportGraphicsPipeline,
-				                                        FreeRDP_SupportStatusInfoPdu,
+			const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportStatusInfoPdu,
 				                                        FreeRDP_SupportErrorInfoPdu,
 				                                        FreeRDP_SupportAsymetricKeys };
 
