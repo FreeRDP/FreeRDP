@@ -636,7 +636,9 @@ owned by rdpRdp */
 		WINPR_ATTR_NODISCARD ALIGN64 pRetryDialog
 		    RetryDialog;                  /* (offset 72) Callback for displaying a dialog in case of
 		                something needs a retry */
-		UINT64 paddingE[80 - 73];         /* 73 */
+		ALIGN64 UINT32 CurrentReconnectCount; /* (offset 73) Current reconnection count. Reset once
+		                                         activation reached */
+		UINT64 paddingE[80 - 74];             /* 74 */
 	};
 
 	struct rdp_channel_handles

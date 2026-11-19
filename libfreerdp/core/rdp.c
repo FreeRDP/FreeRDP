@@ -1946,7 +1946,14 @@ static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
 			if (!rdp_client_transition_to_state(rdp, nextState))
 				status = STATE_RUN_FAILED;
 			else
+			{
+				WINPR_ASSERT(rdp->context);
+
+				freerdp* instance = rdp->context->instance;
+				WINPR_ASSERT(instance);
+				instance->CurrentReconnectCount = 0;
 				status = STATE_RUN_SUCCESS;
+			}
 		}
 		else
 		{
