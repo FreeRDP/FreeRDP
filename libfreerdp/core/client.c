@@ -975,7 +975,7 @@ static BOOL freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 
 	WINPR_ASSERT(channels);
 
-	while (MessageQueue_Peek(channels->queue, &message, TRUE))
+	if (MessageQueue_Peek(channels->queue, &message, TRUE))
 	{
 		if (!freerdp_channels_process_message(instance, &message))
 			status = FALSE;
@@ -1185,6 +1185,10 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 
 	MessageQueue_PostQuit(channels->queue, 0);
 	freerdp_channels_check_fds(channels, instance);
+
+	/* Clear all remaining messages from the queue. The wStream objects are owned by the channel
+	 * which is releasing the resources on CHANNEL_EVENT_TERMINATED */
+	MessageQueue_Clear(channels->queue);
 
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
