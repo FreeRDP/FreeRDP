@@ -238,12 +238,16 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					case SDL_EVENT_USER_UPDATE:
 					{
 						std::vector<SDL_Rect> rectangles;
+						std::vector<SDL_Rect> cur;
 						do
 						{
-							rectangles = sdl->pop();
-							if (!sdl->drawToWindows(rectangles))
-								throw ErrorMsg{ -1, windowEvent.type, "sdl->drawToWindows" };
-						} while (!rectangles.empty());
+							cur = sdl->pop();
+							rectangles.insert(rectangles.end(), cur.begin(), cur.end());
+						} while (!cur.empty());
+
+						if (!sdl->drawToWindows(rectangles))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->drawToWindows" };
+
 						/* geometry updates come with the session updates, not with the
 						 * renderers' frames */
 						if (sdl->hasRenderers() && !sdl->presentRenderers())
