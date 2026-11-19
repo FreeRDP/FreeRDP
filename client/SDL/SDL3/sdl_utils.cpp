@@ -547,6 +547,17 @@ namespace sdl::utils
 		return ss.str();
 	}
 
+	bool inputSent(rdpContext* context, wLog* log, BOOL sent, const char* what)
+	{
+		if (sent)
+			return true;
+		if (freerdp_is_active_state(context))
+			return false;
+		WLog_Print(log, WLOG_DEBUG, "%s not sent, the connection is lost: the event is dropped",
+		           what);
+		return true;
+	}
+
 } // namespace sdl::utils
 
 namespace sdl::error

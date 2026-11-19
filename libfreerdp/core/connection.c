@@ -2172,8 +2172,14 @@ BOOL rdp_is_active_state(const rdpRdp* rdp)
 	const CONNECTION_STATE state = rdp_get_state(rdp);
 	if (freerdp_settings_get_bool(rdp->context->settings, FreeRDP_ServerMode))
 		return rdp_is_active_peer_state(state);
-	else
-		return rdp_is_active_client_state(state);
+
+	if (!rdp_is_active_client_state(state))
+		return FALSE;
+
+	/* A failed write closes the transport before the thread that reads notices and the reconnect
+	 * moves the state: from then on the session is no longer active. The state comes first: a
+	 * disconnect leaves the active state before rdp_reset() frees the transport. */
+	return !rdp->transport || (transport_get_layer(rdp->transport) != TRANSPORT_LAYER_CLOSED);
 }
 
 BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
