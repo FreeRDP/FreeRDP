@@ -462,6 +462,14 @@ extern "C"
 		MONITOR_ATTRIBUTES attributes;
 	} rdpMonitor;
 
+	/** Per-monitor scale override for the FreeRDP_MonitorIds entry at the same index.
+	 *  A factor of 0 keeps the detected value. */
+	typedef struct
+	{
+		UINT32 desktopScaleFactor;
+		UINT32 deviceScaleFactor;
+	} rdpMonitorScale;
+
 	/* Device Redirection */
 	typedef enum
 	{
