@@ -487,22 +487,6 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * 4;
 		DstFormat = gdi->dstFormat;
-
-		/* The shared desktop can be resized under this copy: the loopback
-		 * client buffer is then still the previous size, and copying the
-		 * resized region out of it runs with a source stride narrower than
-		 * the requested width, which trips the stride assertion of
-		 * freerdp_image_copy_no_overlap(). Copy only what the buffer holds;
-		 * the next update carries the rest. */
-		if (x + width > gdi->width)
-			width = gdi->width - x;
-		if (y + height > gdi->height)
-			height = gdi->height - y;
-		if ((width <= 0) || (height <= 0))
-		{
-			region16_clear(&(surface->invalidRegion));
-			return 1;
-		}
 	}
 #elif defined(WITH_DXGI_1_2)
 	DstFormat = PIXEL_FORMAT_BGRX32;
