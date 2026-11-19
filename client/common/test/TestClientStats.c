@@ -46,7 +46,7 @@
 #include <unistd.h>
 #endif
 
-#define NETWORK_STATS 7
+#define SESSION_STATS 8
 
 /* The default settings need rdpdr, which brings rdpsnd along: without it no connection starts */
 #if !defined(_WIN32) && defined(CHANNEL_RDPSND_CLIENT)
@@ -87,17 +87,17 @@ static uint64_t stat_value(const rdpContext* context, const char* name)
 
 static BOOL check_names(void)
 {
-	static const char* const network[NETWORK_STATS] = {
+	static const char* const session[SESSION_STATS] = {
 		"NETWORK_BYTES_RECEIVED", "NETWORK_BYTES_SENT",     "NETWORK_PACKETS_RECEIVED",
 		"NETWORK_PACKETS_SENT",   "NETWORK_BANDWIDTH_KBPS", "NETWORK_RTT_BASE_MS",
-		"NETWORK_RTT_AVERAGE_MS"
+		"NETWORK_RTT_AVERAGE_MS", "GFX_CAPS_VERSION"
 	};
 
 	const size_t max = freerdp_client_stats_max_index();
 #if defined(CHANNEL_RDPGFX_CLIENT)
-	TEST_CHECK(max == NETWORK_STATS + rdpgfx_stats_max_index());
+	TEST_CHECK(max == SESSION_STATS + rdpgfx_stats_max_index());
 #else
-	TEST_CHECK(max == NETWORK_STATS);
+	TEST_CHECK(max == SESSION_STATS);
 #endif
 
 	for (size_t x = 0; x < max; x++)
@@ -111,12 +111,12 @@ static BOOL check_names(void)
 	           0);
 
 	/* each exactly once, in all the statistics */
-	for (size_t x = 0; x < ARRAYSIZE(network); x++)
+	for (size_t x = 0; x < ARRAYSIZE(session); x++)
 	{
 		size_t found = 0;
 		for (size_t y = 0; y < max; y++)
 		{
-			if (strcmp(freerdp_client_stats_name_for_index(y), network[x]) == 0)
+			if (strcmp(freerdp_client_stats_name_for_index(y), session[x]) == 0)
 				found++;
 		}
 		TEST_CHECK(found == 1);
@@ -384,17 +384,22 @@ static BOOL check_gfx_channel(rdpContext* context, IWTSPlugin* plugin, test_chan
 	context->gdi = &gdi;
 
 	/* no gfx yet, as on a session whose graphics channel closed */
-	BOOL rc = stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0;
+	RdpgfxClientContext* gfx = (RdpgfxClientContext*)plugin->pInterface;
+	gfx->CapsVersion = RDPGFX_CAPVERSION_107;
+	BOOL rc = (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0) &&
+	          (stat_value(context, "GFX_CAPS_VERSION") == 0);
 
 	if (rc)
 	{
-		gdi.gfx = (RdpgfxClientContext*)plugin->pInterface;
-		rc = (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0) &&
+		gdi.gfx = gfx;
+		rc = (stat_value(context, "GFX_CAPS_VERSION") == RDPGFX_CAPVERSION_107) &&
+		     (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0) &&
 		     (send_start_frame(callback) == CHANNEL_RC_OK) &&
 		     (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 1) &&
 		     (stat_value(context, "RDPGFX_CMDID_ENDFRAME") == 0);
 		gdi.gfx = nullptr;
-		rc = rc && (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0);
+		rc = rc && (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0) &&
+		     (stat_value(context, "GFX_CAPS_VERSION") == 0);
 	}
 
 	context->gdi = nullptr;

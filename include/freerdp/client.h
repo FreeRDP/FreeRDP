@@ -541,6 +541,10 @@ extern "C"
 	 *  - _BANDWIDTH_KBPS, _RTT_BASE_MS, _RTT_AVERAGE_MS: what the server measured and reported,
 	 *    0 until it does
 	 *
+	 *  GFX_CAPS_VERSION: the RDPGFX_CAPVERSION_* the server confirmed, 0 before the caps confirm
+	 *  and without a graphics channel. It tells what the RDPGFX_CODECID_AV1 counters count: AV2
+	 *  with RDPGFX_CAPVERSION_FRDP_2, AV1 with any other version.
+	 *
 	 *  @return The number of statistics
 	 *  @since version 3.34.0
 	 */
