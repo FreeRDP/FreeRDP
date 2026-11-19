@@ -372,6 +372,60 @@ static void win_shadow_dxgi_drop_duplication(winShadowSubsystem* subsystem)
 	}
 }
 
+/* (Re)create the staging texture, the CPU readable copy of the desktop image
+ * the region copy reads from. It must hold the whole desktop image: the copy
+ * below maps it and hands its pitch to freerdp_image_copy_no_overlap(), which
+ * asserts when a row of the requested region does not fit in that pitch. */
+WINPR_ATTR_NODISCARD
+static int win_shadow_dxgi_create_stage(winShadowSubsystem* subsystem, UINT32 width, UINT32 height)
+{
+	D3D11_TEXTURE2D_DESC textureDesc = WINPR_C_ARRAY_INIT;
+	HRESULT hr;
+
+	WINPR_ASSERT(subsystem);
+	WINPR_ASSERT(subsystem->dxgiDevice);
+
+	if (subsystem->dxgiSurface)
+	{
+		if (subsystem->dxgiSurfaceMapped)
+			subsystem->dxgiSurface->lpVtbl->Unmap(subsystem->dxgiSurface);
+		subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
+		subsystem->dxgiSurface = nullptr;
+	}
+	subsystem->dxgiSurfaceMapped = FALSE;
+
+	if (subsystem->dxgiStage)
+	{
+		subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+		subsystem->dxgiStage = nullptr;
+	}
+
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_STAGING;
+	textureDesc.BindFlags = 0;
+	textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	textureDesc.MiscFlags = 0;
+
+	hr = subsystem->dxgiDevice->lpVtbl->CreateTexture2D(subsystem->dxgiDevice, &textureDesc,
+	                                                    nullptr, &(subsystem->dxgiStage));
+
+	if (FAILED(hr))
+	{
+		WLog_ERR(TAG,
+		         "ID3D11Device::CreateTexture2D(%" PRIu32 "x%" PRIu32 ") failure: %s (0x%08lX)",
+		         width, height, GetDxgiErrorString(hr), hr);
+		return -1;
+	}
+
+	return 1;
+}
+
 WINPR_ATTR_NODISCARD
 static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 {
@@ -383,7 +437,6 @@ static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	BOOL duplicated = FALSE;
 	UINT refusedIndex = 0;
 	UINT duplicatedIndex = 0;
-	D3D11_TEXTURE2D_DESC textureDesc;
 	IDXGIDevice* dxgiDevice = nullptr;
 	IDXGIAdapter* dxgiAdapter = nullptr;
 
@@ -541,27 +594,9 @@ static int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	if (win_shadow_check_resize(subsystem) < 0)
 		return -1;
 
-	textureDesc.Width = subsystem->width;
-	textureDesc.Height = subsystem->height;
-	textureDesc.MipLevels = 1;
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_STAGING;
-	textureDesc.BindFlags = 0;
-	textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-	textureDesc.MiscFlags = 0;
-
-	hr = subsystem->dxgiDevice->lpVtbl->CreateTexture2D(subsystem->dxgiDevice, &textureDesc,
-	                                                    nullptr, &(subsystem->dxgiStage));
-
-	if (FAILED(hr))
-	{
-		WLog_ERR(TAG, "ID3D11Device::CreateTexture2D failure: %s (0x%08lX)", GetDxgiErrorString(hr),
-		         hr);
+	if (win_shadow_dxgi_create_stage(subsystem, (UINT32)subsystem->width,
+	                                 (UINT32)subsystem->height) < 0)
 		return -1;
-	}
 
 	if (subsystem->dxgiDenied)
 	{
@@ -682,6 +717,7 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 	int status;
 	HRESULT hr;
 	D3D11_BOX Box;
+	D3D11_TEXTURE2D_DESC srcDesc = WINPR_C_ARRAY_INIT;
 	DXGI_MAPPED_RECT mappedRect;
 
 	if ((width * height) < 1)
@@ -692,12 +728,50 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 		 * (exclusive vs inclusive rect edges); clamp the requested region to
 		 * the source texture, otherwise the out-of-bounds copy trips
 		 * DXGI_ERROR_DEVICE_REMOVED and capture silently dies. */
-		D3D11_TEXTURE2D_DESC srcDesc;
 		subsystem->dxgiDesktopImage->lpVtbl->GetDesc(subsystem->dxgiDesktopImage, &srcDesc);
 		if (x + width > (int)srcDesc.Width)
 			width = (int)srcDesc.Width - x;
 		if (y + height > (int)srcDesc.Height)
 			height = (int)srcDesc.Height - y;
+
+		/* a desktop that shrank below the region leaves nothing to copy, and
+		 * an empty box is not a valid copy source */
+		if ((width <= 0) || (height <= 0))
+			return 0;
+
+		/* The staging texture is the destination of the copy below and was
+		 * created for the desktop size the duplication was set up with. A
+		 * desktop resize since then (display mode change, a session connected
+		 * to the console) leaves it smaller than the acquired frame while the
+		 * duplication keeps delivering frames of the new size.
+		 * CopySubresourceRegion clips the copy to the smaller destination
+		 * without failing, so the mapped pitch stays that of the old width:
+		 * shorter than one row of the requested region, which trips the
+		 * stride assertion of freerdp_image_copy_no_overlap() in the caller
+		 * and kills the capture thread. Follow the frame instead of dropping
+		 * it: the texture holds the whole desktop image, so one recreation
+		 * covers every region of this geometry. */
+		{
+			D3D11_TEXTURE2D_DESC dstDesc = WINPR_C_ARRAY_INIT;
+			BOOL fits = FALSE;
+
+			if (subsystem->dxgiStage)
+			{
+				subsystem->dxgiStage->lpVtbl->GetDesc(subsystem->dxgiStage, &dstDesc);
+				fits = ((UINT32)width <= dstDesc.Width) && ((UINT32)height <= dstDesc.Height);
+			}
+
+			if (!fits)
+			{
+				WLog_INFO(TAG,
+				          "desktop is %" PRIu32 "x%" PRIu32 ", the staging texture was %" PRIu32
+				          "x%" PRIu32 ": recreating it",
+				          srcDesc.Width, srcDesc.Height, dstDesc.Width, dstDesc.Height);
+
+				if (win_shadow_dxgi_create_stage(subsystem, srcDesc.Width, srcDesc.Height) < 0)
+					return 0;
+			}
+		}
 	}
 
 	Box.top = y;
@@ -707,6 +781,8 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem, BYTE** ppDst
 	Box.front = 0;
 	Box.back = 1;
 
+	/* the destination now holds the whole frame, so this copy cannot clip it
+	 * (CopySubresourceRegion reports no failure in the C vtable) */
 	subsystem->dxgiDeviceContext->lpVtbl->CopySubresourceRegion(
 	    subsystem->dxgiDeviceContext, (ID3D11Resource*)subsystem->dxgiStage, 0, 0, 0, 0,
 	    (ID3D11Resource*)subsystem->dxgiDesktopImage, 0, &Box);

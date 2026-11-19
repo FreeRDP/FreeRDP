@@ -554,6 +554,9 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 
 		if (WaitForSingleObject(subsystem->RdpUpdateEnterEvent, 0) == WAIT_OBJECT_0)
 		{
+			/* the shared desktop can be resized between two updates: keep the
+			 * shadow screen in step before the copy, as the DXGI variant does */
+			(void)win_shadow_check_resize(subsystem);
 			win_shadow_surface_copy(subsystem);
 			(void)ResetEvent(subsystem->RdpUpdateEnterEvent);
 			(void)SetEvent(subsystem->RdpUpdateLeaveEvent);
@@ -638,7 +641,13 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 				const BOOL followed = win_shadow_follow_input_desktop();
 				const BOOL retry = !subsystem->dxgiOutputDuplication &&
 				                   (GetTickCount64() >= subsystem->dxgiRetryTime);
-				if (followed || refresh || retry)
+				/* a desktop resize leaves the duplication behind on the old
+				 * geometry: win_shadow_check_resize has just resized the shadow
+				 * screen, so the next frame would be copied from objects of the
+				 * previous size. Duplicate the output again on the new one and
+				 * send all of it, as for a desktop switch. */
+				const BOOL resized = (dxgi_status > 0);
+				if (followed || refresh || retry || resized)
 				{
 					refresh = FALSE;
 					if (win_shadow_dxgi_restart_duplication(subsystem) > 0)

@@ -85,9 +85,29 @@ static BOOL shw_end_paint(rdpContext* context)
 	return TRUE;
 }
 
-BOOL shw_desktop_resize(rdpContext* context)
+/* The desktop shared through the Windows Desktop Sharing API changed size.
+ * win_shadow_surface_copy() reads this client's primary buffer, so it has to
+ * follow: with the buffer of the previous size, the next copy of the resized
+ * screen runs with a source stride narrower than the requested width and
+ * freerdp_image_copy_no_overlap() asserts on it, which kills the capture
+ * thread. Resizing the GDI primary is what the other clients do here. */
+static BOOL shw_desktop_resize(rdpContext* context)
 {
-	WLog_WARN(TAG, "Desktop resizing not implemented!");
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	const UINT32 width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const UINT32 height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
+	if (!gdi_resize(context->gdi, width, height))
+	{
+		WLog_ERR(TAG, "gdi_resize(%" PRIu32 "x%" PRIu32 ") failed", width, height);
+		return FALSE;
+	}
+
+	WLog_INFO(TAG, "desktop resized to %" PRIu32 "x%" PRIu32, width, height);
 	return TRUE;
 }
 
