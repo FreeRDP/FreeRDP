@@ -528,6 +528,50 @@ extern "C"
 	                                                    const char* str, UINT32 scancode,
 	                                                    UINT32 modmask);
 
+	/** @brief Get the number of runtime statistics of a client session.
+	 *
+	 *  They hold what the libraries count anyway: the network figures, then the graphics
+	 *  channel's (\ref rdpgfx_stats_max_index), if it is built in.
+	 *
+	 *  An index can differ between versions, as a list can grow in the middle. A name means the
+	 *  same in all of them, so use it to find a statistic; slots for unused codec IDs share one
+	 *  name and stay 0. Named NETWORK_*:
+	 *  - _BYTES_RECEIVED, _BYTES_SENT: what passed the transport, without TLS and gateway overhead
+	 *  - _PACKETS_RECEIVED, _PACKETS_SENT: PDUs on the slow path only, the fast path has no counter
+	 *  - _BANDWIDTH_KBPS, _RTT_BASE_MS, _RTT_AVERAGE_MS: what the server measured and reported,
+	 *    0 until it does
+	 *
+	 *  @return The number of statistics
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API size_t freerdp_client_stats_max_index(void);
+
+	/** @brief Get the name of a runtime statistic.
+	 *
+	 *  @param index The index, less than \ref freerdp_client_stats_max_index
+	 *
+	 *  @return The name, valid for the lifetime of the process
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_client_stats_name_for_index(size_t index);
+
+	/** @brief Get the value of a runtime statistic.
+	 *
+	 *  Reads the session's own structures, so call it where they can not go away, as on the
+	 *  thread that runs the session. No lock: a value can be off for one reading.
+	 *
+	 *  @param context The session, may be \b nullptr
+	 *  @param index The index, less than \ref freerdp_client_stats_max_index
+	 *
+	 *  @return The value, 0 for what the session does not have
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API uint64_t freerdp_client_stats_value_for_index(const rdpContext* context,
+	                                                          size_t index);
+
 #ifdef __cplusplus
 }
 #endif
