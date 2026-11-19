@@ -36,7 +36,10 @@ macro(set_simd_source_file_properties INTRINSIC_TYPE)
     message(WARNING "Intrinsic type ${INTRINSIC_TYPE} not supported, only ${SUPPORTED_INTRINSICS_LIST} are available")
   else()
     set(SIMD_LINK_ARG "")
-    if(MSVC)
+    # clang-cl sets MSVC but (unlike MSVC, which accepts every intrinsic)
+    # requires explicit target-feature flags, which the compiler-id branch
+    # below emits in the -m form it accepts.
+    if(MSVC AND NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
       # https://learn.microsoft.com/en-us/cpp/build/reference/arch-x64?view=msvc-140
       if("${SYSTEM_PROCESSOR}" IN_LIST SSE_LIST)
         if("${SYSTEM_PROCESSOR}" IN_LIST SSE_X86_LIST)
