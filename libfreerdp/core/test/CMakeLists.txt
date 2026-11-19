@@ -25,6 +25,9 @@ if(BUILD_TESTING_INTERNAL)
   if(WITH_RDPEUDP)
     list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c)
   endif()
+  if(WITH_RDPEUDP_SERVER)
+    list(APPEND TESTS TestServerTunnel.c TestUdpListener.c)
+  endif()
 endif()
 
 set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c TestFuzzCryptoCertificateDataSetPEM.c)
@@ -32,6 +35,10 @@ set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c Test
 # TestFuzzServer generates a live cert via winpr-tools (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
+endif()
+
+if(WITH_RDPEUDP_SERVER)
+  list(APPEND FUZZERS TestFuzzRdpUdpServer.c TestFuzzRdpUdpTunnel.c)
 endif()
 
 # Test not compatible with package tests, disable
@@ -69,9 +76,13 @@ endif()
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
-# TestCore does not call winpr-tools APIs. The link was added with
-# TestFuzzServer's on-the-fly cert generation and broke -DWITH_WINPR_TOOLS=OFF.
+# TestCore optionally uses winpr-tools: TestUdpListener requires makecert to create a
+# certificate for its tunnel test; otherwise, that test is omitted.
 target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
+if(WITH_WINPR_TOOLS AND WITH_RDPEUDP_SERVER AND BUILD_TESTING_INTERNAL)
+  target_link_libraries(${MODULE_NAME} PRIVATE winpr-tools)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_WINPR_TOOLS)
+endif()
 set(CORE_FUZZER_LIBS freerdp-client ${OPENSSL_LIBRARIES})
 if(WITH_WINPR_TOOLS)
   list(APPEND CORE_FUZZER_LIBS winpr-tools)

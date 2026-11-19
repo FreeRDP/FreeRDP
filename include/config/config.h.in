@@ -67,6 +67,13 @@
 #cmakedefine WITH_GFX_AV2_I444
 #cmakedefine WITH_GFX_AZURE
 #cmakedefine WITH_RDPEUDP
+/** If defined, the server supports UDP multitransport and freerdp/server/udp.h is installed.
+ *  This requires WITH_RDPEUDP, which only signified client support before version 3.34.0.
+ *  Use -DWITH_RDPEUDP_SERVER=OFF to exclude it.
+ *
+ *  \since version 3.34.0
+ */
+#cmakedefine WITH_RDPEUDP_SERVER
 
 #cmakedefine WITH_FFMPEG_HWACCEL
 
