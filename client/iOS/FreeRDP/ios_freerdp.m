@@ -24,6 +24,7 @@
 #import "ios_freerdp_ui.h"
 #import "ios_freerdp_events.h"
 #import "ios_cliprdr.h"
+#import "ios_disp.h"
 
 #import "RDPSession.h"
 #import "RDPCursor.h"
@@ -72,6 +73,10 @@ static void ios_OnChannelConnectedEventHandler(void *context, const ChannelConne
 	{
 		ios_cliprdr_init(afc, (CliprdrClientContext *)e->pInterface);
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		ios_disp_init(afc, (DispClientContext *)e->pInterface);
+	}
 }
 
 static void ios_OnChannelDisconnectedEventHandler(void *context,
@@ -105,6 +110,10 @@ static void ios_OnChannelDisconnectedEventHandler(void *context,
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		ios_cliprdr_uninit(afc, (CliprdrClientContext *)e->pInterface);
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		ios_disp_uninit(afc, (DispClientContext *)e->pInterface);
 	}
 }
 

@@ -228,12 +228,18 @@ BOOL ios_ui_resize_window(rdpContext *context)
 
 	settings = context->settings;
 	gdi = context->gdi;
+	mfInfo *mfi = MFI_FROM_INSTANCE(context->instance);
+
+	// the view copies from the gdi buffer on the main thread, so stop it before gdi_resize frees it
+	[mfi->session performSelectorOnMainThread:@selector(sessionBitmapContextWillChange)
+	                               withObject:nil
+	                            waitUntilDone:YES];
 
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		return FALSE;
 
-	ios_resize_display_buffer(MFI_FROM_INSTANCE(context->instance));
+	ios_resize_display_buffer(mfi);
 	return TRUE;
 }
 
@@ -282,9 +288,6 @@ char *ios_ui_get_clipboard_text(rdpContext *context)
 
 static void ios_create_bitmap_context(mfInfo *mfi)
 {
-	[mfi->session performSelectorOnMainThread:@selector(sessionBitmapContextWillChange)
-	                               withObject:nil
-	                            waitUntilDone:YES];
 	rdpGdi *gdi = mfi->instance->context->gdi;
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
@@ -305,6 +308,9 @@ static void ios_create_bitmap_context(mfInfo *mfi)
 
 void ios_allocate_display_buffer(mfInfo *mfi)
 {
+	[mfi->session performSelectorOnMainThread:@selector(sessionBitmapContextWillChange)
+	                               withObject:nil
+	                            waitUntilDone:YES];
 	ios_create_bitmap_context(mfi);
 }
 

@@ -32,6 +32,12 @@
    Screen resolution selector: Automatic resolution (full screen on iPad, reasonable size on iPhone) */
 "Automatic" = "Automatic";
 
+/* Screen resolution selector: Automatic resolution at 75% of the screen's pixel size (larger text) */
+"Automatic (75%)" = "Automatic (75%)";
+
+/* Screen resolution selector: Automatic resolution at 50% of the screen's pixel size (larger text) */
+"Automatic (50%)" = "Automatic (50%)";
+
 /* Avoid Screen Edges UI setting */
 "Avoid Screen Edges" = "Avoid Screen Edges";
 

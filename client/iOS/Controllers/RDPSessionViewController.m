@@ -30,9 +30,15 @@
 - (void)centerSessionViewInViewport;
 - (void)setKeyboardOverlap:(CGFloat)overlap;
 - (CGRect)sessionViewportFrame;
+- (void)installHingeInteraction;
+- (BOOL)hasHinge;
+- (BOOL)isHingeOpen;
 - (void)showConnectingViewWithText:(NSString *)text;
 - (void)hideConnectingView;
 - (void)endBackgroundTask;
+- (void)scheduleRemoteResize;
+- (void)cancelRemoteResize;
+- (void)sendRemoteResize;
 - (CGPoint)remotePositionForSessionViewPosition:(CGPoint)position;
 - (CGPoint)sessionViewPositionForRemotePosition:(CGPoint)position;
 - (CGPoint)clampedSessionViewCursorPosition:(CGPoint)position;
@@ -164,6 +170,8 @@
 	[_session_scrollview setAlwaysBounceHorizontal:NO];
 	[_session_scrollview setAlwaysBounceVertical:NO];
 	[_session_scrollview setBounces:NO];
+
+	[self installHingeInteraction];
 }
 
 - (void)viewDidLayoutSubviews
@@ -175,7 +183,10 @@
 
 	CGSize viewportSize = [_session_scrollview bounds].size;
 	if (!CGSizeEqualToSize(viewportSize, _last_session_viewport_size))
+	{
 		[self fitSessionViewToViewport];
+		[self scheduleRemoteResize];
+	}
 	else
 		[self centerSessionViewInViewport];
 }
@@ -265,6 +276,7 @@
 		{
 			[_session resume];
 			[self sessionBitmapContextDidChange:_session];
+			[self scheduleRemoteResize];
 		}
 		else
 			[_session connect];
@@ -472,6 +484,14 @@
 	[self hideConnectingView];
 }
 
+- (void)sessionDidActivateDisplayControl:(RDPSession *)session
+{
+	(void)session;
+	// a request made before the (re)connected channel was ready got dropped
+	_requested_remote_size = CGSizeZero;
+	[self scheduleRemoteResize];
+}
+
 - (void)sessionDidConnect:(RDPSession *)session
 {
 	// register keyboard notification handlers
@@ -519,6 +539,10 @@
 
 	[self hideConnectingView];
 
+	// not on every bitmap change: with dynamic resolution that happens whenever the view resizes
+	[_session setToolbarVisible:YES];
+	[self showSessionToolbar:[_session toolbarVisible]];
+
 	// check if session settings changed ...
 	// The 2nd width check is to ignore changes in resolution settings due to the RDVH display bug
 	// (refer to RDPSEssion.m for more details)
@@ -551,6 +575,7 @@
 {
 	[self hideConnectingView];
 	[self endBackgroundTask];
+	[self cancelRemoteResize];
 
 	// return to bookmark list
 	[[self navigationController] popViewControllerAnimated:YES];
@@ -573,11 +598,8 @@
 	_has_cursor_view_position = NO;
 	_has_user_moved_cursor = NO;
 	_last_session_viewport_size = CGSizeZero;
+	_requested_remote_size = CGSizeZero;
 	[self fitSessionViewToViewport];
-
-	// show toolbar
-	[_session setToolbarVisible:YES];
-	[self showSessionToolbar:[_session toolbarVisible]];
 }
 
 - (void)sessionBitmapContextDidChange:(RDPSession *)session
@@ -755,11 +777,14 @@
 {
 	// set remote resolution that matches the on-screen viewport.
 	CGSize size = [self sessionViewportFrame].size;
-	UIScreen *screen = [[self view] window] ? [[[self view] window] screen] : [UIScreen mainScreen];
-	CGFloat scale =
-	    [screen respondsToSelector:@selector(nativeScale)] ? [screen nativeScale] : [screen scale];
+	// not the main screen: the scene can move between displays (iphone duo, external display)
+	UIScreen *screen = [[[[self view] window] windowScene] screen];
+	CGFloat scale = screen ? [screen nativeScale] : [[self traitCollection] displayScale];
 	if (scale <= 0.0f)
 		scale = 1.0f;
+
+	// 'Automatic (75%/50%)': a smaller remote desktop drawn scaled up, so its text looks larger
+	scale *= FitScreenScale([[session params] intForKey:@"screen_resolution_type"]);
 
 	size.width = ceilf(size.width * scale);
 	size.height = ceilf(size.height * scale);
@@ -772,8 +797,9 @@
 		size.height = floorf(size.height * downscale);
 	}
 
-	size.width = MAX(64.0f, size.width);
-	size.height = MAX(64.0f, size.height);
+	size.width = (UINT32)MAX(200.0f, size.width) & ~1u;
+	size.height = (UINT32)MAX(200.0f, size.height) & ~1u;
+
 	return size;
 }
 
@@ -973,11 +999,17 @@
 	    [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
 		    [self endBackgroundTask];
 	    }];
+
+	// ios lays the window out in other orientations for the app switcher snapshots
+	[self cancelRemoteResize];
 }
 
 - (void)applicationWillEnterForeground:(NSNotification *)notification
 {
 	[self endBackgroundTask];
+
+	// the device may have been rotated while the app was in the background
+	[self scheduleRemoteResize];
 }
 
 #pragma mark -
@@ -1219,6 +1251,50 @@
 	_background_task = UIBackgroundTaskInvalid;
 }
 
+- (void)scheduleRemoteResize
+{
+	// a fixed resolution bookmark keeps its remote size
+	if (!IsFitScreenOption([[_session params] intForKey:@"screen_resolution_type"]))
+		return;
+
+	// wait until the size settles, e.g. while a window is dragged or the device unfolds
+	[self cancelRemoteResize];
+	[self performSelector:@selector(sendRemoteResize) withObject:nil afterDelay:0.5];
+}
+
+- (void)cancelRemoteResize
+{
+	[NSObject cancelPreviousPerformRequestsWithTarget:self
+	                                         selector:@selector(sendRemoteResize)
+	                                           object:nil];
+}
+
+- (void)sendRemoteResize
+{
+	UIWindowScene *scene = [[[self view] window] windowScene];
+	if (!scene || [scene activationState] == UISceneActivationStateBackground)
+		return;
+
+	CGSize size = [self sizeForFitScreenForSession:_session];
+
+	// check pending resize (server will resize soon)
+	CGSize current = _requested_remote_size;
+	if (CGSizeEqualToSize(current, CGSizeZero))
+	{
+		// no pending
+		rdpSettings *settings = [_session getSessionParams];
+		current = CGSizeMake(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                     freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	}
+
+	// ignore same size
+	if (CGSizeEqualToSize(size, current))
+		return;
+
+	_requested_remote_size = size;
+	[_session sendMonitorLayoutWithSize:size];
+}
+
 - (CGRect)sessionViewportFrame
 {
 	// use full screen (ipad or 'Avoid Screen Edges' disabled)
@@ -1226,7 +1302,64 @@
 		return [[self view] bounds];
 
 	// if 'Avoid Screen Edges' enabled (only for iphone)
-	return UIEdgeInsetsInsetRect([[self view] bounds], [[self view] safeAreaInsets]);
+	UIEdgeInsets insets = [[self view] safeAreaInsets];
+	CGRect bounds = [[self view] bounds];
+
+	// landscape or iphone duo --> fill the home indicator area
+	if ([self hasHinge] || bounds.size.width > bounds.size.height)
+		insets.bottom = 0.0f;
+
+	// opened iphone duo --> set gap at right side band
+	if ([self isHingeOpen] && insets.right > insets.left)
+		insets.left = insets.right;
+
+	return UIEdgeInsetsInsetRect(bounds, insets);
+}
+
+- (void)installHingeInteraction
+{
+#if defined(__IPHONE_27_1) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_27_1)
+	if (@available(iOS 27.1, *))
+	{
+		__block RDPSessionViewController *weakSelf = self;
+		UIHingeInteraction *interaction = [[UIHingeInteraction alloc]
+		    initWithUpdateHandler:^(UIHingeInteraction *hingeInteraction,
+		                            UIHingeInteractionUpdate *update) {
+			    (void)hingeInteraction;
+			    UIHinge *hinge = [update hinge];
+
+			    // this device is not iphone duo
+			    if (!hinge)
+				    return;
+
+			    weakSelf->_has_hinge = YES;
+
+			    UIHingeStatus hingeStatus = [hinge status];
+			    BOOL open = (hingeStatus == UIHingeStatusPartiallyOpen ||
+			                 hingeStatus == UIHingeStatusFullyOpen);
+			    if (weakSelf->_hinge_open == open)
+				    return;
+
+			    weakSelf->_hinge_open = open;
+			    [[weakSelf view] setNeedsLayout];
+		    }];
+
+		[[self view] addInteraction:interaction];
+		[interaction release];
+	}
+#endif
+}
+
+// return YES (iphone duo)
+// return NO (other devices)
+- (BOOL)hasHinge
+{
+	return _has_hinge;
+}
+
+- (BOOL)isHingeOpen
+{
+	return _hinge_open;
 }
 
 - (void)fitSessionViewToViewport

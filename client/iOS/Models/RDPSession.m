@@ -33,6 +33,7 @@ NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 - (void)sessionDidFailToConnect:(int)reason;
 - (void)sessionWillReconnect;
 - (void)sessionDidReconnect;
+- (void)sessionDidActivateDisplayControl;
 - (void)sessionBitmapContextWillChange;
 - (void)sessionBitmapContextDidChange;
 @end
@@ -214,6 +215,9 @@ static void freeArguments(int argc, char **argv)
 	if ([_params hasValueForKey:@"height"])
 		if (!addArgument(&argc, &argv, "/h:%d", [_params intForKey:@"height"]))
 			goto out_free;
+
+	if (!addArgument(&argc, &argv, "/disp"))
+		goto out_free;
 
 	// security
 	switch ([_params intForKey:@"security"])
@@ -404,6 +408,15 @@ out_free:
 	                                                           @"has_text", nil]);
 }
 
+- (void)sendMonitorLayoutWithSize:(CGSize)size
+{
+	NSNumber *width = [NSNumber numberWithUnsignedInt:(UINT32)size.width];
+	NSNumber *height = [NSNumber numberWithUnsignedInt:(UINT32)size.height];
+	[self sendInputEvent:[NSDictionary dictionaryWithObjectsAndKeys:@"resize", @"type", width,
+	                                                                @"width", height, @"height",
+	                                                                nil]];
+}
+
 #pragma mark -
 #pragma mark Server events (main thread)
 
@@ -540,6 +553,12 @@ out_free:
 {
 	if ([[self delegate] respondsToSelector:@selector(sessionDidReconnect:)])
 		[[self delegate] sessionDidReconnect:self];
+}
+
+- (void)sessionDidActivateDisplayControl
+{
+	if ([[self delegate] respondsToSelector:@selector(sessionDidActivateDisplayControl:)])
+		[[self delegate] sessionDidActivateDisplayControl:self];
 }
 
 - (void)sessionDidConnect
