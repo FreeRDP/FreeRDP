@@ -226,6 +226,86 @@ generic_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
 	return PRIMITIVES_SUCCESS;
 }
 
+static inline pstatus_t generic_image_copy_bgrx32_bgr24(BYTE* WINPR_RESTRICT pDstData,
+                                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                                        UINT32 nWidth, UINT32 nHeight,
+                                                        const BYTE* WINPR_RESTRICT pSrcData,
+                                                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                                        int64_t srcVMultiplier, int64_t srcVOffset,
+                                                        int64_t dstVMultiplier, int64_t dstVOffset)
+{
+
+	const int64_t srcByte = 4;
+	const int64_t dstByte = 3;
+
+	const UINT32 width = nWidth - nWidth % 8;
+
+	for (int64_t y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+
+		int64_t x = 0;
+		WINPR_PRAGMA_UNROLL_LOOP
+		for (; x < width; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 2];
+		}
+		for (; x < nWidth; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 2];
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static inline pstatus_t generic_image_copy_bgrx32_rgb24(BYTE* WINPR_RESTRICT pDstData,
+                                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                                        UINT32 nWidth, UINT32 nHeight,
+                                                        const BYTE* WINPR_RESTRICT pSrcData,
+                                                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                                        int64_t srcVMultiplier, int64_t srcVOffset,
+                                                        int64_t dstVMultiplier, int64_t dstVOffset)
+{
+
+	const int64_t srcByte = 4;
+	const int64_t dstByte = 3;
+
+	const UINT32 width = nWidth - nWidth % 8;
+
+	for (int64_t y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+
+		int64_t x = 0;
+		WINPR_PRAGMA_UNROLL_LOOP
+		for (; x < width; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 2];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 0];
+		}
+		for (; x < nWidth; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 2];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 0];
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 pstatus_t generic_image_copy_no_overlap_convert(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
@@ -303,7 +383,6 @@ static inline pstatus_t generic_image_copy_no_overlap_dst_alpha(
 		case PIXEL_FORMAT_BGR24:
 			switch (DstFormat)
 			{
-				case PIXEL_FORMAT_BGRX32:
 				case PIXEL_FORMAT_BGRA32:
 					return generic_image_copy_bgr24_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
@@ -316,7 +395,6 @@ static inline pstatus_t generic_image_copy_no_overlap_dst_alpha(
 		case PIXEL_FORMAT_BGRA32:
 			switch (DstFormat)
 			{
-				case PIXEL_FORMAT_BGRX32:
 				case PIXEL_FORMAT_BGRA32:
 					return generic_image_copy_bgrx32_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
@@ -329,13 +407,8 @@ static inline pstatus_t generic_image_copy_no_overlap_dst_alpha(
 		case PIXEL_FORMAT_RGBA32:
 			switch (DstFormat)
 			{
-				case PIXEL_FORMAT_RGBX32:
 				case PIXEL_FORMAT_RGBA32:
 					return generic_image_copy_bgrx32_bgrx32(
-					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
-					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
-				case PIXEL_FORMAT_RGB24:
-					return generic_image_copy_bgr24_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
 					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
 				default:
@@ -363,11 +436,48 @@ static inline pstatus_t generic_image_copy_no_overlap_no_alpha(
 		                                            nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
 		                                            nXSrc, nYSrc, palette, srcVMultiplier,
 		                                            srcVOffset, dstVMultiplier, dstVOffset, flags);
-	else
-		return generic_image_copy_no_overlap_convert(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-		                                             nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
-		                                             nXSrc, nYSrc, palette, srcVMultiplier,
-		                                             srcVOffset, dstVMultiplier, dstVOffset);
+
+	switch (SrcFormat)
+	{
+		case PIXEL_FORMAT_BGRX32:
+		case PIXEL_FORMAT_BGRA32:
+			switch (DstFormat)
+			{
+				case PIXEL_FORMAT_BGR24:
+					return generic_image_copy_bgrx32_bgr24(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				case PIXEL_FORMAT_RGB24:
+					return generic_image_copy_bgrx32_rgb24(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				default:
+					break;
+			}
+			break;
+		case PIXEL_FORMAT_RGBX32:
+		case PIXEL_FORMAT_RGBA32:
+			switch (DstFormat)
+			{
+				case PIXEL_FORMAT_RGB24:
+					return generic_image_copy_bgrx32_bgr24(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				case PIXEL_FORMAT_BGR24:
+					return generic_image_copy_bgrx32_rgb24(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+
+	return generic_image_copy_no_overlap_convert(
+	    pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
+	    nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
 }
 
 static pstatus_t generic_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
