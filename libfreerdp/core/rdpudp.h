@@ -46,9 +46,9 @@ typedef enum
 	RDPUDP_STATE_FAILED
 } RDPUDP_STATE;
 
-#define RDPUDP_PROTOCOL_VERSION_1 0x0001
-#define RDPUDP_PROTOCOL_VERSION_2 0x0002
-#define RDPUDP_PROTOCOL_VERSION_3 0x0101
+#define RDPUDP_PROTOCOL_VERSION_1 0x0001u
+#define RDPUDP_PROTOCOL_VERSION_2 0x0002u
+#define RDPUDP_PROTOCOL_VERSION_3 0x0101u
 
 /** Returns time in nanoseconds; only relative differences are meaningful. */
 typedef UINT64 (*rdpUdpClockFn)(void* custom);

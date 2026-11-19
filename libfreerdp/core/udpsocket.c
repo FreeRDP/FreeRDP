@@ -76,15 +76,15 @@ BOOL udpsocket_address_equal(const struct sockaddr_storage* a, const struct sock
 		return FALSE;
 	if (a->ss_family == AF_INET)
 	{
-		const struct sockaddr_in* x = (const struct sockaddr_in*)a;
-		const struct sockaddr_in* y = (const struct sockaddr_in*)b;
+		const struct sockaddr_in* x = WINPR_PACKED_ALIGN_CAST(const struct sockaddr_in*, a);
+		const struct sockaddr_in* y = WINPR_PACKED_ALIGN_CAST(const struct sockaddr_in*, b);
 		return (blen >= sizeof(*y)) && (x->sin_port == y->sin_port) &&
 		       (memcmp(&x->sin_addr, &y->sin_addr, sizeof(x->sin_addr)) == 0);
 	}
 	if (a->ss_family == AF_INET6)
 	{
-		const struct sockaddr_in6* x = (const struct sockaddr_in6*)a;
-		const struct sockaddr_in6* y = (const struct sockaddr_in6*)b;
+		const struct sockaddr_in6* x = WINPR_PACKED_ALIGN_CAST(const struct sockaddr_in6*, a);
+		const struct sockaddr_in6* y = WINPR_PACKED_ALIGN_CAST(const struct sockaddr_in6*, b);
 		/* Link-local addresses on different interfaces are distinct. */
 		return (blen >= sizeof(*y)) && (x->sin6_port == y->sin6_port) &&
 		       (x->sin6_scope_id == y->sin6_scope_id) &&
@@ -103,7 +103,7 @@ void udpsocket_unmap_address(const struct sockaddr* addr, size_t addrlen,
 	*outlen = addrlen;
 	if ((addr->sa_family != AF_INET6) || (addrlen < sizeof(struct sockaddr_in6)))
 		return;
-	const struct sockaddr_in6* v6 = (const struct sockaddr_in6*)addr;
+	const struct sockaddr_in6* v6 = WINPR_PACKED_ALIGN_CAST(const struct sockaddr_in6*, addr);
 	if (!IN6_IS_ADDR_V4MAPPED(&v6->sin6_addr))
 		return;
 

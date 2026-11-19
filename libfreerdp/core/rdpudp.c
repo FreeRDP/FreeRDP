@@ -173,7 +173,7 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_QUEUE_DELAY_MS 30
 /* Number of consecutive delay verdicts with an unchanged minimum round trip required to
  * update the path's base delay. See cc_delay_is_ours. */
-#define RDPUDP2_DELAY_REBASE_CUTS 2
+#define RDPUDP2_DELAY_REBASE_CUTS 2u
 /* The percentage threshold (plus or minus) that the lowest round trip of a round must
  * remain within relative to the last verdict to be counted as unchanged. */
 #define RDPUDP2_DELAY_REBASE_PERCENT 90
