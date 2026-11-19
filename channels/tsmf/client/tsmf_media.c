@@ -332,6 +332,14 @@ finally:
 	return rc;
 }
 
+const IWTSVirtualChannelCallback*
+tsmf_presentation_get_callback(const TSMF_PRESENTATION* presentation)
+{
+	if (!presentation)
+		return nullptr;
+	return presentation->channel_callback;
+}
+
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
                                          IWTSVirtualChannelCallback* pChannelCallback)
 {
