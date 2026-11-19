@@ -572,7 +572,16 @@ public class SessionActivity extends AppCompatActivity
 		}
 
 		// RECORD_AUDIO / CAMERA: only if the matching redirect is enabled.
+
 		java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+		{
+			final String permission = Manifest.permission.ACCESS_LOCAL_NETWORK;
+
+			if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
+				needed.add(permission);
+		}
+
 		if (bookmark.getAdvancedSettings().getRedirectMicrophone() &&
 		    checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
 		        PackageManager.PERMISSION_GRANTED)
