@@ -195,6 +195,16 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_is_valid_ipV6N(const char* ipAddress, size_t len);
 
+	/** @brief check if a path contains '..' or similar constructs that would allow escaping root
+	 *
+	 *  @param path The path to check. Windows or Unix syntax allowed
+	 *  @param path_length The length of the path in characters
+	 *  @return TRUE if the path is invalid, e.g. contains forbidden sequences
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_path_contains_dotdot(const WCHAR* path, size_t path_length);
+
 #ifdef __cplusplus
 }
 #endif

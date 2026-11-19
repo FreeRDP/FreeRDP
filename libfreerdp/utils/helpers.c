@@ -308,3 +308,44 @@ WINPR_JSON* freerdp_GetJSONConfigFile(BOOL system, const char* filename)
 	free(path);
 	return json;
 }
+
+WINPR_ATTR_NODISCARD
+BOOL freerdp_path_contains_dotdot(const WCHAR* path, size_t path_length)
+{
+	if (path_length < 2)
+		return FALSE;
+
+	size_t tstlen = path_length;
+	const WCHAR* tst = path;
+	do
+	{
+		tst = winpr_wcsnchr(tst, tstlen, winpr_wchar_ToLE('.'));
+		if (!tst)
+			return FALSE;
+		const size_t diff = WINPR_ASSERTING_INT_CAST(size_t, tst - path);
+		tstlen = _wcsnlen(tst, path_length - diff);
+		if (tstlen < 2)
+			return FALSE;
+		if (tst[1] != '.')
+		{
+			tst++;
+			tstlen--;
+			continue;
+		}
+
+		/* Filter .. sequences in file or directory names */
+		if ((tst == path) || (*(tst - 1) == L'/') || (*(tst - 1) == L'\\'))
+		{
+			if (tst + 2 < path + path_length)
+			{
+				if ((tst[2] == '/') || (tst[2] == '\\') || (tst[2] == '\0'))
+					return TRUE;
+			}
+			else
+				return TRUE;
+		}
+		tst += 2;
+	} while (TRUE);
+
+	return FALSE;
+}
