@@ -229,8 +229,8 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		/* The server takes the scale of a single monitor from the core data only, so put the
 		 * display scale there too. Otherwise the session starts at 100% and is redone once the
 		 * display channel sends the layout. */
-		if (((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
-		      FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
+		const auto overrides = freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags);
+		if (((overrides & FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			UINT32 scale = 0;
@@ -248,6 +248,12 @@ BOOL SdlContext::preConnect(freerdp* instance)
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, scale))
 					return FALSE;
 			}
+
+			/* With /multimon the server also takes each monitor's own scale from the monitor
+			 * attributes ([MS-RDPBCGR] 2.2.1.3.10), unless an override forces one value on all. */
+			if ((overrides == 0) &&
+			    !freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, TRUE))
+				return FALSE;
 		}
 
 		if ((maxWidth != 0) && (maxHeight != 0) &&

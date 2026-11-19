@@ -786,6 +786,34 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 	return rc;
 }
 
+/* See [MS-RDPBCGR] 2.2.1.3.10.1: the server ignores both scales of a monitor if either is out of
+ * range.
+ * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/8fb3a83c-f3e2-4a81-8824-8173af03b6bc
+ */
+static void freerdp_settings_client_monitors_check_attributes(const rdpSettings* settings,
+                                                              wLog* log)
+{
+	if (!freerdp_settings_get_bool(settings, FreeRDP_HasMonitorAttributes))
+		return;
+
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		WINPR_ASSERT(monitor);
+
+		const UINT32 desktop = monitor->attributes.desktopScaleFactor;
+		const UINT32 device = monitor->attributes.deviceScaleFactor;
+		if ((desktop < 100) || (desktop > 500) ||
+		    ((device != 100) && (device != 140) && (device != 180)))
+			WLog_Print(log, WLOG_WARN,
+			           "Monitor %" PRIu32 ": desktopScale %" PRIu32 ", deviceScale %" PRIu32
+			           " out of range, the server ignores both",
+			           x, desktop, device);
+	}
+}
+
 BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 {
 	wLog* log = WLog_Get(TAG);
@@ -797,6 +825,7 @@ BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 		rc = FALSE;
 	if (!freerdp_settings_client_monitors_check_primary_and_origin(settings))
 		rc = FALSE;
+	freerdp_settings_client_monitors_check_attributes(settings, log);
 	if (!rc)
 	{
 		DWORD level = WLOG_ERROR;
