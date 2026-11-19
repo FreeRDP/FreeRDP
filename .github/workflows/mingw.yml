@@ -42,7 +42,7 @@ jobs:
           ./scripts/mingw.sh -c -s --build-deps-only
 
       - name: Save Dependencies
-        id: restore-dependencies
+        id: save-dependencies
         if: steps.restore-dependencies.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
