@@ -419,6 +419,7 @@ TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 
 static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(sample);
 	WINPR_ASSERT(stream);
 
@@ -429,6 +430,7 @@ static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 	DEBUG_TSMF("MessageId %" PRIu32 " EndTime %" PRIu64 " data_size %" PRIu32 " consumed.",
 	           sample->sample_id, sample->end_time, sample->data_size);
 
+	TSMF_VIDEO_FRAME_EVENT event = WINPR_C_ARRAY_INIT;
 	if (sample->data)
 	{
 		const UINT64 t = get_current_time();
@@ -450,19 +452,19 @@ static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 		}
 
 		if (stream->width > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (stream->height > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.left > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.top > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.width > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.height > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->nr_rects > UINT16_MAX)
-			return FALSE;
+			goto fail;
 
 		stream->next_start_time = t + sample->duration - 50000;
 
@@ -485,7 +487,7 @@ static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 			if (!event.visibleRects)
 			{
 				WLog_ERR(TAG, "can't allocate memory for copy rectangles");
-				return FALSE;
+				goto fail;
 			}
 
 			for (size_t x = 0; x < presentation->nr_rects; x++)
@@ -494,10 +496,8 @@ static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 				RECTANGLE_16* dst = &event.visibleRects[x];
 				if ((cur->left > UINT16_MAX) || (cur->top > UINT16_MAX) ||
 				    (cur->width > UINT16_MAX) || (cur->height > UINT16_MAX))
-				{
-					free(event.visibleRects);
-					return FALSE;
-				}
+					goto fail;
+
 				dst->right = dst->left = (UINT16)cur->left;
 				dst->bottom = dst->top = (UINT16)cur->top;
 				dst->right += (UINT16)cur->width;
@@ -514,13 +514,18 @@ static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 		sample->decoded_size = 0;
 
 		if (tsmf->FrameEvent)
-			tsmf->FrameEvent(tsmf, &event);
-
-		free(event.frameData);
-		free(event.visibleRects);
+		{
+			if (tsmf->FrameEvent(tsmf, &event) < 0)
+				goto fail;
+		}
 	}
+	rc = TRUE;
+fail:
+	free(event.frameData);
+	free(event.visibleRects);
+	ArrayList_Unlock(presentation->stream_list);
 
-	return TRUE;
+	return rc;
 }
 
 static BOOL tsmf_sample_playback_audio(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
@@ -1096,6 +1101,7 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32
 	if (!width || !height)
 		return TRUE;
 
+	ArrayList_Lock(presentation->stream_list);
 	/* Streams can be added/removed from the presentation and the server will resend geometry info
 	 * when a new stream is added to the presentation. Also, num_rects is used to indicate whether
 	 * or not the window is visible. So, always process a valid message with unchanged position/size
@@ -1108,13 +1114,16 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32
 	void* tmp_rects = realloc(presentation->rects, sizeof(RECTANGLE_32) * num_rects);
 
 	if (!tmp_rects && num_rects)
+	{
+		ArrayList_Unlock(presentation->stream_list);
 		return FALSE;
+	}
 
 	presentation->nr_rects = num_rects;
 	presentation->rects = (RECTANGLE_32*)tmp_rects;
 	if (presentation->rects)
 		CopyMemory(presentation->rects, rects, sizeof(RECTANGLE_32) * num_rects);
-	ArrayList_Lock(presentation->stream_list);
+
 	size_t count = ArrayList_Count(presentation->stream_list);
 
 	for (size_t index = 0; index < count; index++)
