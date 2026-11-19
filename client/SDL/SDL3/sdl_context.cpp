@@ -250,6 +250,36 @@ BOOL SdlContext::preConnect(freerdp* instance)
 			}
 		}
 
+		/* With several monitors the core data carries the primary's scale only, so send each
+		 * monitor's own scale too (TS_UD_CS_MONITOR_EX). Otherwise the server starts every
+		 * monitor at the primary's scale and relies on the display channel layout, which comes
+		 * at the end of the logon and is sometimes not applied. */
+		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) &&
+		    ((freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags) &
+		      FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
+		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+		{
+			const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+			bool valid = count > 0;
+			for (UINT32 x = 0; x < count; x++)
+			{
+				auto monitor = static_cast<const rdpMonitor*>(
+				    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
+				if (!monitor)
+				{
+					valid = false;
+					break;
+				}
+				const auto desktop = monitor->attributes.desktopScaleFactor;
+				const auto device = monitor->attributes.deviceScaleFactor;
+				if ((desktop < 100) || (desktop > 500) ||
+				    ((device != 100) && (device != 140) && (device != 180)))
+					valid = false;
+			}
+			if (!freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, valid))
+				return FALSE;
+		}
+
 		if ((maxWidth != 0) && (maxHeight != 0) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
