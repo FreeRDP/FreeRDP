@@ -980,6 +980,8 @@ static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 			}
 
 			message->tiles[i] = tile;
+			if (tile->allocated)
+				memset(tile->data, 0xff, 4ULL * 64ULL * 64ULL);
 
 			/* RFX_TILE */
 			if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 6))
