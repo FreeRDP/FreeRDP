@@ -509,14 +509,29 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ReleaseContext_Call(scard_call_contex
 	WINPR_ASSERT(out);
 	WINPR_ASSERT(operation);
 
-	ret.ReturnCode = wrap(smartcard, SCardReleaseContext, operation->hContext);
+	const void* key = (void*)operation->hContext;
+	const struct s_scard_context_element* element =
+	    HashTable_GetItemValue(smartcard->rgSCardContextList, key);
 
-	if (ret.ReturnCode == SCARD_S_SUCCESS)
-		HashTable_Remove(smartcard->rgSCardContextList, (void*)operation->hContext);
+	if (element && element->fn_free)
+	{
+		/* The owner of the context may still be executing calls queued for it on other
+		 * threads (the smartcard channel does so). fn_free stops and joins them first and
+		 * releases the backend context only afterwards (smartcard_call_release_context), so
+		 * the backend must not be told to release the context before that. */
+		HashTable_Remove(smartcard->rgSCardContextList, key);
+		ret.ReturnCode = SCARD_S_SUCCESS;
+	}
 	else
 	{
-		return scard_log_status_error_wlog(smartcard->log, "SCardReleaseContext", ret.ReturnCode);
+		ret.ReturnCode = wrap(smartcard, SCardReleaseContext, operation->hContext);
+
+		if (ret.ReturnCode == SCARD_S_SUCCESS)
+			HashTable_Remove(smartcard->rgSCardContextList, key);
 	}
+
+	if (ret.ReturnCode != SCARD_S_SUCCESS)
+		return scard_log_status_error_wlog(smartcard->log, "SCardReleaseContext", ret.ReturnCode);
 
 	smartcard_trace_long_return_int(smartcard->log, &ret, "ReleaseContext");
 	return ret.ReturnCode;
