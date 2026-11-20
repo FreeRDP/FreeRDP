@@ -48,8 +48,10 @@
 
 #define SESSION_STATS 8
 
-/* The default settings need rdpdr, which brings rdpsnd along: without it no connection starts */
-#if !defined(_WIN32) && defined(CHANNEL_RDPSND_CLIENT)
+/* The default settings need rdpdr, which brings rdpsnd along: without it no connection starts.
+ * Emscripten has no plain TCP server sockets (setsockopt is not implemented, listen is a
+ * WebSocket server), so the loopback server cannot run there. */
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && defined(CHANNEL_RDPSND_CLIENT)
 #define TEST_NETWORK
 #endif
 
