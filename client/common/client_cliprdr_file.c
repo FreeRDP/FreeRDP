@@ -3268,8 +3268,7 @@ BOOL cliprdr_file_context_set_local_clipboard_data(CliprdrFileContext* file,
 	if (!data)
 		return FALSE;
 
-	return apple_offer_server_files(file, generation, data, size, mime_types, count, fkt,
-	                                userdata);
+	return apple_offer_server_files(file, generation, data, size, mime_types, count, fkt, userdata);
 #else
 	WINPR_UNUSED(file);
 	WINPR_UNUSED(fkt);
