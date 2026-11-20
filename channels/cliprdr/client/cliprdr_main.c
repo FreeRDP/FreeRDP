@@ -300,7 +300,6 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 {
 	CLIPRDR_FILE_CONTENTS_REQUEST request = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
@@ -311,8 +310,16 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 	request.common.msgFlags = flags;
 	request.common.dataLen = length;
 
-	if ((error = cliprdr_read_file_contents_request(s, &request)))
+	UINT error = cliprdr_read_file_contents_request(s, &request);
+	if (error)
 		return error;
+
+	if (!cliprdr->streamFileClipEnabled)
+	{
+		WLog_Print(cliprdr->log, WLOG_WARN,
+		           "clipboard::filecontents requested, but feature not announced! aborting.");
+		return ERROR_INVALID_DATA;
+	}
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
@@ -340,18 +347,26 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsResponse");
 
+	if (!cliprdr->streamFileClipEnabled)
+	{
+		WLog_Print(
+		    cliprdr->log, WLOG_WARN,
+		    "clipboard::filecontents_response requested, but feature not announced! aborting.");
+		return ERROR_INVALID_DATA;
+	}
+
 	response.common.msgType = CB_FILECONTENTS_RESPONSE;
 	response.common.msgFlags = flags;
 	response.common.dataLen = length;
 
-	if ((error = cliprdr_read_file_contents_response(s, &response)))
+	UINT error = cliprdr_read_file_contents_response(s, &response);
+	if (error)
 		return error;
 
 	IFCALLRET(context->ServerFileContentsResponse, error, context, &response);
@@ -383,6 +398,13 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 	if (!Stream_CheckAndLogRequiredLengthWLog(cliprdr->log, s, 4))
 		return ERROR_INVALID_DATA;
 
+	if (!cliprdr->canLockClipData)
+	{
+		WLog_Print(cliprdr->log, WLOG_WARN,
+		           "clipboard::lock requested, but feature not announced! aborting.");
+		return ERROR_INVALID_DATA;
+	}
+
 	lockClipboardData.common.msgType = CB_LOCK_CLIPDATA;
 	lockClipboardData.common.msgFlags = flags;
 	lockClipboardData.common.dataLen = length;
@@ -406,14 +428,21 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, 
 {
 	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "UnlockClipData");
 
-	if ((error = cliprdr_read_unlock_clipdata(s, &unlockClipboardData)))
+	if (!cliprdr->canLockClipData)
+	{
+		WLog_Print(cliprdr->log, WLOG_WARN,
+		           "clipboard::unlock requested, but feature not announced! aborting.");
+		return ERROR_INVALID_DATA;
+	}
+
+	UINT error = cliprdr_read_unlock_clipdata(s, &unlockClipboardData);
+	if (error)
 		return error;
 
 	unlockClipboardData.common.msgType = CB_UNLOCK_CLIPDATA;
@@ -901,14 +930,19 @@ static UINT
 cliprdr_client_file_contents_request(CliprdrClientContext* context,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	wStream* s = nullptr;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(fileContentsRequest);
 
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
 	if (!cliprdr)
 		return ERROR_INTERNAL_ERROR;
+
+	if (!cliprdr->streamFileClipEnabled)
+	{
+		WLog_Print(cliprdr->log, WLOG_WARN,
+		           "clipboard::filecontents requested, but feature not announced! aborting.");
+		return ERROR_INVALID_DATA;
+	}
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
@@ -927,7 +961,7 @@ cliprdr_client_file_contents_request(CliprdrClientContext* context,
 			return ERROR_INVALID_PARAMETER;
 	}
 
-	s = cliprdr_packet_file_contents_request_new(fileContentsRequest);
+	wStream* s = cliprdr_packet_file_contents_request_new(fileContentsRequest);
 
 	if (!s)
 	{
@@ -949,21 +983,26 @@ static UINT
 cliprdr_client_file_contents_response(CliprdrClientContext* context,
                                       const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	wStream* s = nullptr;
-	cliprdrPlugin* cliprdr = nullptr;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(fileContentsResponse);
 
-	cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
+
+	if (!cliprdr->streamFileClipEnabled)
+	{
+		WLog_Print(
+		    cliprdr->log, WLOG_WARN,
+		    "clipboard::filecontents_response requested, but feature not announced! aborting.");
+		return ERROR_INVALID_DATA;
+	}
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
 	if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES) == 0)
 		return cliprdr_send_error_response(cliprdr, CB_FILECONTENTS_RESPONSE);
 
-	s = cliprdr_packet_file_contents_response_new(fileContentsResponse);
+	wStream* s = cliprdr_packet_file_contents_response_new(fileContentsResponse);
 
 	if (!s)
 	{
