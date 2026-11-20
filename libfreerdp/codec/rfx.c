@@ -444,6 +444,7 @@ BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	context->frameIdx = 0;
+	context->decodedHeaderBlocks = 0;
 	return TRUE;
 }
 
