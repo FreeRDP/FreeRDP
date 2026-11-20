@@ -118,7 +118,7 @@ uint64_t freerdp_client_stats_value_for_index(const rdpContext* context, size_t 
 		if (!gfx)
 			return 0;
 		if (index == STATS_GFX_CAPS_VERSION)
-			return gfx->CapsVersion;
+			return gfx->ConfirmedCaps.version;
 		if (index > STATS_GFX_CAPS_VERSION)
 			return rdpgfx_stats_value_for_index(gfx, index - STATS_SESSION_MAX);
 	}

@@ -385,7 +385,7 @@ static BOOL check_gfx_channel(rdpContext* context, IWTSPlugin* plugin, test_chan
 
 	/* no gfx yet, as on a session whose graphics channel closed */
 	RdpgfxClientContext* gfx = (RdpgfxClientContext*)plugin->pInterface;
-	gfx->CapsVersion = RDPGFX_CAPVERSION_107;
+	gfx->ConfirmedCaps.version = RDPGFX_CAPVERSION_107;
 	BOOL rc = (stat_value(context, "RDPGFX_CMDID_STARTFRAME") == 0) &&
 	          (stat_value(context, "GFX_CAPS_VERSION") == 0);
 
