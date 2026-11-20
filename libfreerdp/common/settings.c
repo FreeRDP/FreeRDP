@@ -4719,3 +4719,126 @@ BOOL freerdp_utils_aad_apply_known_configuration_by_url(rdpSettings* settings, c
 		return FALSE;
 	return freerdp_utils_aad_apply_cloud(settings, cloud);
 }
+
+WINPR_ATTR_NODISCARD
+static BOOL append_str_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                            const FreeRDP_Settings_Keys_String* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_Settings_Keys_String key = keys[x];
+		const char* skey = freerdp_settings_get_string(settings, key);
+		if (!skey)
+			continue;
+		const size_t len = strlen(skey);
+		if (!winpr_Digest_Update(md, skey, len))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL append_uint32_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                               const FreeRDP_Settings_Keys_UInt32* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_Settings_Keys_UInt32 key = keys[x];
+		const UINT32 ukey = freerdp_settings_get_uint32(settings, key);
+		if (!winpr_Digest_Update(md, &ukey, sizeof(ukey)))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL append_bool_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                             const FreeRDP_Settings_Keys_Bool* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_Settings_Keys_Bool key = keys[x];
+		const BOOL ukey = freerdp_settings_get_bool(settings, key);
+		if (!winpr_Digest_Update(md, &ukey, sizeof(ukey)))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+struct key_pair
+{
+	FreeRDP_Settings_Keys_Pointer ptr;
+	FreeRDP_Settings_Keys_UInt32 len;
+};
+
+WINPR_ATTR_NODISCARD
+static BOOL append_byte_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                             const struct key_pair* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const struct key_pair* key = &keys[x];
+		const void* pvval = freerdp_settings_get_pointer(settings, key->ptr);
+		const UINT32 uval = freerdp_settings_get_uint32(settings, key->len);
+		if (!winpr_Digest_Update(md, pvval, uval))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+char* freerdp_settings_get_unique_id(const rdpSettings* settings)
+{
+	const FreeRDP_Settings_Keys_String strkeys[] = {
+		FreeRDP_ServerHostname,    FreeRDP_Username,        FreeRDP_Domain,
+		FreeRDP_GatewayHostname,   FreeRDP_GatewayUsername, FreeRDP_GatewayDomain,
+		FreeRDP_GatewayAccessToken
+	};
+	const FreeRDP_Settings_Keys_UInt32 u32keys[] = { FreeRDP_ServerPort, FreeRDP_GatewayPort };
+	const FreeRDP_Settings_Keys_Bool boolkeys[] = { FreeRDP_RemoteApplicationMode,
+		                                            FreeRDP_GatewayEnabled,
+		                                            FreeRDP_RemoteAssistanceMode };
+	const struct key_pair ptrkeys[] = { { FreeRDP_LoadBalanceInfo,
+		                                  FreeRDP_LoadBalanceInfoLength } };
+
+	char* str = nullptr;
+	WINPR_DIGEST_CTX* md = winpr_Digest_New();
+	if (!md)
+		return nullptr;
+
+	if (!winpr_Digest_Init(md, WINPR_MD_SHA256))
+		goto fail;
+
+	if (!append_str_keys(settings, md, strkeys, ARRAYSIZE(strkeys)))
+		goto fail;
+	if (!append_byte_keys(settings, md, ptrkeys, ARRAYSIZE(ptrkeys)))
+		goto fail;
+	if (!append_uint32_keys(settings, md, u32keys, ARRAYSIZE(u32keys)))
+		goto fail;
+	if (!append_bool_keys(settings, md, boolkeys, ARRAYSIZE(boolkeys)))
+		goto fail;
+
+	char hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	if (!winpr_Digest_Final(md, hash, sizeof(hash)))
+		goto fail;
+
+	str = winpr_BinToHexString(hash, sizeof(hash), FALSE);
+fail:
+	winpr_Digest_Free(md);
+	return str;
+}

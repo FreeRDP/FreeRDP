@@ -938,6 +938,15 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char** freerdp_utils_aad_configuration_list(size_t* pcount);
 
+	/** @brief return a unique session identification for a given \ref rdpSettings configuration
+	 *
+	 *  @param settings The settings to use to generate the unique ID
+	 *  @return a unique identification string for the session. NULL in case of failure.
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_MALLOC(winpr_zfree, 1)
+	FREERDP_API char* freerdp_settings_get_unique_id(const rdpSettings* settings);
+
 #ifdef __cplusplus
 }
 #endif
