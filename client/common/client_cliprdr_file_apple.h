@@ -33,21 +33,37 @@ extern "C"
 {
 #endif
 
-	/** Called on the main thread when an application pastes file item \b index.
-	 *  \return the absolute path of the local copy, or nullptr. Freed with free(). */
-	typedef char* (*cliprdr_file_apple_provide_file_fkt)(void* userdata, size_t index);
+	/** Called on the download queue (not the main thread) when an application starts to
+	 *  read entry \b index: write its contents to its path, for a directory those of all
+	 *  files below it. The reader waits until this returns.
+	 *  \return FALSE if the contents are not complete: it removed the files it could not
+	 *  download then, so that no empty file is read. */
+	typedef BOOL (*cliprdr_file_apple_download_fkt)(void* userdata, size_t index);
+
+	/** Called when no entry of an offer is read any more, frees \b userdata. */
+	typedef void (*cliprdr_file_apple_release_fkt)(void* userdata);
 
 	/** \return the files on the general pasteboard as a NUL terminated text/uri-list
 	 *  with path based file:// URLs, or nullptr. Free with free(). */
 	WINPR_ATTR_NODISCARD
 	char* cliprdr_file_apple_get_uri_list(size_t* size);
 
-	/** Put \b count file items on the general pasteboard. The first item also carries
-	 *  \b mime_types: text as the native string, other types as they are. Contents are
-	 *  only requested from the callbacks when an application pastes them. */
+	/** Put the placeholders \b paths[top_level[]] on the general pasteboard as files. An
+	 *  application that pastes them (the Finder) announces its read with file coordination:
+	 *  \b download_fkt then fills the placeholder while the reader waits, without blocking
+	 *  the main thread. Entries with \b present set are watched for such a read.
+	 *
+	 *  The first item also carries \b mime_types: text as the native string, other types
+	 *  as they are, requested from \b data_fkt when an application pastes them.
+	 *
+	 *  \b offer_userdata is taken over in any case and freed with \b release_fkt, together
+	 *  with \b directory, once the offer was replaced and nobody reads from it. */
 	WINPR_ATTR_NODISCARD
-	BOOL cliprdr_file_apple_offer(size_t count, cliprdr_file_apple_provide_file_fkt file_fkt,
-	                              void* file_userdata, const char** mime_types, size_t mime_count,
+	BOOL cliprdr_file_apple_offer(const char* directory, const char** paths, const BOOL* present,
+	                              size_t count, const size_t* top_level, size_t top_level_count,
+	                              cliprdr_file_apple_download_fkt download_fkt,
+	                              cliprdr_file_apple_release_fkt release_fkt, void* offer_userdata,
+	                              const char** mime_types, size_t mime_count,
 	                              cliprdr_file_context_data_fkt data_fkt, void* data_userdata);
 
 	/** \return a new, empty directory for the files of one offer, or nullptr.
@@ -55,7 +71,8 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	char* cliprdr_file_apple_new_download_dir(void);
 
-	/** Stop answering for offered items and remove all downloaded files. */
+	/** Stop answering for offered items, wait for a running download to return and remove
+	 *  all downloaded files. Must not be called on the download queue. */
 	void cliprdr_file_apple_detach(void);
 
 #ifdef __cplusplus

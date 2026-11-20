@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <os/lock.h>
 
 #import <AppKit/AppKit.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
@@ -61,22 +62,140 @@ char *cliprdr_file_apple_get_uri_list(size_t *size)
 	}
 }
 
-static cliprdr_file_apple_provide_file_fkt s_file_fkt = NULL;
-static void *s_file_userdata = NULL;
+/* The offers are replaced on the main thread and detached on the channel thread */
+static os_unfair_lock s_lock = OS_UNFAIR_LOCK_INIT;
 static cliprdr_file_context_data_fkt s_data_fkt = NULL;
 static void *s_data_userdata = NULL;
 static NSUInteger s_generation = 0;
-static NSMutableArray *s_providers = nil;
 static unsigned s_download_serial = 0;
 
-@interface CliprdrFileProvider : NSObject <NSPasteboardItemDataProvider>
+/* All file presenters share this serial queue: one download at a time, off the main thread */
+static NSOperationQueue *download_queue(void)
+{
+	static NSOperationQueue *queue = nil;
+	static dispatch_once_t once;
+	dispatch_once(&once, ^{
+		queue = [NSOperationQueue new];
+		queue.maxConcurrentOperationCount = 1;
+		queue.name = @"com.freerdp.client.cliprdr.file";
+	});
+	return queue;
+}
+
+/* Remove downloaded files as a coordinated writer: it waits for an application that still
+ * reads them, e.g. the Finder copying a file that was just downloaded. */
+static void remove_path(NSString *path)
+{
+	NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
+	NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] initWithFilePresenter:nil];
+	__block BOOL removed = NO;
+	[coordinator coordinateWritingItemAtURL:url
+	                                options:NSFileCoordinatorWritingForDeleting
+	                                  error:nil
+	                             byAccessor:^(NSURL *newURL) {
+		                             [[NSFileManager defaultManager] removeItemAtURL:newURL
+		                                                                       error:nil];
+		                             removed = YES;
+	                             }];
+	if (!removed)
+		[[NSFileManager defaultManager] removeItemAtURL:url error:nil];
+}
+
+/* The placeholders of one server copy and what downloads them */
+@interface CliprdrFileOffer : NSObject
+@property(nonatomic) cliprdr_file_apple_download_fkt downloadFkt;
+@property(nonatomic) cliprdr_file_apple_release_fkt releaseFkt;
+@property(nonatomic) void *userdata;
+@property(nonatomic, copy) NSString *directory;
+@property(nonatomic, strong) NSMutableArray *presenters;
+- (void)invalidate;
+@end
+
+static CliprdrFileOffer *s_offer = nil;
+static CliprdrFileOffer *s_previous_offer = nil;
+
+@implementation CliprdrFileOffer
+
+/* Stop watching the placeholders. Not on the download queue: it delivers their messages. */
+- (void)invalidate
+{
+	for (id<NSFilePresenter> presenter in self.presenters)
+		[NSFileCoordinator removeFilePresenter:presenter];
+	[self.presenters removeAllObjects];
+}
+
+- (void)dealloc
+{
+	/* The last reference might be the one of a download, on the download queue */
+	NSArray *presenters = [_presenters copy];
+	NSString *directory = _directory;
+	cliprdr_file_apple_release_fkt releaseFkt = _releaseFkt;
+	void *userdata = _userdata;
+
+	dispatch_async(dispatch_get_main_queue(), ^{
+		for (id<NSFilePresenter> presenter in presenters)
+			[NSFileCoordinator removeFilePresenter:presenter];
+		if (releaseFkt)
+			releaseFkt(userdata);
+		if (directory)
+		{
+			dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+				remove_path(directory);
+			});
+		}
+	});
+}
+
+@end
+
+/* Watches one placeholder. An application that reads a file with file coordination, like
+ * the Finder does to copy it, has to wait until its presenter lets it: this is where the
+ * contents are downloaded. The application waits in its own copy operation only, and the
+ * message arrives on the download queue, so neither it nor this process is blocked. */
+@interface CliprdrFilePresenter : NSObject <NSFilePresenter>
+@property(nonatomic, weak) CliprdrFileOffer *offer;
 @property(nonatomic) size_t index;
+@property(nonatomic, strong) NSURL *url;
+@end
+
+@implementation CliprdrFilePresenter
+
+- (NSURL *)presentedItemURL
+{
+	return self.url;
+}
+
+- (NSOperationQueue *)presentedItemOperationQueue
+{
+	return download_queue();
+}
+
+- (void)relinquishPresentedItemToReader:(void (^)(void (^_Nullable reacquirer)(void)))reader
+{
+	/* This reference keeps the offer and its files until the download returned */
+	CliprdrFileOffer *offer = self.offer;
+
+	/* Better no file than an empty one: the download removes what it could not complete,
+	 * and without an offer there is nothing to download from any more */
+	if (offer && offer.downloadFkt)
+		(void)offer.downloadFkt(offer.userdata, self.index);
+	else
+		[[NSFileManager defaultManager] removeItemAtURL:self.url error:nil];
+	reader(nil);
+}
+
+@end
+
+/* Provides the other formats of a server copy (e.g. its text) when they are pasted */
+@interface CliprdrDataProvider : NSObject <NSPasteboardItemDataProvider>
 @property(nonatomic) NSUInteger generation;
 /* pasteboard type -> MIME type the data is requested with */
 @property(nonatomic, strong) NSDictionary<NSPasteboardType, NSString *> *mimeTypes;
 @end
 
-@implementation CliprdrFileProvider
+static CliprdrDataProvider *s_provider = nil;
+
+@implementation CliprdrDataProvider
 
 - (void)pasteboard:(NSPasteboard *)pasteboard
                   item:(NSPasteboardItem *)item
@@ -84,21 +203,6 @@ static unsigned s_download_serial = 0;
 {
 	if (self.generation != s_generation)
 		return;
-
-	if ([type isEqualToString:NSPasteboardTypeFileURL])
-	{
-		if (!s_file_fkt)
-			return;
-
-		char *path = s_file_fkt(s_file_userdata, self.index);
-		if (!path)
-			return;
-
-		NSURL *url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
-		free(path);
-		[item setString:[url absoluteString] forType:NSPasteboardTypeFileURL];
-		return;
-	}
 
 	NSString *mime = self.mimeTypes[type];
 	if (!mime || !s_data_fkt)
@@ -153,44 +257,75 @@ static NSDictionary<NSPasteboardType, NSString *> *get_item_types(const char **m
 	return types;
 }
 
-BOOL cliprdr_file_apple_offer(size_t count, cliprdr_file_apple_provide_file_fkt file_fkt,
-                              void *file_userdata, const char **mime_types, size_t mime_count,
+static NSURL *path_url(const char *path)
+{
+	NSString *str =
+	    [[NSFileManager defaultManager] stringWithFileSystemRepresentation:path
+	                                                                length:strlen(path)];
+	/* Looks at the placeholder to tell a directory from a file */
+	return str ? [NSURL fileURLWithPath:str] : nil;
+}
+
+BOOL cliprdr_file_apple_offer(const char *directory, const char **paths, const BOOL *present,
+                              size_t count, const size_t *top_level, size_t top_level_count,
+                              cliprdr_file_apple_download_fkt download_fkt,
+                              cliprdr_file_apple_release_fkt release_fkt, void *offer_userdata,
+                              const char **mime_types, size_t mime_count,
                               cliprdr_file_context_data_fkt data_fkt, void *data_userdata)
 {
 	if (@available(macOS 11.0, *))
 	{
 		@autoreleasepool
 		{
-			s_file_fkt = file_fkt;
-			s_file_userdata = file_userdata;
-			s_data_fkt = data_fkt;
-			s_data_userdata = data_userdata;
-			s_generation++;
+			/* From here on the offer frees offer_userdata and the directory, also when
+			 * this function fails */
+			CliprdrFileOffer *offer = [CliprdrFileOffer new];
+			offer.downloadFkt = download_fkt;
+			offer.releaseFkt = release_fkt;
+			offer.userdata = offer_userdata;
+			offer.directory = [[NSFileManager defaultManager]
+			    stringWithFileSystemRepresentation:directory
+			                                length:strlen(directory)];
+			offer.presenters = [NSMutableArray array];
 
+			for (size_t i = 0; i < count; i++)
+			{
+				if (!paths[i] || !present[i])
+					continue;
+
+				CliprdrFilePresenter *presenter = [CliprdrFilePresenter new];
+				presenter.offer = offer;
+				presenter.index = i;
+				presenter.url = path_url(paths[i]);
+				if (!presenter.url)
+					return FALSE;
+
+				[offer.presenters addObject:presenter];
+				[NSFileCoordinator addFilePresenter:presenter];
+			}
+
+			CliprdrDataProvider *provider = nil;
 			NSDictionary<NSPasteboardType, NSString *> *mimeTypes =
 			    get_item_types(mime_types, mime_count);
 
-			/* NSPasteboardItem does not keep its data provider alive */
-			s_providers = [NSMutableArray array];
 			NSMutableArray *items = [NSMutableArray array];
-			for (size_t i = 0; i < count; i++)
+			for (size_t i = 0; i < top_level_count; i++)
 			{
-				CliprdrFileProvider *provider = [CliprdrFileProvider new];
-				provider.index = i;
-				provider.generation = s_generation;
-				[s_providers addObject:provider];
-
-				NSMutableArray<NSPasteboardType> *types =
-				    [NSMutableArray arrayWithObject:NSPasteboardTypeFileURL];
-				if (i == 0)
-				{
-					provider.mimeTypes = mimeTypes;
-					[types addObjectsFromArray:[mimeTypes allKeys]];
-				}
-
+				/* A real file URL: an application gets it right away, and waits for the
+				 * contents only when it reads the file */
+				NSURL *url = path_url(paths[top_level[i]]);
 				NSPasteboardItem *item = [NSPasteboardItem new];
-				if (![item setDataProvider:provider forTypes:types])
+				if (!url || ![item setString:[url absoluteString] forType:NSPasteboardTypeFileURL])
 					return FALSE;
+
+				if ((i == 0) && ([mimeTypes count] > 0))
+				{
+					/* NSPasteboardItem does not keep its data provider alive */
+					provider = [CliprdrDataProvider new];
+					provider.mimeTypes = mimeTypes;
+					if (![item setDataProvider:provider forTypes:[mimeTypes allKeys]])
+						return FALSE;
+				}
 				[items addObject:item];
 			}
 
@@ -198,9 +333,27 @@ BOOL cliprdr_file_apple_offer(size_t count, cliprdr_file_apple_provide_file_fkt 
 			/* Universal Clipboard reads new contents right away, which would download
 			 * every copied file. Keep the files on this Mac until they are pasted. */
 			[pasteboard prepareForNewContentsWithOptions:NSPasteboardContentsCurrentHostOnly];
-			return [pasteboard writeObjects:items];
+			if (![pasteboard writeObjects:items])
+				return FALSE;
+
+			/* Keep the previous offer, Finder might still be copying from it */
+			os_unfair_lock_lock(&s_lock);
+			CliprdrFileOffer *oldest = s_previous_offer;
+			s_previous_offer = s_offer;
+			s_offer = offer;
+			s_data_fkt = data_fkt;
+			s_data_userdata = data_userdata;
+			provider.generation = ++s_generation;
+			s_provider = provider;
+			os_unfair_lock_unlock(&s_lock);
+			oldest = nil; /* released without the lock */
+			return TRUE;
 		}
 	}
+
+	if (release_fkt)
+		release_fkt(offer_userdata);
+	[[NSFileManager defaultManager] removeItemAtPath:@(directory) error:nil];
 	return FALSE;
 }
 
@@ -216,13 +369,6 @@ char *cliprdr_file_apple_new_download_dir(void)
 	{
 		NSFileManager *fm = [NSFileManager defaultManager];
 		NSString *root = download_root();
-
-		/* Keep the previous offer, Finder might still be copying from it */
-		if (s_download_serial >= 2)
-		{
-			NSString *old = [NSString stringWithFormat:@"%u", s_download_serial - 2];
-			[fm removeItemAtPath:[root stringByAppendingPathComponent:old] error:nil];
-		}
 
 		NSString *name = [NSString stringWithFormat:@"%u", s_download_serial++];
 		NSString *dir = [root stringByAppendingPathComponent:name];
@@ -240,12 +386,28 @@ void cliprdr_file_apple_detach(void)
 {
 	@autoreleasepool
 	{
-		s_file_fkt = NULL;
-		s_file_userdata = NULL;
+		os_unfair_lock_lock(&s_lock);
+		CliprdrFileOffer *offer = s_offer;
+		CliprdrFileOffer *previous = s_previous_offer;
+		s_offer = nil;
+		s_previous_offer = nil;
 		s_data_fkt = NULL;
 		s_data_userdata = NULL;
 		s_generation++;
-		s_providers = nil;
+		s_provider = nil;
+		os_unfair_lock_unlock(&s_lock);
+
+		[offer invalidate];
+		[previous invalidate];
+		offer = nil;
+		previous = nil;
+
+		/* The caller cancelled its downloads: wait until the last one returned, it uses
+		 * the caller's context. Later messages find no offer any more. */
+		[download_queue() waitUntilAllOperationsAreFinished];
+
+		/* Not as a coordinated writer: that would wait for an application that still
+		 * copies a downloaded file, for as long as its copy takes */
 		[[NSFileManager defaultManager] removeItemAtPath:download_root() error:nil];
 	}
 }
