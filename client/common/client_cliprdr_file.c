@@ -189,15 +189,11 @@ struct cliprdr_file_context
 #endif
 
 #if defined(WITH_CLIPRDR_FILE_APPLE)
-	/* Server files on the pasteboard, accessed on the main thread only */
-	FILEDESCRIPTORW* apple_files;
-	UINT32 apple_files_count;
-	size_t* apple_top_level;
-	size_t apple_top_level_count;
-	char* apple_download_dir;
-
-	/* The pending FILECONTENTS request, answered on the channel thread */
+	/* The pending FILECONTENTS request of the download queue, answered on the channel
+	 * thread */
 	CRITICAL_SECTION apple_lock;
+	BOOL apple_cancelled;
+	UINT32 apple_generation; /* changes with the server clipboard, see apple_lock */
 	HANDLE apple_contents_event;
 	UINT32 apple_stream_id;
 	BOOL apple_contents_success;
@@ -654,6 +650,21 @@ static UINT prepare_clip_data_entry_without_id(CliprdrFileContext* file_context)
 }
 #endif
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+/* The clipboard the server files were offered from is gone: their list indices would address
+ * the files of another copy now. Fail the pending FILECONTENTS request of such an offer and
+ * every later one. */
+static void apple_new_generation(CliprdrFileContext* file)
+{
+	WINPR_ASSERT(file);
+
+	EnterCriticalSection(&file->apple_lock);
+	file->apple_generation++;
+	(void)SetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+}
+#endif
+
 UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file_context)
 {
 	UINT rc = CHANNEL_RC_OK;
@@ -673,6 +684,9 @@ UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file
 	else
 		rc = prepare_clip_data_entry_without_id(file_context);
 #endif
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	apple_new_generation(file_context);
+#endif
 	return rc;
 }
 
@@ -681,6 +695,9 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(file_context->context);
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	apple_new_generation(file_context);
+#endif
 #if defined(WITH_FUSE)
 	if (!clear_no_cdi_entry(file_context))
 		return ERROR_INTERNAL_ERROR;
@@ -1420,11 +1437,45 @@ static UINT cliprdr_file_context_server_file_contents_response(
 #endif
 
 #if defined(WITH_CLIPRDR_FILE_APPLE)
+/* The files of one server copy. Empty placeholders for them are on the pasteboard, the
+ * contents are downloaded when an application (the Finder) starts to read one of them.
+ * Owned by the pasteboard part, which calls apple_download() on its download queue only. */
+typedef struct
+{
+	CliprdrFileContext* file;
+	UINT32 generation; /* the server clipboard the files are from */
+	FILEDESCRIPTORW* files;
+	UINT32 count;
+	char** paths; /* the local path of every entry, nullptr if it can not be offered */
+	BYTE* done;   /* the entries downloaded already */
+} AppleOffer;
+
+static void apple_offer_free(void* userdata)
+{
+	AppleOffer* offer = userdata;
+	if (!offer)
+		return;
+
+	for (UINT32 x = 0; offer->paths && (x < offer->count); x++)
+		free(offer->paths[x]);
+	free(offer->paths);
+	free(offer->done);
+	free(offer->files);
+	free(offer);
+}
+
 static char* apple_descriptor_name(const FILEDESCRIPTORW* descriptor)
 {
 	WINPR_ASSERT(descriptor);
 	return ConvertWCharNToUtf8Alloc(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName),
 	                                nullptr);
+}
+
+static BOOL apple_is_directory(const FILEDESCRIPTORW* descriptor)
+{
+	WINPR_ASSERT(descriptor);
+	return (descriptor->dwFlags & FD_ATTRIBUTES) &&
+	       (descriptor->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 }
 
 /* Map a server relative path (dir\file) to a local relative path (dir/file) */
@@ -1464,22 +1515,9 @@ fail:
 	return nullptr;
 }
 
-static void apple_clear_server_files(CliprdrFileContext* file)
-{
-	WINPR_ASSERT(file);
-
-	free(file->apple_files);
-	file->apple_files = nullptr;
-	file->apple_files_count = 0;
-	free(file->apple_top_level);
-	file->apple_top_level = nullptr;
-	file->apple_top_level_count = 0;
-	free(file->apple_download_dir);
-	file->apple_download_dir = nullptr;
-}
-
-static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 listIndex, UINT32 flags,
-                                        UINT64 offset, UINT32 size, BYTE** pdata, UINT32* plen)
+static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 generation,
+                                        UINT32 listIndex, UINT32 flags, UINT64 offset, UINT32 size,
+                                        BYTE** pdata, UINT32* plen)
 {
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(pdata);
@@ -1487,10 +1525,6 @@ static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 listInd
 
 	*pdata = nullptr;
 	*plen = 0;
-
-	CliprdrClientContext* cliprdr = file->context;
-	if (!cliprdr || !cliprdr->ClientFileContentsRequest)
-		return FALSE;
 
 	CLIPRDR_FILE_CONTENTS_REQUEST request = WINPR_C_ARRAY_INIT;
 	request.common.msgType = CB_FILECONTENTS_REQUEST;
@@ -1500,7 +1534,15 @@ static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 listInd
 	request.nPositionHigh = (UINT32)(offset >> 32);
 	request.cbRequested = size;
 
+	/* cliprdr_file_context_uninit() cancels under this lock and then waits for the download
+	 * queue, so the channel is valid for as long as this request is not cancelled. */
 	EnterCriticalSection(&file->apple_lock);
+	CliprdrClientContext* cliprdr = file->apple_cancelled ? nullptr : file->context;
+	if (!cliprdr || !cliprdr->ClientFileContentsRequest || (generation != file->apple_generation))
+	{
+		LeaveCriticalSection(&file->apple_lock);
+		return FALSE;
+	}
 	request.streamId = ++file->apple_stream_id;
 	file->apple_contents_success = FALSE;
 	free(file->apple_contents_data);
@@ -1525,7 +1567,8 @@ static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 listInd
 	}
 
 	EnterCriticalSection(&file->apple_lock);
-	const BOOL rc = file->apple_contents_success;
+	const BOOL rc = file->apple_contents_success && !file->apple_cancelled &&
+	                (generation == file->apple_generation);
 	if (rc)
 	{
 		*pdata = file->apple_contents_data;
@@ -1535,6 +1578,18 @@ static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 listInd
 	}
 	LeaveCriticalSection(&file->apple_lock);
 	return rc;
+}
+
+/* Fail the pending FILECONTENTS request and every later one */
+static void apple_cancel_downloads(CliprdrFileContext* file)
+{
+	WINPR_ASSERT(file);
+
+	EnterCriticalSection(&file->apple_lock);
+	file->apple_cancelled = TRUE;
+	file->apple_generation++;
+	(void)SetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
 }
 
 static UINT
@@ -1577,7 +1632,7 @@ cliprdr_file_context_apple_contents_response(CliprdrClientContext* cliprdr_conte
 	return CHANNEL_RC_OK;
 }
 
-static BOOL apple_download_file(CliprdrFileContext* file, UINT32 listIndex,
+static BOOL apple_download_file(CliprdrFileContext* file, UINT32 generation, UINT32 listIndex,
                                 const FILEDESCRIPTORW* descriptor, const char* path)
 {
 	WINPR_ASSERT(file);
@@ -1591,8 +1646,8 @@ static BOOL apple_download_file(CliprdrFileContext* file, UINT32 listIndex,
 	{
 		BYTE* data = nullptr;
 		UINT32 len = 0;
-		const BOOL rc = apple_request_file_contents(file, listIndex, FILECONTENTS_SIZE, 0,
-		                                            sizeof(UINT64), &data, &len);
+		const BOOL rc = apple_request_file_contents(file, generation, listIndex, FILECONTENTS_SIZE,
+		                                            0, sizeof(UINT64), &data, &len);
 		if (rc && (len >= sizeof(UINT64)))
 			memcpy(&size, data, sizeof(size));
 		free(data);
@@ -1611,9 +1666,9 @@ static BOOL apple_download_file(CliprdrFileContext* file, UINT32 listIndex,
 		const UINT32 requested = (size - offset < chunk) ? (UINT32)(size - offset) : chunk;
 		BYTE* data = nullptr;
 		UINT32 len = 0;
-		if (!apple_request_file_contents(file, listIndex, FILECONTENTS_RANGE, offset, requested,
-		                                 &data, &len) ||
-		    (len == 0) || (fwrite(data, 1, len, fp) != len))
+		if (!apple_request_file_contents(file, generation, listIndex, FILECONTENTS_RANGE, offset,
+		                                 requested, &data, &len) ||
+		    (len == 0) || (len > requested) || (fwrite(data, 1, len, fp) != len))
 		{
 			free(data);
 			rc = FALSE;
@@ -1630,127 +1685,199 @@ static BOOL apple_download_file(CliprdrFileContext* file, UINT32 listIndex,
 	return rc;
 }
 
-/* Download the file, or the directory with everything below it */
-static BOOL apple_download_entry(CliprdrFileContext* file, UINT32 listIndex, const char* name)
+/* Download file x unless that was done already. A file that is not complete is removed:
+ * better no file than an empty one. A later read creates and downloads it again. */
+static BOOL apple_download_entry(AppleOffer* offer, UINT32 x)
 {
-	WINPR_ASSERT(file);
-	WINPR_ASSERT(name);
+	WINPR_ASSERT(offer);
 
-	char* relative = apple_local_relative_path(name);
-	if (!relative)
-	{
-		WLog_Print(file->log, WLOG_WARN, "skipping invalid server file name %s", name);
+	if (offer->done[x])
 		return TRUE;
-	}
 
-	BOOL rc = FALSE;
-	const FILEDESCRIPTORW* descriptor = &file->apple_files[listIndex];
-	char* path = nullptr;
-	size_t pathlen = 0;
-	if (winpr_asprintf(&path, &pathlen, "%s/%s", file->apple_download_dir, relative) < 0)
-		goto fail;
-
-	if ((descriptor->dwFlags & FD_ATTRIBUTES) &&
-	    (descriptor->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-		rc = winpr_PathMakePath(path, nullptr);
-	else
+	if (!apple_download_file(offer->file, offer->generation, x, &offer->files[x], offer->paths[x]))
 	{
-		char* slash = strrchr(path, '/');
-		WINPR_ASSERT(slash);
-		*slash = '\0';
-		const BOOL parent = winpr_PathMakePath(path, nullptr);
-		*slash = '/';
-		if (parent)
-		{
-			rc = apple_download_file(file, listIndex, descriptor, path);
-			if (!rc)
-				WLog_Print(file->log, WLOG_ERROR, "failed to download %s", name);
-		}
+		WLog_Print(offer->file->log, WLOG_ERROR, "failed to download %s", offer->paths[x]);
+		(void)winpr_DeleteFile(offer->paths[x]);
+		return FALSE;
 	}
+	offer->done[x] = 1;
+	return TRUE;
+}
 
-fail:
-	free(path);
-	free(relative);
+/* Called on the download queue when an application starts to read entry index: download
+ * the file, or every file below the directory. The reader waits until this returns. */
+static BOOL apple_download(void* userdata, size_t index)
+{
+	AppleOffer* offer = userdata;
+	WINPR_ASSERT(offer);
+
+	if ((index >= offer->count) || !offer->paths[index])
+		return FALSE;
+
+	if (!apple_is_directory(&offer->files[index]))
+		return apple_download_entry(offer, (UINT32)index);
+
+	const char* top = offer->paths[index];
+	const size_t toplen = strlen(top);
+
+	BOOL rc = TRUE;
+	for (UINT32 x = 0; x < offer->count; x++)
+	{
+		const char* path = offer->paths[x];
+		if (!path || apple_is_directory(&offer->files[x]) || (strncmp(path, top, toplen) != 0) ||
+		    (path[toplen] != '/'))
+			continue;
+
+		/* After a failure keep what was downloaded, but leave no empty files behind */
+		if (rc)
+			rc = apple_download_entry(offer, x);
+		else if (!offer->done[x])
+			(void)winpr_DeleteFile(path);
+	}
 	return rc;
 }
 
-/* Called on the main thread when an application pastes top level item index */
-static char* apple_provide_file(void* userdata, size_t index)
+/* Create the directory, or an empty placeholder for the file */
+static BOOL apple_create_placeholder(const FILEDESCRIPTORW* descriptor, char* path)
 {
-	CliprdrFileContext* file = userdata;
-	WINPR_ASSERT(file);
+	WINPR_ASSERT(descriptor);
+	WINPR_ASSERT(path);
 
-	if (!file->context || (index >= file->apple_top_level_count))
-		return nullptr;
+	if (apple_is_directory(descriptor))
+		return winpr_PathMakePath(path, nullptr);
 
-	char* top = apple_descriptor_name(&file->apple_files[file->apple_top_level[index]]);
-	if (!top)
-		return nullptr;
-	const size_t toplen = strlen(top);
+	char* slash = strrchr(path, '/');
+	WINPR_ASSERT(slash);
+	*slash = '\0';
+	const BOOL parent = winpr_PathMakePath(path, nullptr);
+	*slash = '/';
+	if (!parent)
+		return FALSE;
 
-	char* result = nullptr;
-	for (UINT32 x = 0; x < file->apple_files_count; x++)
-	{
-		char* name = apple_descriptor_name(&file->apple_files[x]);
-		if (!name)
-			continue;
-
-		const BOOL below =
-		    (strncmp(name, top, toplen) == 0) && ((name[toplen] == '\0') || (name[toplen] == '\\'));
-		const BOOL rc = !below || apple_download_entry(file, x, name);
-		free(name);
-		if (!rc)
-			goto fail;
-	}
-
-	{
-		size_t len = 0;
-		if (winpr_asprintf(&result, &len, "%s/%s", file->apple_download_dir, top) < 0)
-			result = nullptr;
-	}
-
-fail:
-	free(top);
-	return result;
+	FILE* fp = winpr_fopen(path, "wb");
+	if (!fp)
+		return FALSE;
+	return fclose(fp) == 0;
 }
 
-static BOOL apple_set_server_files(CliprdrFileContext* file, const void* data, size_t size)
+/* Parse the server file list and create the placeholders below dir */
+static AppleOffer* apple_offer_new(CliprdrFileContext* file, UINT32 generation, const void* data,
+                                   size_t size, const char* dir)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(dir);
+
+	if (size > UINT32_MAX)
+		return nullptr;
+
+	AppleOffer* offer = calloc(1, sizeof(AppleOffer));
+	if (!offer)
+		return nullptr;
+	offer->file = file;
+	offer->generation = generation;
+
+	if (cliprdr_parse_file_list(data, (UINT32)size, &offer->files, &offer->count) != 0)
+		goto fail;
+	if (offer->count == 0)
+		goto fail;
+
+	offer->paths = calloc(offer->count, sizeof(char*));
+	offer->done = calloc(offer->count, sizeof(BYTE));
+	if (!offer->paths || !offer->done)
+		goto fail;
+
+	for (UINT32 x = 0; x < offer->count; x++)
+	{
+		char* name = apple_descriptor_name(&offer->files[x]);
+		char* relative = name ? apple_local_relative_path(name) : nullptr;
+		if (!relative)
+		{
+			WLog_Print(file->log, WLOG_WARN, "skipping invalid server file name %s",
+			           name ? name : "(null)");
+			free(name);
+			continue;
+		}
+		free(name);
+
+		size_t pathlen = 0;
+		const int rc = winpr_asprintf(&offer->paths[x], &pathlen, "%s/%s", dir, relative);
+		free(relative);
+		if (rc < 0)
+		{
+			offer->paths[x] = nullptr;
+			goto fail;
+		}
+		if (!apple_create_placeholder(&offer->files[x], offer->paths[x]))
+		{
+			/* e.g. a name that is too long here: offer the other files */
+			WLog_Print(file->log, WLOG_WARN, "skipping %s, failed to create it", offer->paths[x]);
+			free(offer->paths[x]);
+			offer->paths[x] = nullptr;
+		}
+	}
+	return offer;
+
+fail:
+	apple_offer_free(offer);
+	return nullptr;
+}
+
+/* Put the server files on the pasteboard, the pasteboard part takes the offer */
+static BOOL apple_offer_server_files(CliprdrFileContext* file, UINT32 generation, const void* data,
+                                     size_t size, const char** mime_types, size_t mime_count,
+                                     cliprdr_file_context_data_fkt fkt, void* userdata)
 {
 	WINPR_ASSERT(file);
 
-	if (size > UINT32_MAX)
-		return FALSE;
-
-	FILEDESCRIPTORW* files = nullptr;
-	UINT32 count = 0;
-	if (cliprdr_parse_file_list(data, (UINT32)size, &files, &count) != 0)
-		return FALSE;
-
-	size_t* top_level = (count > 0) ? calloc(count, sizeof(size_t)) : nullptr;
-	size_t top_level_count = 0;
-	for (UINT32 x = 0; top_level && (x < count); x++)
-	{
-		char* name = apple_descriptor_name(&files[x]);
-		if (name && (name[0] != '\0') && !strchr(name, '\\'))
-			top_level[top_level_count++] = x;
-		free(name);
-	}
-
-	char* dir = (top_level_count > 0) ? cliprdr_file_apple_new_download_dir() : nullptr;
+	char* dir = cliprdr_file_apple_new_download_dir();
 	if (!dir)
-	{
-		free(top_level);
-		free(files);
 		return FALSE;
-	}
 
-	apple_clear_server_files(file);
-	file->apple_files = files;
-	file->apple_files_count = count;
-	file->apple_top_level = top_level;
-	file->apple_top_level_count = top_level_count;
-	file->apple_download_dir = dir;
-	return TRUE;
+	BOOL rc = FALSE;
+	BOOL taken = FALSE;
+	size_t* top_level = nullptr;
+	BOOL* present = nullptr;
+	size_t top_level_count = 0;
+	AppleOffer* offer = apple_offer_new(file, generation, data, size, dir);
+	if (!offer)
+		goto fail;
+
+	top_level = calloc(offer->count, sizeof(size_t));
+	present = calloc(offer->count, sizeof(BOOL));
+	if (!top_level || !present)
+		goto fail;
+
+	for (UINT32 x = 0; x < offer->count; x++)
+	{
+		if (!offer->paths[x])
+			continue;
+
+		/* Only the top level entries are on the pasteboard. An application reading a
+		 * directory might announce that for the directory or for the files in it. */
+		const BOOL top = (strchr(offer->paths[x] + strlen(dir) + 1, '/') == nullptr);
+		if (top)
+			top_level[top_level_count++] = x;
+		present[x] = top || !apple_is_directory(&offer->files[x]);
+	}
+	if (top_level_count == 0)
+		goto fail;
+
+	WLog_Print(file->log, WLOG_DEBUG, "offering %" PRIuz " server files (%" PRIu32 " entries)",
+	           top_level_count, offer->count);
+	taken = TRUE;
+	rc = cliprdr_file_apple_offer(dir, (const char**)offer->paths, present, offer->count, top_level,
+	                              top_level_count, apple_download, apple_offer_free, offer,
+	                              mime_types, mime_count, fkt, userdata);
+	offer = nullptr;
+
+fail:
+	if (!taken)
+		(void)winpr_RemoveDirectory_RecursiveA(dir);
+	apple_offer_free(offer);
+	free(top_level);
+	free(present);
+	free(dir);
+	return rc;
 }
 #endif
 
@@ -2098,6 +2225,9 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 	return root_dir != nullptr;
 #elif defined(WITH_CLIPRDR_FILE_APPLE)
 	cliprdr->ServerFileContentsResponse = cliprdr_file_context_apple_contents_response;
+	EnterCriticalSection(&file->apple_lock);
+	file->apple_cancelled = FALSE;
+	LeaveCriticalSection(&file->apple_lock);
 	return TRUE;
 #else
 	return TRUE;
@@ -2137,7 +2267,8 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 	}
 #endif
 #if defined(WITH_CLIPRDR_FILE_APPLE)
-	/* The file list stays until cliprdr_file_context_free(), a paste might still read it */
+	/* A download uses the channel: fail it, then wait until the download queue is idle */
+	apple_cancel_downloads(file);
 	cliprdr_file_apple_detach();
 #endif
 
@@ -2585,7 +2716,12 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 
 #endif
 #if defined(WITH_CLIPRDR_FILE_APPLE)
-	apple_clear_server_files(file);
+	if (file->apple_contents_event)
+	{
+		/* An offer made after cliprdr_file_context_uninit() still refers to this context */
+		apple_cancel_downloads(file);
+		cliprdr_file_apple_detach();
+	}
 	free(file->apple_contents_data);
 	if (file->apple_contents_event)
 	{
@@ -3120,16 +3256,20 @@ BOOL cliprdr_file_context_set_local_clipboard_data(CliprdrFileContext* file,
 	if (!files)
 		return FALSE;
 
-	/* Only the file list is fetched now, the contents follow on paste */
+	/* Taken before the file list: if the server clipboard changes meanwhile, the offer is
+	 * outdated and must not download anything */
+	EnterCriticalSection(&file->apple_lock);
+	const UINT32 generation = file->apple_generation;
+	LeaveCriticalSection(&file->apple_lock);
+
+	/* Only the file list is fetched now, the contents follow when the files are read */
 	size_t size = 0;
 	const void* data = fkt(userdata, "FileGroupDescriptorW", &size);
-	if (!data || !apple_set_server_files(file, data, size))
+	if (!data)
 		return FALSE;
 
-	WLog_Print(file->log, WLOG_DEBUG, "offering %" PRIuz " server files (%" PRIu32 " entries)",
-	           file->apple_top_level_count, file->apple_files_count);
-	return cliprdr_file_apple_offer(file->apple_top_level_count, apple_provide_file, file,
-	                                mime_types, count, fkt, userdata);
+	return apple_offer_server_files(file, generation, data, size, mime_types, count, fkt,
+	                                userdata);
 #else
 	WINPR_UNUSED(file);
 	WINPR_UNUSED(fkt);
