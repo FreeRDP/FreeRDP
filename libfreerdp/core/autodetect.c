@@ -219,11 +219,21 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
 
+#if defined(WITH_RDPEUDP_SERVER)
 	BOOL sent = FALSE;
 	if (multitransport_server_send_autodetect(autodetect->context->rdp->multitransport, transport,
 	                                          sequenceNumber, RDP_BW_START_REQUEST_TYPE_CONTINUOUS,
 	                                          &sent))
 		return sent;
+#else
+	if (transport != RDP_TRANSPORT_TCP)
+	{
+		WLog_Print(autodetect->log, WLOG_ERROR,
+		           "sending Bandwidth Measure Start PDU -> unsupported transport %s, abort",
+		           rdp_transport_type_string(transport));
+		return FALSE;
+	}
+#endif
 
 	s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
 	if (!s)
@@ -301,11 +311,21 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
 
+#if defined(WITH_RDPEUDP_SERVER)
 	BOOL sent = FALSE;
 	if (multitransport_server_send_autodetect(autodetect->context->rdp->multitransport, transport,
 	                                          sequenceNumber, RDP_BW_STOP_REQUEST_TYPE_CONTINUOUS,
 	                                          &sent))
 		return sent;
+#else
+	if (transport != RDP_TRANSPORT_TCP)
+	{
+		WLog_Print(autodetect->log, WLOG_ERROR,
+		           "sending Bandwidth Measure Stop PDU -> unsupported transport %s, abort",
+		           rdp_transport_type_string(transport));
+		return FALSE;
+	}
+#endif
 
 	s = rdp_message_channel_pdu_init(autodetect->context->rdp, &sec_flags);
 	if (!s)

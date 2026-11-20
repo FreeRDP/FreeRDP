@@ -49,7 +49,7 @@ extern "C"
 	 * bytes
 	 *  @param invalidRegion The region of the image to compress, the whole image if NULL
 	 *  @param ppDstData A pointer that will be set to the compressed data. The data is owned by
-	 * \ref progressive context, so copy if it is required to stay valid afer another call to \ref
+	 * \ref progressive context, so copy if it is required to stay valid after another call to \ref
 	 * progressive_compress or \ref progressive_reset
 	 *  @param pDstSize A pointer to a UINT32 that will be set to the \ref ppDstData size in bytes
 	 *

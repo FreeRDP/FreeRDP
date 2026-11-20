@@ -401,6 +401,17 @@ progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surf
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(surface->gridSize > 0);
 
+	/* Limit grid size to a reasonable amount.
+	 * the minimum is width/64 * height/64, allow 8 times as many tiles before
+	 * rejecting
+	 */
+	const size_t limit = 8ull * surface->gridWidth * surface->gridHeight;
+	if (min > limit)
+	{
+		WLog_ERR(TAG, "tile cache limit %" PRIuz " reached, aborting", limit);
+		return FALSE;
+	}
+
 	UINT32 gridSize = surface->gridSize;
 	if (surface->tiles)
 	{

@@ -2296,6 +2296,23 @@ const char* rdp_state_string(CONNECTION_STATE state)
 	}
 }
 
+const char* rdp_transport_type_string(RDP_TRANSPORT_TYPE type)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+	switch (type)
+	{
+		EVCASE(RDP_TRANSPORT_TCP);
+		EVCASE(RDP_TRANSPORT_UDP_R);
+		EVCASE(RDP_TRANSPORT_UDP_L);
+		default:
+			return "RDP_TRANSPORT_UNKNOWN";
+	}
+
+#undef EVCASE
+}
+
 CONNECTION_STATE rdp_get_state(const rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);

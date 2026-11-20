@@ -52,26 +52,6 @@ void sf_udp_usage(FILE* fp);
 WINPR_ATTR_NODISCARD
 BOOL sf_udp_parse_option(const char* arg, BOOL* udp);
 
-#else
-
-/* Stubs for non-UDP builds to maintain compatibility with the main server loop. */
-#define sf_udp_configure(settings, udp) (TRUE)
-#define sf_udp_wait_ms(udp) (INFINITE)
-#define sf_udp_check_channels(vcm, udp, activated) WTSVirtualChannelManagerCheckFileDescriptor(vcm)
-#define sf_udp_tick(context, udp) \
-	do                            \
-	{                             \
-	} while (0)
-#define sf_udp_free(context) \
-	do                       \
-	{                        \
-	} while (0)
-#define sf_udp_usage(fp) \
-	do                   \
-	{                    \
-	} while (0)
-#define sf_udp_parse_option(arg, udp) (FALSE)
-
 #endif
 
 #endif /* End of FREERDP_SERVER_SAMPLE_SF_UDP_H */

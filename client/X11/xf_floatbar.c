@@ -309,17 +309,11 @@ static void xf_floatbar_step_animation(xfFloatbar* floatbar, UINT64 now)
 
 BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar)
 {
-	xfContext* xfc = nullptr;
-
 	if (!floatbar || !floatbar->xfc)
 		return FALSE;
 
 	if (!floatbar->created)
 		return TRUE;
-
-	xfc = floatbar->xfc;
-	WINPR_ASSERT(xfc);
-	WINPR_ASSERT(xfc->display);
 
 	if (floatbar->locked || (floatbar->mode != XF_FLOATBAR_MODE_NONE))
 	{
