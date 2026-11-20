@@ -103,6 +103,7 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 		memcpy(h264->iStride, iStride, sizeof(h264->iStride));
 		h264->width = width;
 		h264->height = height;
+		h264->firstLumaFrameDone = FALSE;
 	}
 
 	return TRUE;
