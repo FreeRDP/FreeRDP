@@ -3022,6 +3022,9 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
 
+		case FreeRDP_LicenseStorePath:
+			return settings->LicenseStorePath;
+
 		case FreeRDP_NtlmSamFile:
 			return settings->NtlmSamFile;
 
@@ -3368,6 +3371,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
+
+		case FreeRDP_LicenseStorePath:
+			return settings->LicenseStorePath;
 
 		case FreeRDP_NtlmSamFile:
 			return settings->NtlmSamFile;
@@ -3727,6 +3733,9 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_KeyboardRemappingList:
 			return update_string_(&settings->KeyboardRemappingList, cnv.c, len);
+
+		case FreeRDP_LicenseStorePath:
+			return update_string_(&settings->LicenseStorePath, cnv.c, len);
 
 		case FreeRDP_NtlmSamFile:
 			return update_string_(&settings->NtlmSamFile, cnv.c, len);
@@ -4105,6 +4114,9 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_KeyboardRemappingList:
 			return update_string_copy_(&settings->KeyboardRemappingList, cnv.cc, len, cleanup);
+
+		case FreeRDP_LicenseStorePath:
+			return update_string_copy_(&settings->LicenseStorePath, cnv.cc, len, cleanup);
 
 		case FreeRDP_NtlmSamFile:
 			return update_string_copy_(&settings->NtlmSamFile, cnv.cc, len, cleanup);

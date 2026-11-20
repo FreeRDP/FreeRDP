@@ -440,6 +440,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_KerberosStartTime,
 	FreeRDP_KeyboardPipeName,
 	FreeRDP_KeyboardRemappingList,
+	FreeRDP_LicenseStorePath,
 	FreeRDP_NtlmSamFile,
 	FreeRDP_Password,
 	FreeRDP_PasswordHash,
