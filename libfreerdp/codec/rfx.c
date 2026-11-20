@@ -1187,6 +1187,12 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 
 	WINPR_ASSERT(context->priv);
 	RFX_MESSAGE* message = &context->currentMessage;
+	for (UINT16 i = 0; i < message->numTiles; i++)
+	{
+		ObjectPool_Return(context->priv->TilePool, message->tiles[i]);
+		message->tiles[i] = nullptr;
+	}
+	message->numTiles = 0;
 
 	wStream* s = Stream_StaticConstInit(&inStream, data, length);
 
