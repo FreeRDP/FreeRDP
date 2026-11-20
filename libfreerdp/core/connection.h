@@ -80,6 +80,9 @@ FREERDP_LOCAL CONNECTION_STATE rdp_get_state(const rdpRdp* rdp);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* rdp_state_string(CONNECTION_STATE state);
 
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* rdp_transport_type_string(RDP_TRANSPORT_TYPE type);
+
 /**
  * @brief checks if the current state is the requested (or any later) one.
  * * In case of failure a warning is logged.
