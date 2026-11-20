@@ -306,15 +306,22 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 	return hEvent;
 }
 
-static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events, DWORD count)
+static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, WINPR_ATTR_UNUSED HANDLE* events,
+                                            WINPR_ATTR_UNUSED DWORD count)
 {
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
-	WINPR_ASSERT(client->context->rdp);
+
 	rdpRdp* rdp = client->context->rdp;
-	return multitransport_server_add_event(
-	    rdp->multitransport, events, transport_get_event_handles(rdp->transport, events, count),
-	    count);
+	WINPR_ASSERT(rdp);
+
+	DWORD res = transport_get_event_handles(rdp->transport, events, count);
+
+#if defined(WITH_RDPEUDP_SERVER)
+	return multitransport_server_add_event(rdp->multitransport, events, res, count);
+#else
+	return res;
+#endif
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
@@ -1274,7 +1281,10 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 
+#if defined(WITH_RDPEUDP_SERVER)
 	multitransport_server_disconnect(client->context);
+#endif
+
 	transport = freerdp_get_transport(client->context);
 	transport_disconnect(transport);
 }

@@ -115,30 +115,8 @@ FREERDP_LOCAL DWORD multitransport_server_add_event(rdpMultitransport* multi, HA
  *  FREERDP_UDP_LINK_NONE first, while the application context remains valid. */
 FREERDP_LOCAL void multitransport_server_disconnect(rdpContext* context);
 
-#else
-
-WINPR_ATTR_NODISCARD
-static inline BOOL multitransport_server_send_autodetect(
-    WINPR_ATTR_UNUSED rdpMultitransport* multi, WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
-    WINPR_ATTR_UNUSED UINT16 sequenceNumber, WINPR_ATTR_UNUSED UINT16 requestType,
-    WINPR_ATTR_UNUSED BOOL* rc)
-{
-	return FALSE;
-}
-
-WINPR_ATTR_NODISCARD
-static inline DWORD multitransport_server_add_event(WINPR_ATTR_UNUSED rdpMultitransport* multi,
-                                                    WINPR_ATTR_UNUSED HANDLE* events, DWORD used,
-                                                    WINPR_ATTR_UNUSED DWORD count)
-{
-	return used;
-}
-
-static inline void multitransport_server_disconnect(WINPR_ATTR_UNUSED rdpContext* context)
-{
-}
-
 #endif
+
 /** TRUE when the connection was ended because its UDP tunnel broke down. Cleared by
  * multitransport_reset(). */
 WINPR_ATTR_NODISCARD
