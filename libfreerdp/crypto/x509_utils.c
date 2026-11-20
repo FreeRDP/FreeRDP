@@ -32,6 +32,7 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/assert.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/log.h>
 
@@ -240,10 +241,13 @@ mapper is called for all the names,  else it's called only for names
 of the given type.
 
 
-We implement two extractors:
+We implement the following extractors:
 
  -  a string extractor that can be used to get the subjectAltNames of
     the following types: GEN_URI,  GEN_DNS,  GEN_EMAIL
+
+ -  an IP address extractor that converts the binary GEN_IPADD value
+    into its presentation format
 
  - a ASN1_OBJECT filter/extractor that can be used to get the
    subjectAltNames of OTHERNAME type.
@@ -254,7 +258,7 @@ We implement two extractors:
    object.
 
 Not implemented yet: extractors for the types: GEN_X400, GEN_DIRNAME,
-GEN_EDIPARTY, GEN_RID, GEN_IPADD (the later can contain nul-bytes).
+GEN_EDIPARTY, GEN_RID.
 
 
 mapper(name, data, index, count)
@@ -497,6 +501,33 @@ static BOOL check_string_is_host_or_ip_or_email(WINPR_ATTR_UNUSED const X509* x5
 	return check_string_is_email(x509, ustr, length);
 }
 
+static char* ip_address_to_string(const ASN1_STRING* str)
+{
+	WINPR_ASSERT(str);
+
+	const int length = ASN1_STRING_length(str);
+	int family = AF_UNSPEC;
+
+	switch (length)
+	{
+		case 4:
+			family = AF_INET;
+			break;
+		case 16:
+			family = AF_INET6;
+			break;
+		default:
+			return nullptr;
+	}
+
+	char buffer[INET6_ADDRSTRLEN] = WINPR_C_ARRAY_INIT;
+	const void* data = ASN1_STRING_get0_data(str);
+	if (!inet_ntop(family, data, buffer, sizeof(buffer)))
+		return nullptr;
+
+	return OPENSSL_strdup(buffer);
+}
+
 WINPR_ATTR_NODISCARD
 static int
 extract_string_generic(const X509* x509, GENERAL_NAME* name, void* data, int index, int count,
@@ -522,10 +553,6 @@ extract_string_generic(const X509* x509, GENERAL_NAME* name, void* data, int ind
 
 		case GEN_EMAIL:
 			str = name->d.rfc822Name;
-			break;
-
-		case GEN_IPADD:
-			str = name->d.iPAddress;
 			break;
 
 		default:
@@ -581,6 +608,46 @@ static int extract_string(const X509* x509, GENERAL_NAME* name, void* data, int 
 static int extract_email(const X509* x509, GENERAL_NAME* name, void* data, int index, int count)
 {
 	return extract_string_generic(x509, name, data, index, count, check_string_is_email);
+}
+
+static int extract_ip_address(const X509* x509, GENERAL_NAME* name, void* data, int index,
+                              int count)
+{
+	string_list* list = data;
+	WINPR_ASSERT(list);
+	WINPR_ASSERT(name);
+	WINPR_UNUSED(x509);
+	WINPR_UNUSED(index);
+
+	if (name->type != GEN_IPADD)
+		return 1;
+
+	char* address = ip_address_to_string(name->d.iPAddress);
+	if (!address)
+	{
+		WLog_ERR(TAG, "Failed to convert %s to a string", general_name_type_label(name->type));
+		return 1;
+	}
+
+	if (!string_list_allocate(list, WINPR_ASSERTING_INT_CAST(size_t, count)) ||
+	    (list->allocated <= 0))
+	{
+		WLog_ERR(TAG, "Failed to allocate %s list", general_name_type_label(name->type));
+		OPENSSL_free(address);
+		return 0;
+	}
+
+	list->strings[list->count] = address;
+	list->lengths[list->count] = strlen(address);
+	list->count++;
+
+	if (list->count >= list->maximum)
+	{
+		WLog_ERR(TAG, "Too many %s entries", general_name_type_label(name->type));
+		return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -806,11 +873,11 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 }
 
 WINPR_ATTR_NODISCARD
-static char** x509_utils_get_names(const X509* xcert, int general_name_type, size_t* count,
-                                   size_t** lengths)
+static char** x509_utils_get_names(const X509* xcert, int general_name_type,
+                                   general_name_mapper_pr mapper, size_t* count, size_t** lengths)
 {
 	string_list list = string_list_initialize();
-	map_subject_alt_name(xcert, general_name_type, extract_string, &list);
+	map_subject_alt_name(xcert, general_name_type, mapper, &list);
 	(*count) = list.count;
 
 	if (list.count <= 0)
@@ -846,12 +913,12 @@ static char** x509_utils_get_names(const X509* xcert, int general_name_type, siz
 
 char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** pplengths)
 {
-	return x509_utils_get_names(xcert, GEN_DNS, count, pplengths);
+	return x509_utils_get_names(xcert, GEN_DNS, extract_string, count, pplengths);
 }
 
 char** x509_utils_get_ip_names(const X509* xcert, size_t* count, size_t** pplengths)
 {
-	return x509_utils_get_names(xcert, GEN_IPADD, count, pplengths);
+	return x509_utils_get_names(xcert, GEN_IPADD, extract_ip_address, count, pplengths);
 }
 
 char* x509_utils_get_issuer(const X509* xcert)

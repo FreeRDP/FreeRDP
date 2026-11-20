@@ -420,6 +420,45 @@ fail:
 	return rc;
 }
 
+/*
+SAN='IP:192.0.2.1,IP:2001:db8::1'
+openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes \
+  -subj "/CN=Test" -addext "subjectAltName=$SAN" \
+  -out Test_x509_ip_san_cert.pem
+*/
+static int TestIPNames(void)
+{
+	int rc = -1;
+	size_t count = 0;
+	size_t* lengths = nullptr;
+	char** names = nullptr;
+	char* path = certificate_path("Test_x509_ip_san_cert.pem");
+	X509* certificate = path ? x509_utils_from_pem(path, strlen(path), TRUE) : nullptr;
+
+	if (!certificate)
+	{
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__,
+		       path ? path : "(null)");
+		goto fail;
+	}
+
+	names = x509_utils_get_ip_names(certificate, &count, &lengths);
+	if (!names || (count != 2) || (strcmp(names[0], "192.0.2.1") != 0) ||
+	    (strcmp(names[1], "2001:db8::1") != 0) || (lengths[0] != strlen(names[0])) ||
+	    (lengths[1] != strlen(names[1])))
+	{
+		printf("%s: failure: expected the IPv4 and IPv6 SANs, got %" PRIuz "\n", __func__, count);
+		goto fail;
+	}
+
+	rc = 0;
+fail:
+	x509_utils_ip_names_free(count, lengths, names);
+	X509_free(certificate);
+	free(path);
+	return rc;
+}
+
 int Test_x509_utils(int argc, char* argv[])
 {
 	char* cert_path = certificate_path("Test_x509_cert_info.pem");
@@ -433,6 +472,10 @@ int Test_x509_utils(int argc, char* argv[])
 		return ret;
 
 	ret = TestWildcardNames();
+	if (ret != 0)
+		return ret;
+
+	ret = TestIPNames();
 	if (ret != 0)
 		return ret;
 
