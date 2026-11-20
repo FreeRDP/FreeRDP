@@ -199,7 +199,7 @@ static inline UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 			Stream_Write_UINT16(in_s, in_count);
 		}
 
-		Stream_Write(in_s, Stream_Pointer(in_data), 3ULL * in_count);
+		Stream_Write(in_s, Stream_Buffer(in_data), 3ULL * in_count);
 	}
 
 	Stream_ResetPosition(in_data);
