@@ -28,17 +28,20 @@
 
 #include <freerdp/settings_types.h>
 
+[[nodiscard]]
 static bool spansRange(int64_t a, int64_t alen, int64_t b, int64_t blen)
 {
 	return (a < b + blen) && (b < a + alen);
 }
 
+[[nodiscard]]
 static bool intersect(const rdpMonitor& a, const rdpMonitor& b)
 {
 	return spansRange(a.x, a.width, b.x, b.width) && spansRange(a.y, a.height, b.y, b.height);
 }
 
 /* Two monitors are adjacent when they share an edge segment of positive length. */
+[[nodiscard]]
 static bool touch(const rdpMonitor& a, const rdpMonitor& b)
 {
 	const int64_t ax = a.x;
@@ -52,27 +55,28 @@ static bool touch(const rdpMonitor& a, const rdpMonitor& b)
 
 /* MS-RDPEDISP 3.1.5.2: monitors must not overlap and must form one area, connected through
  * shared edges. */
+[[nodiscard]]
 static bool valid(const std::vector<rdpMonitor>& list)
 {
 	for (size_t i = 0; i < list.size(); i++)
 		for (size_t j = i + 1; j < list.size(); j++)
-			if (intersect(list[i], list[j]))
+			if (intersect(list.at(i), list.at(j)))
 				return false;
 	if (list.size() < 2)
 		return true;
 
 	std::vector<bool> reached(list.size(), false);
 	std::vector<size_t> next{ 0 };
-	reached[0] = true;
+	reached.at(0) = true;
 	while (!next.empty())
 	{
 		const auto i = next.back();
 		next.pop_back();
 		for (size_t j = 0; j < list.size(); j++)
 		{
-			if (!reached[j] && touch(list[i], list[j]))
+			if (!reached.at(j) && touch(list.at(i), list.at(j)))
 			{
-				reached[j] = true;
+				reached.at(j) = true;
 				next.push_back(j);
 			}
 		}
@@ -80,6 +84,7 @@ static bool valid(const std::vector<rdpMonitor>& list)
 	return std::all_of(reached.begin(), reached.end(), [](bool r) { return r; });
 }
 
+[[nodiscard]]
 static bool expect(bool value, const char* message)
 {
 	if (!value)
@@ -95,25 +100,27 @@ struct Display
 	int height;
 };
 
+[[nodiscard]]
 static sdl_display_offsets::Offsets offsets(const std::vector<Display>& displays,
                                             const std::vector<SDL_DisplayID>& ids, size_t primary,
                                             const std::vector<SDL_DisplayID>& selection = {})
 {
 	/* SDL reports bounds relative to the primary display, which starts at (0, 0). */
-	const auto origin = displays[primary].points;
+	const auto origin = displays.at(primary).points;
 	sdl_display_offsets::Offsets result;
 	for (size_t i = 0; i < displays.size(); i++)
 	{
-		auto bounds = displays[i].points;
+		auto bounds = displays.at(i).points;
 		bounds.x -= origin.x;
 		bounds.y -= origin.y;
-		SDL_Rect pixel{ 0, 0, displays[i].width, displays[i].height };
-		result.emplace(ids[i], std::pair{ bounds, pixel });
+		SDL_Rect pixel{ 0, 0, displays.at(i).width, displays.at(i).height };
+		result.emplace(ids.at(i), std::pair{ bounds, pixel });
 	}
-	sdl_display_offsets::update(result, ids[primary], selection);
+	sdl_display_offsets::update(result, ids.at(primary), selection);
 	return result;
 }
 
+[[nodiscard]]
 static rdpMonitor monitor(const sdl_display_offsets::Offsets& o, SDL_DisplayID id)
 {
 	const auto& pixel = o.at(id).second;
@@ -130,15 +137,16 @@ static void dump(const std::vector<Display>& displays, const std::vector<SDL_Dis
 {
 	for (size_t i = 0; i < displays.size(); i++)
 	{
-		const auto m = monitor(o, ids[i]);
-		(void)fprintf(stderr, "  %-8s id %u at %d,%d %dx%d\n", displays[i].name, ids[i], m.x, m.y,
-		              m.width, m.height);
+		const auto m = monitor(o, ids.at(i));
+		(void)fprintf(stderr, "  %-8s id %u at %d,%d %dx%d\n", displays.at(i).name, ids.at(i), m.x,
+		              m.y, m.width, m.height);
 	}
 }
 
 /* Calls check with the pixel layout for every primary (or those listed) and every assignment of
  * display IDs (the displays are kept in a map ordered by ID). */
 template <typename Check>
+[[nodiscard]]
 static bool forEachOrder(const char* name, const std::vector<Display>& displays,
                          const std::vector<size_t>& selection, Check check,
                          const std::vector<size_t>& primaries = {})
@@ -150,7 +158,7 @@ static bool forEachOrder(const char* name, const std::vector<Display>& displays,
 		std::vector<SDL_DisplayID> sel;
 		sel.reserve(selection.size());
 		for (const auto i : selection)
-			sel.push_back(ids[i]);
+			sel.push_back(ids.at(i));
 		for (size_t primary = 0; primary < displays.size(); primary++)
 		{
 			if (!primaries.empty() &&
@@ -160,10 +168,10 @@ static bool forEachOrder(const char* name, const std::vector<Display>& displays,
 			std::vector<rdpMonitor> list;
 			list.reserve(displays.size());
 			for (size_t i = 0; i < displays.size(); i++)
-				list.push_back(monitor(o, ids[i]));
+				list.push_back(monitor(o, ids.at(i)));
 			if (!check(list))
 			{
-				(void)fprintf(stderr, "FAIL: %s (primary %s)\n", name, displays[primary].name);
+				(void)fprintf(stderr, "FAIL: %s (primary %s)\n", name, displays.at(primary).name);
 				dump(displays, ids, o);
 				return false;
 			}
@@ -173,6 +181,7 @@ static bool forEachOrder(const char* name, const std::vector<Display>& displays,
 }
 
 /* The selected displays (empty: all) form a valid layout. */
+[[nodiscard]]
 static bool checkValid(const char* name, const std::vector<Display>& displays,
                        const std::vector<size_t>& selection = {})
 {
@@ -185,7 +194,7 @@ static bool checkValid(const char* name, const std::vector<Display>& displays,
 		    {
 			    if (selection.empty() ||
 			        (std::find(selection.begin(), selection.end(), i) != selection.end()))
-				    sent.push_back(list[i]);
+				    sent.push_back(list.at(i));
 		    }
 		    return valid(sent);
 	    });
@@ -193,6 +202,7 @@ static bool checkValid(const char* name, const std::vector<Display>& displays,
 
 /* Whenever the walk gives a valid layout, the result is valid too: every primary and every
  * assignment of display IDs. */
+[[nodiscard]]
 static bool checkNotWorse(const char* name, const std::vector<Display>& displays,
                           const std::vector<size_t>& selection = {})
 {
@@ -203,12 +213,12 @@ static bool checkNotWorse(const char* name, const std::vector<Display>& displays
 		std::vector<SDL_DisplayID> sel;
 		sel.reserve(selection.size());
 		for (const auto i : selection)
-			sel.push_back(ids[i]);
+			sel.push_back(ids.at(i));
 		for (size_t primary = 0; primary < displays.size(); primary++)
 		{
 			const auto o = offsets(displays, ids, primary, sel);
 			auto before = o;
-			sdl_display_offsets::walk(before, ids[primary]);
+			sdl_display_offsets::walk(before, ids.at(primary));
 			std::vector<rdpMonitor> ours;
 			std::vector<rdpMonitor> walked;
 			for (size_t i = 0; i < displays.size(); i++)
@@ -216,14 +226,14 @@ static bool checkNotWorse(const char* name, const std::vector<Display>& displays
 				if (selection.empty() ||
 				    (std::find(selection.begin(), selection.end(), i) != selection.end()))
 				{
-					ours.push_back(monitor(o, ids[i]));
-					walked.push_back(monitor(before, ids[i]));
+					ours.push_back(monitor(o, ids.at(i)));
+					walked.push_back(monitor(before, ids.at(i)));
 				}
 			}
 			if (valid(walked) && !valid(ours))
 			{
 				(void)fprintf(stderr, "FAIL: %s is worse than the walk (primary %s)\n", name,
-				              displays[primary].name);
+				              displays.at(primary).name);
 				dump(displays, ids, o);
 				return false;
 			}
@@ -232,6 +242,7 @@ static bool checkNotWorse(const char* name, const std::vector<Display>& displays
 	return true;
 }
 
+[[nodiscard]]
 static bool checkDesk()
 {
 	/* A macOS arrangement in points, with the IDs and the fullscreen built-in size the client
@@ -260,8 +271,8 @@ static bool checkDesk()
 		const auto o = offsets(desk, ids, 0, selection);
 		const auto uhd = monitor(o, 2);
 		const auto fhd = monitor(o, 3);
-		const bool withFhd = selection.empty() || (selection[1] == 3);
-		const bool withUhd = selection.empty() || (selection[1] == 2);
+		const bool withFhd = selection.empty() || (selection.at(1) == 3);
+		const bool withUhd = selection.empty() || (selection.at(1) == 2);
 		if (!expect((!withFhd || ((fhd.x == 0) && (fhd.y == -1080))) &&
 		                (!withUhd || ((uhd.x == 1920) && (uhd.y == -2160))),
 		            "the desk layout keeps the FHD above the built-in and the 4K next to it"))
@@ -273,6 +284,7 @@ static bool checkDesk()
 	return true;
 }
 
+[[nodiscard]]
 static bool checkMixed()
 {
 	/* Ordinary MacBook layouts: valid with every primary and ID assignment. */
@@ -318,13 +330,14 @@ static bool checkMixed()
 	       checkNotWorse("a MacBook with displays on both sides", sides, { 0, 2, 3 });
 }
 
+[[nodiscard]]
 static bool checkKept(const char* name, const std::vector<Display>& displays,
                       const std::vector<size_t>& selection = {})
 {
 	/* Relative to the first selected display, as the primary changes; all displays have the
 	 * scale of the first one. */
 	const size_t ref = selection.empty() ? 0 : selection.front();
-	const int scale = displays[ref].width / displays[ref].points.w;
+	const int scale = displays.at(ref).width / displays.at(ref).points.w;
 	return forEachOrder(
 	    name, displays, selection,
 	    [&](const std::vector<rdpMonitor>& list)
@@ -334,16 +347,17 @@ static bool checkKept(const char* name, const std::vector<Display>& displays,
 			    if (!selection.empty() &&
 			        (std::find(selection.begin(), selection.end(), i) == selection.end()))
 				    continue;
-			    if ((list[i].x - list[ref].x !=
-			         scale * (displays[i].points.x - displays[ref].points.x)) ||
-			        (list[i].y - list[ref].y !=
-			         scale * (displays[i].points.y - displays[ref].points.y)))
+			    if ((list.at(i).x - list.at(ref).x !=
+			         scale * (displays.at(i).points.x - displays.at(ref).points.x)) ||
+			        (list.at(i).y - list.at(ref).y !=
+			         scale * (displays.at(i).points.y - displays.at(ref).points.y)))
 				    return false;
 		    }
 		    return true;
 	    });
 }
 
+[[nodiscard]]
 static bool checkSameScale()
 {
 	const std::vector<Display> plain{ { "a", { 0, 0, 1920, 1080 }, 1920, 1080 },
@@ -378,6 +392,7 @@ static bool checkSameScale()
 	       checkKept("2x displays keep their point layout", retina);
 }
 
+[[nodiscard]]
 static bool checkEdgeCases()
 {
 	sdl_display_offsets::Offsets none;
@@ -389,8 +404,9 @@ static bool checkEdgeCases()
 		                            { "c", { 3840, 0, 1920, 1080 }, 3840, 2160 } };
 	sdl_display_offsets::Offsets missing;
 	for (size_t i = 0; i < row.size(); i++)
-		missing.emplace(static_cast<SDL_DisplayID>(i + 1),
-		                std::pair{ row[i].points, SDL_Rect{ 0, 0, row[i].width, row[i].height } });
+		missing.emplace(
+		    static_cast<SDL_DisplayID>(i + 1),
+		    std::pair{ row.at(i).points, SDL_Rect{ 0, 0, row.at(i).width, row.at(i).height } });
 	sdl_display_offsets::update(missing, 42);
 	return expect((monitor(missing, 1).x == 0) && (monitor(missing, 2).x == 1920) &&
 	                  (monitor(missing, 3).x == 3840),
