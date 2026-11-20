@@ -961,6 +961,8 @@ BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	if (!security_fips_check_length(length))
 		goto fail;
 
+	if (!rdp->fips_encrypt)
+		goto fail;
 	if (!winpr_Cipher_Update(rdp->fips_encrypt, data, length, data, &olen))
 		goto fail;
 

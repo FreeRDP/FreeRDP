@@ -2602,6 +2602,11 @@ static void rdp_reset_free(rdpRdp* rdp)
 	winpr_Cipher_Free(rdp->fips_decrypt);
 	rdp->fips_encrypt = nullptr;
 	rdp->fips_decrypt = nullptr;
+
+	rdp->do_crypt = FALSE;
+	rdp->do_crypt_license = FALSE;
+	rdp->do_secure_checksum = FALSE;
+
 	security_unlock(rdp);
 
 	aad_free(rdp->aad);
