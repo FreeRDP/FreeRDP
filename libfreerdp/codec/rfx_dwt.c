@@ -28,6 +28,16 @@
 
 #include "rfx_dwt.h"
 
+WINPR_ATTR_NODISCARD
+static inline INT16 clampi16(int val)
+{
+	if (val < INT16_MIN)
+		return INT16_MIN;
+	if (val > INT16_MAX)
+		return INT16_MAX;
+	return (INT16)val;
+}
+
 static inline void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
                                            size_t subband_width)
 {
@@ -50,13 +60,13 @@ static inline void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 	for (size_t y = 0; y < subband_width; y++)
 	{
 		/* Even coefficients */
-		l_dst[0] = WINPR_ASSERTING_INT_CAST(int16_t, ll[0] - ((hl[0] + hl[0] + 1) >> 1));
-		h_dst[0] = WINPR_ASSERTING_INT_CAST(int16_t, lh[0] - ((hh[0] + hh[0] + 1) >> 1));
+		l_dst[0] = clampi16(ll[0] - ((hl[0] + hl[0] + 1) >> 1));
+		h_dst[0] = clampi16(lh[0] - ((hh[0] + hh[0] + 1) >> 1));
 		for (size_t n = 1; n < subband_width; n++)
 		{
 			const size_t x = n << 1;
-			l_dst[x] = WINPR_ASSERTING_INT_CAST(int16_t, ll[n] - ((hl[n - 1] + hl[n] + 1) >> 1));
-			h_dst[x] = WINPR_ASSERTING_INT_CAST(int16_t, lh[n] - ((hh[n - 1] + hh[n] + 1) >> 1));
+			l_dst[x] = clampi16(ll[n] - ((hl[n - 1] + hl[n] + 1) >> 1));
+			h_dst[x] = clampi16(lh[n] - ((hh[n - 1] + hh[n] + 1) >> 1));
 		}
 
 		/* Odd coefficients */
@@ -68,16 +78,16 @@ static inline void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 			const int ld = (hl[n] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);
 			const int hd = (hh[n] << 1) + ((h_dst[x] + h_dst[x + 2]) >> 1);
 
-			l_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, ld);
-			h_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, hd);
+			l_dst[x + 1] = clampi16(ld);
+			h_dst[x + 1] = clampi16(hd);
 		}
 
 		const size_t x = n << 1;
 
 		const int ld = (hl[n] << 1) + (l_dst[x]);
 		const int hd = (hh[n] << 1) + (h_dst[x]);
-		l_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, ld);
-		h_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, hd);
+		l_dst[x + 1] = clampi16(ld);
+		h_dst[x + 1] = clampi16(hd);
 
 		ll += subband_width;
 		hl += subband_width;
@@ -96,7 +106,7 @@ static inline void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 		INT16* dst = buffer + x;
 
 		const int dd = *l - ((*h * 2 + 1) >> 1);
-		*dst = WINPR_ASSERTING_INT_CAST(INT16, dd);
+		*dst = clampi16(dd);
 
 		for (size_t n = 1; n < subband_width; n++)
 		{
@@ -105,17 +115,17 @@ static inline void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 
 			/* Even coefficients */
 			const int d2 = *l - ((*(h - total_width) + *h + 1) >> 1);
-			dst[2 * total_width] = WINPR_ASSERTING_INT_CAST(INT16, d2);
+			dst[2 * total_width] = clampi16(d2);
 
 			/* Odd coefficients */
 			const int d = (*(h - total_width) << 1) + ((*dst + dst[2 * total_width]) >> 1);
-			dst[total_width] = WINPR_ASSERTING_INT_CAST(INT16, d);
+			dst[total_width] = clampi16(d);
 
 			dst += 2 * total_width;
 		}
 
 		const int d = (*h << 1) + ((*dst * 2) >> 1);
-		dst[total_width] = WINPR_ASSERTING_INT_CAST(INT16, d);
+		dst[total_width] = clampi16(d);
 	}
 }
 

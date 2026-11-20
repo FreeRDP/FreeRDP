@@ -370,7 +370,7 @@ static UINT rdpsnd_server_initialize(RdpsndServerContext* context, BOOL ownThrea
  */
 static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 client_format_index)
 {
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INVALID_DATA;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -382,17 +382,19 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	}
 
 	EnterCriticalSection(&context->priv->lock);
+	// Invalidate currently selected format. Should anything fail no function will touch the
+	// buffers.
+	context->selected_client_format = UINT16_MAX;
+
 	context->priv->src_bytes_per_sample = context->src_format->wBitsPerSample / 8;
 	context->priv->src_bytes_per_frame =
 	    context->priv->src_bytes_per_sample * context->src_format->nChannels;
-	context->selected_client_format = client_format_index;
 
 	const AUDIO_FORMAT* format = &context->client_formats[client_format_index];
 
 	if (format->nSamplesPerSec == 0)
 	{
-		WLog_ERR(TAG, "invalid Client Sound Format!!");
-		error = ERROR_INVALID_DATA;
+		WLog_ERR(TAG, "invalid Client Sound Format!");
 		goto out;
 	}
 
@@ -414,8 +416,6 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 			if (format->nChannels == 0)
 				goto out;
 
-			error = CHANNEL_RC_OK;
-
 			/* maximum:
 			 * 1: nBlockAlign=0xFFFF - 4 * nChannels=1 == 0xFFFB
 			 * 2: 4 * 0xFFFB = 0x3FFEC
@@ -433,13 +433,10 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 
 		case WAVE_FORMAT_ADPCM:
 		{
-			error = ERROR_INVALID_DATA;
 			if (format->nBlockAlign / 7 < format->nChannels)
 				goto out;
 			if (format->nChannels == 0)
 				goto out;
-
-			error = CHANNEL_RC_OK;
 
 			/* maximum:
 			 * 1: nBlockAlign=0xFFFF - 7 * nChannels=1 == 0xFFF8
@@ -460,8 +457,10 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	}
 
 	context->priv->out_pending_frames = 0;
-	const size_t out_buffer_size = context->priv->out_frames * context->priv->src_bytes_per_frame;
+	if (context->priv->out_frames > UINT32_MAX / context->priv->src_bytes_per_frame)
+		goto out;
 
+	const size_t out_buffer_size = context->priv->out_frames * context->priv->src_bytes_per_frame;
 	if (context->priv->out_buffer_size < out_buffer_size)
 	{
 		BYTE* newBuffer = (BYTE*)realloc(context->priv->out_buffer, out_buffer_size);
@@ -478,7 +477,13 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	}
 
 	if (!freerdp_dsp_context_reset(context->priv->dsp_context, format, 0u))
+	{
 		error = ERROR_INTERNAL_ERROR;
+		goto out;
+	}
+
+	context->selected_client_format = client_format_index;
+	error = CHANNEL_RC_OK;
 out:
 	LeaveCriticalSection(&context->priv->lock);
 	return error;
@@ -905,7 +910,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 	if (error)
 		return error;
 
-	context->selected_client_format = 0xFFFF;
+	context->selected_client_format = UINT16_MAX;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
 		return ERROR_OUTOFMEMORY;
@@ -1129,7 +1134,7 @@ RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 	context->vcm = vcm;
 	context->Start = rdpsnd_server_start;
 	context->Stop = rdpsnd_server_stop;
-	context->selected_client_format = 0xFFFF;
+	context->selected_client_format = UINT16_MAX;
 	context->Initialize = rdpsnd_server_initialize;
 	context->SendFormats = rdpsnd_server_send_formats;
 	context->SelectFormat = rdpsnd_server_select_format;
