@@ -787,7 +787,7 @@ fail:
 }
 #endif
 
-static int add_entry(X509_NAME* name, const char* value, const char* txt)
+static int add_entry(const X509_NAME* name, const char* value, const char* txt)
 {
 	WINPR_ASSERT(name);
 	WINPR_ASSERT(value);
@@ -799,9 +799,9 @@ static int add_entry(X509_NAME* name, const char* value, const char* txt)
 	{
 		if (length > INT32_MAX)
 			return -1;
-		const int rc =
-		    X509_NAME_add_entry_by_txt(name, txt, MBSTRING_UTF8, (const unsigned char*)entry,
-		                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0);
+		const int rc = X509_NAME_add_entry_by_txt(WINPR_CAST_CONST_PTR_AWAY(name, X509_NAME*), txt,
+		                                          MBSTRING_UTF8, (const unsigned char*)entry,
+		                                          WINPR_ASSERTING_INT_CAST(int, length), -1, 0);
 		if (rc != 1)
 			return -1;
 		return 1;
@@ -816,7 +816,7 @@ static int add_entry(X509_NAME* name, const char* value, const char* txt)
  * name, such as the fully qualified name of a cloud machine, keeps its first label (the host
  * name). A first label longer than a label may be is no host name: an error. */
 WINPR_ATTR_NODISCARD
-static int add_common_name(X509_NAME* name, const char* value)
+static int add_common_name(const X509_NAME* name, const char* value)
 {
 	WINPR_ASSERT(name);
 	WINPR_ASSERT(value);
@@ -836,7 +836,8 @@ static int add_common_name(X509_NAME* name, const char* value)
 		          WINPR_ASSERTING_INT_CAST(int, length), value);
 	}
 
-	if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)value,
+	if (X509_NAME_add_entry_by_txt(WINPR_CAST_CONST_PTR_AWAY(name, X509_NAME*), "CN", MBSTRING_UTF8,
+	                               (const unsigned char*)value,
 	                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
 		return -1;
 	return 1;
@@ -996,7 +997,6 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	};
 #ifdef WITH_OPENSSL
 	long serial = 0;
-	X509_NAME* name = nullptr;
 	const EVP_MD* md = nullptr;
 	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
 	int ret = makecert_context_parse_arguments(context, args, argc, argv);
@@ -1093,7 +1093,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	if (X509_set_pubkey(context->x509, context->pkey) != 1)
 		return -1;
 
-	name = X509_get_subject_name(context->x509);
+	const X509_NAME* name = X509_get_subject_name(context->x509);
 	arg = CommandLineFindArgumentA(args, "n");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
