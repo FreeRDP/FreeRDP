@@ -1421,7 +1421,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 	for (size_t x = offset; x < width; x += 2)
 	{
 		const BYTE* srcEven = &pSrcEven[4ULL * x];
-		const BYTE* srcOdd = &pSrcOdd[4ULL * x];
+		const BYTE* srcOdd = pSrcOdd ? &pSrcOdd[4ULL * x] : nullptr;
 		const BOOL lastX = (x + 1) >= width;
 		BYTE Y1e = 0;
 		BYTE Y2e = 0;
