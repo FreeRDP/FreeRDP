@@ -244,16 +244,17 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3],
 		for (UINT32 i = 0; i < pad; i++)
 		{
 			const INT32 divisor = 16;
-			const INT32 Y = ((*y_buf++) + 4096) << divisor;
+			/* unsigned arithmetic: wraps instead of overflowing for out of range input */
+			const UINT32 Y = (UINT32)((*y_buf++) + 4096) << divisor;
 			const INT32 Cb = (*cb_buf++);
 			const INT32 Cr = (*cr_buf++);
-			const INT32 CrR = Cr * ycbcr_table[divisor][0];
-			const INT32 CrG = Cr * ycbcr_table[divisor][1];
-			const INT32 CbG = Cb * ycbcr_table[divisor][2];
-			const INT32 CbB = Cb * ycbcr_table[divisor][3];
-			const INT16 R = WINPR_ASSERTING_INT_CAST(int16_t, (((CrR + Y) >> divisor) >> 5));
-			const INT16 G = WINPR_ASSERTING_INT_CAST(int16_t, (((Y - CbG - CrG) >> divisor) >> 5));
-			const INT16 B = WINPR_ASSERTING_INT_CAST(int16_t, (((CbB + Y) >> divisor) >> 5));
+			const UINT32 CrR = (UINT32)Cr * (UINT32)ycbcr_table[divisor][0];
+			const UINT32 CrG = (UINT32)Cr * (UINT32)ycbcr_table[divisor][1];
+			const UINT32 CbG = (UINT32)Cb * (UINT32)ycbcr_table[divisor][2];
+			const UINT32 CbB = (UINT32)Cb * (UINT32)ycbcr_table[divisor][3];
+			const INT32 R = (INT32)(CrR + Y) >> (divisor + 5);
+			const INT32 G = (INT32)(Y - CbG - CrG) >> (divisor + 5);
+			const INT32 B = (INT32)(CbB + Y) >> (divisor + 5);
 			*d_buf++ = CLIP(B);
 			*d_buf++ = CLIP(G);
 			*d_buf++ = CLIP(R);
@@ -413,16 +414,17 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3],
 		for (UINT32 i = 0; i < pad; i++)
 		{
 			const INT32 divisor = 16;
-			const INT32 Y = ((*y_buf++) + 4096) << divisor;
+			/* unsigned arithmetic: wraps instead of overflowing for out of range input */
+			const UINT32 Y = (UINT32)((*y_buf++) + 4096) << divisor;
 			const INT32 Cb = (*cb_buf++);
 			const INT32 Cr = (*cr_buf++);
-			const INT32 CrR = Cr * ycbcr_table[divisor][0];
-			const INT32 CrG = Cr * ycbcr_table[divisor][1];
-			const INT32 CbG = Cb * ycbcr_table[divisor][2];
-			const INT32 CbB = Cb * ycbcr_table[divisor][3];
-			const INT16 R = WINPR_ASSERTING_INT_CAST(int16_t, (((CrR + Y) >> divisor) >> 5));
-			const INT16 G = WINPR_ASSERTING_INT_CAST(int16_t, (((Y - CbG - CrG) >> divisor) >> 5));
-			const INT16 B = WINPR_ASSERTING_INT_CAST(int16_t, (((CbB + Y) >> divisor) >> 5));
+			const UINT32 CrR = (UINT32)Cr * (UINT32)ycbcr_table[divisor][0];
+			const UINT32 CrG = (UINT32)Cr * (UINT32)ycbcr_table[divisor][1];
+			const UINT32 CbG = (UINT32)Cb * (UINT32)ycbcr_table[divisor][2];
+			const UINT32 CbB = (UINT32)Cb * (UINT32)ycbcr_table[divisor][3];
+			const INT32 R = (INT32)(CrR + Y) >> (divisor + 5);
+			const INT32 G = (INT32)(Y - CbG - CrG) >> (divisor + 5);
+			const INT32 B = (INT32)(CbB + Y) >> (divisor + 5);
 			*d_buf++ = CLIP(R);
 			*d_buf++ = CLIP(G);
 			*d_buf++ = CLIP(B);
