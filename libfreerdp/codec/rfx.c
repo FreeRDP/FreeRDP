@@ -444,6 +444,7 @@ BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	context->frameIdx = 0;
+	context->decodedHeaderBlocks = 0;
 	return TRUE;
 }
 
@@ -979,6 +980,8 @@ static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 			}
 
 			message->tiles[i] = tile;
+			if (tile->allocated)
+				memset(tile->data, 0xff, 4ULL * 64ULL * 64ULL);
 
 			/* RFX_TILE */
 			if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 6))
@@ -1184,6 +1187,12 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 
 	WINPR_ASSERT(context->priv);
 	RFX_MESSAGE* message = &context->currentMessage;
+	for (UINT16 i = 0; i < message->numTiles; i++)
+	{
+		ObjectPool_Return(context->priv->TilePool, message->tiles[i]);
+		message->tiles[i] = nullptr;
+	}
+	message->numTiles = 0;
 
 	wStream* s = Stream_StaticConstInit(&inStream, data, length);
 
