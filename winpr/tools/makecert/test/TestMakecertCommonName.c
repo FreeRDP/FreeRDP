@@ -57,11 +57,12 @@ static BOOL make(const char* dir, const char* file, char** argv, int argc, char*
 	name_entry(X509_get_subject_name(x509), NID_organizationName, org, size);
 	rc = TRUE;
 fail:
+	X509_free(x509);
+	/* close the file before deleting it: Windows does not delete a file that is still open */
+	BIO_free(bio);
 	if (path)
 		(void)winpr_DeleteFile(path);
 	free(path);
-	X509_free(x509);
-	BIO_free(bio);
 	makecert_context_free(makecert);
 	return rc;
 }
@@ -123,7 +124,8 @@ int TestMakecertCommonName(int argc, char* argv[])
 	char* dir = nullptr;
 	if (!temp || !host_name(host, sizeof(host)))
 	{
-		(void)fprintf(stderr, "%s: temp directory %s or host %s: failed to create\n", temp, host);
+		(void)fprintf(stderr, "%s: temp directory %s or host %s: failed to create\n", __func__,
+		              temp ? temp : "(none)", host);
 		goto fail;
 	}
 	{
@@ -131,9 +133,11 @@ int TestMakecertCommonName(int argc, char* argv[])
 		(void)_snprintf(sub, sizeof(sub), "TestMakecertCommonName-%" PRIu32, GetCurrentProcessId());
 		dir = GetCombinedPath(temp, sub);
 	}
-	if (!dir || !winpr_PathMakePath(dir, nullptr))
+	/* a run that failed may have left the directory of a process with the same ID behind */
+	if (!dir || (!winpr_PathFileExists(dir) && !winpr_PathMakePath(dir, nullptr)))
 	{
-		(void)fprintf(stderr, "%s: test directory %s: failed to create\n", dir);
+		(void)fprintf(stderr, "%s: test directory %s: failed to create\n", __func__,
+		              dir ? dir : "(none)");
 		goto fail;
 	}
 
