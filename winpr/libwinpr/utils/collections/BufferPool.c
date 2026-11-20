@@ -255,6 +255,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 	else
 	{
 		/* variable size buffers */
+		SSIZE_T bufferSize = 0;
 
 		maxSize = 0;
 		maxIndex = 0;
@@ -286,6 +287,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 		if (!found)
 		{
+			bufferSize = size;
 			if (!size)
 				buffer = nullptr;
 			else
@@ -300,6 +302,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		else
 		{
 			buffer = pool->aArray[foundIndex].buffer;
+			bufferSize = pool->aArray[foundIndex].size;
 
 			if (maxSize < size)
 			{
@@ -311,6 +314,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 					goto out_error_no_free;
 
 				buffer = newBuffer;
+				bufferSize = size;
 			}
 
 			if (!BufferPool_ShiftAvailable(pool, WINPR_ASSERTING_INT_CAST(size_t, foundIndex), -1))
@@ -336,7 +340,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		}
 
 		pool->uArray[pool->uSize].buffer = buffer;
-		pool->uArray[pool->uSize].size = size;
+		pool->uArray[pool->uSize].size = bufferSize;
 		(pool->uSize)++;
 	}
 
