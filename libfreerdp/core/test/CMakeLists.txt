@@ -23,6 +23,7 @@ if(BUILD_TESTING_INTERNAL)
     TestTransportWriteFail.c
     TestInputWriteFail.c
     TestRemoteSettings.c
+    TestRemoteShadow.c
   )
   if(WITH_RDPEUDP)
     list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c)

@@ -31,6 +31,7 @@
 #include "peer.h"
 
 #include "connection.h"
+#include "remote_shadow.h"
 #include "transport.h"
 
 #include <winpr/crt.h>
@@ -364,12 +365,17 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		}
 	}
 
-	const char* hostname = settings->ServerHostname;
-	if (!hostname)
+	if (!settings->ServerHostname)
 	{
 		WLog_ERR(TAG, "Missing hostname, can not connect to nullptr target");
 		return FALSE;
 	}
+
+	/* every shadow connection needs a fresh invitation naming a fresh listener */
+	if (!remote_shadow_prepare_connect(rdp->context))
+		return FALSE;
+
+	const char* hostname = settings->ServerHostname;
 
 	const UINT32 port = settings->ServerPort;
 	WINPR_ASSERT(port <= UINT32_MAX);
