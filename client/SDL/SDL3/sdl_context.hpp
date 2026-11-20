@@ -241,9 +241,7 @@ class SdlContext
 
 	void applyMonitorOffset(SDL_WindowID window, float& x, float& y) const;
 
-	[[nodiscard]] std::vector<SDL_DisplayID>
-	updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
-	                                  const std::vector<SDL_DisplayID>& ignore = {});
+	void updateDisplayOffsets();
 	void updateMonitorDataFromOffsets();
 
 	rdpContext* _context = nullptr;
@@ -323,6 +321,8 @@ class SdlContext
 	std::set<uint64_t> _railWindowInfoPending;
 
 	std::map<SDL_DisplayID, std::pair<SDL_Rect, SDL_Rect>> _offsets;
+	std::map<SDL_DisplayID, SDL_Rect> _displayBounds;
+	SDL_DisplayID _primaryDisplay = 0;
 
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeight = 0;

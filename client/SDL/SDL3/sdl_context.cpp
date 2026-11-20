@@ -26,6 +26,7 @@
 #include "sdl_config.hpp"
 #include "sdl_channels.hpp"
 #include "sdl_monitor.hpp"
+#include "sdl_display_offsets.hpp"
 #include "sdl_pointer.hpp"
 #include "sdl_touch.hpp"
 #include "sdl_prefs.hpp"
@@ -1000,96 +1001,8 @@ void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) con
 	y -= static_cast<float>(w->offsetY());
 }
 
-static bool alignX(const SDL_Rect& a, const SDL_Rect& b)
-{
-	if (a.x + a.w == b.x)
-		return true;
-	if (b.x + b.w == a.x)
-		return true;
-	return false;
-}
-
-static bool alignY(const SDL_Rect& a, const SDL_Rect& b)
-{
-	if (a.y + a.h == b.y)
-		return true;
-	if (b.y + b.h == a.y)
-		return true;
-	return false;
-}
-
-std::vector<SDL_DisplayID>
-SdlContext::updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
-                                              const std::vector<SDL_DisplayID>& ignore)
-{
-	auto first = _offsets.at(id);
-	std::vector<SDL_DisplayID> neighbours;
-
-	for (auto& entry : _offsets)
-	{
-		if (entry.first == id)
-			continue;
-		if (std::find(ignore.begin(), ignore.end(), entry.first) != ignore.end())
-			continue;
-
-		bool neighbor = false;
-		const bool ax = alignX(entry.second.first, first.first);
-		const bool ay = alignY(entry.second.first, first.first);
-
-		/* Offset along the axis that does not touch, converted from logical to pixel
-		 * units of the reference display. Without this, a monitor that is adjacent on
-		 * one axis but shifted on the other (e.g. a wider monitor above another, or a
-		 * rotated monitor that is not top aligned) keeps offset 0 on that axis, the
-		 * layout sent to the server no longer matches the local one and pointer input
-		 * lands offset by that difference. */
-		auto crossOffset = [](int ePos, int fPos, int fLogical, int fPixel) -> int
-		{
-			if (fLogical <= 0)
-				return ePos - fPos;
-			return static_cast<int>(
-			    std::lround(static_cast<double>(ePos - fPos) * fPixel / fLogical));
-		};
-
-		if (ax)
-		{
-			if (entry.second.first.x < first.first.x)
-				entry.second.second.x = first.second.x - entry.second.second.w;
-			else
-				entry.second.second.x = first.second.x + first.second.w;
-			if (!ay)
-				entry.second.second.y =
-				    first.second.y +
-				    crossOffset(entry.second.first.y, first.first.y, first.first.h, first.second.h);
-			neighbor = true;
-		}
-		if (ay)
-		{
-			if (entry.second.first.y < first.first.y)
-				entry.second.second.y = first.second.y - entry.second.second.h;
-			else
-				entry.second.second.y = first.second.y + first.second.h;
-			if (!ax)
-				entry.second.second.x =
-				    first.second.x +
-				    crossOffset(entry.second.first.x, first.first.x, first.first.w, first.second.w);
-			neighbor = true;
-		}
-
-		if (neighbor)
-			neighbours.push_back(entry.first);
-	}
-	return neighbours;
-}
-
 void SdlContext::updateMonitorDataFromOffsets()
 {
-	for (auto& entry : _displays)
-	{
-		auto offsets = _offsets.at(entry.first);
-		entry.second.x = offsets.second.x;
-		entry.second.y = offsets.second.y;
-	}
-
 	for (auto& entry : _windows)
 	{
 		const auto& monitor = _displays.at(entry.first);
@@ -1646,18 +1559,32 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 	}
 	_displays.emplace(id, monitor);
 
-	/* Update actual display rectangles:
-	 *
-	 * 1. Get logical display bounds
-	 * 2. Use already known pixel width and height
-	 * 3. Iterate over each display and update the x and y offsets by adding all monitor
-	 * widths/heights from the primary
-	 */
-	_offsets.clear();
-	for (auto& entry : _displays)
+	/* The logical bounds and the primary are read here, on the thread SDL display functions
+	 * must be called from; updateDisplayOffsets() also runs when the selection is set during
+	 * connect, on another thread. */
+	_displayBounds.clear();
+	for (const auto& entry : _displays)
 	{
 		SDL_Rect bounds{};
 		std::ignore = SDL_GetDisplayBounds(entry.first, &bounds);
+		_displayBounds.emplace(entry.first, bounds);
+	}
+	_primaryDisplay = SDL_GetPrimaryDisplay();
+	updateDisplayOffsets();
+	updateMonitorDataFromOffsets();
+}
+
+void SdlContext::updateDisplayOffsets()
+{
+	/* Update actual display rectangles from the logical display bounds and the known pixel
+	 * width and height of each display. */
+	_offsets.clear();
+	for (const auto& entry : _displays)
+	{
+		SDL_Rect bounds{};
+		const auto found = _displayBounds.find(entry.first);
+		if (found != _displayBounds.end())
+			bounds = found->second;
 
 		SDL_Rect pixel{};
 		pixel.w = entry.second.width;
@@ -1665,35 +1592,15 @@ void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
 		_offsets.emplace(entry.first, std::pair{ bounds, pixel });
 	}
 
-	/* 1. Find primary and update all neighbors
-	 * 2. For each neighbor update all neighbors
-	 * 3. repeat until all displays updated.
-	 */
-	const auto primary = SDL_GetPrimaryDisplay();
-	/* Align display offsets to the primary display origin. */
-	auto it = _offsets.find(primary);
-	if (it != _offsets.end())
+	if (_offsets.empty())
+		return;
+	sdl_display_offsets::update(_offsets, _primaryDisplay, _monitorIds);
+	for (auto& entry : _displays)
 	{
-		it->second.second.x = it->second.first.x;
-		it->second.second.y = it->second.first.y;
+		const auto& pixel = _offsets.at(entry.first).second;
+		entry.second.x = pixel.x;
+		entry.second.y = pixel.y;
 	}
-	std::vector<SDL_DisplayID> handled;
-	handled.push_back(primary);
-
-	auto neighbors = updateDisplayOffsetsForNeighbours(primary);
-	while (!neighbors.empty())
-	{
-		auto neighbor = neighbors.front();
-		neighbors.erase(neighbors.begin());
-
-		if (std::find(handled.begin(), handled.end(), neighbor) != handled.end())
-			continue;
-		handled.push_back(neighbor);
-
-		auto next = updateDisplayOffsetsForNeighbours(neighbor, handled);
-		neighbors.insert(neighbors.end(), next.begin(), next.end());
-	}
-	updateMonitorDataFromOffsets();
 }
 
 void SdlContext::deleteDisplay(SDL_DisplayID id)
@@ -2176,6 +2083,10 @@ void SdlContext::setMonitorIds(const std::vector<SDL_DisplayID>& ids)
 	{
 		_monitorIds.push_back(id);
 	}
+	/* Only the selected displays are sent, so only they need to fit together. This runs during
+	 * connect, outside the thread that owns the windows; they are not touched here and are
+	 * created from the updated displays. */
+	updateDisplayOffsets();
 }
 
 const std::vector<SDL_DisplayID>& SdlContext::monitorIds() const
