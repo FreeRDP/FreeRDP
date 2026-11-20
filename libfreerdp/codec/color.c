@@ -1307,8 +1307,21 @@ static enum AVPixelFormat av_format_for_buffer(UINT32 format)
 }
 #endif
 
+static freerdp_image_scale_fkt s_scale_fkt = nullptr;
+static void* s_scale_user_arg = nullptr;
+
+BOOL freerdp_set_image_scaling_function(freerdp_image_scale_fkt scale, void* user)
+{
+	s_scale_fkt = scale;
+	s_scale_user_arg = user;
+	return TRUE;
+}
+
 BOOL freerdp_image_scaling_supported(void)
 {
+	if (s_scale_fkt)
+		return TRUE;
+
 #if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
 	return TRUE;
 #else
@@ -1321,6 +1334,11 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
                          const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                          UINT32 nXSrc, UINT32 nYSrc, UINT32 nSrcWidth, UINT32 nSrcHeight)
 {
+	if (s_scale_fkt)
+		return s_scale_fkt(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+		                   pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, nSrcWidth, nSrcHeight,
+		                   s_scale_user_arg);
+
 	BOOL rc = FALSE;
 	if (FreeRDPGetBitsPerPixel(SrcFormat) == 0)
 		return FALSE;

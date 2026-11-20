@@ -468,6 +468,32 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_image_scaling_supported(void);
 
+	typedef BOOL (*freerdp_image_scale_fkt)(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
+	                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+	                                        UINT32 nDstWidth, UINT32 nDstHeight,
+	                                        const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+	                                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+	                                        UINT32 nSrcWidth, UINT32 nSrcHeight, void* userdata);
+
+	/** @brief Register a custom image scaling function
+	 *
+	 *  For implementations that do not rely on FreeRDP build in image scaling support register a
+	 * function that can override the compiled in support status. Suggested place of registration:
+	 * \ref GlobalInit \ref GlobalUninit or same scope as \ref winpr_InitializeSSL
+	 *
+	 *  thread-safety: Not thread safe. Call before any threads are in use.
+	 *
+	 *  @param scale The function to register, will be called whenever \ref freerdp_image_scale is,
+	 * \ref freerdp_image_scaling_supported will return TRUE if != NULL
+	 *  @param user A caller supplied context. Must be valid for as long as the client/server is in
+	 * use.
+	 *
+	 *  @return TRUE if registered successfully
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_set_image_scaling_function(freerdp_image_scale_fkt scale, void* user);
+
 	/*** Scale an image to destination
 	 *
 	 * @param pDstData   destination buffer
