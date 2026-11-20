@@ -929,13 +929,15 @@ static void peer_free(t_peer* peer)
 	if (peer->s != INVALID_SOCKET)
 		closesocket(peer->s);
 
-	freeaddrinfo(peer->addr);
+	/* addr may point into the list, result is its head; musl's freeaddrinfo crashes on NULL */
+	if (peer->result)
+		freeaddrinfo(peer->result);
 	memset(peer, 0, sizeof(t_peer));
 	peer->s = INVALID_SOCKET;
 }
 
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, const UINT32* ports,
-                                     UINT32 count, UINT16 port, WINPR_ATTR_UNUSED UINT32 timeout)
+                                     UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 sindex = count;
 	SOCKET sockfd = INVALID_SOCKET;
@@ -951,6 +953,10 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 		free((void*)events);
 		return -1;
 	}
+
+	/* calloc leaves 0, a valid descriptor: an address that does not resolve must not close it */
+	for (UINT32 index = 0; index < count; index++)
+		peers[index].s = INVALID_SOCKET;
 
 	for (UINT32 index = 0; index < count; index++)
 	{
@@ -992,22 +998,26 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 
 	for (UINT32 index = 0; index < count; index++)
 	{
-		sockfd = peers[index].s;
+		const SOCKET s = peers[index].s;
 		addr = peers[index].addr;
 
-		if ((sockfd == INVALID_SOCKET) || (!addr))
+		if ((s == INVALID_SOCKET) || (!addr))
 			continue;
 
-		/* blocking tcp connect */
-		const int rc =
-		    _connect(sockfd, addr->ai_addr, WINPR_ASSERTING_INT_CAST(int, addr->ai_addrlen));
-
-		if (rc >= 0)
+		/* An unreachable address (e.g. an IPv6 link-local one from a remote assistance
+		 * invitation) must not block the others for the system connect timeout. */
+		if (freerdp_tcp_connect_timeout(context, (int)s, addr->ai_addr, addr->ai_addrlen, timeout))
 		{
 			/* connection success */
 			sindex = index;
 			break;
 		}
+
+		/* a late answer on a socket that timed out must not complete a connection */
+		closesocket(peers[index].s);
+		peers[index].s = INVALID_SOCKET;
+		if (utils_abort_event_is_set(context->rdp))
+			break;
 	}
 
 	if (sindex < count)
@@ -1376,7 +1386,8 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			}
 		}
 
-		if (sockfd <= 0)
+		/* after an abort the fallback would only replace CONNECT_CANCELLED by another error */
+		if ((sockfd <= 0) && !utils_abort_event_is_set(context->rdp))
 			sockfd = freerdp_host_connect(context, hostname, port, timeout);
 	}
 

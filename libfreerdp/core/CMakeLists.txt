@@ -116,6 +116,8 @@ set(${MODULE_PREFIX}_SRCS
     timezone.c
     timezone.h
     childsession.c
+    remote_shadow.c
+    remote_shadow.h
     rdp.c
     rdp.h
     tcp.c
@@ -192,6 +194,12 @@ if(WITH_RDPEUDP)
 endif()
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
+
+if(WITH_LIBSMB2)
+  freerdp_module_add(remote_shadow_rpc.c)
+  freerdp_library_add(libsmb2)
+  freerdp_pc_add_requires_private("libsmb2")
+endif()
 
 if(WIN32)
   set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
