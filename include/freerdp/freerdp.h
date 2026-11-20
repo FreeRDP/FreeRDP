@@ -753,6 +753,22 @@ owned by rdpRdp */
 	FREERDP_API BOOL freerdp_get_stats(const rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes,
 	                                   UINT64* inPackets, UINT64* outPackets);
 
+	/** @brief What the peer announced in this connection: its core data and capability sets.
+	 *
+	 *  On a client these are the server's (its RDP version as it sent it, its OS type in the
+	 *  General Capability Set, its trusted TLS certificate as RdpServerCertificate, ...), on a
+	 *  server the client's. The RDP version and the OS type are 0 and the certificate is
+	 *  nullptr until the peer sends them, other fields it has not sent hold their defaults; the
+	 *  settings start over with each connection (a reconnect or a redirection too). Read them
+	 *  with the freerdp_settings_get_* functions, on the thread that runs the connection.
+	 *
+	 *  @param context The context of the connection
+	 *  @return the peer's settings, read-only, or nullptr without a connection
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const rdpSettings* freerdp_get_remote_settings(const rdpContext* context);
+
 	FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 
 	WINPR_ATTR_NODISCARD

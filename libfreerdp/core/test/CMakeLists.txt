@@ -22,6 +22,7 @@ if(BUILD_TESTING_INTERNAL)
     TestRdpPacketLengths.c
     TestTransportWriteFail.c
     TestInputWriteFail.c
+    TestRemoteSettings.c
   )
   if(WITH_RDPEUDP)
     list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c)

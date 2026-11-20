@@ -1064,7 +1064,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_Decorations, TRUE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_RdpVersion, RDP_VERSION_10_12) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_RdpVersion,
+	                                 remote ? 0 : RDP_VERSION_10_12) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE) ||
@@ -1159,7 +1160,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings_init_computer_name(settings))
 		goto out_fail;
 
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, nullptr, 1))
+	/* a peer's certificate is nullptr until it sends one */
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, nullptr,
+	                                      remote ? 0 : 1))
 		goto out_fail;
 
 	if (!freerdp_capability_buffer_resize(settings, 32, FALSE))

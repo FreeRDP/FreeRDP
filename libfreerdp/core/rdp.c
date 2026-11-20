@@ -2404,6 +2404,13 @@ int rdp_check_fds(rdpRdp* rdp)
 	return status;
 }
 
+const rdpSettings* freerdp_get_remote_settings(const rdpContext* context)
+{
+	if (!context || !context->rdp)
+		return nullptr;
+	return context->rdp->remoteSettings;
+}
+
 BOOL freerdp_get_stats(const rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes, UINT64* inPackets,
                        UINT64* outPackets)
 {
