@@ -1962,5 +1962,33 @@ BOOL freerdp_settings_enforce_consistency(rdpSettings* settings)
 			          "Gateway enabled but GatewayHostname is empty, deactivating gateway support");
 		}
 	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
+	{
+		const char* licenses = freerdp_settings_get_string(settings, FreeRDP_LicenseStorePath);
+		if (!licenses)
+		{
+			const char* config = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
+			if (!config)
+			{
+				WLog_ERR(TAG, "ConfigPath missing, can not continue.");
+				return FALSE;
+			}
+			char* path = GetCombinedPath(config, "licenses");
+			if (!path)
+			{
+				WLog_ERR(TAG, "Failed to create license store path from config path %s", config);
+				return FALSE;
+			}
+			const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_LicenseStorePath, path);
+			winpr_zfree(path);
+			if (!rc)
+			{
+				WLog_ERR(TAG, "Failed to update LicenseStorePath to %s", path);
+				return FALSE;
+			}
+		}
+	}
+
 	return TRUE;
 }

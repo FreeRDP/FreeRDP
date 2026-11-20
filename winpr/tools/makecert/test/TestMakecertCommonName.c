@@ -4,6 +4,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include <winpr/rpc.h>
 #include <winpr/wtypes.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
@@ -38,11 +39,7 @@ static BOOL make(const char* dir, const char* file, char** argv, int argc, char*
 	if (makecert_context_output_certificate_file(makecert, dir) != 1)
 		goto fail;
 
-	{
-		char name[64] = { 0 };
-		(void)_snprintf(name, sizeof(name), "%s.crt", file);
-		path = GetCombinedPath(dir, name);
-	}
+	path = GetCombinedPathV(dir, "%s.crt", file);
 	if (!path)
 		goto fail;
 	bio = BIO_new_file(path, "r");
@@ -113,31 +110,46 @@ static BOOL host_name(char* name, DWORD size)
 	return GetComputerNameExA(ComputerNamePhysicalNetBIOS, name, &length) && (length > 0);
 }
 
+static const char* guid2str(const GUID* guid, char* buffer, size_t len)
+{
+	if (!guid)
+		return nullptr;
+	RPC_CSTR strguid = nullptr;
+
+	RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
+
+	if (rpcStatus != RPC_S_OK)
+		return nullptr;
+
+	(void)sprintf_s(buffer, len, "%s", strguid);
+	RpcStringFreeA(&strguid);
+	return buffer;
+}
+
 int TestMakecertCommonName(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	int rc = -1;
-	char host[256] = { 0 };
-	char* temp = GetKnownPath(KNOWN_PATH_TEMP);
+	char host[256] = WINPR_C_ARRAY_INIT;
 	char* dir = nullptr;
-	if (!temp || !host_name(host, sizeof(host)))
+	if (!host_name(host, sizeof(host)))
 	{
-		(void)fprintf(stderr, "%s: temp directory %s or host %s: failed to create\n", __func__,
-		              temp ? temp : "(none)", host);
+		(void)fprintf(stderr, "%s: host %s: failed to create\n", host);
 		goto fail;
 	}
+
+	GUID uuid = WINPR_C_ARRAY_INIT;
+	if (UuidCreate(&uuid) != RPC_S_OK)
+		goto fail;
+
+	char strhash[sizeof(uuid) * 2 + 8] = WINPR_C_ARRAY_INIT;
+	dir = GetKnownSubPathV(KNOWN_PATH_TEMP, "TestMakecertCommonName-%s",
+	                       guid2str(&uuid, strhash, sizeof(strhash)));
+	if (!dir || !winpr_PathMakePath(dir, nullptr))
 	{
-		char sub[64] = { 0 };
-		(void)_snprintf(sub, sizeof(sub), "TestMakecertCommonName-%" PRIu32, GetCurrentProcessId());
-		dir = GetCombinedPath(temp, sub);
-	}
-	/* a run that failed may have left the directory of a process with the same ID behind */
-	if (!dir || (!winpr_PathFileExists(dir) && !winpr_PathMakePath(dir, nullptr)))
-	{
-		(void)fprintf(stderr, "%s: test directory %s: failed to create\n", __func__,
-		              dir ? dir : "(none)");
+		(void)fprintf(stderr, "%s: test directory %s: failed to create\n", __func__, dir);
 		goto fail;
 	}
 
@@ -177,6 +189,5 @@ fail:
 	if (dir)
 		(void)winpr_RemoveDirectory(dir);
 	free(dir);
-	free(temp);
 	return rc;
 }

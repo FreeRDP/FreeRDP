@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
+#include <winpr/path.h>
 
 #include <freerdp/config.h>
 
@@ -275,6 +276,21 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	if (PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated) < 0)
 		return FALSE;
 	if (!pf_client_use_peer_load_balance_info(pc))
+		return FALSE;
+
+	/* For each proxy client create a unique session configuration directory.
+	 * This will (mostly) be used to store license data, so the directory should stay consistent
+	 * over multiple sessions. */
+	char* sessionid = freerdp_settings_get_unique_id(settings);
+	if (!sessionid)
+		return FALSE;
+
+	char* cfg = GetKnownSubPath(KNOWN_PATH_XDG_RUNTIME_DIR, sessionid);
+	winpr_zfree(sessionid);
+
+	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, cfg);
+	winpr_zfree(cfg);
+	if (!rc)
 		return FALSE;
 
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);

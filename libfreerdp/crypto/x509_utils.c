@@ -505,7 +505,7 @@ static char* ip_address_to_string(const ASN1_STRING* str)
 {
 	WINPR_ASSERT(str);
 
-	const int length = ASN1_STRING_length(str);
+	const long length = ASN1_STRING_length_wrapper(str);
 	int family = AF_UNSPEC;
 
 	switch (length)

@@ -504,8 +504,6 @@ static void license_print_scope_list(wLog* log, const SCOPE_LIST* scopeList)
 }
 #endif
 
-static const char licenseStore[] = "licenses";
-
 WINPR_ATTR_NODISCARD
 static BOOL license_ensure_state(rdpLicense* license, LICENSE_STATE state, UINT32 msg)
 {
@@ -578,7 +576,7 @@ static BOOL computeCalHash(wLog* log, const char* hostname, char* hashStr, size_
 {
 	WINPR_DIGEST_CTX* sha1 = nullptr;
 	BOOL ret = FALSE;
-	BYTE hash[20] = WINPR_C_ARRAY_INIT;
+	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(hostname);
 	WINPR_ASSERT(hashStr);
@@ -590,13 +588,12 @@ static BOOL computeCalHash(wLog* log, const char* hostname, char* hashStr, size_
 		goto out;
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
 		goto out;
-	if (!winpr_Digest_Update(sha1, (const BYTE*)hostname, strlen(hostname)))
+	if (!winpr_Digest_Update(sha1, hostname, strlen(hostname)))
 		goto out;
 	if (!winpr_Digest_Final(sha1, hash, sizeof(hash)))
 		goto out;
 
-	for (size_t i = 0; i < sizeof(hash); i++, hashStr += 2)
-		(void)sprintf_s(hashStr, 3, "%.2x", hash[i]);
+	winpr_BinToHexStringBuffer(hash, sizeof(hash), hashStr, len, FALSE);
 
 	ret = TRUE;
 out:
@@ -606,69 +603,65 @@ out:
 	return ret;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL saveCal(wLog* log, const rdpSettings* settings, const BYTE* data, size_t length,
-                    const char* hostname)
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
+static char* licenseCanonicalFilePath(wLog* log, const rdpSettings* settings, const char* hostname,
+                                      char* extension)
 {
-	char hash[41] = WINPR_C_ARRAY_INIT;
-	FILE* fp = nullptr;
-	char* licenseStorePath = nullptr;
-	char filename[MAX_PATH] = WINPR_C_ARRAY_INIT;
-	char filenameNew[MAX_PATH] = WINPR_C_ARRAY_INIT;
-	char* filepath = nullptr;
-	char* filepathNew = nullptr;
-
-	size_t written = 0;
-	BOOL ret = FALSE;
-	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
-
-	WINPR_ASSERT(path);
-	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(settings);
 	WINPR_ASSERT(hostname);
+	WINPR_ASSERT(extension);
+
+	char hash[MAX_PATH] = WINPR_C_ARRAY_INIT;
+
+	if (!computeCalHash(log, hostname, hash, sizeof(hash)))
+	{
+		WLog_Print(log, WLOG_ERROR, "unable to compute hostname hash");
+		return nullptr;
+	}
+
+	const char* path = freerdp_settings_get_string(settings, FreeRDP_LicenseStorePath);
+	if (!path)
+	{
+		WLog_Print(log, WLOG_ERROR, "No LicenseStorePath available");
+		return nullptr;
+	}
 
 	if (!winpr_PathFileExists(path))
 	{
 		if (!winpr_PathMakePath(path, nullptr))
 		{
 			WLog_Print(log, WLOG_ERROR, "error creating directory '%s'", path);
-			goto out;
+			return nullptr;
 		}
 		WLog_Print(log, WLOG_INFO, "creating directory %s", path);
 	}
+	return GetCombinedPathV(path, "%s.%s", hash, extension);
+}
 
-	if (!(licenseStorePath = GetCombinedPath(path, licenseStore)))
+WINPR_ATTR_NODISCARD
+static BOOL saveCal(wLog* log, const rdpSettings* settings, const BYTE* data, size_t length,
+                    const char* hostname)
+{
+	FILE* fp = nullptr;
+
+	size_t written = 0;
+	BOOL ret = FALSE;
+
+	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(hostname);
+
+	char* filepath = licenseCanonicalFilePath(log, settings, hostname, "cal");
+	char* filepathNew = licenseCanonicalFilePath(log, settings, hostname, "cal.new");
+	if (!filepath)
 	{
-		WLog_Print(log, WLOG_ERROR, "Failed to get license store path from '%s' + '%s'", path,
-		           licenseStore);
+		WLog_Print(log, WLOG_ERROR, "Failed to get license file path");
 		goto out;
 	}
 
-	if (!winpr_PathFileExists(licenseStorePath))
+	if (!filepathNew)
 	{
-		if (!winpr_PathMakePath(licenseStorePath, nullptr))
-		{
-			WLog_Print(log, WLOG_ERROR, "error creating directory '%s'", licenseStorePath);
-			goto out;
-		}
-		WLog_Print(log, WLOG_INFO, "creating directory %s", licenseStorePath);
-	}
-
-	if (!computeCalHash(log, hostname, hash, sizeof(hash)))
-		goto out;
-	(void)sprintf_s(filename, sizeof(filename) - 1, "%s.cal", hash);
-	(void)sprintf_s(filenameNew, sizeof(filenameNew) - 1, "%s.cal.new", hash);
-
-	if (!(filepath = GetCombinedPath(licenseStorePath, filename)))
-	{
-		WLog_Print(log, WLOG_ERROR, "Failed to get license file path from '%s' + '%s'", path,
-		           filename);
-		goto out;
-	}
-
-	if (!(filepathNew = GetCombinedPath(licenseStorePath, filenameNew)))
-	{
-		WLog_Print(log, WLOG_ERROR, "Failed to get license new file path from '%s' + '%s'", path,
-		           filenameNew);
+		WLog_Print(log, WLOG_ERROR, "Failed to get license new file path");
 		goto out;
 	}
 
@@ -697,7 +690,6 @@ static BOOL saveCal(wLog* log, const rdpSettings* settings, const BYTE* data, si
 out:
 	winpr_zfree(filepathNew);
 	winpr_zfree(filepath);
-	winpr_zfree(licenseStorePath);
 	return ret;
 }
 
@@ -705,9 +697,6 @@ WINPR_ATTR_MALLOC(free, 1)
 static BYTE* loadCalFile(wLog* log, const rdpSettings* settings, const char* hostname,
                          size_t* dataLen)
 {
-	char* licenseStorePath = nullptr;
-	char calFilename[MAX_PATH] = WINPR_C_ARRAY_INIT;
-	char hash[41] = WINPR_C_ARRAY_INIT;
 	INT64 length = 0;
 	size_t status = 0;
 	FILE* fp = nullptr;
@@ -717,19 +706,7 @@ static BYTE* loadCalFile(wLog* log, const rdpSettings* settings, const char* hos
 	WINPR_ASSERT(hostname);
 	WINPR_ASSERT(dataLen);
 
-	if (!computeCalHash(log, hostname, hash, sizeof(hash)))
-	{
-		WLog_Print(log, WLOG_ERROR, "%s: unable to compute hostname hash", __func__);
-		return nullptr;
-	}
-
-	(void)sprintf_s(calFilename, sizeof(calFilename) - 1, "%s.cal", hash);
-
-	if (!(licenseStorePath = GetCombinedPath(
-	          freerdp_settings_get_string(settings, FreeRDP_ConfigPath), licenseStore)))
-		return nullptr;
-
-	char* calPath = GetCombinedPath(licenseStorePath, calFilename);
+	char* calPath = licenseCanonicalFilePath(log, settings, hostname, "cal");
 	if (!calPath)
 		goto fail;
 
@@ -765,7 +742,6 @@ static BYTE* loadCalFile(wLog* log, const rdpSettings* settings, const char* hos
 
 	(void)fclose(fp);
 	winpr_zfree(calPath);
-	winpr_zfree(licenseStorePath);
 	return ret;
 
 fail:
@@ -774,7 +750,6 @@ fail:
 	if (fp)
 		(void)fclose(fp);
 	winpr_zfree(calPath);
-	winpr_zfree(licenseStorePath);
 	return nullptr;
 }
 

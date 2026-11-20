@@ -441,7 +441,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL MouseUseRelativeMove);    /* 1607 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL UseCommonStdioCallbacks); /* 1608 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL ConnectChildSession);     /* 1609 */
-	UINT64 padding1664[1664 - 1610];                           /* 1610 */
+	SETTINGS_DEPRECATED(ALIGN64 char* LicenseStorePath);       /* 1610 */
+	UINT64 padding1664[1664 - 1611];                           /* 1611 */
 
 	/* Names */
 	SETTINGS_DEPRECATED(ALIGN64 char* ComputerName); /* 1664 */

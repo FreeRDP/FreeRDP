@@ -556,6 +556,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_KeyboardPipeName, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_KeyboardPipeName" },
 	{ FreeRDP_KeyboardRemappingList, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_KeyboardRemappingList" },
+	{ FreeRDP_LicenseStorePath, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_LicenseStorePath" },
 	{ FreeRDP_NtlmSamFile, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_NtlmSamFile" },
 	{ FreeRDP_Password, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_Password" },
 	{ FreeRDP_PasswordHash, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_PasswordHash" },
