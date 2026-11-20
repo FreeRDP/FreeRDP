@@ -1724,6 +1724,7 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_context_reset(context, targetFormat);
 #else
+	ZeroMemory(&context->adpcm, sizeof(context->adpcm));
 	context->common.format = *targetFormat;
 
 	switch (context->common.format.wFormatTag)
