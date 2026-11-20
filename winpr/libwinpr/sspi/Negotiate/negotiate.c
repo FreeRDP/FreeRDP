@@ -693,6 +693,11 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 		output_token->mic = mic_buffers[1];
 	}
 
+	/* A peer may send a MIC unasked. Every MIC uses a sequence number, which the message
+	 * functions account for through this flag. */
+	if ((input_token->mic.cbBuffer > 0) || (output_token->mic.cbBuffer > 0))
+		context->mic = TRUE;
+
 	/* When using NTLM cipher states need to be reset after mic exchange */
 	const SSPI_PACKAGE_ID sub_id = sspi_SecureHandleGetPackageId(&context->sub_context);
 	if (!sub_id)
