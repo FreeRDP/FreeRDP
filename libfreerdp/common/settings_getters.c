@@ -510,6 +510,15 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_RemoteFxOnly:
 			return settings->RemoteFxOnly;
 
+		case FreeRDP_RemoteShadowControl:
+			return settings->RemoteShadowControl;
+
+		case FreeRDP_RemoteShadowMode:
+			return settings->RemoteShadowMode;
+
+		case FreeRDP_RemoteShadowNoConsentPrompt:
+			return settings->RemoteShadowNoConsentPrompt;
+
 		case FreeRDP_RestrictedAdminModeRequired:
 			return settings->RestrictedAdminModeRequired;
 
@@ -1293,6 +1302,18 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->RemoteFxOnly = cnv.c;
 			break;
 
+		case FreeRDP_RemoteShadowControl:
+			settings->RemoteShadowControl = cnv.c;
+			break;
+
+		case FreeRDP_RemoteShadowMode:
+			settings->RemoteShadowMode = cnv.c;
+			break;
+
+		case FreeRDP_RemoteShadowNoConsentPrompt:
+			settings->RemoteShadowNoConsentPrompt = cnv.c;
+			break;
+
 		case FreeRDP_RestrictedAdminModeRequired:
 			settings->RestrictedAdminModeRequired = cnv.c;
 			break;
@@ -2004,6 +2025,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_RemoteFxRlgrMode:
 			return settings->RemoteFxRlgrMode;
 
+		case FreeRDP_RemoteShadowSessionId:
+			return settings->RemoteShadowSessionId;
+
 		case FreeRDP_RemoteWndSupportLevel:
 			return settings->RemoteWndSupportLevel;
 
@@ -2534,6 +2558,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RemoteFxRlgrMode:
 			settings->RemoteFxRlgrMode = cnv.c;
+			break;
+
+		case FreeRDP_RemoteShadowSessionId:
+			settings->RemoteShadowSessionId = cnv.c;
 			break;
 
 		case FreeRDP_RemoteWndSupportLevel:
