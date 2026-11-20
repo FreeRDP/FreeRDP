@@ -330,7 +330,16 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 			__m128i b_val = WINPR_C_ARRAY_INIT;
 			__m128i a_val = WINPR_C_ARRAY_INIT;
 
-			const size_t rc = nsc_encode_next_rgba(context->format, src, context->palette, &r_val,
+			/* copy a short last group of a row so that it is not read past the row */
+			const BYTE* cur = src;
+			BYTE tail[8 * 4] = { 0 };
+			const size_t bpp = FreeRDPGetBytesPerPixel(context->format);
+			if (bpp && (x + 8u > context->width))
+			{
+				memcpy(tail, src, (context->width - x) * bpp);
+				cur = tail;
+			}
+			const size_t rc = nsc_encode_next_rgba(context->format, cur, context->palette, &r_val,
 			                                       &g_val, &b_val, &a_val);
 			src += rc;
 
