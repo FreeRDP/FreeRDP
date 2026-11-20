@@ -270,7 +270,9 @@ static DWORD EventCleanupHandle(HANDLE handle)
 	if (!EventIsHandled(handle))
 		return WAIT_FAILED;
 
-	if (!event->bManualReset)
+	/* An attached descriptor (CreateFileDescriptorEvent, CreateWaitObjectEvent) belongs to the
+	 * caller: draining it would discard the caller's data. */
+	if (!event->bManualReset && !event->bAttached)
 		winpr_event_reset(&event->impl);
 
 	return WAIT_OBJECT_0;
