@@ -2541,13 +2541,7 @@ static UINT prepare_path_irp(RdpdrServerContext* context, UINT32 deviceId,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
+	/* The IRP is not in the IRP list yet, rdpdr_seal_send_irp_request() adds it */
 	*outIrp = irp;
 	return CHANNEL_RC_OK;
 }
@@ -2587,21 +2581,34 @@ static UINT prepare_smartcard_irp(RdpdrServerContext* context, UINT32 ioControlC
 	return CHANNEL_RC_OK;
 }
 
-static void dequeueAndDiscard(RdpdrServerContext* context, RDPDR_IRP* irp)
-{
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(irp);
-	RDPDR_IRP* val = rdpdr_server_dequeue_irp(context, irp->CompletionId);
-	rdpdr_server_irp_free(val);
-}
-
-/* Send a request for an enqueued IRP, drop the IRP if the request can not be sent */
+/* Enqueue an IRP and send its request, drop the IRP if the request can not be sent.
+ *
+ * The IRP is added to the IRP list only here, after the request has been built
+ * from it: the channel thread takes and frees an IRP for any completion with its
+ * CompletionId, and a client may send such a completion as soon as (or before) the
+ * request is on the wire. So the IRP must not be used after rdpdr_server_enqueue_irp(),
+ * only looked up by the CompletionId saved beforehand. */
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_seal_send_irp_request(RdpdrServerContext* context, RDPDR_IRP* irp, wStream* s)
 {
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
+	WINPR_ASSERT(s);
+
+	const UINT32 completionId = irp->CompletionId;
+
+	if (!rdpdr_server_enqueue_irp(context, irp))
+	{
+		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		Stream_Release(s);
+		rdpdr_server_irp_free(irp);
+		return ERROR_INTERNAL_ERROR;
+	}
+
 	const UINT rc = rdpdr_seal_send_free_request(context, s);
 	if (rc != CHANNEL_RC_OK)
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(rdpdr_server_dequeue_irp(context, completionId));
 	return rc;
 }
 
@@ -2639,7 +2646,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
 		if (wlen < 0)
 		{
-			dequeueAndDiscard(context, irp);
+			rdpdr_server_irp_free(irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
@@ -2649,7 +2656,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2668,7 +2675,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	                                        TRUE) < 0)
 	{
 		Stream_Release(s);
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
 	return rdpdr_seal_send_irp_request(context, irp, s);
@@ -2696,7 +2703,7 @@ static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, 
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2730,7 +2737,7 @@ static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, R
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2769,7 +2776,7 @@ static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, 
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2810,7 +2817,7 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
 		if (wlen < 0)
 		{
-			dequeueAndDiscard(context, irp);
+			rdpdr_server_irp_free(irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
@@ -2820,7 +2827,7 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2839,7 +2846,7 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 		                                        TRUE) < 0)
 		{
 			Stream_Release(s);
-			dequeueAndDiscard(context, irp);
+			rdpdr_server_irp_free(irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -2876,7 +2883,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
 		if (wlen < 0)
 		{
-			dequeueAndDiscard(context, irp);
+			rdpdr_server_irp_free(irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
@@ -2885,7 +2892,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	/* Covers the stream size and Length, FileNameLength plus the 6 bytes before FileName */
 	if (pathLength > UINT32_MAX - 64U)
 	{
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return ERROR_INVALID_PARAMETER;
 	}
 
@@ -2894,7 +2901,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2915,7 +2922,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 		                                        TRUE) < 0)
 		{
 			Stream_Release(s);
-			dequeueAndDiscard(context, irp);
+			rdpdr_server_irp_free(irp);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -2941,14 +2948,14 @@ static UINT rdpdr_server_send_device_set_information_request(RdpdrServerContext*
 
 	if (length > UINT32_MAX - 64U)
 	{
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return ERROR_INVALID_PARAMETER;
 	}
 
 	wStream* s = Stream_New(nullptr, 64U + length);
 	if (!s)
 	{
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2979,7 +2986,7 @@ static UINT rdpdr_server_send_device_query_volume_information_request(RdpdrServe
 	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
 	{
-		dequeueAndDiscard(context, irp);
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2991,21 +2998,23 @@ static UINT rdpdr_server_send_device_query_volume_information_request(RdpdrServe
 	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
+/* Send a device control request for an IRP, the IRP is dropped on failure */
 WINPR_ATTR_NODISCARD
-static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context, UINT32 deviceId,
-                                                     UINT32 completionId, UINT32 ioControlCode,
+static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context, RDPDR_IRP* irp,
                                                      UINT32 outputBufferLength,
                                                      const void* inputBuffer,
                                                      size_t inputBufferLength)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(irp);
 	WINPR_ASSERT(inputBuffer || (inputBufferLength == 0));
 
 	if (inputBufferLength > UINT32_MAX)
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR,
 		           "inputBufferLength %" PRIuz " exceeds UINT32_MAX", inputBufferLength);
+		rdpdr_server_irp_free(irp);
 		return ERROR_INVALID_PARAMETER;
 	}
 
@@ -3014,7 +3023,7 @@ static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceControlRequest: deviceId=%" PRIu32 ","
 	           " ioControlCode=0x%" PRIx32 ", inputBufferLength=%" PRIuz,
-	           deviceId, ioControlCode, inputBufferLength);
+	           irp->DeviceId, irp->IoControlCode, inputBufferLength);
 
 	if (inputBufferLength > 0)
 		winpr_HexLogDump(priv->log, WLOG_DEBUG, inputBuffer, inputBufferLength);
@@ -3025,20 +3034,22 @@ static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	UINT32 inputLength = WINPR_ASSERTING_INT_CAST(UINT32, inputBufferLength);
-	rdpdr_server_write_device_iorequest(s, deviceId, 0, completionId, IRP_MJ_DEVICE_CONTROL, 0);
+	rdpdr_server_write_device_iorequest(s, irp->DeviceId, 0, irp->CompletionId,
+	                                    IRP_MJ_DEVICE_CONTROL, 0);
 	Stream_Write_UINT32(s, outputBufferLength); /* OutputBufferLength (4 bytes) */
 	Stream_Write_UINT32(s, inputLength);        /* InputBufferLength (4 bytes) */
-	Stream_Write_UINT32(s, ioControlCode);      /* IoControlCode (4 bytes) */
+	Stream_Write_UINT32(s, irp->IoControlCode); /* IoControlCode (4 bytes) */
 	Stream_Zero(s, 20);                         /* Padding (20 bytes) */
 
 	if (inputBufferLength > 0)
 		Stream_Write(s, inputBuffer, inputBufferLength);
 
-	return rdpdr_seal_send_free_request(context, s);
+	return rdpdr_seal_send_irp_request(context, irp, s);
 }
 
 /*************************************************
@@ -3116,13 +3127,6 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	irp->Callback = rdpdr_server_drive_create_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
-
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	/* Send a request to close the file */
 	return rdpdr_server_send_device_close_request(context, irp);
@@ -3228,13 +3232,6 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to close the file */
 	return rdpdr_server_send_device_close_request(context, irp);
 }
@@ -3338,13 +3335,6 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		irp->CompletionId = rdpdr_server_next_completion_id(priv);
 		irp->Callback = rdpdr_server_drive_query_directory_callback2;
 
-		if (!rdpdr_server_enqueue_irp(context, irp))
-		{
-			WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-			rdpdr_server_irp_free(irp);
-			return ERROR_INTERNAL_ERROR;
-		}
-
 		/* Send a request to query the directory. */
 		return rdpdr_server_send_device_query_directory_request(context, irp, nullptr);
 	}
@@ -3356,12 +3346,6 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		/* Close the directory, so that the client does not leak its handle */
 		irp->CompletionId = rdpdr_server_next_completion_id(priv);
 		irp->Callback = rdpdr_server_drive_query_directory_callback3;
-
-		if (!rdpdr_server_enqueue_irp(context, irp))
-		{
-			rdpdr_server_irp_free(irp);
-			return ERROR_INTERNAL_ERROR;
-		}
 
 		return rdpdr_server_send_device_close_request(context, irp);
 	}
@@ -3416,13 +3400,6 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	}
 	free(irp->PathName);
 	irp->PathName = pattern;
-
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	/* Send a request to query the directory. */
 	return rdpdr_server_send_device_query_directory_request(context, irp, irp->PathName);
@@ -3582,6 +3559,7 @@ static UINT rdpdr_server_drive_read_file_ex(RdpdrServerContext* context, void* c
 	irp->FileId = fileId;
 
 	/* Send a request to open the directory. */
+	// NOLINTNEXTLINE: clang-analyzer-unix.Malloc
 	return rdpdr_server_send_device_read_request(context, irp, length, offset);
 }
 
@@ -3790,13 +3768,6 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to close the file */
 	return rdpdr_server_send_device_close_request(context, irp);
 }
@@ -3890,13 +3861,6 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	irp->Callback = rdpdr_server_drive_rename_file_callback3;
 	irp->DeviceId = deviceId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to close the file */
 	return rdpdr_server_send_device_close_request(context, irp);
 }
@@ -3943,13 +3907,6 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	irp->Callback = rdpdr_server_drive_rename_file_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
-
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	/* Send a request to rename the file */
 	return rdpdr_server_send_device_file_rename_request(context, irp, irp->ExtraBuffer,
@@ -4053,12 +4010,6 @@ static UINT rdpdr_server_drive_set_information_callback2(RdpdrServerContext* con
 	irp->Callback = rdpdr_server_drive_set_information_callback3;
 	irp->DeviceId = deviceId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	return rdpdr_server_send_device_close_request(context, irp);
 }
 
@@ -4088,12 +4039,6 @@ static UINT rdpdr_server_drive_set_information_callback1(RdpdrServerContext* con
 	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_set_information_callback2;
 	irp->DeviceId = deviceId;
-
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	return rdpdr_server_send_device_set_information_request(context, irp, irp->InfoClass,
 	                                                        irp->InfoBuffer, irp->InfoLength);
@@ -4230,12 +4175,6 @@ static UINT rdpdr_server_drive_query_volume_information_callback2(RdpdrServerCon
 	irp->Callback = rdpdr_server_drive_set_information_callback3;
 	irp->DeviceId = deviceId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	return rdpdr_server_send_device_close_request(context, irp);
 }
 
@@ -4268,12 +4207,6 @@ static UINT rdpdr_server_drive_query_volume_information_callback1(RdpdrServerCon
 	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_query_volume_information_callback2;
 	irp->DeviceId = deviceId;
-
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
 
 	return rdpdr_server_send_device_query_volume_information_request(context, irp,
 	                                                                 FileFsFullSizeInformation);
@@ -4455,14 +4388,12 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4555,14 +4486,12 @@ static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, 
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4657,14 +4586,12 @@ static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context,
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4762,14 +4689,12 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4886,14 +4811,12 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5016,14 +4939,12 @@ static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5134,14 +5055,12 @@ static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* cal
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5245,14 +5164,12 @@ static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* ca
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5365,14 +5282,12 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5467,14 +5382,12 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5572,14 +5485,12 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5675,14 +5586,12 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5779,14 +5688,12 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5893,14 +5800,12 @@ static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* c
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5998,14 +5903,12 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -6096,14 +5999,12 @@ static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void*
 	}
 
 	error = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return error;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (error != CHANNEL_RC_OK && irp)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return error;
@@ -6199,14 +6100,12 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 	}
 
 	result = rdpdr_server_send_device_control_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
-	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	    context, irp, SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
+	Stream_Release(s);
+	return result;
 
 out:
-	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK)
-		rdpdr_server_discard_request(context, irp->CompletionId);
-	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	rdpdr_server_irp_free(irp);
 	if (s)
 		Stream_Release(s);
 	return result;
