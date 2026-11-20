@@ -614,6 +614,7 @@ int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT 
 
 void zgfx_context_reset(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, WINPR_ATTR_UNUSED BOOL flush)
 {
+	ZeroMemory(zgfx->HistoryBuffer, sizeof(zgfx->HistoryBuffer));
 	zgfx->HistoryIndex = 0;
 }
 
