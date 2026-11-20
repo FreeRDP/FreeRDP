@@ -17,6 +17,7 @@
  */
 
 #include <windows.h>
+#include <winuser.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
