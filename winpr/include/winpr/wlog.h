@@ -316,38 +316,91 @@ typedef struct
 		}                                                                                          \
 	} while (0)
 
+	/** The logger of tag, looked up once per call site: *cache belongs to the call site, so two
+	 *  call sites with different tags in one file each keep their own logger. */
+	WINPR_ATTR_FORMAT_ARG(7, 8)
+	static inline void WLog_Print_dbg_tag_cached(wLog** WINPR_RESTRICT cache,
+	                                             const char* WINPR_RESTRICT tag, DWORD log_level,
+	                                             size_t line, const char* file, const char* fkt,
+	                                             WINPR_FORMAT_ARG const char* fmt, ...)
+	{
+		if (!*cache)
+			*cache = WLog_Get(tag);
+
+		if (WLog_IsLevelActive(*cache, log_level))
+		{
+			va_list ap = WINPR_C_ARRAY_INIT;
+			va_start(ap, fmt);
+			WLog_PrintTextMessageVA(*cache, log_level, line, file, fkt, fmt, ap);
+			va_end(ap);
+		}
+	}
+
+	/** Kept for callers outside of the WLog_* macros: looks the logger up on every call. */
 	WINPR_ATTR_FORMAT_ARG(6, 7)
 	static inline void WLog_Print_dbg_tag(const char* WINPR_RESTRICT tag, DWORD log_level,
 	                                      size_t line, const char* file, const char* fkt,
 	                                      WINPR_FORMAT_ARG const char* fmt, ...)
 	{
-		static wLog* log_cached_ptr = nullptr;
-		if (!log_cached_ptr)
-			log_cached_ptr = WLog_Get(tag);
-
-		if (WLog_IsLevelActive(log_cached_ptr, log_level))
+		wLog* log = WLog_Get(tag);
+		if (WLog_IsLevelActive(log, log_level))
 		{
 			va_list ap = WINPR_C_ARRAY_INIT;
 			va_start(ap, fmt);
-			WLog_PrintTextMessageVA(log_cached_ptr, log_level, line, file, fkt, fmt, ap);
+			WLog_PrintTextMessageVA(log, log_level, line, file, fkt, fmt, ap);
 			va_end(ap);
 		}
 	}
 
-#define WLog_LVL(tag, lvl, ...) \
-	WLog_Print_dbg_tag(tag, lvl, __LINE__, __FILE__, __func__, __VA_ARGS__)
-#define WLog_VRB(tag, ...) \
-	WLog_Print_dbg_tag(tag, WLOG_TRACE, __LINE__, __FILE__, __func__, __VA_ARGS__)
-#define WLog_DBG(tag, ...) \
-	WLog_Print_dbg_tag(tag, WLOG_DEBUG, __LINE__, __FILE__, __func__, __VA_ARGS__)
-#define WLog_INFO(tag, ...) \
-	WLog_Print_dbg_tag(tag, WLOG_INFO, __LINE__, __FILE__, __func__, __VA_ARGS__)
-#define WLog_WARN(tag, ...) \
-	WLog_Print_dbg_tag(tag, WLOG_WARN, __LINE__, __FILE__, __func__, __VA_ARGS__)
-#define WLog_ERR(tag, ...) \
-	WLog_Print_dbg_tag(tag, WLOG_ERROR, __LINE__, __FILE__, __func__, __VA_ARGS__)
-#define WLog_FATAL(tag, ...) \
-	WLog_Print_dbg_tag(tag, WLOG_FATAL, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_LVL(tag, lvl, ...)                                                              \
+	do                                                                                       \
+	{                                                                                        \
+		static wLog* WLog_cached_ptr_ = nullptr;                                             \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, lvl, __LINE__, __FILE__, __func__, \
+		                          __VA_ARGS__);                                              \
+	} while (0)
+#define WLog_VRB(tag, ...)                                                                \
+	do                                                                                    \
+	{                                                                                     \
+		static wLog* WLog_cached_ptr_ = nullptr;                                          \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, WLOG_TRACE, __LINE__, __FILE__, \
+		                          __func__, __VA_ARGS__);                                 \
+	} while (0)
+#define WLog_DBG(tag, ...)                                                                \
+	do                                                                                    \
+	{                                                                                     \
+		static wLog* WLog_cached_ptr_ = nullptr;                                          \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, WLOG_DEBUG, __LINE__, __FILE__, \
+		                          __func__, __VA_ARGS__);                                 \
+	} while (0)
+#define WLog_INFO(tag, ...)                                                                        \
+	do                                                                                             \
+	{                                                                                              \
+		static wLog* WLog_cached_ptr_ = nullptr;                                                   \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, WLOG_INFO, __LINE__, __FILE__, __func__, \
+		                          __VA_ARGS__);                                                    \
+	} while (0)
+#define WLog_WARN(tag, ...)                                                                        \
+	do                                                                                             \
+	{                                                                                              \
+		static wLog* WLog_cached_ptr_ = nullptr;                                                   \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, WLOG_WARN, __LINE__, __FILE__, __func__, \
+		                          __VA_ARGS__);                                                    \
+	} while (0)
+#define WLog_ERR(tag, ...)                                                                \
+	do                                                                                    \
+	{                                                                                     \
+		static wLog* WLog_cached_ptr_ = nullptr;                                          \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, WLOG_ERROR, __LINE__, __FILE__, \
+		                          __func__, __VA_ARGS__);                                 \
+	} while (0)
+#define WLog_FATAL(tag, ...)                                                              \
+	do                                                                                    \
+	{                                                                                     \
+		static wLog* WLog_cached_ptr_ = nullptr;                                          \
+		WLog_Print_dbg_tag_cached(&WLog_cached_ptr_, tag, WLOG_FATAL, __LINE__, __FILE__, \
+		                          __func__, __VA_ARGS__);                                 \
+	} while (0)
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
