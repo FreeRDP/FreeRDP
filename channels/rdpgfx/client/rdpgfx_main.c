@@ -720,7 +720,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	gfx->TotalDecodedFrames = 0;
 	gfx->ConnectionCaps = capsSet;
 	if (context)
-		context->CapsVersion = capsSet.version;
+		context->ConfirmedCaps = capsSet;
 	{
 		char buffer[128] = WINPR_C_ARRAY_INIT;
 

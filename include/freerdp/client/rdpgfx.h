@@ -176,11 +176,13 @@ extern "C"
 		rdpCodecs* codecs;
 		PROFILER_DEFINE(SurfaceProfiler)
 
-		/** The RDPGFX_CAPVERSION_* the server confirmed, 0 before the caps confirm PDU.
-		 * Tells what RDPGFX_CODECID_AV1 carries: AV1 with RDPGFX_CAPVERSION_FRDP_1, AV2 with
-		 * RDPGFX_CAPVERSION_FRDP_2.
+		/** The capability set of the server's last RDPGFX_CAPS_CONFIRM_PDU (MS-RDPEGFX
+		 * 2.2.2.19): version, capsDataLength and flags, all 0 before the first. The flags are
+		 * RDPGFX_CAPS_FLAG_*, which of them a version defines is in MS-RDPEGFX 2.2.3.
+		 * The version also tells what RDPGFX_CODECID_AV1 carries: AV1 with
+		 * RDPGFX_CAPVERSION_FRDP_1, AV2 with RDPGFX_CAPVERSION_FRDP_2.
 		 * @since version 3.34.0 */
-		UINT32 CapsVersion;
+		RDPGFX_CAPSET ConfirmedCaps;
 	};
 
 	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
