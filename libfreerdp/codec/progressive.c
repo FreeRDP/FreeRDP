@@ -2472,12 +2472,13 @@ static inline BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 			    progressive->format, tile->stride, nXSrc, nYSrc, nullptr, FREERDP_KEEP_DST_ALPHA);
 			if (!res)
 				goto loop_end;
+		}
 
-			if (invalidRegion)
-			{
-				if (!region16_union_rect(invalidRegion, invalidRegion, rect))
-					goto loop_end;
-			}
+		if (invalidRegion)
+		{
+			const RECTANGLE_16* damage = region16_extents(&updateRegion);
+			if (!region16_union_rect(invalidRegion, invalidRegion, damage))
+				goto loop_end;
 		}
 
 		tile->dirty = FALSE;
