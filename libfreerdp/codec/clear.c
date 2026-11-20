@@ -180,14 +180,7 @@ static BOOL clear_decompress_subcode_rlex(wLog* log, wStream* WINPR_RESTRICT s,
 {
 	UINT32 x = 0;
 	UINT32 y = 0;
-	UINT32 pixelCount = 0;
 	UINT32 bitmapDataOffset = 0;
-	size_t pixelIndex = 0;
-	UINT32 numBits = 0;
-	BYTE startIndex = 0;
-	BYTE stopIndex = 0;
-	BYTE suiteIndex = 0;
-	BYTE suiteDepth = 0;
 	BYTE paletteCount = 0;
 	UINT32 palette[128] = WINPR_C_ARRAY_INIT;
 
@@ -210,34 +203,31 @@ static BOOL clear_decompress_subcode_rlex(wLog* log, wStream* WINPR_RESTRICT s,
 
 	for (UINT32 i = 0; i < paletteCount; i++)
 	{
-		BYTE r = 0;
-		BYTE g = 0;
-		BYTE b = 0;
-		Stream_Read_UINT8(s, b);
-		Stream_Read_UINT8(s, g);
-		Stream_Read_UINT8(s, r);
+		const BYTE b = Stream_Get_UINT8(s);
+		const BYTE g = Stream_Get_UINT8(s);
+		const BYTE r = Stream_Get_UINT8(s);
 		palette[i] = FreeRDPGetColor(DstFormat, r, g, b, 0xFF);
 	}
 
-	pixelIndex = 0;
-	pixelCount = width * height;
-	numBits = CLEAR_LOG2_FLOOR[paletteCount - 1] + 1;
+	UINT32 pixelIndex = 0;
+	if ((height == 0) || (width == 0) || (width > UINT32_MAX / height))
+		return FALSE;
+
+	const UINT32 pixelCount = width * height;
+	const UINT32 numBits = CLEAR_LOG2_FLOOR[paletteCount - 1] + 1;
 
 	while (bitmapDataOffset < bitmapDataByteCount)
 	{
-		UINT32 tmp = 0;
-		UINT32 color = 0;
-		UINT32 runLengthFactor = 0;
-
 		if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
 			return FALSE;
 
-		Stream_Read_UINT8(s, tmp);
-		Stream_Read_UINT8(s, runLengthFactor);
+		const UINT32 tmp = Stream_Get_UINT8(s);
+		UINT32 runLengthFactor = Stream_Get_UINT8(s);
+
 		bitmapDataOffset += 2;
-		suiteDepth = (tmp >> numBits) & CLEAR_8BIT_MASKS[(8 - numBits)];
-		stopIndex = tmp & CLEAR_8BIT_MASKS[numBits];
-		startIndex = stopIndex - suiteDepth;
+		const BYTE suiteDepth = (tmp >> numBits) & CLEAR_8BIT_MASKS[(8 - numBits)];
+		const BYTE stopIndex = tmp & CLEAR_8BIT_MASKS[numBits];
+		const BYTE startIndex = stopIndex - suiteDepth;
 
 		if (runLengthFactor >= 0xFF)
 		{
@@ -271,7 +261,7 @@ static BOOL clear_decompress_subcode_rlex(wLog* log, wStream* WINPR_RESTRICT s,
 			return FALSE;
 		}
 
-		suiteIndex = startIndex;
+		BYTE suiteIndex = startIndex;
 
 		if (suiteIndex > 127)
 		{
@@ -279,12 +269,12 @@ static BOOL clear_decompress_subcode_rlex(wLog* log, wStream* WINPR_RESTRICT s,
 			return FALSE;
 		}
 
-		color = palette[suiteIndex];
-
-		if ((pixelIndex + runLengthFactor) > pixelCount)
+		const UINT32 color = palette[suiteIndex];
+		if ((pixelIndex > UINT32_MAX - runLengthFactor) ||
+		    ((pixelIndex + runLengthFactor) > pixelCount))
 		{
 			WLog_Print(log, WLOG_ERROR,
-			           "pixelIndex %" PRIuz " + runLengthFactor %" PRIu32 " > pixelCount %" PRIu32
+			           "pixelIndex %" PRIu32 " + runLengthFactor %" PRIu32 " > pixelCount %" PRIu32
 			           "",
 			           pixelIndex, runLengthFactor, pixelCount);
 			return FALSE;
@@ -307,10 +297,12 @@ static BOOL clear_decompress_subcode_rlex(wLog* log, wStream* WINPR_RESTRICT s,
 
 		pixelIndex += runLengthFactor;
 
-		if ((pixelIndex + (suiteDepth + 1)) > pixelCount)
+		if ((pixelIndex > UINT32_MAX - 1 - suiteDepth) ||
+		    ((pixelIndex + (suiteDepth + 1)) > pixelCount))
 		{
 			WLog_Print(log, WLOG_ERROR,
-			           "pixelIndex %" PRIuz " + suiteDepth %" PRIu8 " + 1 > pixelCount %" PRIu32 "",
+			           "pixelIndex %" PRIu32 " + suiteDepth %" PRIu8 " + 1 > pixelCount %" PRIu32
+			           "",
 			           pixelIndex, suiteDepth, pixelCount);
 			return FALSE;
 		}
@@ -344,7 +336,7 @@ static BOOL clear_decompress_subcode_rlex(wLog* log, wStream* WINPR_RESTRICT s,
 
 	if (pixelIndex != pixelCount)
 	{
-		WLog_Print(log, WLOG_ERROR, "pixelIndex %" PRIuz " != pixelCount %" PRIu32 "", pixelIndex,
+		WLog_Print(log, WLOG_ERROR, "pixelIndex %" PRIu32 " != pixelCount %" PRIu32 "", pixelIndex,
 		           pixelCount);
 		return FALSE;
 	}
