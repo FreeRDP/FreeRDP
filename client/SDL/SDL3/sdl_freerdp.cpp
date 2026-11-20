@@ -261,6 +261,10 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 						if (!sdl->presentRenderers())
 							throw ErrorMsg{ -1, windowEvent.type, "sdl->presentRenderers" };
 						break;
+					case SDL_EVENT_USER_OVERLAY:
+						if (!sdl->updateOverlay())
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->updateOverlay" };
+						break;
 					case SDL_EVENT_USER_CREATE_WINDOWS:
 					{
 						auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);

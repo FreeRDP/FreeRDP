@@ -23,6 +23,7 @@
 
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_overlay.hpp"
 
 #include <freerdp/utils/string.h>
 
@@ -75,10 +76,10 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
     : _window(other._window), _videoOverlays(std::move(other._videoOverlays)),
       _renderer(other._renderer), _renderTarget(other._renderTarget),
-      _gdiTexture(other._gdiTexture), _gdiTextureW(other._gdiTextureW),
-      _gdiTextureH(other._gdiTextureH), _initialW(other._initialW), _initialH(other._initialH),
-      _displayID(other._displayID), _offset_x(other._offset_x), _offset_y(other._offset_y),
-      _monitor(other._monitor)
+      _gdiTexture(other._gdiTexture), _overlayPainter(std::move(other._overlayPainter)),
+      _gdiTextureW(other._gdiTextureW), _gdiTextureH(other._gdiTextureH),
+      _initialW(other._initialW), _initialH(other._initialH), _displayID(other._displayID),
+      _offset_x(other._offset_x), _offset_y(other._offset_y), _monitor(other._monitor)
 {
 	other._videoOverlays.clear();
 	other._window = nullptr;
@@ -91,6 +92,8 @@ SdlWindow::~SdlWindow()
 {
 	for (auto& o : _videoOverlays)
 		SDL_DestroyTexture(o.second.texture);
+	/* its text lives in the renderer */
+	_overlayPainter.reset();
 	if (_gdiTexture)
 		SDL_DestroyTexture(_gdiTexture);
 	if (_renderTarget)
@@ -658,7 +661,7 @@ bool SdlWindow::render(const SDL_Rect& srcRect, const SDL_Rect& dstRect)
 	return true;
 }
 
-void SdlWindow::updateSurface()
+void SdlWindow::updateSurface(const SdlOverlay* overlay)
 {
 	if (!_renderer)
 		return;
@@ -671,6 +674,9 @@ void SdlWindow::updateSurface()
 	if (!SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr))
 		return;
 	drawVideoOverlays();
+	/* over the picture, never into it */
+	if (overlay && overlay->visible())
+		drawOverlay(*overlay);
 	if (!SDL_RenderPresent(_renderer))
 		return;
 }
@@ -749,6 +755,23 @@ void SdlWindow::pruneVideoOverlays(const std::function<bool(Uint64)>& keep)
 			it = _videoOverlays.erase(it);
 		}
 	}
+}
+
+const char* SdlWindow::rendererName() const
+{
+	return _renderer ? SDL_GetRendererName(_renderer) : nullptr;
+}
+
+void SdlWindow::drawOverlay(const SdlOverlay& overlay)
+{
+	if (!_overlayPainter)
+		_overlayPainter = std::make_unique<SdlOverlayPainter>(_renderer);
+
+	int w = 0;
+	int h = 0;
+	if (!SDL_GetCurrentRenderOutputSize(_renderer, &w, &h))
+		return;
+	_overlayPainter->draw(overlay, w, h, SDL_GetWindowDisplayScale(_window));
 }
 
 bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,

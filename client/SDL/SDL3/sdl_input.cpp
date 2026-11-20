@@ -630,6 +630,14 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 				std::ignore = _sdl->abortConnect();
 				return true;
 			}
+			if (ev.scancode == _hotkeyInfo)
+			{
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling the overlay",
+				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyInfo));
+				if (!keyboard_sync_state())
+					return false;
+				return _sdl->toggleOverlay();
+			}
 			if (ev.scancode == _hotkeyMinimize)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, minimizing client",
@@ -731,6 +739,7 @@ sdlInput::sdlInput(SdlContext* sdl)
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
 	_hotkeyDisconnect = prefKeyValue("SDL_Disconnect", SDL_SCANCODE_D);
 	_hotkeyMinimize = prefKeyValue("SDL_Minimize", SDL_SCANCODE_M);
+	_hotkeyInfo = prefKeyValue("SDL_Info", SDL_SCANCODE_I);
 }
 
 sdlInput::~sdlInput()

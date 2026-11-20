@@ -46,6 +46,7 @@ enum
 	SDL_EVENT_USER_POINTER_POSITION,
 	SDL_EVENT_USER_POINTER_SET,
 	SDL_EVENT_USER_RAIL_MOVE,
+	SDL_EVENT_USER_OVERLAY,
 	SDL_EVENT_USER_QUIT,
 	/* a mapped renderer (rdpContext::bitmapRenderService) got a frame. Before the dialogs:
 	 * sdl_run() only takes the events up to SDL_EVENT_USER_RETRY_DIALOG, the *_RESULT ones are

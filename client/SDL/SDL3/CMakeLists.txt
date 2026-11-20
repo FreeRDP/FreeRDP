@@ -43,6 +43,10 @@ set(SRCS
     sdl_channels.cpp
     sdl_window.hpp
     sdl_window.cpp
+    sdl_overlay.hpp
+    sdl_overlay.cpp
+    sdl_overlay_model.hpp
+    sdl_overlay_model.cpp
     sdl_clip.hpp
     sdl_clip.cpp
     sdl_web_clip_offers.hpp
