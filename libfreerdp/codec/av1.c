@@ -796,6 +796,7 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			return rc;
 		}
 	}
+	dav1d_data_unref(&data);
 
 	/* Drain any picture the decoder buffered internally before it consumed the last input. */
 	for (;;)
