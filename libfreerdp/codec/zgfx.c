@@ -620,6 +620,8 @@ int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT 
 {
 	int status = 0;
 	wStream* s = Stream_New(nullptr, SrcSize);
+	if (!s)
+		return -1;
 	status = zgfx_compress_to_stream(zgfx, s, pSrcData, SrcSize, pFlags);
 	const size_t pos = Stream_GetPosition(s);
 	if (pos > UINT32_MAX)
