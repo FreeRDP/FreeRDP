@@ -1079,7 +1079,8 @@ static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adp
 	if (sample < ARRAYSIZE(ms_adpcm_adaptation_table))
 		tableval = ms_adpcm_adaptation_table[sample];
 
-	adpcm->ms.delta[channel] = adpcm->ms.delta[channel] * tableval / 256;
+	const INT64 delta = (INT64)adpcm->ms.delta[channel] * tableval / 256;
+	adpcm->ms.delta[channel] = (INT32)MIN(delta, INT32_MAX / 768);
 
 	if (adpcm->ms.delta[channel] < 16)
 		adpcm->ms.delta[channel] = 16;
