@@ -160,9 +160,10 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
                                                           const uint16_t* sourceEnd,
                                                           uint8_t** targetStart,
                                                           const uint8_t* targetEnd,
-                                                          ConversionFlags flags)
+                                                          ConversionFlags flags, size_t* computed)
 {
 	bool computeLength = (!targetEnd) ? true : false;
+	size_t count = 0; /* length-only mode: count, do not advance the null target */
 	const uint16_t* source = *sourceStart;
 	uint8_t* target = *targetStart;
 	ConversionResult result = conversionOK;
@@ -243,6 +244,12 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 			ch = UNI_REPLACEMENT_CHAR;
 		}
 
+		if (computeLength)
+		{
+			count += bytesToWrite;
+			continue;
+		}
+
 		target += bytesToWrite;
 
 		if ((target > targetEnd) && (!computeLength))
@@ -315,6 +322,8 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 
 	*sourceStart = source;
 	*targetStart = target;
+	if (computed)
+		*computed = count;
 	return result;
 }
 
@@ -624,18 +633,16 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 
 	if (cchDst == 0)
 	{
-		result =
-		    winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
-
-		length = dstBeg - ((uint8_t*)nullptr);
+		result = winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, &length);
 	}
 	else
 	{
 		dstBeg = dst;
 		dstEnd = &dst[cchDst];
 
-		result =
-		    winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
+		result = winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, nullptr);
 
 		length = dstBeg - dst;
 	}
