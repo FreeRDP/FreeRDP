@@ -255,7 +255,11 @@ BOOL audio_format_is_valid(const AUDIO_FORMAT* format)
 	if (format->nChannels > 128)
 		return FALSE;
 	if (format->wBitsPerSample == 0)
-		return FALSE;
+	{
+		/* only allow WAVE_FORMAT_GSM610 which is variable-length and has 0 wBitsPerSample */
+		if (format->wFormatTag != WAVE_FORMAT_GSM610)
+			return FALSE;
+	}
 	if (format->wBitsPerSample > 1024)
 		return FALSE;
 	if (format->nSamplesPerSec == 0)
