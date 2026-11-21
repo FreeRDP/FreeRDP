@@ -809,6 +809,10 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ListReadersW_Call(scard_call_context*
 	if (original)
 		wrap(smartcard, SCardFreeMemory, operation->hContext, original);
 
+	/* filter_device_by_name_w() replaced the list with its own allocation */
+	if (mszReaders.pb != original)
+		free(mszReaders.pb);
+
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
