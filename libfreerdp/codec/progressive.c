@@ -852,10 +852,7 @@ static inline int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* WINPR_RESTR
 			return -1;
 	}
 
-	INT16* temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
-
-	if (!temp)
-		return -2;
+	INT16 temp[64 * 64]; /* DWT buffer */
 
 	if (!extrapolate)
 	{
@@ -866,7 +863,6 @@ static inline int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* WINPR_RESTR
 		WINPR_ASSERT(progressive->rfx_context->dwt_2d_extrapolate_decode);
 		progressive->rfx_context->dwt_2d_extrapolate_decode(buffer, temp);
 	}
-	BufferPool_Return(progressive->bufferPool, temp);
 	return 1;
 }
 
@@ -961,7 +957,7 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	BOOL diff = 0;
 	BOOL sub = 0;
 	BOOL extrapolate = 0;
-	BYTE* pBuffer = nullptr;
+	BYTE pBuffer[(8192 + 32) * 3];
 	INT16* pSign[3];
 	INT16* pSrcDst[3];
 	INT16* pCurrent[3];
@@ -1073,7 +1069,6 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	pCurrent[2] =
 	    WINPR_PACKED_ALIGN_CAST(INT16*, (&tile->current[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	pBuffer = (BYTE*)BufferPool_Take(progressive->bufferPool, -1);
 	pSrcDst[0] =
 	    WINPR_PACKED_ALIGN_CAST(INT16*, (&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
 	pSrcDst[1] =
@@ -1102,7 +1097,6 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 		                                    progressive->format, &roi_64x64);
 	}
 fail:
-	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return rc;
 }
 
@@ -1394,7 +1388,7 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	BOOL coeffDiff = 0;
 	BOOL sub = 0;
 	BOOL extrapolate = 0;
-	BYTE* pBuffer = nullptr;
+	BYTE pBuffer[(8192 + 32) * 3];
 	INT16* pSign[3] = WINPR_C_ARRAY_INIT;
 	INT16* pSrcDst[3] = WINPR_C_ARRAY_INIT;
 	INT16* pCurrent[3] = WINPR_C_ARRAY_INIT;
@@ -1535,7 +1529,6 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	pCurrent[2] =
 	    WINPR_PACKED_ALIGN_CAST(INT16*, (&tile->current[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	pBuffer = (BYTE*)BufferPool_Take(progressive->bufferPool, -1);
 	pSrcDst[0] =
 	    WINPR_PACKED_ALIGN_CAST(INT16*, (&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
 	pSrcDst[1] =
@@ -1573,7 +1566,6 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 		                                        progressive->format, &roi_64x64);
 	}
 fail:
-	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return status;
 }
 
@@ -2748,9 +2740,6 @@ PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor, UINT32 Threadin
 	progressive->rects = Stream_New(nullptr, 1024);
 	if (!progressive->rects)
 		goto fail;
-	progressive->bufferPool = BufferPool_New(TRUE, (8192LL + 32LL) * 3LL, 16);
-	if (!progressive->bufferPool)
-		goto fail;
 	progressive->SurfaceContexts = HashTable_New(TRUE);
 	if (!progressive->SurfaceContexts)
 		goto fail;
@@ -2778,7 +2767,6 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 	Stream_Free(progressive->rects, TRUE);
 	rfx_context_free(progressive->rfx_context);
 
-	BufferPool_Free(progressive->bufferPool);
 	HashTable_Free(progressive->SurfaceContexts);
 
 	winpr_aligned_free(progressive);
