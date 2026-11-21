@@ -419,9 +419,10 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
                                                           const uint8_t* sourceEnd,
                                                           uint16_t** targetStart,
                                                           const uint16_t* targetEnd,
-                                                          ConversionFlags flags)
+                                                          ConversionFlags flags, size_t* computed)
 {
 	bool computeLength = (!targetEnd) ? true : false;
+	size_t count = 0; /* length-only mode: count, do not offset the null target */
 	ConversionResult result = conversionOK;
 	const uint8_t* source = *sourceStart;
 	uint16_t* target = *targetStart;
@@ -513,7 +514,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 					if (!computeLength)
 						*target++ = setWcharFrom(UNI_REPLACEMENT_CHAR);
 					else
-						target++;
+						count++;
 				}
 			}
 			else
@@ -521,7 +522,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				if (!computeLength)
 					*target++ = setWcharFrom((WCHAR)ch); /* normal case */
 				else
-					target++;
+					count++;
 			}
 		}
 		else if (ch > UNI_MAX_UTF16)
@@ -537,13 +538,13 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				if (!computeLength)
 					*target++ = setWcharFrom(UNI_REPLACEMENT_CHAR);
 				else
-					target++;
+					count++;
 			}
 		}
 		else
 		{
 			/* target is a character in range 0xFFFF - 0x10FFFF. */
-			if ((target + 1 >= targetEnd) && (!computeLength))
+			if ((!computeLength) && (target + 1 >= targetEnd))
 			{
 				source -= (extraBytesToRead + 1); /* Back up source pointer! */
 				result = targetExhausted;
@@ -558,15 +559,14 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				*target++ = setWcharFrom((WCHAR)((ch & halfMask) + UNI_SUR_LOW_START));
 			}
 			else
-			{
-				target++;
-				target++;
-			}
+				count += 2;
 		}
 	}
 
 	*sourceStart = source;
 	*targetStart = target;
+	if (computed)
+		*computed = count;
 	return result;
 }
 
@@ -591,18 +591,16 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 
 	if (cchDst == 0)
 	{
-		result =
-		    winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
-
-		length = dstBeg - (uint16_t*)nullptr;
+		result = winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, &length);
 	}
 	else
 	{
 		dstBeg = dst;
 		dstEnd = &dst[cchDst];
 
-		result =
-		    winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
+		result = winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, nullptr);
 
 		length = dstBeg - dst;
 	}
