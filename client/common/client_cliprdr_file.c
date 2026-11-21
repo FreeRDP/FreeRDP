@@ -1276,6 +1276,13 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 
 	struct fuse_args args = FUSE_ARGS_INIT(0, nullptr);
 	fuse_opt_add_arg(&args, file->path);
+#if defined(__linux__)
+	/* fusermount3 releases the mount point if this process dies without unmounting it (SIGKILL,
+	 * a crash): otherwise it stays behind, and every access to it fails with ENOTCONN.
+	 * Only libfuse's Linux mount code knows the option: elsewhere (mount_bsd.c) it would stay in
+	 * the arguments and fuse_session_new would refuse them. */
+	fuse_opt_add_arg(&args, "-oauto_unmount");
+#endif
 	file->fuse_sess = fuse_session_new(&args, &cliprdr_file_fuse_oper,
 	                                   sizeof(cliprdr_file_fuse_oper), (void*)file);
 	(void)SetEvent(file->fuse_start_sync);
