@@ -57,3 +57,7 @@ install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT cli
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Wayland")
 generate_and_install_freerdp_man_from_template(${MODULE_NAME} "1" "${FREERDP_API_VERSION}")
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()

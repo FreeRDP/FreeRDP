@@ -21,6 +21,9 @@
 #include <freerdp/config.h>
 
 #include <stdlib.h>
+#include <errno.h>
+#include <poll.h>
+#include <unistd.h>
 
 #include <winpr/crt.h>
 #include <winpr/image.h>
@@ -77,6 +80,17 @@ typedef struct
 	const char* responseMime;
 } wlf_const_request;
 
+/* The cliprdr channel processes one callback at a time. Keep the callback's
+ * arguments alive until the display thread has completed (or cancelled) it. */
+typedef UINT (*wlf_display_call)(wfClipboard* clipboard, void* arg);
+typedef struct
+{
+	wlf_display_call call;
+	void* arg;
+	HANDLE done;
+	UINT result;
+} wlf_display_request;
+
 struct wlf_clipboard
 {
 	wlfContext* wfc;
@@ -99,7 +113,166 @@ struct wlf_clipboard
 	CliprdrFileContext* file;
 
 	wQueue* request_queue;
+
+	DWORD displayThread;
+	CRITICAL_SECTION displayLock;
+	HANDLE displayEvent;
+	wlf_display_request* displayRequest;
 };
+
+/* Only the display thread executes UWAC calls. Do not hold displayLock while
+ * dispatching: Wayland callbacks can re-enter clipboard handling. */
+HANDLE wlf_cliprdr_get_event_handle(wfClipboard* clipboard)
+{
+	return clipboard ? clipboard->displayEvent : nullptr;
+}
+
+BOOL wlf_cliprdr_dispatch(wfClipboard* clipboard)
+{
+	if (!clipboard)
+		return FALSE;
+	WINPR_ASSERT(GetCurrentThreadId() == clipboard->displayThread);
+
+	EnterCriticalSection(&clipboard->displayLock);
+	wlf_display_request* request = clipboard->displayRequest;
+	clipboard->displayRequest = nullptr;
+	ResetEvent(clipboard->displayEvent);
+	LeaveCriticalSection(&clipboard->displayLock);
+
+	if (request)
+	{
+		request->result = request->call(clipboard, request->arg);
+		SetEvent(request->done);
+	}
+	return request != nullptr;
+}
+
+static UINT wlf_cliprdr_invoke(wfClipboard* clipboard, wlf_display_call call, void* arg)
+{
+	HANDLE abortEvent = freerdp_abort_event(&clipboard->wfc->common.context);
+	if (WaitForSingleObject(abortEvent, 0) == WAIT_OBJECT_0)
+		return ERROR_OPERATION_ABORTED;
+
+	/* Also support a channel callback running on the display thread. */
+	if (GetCurrentThreadId() == clipboard->displayThread)
+		return call(clipboard, arg);
+
+	wlf_display_request request = { .call = call, .arg = arg, .result = ERROR_OPERATION_ABORTED };
+	request.done = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	if (!request.done)
+		return ERROR_NOT_ENOUGH_MEMORY;
+
+	EnterCriticalSection(&clipboard->displayLock);
+	/* There is only one cliprdr worker. A second producer is a programming error. */
+	WINPR_ASSERT(!clipboard->displayRequest);
+	clipboard->displayRequest = &request;
+	SetEvent(clipboard->displayEvent);
+	LeaveCriticalSection(&clipboard->displayLock);
+
+	const HANDLE handles[] = { request.done, abortEvent };
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	if (status != WAIT_OBJECT_0)
+	{
+		EnterCriticalSection(&clipboard->displayLock);
+		const BOOL pending = (clipboard->displayRequest == &request);
+		if (pending)
+		{
+			clipboard->displayRequest = nullptr;
+			ResetEvent(clipboard->displayEvent);
+		}
+		LeaveCriticalSection(&clipboard->displayLock);
+		/* A dispatched call still owns the borrowed arguments. Wait for its
+		 * completion before returning, even if the RDP connection was aborted. */
+		if (!pending)
+			WaitForSingleObject(request.done, INFINITE);
+		request.result = ERROR_OPERATION_ABORTED;
+	}
+	CloseHandle(request.done);
+	return request.result;
+}
+
+typedef struct
+{
+	const char* mime;
+	int fd;
+} wlf_data_request;
+
+static UINT wlf_cliprdr_open_data(wfClipboard* clipboard, void* arg)
+{
+	wlf_data_request* request = arg;
+	request->fd = UwacClipboardDataGetFd(clipboard->seat, request->mime);
+	return (request->fd >= 0) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
+}
+
+/* Read only the pipe on the channel worker; never dispatch Wayland here.
+ * A non-responsive clipboard owner must not prevent RDP disconnect. */
+static char* wlf_cliprdr_read_data(wfClipboard* clipboard, const char* mime, size_t* size)
+{
+	wlf_data_request request = { .mime = mime, .fd = -1 };
+	char* data = nullptr;
+	size_t used = 0;
+	size_t capacity = 0;
+	BOOL success = FALSE;
+
+	*size = 0;
+	if (wlf_cliprdr_invoke(clipboard, wlf_cliprdr_open_data, &request) != CHANNEL_RC_OK)
+		goto out;
+	const int abortFd =
+	    GetEventFileDescriptor(freerdp_abort_event(&clipboard->wfc->common.context));
+	if (abortFd < 0)
+		goto out;
+	struct pollfd fds[] = { { .fd = abortFd, .events = POLLIN },
+		                    { .fd = request.fd, .events = POLLIN } };
+	for (;;)
+	{
+		const int status = poll(fds, ARRAYSIZE(fds), -1);
+		if (status < 0)
+		{
+			if (errno == EINTR)
+				continue;
+			goto out;
+		}
+		if (fds[0].revents || (fds[1].revents & (POLLERR | POLLNVAL)))
+			goto out;
+		/* POLLHUP is also readable: drain buffered data, then observe EOF. */
+		if (!(fds[1].revents & (POLLIN | POLLHUP)))
+			continue;
+		if (capacity - used < 1024)
+		{
+			if (capacity > SIZE_MAX - 4096)
+				goto out;
+			capacity += 4096;
+			char* tmp = realloc(data, capacity);
+			if (!tmp)
+				goto out;
+			data = tmp;
+		}
+		const ssize_t n = read(request.fd, data + used, capacity - used - 1);
+		if (n < 0)
+		{
+			if ((errno == EINTR) || (errno == EAGAIN))
+				continue;
+			goto out;
+		}
+		if (n == 0)
+		{
+			data[used] = '\0';
+			*size = used + 1; /* Preserve UwacClipboardDataGet's trailing NUL. */
+			success = TRUE;
+			break;
+		}
+		used += (size_t)n;
+	}
+out:
+	if (request.fd >= 0)
+		close(request.fd);
+	if (!success)
+	{
+		free(data);
+		data = nullptr;
+	}
+	return data;
+}
 
 static void wlf_request_free(void* rq)
 {
@@ -583,20 +756,14 @@ static void wlf_cliprdr_cancel_data(UwacSeat* seat, void* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
-                                           const CLIPRDR_FORMAT_LIST* formatList)
+static UINT wlf_cliprdr_server_format_list_on_display(wfClipboard* clipboard, void* arg)
 {
 	BOOL html = FALSE;
 	BOOL text = FALSE;
 	BOOL image = FALSE;
 	BOOL file = FALSE;
 
-	if (!context || !context->custom)
-		return ERROR_INVALID_PARAMETER;
-
-	wfClipboard* clipboard = cliprdr_file_context_get_context(context->custom);
-	WINPR_ASSERT(clipboard);
-
+	const CLIPRDR_FORMAT_LIST* formatList = arg;
 	wlf_cliprdr_free_server_formats(clipboard);
 	if (!cliprdr_file_context_clear(clipboard->file))
 		return ERROR_INTERNAL_ERROR;
@@ -693,9 +860,20 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 			UwacClipboardOfferCreate(clipboard->seat, mime_image[x]);
 	}
 
-	UwacClipboardOfferAnnounce(clipboard->seat, clipboard, wlf_cliprdr_transfer_data,
-	                           wlf_cliprdr_cancel_data);
+	if (UwacClipboardOfferAnnounce(clipboard->seat, clipboard, wlf_cliprdr_transfer_data,
+	                               wlf_cliprdr_cancel_data) != UWAC_SUCCESS)
+		return ERROR_INTERNAL_ERROR;
 	return wlf_cliprdr_send_client_format_list_response(clipboard, TRUE);
+}
+
+static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
+                                           const CLIPRDR_FORMAT_LIST* formatList)
+{
+	if (!context || !context->custom || !formatList)
+		return ERROR_INVALID_PARAMETER;
+	wfClipboard* clipboard = cliprdr_file_context_get_context(context->custom);
+	return wlf_cliprdr_invoke(clipboard, wlf_cliprdr_server_format_list_on_display,
+	                          (void*)formatList);
 }
 
 /**
@@ -780,7 +958,10 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			break;
 	}
 
-	data = UwacClipboardDataGet(clipboard->seat, mime, &size);
+	/* The display thread can need the WinPR clipboard lock while we wait. */
+	ClipboardUnlock(clipboard->system);
+	data = wlf_cliprdr_read_data(clipboard, mime, &size);
+	ClipboardLock(clipboard->system);
 
 	if (!data || (size > UINT32_MAX))
 		goto fail;
@@ -812,10 +993,17 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			if (error)
 				goto fail;
 		}
+		else
+		{
+			ddata = (BYTE*)data;
+			dsize = len;
+			data = nullptr;
+		}
 	}
 fail:
 	ClipboardUnlock(clipboard->system);
 	rc = wlf_cliprdr_send_data_response(clipboard, ddata, dsize);
+	free(ddata);
 	free(data);
 	return rc;
 }
@@ -946,6 +1134,11 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 		goto fail;
 
 	InitializeCriticalSection(&clipboard->lock);
+	InitializeCriticalSection(&clipboard->displayLock);
+	clipboard->displayThread = GetCurrentThreadId();
+	clipboard->displayEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	if (!clipboard->displayEvent)
+		goto fail;
 	clipboard->wfc = wfc;
 	channels = wfc->common.context.channels;
 	clipboard->log = WLog_Get(TAG);
@@ -995,6 +1188,10 @@ void wlf_clipboard_free(wfClipboard* clipboard)
 	Queue_Free(clipboard->request_queue);
 	LeaveCriticalSection(&clipboard->lock);
 	DeleteCriticalSection(&clipboard->lock);
+	WINPR_ASSERT(!clipboard->displayRequest);
+	if (clipboard->displayEvent)
+		CloseHandle(clipboard->displayEvent);
+	DeleteCriticalSection(&clipboard->displayLock);
 	free(clipboard);
 }
 

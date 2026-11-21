@@ -31,6 +31,10 @@ void wlf_clipboard_free(wfClipboard* clipboard);
 BOOL wlf_cliprdr_init(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
 BOOL wlf_cliprdr_uninit(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
 
+/* Called by the display/main thread; the event wakes it for channel requests. */
+HANDLE wlf_cliprdr_get_event_handle(wfClipboard* clipboard);
+BOOL wlf_cliprdr_dispatch(wfClipboard* clipboard);
+
 BOOL wlf_cliprdr_handle_event(wfClipboard* clipboard, const UwacClipboardEvent* event);
 
 #endif /* FREERDP_CLIENT_WAYLAND_CLIPRDR_H */

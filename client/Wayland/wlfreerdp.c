@@ -316,6 +316,7 @@ static void wl_post_disconnect(freerdp* instance)
 	wlfContext* context = (wlfContext*)instance->context;
 	gdi_free(instance);
 	wlf_clipboard_free(context->clipboard);
+	context->clipboard = nullptr;
 	wlf_disp_free(context->disp);
 
 	if (context->window)
@@ -511,6 +512,13 @@ static int wlfreerdp_run(freerdp* instance)
 			break;
 		}
 
+		HANDLE clipboardEvent = wlf_cliprdr_get_event_handle(context->clipboard);
+		if (clipboardEvent)
+		{
+			if (count >= ARRAYSIZE(handles))
+				break;
+			handles[count++] = clipboardEvent;
+		}
 		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
 		if (WAIT_FAILED == status)
@@ -522,6 +530,15 @@ static int wlfreerdp_run(freerdp* instance)
 		if (!handle_uwac_events(instance, context->display))
 		{
 			WLog_Print(context->log, WLOG_ERROR, "error handling UWAC events");
+			break;
+		}
+
+		/* A clipboard roundtrip can queue UWAC events; a receive can leave
+		 * output pending after EAGAIN. Service both before waiting again. */
+		if (!context->closed && wlf_cliprdr_dispatch(context->clipboard) &&
+		    !handle_uwac_events(instance, context->display))
+		{
+			WLog_Print(context->log, WLOG_ERROR, "error handling clipboard UWAC events");
 			break;
 		}
 
