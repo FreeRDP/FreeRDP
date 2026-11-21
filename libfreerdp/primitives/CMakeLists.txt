@@ -44,7 +44,9 @@ set(PRIMITIVES_SSE4_2_SRCS)
 
 set(PRIMITIVES_AVX2_SRCS sse/prim_copy_avx2.c sse/prim_YUV_avx2.c)
 
-set(PRIMITIVES_NEON_SRCS neon/prim_colors_neon.c neon/prim_YCoCg_neon.c neon/prim_YUV_neon.c)
+set(PRIMITIVES_NEON_SRCS neon/prim_add_neon.c neon/prim_colors_neon.c neon/prim_shift_neon.c neon/prim_YCoCg_neon.c
+                         neon/prim_YUV_neon.c
+)
 
 set(PRIMITIVES_OPENCL_SRCS opencl/prim_YUV_opencl.c)
 
