@@ -2194,11 +2194,14 @@ static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT
 	 *
 	 * 2. if only /network is found
 	 *   * enable GFX
-	 * 3. if any other element is found as well
+	 * 3. if /gfx is found as well
 	 *   * skip defaults
+	 * 4. if /rfx or /bpp is found
+	 *   * skip defaults, unless /network:auto asks for them
 	 */
 	BOOL narg = FALSE;
 	BOOL garg = FALSE;
+	BOOL larg = FALSE;
 	for (size_t x = 0; x < ARRAYSIZE(arguments); x++)
 	{
 		const char* arg = arguments[x];
@@ -2230,7 +2233,7 @@ static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, enable))
 					return fail_at(p, COMMAND_LINE_ERROR);
-				garg = TRUE;
+				larg = TRUE;
 			}
 			break;
 			case 3:
@@ -2238,7 +2241,7 @@ static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT
 				const int rc = parse_bpp_options(settings, p);
 				if (rc != 0)
 					return fail_at(p, rc);
-				garg = TRUE;
+				larg = TRUE;
 			}
 			break;
 			default:
@@ -2251,6 +2254,14 @@ static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT
 		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
 			return -1;
 	}
+
+	/* /rfx or a color depth alone select the legacy graphics, but neither says anything
+	 * about the graphics pipeline, so an explicit /network:auto still turns the codecs
+	 * on: servers like gnome-remote-desktop refuse a client without the pipeline. */
+	const BOOL autoarg = narg && (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) ==
+	                              CONNECTION_TYPE_AUTODETECT);
+	if (larg && !autoarg)
+		garg = TRUE;
 
 	if (!garg)
 	{

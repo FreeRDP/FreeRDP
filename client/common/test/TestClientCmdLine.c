@@ -447,6 +447,43 @@ static BOOL check_settings_gfx_without_h264(rdpSettings* settings)
 	return result;
 }
 
+static BOOL check_settings_gfx_enabled(rdpSettings* settings)
+{
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
+	{
+		TEST_FAILURE("Expected /network:auto to enable the graphics pipeline with /bpp or /rfx!\n");
+		return FALSE;
+	}
+	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec))
+	{
+		TEST_FAILURE("Expected RemoteFxCodec = TRUE, but RemoteFxCodec = FALSE!\n");
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL check_settings_bpp32_gfx_enabled(rdpSettings* settings)
+{
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) != 32)
+	{
+		TEST_FAILURE("Expected ColorDepth = 32, but ColorDepth = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
+		return FALSE;
+	}
+	return check_settings_gfx_enabled(settings);
+}
+
+static BOOL check_settings_gfx_disabled(rdpSettings* settings)
+{
+	if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
+	{
+		TEST_FAILURE("Expected /bpp or /rfx without /network:auto to leave the graphics pipeline "
+		             "off!\n");
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL check_settings_network_auto_h264(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -701,6 +738,34 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_multimon_enabled,
 	  { "testfreerdp", "+multimon", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_bpp32_gfx_enabled,
+	  { "testfreerdp", "/bpp:32", "/network:auto", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_bpp32_gfx_enabled,
+	  { "testfreerdp", "/network:auto", "/bpp:32", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_enabled,
+	  { "testfreerdp", "/rfx", "/network:auto", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_enabled,
+	  { "testfreerdp", "/network:auto", "/rfx", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_disabled,
+	  { "testfreerdp", "/rfx", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_disabled,
+	  { "testfreerdp", "/bpp:32", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_disabled,
+	  { "testfreerdp", "/bpp:32", "/network:lan", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 #if defined(WITH_GFX_H264)
 	{ 0,
