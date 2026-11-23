@@ -61,7 +61,7 @@ typedef struct
 	UINT32 volume;
 	time_t reconnect_delay_seconds;
 	time_t reconnect_time;
-	UINT64 play_end; /* tick count when the queued audio has been played */
+	UINT64 play_end; /* microsecond tick count when the queued audio has been played */
 } rdpsndPulsePlugin;
 
 WINPR_ATTR_NODISCARD
@@ -738,7 +738,7 @@ static BOOL rdpsnd_pulse_ran_dry(rdpsndPulsePlugin* pulse, UINT64 now)
 		return TRUE;
 
 	/* audio is still waiting: no silence, and the estimate follows the stream again */
-	pulse->play_end = now + pa_bytes_to_usec((uint64_t)queued, &pulse->sample_spec) / 1000ULL;
+	pulse->play_end = now + pa_bytes_to_usec((uint64_t)queued, &pulse->sample_spec);
 	return FALSE;
 }
 
@@ -769,18 +769,18 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	 * soon as one quantum is there, so the next sample has to be on time,
 	 * and PulseAudio loses some of it. Put some silence in front, so the
 	 * following samples can arrive a little late. */
-	const UINT64 now = GetTickCount64();
+	const UINT64 now = winpr_GetTickCount64NS() / 1000ull;
 	if (rdpsnd_pulse_ran_dry(pulse, now))
 	{
 		const UINT32 ms = (pulse->latency > 0) ? pulse->latency : PULSE_DEFAULT_LATENCY_MS;
 		if (!rdpsnd_pulse_write(pulse, nullptr,
 		                        pa_usec_to_bytes(1000ULL * ms, &pulse->sample_spec)))
 			WLog_WARN(TAG, "rdpsnd_pulse_write failed");
-		pulse->play_end = now + ms;
+		pulse->play_end = now + 1000ULL * ms;
 	}
 
 	if (rdpsnd_pulse_write(pulse, data, size))
-		pulse->play_end += pa_bytes_to_usec(size, &pulse->sample_spec) / 1000;
+		pulse->play_end += pa_bytes_to_usec(size, &pulse->sample_spec);
 
 	if (pa_stream_get_latency(pulse->stream, &latency, &negative) != 0)
 		latency = 0;
