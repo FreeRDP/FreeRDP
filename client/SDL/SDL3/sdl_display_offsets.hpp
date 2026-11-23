@@ -308,7 +308,7 @@ namespace sdl_display_offsets
 		auto placed = offsets;
 		placeOnce(placed, primary);
 		if (valid(placed, selection))
-			offsets = placed;
+			offsets = std::move(placed);
 		else
 			walk(offsets, primary);
 	}
