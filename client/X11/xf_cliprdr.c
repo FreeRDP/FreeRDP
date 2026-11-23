@@ -869,7 +869,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_client_formats(xfClipboard* clipboard, UIN
 		/* Raw file descriptors alone cannot relay the source client's file contents. */
 		for (UINT32 i = 0; i < *numFormats; i++)
 		{
-			if (formats[i].formatName && strcmp(formats[i].formatName, type_FileGroupDescriptorW) == 0)
+			if (formats[i].formatName &&
+			    strcmp(formats[i].formatName, type_FileGroupDescriptorW) == 0)
 			{
 				clipboard->local_files_via_uri = TRUE;
 				xf_cliprdr_free_formats(formats, *numFormats);
@@ -1714,8 +1715,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				                                      &nullTerminated);
 
 				HashTable_Lock(clipboard->cachedRawData);
-				cached_raw_data =
-				    HashTable_GetItemValue(clipboard->cachedRawData, format_to_cache_slot(srcFormatId));
+				cached_raw_data = HashTable_GetItemValue(clipboard->cachedRawData,
+				                                         format_to_cache_slot(srcFormatId));
 				HashTable_Unlock(clipboard->cachedRawData);
 
 				DEBUG_CLIPRDR("hasCachedRawData: %u, rawDataLength: %u", cached_raw_data ? 1u : 0u,
@@ -2310,8 +2311,8 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 		if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE) == 0)
 			return xf_cliprdr_send_data_response(clipboard, format, nullptr, 0);
 	}
-	const BOOL rawTransfer = !clipboard->local_files_via_uri &&
-	                         xf_cliprdr_is_raw_transfer_available(clipboard);
+	const BOOL rawTransfer =
+	    !clipboard->local_files_via_uri && xf_cliprdr_is_raw_transfer_available(clipboard);
 
 	if (rawTransfer)
 	{
