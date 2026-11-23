@@ -38,4 +38,13 @@ static inline void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims
 	primitives_init_shift_sse3_int(prims);
 }
 
+FREERDP_LOCAL void primitives_init_shift_neon_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_shift_neon(primitives_t* WINPR_RESTRICT prims)
+{
+	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_shift_neon_int(prims);
+}
+
 #endif
