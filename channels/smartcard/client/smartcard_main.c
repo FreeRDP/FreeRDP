@@ -319,9 +319,9 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	}
 
 	Stream_Free(smartcard->device.data, TRUE);
-	ListDictionary_Free(smartcard->rgOutstandingMessages);
 
 	smartcard_call_context_free(smartcard->callctx);
+	ListDictionary_Free(smartcard->rgOutstandingMessages);
 	DeleteCriticalSection(&smartcard->lock);
 
 	free(smartcard);
