@@ -1424,15 +1424,23 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	{
-		const BOOL enable = TRUE;
+		const BOOL isServer = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
 		{
-			const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportStatusInfoPdu,
-				                                        FreeRDP_SupportErrorInfoPdu,
-				                                        FreeRDP_SupportAsymetricKeys };
+			struct keypairs
+			{
+				FreeRDP_Settings_Keys_Bool key;
+				BOOL val;
+			};
+
+			const struct keypairs keys[] = { { FreeRDP_SupportGraphicsPipeline, isServer },
+				                             { FreeRDP_SupportStatusInfoPdu, TRUE },
+				                             { FreeRDP_SupportErrorInfoPdu, TRUE },
+				                             { FreeRDP_SupportAsymetricKeys, TRUE } };
 
 			for (size_t x = 0; x < ARRAYSIZE(keys); x++)
 			{
-				if (!freerdp_settings_set_bool(settings, keys[x], enable))
+				const struct keypairs* cur = &keys[x];
+				if (!freerdp_settings_set_bool(settings, cur->key, cur->val))
 					goto out_fail;
 			}
 		}
