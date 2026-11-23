@@ -50,6 +50,24 @@ static BOOL check_duplicate(size_t offset, const char* key, BOOL* array, size_t 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL check_is_uint32(const char* what, cbor_item_t* value)
+{
+	if (!cbor_isa_uint(value))
+	{
+		WLog_ERR(TAG, "\"%s\"is not an unsigned int", what);
+		return FALSE;
+	}
+	const uint64_t val = cbor_get_int(value);
+	if (val > UINT32_MAX)
+	{
+		WLog_ERR(TAG, "\"%s\"is out of range: 0x%16" PRIx64 " > 0x%08" PRIx32, what, val,
+		         UINT32_MAX);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST* out)
 {
 	struct cbor_load_result result = WINPR_C_ARRAY_INIT;
@@ -90,6 +108,8 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 
 		const char* keyStr = (const char*)cbor_string_handle(key);
 		const size_t keyLen = cbor_string_length(key);
+		if (keyLen > INT32_MAX)
+			goto out;
 
 		WLog_DBG(TAG, "  key[%" PRIuz "]: \"%.*s\" type=%u", i,
 		         WINPR_ASSERTING_INT_CAST(int, keyLen), keyStr, cbor_typeof(value));
@@ -118,11 +138,8 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 					if (!check_duplicate(1, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
 
-					if (!cbor_isa_uint(value))
-					{
-						WLog_ERR(TAG, "\"flags\"is not an unsigned int");
+					if (!check_is_uint32("falgs", value))
 						goto out;
-					}
 					out->flags = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
 				break;
@@ -132,12 +149,9 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 					if (!check_duplicate(2, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
 
-					if (!cbor_isa_uint(value))
-					{
-						WLog_ERR(TAG, "\"command\"is not an unsigned int");
+					if (!check_is_uint32("command", value))
 						goto out;
-					}
-					out->command = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
+					out->command = WINPR_ASSERTING_INT_CAST(UINT32, val);
 				}
 				else if (memcmp(keyStr, "request", 7) == 0)
 				{
@@ -164,11 +178,8 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 					if (!check_duplicate(4, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
 
-					if (!cbor_isa_uint(value))
-					{
-						WLog_ERR(TAG, "\"timeout\"is not an unsigned int");
+					if (!check_is_uint32("timeout", value))
 						goto out;
-					}
 					out->timeout = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
 				break;
