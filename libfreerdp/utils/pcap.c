@@ -140,7 +140,7 @@ BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 	}
 	else
 	{
-		record->next = pcap->tail;
+		pcap->tail->next = record;
 		pcap->tail = record;
 	}
 
@@ -247,6 +247,8 @@ void pcap_flush(rdpPcap* pcap)
 		free(pcap->record);
 		pcap->record = next;
 	}
+	pcap->head = nullptr;
+	pcap->tail = nullptr;
 
 	if (pcap->fp != nullptr)
 		(void)fflush(pcap->fp);
