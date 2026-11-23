@@ -222,13 +222,28 @@ static BOOL delete_surface(const void* key, void* value, void* arg)
 
 static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable)
 {
+	ULONG_PTR* pKeys = nullptr;
+
 	WINPR_ASSERT(context);
-	if (!HashTable_Foreach(SurfaceTable, delete_surface, context))
+
+	/* Do not use HashTable_Foreach here: it keeps the (synchronized) table locked while
+	 * context->DeleteSurface is called, which acquires context->mux. All other users
+	 * (GetSurfaceData, GetSurfaceIds, SetSurfaceData) take context->mux first and the
+	 * table lock second, so iterate over a snapshot of the keys instead. */
+	const size_t count = HashTable_GetKeys(SurfaceTable, &pKeys);
+
+	for (size_t index = 0; index < count; index++)
 	{
-		RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
-		WINPR_ASSERT(gfx);
-		WLog_Print(gfx->base.log, WLOG_WARN, "delete_surface failed");
+		if (!delete_surface((const void*)pKeys[index], nullptr, context))
+		{
+			RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
+			WINPR_ASSERT(gfx);
+			WLog_Print(gfx->base.log, WLOG_WARN, "delete_surface failed");
+			break;
+		}
 	}
+
+	free(pKeys);
 }
 
 static UINT evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots, void** CacheSlots)

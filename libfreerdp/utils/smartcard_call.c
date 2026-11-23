@@ -2685,6 +2685,9 @@ void smartcard_call_context_free(scard_call_context* ctx)
 		wrap_raw(ctx, SCardReleaseStartedEvent);
 	}
 
+	HashTable_Free(ctx->rgSCardContextList);
+	HashTable_Free(ctx->handleStates);
+
 	if (ctx->useEmulatedCard)
 	{
 #ifdef WITH_SMARTCARD_EMULATE
@@ -2705,8 +2708,6 @@ void smartcard_call_context_free(scard_call_context* ctx)
 
 	ctx->pWinSCardApi = nullptr;
 
-	HashTable_Free(ctx->rgSCardContextList);
-	HashTable_Free(ctx->handleStates);
 	(void)CloseHandle(ctx->stopEvent);
 	free(ctx);
 }

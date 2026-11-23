@@ -1988,7 +1988,7 @@ BOOL freerdp_certificate_matches_hostname(const rdpCertificate* cert, const char
 	}
 
 	/* compare against alternative names */
-	if (!skip && dns_names)
+	if (!skip && x509_utils_has_dns_names(cert->x509))
 	{
 		for (size_t index = 0; index < dns_names_count; index++)
 		{

@@ -681,7 +681,6 @@ rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* cmd)
 WINPR_ATTR_NODISCARD static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s,
                                                              const RDPGFX_H264_METABLOCK* meta)
 {
-	RECTANGLE_16* regionRect = nullptr;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
@@ -691,9 +690,19 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_h264_metablock(wLog* log, wStream*
 
 	Stream_Write_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
+	if (meta->numRegionRects > RDPGFX_MAX_META_REGION_COUNT)
+	{
+		WLog_Print(log, WLOG_ERROR, "unusually high number of update rectangles %" PRIu32,
+		           meta->numRegionRects);
+		return ERROR_INVALID_PARAMETER;
+	}
+
 	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
-		regionRect = &(meta->regionRects[index]);
+		const RECTANGLE_16* regionRect = &(meta->regionRects[index]);
+		if (rectangle_is_empty(regionRect))
+			WLog_Print(log, WLOG_WARN, "rectangle at %" PRIu32 " (of %" PRIu32 ") is empty!", index,
+			           meta->numRegionRects);
 
 		if ((error = rdpgfx_write_rect16(s, regionRect)))
 		{

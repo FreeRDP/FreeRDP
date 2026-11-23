@@ -251,9 +251,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return FALSE;
 	}
 
-	if (srcFormat->wBitsPerSample != 16)
-		return FALSE;
-
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
@@ -267,6 +264,12 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	}
 
 #if defined(WITH_SOXR)
+	if (srcFormat->wBitsPerSample != 16)
+	{
+		WLog_ERR(TAG, "requires 16 bit samples for input, got %" PRIu16, srcFormat->wBitsPerSample);
+		return FALSE;
+	}
+
 	const size_t srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
 	const size_t dstBytesPerFrame = (context->common.format.wBitsPerSample > 8) ? 2 : 1;
 	const size_t srcChannels = srcFormat->nChannels;
@@ -681,6 +684,13 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!context || !src || !out)
 		return FALSE;
 
+	if (context->common.format.wBitsPerSample != 16)
+	{
+		WLog_ERR(TAG, "Encoder requires wBitsPerSample == 16");
+		return FALSE;
+	}
+
+	/* The encoder is configured with FAAC_INPUT_16BIT */
 	const unsigned int bpp = context->common.format.wBitsPerSample / 8;
 	const size_t nrSamples = size / bpp;
 
@@ -836,6 +846,12 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 		if (samplerate != context->common.format.nSamplesPerSec)
 			return FALSE;
+
+		if (context->common.format.wBitsPerSample != 16)
+		{
+			WLog_ERR(TAG, "Encoder requires wBitsPerSample == 16");
+			return FALSE;
+		}
 
 		context->faadSetup = TRUE;
 	}
