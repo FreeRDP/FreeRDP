@@ -852,7 +852,7 @@ static inline int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* WINPR_RESTR
 			return -1;
 	}
 
-	INT16 temp[64 * 64]; /* DWT buffer */
+	DECLSPEC_ALIGN(16) INT16 temp[64 * 64]; /* DWT buffer */
 
 	if (!extrapolate)
 	{
@@ -957,7 +957,7 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	BOOL diff = 0;
 	BOOL sub = 0;
 	BOOL extrapolate = 0;
-	BYTE pBuffer[(8192 + 32) * 3];
+	DECLSPEC_ALIGN(16) BYTE pBuffer[(8192 + 32) * 3];
 	INT16* pSign[3];
 	INT16* pSrcDst[3];
 	INT16* pCurrent[3];
@@ -1388,7 +1388,7 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	BOOL coeffDiff = 0;
 	BOOL sub = 0;
 	BOOL extrapolate = 0;
-	BYTE pBuffer[(8192 + 32) * 3];
+	DECLSPEC_ALIGN(16) BYTE pBuffer[(8192 + 32) * 3];
 	INT16* pSign[3] = WINPR_C_ARRAY_INIT;
 	INT16* pSrcDst[3] = WINPR_C_ARRAY_INIT;
 	INT16* pCurrent[3] = WINPR_C_ARRAY_INIT;
