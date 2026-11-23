@@ -1418,10 +1418,13 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
     BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7, UINT32 width)
 {
+	WINPR_ASSERT((pSrcOdd && b1Odd) || (!pSrcOdd && !b1Odd));
+	const BOOL haveOdd = b1Odd && pSrcOdd;
+
 	for (size_t x = offset; x < width; x += 2)
 	{
 		const BYTE* srcEven = &pSrcEven[4ULL * x];
-		const BYTE* srcOdd = pSrcOdd ? &pSrcOdd[4ULL * x] : nullptr;
+		const BYTE* srcOdd = haveOdd ? &pSrcOdd[4ULL * x] : nullptr;
 		const BOOL lastX = (x + 1) >= width;
 		BYTE Y1e = 0;
 		BYTE Y2e = 0;
@@ -1457,7 +1460,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			V2e = RGB2V(r, g, b);
 		}
 
-		if (b1Odd)
+		if (haveOdd)
 		{
 			const BYTE b = *srcOdd++;
 			const BYTE g = *srcOdd++;
@@ -1468,7 +1471,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			V1o = V2o = RGB2V(r, g, b);
 		}
 
-		if (b1Odd && !lastX)
+		if (haveOdd && !lastX)
 		{
 			const BYTE b = *srcOdd++;
 			const BYTE g = *srcOdd++;
@@ -1483,7 +1486,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		*b1Even++ = Y1e;
 		*b1Even++ = Y2e;
 
-		if (b1Odd)
+		if (haveOdd)
 		{
 			*b1Odd++ = Y1o;
 			*b1Odd++ = Y2o;
@@ -1499,7 +1502,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		}
 
 		/* UV from 2x, 2y+1 */
-		if (b1Odd)
+		if (haveOdd)
 		{
 			*b4++ = U1o;
 			*b5++ = V1o;
