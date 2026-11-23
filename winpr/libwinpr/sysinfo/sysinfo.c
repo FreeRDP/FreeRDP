@@ -1153,6 +1153,9 @@ static void cpuid(unsigned info, unsigned* eax, unsigned* ebx, unsigned* ecx, un
 #define HWCAP_VFPD32 (1 << 19) /* set if VFP has 32 regs (not 16) */
 #define HWCAP_IDIV (HWCAP_IDIVA | HWCAP_IDIVT)
 
+// AArch64 uses a different layout - arch/arm64/include/uapi/asm/hwcap.h
+#define ARM64_HWCAP_ASIMD (1 << 1)
+
 // From linux kernel uapi/linux/auxvec.h
 #define AT_HWCAP 16
 
@@ -1260,8 +1263,11 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	{
 		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_NEON:
-
+#if defined(_M_ARM64)
+			if (caps & ARM64_HWCAP_ASIMD)
+#else
 			if (caps & HWCAP_NEON)
+#endif
 				ret = TRUE;
 
 			break;
