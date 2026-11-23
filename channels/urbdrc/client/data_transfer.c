@@ -1360,7 +1360,11 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CA
 	                                          &OutputBufferSize, Stream_Pointer(out), 1000);
 
 	if (ret < 0)
-		WLog_Print(urbdrc->log, WLOG_DEBUG, "os_feature_descriptor_request: error num %d", ret);
+	{
+		WLog_Print(urbdrc->log, WLOG_ERROR, "os_feature_descriptor_request: error num %d", ret);
+		Stream_Free(out, TRUE);
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
 	                            usbd_status, OutputBufferSize, transferDir);
