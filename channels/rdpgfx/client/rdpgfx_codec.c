@@ -48,6 +48,13 @@ static UINT rdpgfx_read_h264_metablock(WINPR_ATTR_UNUSED RDPGFX_PLUGIN* gfx, wSt
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
+	if (meta->numRegionRects > RDPGFX_MAX_META_REGION_COUNT)
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "Unusually high number of RDPGFX_H264_METABLOCK::numRegionRects %" PRIu32,
+		           meta->numRegionRects);
+		goto error_out;
+	}
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(gfx->base.log, s, meta->numRegionRects, 8ull))
 		goto error_out;
 
