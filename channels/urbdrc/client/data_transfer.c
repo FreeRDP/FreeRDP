@@ -925,7 +925,13 @@ static void urb_isoch_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* call
 
 	if (!noAck)
 	{
-		UINT32 packetSize = (status == 0) ? NumberOfPackets * 12 : 0;
+		const UINT32 packetSize = (status == 0) ? NumberOfPackets * 12u : 0;
+		if ((NumberOfPackets > UINT32_MAX / 12) || (packetSize > UINT16_MAX - 20))
+		{
+			Stream_Free(out, TRUE);
+			return;
+		}
+
 		const UINT32 payloadSize = urb_completion_payload_size(transferDir, OutputBufferSize);
 		Stream_ResetPosition(out);
 
@@ -1001,6 +1007,15 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callbac
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, NumberOfPackets, 12ull))
 		return ERROR_INVALID_DATA;
+
+	if (NumberOfPackets > (UINT16_MAX - 20) / 12)
+	{
+		WLog_ERR(TAG,
+		         "[MS-RDPEUSB] 2.2.9.8 TS_URB_ISOCH_TRANSFER::NumberOfPackets %" PRIu32
+		         " too large, maximum allowed is %d",
+		         NumberOfPackets, (UINT16_MAX - 20) / 12);
+		return ERROR_INVALID_DATA;
+	}
 
 	packetDescriptorData = Stream_Pointer(s);
 	Stream_Seek(s, 12ULL * NumberOfPackets);
