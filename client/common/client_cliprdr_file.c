@@ -1650,12 +1650,18 @@ static BOOL apple_set_write_time(const FILEDESCRIPTORW* descriptor, const char* 
 	if ((descriptor->dwFlags & FD_WRITESTIME) == 0)
 		return TRUE;
 
-	const INT64 filetime = ((INT64)descriptor->ftLastWriteTime.dwHighDateTime << 32) |
-	                       descriptor->ftLastWriteTime.dwLowDateTime;
-	const INT64 seconds = filetime / (10LL * 1000LL * 1000LL) - WIN32_FILETIME_TO_UNIX_EPOCH;
-	struct timeval times[2] = WINPR_C_ARRAY_INIT;
-	times[0].tv_sec = (time_t)seconds;
-	times[1].tv_sec = (time_t)seconds;
+	const UINT64 filetime = ((1ull * descriptor->ftLastWriteTime.dwHighDateTime) << 32u) |
+	                        descriptor->ftLastWriteTime.dwLowDateTime;
+	UINT64 seconds = filetime / (10ULL * 1000ULL * 1000ULL);
+	const int32_t usec = (filetime % (10ll * 1000ll * 1000ll)) / 10ll;
+
+	if (seconds < WIN32_FILETIME_TO_UNIX_EPOCH)
+		seconds = 0;
+	else
+		seconds -= WIN32_FILETIME_TO_UNIX_EPOCH;
+
+	struct timeval times[2] = { { .tv_sec = (time_t)seconds, .tv_usec = usec },
+		                        { .tv_sec = (time_t)seconds, .tv_usec = usec } };
 	return utimes(path, times) == 0;
 }
 
