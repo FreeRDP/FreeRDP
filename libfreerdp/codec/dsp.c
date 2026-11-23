@@ -1046,6 +1046,16 @@ static const INT32 ms_adpcm_coeffs1[7] = { 256, 512, 0, 192, 240, 460, 392 };
 
 static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
 
+static inline INT32 saturated_multiply(INT32 a, INT32 b)
+{
+	WINPR_ASSERT(b > 0);
+	if (a > INT32_MAX / b)
+		return INT32_MAX;
+	if (a < INT32_MIN / b)
+		return INT32_MIN;
+	return a * b;
+}
+
 static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
                                                        size_t channel)
 {
@@ -1079,8 +1089,7 @@ static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adp
 	if (sample < ARRAYSIZE(ms_adpcm_adaptation_table))
 		tableval = ms_adpcm_adaptation_table[sample];
 
-	const INT32 delta = adpcm->ms.delta[channel] * tableval / 256;
-	adpcm->ms.delta[channel] = MIN(delta, INT32_MAX / 768);
+	adpcm->ms.delta[channel] = saturated_multiply(adpcm->ms.delta[channel], tableval) / 256;
 
 	if (adpcm->ms.delta[channel] < 16)
 		adpcm->ms.delta[channel] = 16;
