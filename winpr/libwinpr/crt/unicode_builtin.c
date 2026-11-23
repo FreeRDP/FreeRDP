@@ -260,61 +260,31 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 			break;
 		}
 
-		if (!computeLength)
+		switch (bytesToWrite)
 		{
-			switch (bytesToWrite)
-			{
-					/* note: everything falls through. */
-				case 4:
-					*--target = (uint8_t)((ch | byteMark) & byteMask);
-					ch >>= 6;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-				case 3:
-					*--target = (uint8_t)((ch | byteMark) & byteMask);
-					ch >>= 6;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
+				/* note: everything falls through. */
+			case 4:
+				*--target = (uint8_t)((ch | byteMark) & byteMask);
+				ch >>= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
+			case 3:
+				*--target = (uint8_t)((ch | byteMark) & byteMask);
+				ch >>= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
-				case 2:
-					*--target = (uint8_t)((ch | byteMark) & byteMask);
-					ch >>= 6;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
+			case 2:
+				*--target = (uint8_t)((ch | byteMark) & byteMask);
+				ch >>= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
-				case 1:
-					*--target = (uint8_t)(ch | firstByteMark[bytesToWrite]);
-					break;
-				default:
-					return sourceIllegal;
-			}
-		}
-		else
-		{
-			switch (bytesToWrite)
-			{
-					/* note: everything falls through. */
-				case 4:
-					--target;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-
-				case 3:
-					--target;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-
-				case 2:
-					--target;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-
-				case 1:
-					--target;
-					break;
-				default:
-					return sourceIllegal;
-			}
+			case 1:
+				*--target = (uint8_t)(ch | firstByteMark[bytesToWrite]);
+				break;
+			default:
+				return sourceIllegal;
 		}
 
 		target += bytesToWrite;

@@ -1170,6 +1170,27 @@ static BOOL rect_is_valid(const RFX_RECT* rect, UINT32 left, UINT32 top,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL tile_is_valid(const RFX_TILE* tile, UINT32 left, UINT32 top)
+{
+	if (!tile)
+	{
+		WLog_ERR(TAG, "tile=NULL");
+		return FALSE;
+	}
+	if (left > UINT16_MAX - 1u * tile->x)
+	{
+		WLog_ERR(TAG, "left(%" PRIu32 ") + tile->x(%" PRIu16 ") > %d", left, tile->x, UINT16_MAX);
+		return FALSE;
+	}
+	if (top > UINT16_MAX - 1u * tile->y)
+	{
+		WLog_ERR(TAG, "top(%" PRIu32 ") + tile->y(%" PRIu16 ") > %d", top, tile->y, UINT16_MAX);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_RESTRICT data,
                          UINT32 length, UINT32 left, UINT32 top, BYTE* WINPR_RESTRICT dst,
                          UINT32 dstFormat, UINT32 dstStride, UINT32 dstHeight,
@@ -1390,7 +1411,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			RECTANGLE_16 updateRect = WINPR_C_ARRAY_INIT;
 			const RFX_TILE* tile = rfx_message_get_tile(message, i);
 
-			if ((1ul * left + tile->x > UINT16_MAX - 64) || (1ul * top + tile->y > UINT16_MAX - 64))
+			if (!tile_is_valid(tile, left, top))
 			{
 				region16_uninit(&updateRegion);
 				region16_uninit(&clippingRects);

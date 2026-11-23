@@ -202,11 +202,13 @@ void SdlOverlay::clientRows(const char* rendererName)
 	/* a build from outside a git tree says "n/a" */
 	if (revision && (strlen(revision) > 0) && (strcmp(revision, "n/a") != 0))
 		freerdp += std::string(" (") + revision + ")";
-	_client.push_back({ "FreeRDP", freerdp });
-	_client.push_back({ "Build", sdl::overlay::buildSummary(freerdp_get_build_config()) });
-	_client.push_back({ "SDL", version(SDL_GetVersion()) + ", SDL_ttf " + version(TTF_Version()) +
-	                               ", renderer " + (rendererName ? rendererName : "unknown") });
-	_client.push_back({ "Decoders", decodersSupported(_sdl->context()) });
+	_client.emplace_back(sdl::overlay::Row{ "FreeRDP", freerdp });
+	_client.emplace_back(
+	    sdl::overlay::Row{ "Build", sdl::overlay::buildSummary(freerdp_get_build_config()) });
+	_client.emplace_back(sdl::overlay::Row{ "SDL", version(SDL_GetVersion()) + ", SDL_ttf " +
+	                                                   version(TTF_Version()) + ", renderer " +
+	                                                   (rendererName ? rendererName : "unknown") });
+	_client.emplace_back(sdl::overlay::Row{ "Decoders", decodersSupported(_sdl->context()) });
 }
 
 bool SdlOverlay::update(int windowWidth, int windowHeight, const char* rendererName)
