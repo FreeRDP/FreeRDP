@@ -40,3 +40,9 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Client/Test")
+
+if(UNIX)
+  add_executable(TestClientClipboardFileLocks TestClientClipboardFileLocks.c)
+  target_link_libraries(TestClientClipboardFileLocks PRIVATE freerdp-client freerdp winpr)
+  add_test(NAME TestClientClipboardFileLocks COMMAND TestClientClipboardFileLocks)
+endif()
