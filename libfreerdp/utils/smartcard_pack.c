@@ -5147,11 +5147,13 @@ LONG smartcard_unpack_get_status_change_return(wStream* s, GetStatusChange_Retur
 	UINT32 index = 0;
 	UINT32 ndrPtr = 0;
 
+	ret->cReaders = 0;
+	ret->rgReaderStates = nullptr;
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
 
-	Stream_Read_UINT32(s, ret->cReaders);
-	if (ret->cReaders > 10)
+	const UINT32 cReaders = Stream_Get_UINT32(s);
+	if (cReaders > 10)
 	{
 		WLog_Print(log, WLOG_ERROR,
 		           "2.2.3.5 LocateCards_Return and GetStatusChange_Return cReaders(%" PRIu32
@@ -5163,15 +5165,23 @@ LONG smartcard_unpack_get_status_change_return(wStream* s, GetStatusChange_Retur
 	if (!smartcard_ndr_pointer_read(log, s, &index, &ndrPtr))
 		return ERROR_INVALID_DATA;
 
-	if (ndrPtr && ret->cReaders > 0)
+	if ((cReaders > 0) && !ndrPtr)
+	{
+		WLog_Print(log, WLOG_WARN,
+		           "GetStatusChange_Return rgReaderStatesNdrPtr (0x%08" PRIX32
+		           ") and cReaders (0x%08" PRIX32 ") inconsistency",
+		           ndrPtr, cReaders);
+		return SCARD_E_INVALID_VALUE;
+	}
+
+	if (ndrPtr)
 	{
 		LONG status =
 		    smartcard_ndr_read_state(log, s, &ret->rgReaderStates, ret->cReaders, NDR_PTR_SIMPLE);
 		if (status != SCARD_S_SUCCESS)
 			return status;
+		ret->cReaders = cReaders;
 	}
-	else
-		ret->rgReaderStates = nullptr;
 
 	smartcard_trace_get_status_change_return(log, ret, unicode);
 	return SCARD_S_SUCCESS;
