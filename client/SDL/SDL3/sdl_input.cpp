@@ -347,7 +347,13 @@ bool sdlInput::keyboard_focus_in()
 	SDL_GetMouseState(&fx, &fy);
 
 	auto w = SDL_GetMouseFocus();
-	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
+	if (!w)
+		return true;
+	SDL_FPoint pos{};
+	if (_sdl->getRailChannelContext().enabled())
+		pos = _sdl->screenToPixel(SDL_GetWindowID(w), { fx, fy });
+	else if (!_sdl->screenToRdp(SDL_GetWindowID(w), { fx, fy }, pos))
+		return true;
 
 	return sdl::utils::inputSent(
 	    _sdl->context(), _sdl->getWLog(),
