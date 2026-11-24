@@ -11,6 +11,68 @@
 
 #include "helpers.h"
 
+/* Regression test: an off-screen rect (entirely outside the visible area)
+ * must not discard previously accumulated invalid-region bounds. */
+static int test_gdi_InvalidateRegion_preserves_bbox(void)
+{
+	int rc = -1;
+	HGDI_DC hdc = nullptr;
+
+	if (!(hdc = gdi_GetDC()))
+		return -1;
+
+	if (!(hdc->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND))))
+		goto fail;
+
+	if (!(hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
+		goto fail;
+
+	hdc->hwnd->invalid->null = TRUE;
+	hdc->hwnd->count = 32;
+
+	if (!(hdc->hwnd->cinvalid = (GDI_RGN*)calloc(hdc->hwnd->count, sizeof(GDI_RGN))))
+		goto fail;
+
+	hdc->hwnd->ninvalid = 0;
+
+	/* Establish an initial bounding region. */
+	if (!gdi_InvalidateRegion(hdc, 10, 10, 20, 20))
+		goto fail;
+
+	if (hdc->hwnd->invalid->null)
+		goto fail;
+	if (hdc->hwnd->invalid->x != 10)
+		goto fail;
+	if (hdc->hwnd->invalid->y != 10)
+		goto fail;
+	if (hdc->hwnd->invalid->w != 20)
+		goto fail;
+	if (hdc->hwnd->invalid->h != 20)
+		goto fail;
+
+	/* A rect entirely outside the visible area (negative coordinates) must
+	 * be rejected by gdi_CRgnToRect, but the call itself must still succeed
+	 * and leave the previously accumulated bounds untouched. */
+	if (!gdi_InvalidateRegion(hdc, -100, -100, 10, 10))
+		goto fail;
+
+	if (hdc->hwnd->invalid->null)
+		goto fail;
+	if (hdc->hwnd->invalid->x != 10)
+		goto fail;
+	if (hdc->hwnd->invalid->y != 10)
+		goto fail;
+	if (hdc->hwnd->invalid->w != 20)
+		goto fail;
+	if (hdc->hwnd->invalid->h != 20)
+		goto fail;
+
+	rc = 0;
+fail:
+	gdi_DeleteDC(hdc);
+	return rc;
+}
+
 int TestGdiRegion(int argc, char* argv[])
 {
 	int rc = -1;
@@ -250,7 +312,8 @@ int TestGdiRegion(int argc, char* argv[])
 	if (!gdi_PtInRect(rect1, 2, 550))
 		goto fail;
 
-	// BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h);
+	if (test_gdi_InvalidateRegion_preserves_bbox() != 0)
+		goto fail;
 
 	rc = 0;
 fail:
