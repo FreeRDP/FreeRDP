@@ -81,15 +81,15 @@ WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_stream_set_format(TSMF_STREAM* stre
                                                                const char* name, wStream* s);
 
 FREERDP_LOCAL
-void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id,
-                     IWTSVirtualChannelCallback* pChannelCallback);
+void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_stream_flush(TSMF_STREAM* stream);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL
-tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
-                        UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration,
-                        UINT32 extensions, UINT32 data_size, BYTE* data);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_stream_push_sample(TSMF_STREAM* stream,
+                                                                UINT32 sample_id, UINT64 start_time,
+                                                                UINT64 end_time, UINT64 duration,
+                                                                UINT32 extensions, UINT32 data_size,
+                                                                BYTE* data);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_media_init(void);
 
