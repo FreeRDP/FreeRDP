@@ -75,7 +75,10 @@ extern "C"
 	FREERDP_API BOOL smarcard_call_set_callbacks(scard_call_context* ctx, void* userdata,
 	                                             void* (*fn_new)(void*, SCARDCONTEXT),
 	                                             void (*fn_free)(void*));
-	WINPR_ATTR_NODISCARD
+
+	FREERDP_API void smartcard_call_return_context(scard_call_context* ctx, void* context);
+
+	WINPR_ATTR_MALLOC(smartcard_call_return_context, 2)
 	FREERDP_API void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext);
 
 	WINPR_ATTR_NODISCARD
