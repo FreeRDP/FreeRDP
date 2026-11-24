@@ -89,7 +89,7 @@ struct s_scard_call_context
 {
 	BOOL useEmulatedCard;
 	HANDLE StartedEvent;
-	wLinkedList* names;
+	wLinkedList* allowednames;
 	wHashTable* rgSCardContextList;
 #if defined(WITH_SMARTCARD_EMULATE)
 	SmartcardEmulationContext* emulation;
@@ -372,7 +372,7 @@ static void scard_context_free(struct s_scard_context_element* ptr)
 		return;
 
 	if (ptr->fn_free)
-		ptr->fn_free(ptr);
+		ptr->fn_free(ptr->context);
 	ArrayList_Free(ptr->cards);
 	free(ptr);
 }
@@ -627,28 +627,6 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ListReaderGroupsW_Call(scard_call_con
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL filter_match(wLinkedList* list, LPCSTR reader, size_t readerLen)
-{
-	if (readerLen < 1)
-		return FALSE;
-
-	LinkedList_Enumerator_Reset(list);
-
-	while (LinkedList_Enumerator_MoveNext(list))
-	{
-		const char* filter = LinkedList_Enumerator_Current(list);
-
-		if (filter)
-		{
-			if (strstr(reader, filter) != nullptr)
-				return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-WINPR_ATTR_NODISCARD
 static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD cchReaders)
 {
 	size_t rpos = 0;
@@ -657,6 +635,7 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 	if (*mszReaders == nullptr || LinkedList_Count(list) < 1)
 		return cchReaders;
 
+	const size_t count = LinkedList_Count(list);
 	do
 	{
 		LPCSTR rreader = &(*mszReaders)[rpos];
@@ -665,7 +644,12 @@ static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD
 
 		rpos += readerLen + 1;
 
-		if (filter_match(list, rreader, readerLen))
+		char* str = strndup(rreader, readerLen);
+		BOOL rc = FALSE;
+		if (str)
+			rc = LinkedList_Contains(list, str);
+		winpr_znfree(str, readerLen);
+		if ((count == 0) || rc)
 		{
 			if (rreader != wreader)
 				memmove(wreader, rreader, readerLen + 1);
@@ -742,7 +726,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ListReadersA_Call(scard_call_context*
 	}
 
 	void* original = mszReaders;
-	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
+	cchReaders = filter_device_by_name_a(smartcard->allowednames, &mszReaders, cchReaders);
 	ret.msz = (BYTE*)mszReaders;
 	ret.cBytes = cchReaders;
 
@@ -801,7 +785,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ListReadersW_Call(scard_call_context*
 	}
 
 	void* original = mszReaders.pb;
-	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders.pw, cchReaders);
+	cchReaders = filter_device_by_name_w(smartcard->allowednames, &mszReaders.pw, cchReaders);
 	ret.msz = mszReaders.pb;
 	ret.cBytes = cchReaders * sizeof(WCHAR);
 	status = smartcard_pack_list_readers_return(out, &ret, TRUE);
@@ -1553,8 +1537,11 @@ smartcard_ConnectA_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 
 	ConnectA_Call* call = &operation->call.connectA;
 
-	if (LinkedList_Contains(smartcard->names, call->szReader))
-		return SCARD_E_UNKNOWN_READER;
+	if (LinkedList_Count(smartcard->allowednames) > 0)
+	{
+		if (LinkedList_Contains(smartcard->allowednames, call->szReader))
+			return SCARD_E_UNKNOWN_READER;
+	}
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 	    (call->Common.dwShareMode != SCARD_SHARE_DIRECT))
@@ -1565,7 +1552,6 @@ smartcard_ConnectA_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 	ret.ReturnCode = wrap(smartcard, SCardConnectA, operation->hContext, (char*)call->szReader,
 	                      call->Common.dwShareMode, call->Common.dwPreferredProtocols, &hCard,
 	                      &ret.dwActiveProtocol);
-	smartcard_add_card_to_context(smartcard, operation->hContext, hCard);
 	smartcard_scard_context_native_to_redir(&(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(&(ret.hCard), hCard);
 
@@ -1574,6 +1560,8 @@ smartcard_ConnectA_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 		goto out_fail;
 
 	status = ret.ReturnCode;
+	if (status == SCARD_S_SUCCESS)
+		(void)smartcard_add_card_to_context(smartcard, operation->hContext, hCard);
 out_fail:
 
 	return status;
@@ -1593,12 +1581,17 @@ smartcard_ConnectW_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 	// TODO: context valid?
 	ConnectW_Call* call = &operation->call.connectW;
 
-	char* reader = ConvertWCharToUtf8Alloc(call->szReader, nullptr);
-	if (!reader)
-		return SCARD_E_UNKNOWN_READER;
-	const BOOL rc = LinkedList_Contains(smartcard->names, reader);
-	free(reader);
-	if (rc)
+	BOOL rc = TRUE;
+	if (LinkedList_Count(smartcard->allowednames) > 0)
+	{
+		char* reader = ConvertWCharToUtf8Alloc(call->szReader, nullptr);
+		if (!reader)
+			return SCARD_E_UNKNOWN_READER;
+		rc = LinkedList_Contains(smartcard->allowednames, reader);
+		free(reader);
+	}
+
+	if (!rc)
 		return SCARD_E_UNKNOWN_READER;
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
@@ -1610,7 +1603,6 @@ smartcard_ConnectW_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 	ret.ReturnCode = wrap(smartcard, SCardConnectW, operation->hContext, (WCHAR*)call->szReader,
 	                      call->Common.dwShareMode, call->Common.dwPreferredProtocols, &hCard,
 	                      &ret.dwActiveProtocol);
-	smartcard_add_card_to_context(smartcard, operation->hContext, hCard);
 	smartcard_scard_context_native_to_redir(&(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(&(ret.hCard), hCard);
 
@@ -1619,6 +1611,8 @@ smartcard_ConnectW_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 		goto out_fail;
 
 	status = ret.ReturnCode;
+	if (status == SCARD_S_SUCCESS)
+		(void)smartcard_add_card_to_context(smartcard, operation->hContext, hCard);
 out_fail:
 
 	return status;
@@ -1659,6 +1653,9 @@ WINPR_ATTR_NODISCARD static LONG smartcard_Disconnect_Call(scard_call_context* s
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(out);
 	WINPR_ASSERT(operation);
+
+	if (!smartcard_context_matches_handle(smartcard, operation->hContext, operation->hCard))
+		return SCARD_E_INVALID_HANDLE;
 
 	HCardAndDisposition_Call* call = &operation->call.hCardAndDisposition;
 
@@ -2565,11 +2562,15 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 }
 #endif
 
+/* LinkedList_Contains passes the listed filter first and the reader second;
+ * a reader matches a filter as in filter_match, by containing it as a sustring. */
 static BOOL names_compare(const void* pa, const void* pb)
 {
-	const char* a = pa;
-	const char* b = pb;
-	return strcmp(a, b) == 0;
+	const char* filter = pa;
+	const char* reader = pb;
+	if (!filter || !reader || !reader[0])
+		return FALSE;
+	return strstr(reader, filter) != nullptr;
 }
 
 scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
@@ -2591,11 +2592,11 @@ scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
 	if (!ctx->stopEvent)
 		goto fail;
 
-	ctx->names = LinkedList_New();
-	if (!ctx->names)
+	ctx->allowednames = LinkedList_New();
+	if (!ctx->allowednames)
 		goto fail;
 
-	wObject* obj = LinkedList_Object(ctx->names);
+	wObject* obj = LinkedList_Object(ctx->allowednames);
 	obj->fnObjectEquals = names_compare;
 
 #if defined(WITH_SMARTCARD_EMULATE)
@@ -2678,7 +2679,7 @@ void smartcard_call_context_free(scard_call_context* ctx)
 	/* uses the WinSCard API */
 	smartcard_transaction_watchdog_stop(ctx);
 
-	LinkedList_Free(ctx->names);
+	LinkedList_Free(ctx->allowednames);
 	if (ctx->StartedEvent)
 	{
 		WINPR_ASSERT(ctx->useEmulatedCard || ctx->pWinSCardApi);
@@ -2716,7 +2717,7 @@ BOOL smartcard_call_context_add(scard_call_context* ctx, const char* name)
 {
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(name);
-	return LinkedList_AddLast(ctx->names, name);
+	return LinkedList_AddLast(ctx->allowednames, name);
 }
 
 BOOL smartcard_call_cancel_context(scard_call_context* ctx, SCARDCONTEXT hContext)
