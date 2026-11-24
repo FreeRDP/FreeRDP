@@ -77,8 +77,8 @@ static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, 
 	return HashTable_GetItemValue(vcm->dynamicVirtualChannels, &ChannelId);
 }
 
-static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer1, size_t Length1,
-                                   const BYTE* Buffer2, size_t Length2)
+static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const void* Buffer1, size_t Length1,
+                                   const void* Buffer2, size_t Length2)
 {
 	WINPR_ASSERT(channel);
 
@@ -524,19 +524,27 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 			{
 				firstPass = FALSE;
 				if (flags & CHANNEL_FLAG_FIRST)
+				{
+					channel->offset = 0;
+					channel->total = t;
 					newFlags = CHANNEL_FLAG_FIRST;
+				}
 			}
 
 			if (!size && (flags & CHANNEL_FLAG_LAST))
 				newFlags |= CHANNEL_FLAG_LAST;
 
-			const CHANNEL_PDU_HEADER header = {
-				.length = payloadLen,
-				.flags = newFlags,
-			};
+			const CHANNEL_PDU_HEADER header = { .length = payloadLen, .flags = newFlags };
 
-			if (!wts_queue_receive_data(channel, (const BYTE*)&header, sizeof(header), data,
-			                            payloadLen))
+			channel->offset += payloadLen;
+			if ((channel->total != t) || (channel->offset > t))
+			{
+				WLog_ERR(TAG, "channelId %" PRIu16 " received %" PRIuz " but limit is %" PRIuz,
+				         channelId, channel->offset, t);
+				return FALSE;
+			}
+
+			if (!wts_queue_receive_data(channel, &header, sizeof(header), data, payloadLen))
 				return FALSE;
 
 			data += payloadLen;
