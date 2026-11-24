@@ -437,7 +437,7 @@ WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* context,
                                             const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface = nullptr;
 	RECTANGLE_16 invalidRect;
 	DWORD bpp = 0;
@@ -496,7 +496,7 @@ static UINT gdi_SurfaceCommand_AV1(rdpGdi* gdi, RdpgfxClientContext* context,
                                    const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	INT32 rc = 0;
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface = nullptr;
 	RDPGFX_H264_METABLOCK* meta = nullptr;
 	RDPGFX_AVC420_BITMAP_STREAM* bs = nullptr;
@@ -575,7 +575,7 @@ static UINT gdi_SurfaceCommand_AV2(rdpGdi* gdi, RdpgfxClientContext* context,
                                    const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	INT32 rc = 0;
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface = nullptr;
 	RDPGFX_H264_METABLOCK* meta = nullptr;
 	RDPGFX_AVC420_BITMAP_STREAM* bs = nullptr;
@@ -698,6 +698,7 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 
 	if (status != CHANNEL_RC_OK)
 		goto fail;
+	status = ERROR_INTERNAL_ERROR;
 
 	for (UINT32 x = 0; x < nrRects; x++)
 	{
@@ -722,7 +723,7 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* cont
                                           const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	INT32 rc = 0;
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface = nullptr;
 	RECTANGLE_16 invalidRect;
 	WINPR_ASSERT(gdi);
@@ -780,7 +781,7 @@ WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	BYTE* DstData = nullptr;
 	gdiGfxSurface* surface = nullptr;
 	RECTANGLE_16 invalidRect;
@@ -838,7 +839,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 {
 #ifdef WITH_GFX_H264
 	INT32 rc = 0;
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface = nullptr;
 	RDPGFX_H264_METABLOCK* meta = nullptr;
 	RDPGFX_AVC420_BITMAP_STREAM* bs = nullptr;
@@ -924,7 +925,7 @@ WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_HEVC(rdpGdi* gdi, RdpgfxClientContext* context,
                                     const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
@@ -1027,7 +1028,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 {
 #ifdef WITH_GFX_H264
 	INT32 rc = 0;
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	gdiGfxSurface* surface = nullptr;
 	RDPGFX_AVC444_BITMAP_STREAM* bs = nullptr;
 	RDPGFX_AVC420_BITMAP_STREAM* avc1 = nullptr;
@@ -1103,6 +1104,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (status != CHANNEL_RC_OK)
 		goto fail;
+	status = ERROR_INTERNAL_ERROR;
 
 	for (UINT32 i = 0; i < meta2->numRegionRects; i++)
 	{
@@ -1169,7 +1171,7 @@ WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
                                      const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT status = CHANNEL_RC_OK;
+	UINT status = ERROR_INTERNAL_ERROR;
 	UINT16 alphaSig = 0;
 	UINT16 compressed = 0;
 	RECTANGLE_16 invalidRect;
@@ -1845,6 +1847,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 
 			if (status != CHANNEL_RC_OK)
 				goto fail;
+			status = ERROR_INTERNAL_ERROR;
 		}
 	}
 
@@ -2004,6 +2007,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 
 		if (status != CHANNEL_RC_OK)
 			goto fail;
+		status = ERROR_INTERNAL_ERROR;
 	}
 
 	LeaveCriticalSection(&context->mux);
