@@ -1295,6 +1295,7 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 	priv->expectedBytes = 4;
 	priv->waitingHeader = TRUE;
 
+	EnterCriticalSection(&priv->lock);
 	switch (priv->msgType)
 	{
 		case SNDC_WAVECONFIRM:
@@ -1326,7 +1327,7 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 			ret = ERROR_INVALID_DATA;
 			break;
 	}
-
+	LeaveCriticalSection(&priv->lock);
 	Stream_ResetPosition(s);
 	return ret;
 }
