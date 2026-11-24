@@ -138,7 +138,7 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 					if (!check_duplicate(1, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
 
-					if (!check_is_uint32("falgs", value))
+					if (!check_is_uint32("flags", value))
 						goto out;
 					out->flags = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
@@ -151,7 +151,7 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 
 					if (!check_is_uint32("command", value))
 						goto out;
-					out->command = WINPR_ASSERTING_INT_CAST(UINT32, value);
+					out->command = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
 				else if (memcmp(keyStr, "request", 7) == 0)
 				{
