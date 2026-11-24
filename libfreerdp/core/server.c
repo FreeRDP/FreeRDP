@@ -87,6 +87,10 @@ static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const void* Buffer1,
 	if (Length2 > UINT32_MAX - sizeof(wtsChannelMessage) - Length1)
 		return FALSE;
 	const size_t len = Length1 + Length2;
+
+	/* Ignore empty messages. */
+	if (len == 0)
+		return TRUE;
 	const size_t tlen = sizeof(wtsChannelMessage) + len;
 	wtsChannelMessage* messageCtx = (wtsChannelMessage*)malloc(tlen);
 	if (!messageCtx)
