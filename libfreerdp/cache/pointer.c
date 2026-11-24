@@ -78,10 +78,6 @@ static BOOL update_pointer_position(rdpContext* context,
 	    !pointer_position)
 		return FALSE;
 
-	const BOOL GrabMouse = freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse);
-	if (!GrabMouse)
-		return TRUE;
-
 	const rdpPointer* pointer = context->graphics->Pointer_Prototype;
 	WINPR_ASSERT(pointer);
 
