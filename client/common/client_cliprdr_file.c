@@ -57,6 +57,8 @@
 #include <freerdp/client/client_cliprdr_file.h>
 
 #if defined(WITH_CLIPRDR_FILE_APPLE)
+#include <sys/time.h>
+
 #include <winpr/file.h>
 
 #include <freerdp/freerdp.h>
@@ -1639,6 +1641,24 @@ cliprdr_file_context_apple_contents_response(CliprdrClientContext* cliprdr_conte
 	return CHANNEL_RC_OK;
 }
 
+/* An application that copies the file (the Finder) keeps its modification time */
+static BOOL apple_set_write_time(const FILEDESCRIPTORW* descriptor, const char* path)
+{
+	WINPR_ASSERT(descriptor);
+	WINPR_ASSERT(path);
+
+	if ((descriptor->dwFlags & FD_WRITESTIME) == 0)
+		return TRUE;
+
+	const INT64 filetime = ((INT64)descriptor->ftLastWriteTime.dwHighDateTime << 32) |
+	                       descriptor->ftLastWriteTime.dwLowDateTime;
+	const INT64 seconds = filetime / (10LL * 1000LL * 1000LL) - WIN32_FILETIME_TO_UNIX_EPOCH;
+	struct timeval times[2] = WINPR_C_ARRAY_INIT;
+	times[0].tv_sec = (time_t)seconds;
+	times[1].tv_sec = (time_t)seconds;
+	return utimes(path, times) == 0;
+}
+
 static BOOL apple_download_file(CliprdrFileContext* file, UINT32 generation, UINT32 listIndex,
                                 const FILEDESCRIPTORW* descriptor, const char* path)
 {
@@ -1689,6 +1709,8 @@ static BOOL apple_download_file(CliprdrFileContext* file, UINT32 generation, UIN
 		rc = FALSE;
 	if (!rc)
 		(void)winpr_DeleteFile(path);
+	else if (!apple_set_write_time(descriptor, path))
+		WLog_Print(file->log, WLOG_WARN, "failed to set the modification time of %s", path);
 	return rc;
 }
 
@@ -1764,7 +1786,12 @@ static BOOL apple_create_placeholder(const FILEDESCRIPTORW* descriptor, char* pa
 	FILE* fp = winpr_fopen(path, "wb");
 	if (!fp)
 		return FALSE;
-	return fclose(fp) == 0;
+	if (fclose(fp) != 0)
+		return FALSE;
+	/* The Finder may read the attributes of the files below a directory before their
+	 * contents: the placeholder already has the modification time of the server file */
+	(void)apple_set_write_time(descriptor, path);
+	return TRUE;
 }
 
 /* Parse the server file list and create the placeholders below dir */
