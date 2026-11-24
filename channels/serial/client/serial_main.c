@@ -577,15 +577,45 @@ error_out:
 	return error;
 }
 
-static void close_unterminated_irp_thread(wListDictionary* list, wLog* log, ULONG_PTR id)
+/* Wakes up the IRP threads blocking in CommReadFile, CommWriteFile or IOCTL_SERIAL_WAIT_ON_MASK.
+ * NB: PURGE_TXCLEAR is required as CommWriteFile ends with a tcdrain() */
+static void abort_pending_irps(SERIAL_DEVICE* serial)
 {
-	WINPR_ASSERT(list);
+	const ULONG WaitMask = 0;
+	DWORD BytesReturned = 0;
+
+	WINPR_ASSERT(serial);
+
+	if (!serial->hComm)
+		return;
+
+	if (!PurgeComm(serial->hComm, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR))
+		WLog_Print(
+		    serial->log, WLOG_WARN,
+		    "PurgeComm(serial->hComm, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR) failed");
+	if (!CommDeviceIoControl(serial->hComm, IOCTL_SERIAL_SET_WAIT_MASK, &WaitMask, sizeof(WaitMask),
+	                         nullptr, 0, &BytesReturned, nullptr))
+		WLog_Print(serial->log, WLOG_WARN,
+		           "CommDeviceIoControl(serial->hComm, IOCTL_SERIAL_SET_WAIT_MASK, ...) failed");
+}
+
+static void close_unterminated_irp_thread(SERIAL_DEVICE* serial, ULONG_PTR id)
+{
+	WINPR_ASSERT(serial);
 	HANDLE self = _GetCurrentThread();
-	HANDLE cirpThread = ListDictionary_GetItemValue(list, (void*)id);
+	HANDLE cirpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
 	if (self == cirpThread)
-		WLog_Print(log, WLOG_DEBUG, "Skipping termination of own IRP thread");
+		WLog_Print(serial->log, WLOG_DEBUG, "Skipping termination of own IRP thread");
 	else
-		ListDictionary_Remove(list, (void*)id);
+	{
+		/* NB: never TerminateThread() an IRP thread, it might hold locks (e.g. WLog) that
+		 * would never be released. A wake up is lost on a thread that is not yet blocking,
+		 * so repeat it until the thread returned. */
+		while (WaitForSingleObject(cirpThread, 10) == WAIT_TIMEOUT)
+			abort_pending_irps(serial);
+
+		ListDictionary_Remove(serial->IrpThreads, (void*)id);
+	}
 }
 
 static void close_terminated_irp_thread(wListDictionary* list, wLog* log, ULONG_PTR id)
@@ -619,7 +649,7 @@ void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose)
 	{
 		ULONG_PTR id = ids[i];
 		if (forceClose)
-			close_unterminated_irp_thread(serial->IrpThreads, serial->log, id);
+			close_unterminated_irp_thread(serial, id);
 		else
 			close_terminated_irp_thread(serial->IrpThreads, serial->log, id);
 	}
@@ -722,7 +752,17 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		/* Start the thread before the list is unlocked: IRP_MJ_CLOSE terminates and closes every
 		 * thread it finds in the list, which must not happen to a thread not yet started. */
 		if (added)
+		{
+			/* irp is owned by the thread once resumed */
+			const BOOL isClose = irp->MajorFunction == IRP_MJ_CLOSE;
+
 			ResumeThread(irpThread);
+
+			/* The close request waits for all other IRP threads and then invalidates the device
+			 * handle, do not start any other request meanwhile. */
+			if (isClose)
+				(void)WaitForSingleObject(irpThread, INFINITE);
+		}
 		ListDictionary_Unlock(serial->IrpThreads);
 
 		if (!added)
@@ -778,9 +818,7 @@ static DWORD WINAPI serial_thread_func(LPVOID arg)
 			create_irp_thread(serial, irp);
 	}
 
-	ListDictionary_Lock(serial->IrpThreads);
-	ListDictionary_Clear(serial->IrpThreads);
-	ListDictionary_Unlock(serial->IrpThreads);
+	close_terminated_irp_thread_handles(serial, TRUE);
 
 	if (error && serial->rdpcontext)
 		setChannelError(serial->rdpcontext, error, "serial_thread_func reported an error");
@@ -878,7 +916,6 @@ static void irp_thread_close(void* arg)
 			WLog_WARN(TAG, "closing self, ignoring...");
 		else
 		{
-			(void)TerminateThread(hdl, 0);
 			(void)WaitForSingleObject(hdl, INFINITE);
 			(void)CloseHandle(hdl);
 		}
