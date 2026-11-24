@@ -2461,8 +2461,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 	const PSecBuffer sig_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_TOKEN);
 	PSecBuffer data_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
 
-	if (!sig_buffer || !data_buffer || sig_buffer->cbBuffer < 16 || !sig_buffer->pvBuffer ||
-	    (data_buffer->cbBuffer && !data_buffer->pvBuffer))
+	if (!sig_buffer || !data_buffer || (sig_buffer->cbBuffer < 16) || !sig_buffer->pvBuffer ||
+	    ((data_buffer->cbBuffer > 0) && !data_buffer->pvBuffer))
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header information */
@@ -2495,7 +2495,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 
 	/* CredSSP splits the wire token at cbSecurityTrailer, not at a Kerberos boundary. */
 	const size_t token_body_length = sig_buffer->cbBuffer - 16;
-	if (data_buffer->cbBuffer > SIZE_MAX - token_body_length)
+	if (data_buffer->cbBuffer > (SIZE_MAX - token_body_length))
 		return SEC_E_INVALID_TOKEN;
 	const size_t body_length = token_body_length + data_buffer->cbBuffer;
 	if (body_length == 0)
@@ -2507,32 +2507,32 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 		                      { KRB5_CRYPTO_TYPE_TRAILER, WINPR_C_ARRAY_INIT } };
 	unsigned int crypto_header_length = 0;
 	unsigned int crypto_trailer_length = 0;
-	if (krb_log_exec(krb5glue_crypto_length, creds->ctx, key, KRB5_CRYPTO_TYPE_HEADER,
-	                 &crypto_header_length) ||
-	    krb_log_exec(krb5glue_crypto_length, creds->ctx, key, KRB5_CRYPTO_TYPE_TRAILER,
-	                 &crypto_trailer_length))
+	if ((krb_log_exec(krb5glue_crypto_length, creds->ctx, key, KRB5_CRYPTO_TYPE_HEADER,
+	                  &crypto_header_length) != 0) ||
+	    (krb_log_exec(krb5glue_crypto_length, creds->ctx, key, KRB5_CRYPTO_TYPE_TRAILER,
+	                  &crypto_trailer_length) != 0))
 		return SEC_E_INTERNAL_ERROR;
 
-	if (crypto_header_length > body_length ||
-	    crypto_trailer_length > body_length - crypto_header_length)
+	if ((crypto_header_length > body_length) ||
+	    (crypto_trailer_length > (body_length - crypto_header_length)))
 		return SEC_E_INVALID_TOKEN;
 	const size_t clear_length = body_length - crypto_header_length - crypto_trailer_length;
 	/* MIT krb5_data.length cannot represent more than UINT32_MAX bytes. */
-	if (clear_length > UINT32_MAX || clear_length < 16 || ec > clear_length - 16)
+	if ((clear_length > UINT32_MAX) || (clear_length < 16) || (ec > (clear_length - 16)))
 		return SEC_E_INVALID_TOKEN;
 	const size_t data_length = clear_length - 16 - ec;
 	if (data_length > data_buffer->cbBuffer)
 		return SEC_E_INVALID_TOKEN;
 
 	iov[1].data.length = WINPR_ASSERTING_INT_CAST(unsigned int, clear_length);
-	if (krb_log_exec(krb5glue_crypto_length_iov, creds->ctx, key, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_crypto_length_iov, creds->ctx, key, iov, ARRAYSIZE(iov)) != 0)
 		return SEC_E_INTERNAL_ERROR;
 	/* RFC 4121 filler must eliminate crypto-system residue. */
-	if (iov[0].data.length != crypto_header_length || iov[2].data.length != 0 ||
-	    iov[3].data.length != crypto_trailer_length)
+	if ((iov[0].data.length != crypto_header_length) || (iov[2].data.length != 0) ||
+	    (iov[3].data.length != crypto_trailer_length))
 		return SEC_E_INVALID_TOKEN;
 
-	BYTE* body = malloc(body_length);
+	BYTE* body = calloc(body_length, sizeof(BYTE));
 	if (!body)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
@@ -2541,8 +2541,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 	size_t source = rrc % body_length;
 	for (size_t offset = 0; offset < body_length; offset++)
 	{
-		body[offset] = source < token_body_length ? header[16 + source]
-		                                          : encrypted_data[source - token_body_length];
+		body[offset] = (source < token_body_length) ? header[16 + source]
+		                                            : encrypted_data[source - token_body_length];
 		if (++source == body_length)
 			source = 0;
 	}
@@ -2553,11 +2553,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 	iov[3].data.data = iov[2].data.data;
 
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)) != 0)
 		goto out;
 
 	/* The authenticated header includes EC, but its RRC is zero before rotation. */
-	BYTE expected_header[16];
+	BYTE expected_header[16] = WINPR_C_ARRAY_INIT;
 	CopyMemory(expected_header, header, sizeof(expected_header));
 	winpr_Data_Write_UINT16_BE(&expected_header[6], 0);
 	if (memcmp(iov[1].data.data + clear_length - 16, expected_header, sizeof(expected_header)) != 0)
@@ -2566,15 +2566,14 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 		goto out;
 	}
 
-	if (data_length)
+	if (data_length > 0)
 		CopyMemory(data_buffer->pvBuffer, iov[1].data.data, data_length);
 	data_buffer->cbBuffer = WINPR_ASSERTING_INT_CAST(ULONG, data_length);
 	*pfQOP = 0;
 	status = SEC_E_OK;
 
 out:
-	SecureZeroMemory(body, body_length);
-	free(body);
+	winpr_znfree(body, body_length);
 	return status;
 #else
 	return SEC_E_UNSUPPORTED_FUNCTION;

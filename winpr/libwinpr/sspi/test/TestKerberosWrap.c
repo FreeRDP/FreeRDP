@@ -58,11 +58,11 @@ static BOOL make_token(krb5_context ctx, const krb5_keyblock* key, uint16_t ec, 
 {
 	const size_t clear_length = TEST_PLAINTEXT_LENGTH + ec + 16ull;
 	size_t encrypted_length = 0;
-	if (krb5_c_encrypt_length(ctx, key->enctype, clear_length, &encrypted_length))
+	if (krb5_c_encrypt_length(ctx, key->enctype, clear_length, &encrypted_length) != 0)
 		return FALSE;
 
 	BYTE* clear = calloc(1, clear_length);
-	BYTE* encrypted = malloc(encrypted_length);
+	BYTE* encrypted = calloc(1, encrypted_length);
 	*wire = calloc(1, 16 + encrypted_length);
 	if (!clear || !encrypted || !*wire)
 	{
@@ -101,15 +101,14 @@ static BOOL make_token(krb5_context ctx, const krb5_keyblock* key, uint16_t ec, 
 		encrypted_length = output.ciphertext.length;
 		/* Rotate right by RRC octets, modulo the body length */
 		for (size_t x = 0; x < encrypted_length; x++)
-			header[16 + (x + rrc) % encrypted_length] = encrypted[x];
+			header[16 + ((x + rrc) % encrypted_length)] = encrypted[x];
 		winpr_Data_Write_UINT16_BE(&header[6], rrc);
 		*wire_length = 16 + encrypted_length;
 	}
 
-	SecureZeroMemory(clear, clear_length);
-	free(clear);
+	winpr_znfree(clear, clear_length);
 	free(encrypted);
-	if (rv)
+	if (rv != 0)
 	{
 		free(*wire);
 		*wire = nullptr;
@@ -120,8 +119,9 @@ static BOOL make_token(krb5_context ctx, const krb5_keyblock* key, uint16_t ec, 
 static SECURITY_STATUS decrypt(KRB_CONTEXT* context, const BYTE* wire, size_t length, size_t split,
                                BOOL expect_success, const char* name)
 {
-	BYTE* token = malloc(split ? split : 1);
-	BYTE* data = malloc((length - split) ? (length - split) : 1);
+	const size_t data_size = length - split;
+	BYTE* token = calloc((split > 0) ? split : 1, sizeof(BYTE));
+	BYTE* data = calloc((data_size > 0) ? data_size : 1, sizeof(BYTE));
 	if (!token || !data)
 	{
 		check(FALSE, "allocation");
@@ -130,11 +130,11 @@ static SECURITY_STATUS decrypt(KRB_CONTEXT* context, const BYTE* wire, size_t le
 		return SEC_E_INSUFFICIENT_MEMORY;
 	}
 	memcpy(token, wire, split);
-	memcpy(data, &wire[split], length - split);
+	memcpy(data, &wire[split], data_size);
 
 	SecBuffer buffers[2] = {
 		{ (ULONG)split, SECBUFFER_TOKEN, token },
-		{ (ULONG)(length - split), SECBUFFER_DATA, data },
+		{ (ULONG)data_size, SECBUFFER_DATA, data },
 	};
 	SecBufferDesc desc = { SECBUFFER_VERSION, 2, buffers };
 	CtxtHandle handle = WINPR_C_ARRAY_INIT;
@@ -150,17 +150,19 @@ static SECURITY_STATUS decrypt(KRB_CONTEXT* context, const BYTE* wire, size_t le
 		{
 			check(buffers[1].cbBuffer == TEST_PLAINTEXT_LENGTH, "exact plaintext size");
 			check(qop == 0, "confidential QOP");
-			BOOL equal = buffers[1].cbBuffer == TEST_PLAINTEXT_LENGTH;
+			/* Only read what was actually allocated */
+			BOOL equal = (buffers[1].cbBuffer == TEST_PLAINTEXT_LENGTH) &&
+			             (data_size >= TEST_PLAINTEXT_LENGTH);
 			for (size_t x = 0; equal && (x < TEST_PLAINTEXT_LENGTH); x++)
-				equal = data[x] == (BYTE)(x ^ 0xA5);
+				equal = (data[x] == (BYTE)(x ^ 0xA5));
 			check(equal, "exact plaintext bytes");
 		}
 	}
 	else
 	{
 		check(status != SEC_E_OK, name);
-		check((qop == 123) && (buffers[1].cbBuffer == length - split) &&
-		          (memcmp(data, &wire[split], length - split) == 0),
+		check((qop == 123) && (buffers[1].cbBuffer == data_size) &&
+		          (memcmp(data, &wire[split], data_size) == 0),
 		      "rejection leaves the output untouched");
 	}
 
@@ -263,7 +265,8 @@ static BOOL check_enctype(krb5_context ctx, krb5_enctype enctype)
 	krb5_keyblock key = WINPR_C_ARRAY_INIT;
 	krb5_key opaque = nullptr;
 
-	if (krb5_c_make_random_key(ctx, enctype, &key) || krb5_k_create_key(ctx, &key, &opaque))
+	if ((krb5_c_make_random_key(ctx, enctype, &key) != 0) ||
+	    (krb5_k_create_key(ctx, &key, &opaque) != 0))
 	{
 		(void)fprintf(stderr, "cannot create a key for enctype %d\n", enctype);
 		krb5_free_keyblock_contents(ctx, &key);
@@ -327,7 +330,7 @@ int TestKerberosWrap(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	if (krb5_init_context(&ctx))
+	if (krb5_init_context(&ctx) != 0)
 		return -1;
 
 	for (size_t e = 0; e < ARRAYSIZE(enctypes); e++)
@@ -338,5 +341,5 @@ int TestKerberosWrap(int argc, char* argv[])
 	krb5_free_context(ctx);
 
 	printf("TestKerberosWrap: %" PRIuz " checks, %" PRIuz " failures\n", checks, failures);
-	return failures ? -1 : 0;
+	return (failures > 0) ? -1 : 0;
 }
