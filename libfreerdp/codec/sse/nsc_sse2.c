@@ -393,7 +393,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 			}
 			else if (context->format == PIXEL_FORMAT_RGB8)
 			{
-				const size_t idx = (*src) * 3;
+				const size_t idx = (*src) * 3ull;
 				r_val = context->palette[idx];
 				g_val = context->palette[idx + 1];
 				b_val = context->palette[idx + 2];

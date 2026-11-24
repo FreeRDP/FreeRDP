@@ -433,14 +433,14 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)arg;
 
 	/* register device interface to hwnd */
-	const DEV_BROADCAST_HANDLE NotificationFilter = { .dbch_size = sizeof(DEV_BROADCAST_HANDLE),
-		                                              .dbch_devicetype = DBT_DEVTYP_HANDLE };
+	DEV_BROADCAST_HANDLE NotificationFilter = { .dbch_size = sizeof(DEV_BROADCAST_HANDLE),
+		                                        .dbch_devicetype = DBT_DEVTYP_HANDLE };
 
-	HDEVNOTIFY hDevNotify =
-	    RegisterDeviceNotification(hwnd, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
+	HDEVNOTIFY hDevNotify = RegisterDeviceNotification(rdpdr->hotplug_wnd, &NotificationFilter,
+	                                                   DEVICE_NOTIFY_WINDOW_HANDLE);
 
 	/* message loop */
-	MSG msg = WINPR_C_ARRAY_INIG;
+	MSG msg = WINPR_C_ARRAY_INIT;
 	while ((bRet = GetMessage(&msg, 0, 0, 0)) > 0)
 	{
 		TranslateMessage(&msg);
@@ -451,25 +451,35 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	return CHANNEL_RC_OK;
 }
 
+static const WCHAR hotplug_class_name[] = L"DRIVE_HOTPLUG";
+
 static UINT drive_hotplug_thread_initialize(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr)
 {
 	/* init windows class */
-	WNDCLASSEX wnd_cls = { .cbSize = sizeof(WNDCLASSEX),
-		                   .style = CS_HREDRAW | CS_VREDRAW,
-		                   .lpfnWndProc = hotplug_proc,
-		                   .cbClsExtra = 0,
-		                   .cbWndExtra = 0,
-		                   .hIcon = LoadIcon(nullptr, IDI_APPLICATION),
-		                   .hCursor = nullptr,
-		                   .hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH),
-		                   .lpszMenuName = nullptr,
-		                   .lpszClassName = L"DRIVE_HOTPLUG",
-		                   .hInstance = nullptr,
-		                   .hIconSm =
-		                       LoadIcon(nullptr, IDI_APPLICATION) } RegisterClassEx(&wnd_cls);
+	WNDCLASSEXW wnd_cls = { .cbSize = sizeof(WNDCLASSEX),
+		                    .style = CS_HREDRAW | CS_VREDRAW,
+		                    .lpfnWndProc = hotplug_proc,
+		                    .cbClsExtra = 0,
+		                    .cbWndExtra = 0,
+		                    .hIcon = LoadIcon(nullptr, IDI_APPLICATION),
+		                    .hCursor = nullptr,
+		                    .hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH),
+		                    .lpszMenuName = nullptr,
+		                    .lpszClassName = hotplug_class_name,
+		                    .hInstance = nullptr,
+		                    .hIconSm = LoadIcon(nullptr, IDI_APPLICATION) };
+	ATOM rc = RegisterClassExW(&wnd_cls);
+	if (rc == 0)
+	{
+		WLog_Print(rdpdr->log, WLOG_ERROR, "RegisterClassEx failed with %" PRIu32 "",
+		           GetLastError());
+		return CHANNEL_RC_BAD_INIT_HANDLE;
+	}
+	rdpdr->hotplug_class = rc;
+
 	/* create window */
-	HWND hwnd = CreateWindowEx(0, L"DRIVE_HOTPLUG", nullptr, 0, 0, 0, 0, 0, nullptr, nullptr,
-	                           nullptr, nullptr);
+	HWND hwnd = CreateWindowExW(0, hotplug_class_name, nullptr, 0, 0, 0, 0, 0, nullptr, nullptr,
+	                            nullptr, nullptr);
 	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)rdpdr);
 	rdpdr->hotplug_wnd = hwnd;
 
@@ -489,6 +499,13 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 	{
 		error = GetLastError();
 		WLog_Print(rdpdr->log, WLOG_ERROR, "PostMessage failed with error %" PRIu32 "", error);
+	}
+
+	if (rdpdr->hotplug_class)
+	{
+		if (!UnregisterClassW(hotplug_class_name, rdpdr->hotplug_class))
+			WLog_Print(rdpdr->log, WLOG_ERROR, "UnregisterClassW failed with %" PRIu32 "",
+			           GetLastError());
 	}
 
 	return error;

@@ -1068,7 +1068,10 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 
 		if (Stream_GetPosition(context->common.buffer) >= context->adpcm.ima.packet_size)
 		{
-			BYTE* bsrc = Stream_Buffer(context->common.buffer);
+			const BYTE* bsrc = Stream_Buffer(context->common.buffer);
+			if (!Stream_EnsureRemainingCapacity(context->common.buffer,
+			                                    context->adpcm.ima.packet_size))
+				return FALSE;
 			Stream_Write(out, bsrc, context->adpcm.ima.packet_size);
 			Stream_ResetPosition(context->common.buffer);
 		}

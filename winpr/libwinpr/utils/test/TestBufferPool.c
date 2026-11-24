@@ -64,5 +64,38 @@ int TestBufferPool(int argc, char* argv[])
 
 	BufferPool_Free(pool);
 
+	/* variable size pool: fill the array of buffers in use (initial capacity 32), then return the
+	 * buffers first to last, so all entries after the removed one are shifted down each time */
+	{
+		BYTE* Many[32] = WINPR_C_ARRAY_INIT;
+		const size_t count = ARRAYSIZE(Many);
+
+		pool = BufferPool_New(TRUE, 0, 16);
+		if (!pool)
+			return -1;
+
+		for (size_t x = 0; x < count; x++)
+		{
+			Many[x] = BufferPool_Take(pool, 64);
+			if (!Many[x])
+				return -1;
+		}
+
+		for (size_t x = 0; x < count; x++)
+		{
+			BufferPool_Return(pool, Many[x]);
+			Many[x] = nullptr;
+			PoolSize = BufferPool_GetPoolSize(pool);
+			if (PoolSize != count - x - 1)
+			{
+				printf("BufferPool_GetPoolSize failure: Actual: %" PRIu32 " Expected: %" PRIuz "\n",
+				       PoolSize, count - x - 1);
+				return -1;
+			}
+		}
+
+		BufferPool_Free(pool);
+	}
+
 	return 0;
 }
