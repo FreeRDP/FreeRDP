@@ -161,6 +161,7 @@ WINPR_ATTR_NODISCARD
 static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                        const char* user, const char* domain, const char* password)
 {
+	int rc = -1;
 	int pam_status = 0;
 	SHADOW_PAM_AUTH_INFO info = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(subsystem);
@@ -179,7 +180,7 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	if (pam_status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_start failure: %s", pam_strerror(info.handle, pam_status));
-		return -1;
+		goto fail;
 	}
 
 	pam_status = pam_authenticate(info.handle, 0);
@@ -187,7 +188,7 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	if (pam_status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_authenticate failure: %s", pam_strerror(info.handle, pam_status));
-		return -1;
+		goto fail;
 	}
 
 	pam_status = pam_acct_mgmt(info.handle, 0);
@@ -195,10 +196,19 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	if (pam_status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_acct_mgmt failure: %s", pam_strerror(info.handle, pam_status));
-		return -1;
+		goto fail;
 	}
 
-	return 1;
+	rc = 1;
+fail:
+	if (info.handle)
+	{
+		const int res = pam_end(info.handle, pam_status);
+		if (res != PAM_SUCCESS)
+			WLog_WARN(TAG, "pam_end failure: %s", pam_strerror(info.handle, pam_status));
+	}
+	free(info.service_name);
+	return rc;
 }
 
 #endif
