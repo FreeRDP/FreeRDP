@@ -402,7 +402,9 @@ static UINT rail_recv_compartmentinfo_order(railPlugin* rail, wStream* s)
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if (!rail_is_feature_supported(rail->rdpcontext, RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED))
+	if (!rail_is_feature_supported(rail->rdpcontext,
+	                               RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
+	                                   RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED))
 		return ERROR_BAD_CONFIGURATION;
 
 	if ((error = rail_read_compartment_info_order(s, &pdu)))
@@ -410,10 +412,10 @@ static UINT rail_recv_compartmentinfo_order(railPlugin* rail, wStream* s)
 
 	if (context->custom)
 	{
-		IFCALLRET(context->ClientCompartmentInfo, error, context, &pdu);
+		IFCALLRET(context->ServerCompartmentInfo, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context.ClientCompartmentInfo failed with error %" PRIu32 "", error);
+			WLog_ERR(TAG, "context.ServerCompartmentInfo failed with error %" PRIu32 "", error);
 	}
 
 	return error;
