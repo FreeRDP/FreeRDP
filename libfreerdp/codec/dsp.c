@@ -616,14 +616,28 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!Stream_EnsureCapacity(context->common.buffer, 2ull * buffer_size))
 		return FALSE;
 
+	mp3data_struct header = WINPR_C_ARRAY_INIT;
 	short* pcm_l = Stream_BufferAs(context->common.buffer, short);
 	short* pcm_r = Stream_BufferAs(context->common.buffer, short) + (buffer_size / sizeof(short));
-	const int rc = hip_decode(
+	int rc = hip_decode1_headers(
 	    context->hip,
 	    WINPR_CAST_CONST_PTR_AWAY(/* API is not modifying content */ src, unsigned char*), size,
-	    pcm_l, pcm_r);
+	    pcm_l, pcm_r, &header);
 
-	if (rc <= 0)
+	if ((rc <= 0) || (header.header_parsed != 1) || (header.samplerate <= 0) ||
+	    (header.framesize <= 0))
+		return FALSE;
+
+	if ((size_t)header.samplerate != context->common.format.nSamplesPerSec)
+		return FALSE;
+
+	if (context->common.format.nChannels != 2)
+		return FALSE;
+
+	if (header.stereo != context->common.format.nChannels)
+		return FALSE;
+
+	if ((size_t)header.framesize > buffer_size / sizeof(short))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(out, (size_t)rc * context->common.format.nChannels * 2ull))
@@ -634,6 +648,20 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		Stream_Write_UINT16(out, (UINT16)pcm_l[x]);
 		Stream_Write_UINT16(out, (UINT16)pcm_r[x]);
 	}
+
+	do
+	{
+		rc = hip_decode1(context->hip, nullptr, 0, pcm_l, pcm_r);
+		if (!Stream_EnsureRemainingCapacity(out,
+		                                    (size_t)rc * context->common.format.nChannels * 2ull))
+			return FALSE;
+
+		for (int x = 0; x < rc; x++)
+		{
+			Stream_Write_UINT16(out, (UINT16)pcm_l[x]);
+			Stream_Write_UINT16(out, (UINT16)pcm_r[x]);
+		}
+	} while (rc > 0);
 
 	return TRUE;
 }
