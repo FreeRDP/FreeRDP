@@ -718,6 +718,12 @@ WINPR_ATTR_NODISCARD static BOOL s_update_read_pointer_large(wStream* s,
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer->xorBpp);
+	if ((pointer->xorBpp < 1) || (pointer->xorBpp > 32))
+	{
+		WLog_ERR(TAG, "invalid xorBpp %" PRIu32 "", pointer->xorBpp);
+		goto fail;
+	}
+
 	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
 	Stream_Read_UINT16(s, pointer->hotSpotX);   /* hotSpot.xPos (2 bytes) */
 	Stream_Read_UINT16(s, pointer->hotSpotY);   /* hotSpot.yPos (2 bytes) */
