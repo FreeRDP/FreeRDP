@@ -103,6 +103,7 @@ typedef struct
 	HANDLE hotplugThread;
 #ifdef _WIN32
 	HWND hotplug_wnd;
+	HINSTANCE hotplug_class;
 #endif
 #ifndef _WIN32
 	HANDLE stopEvent;
