@@ -658,11 +658,9 @@ BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h)
 
 	if (!gdi_CRgnToRect(x, y, w, h, &rgn))
 	{
-		invalid->x = 0;
-		invalid->y = 0;
-		invalid->w = 0;
-		invalid->h = 0;
-		invalid->null = TRUE;
+		/* This rect does not contribute to the aggregate bounding region
+		 * (e.g. it lies entirely outside the visible area), but previously
+		 * accumulated damage must not be discarded. */
 		return TRUE;
 	}
 
