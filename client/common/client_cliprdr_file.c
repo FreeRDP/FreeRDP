@@ -2525,7 +2525,9 @@ end:
 	if (!crc)
 	{
 		fuse_file_free(fuse_file);
-		return clear_entry_selection(clip_data_entry);
+		if (!clear_entry_selection(clip_data_entry))
+			WLog_Print(file_context->log, WLOG_WARN, "failed to clear selection");
+		return FALSE;
 	}
 	return TRUE;
 }
