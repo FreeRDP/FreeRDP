@@ -58,7 +58,6 @@ typedef struct
 
 	/* one thread per pending IRP and indexed according their CompletionId */
 	wListDictionary* IrpThreads;
-	CRITICAL_SECTION TerminatingIrpThreadsLock;
 	rdpContext* rdpcontext;
 } SERIAL_DEVICE;
 
@@ -563,10 +562,8 @@ static DWORD WINAPI irp_thread_func(LPVOID arg)
 		goto error_out;
 	}
 
-	EnterCriticalSection(&data->serial->TerminatingIrpThreadsLock);
 	WINPR_ASSERT(data->irp->Complete);
 	error = data->irp->Complete(data->irp);
-	LeaveCriticalSection(&data->serial->TerminatingIrpThreadsLock);
 error_out:
 
 	if (error && data->serial->rdpcontext)
@@ -614,8 +611,6 @@ void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose)
 {
 	WINPR_ASSERT(serial);
 
-	EnterCriticalSection(&serial->TerminatingIrpThreadsLock);
-
 	ListDictionary_Lock(serial->IrpThreads);
 	ULONG_PTR* ids = nullptr;
 	const size_t nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
@@ -631,8 +626,6 @@ void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose)
 
 	free(ids);
 	ListDictionary_Unlock(serial->IrpThreads);
-
-	LeaveCriticalSection(&serial->TerminatingIrpThreadsLock);
 }
 
 static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
@@ -856,7 +849,6 @@ static UINT serial_free(DEVICE* device)
 	Stream_Free(serial->device.data, TRUE);
 	MessageQueue_Free(serial->MainIrpQueue);
 	ListDictionary_Free(serial->IrpThreads);
-	DeleteCriticalSection(&serial->TerminatingIrpThreadsLock);
 	free(serial);
 	return CHANNEL_RC_OK;
 }
@@ -1029,8 +1021,6 @@ FREERDP_ENTRY_POINT(
 			WINPR_ASSERT(obj);
 			obj->fnObjectFree = irp_thread_close;
 		}
-
-		InitializeCriticalSection(&serial->TerminatingIrpThreadsLock);
 
 		error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &serial->device);
 		if (error != CHANNEL_RC_OK)
