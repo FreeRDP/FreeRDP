@@ -160,6 +160,7 @@ class SdlContext
 	[[nodiscard]] bool detectDisplays();
 	[[nodiscard]] rdpMonitor getDisplay(SDL_DisplayID id) const;
 	[[nodiscard]] std::vector<SDL_DisplayID> getDisplayIds() const;
+	void applyMonitorScaleOverride(rdpMonitor& monitor) const;
 
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();

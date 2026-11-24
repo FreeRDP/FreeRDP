@@ -2244,6 +2244,55 @@ fail:
 	return log_result(rc);
 }
 
+static BOOL test_monitor_scale_validity(void)
+{
+	BOOL rc = FALSE;
+	rdpSettings* settings = freerdp_settings_new(0);
+	const rdpMonitor monitor = {
+		.x = 0, .y = 0, .width = 1920, .height = 1080, .is_primary = TRUE
+	};
+	const UINT32 ids[] = { 3, 2 };
+	const rdpMonitorScale scales[] = { { 175, 100 }, { 0, 0 } };
+	const rdpMonitorScale none[] = { { 0, 0 }, { 0, 0 } };
+
+	if (!settings)
+		goto fail;
+	if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1) ||
+	    !freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, ids, ARRAYSIZE(ids)) ||
+	    !freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorScales, scales,
+	                                      ARRAYSIZE(scales)))
+		goto fail;
+
+#if defined(BUILD_TESTING_INTERNAL)
+	if (!freerdp_settings_check_client_after_preconnect(settings))
+		goto fail;
+	if (!freerdp_settings_set_uint64(settings, FreeRDP_MonitorOverrideFlags,
+	                                 FREERDP_MONITOR_OVERRIDE_ORIENTATION) ||
+	    !freerdp_settings_check_client_after_preconnect(settings))
+		goto fail;
+
+	/* Per-monitor scales and global scale overrides are mutually exclusive. */
+	if (!freerdp_settings_set_uint64(settings, FreeRDP_MonitorOverrideFlags,
+	                                 FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE) ||
+	    freerdp_settings_check_client_after_preconnect(settings))
+		goto fail;
+	if (!freerdp_settings_set_uint64(settings, FreeRDP_MonitorOverrideFlags,
+	                                 FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) ||
+	    freerdp_settings_check_client_after_preconnect(settings))
+		goto fail;
+
+	/* Monitor IDs without scales do not conflict. */
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorScales, none, ARRAYSIZE(none)) ||
+	    !freerdp_settings_check_client_after_preconnect(settings))
+		goto fail;
+#endif
+	rc = TRUE;
+
+fail:
+	freerdp_settings_free(settings);
+	return log_result(rc);
+}
+
 static BOOL test_all(void)
 {
 	BOOL rc = FALSE;
@@ -2412,6 +2461,8 @@ int TestSettings(int argc, char* argv[])
 	if (!test_pointer_array())
 		goto fail;
 	if (!test_validity_check())
+		goto fail;
+	if (!test_monitor_scale_validity())
 		goto fail;
 	if (!test_all())
 		goto fail;
