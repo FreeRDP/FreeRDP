@@ -231,6 +231,34 @@ static void waitForCancel(SCardContext* ctx)
 		Sleep(10);
 }
 
+/* Cancel the long running calls of a context and wait until they have terminated.
+ *
+ * Must be called with smartcard->contexts locked. These calls need that lock to notice the
+ * request (see Emulate_SCardGetStatusChangeA and Emulate_SCardGetStatusChangeW), so it is
+ * released while waiting. The context might be released in the meantime, so look it up again.
+ *
+ * Returns the context without pending calls or nullptr if it does not exist (anymore).
+ */
+static SCardContext* scard_context_cancel(SmartcardEmulationContext* smartcard,
+                                          SCARDCONTEXT hContext)
+{
+	WINPR_ASSERT(smartcard);
+
+	SCardContext* ctx = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
+	while (ctx)
+	{
+		ctx->canceled = TRUE;
+		if (InterlockedCompareExchange(&ctx->semaphore, 0, 0) <= 0)
+			break;
+
+		HashTable_Unlock(smartcard->contexts);
+		Sleep(10);
+		HashTable_Lock(smartcard->contexts);
+		ctx = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
+	}
+	return ctx;
+}
+
 static void scard_context_free(void* context)
 {
 	SCardContext* ctx = context;
@@ -500,7 +528,9 @@ LONG WINAPI Emulate_SCardReleaseContext(SmartcardEmulationContext* smartcard, SC
 	WINPR_ASSERT(smartcard);
 
 	HashTable_Lock(smartcard->contexts);
-	SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
+
+	/* scard_context_free waits for pending calls with the lock held, terminate them first */
+	SCardContext* value = scard_context_cancel(smartcard, hContext);
 
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardReleaseContext { hContext: %p",
 	           (void*)hContext);
@@ -1671,13 +1701,7 @@ LONG WINAPI Emulate_SCardCancel(SmartcardEmulationContext* smartcard, SCARDCONTE
 	           (void*)hContext);
 
 	if (status == SCARD_S_SUCCESS)
-	{
-		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
-		WINPR_ASSERT(value);
-		value->canceled = TRUE;
-
-		waitForCancel(value);
-	}
+		(void)scard_context_cancel(smartcard, hContext);
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardCancel } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
