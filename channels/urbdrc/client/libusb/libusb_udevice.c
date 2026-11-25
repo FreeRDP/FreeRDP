@@ -661,6 +661,17 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 
 	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 
+	/* A device may implement a single alternate setting only (USB 2.0 9.2.3) and will
+	 * stall a SET_INTERFACE for one it does not have (9.4.10). Do not send it. */
+	if (func_get_interface_descriptor(pdev->LibusbConfig, InterfaceNumber, AlternateSetting) ==
+	    nullptr)
+	{
+		WLog_Print(urbdrc->log, WLOG_INFO,
+		           "interface %" PRIu8 " has no alternate setting %" PRIu8 ", keeping current",
+		           InterfaceNumber, AlternateSetting);
+		return 0;
+	}
+
 	const int error =
 	    libusb_set_interface_alt_setting(pdev->libusb_handle, InterfaceNumber, AlternateSetting);
 
