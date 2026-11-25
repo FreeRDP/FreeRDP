@@ -381,10 +381,11 @@ static LONG scard_reader_name_valid_a(SmartcardEmulationContext* smartcard, SCAR
 {
 	WINPR_ASSERT(smartcard);
 
+	if (!name)
+		return SCARD_E_INVALID_VALUE;
+
 	HashTable_Lock(smartcard->contexts);
 	SCardContext* ctx = HashTable_GetItemValue(smartcard->contexts, (const void*)context);
-
-	WINPR_ASSERT(name);
 	WINPR_ASSERT(ctx);
 
 	LONG rc = SCARD_E_UNKNOWN_READER;
