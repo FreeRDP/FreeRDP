@@ -107,7 +107,7 @@ static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* n
 	{
 		if (!create || !winpr_PathMakePath(config, nullptr))
 		{
-			char* uname = ConvertWCharNToUtf8Alloc(name, length, nullptr);
+			char* uname = ConvertWCharNToUtf8Alloc(name, length / sizeof(WCHAR), nullptr);
 			if (!create)
 				WLog_WARN(TAG, "Printer configuration for unknown printer %s requested, ignoring",
 				          uname);
