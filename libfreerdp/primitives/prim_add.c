@@ -80,4 +80,5 @@ void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	primitives_init_add(prims);
 	primitives_init_add_sse3(prims);
+	primitives_init_add_neon(prims);
 }

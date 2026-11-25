@@ -661,6 +661,17 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 
 	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 
+	/* A device may implement a single alternate setting only (USB 2.0 9.2.3) and will
+	 * stall a SET_INTERFACE for one it does not have (9.4.10). Do not send it. */
+	if (func_get_interface_descriptor(pdev->LibusbConfig, InterfaceNumber, AlternateSetting) ==
+	    nullptr)
+	{
+		WLog_Print(urbdrc->log, WLOG_INFO,
+		           "interface %" PRIu8 " has no alternate setting %" PRIu8 ", keeping current",
+		           InterfaceNumber, AlternateSetting);
+		return 0;
+	}
+
 	const int error =
 	    libusb_set_interface_alt_setting(pdev->libusb_handle, InterfaceNumber, AlternateSetting);
 
@@ -1398,7 +1409,6 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
 	int success = 0;
-	int ret = 0;
 	URBDRC_PLUGIN* urbdrc = nullptr;
 
 	WINPR_ASSERT(BufferSize);
@@ -1410,13 +1420,13 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 
 	if (pdev->hub_handle != nullptr)
 	{
-		ret = idev->control_transfer(
+		const BOOL ret = idev->control_transfer(
 		    idev, 0xffff, 0, 0,
 		    (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_REQUEST_TYPE_CLASS |
 		        (uint8_t)LIBUSB_RECIPIENT_OTHER,
 		    LIBUSB_REQUEST_GET_STATUS, 0, pdev->port_number, UsbdStatus, BufferSize, Buffer, 1000);
 
-		if (log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_control_transfer", ret))
+		if (!ret)
 			*BufferSize = 0;
 		else
 		{

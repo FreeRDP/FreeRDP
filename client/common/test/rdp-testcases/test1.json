@@ -1090,6 +1090,7 @@
 			}
 		],
 		"FreeRDP_MonitorIds": [],
+		"FreeRDP_MonitorScales": [],
 		"FreeRDP_ClientAutoReconnectCookie": [
 			{
 				"cbLen": 0.0,

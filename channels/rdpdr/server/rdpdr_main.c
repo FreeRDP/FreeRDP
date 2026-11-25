@@ -3212,7 +3212,7 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	if (ioStatus != STATUS_SUCCESS)
 	{
 		/* Invoke the delete directory completion routine. */
-		context->OnDriveDeleteFileComplete(context, irp->CallbackData, ioStatus);
+		context->OnDriveDeleteDirectoryComplete(context, irp->CallbackData, ioStatus);
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 		return CHANNEL_RC_OK;

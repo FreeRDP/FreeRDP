@@ -49,6 +49,9 @@
 
 #include "video_main.h"
 
+/* Maximum number of frames in the queue. If the queue grows too large late frames are discarded. */
+#define QUEUE_SIZE_LIMIT 64u
+
 typedef struct
 {
 	IWTSPlugin wtsPlugin;
@@ -346,6 +349,15 @@ fail:
 	return nullptr;
 }
 
+static void drain_queue(VideoClientContextPriv* priv, size_t limit)
+{
+	while (Queue_Count(priv->frames) > limit)
+	{
+		VideoFrame* frame = Queue_Dequeue(priv->frames);
+		VideoFrame_free(priv, frame);
+	}
+}
+
 void VideoClientContextPriv_free(VideoClientContextPriv* priv)
 {
 	if (!priv)
@@ -354,14 +366,7 @@ void VideoClientContextPriv_free(VideoClientContextPriv* priv)
 	EnterCriticalSection(&priv->framesLock);
 
 	if (priv->frames)
-	{
-		while (Queue_Count(priv->frames))
-		{
-			VideoFrame* frame = Queue_Dequeue(priv->frames);
-			if (frame)
-				VideoFrame_free(priv, frame);
-		}
-	}
+		drain_queue(priv, 0);
 
 	Queue_Free(priv->frames);
 	LeaveCriticalSection(&priv->framesLock);
@@ -982,7 +987,10 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 			goto out;
 		}
 
+		Queue_Lock(priv->frames);
+		drain_queue(priv, QUEUE_SIZE_LIMIT);
 		enqueueResult = Queue_Enqueue(priv->frames, frame);
+		Queue_Unlock(priv->frames);
 
 		if (!enqueueResult)
 		{

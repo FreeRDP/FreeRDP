@@ -93,6 +93,8 @@ extern "C"
 	                                                     const RAIL_GET_APPID_RESP_EX* id);
 	typedef UINT (*pcRailClientCompartmentInfo)(RailClientContext* context,
 	                                            const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
+	typedef UINT (*pcRailServerCompartmentInfo)(RailClientContext* context,
+	                                            const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
 	typedef UINT (*pcRailClientTextScale)(RailClientContext* context, UINT32 TextScale);
 	typedef UINT (*pcRailClientCaretBlinkRate)(RailClientContext* context, UINT32 CaretBlinkRate);
 
@@ -154,6 +156,16 @@ extern "C"
 #endif
 		WINPR_ATTR_NODISCARD pcRailClientTextScale ClientTextScale;
 		WINPR_ATTR_NODISCARD pcRailClientCaretBlinkRate ClientCaretBlinkRate;
+
+		/** @brief (optional) callback when a [MS-RDPERP] 2.2.2.12.2 Compartment Status Information
+		 * PDU (TS_RAIL_ORDER_COMPARTMENTINFO) is received. The server only sends it if
+		 * RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED was negotiated.
+		 *
+		 *  @bug before 3.34.0 a received PDU was passed to \ref ClientCompartmentInfo instead,
+		 * which sent it back to the server.
+		 *  @since version 3.34.0
+		 */
+		WINPR_ATTR_NODISCARD pcRailServerCompartmentInfo ServerCompartmentInfo;
 	};
 
 	WINPR_ATTR_NODISCARD

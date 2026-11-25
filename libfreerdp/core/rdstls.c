@@ -842,6 +842,9 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	}
 	rc = TRUE;
 fail:
+	winpr_zfree(clientUsername);
+	winpr_zfree(clientDomain);
+	winpr_zfree(clientPassword);
 	return rc;
 }
 

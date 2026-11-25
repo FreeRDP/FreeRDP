@@ -315,6 +315,19 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 	const BYTE ccl = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel);
 
+	const UINT16 w = context->width - context->width % 8;
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(context->format);
+	switch (context->format)
+	{
+		case PIXEL_FORMAT_A4:
+		case PIXEL_FORMAT_RGB8:
+			if (!context->palette)
+				return FALSE;
+			break;
+		default:
+			break;
+	}
+
 	for (; y < context->height; y++)
 	{
 		const BYTE* src = data + (context->height - 1 - y) * scanline;
@@ -323,23 +336,15 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 		BYTE* cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		BYTE* aplane = context->priv->PlaneBuffers[3] + y * context->width;
 
-		for (UINT16 x = 0; x < context->width; x += 8)
+		UINT16 x = 0;
+		for (; x < w; x += 8)
 		{
 			__m128i r_val = WINPR_C_ARRAY_INIT;
 			__m128i g_val = WINPR_C_ARRAY_INIT;
 			__m128i b_val = WINPR_C_ARRAY_INIT;
 			__m128i a_val = WINPR_C_ARRAY_INIT;
 
-			/* copy a short last group of a row so that it is not read past the row */
-			const BYTE* cur = src;
-			BYTE tail[8 * 4] = { 0 };
-			const size_t bpp = FreeRDPGetBytesPerPixel(context->format);
-			if (bpp && (x + 8u > context->width))
-			{
-				memcpy(tail, src, (context->width - x) * bpp);
-				cur = tail;
-			}
-			const size_t rc = nsc_encode_next_rgba(context->format, cur, context->palette, &r_val,
+			const size_t rc = nsc_encode_next_rgba(context->format, src, context->palette, &r_val,
 			                                       &g_val, &b_val, &a_val);
 			src += rc;
 
@@ -363,6 +368,51 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 			coplane += 8;
 			cgplane += 8;
 			aplane += 8;
+		}
+		for (; x < context->width; x++)
+		{
+			BYTE r_val = 0;
+			BYTE g_val = 0;
+			BYTE b_val = 0;
+			BYTE a_val = 0;
+
+			if (context->format == PIXEL_FORMAT_A4)
+			{
+				const int shift = (7 - (x % 8));
+				BYTE idx = ((*src) >> shift) & 1;
+				idx |= (((*(src + 1)) >> shift) & 1) << 1;
+				idx |= (((*(src + 2)) >> shift) & 1) << 2;
+				idx |= (((*(src + 3)) >> shift) & 1) << 3;
+				idx *= 3;
+				r_val = context->palette[idx];
+				g_val = context->palette[idx + 1];
+				b_val = context->palette[idx + 2];
+				a_val = 0xFF;
+				if (shift == 0)
+					src += 4;
+			}
+			else if (context->format == PIXEL_FORMAT_RGB8)
+			{
+				const size_t idx = (*src) * 3ull;
+				r_val = context->palette[idx];
+				g_val = context->palette[idx + 1];
+				b_val = context->palette[idx + 2];
+				a_val = 0xFF;
+				src++;
+			}
+			else
+			{
+				const UINT32 color = FreeRDPReadColor(src, context->format);
+				src += bpp;
+
+				FreeRDPSplitColor(color, context->format, &r_val, &g_val, &b_val, &a_val, nullptr);
+			}
+
+			*yplane++ = (BYTE)((r_val >> 2) + (g_val >> 1) + (b_val >> 2));
+			/* Perform color loss reduction here */
+			*coplane++ = (BYTE)((r_val - b_val) >> ccl);
+			*cgplane++ = (BYTE)((-(r_val >> 1) + g_val - (b_val >> 1)) >> ccl);
+			*aplane++ = a_val;
 		}
 
 		if (context->ChromaSubsamplingLevel > 0 && (context->width % 2) == 1)

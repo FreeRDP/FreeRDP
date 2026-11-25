@@ -45,6 +45,9 @@ tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCallback* pChannelCall
 WINPR_ATTR_NODISCARD FREERDP_LOCAL TSMF_PRESENTATION*
 tsmf_presentation_find_by_id(const BYTE* guid);
 
+WINPR_ATTR_NODISCARD FREERDP_LOCAL const IWTSVirtualChannelCallback*
+tsmf_presentation_get_callback(const TSMF_PRESENTATION* presentation);
+
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_presentation_start(TSMF_PRESENTATION* presentation);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation);
@@ -71,8 +74,8 @@ FREERDP_LOCAL
 void tsmf_stream_free(TSMF_STREAM* stream);
 
 WINPR_ATTR_MALLOC(tsmf_stream_free, 1)
-WINPR_ATTR_NODISCARD FREERDP_LOCAL TSMF_STREAM*
-tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id, rdpContext* rdpcontext);
+FREERDP_LOCAL TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
+                                           rdpContext* rdpcontext);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL TSMF_STREAM*
 tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id);
@@ -81,15 +84,15 @@ WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_stream_set_format(TSMF_STREAM* stre
                                                                const char* name, wStream* s);
 
 FREERDP_LOCAL
-void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id,
-                     IWTSVirtualChannelCallback* pChannelCallback);
+void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_stream_flush(TSMF_STREAM* stream);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL
-tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
-                        UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration,
-                        UINT32 extensions, UINT32 data_size, BYTE* data);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_stream_push_sample(TSMF_STREAM* stream,
+                                                                UINT32 sample_id, UINT64 start_time,
+                                                                UINT64 end_time, UINT64 duration,
+                                                                UINT32 extensions, UINT32 data_size,
+                                                                BYTE* data);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_media_init(void);
 

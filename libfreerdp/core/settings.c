@@ -814,6 +814,31 @@ static void freerdp_settings_client_monitors_check_attributes(const rdpSettings*
 	}
 }
 
+static BOOL freerdp_settings_client_monitor_scales_valid(const rdpSettings* settings, wLog* log)
+{
+	const UINT64 mask = freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags);
+	if ((mask & (FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE | FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE)) ==
+	    0)
+		return TRUE;
+	if (!freerdp_settings_get_pointer(settings, FreeRDP_MonitorScales))
+		return TRUE;
+
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const rdpMonitorScale* scale =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorScales, x);
+		if (scale && (scale->desktopScaleFactor != 0))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "Inconsistent settings: per-monitor scale factors cannot be combined with "
+			           "global desktop or device scale overrides.");
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 {
 	wLog* log = WLog_Get(TAG);
@@ -840,6 +865,9 @@ BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 		log_monitor_configuration(settings, log, level);
 		rc = FALSE;
 	}
+
+	if (!freerdp_settings_client_monitor_scales_valid(settings, log))
+		rc = FALSE;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
 	{
@@ -1424,15 +1452,23 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	{
-		const BOOL enable = TRUE;
+		const BOOL isServer = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
 		{
-			const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportStatusInfoPdu,
-				                                        FreeRDP_SupportErrorInfoPdu,
-				                                        FreeRDP_SupportAsymetricKeys };
+			struct keypairs
+			{
+				FreeRDP_Settings_Keys_Bool key;
+				BOOL val;
+			};
+
+			const struct keypairs keys[] = { { FreeRDP_SupportGraphicsPipeline, isServer },
+				                             { FreeRDP_SupportStatusInfoPdu, TRUE },
+				                             { FreeRDP_SupportErrorInfoPdu, TRUE },
+				                             { FreeRDP_SupportAsymetricKeys, TRUE } };
 
 			for (size_t x = 0; x < ARRAYSIZE(keys); x++)
 			{
-				if (!freerdp_settings_set_bool(settings, keys[x], enable))
+				const struct keypairs* cur = &keys[x];
+				if (!freerdp_settings_set_bool(settings, cur->key, cur->val))
 					goto out_fail;
 			}
 		}
@@ -1514,6 +1550,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* dst, const rdpSettings
 		{ FreeRDP_ServerCertificateLength, FreeRDP_ServerCertificate },
 		{ FreeRDP_ChannelDefArraySize, FreeRDP_ChannelDefArray },
 		{ FreeRDP_NumMonitorIds, FreeRDP_MonitorIds },
+		{ FreeRDP_NumMonitorIds, FreeRDP_MonitorScales },
 		{ FreeRDP_BitmapCacheV2NumCells, FreeRDP_BitmapCacheV2CellInfo },
 		{ FreeRDP_RedirectionPasswordLength, FreeRDP_RedirectionPassword },
 		{ FreeRDP_RedirectionTsvUrlLength, FreeRDP_RedirectionTsvUrl },

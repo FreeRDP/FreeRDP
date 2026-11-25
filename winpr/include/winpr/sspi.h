@@ -102,6 +102,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define NTLM_SSP_NAME _T("NTLM")
 #define KERBEROS_SSP_NAME _T("Kerberos")
 #define NEGO_SSP_NAME _T("Negotiate")
+#define TSSSP_SSP_NAME _T("TSSSP")
 
 #define SECPKG_ID_NONE 0xFFFF
 
@@ -1506,6 +1507,12 @@ extern "C"
 	};
 
 #define SECPKG_CRED_ATTR_TICKET_LOGON 1200
+
+/* WinPR-private context attribute: the per-context handle value that [MS-RDPEAR]
+ * servicing places in the TSRemoteGuardPacket TsPkgContext field. On Windows the
+ * TSSSP forwarder returns the native context's dwUpper; the POSIX proxy returns
+ * the lsa4posix context id. */
+#define SECPKG_ATTR_WINPR_TSPKG_CONTEXT 1201
 
 	typedef struct
 	{

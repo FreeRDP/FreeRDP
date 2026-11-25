@@ -13,6 +13,7 @@ set(${MODULE_PREFIX}_TESTS
     TestClientAutoReconnect.c
     TestClientWindowInfoService.c
     TestClientStats.c
+    TestClientMonitorScale.c
 )
 if(BUILD_TESTING_INTERNAL)
   list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c)

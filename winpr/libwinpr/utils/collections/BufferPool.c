@@ -108,9 +108,14 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 	}
 	else if (count < 0)
 	{
-		MoveMemory(
-		    &pool->aArray[index], &pool->aArray[index + WINPR_ASSERTING_INT_CAST(size_t, -count)],
-		    (WINPR_ASSERTING_INT_CAST(size_t, pool->aSize) - index) * sizeof(wBufferPoolItem));
+		const size_t size = WINPR_ASSERTING_INT_CAST(size_t, pool->aSize);
+		const size_t offset = index + WINPR_ASSERTING_INT_CAST(size_t, -count);
+		// the removed entries must lie within the array
+		if (offset > size)
+			return FALSE;
+
+		MoveMemory(&pool->aArray[index], &pool->aArray[offset],
+		           (size - offset) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
 	return TRUE;
@@ -152,8 +157,14 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
-		           WINPR_ASSERTING_INT_CAST(size_t, pool->uSize - index) * sizeof(wBufferPoolItem));
+		const SSIZE_T offset = index - count;
+		// the removed entries must lie within the array
+		if (offset > pool->uSize)
+			return FALSE;
+
+		MoveMemory(&pool->uArray[index], &pool->uArray[offset],
+		           WINPR_ASSERTING_INT_CAST(size_t, pool->uSize - offset) *
+		               sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
 	return TRUE;

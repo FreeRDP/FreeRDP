@@ -152,7 +152,7 @@ extern "C"
 	/** adds a rectangle in src and stores the resulting region in dst
 	 * @param dst destination region
 	 * @param src source region
-	 * @param rect the rectangle to add
+	 * @param rect the rectangle to add, an empty rectangle (see \b rectangle_is_empty) is ignored
 	 * @return if the operation was successful (false meaning out-of-memory)
 	 */
 	WINPR_ATTR_NODISCARD

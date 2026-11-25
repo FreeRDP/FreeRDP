@@ -96,7 +96,6 @@ struct S_TSMF_STREAM
 	int major_type;
 	int eos;
 	UINT32 eos_message_id;
-	IWTSVirtualChannelCallback* eos_channel_callback;
 	int delayed_stop;
 	UINT32 width;
 	UINT32 height;
@@ -143,8 +142,6 @@ struct S_TSMF_SAMPLE
 
 	BOOL invalidTimestamps;
 
-	TSMF_STREAM* stream;
-	IWTSVirtualChannelCallback* channel_callback;
 	UINT64 ack_time;
 };
 
@@ -256,24 +253,24 @@ static void tsmf_sample_free(void* arg)
 	free(sample);
 }
 
-static BOOL tsmf_sample_ack(TSMF_SAMPLE* sample)
+static BOOL tsmf_sample_ack(TSMF_STREAM* stream, const TSMF_SAMPLE* sample)
 {
-	if (!sample)
+	if (!sample || !stream)
 		return FALSE;
 
-	return tsmf_playback_ack(sample->channel_callback, sample->sample_id, sample->duration,
-	                         sample->data_size);
+	return tsmf_playback_ack(stream->presentation->channel_callback, sample->sample_id,
+	                         sample->duration, sample->data_size);
 }
 
-static BOOL tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
+static BOOL tsmf_sample_queue_ack(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 {
 	if (!sample)
 		return FALSE;
 
-	if (!sample->stream)
+	if (!stream)
 		return FALSE;
 
-	return Queue_Enqueue(sample->stream->sample_ack_list, sample);
+	return Queue_Enqueue(stream->sample_ack_list, sample);
 }
 
 /* Returns TRUE if no more samples are currently available
@@ -323,13 +320,21 @@ dequeue:
 
 	if (sample)
 	{
-		tsmf_sample_ack(sample);
+		tsmf_sample_ack(stream, sample);
 		tsmf_sample_free(sample);
 	}
 
 finally:
 	Queue_Unlock(stream->sample_ack_list);
 	return rc;
+}
+
+const IWTSVirtualChannelCallback*
+tsmf_presentation_get_callback(const TSMF_PRESENTATION* presentation)
+{
+	if (!presentation)
+		return nullptr;
+	return presentation->channel_callback;
 }
 
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
@@ -412,17 +417,20 @@ TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 	return (found) ? presentation : nullptr;
 }
 
-static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
+static BOOL tsmf_sample_playback_video(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(sample);
+	WINPR_ASSERT(stream);
 
-	TSMF_STREAM* stream = sample->stream;
 	TSMF_PRESENTATION* presentation = stream->presentation;
-	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)sample->channel_callback;
+	TSMF_CHANNEL_CALLBACK* callback =
+	    (TSMF_CHANNEL_CALLBACK*)stream->presentation->channel_callback;
 	TsmfClientContext* tsmf = (TsmfClientContext*)callback->plugin->pInterface;
 	DEBUG_TSMF("MessageId %" PRIu32 " EndTime %" PRIu64 " data_size %" PRIu32 " consumed.",
 	           sample->sample_id, sample->end_time, sample->data_size);
 
+	TSMF_VIDEO_FRAME_EVENT event = WINPR_C_ARRAY_INIT;
 	if (sample->data)
 	{
 		const UINT64 t = get_current_time();
@@ -443,20 +451,20 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			}
 		}
 
-		if (sample->stream->width > INT16_MAX)
-			return FALSE;
-		if (sample->stream->height > INT16_MAX)
-			return FALSE;
+		if (stream->width > INT16_MAX)
+			goto fail;
+		if (stream->height > INT16_MAX)
+			goto fail;
 		if (presentation->rect.left > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.top > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.width > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->rect.height > INT16_MAX)
-			return FALSE;
+			goto fail;
 		if (presentation->nr_rects > UINT16_MAX)
-			return FALSE;
+			goto fail;
 
 		stream->next_start_time = t + sample->duration - 50000;
 
@@ -464,8 +472,8 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		event.frameData = sample->data;
 		event.frameSize = sample->decoded_size;
 		event.framePixFmt = sample->pixfmt;
-		event.frameWidth = (INT16)sample->stream->width;
-		event.frameHeight = (INT16)sample->stream->height;
+		event.frameWidth = (INT16)stream->width;
+		event.frameHeight = (INT16)stream->height;
 		event.x = (INT16)presentation->rect.left;
 		event.y = (INT16)presentation->rect.top;
 		event.width = (INT16)presentation->rect.width;
@@ -479,7 +487,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			if (!event.visibleRects)
 			{
 				WLog_ERR(TAG, "can't allocate memory for copy rectangles");
-				return FALSE;
+				goto fail;
 			}
 
 			for (size_t x = 0; x < presentation->nr_rects; x++)
@@ -488,10 +496,8 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 				RECTANGLE_16* dst = &event.visibleRects[x];
 				if ((cur->left > UINT16_MAX) || (cur->top > UINT16_MAX) ||
 				    (cur->width > UINT16_MAX) || (cur->height > UINT16_MAX))
-				{
-					free(event.visibleRects);
-					return FALSE;
-				}
+					goto fail;
+
 				dst->right = dst->left = (UINT16)cur->left;
 				dst->bottom = dst->top = (UINT16)cur->top;
 				dst->right += (UINT16)cur->width;
@@ -508,27 +514,30 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		sample->decoded_size = 0;
 
 		if (tsmf->FrameEvent)
-			tsmf->FrameEvent(tsmf, &event);
-
-		free(event.frameData);
-		free(event.visibleRects);
+		{
+			if (tsmf->FrameEvent(tsmf, &event) < 0)
+				goto fail;
+		}
 	}
+	rc = TRUE;
+fail:
+	free(event.frameData);
+	free(event.visibleRects);
+	ArrayList_Unlock(presentation->stream_list);
 
-	return TRUE;
+	return rc;
 }
 
-static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
+static BOOL tsmf_sample_playback_audio(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 {
 	UINT64 latency = 0;
-	TSMF_STREAM* stream = sample->stream;
 	BOOL ret = 0;
 	DEBUG_TSMF("MessageId %" PRIu32 " EndTime %" PRIu64 " consumed.", sample->sample_id,
 	           sample->end_time);
 
 	if (stream->audio && sample->data)
 	{
-		ret =
-		    sample->stream->audio->Play(sample->stream->audio, sample->data, sample->decoded_size);
+		ret = stream->audio->Play(stream->audio, sample->data, sample->decoded_size);
 		free(sample->data);
 		sample->data = nullptr;
 		sample->decoded_size = 0;
@@ -556,13 +565,12 @@ static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 	return ret;
 }
 
-static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
+static BOOL tsmf_sample_playback(TSMF_STREAM* stream, TSMF_SAMPLE* sample)
 {
 	BOOL ret = FALSE;
 	UINT32 width = 0;
 	UINT32 height = 0;
 	UINT32 pixfmt = 0;
-	TSMF_STREAM* stream = sample->stream;
 
 	if (stream->decoder)
 	{
@@ -625,7 +633,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	{
 		WLog_ERR(TAG, "decode error, queue ack anyways");
 
-		if (!tsmf_sample_queue_ack(sample))
+		if (!tsmf_sample_queue_ack(stream, sample))
 		{
 			WLog_ERR(TAG, "error queuing sample for ack");
 			return FALSE;
@@ -647,7 +655,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 			{
 				WLog_ERR(TAG, "unable to decode video format");
 
-				if (!tsmf_sample_queue_ack(sample))
+				if (!tsmf_sample_queue_ack(stream, sample))
 				{
 					WLog_ERR(TAG, "error queuing sample for ack");
 				}
@@ -675,14 +683,16 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	{
 		sample->data = stream->decoder->GetDecodedData(stream->decoder, &sample->decoded_size);
 
-		switch (sample->stream->major_type)
+		switch (stream->major_type)
 		{
 			case TSMF_MAJOR_TYPE_VIDEO:
-				ret = tsmf_sample_playback_video(sample) && tsmf_sample_queue_ack(sample);
+				ret = tsmf_sample_playback_video(stream, sample) &&
+				      tsmf_sample_queue_ack(stream, sample);
 				break;
 
 			case TSMF_MAJOR_TYPE_AUDIO:
-				ret = tsmf_sample_playback_audio(sample) && tsmf_sample_queue_ack(sample);
+				ret = tsmf_sample_playback_audio(stream, sample) &&
+				      tsmf_sample_queue_ack(stream, sample);
 				break;
 			default:
 				break;
@@ -695,7 +705,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 		ack_anticipation_time +=
 		    (sample->duration / 2 < MAX_ACK_TIME) ? sample->duration / 2 : MAX_ACK_TIME;
 
-		switch (sample->stream->major_type)
+		switch (stream->major_type)
 		{
 			case TSMF_MAJOR_TYPE_VIDEO:
 			{
@@ -712,7 +722,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 
 		sample->ack_time = ack_anticipation_time;
 
-		if (!tsmf_sample_queue_ack(sample))
+		if (!tsmf_sample_queue_ack(stream, sample))
 		{
 			WLog_ERR(TAG, "error queuing sample for ack");
 			ret = FALSE;
@@ -760,7 +770,7 @@ static DWORD WINAPI tsmf_stream_ack_func(LPVOID arg)
 				USleep(1000);
 			}
 
-			tsmf_send_eos_response(stream->eos_channel_callback, stream->eos_message_id);
+			tsmf_send_eos_response(stream->presentation->channel_callback, stream->eos_message_id);
 			stream->eos = 0;
 
 			if (stream->delayed_stop)
@@ -870,7 +880,7 @@ static DWORD WINAPI tsmf_stream_playback_func(LPVOID arg)
 
 		sample = tsmf_stream_pop_sample(stream, 0);
 
-		if (sample && !tsmf_sample_playback(sample))
+		if (sample && !tsmf_sample_playback(stream, sample))
 		{
 			WLog_ERR(TAG, "error playing sample");
 			error = ERROR_INTERNAL_ERROR;
@@ -1091,6 +1101,7 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32
 	if (!width || !height)
 		return TRUE;
 
+	ArrayList_Lock(presentation->stream_list);
 	/* Streams can be added/removed from the presentation and the server will resend geometry info
 	 * when a new stream is added to the presentation. Also, num_rects is used to indicate whether
 	 * or not the window is visible. So, always process a valid message with unchanged position/size
@@ -1103,13 +1114,16 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32
 	void* tmp_rects = realloc(presentation->rects, sizeof(RECTANGLE_32) * num_rects);
 
 	if (!tmp_rects && num_rects)
+	{
+		ArrayList_Unlock(presentation->stream_list);
 		return FALSE;
+	}
 
 	presentation->nr_rects = num_rects;
 	presentation->rects = (RECTANGLE_32*)tmp_rects;
 	if (presentation->rects)
 		CopyMemory(presentation->rects, rects, sizeof(RECTANGLE_32) * num_rects);
-	ArrayList_Lock(presentation->stream_list);
+
 	size_t count = ArrayList_Count(presentation->stream_list);
 
 	for (size_t index = 0; index < count; index++)
@@ -1148,10 +1162,10 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 
 	stream->eos = 0;
 	stream->eos_message_id = 0;
-	stream->eos_channel_callback = nullptr;
 	stream->delayed_stop = 0;
 	stream->last_end_time = 0;
 	stream->next_start_time = 0;
+	Queue_Clear(stream->sample_ack_list);
 
 	if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
 	{
@@ -1209,7 +1223,6 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	stream->seeking = FALSE;
 	stream->eos = 0;
 	stream->eos_message_id = 0;
-	stream->eos_channel_callback = nullptr;
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
 	stream->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
@@ -1382,15 +1395,13 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
 	return ret;
 }
 
-void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id,
-                     IWTSVirtualChannelCallback* pChannelCallback)
+void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id)
 {
 	if (!stream)
 		return;
 
 	stream->eos = 1;
 	stream->eos_message_id = message_id;
-	stream->eos_channel_callback = pChannelCallback;
 }
 
 void s_tsmf_stream_free(void* obj)
@@ -1448,10 +1459,12 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 	ArrayList_Remove(presentation->stream_list, stream);
 }
 
-BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
-                             UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration,
-                             UINT32 extensions, UINT32 data_size, BYTE* data)
+BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, UINT32 sample_id, UINT64 start_time,
+                             UINT64 end_time, UINT64 duration, UINT32 extensions, UINT32 data_size,
+                             BYTE* data)
 {
+	WINPR_ASSERT(stream);
+
 	(void)SetEvent(stream->ready);
 
 	if (TERMINATING)
@@ -1476,8 +1489,6 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	else
 		sample->invalidTimestamps = FALSE;
 
-	sample->stream = stream;
-	sample->channel_callback = pChannelCallback;
 	sample->data_size = data_size;
 	sample->data = calloc(1, data_size + TSMF_BUFFER_PADDING_SIZE);
 

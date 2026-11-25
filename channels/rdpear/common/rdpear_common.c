@@ -203,6 +203,12 @@ BOOL ndr_decoder_read_RPC_UNICODE_STRING(WinPrNdrDecoder* context, wStream* s, c
 	    !winpr_ndr_decoder_read_refpointer(context, s, &bufferDesc.ptrId) || Length > MaximumLength)
 		return FALSE;
 
+	if (!bufferDesc.ptrId && (Length > 0))
+	{
+		WLog_ERR(TAG, "RPC_UNICODE_STRING.Buffer can't be null with Length=%" PRIu16, Length);
+		return FALSE;
+	}
+
 	res->lenHints.length = Length;
 	res->lenHints.maxLength = MaximumLength;
 	res->strLength = Length / 2;
@@ -348,8 +354,17 @@ BOOL ndr_decoder_read_KERB_RPC_INTERNAL_NAME(WinPrNdrDecoder* context, wStream* 
 
 	res->nameHints.count = nameCount;
 
-	return winpr_ndr_decoder_read_refpointer(context, s, &names.ptrId) &&
-	       winpr_ndr_decoder_push_deferreds(context, &names, 1);
+	if (!winpr_ndr_decoder_read_refpointer(context, s, &names.ptrId))
+		return FALSE;
+
+	if (!names.ptrId && (nameCount > 0))
+	{
+		WLog_ERR(TAG, "KERB_RPC_INTERNAL_NAME.Names can't be null with NameCount=%" PRIu16,
+		         nameCount);
+		return FALSE;
+	}
+
+	return winpr_ndr_decoder_push_deferreds(context, &names, 1);
 }
 
 static BOOL ndr_descr_read_KERB_RPC_INTERNAL_NAME(WinPrNdrDecoder* context, wStream* s,

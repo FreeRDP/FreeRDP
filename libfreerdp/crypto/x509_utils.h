@@ -73,11 +73,17 @@ extern "C"
 
 	FREERDP_LOCAL void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names);
 
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL BOOL x509_utils_has_dns_names(const X509* xcert);
+
 	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_LOCAL char** x509_utils_get_ip_names(const X509* xcert, size_t* count,
 	                                             size_t** pplengths);
 
 	FREERDP_LOCAL void x509_utils_ip_names_free(size_t count, size_t* lengths, char** dns_names);
+
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL BOOL x509_utils_has_ip_names(const X509* xcert);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL x509_utils_check_eku(const X509* xcert, int nid);

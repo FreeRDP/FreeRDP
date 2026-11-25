@@ -274,7 +274,7 @@ BOOL sdl_present_gateway_message(freerdp* instance, [[maybe_unused]] UINT32 type
 		flags = SHOW_DIALOG_ACCEPT_REJECT;
 	else if (isDisplayMandatory)
 		flags = SHOW_DIALOG_TIMED_ACCEPT;
-	char* message = ConvertWCharNToUtf8Alloc(wmessage, length, nullptr);
+	char* message = ConvertWCharNToUtf8Alloc(wmessage, length / sizeof(WCHAR), nullptr);
 
 	SDLConnectionDialogHider hider(instance);
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);

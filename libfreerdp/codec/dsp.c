@@ -251,9 +251,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return FALSE;
 	}
 
-	if (srcFormat->wBitsPerSample != 16)
-		return FALSE;
-
 	/* We want to ignore differences of source and destination format. */
 	format = *srcFormat;
 	format.wFormatTag = WAVE_FORMAT_UNKNOWN;
@@ -267,6 +264,12 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	}
 
 #if defined(WITH_SOXR)
+	if (srcFormat->wBitsPerSample != 16)
+	{
+		WLog_ERR(TAG, "requires 16 bit samples for input, got %" PRIu16, srcFormat->wBitsPerSample);
+		return FALSE;
+	}
+
 	const size_t srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
 	const size_t dstBytesPerFrame = (context->common.format.wBitsPerSample > 8) ? 2 : 1;
 	const size_t srcChannels = srcFormat->nChannels;
@@ -613,14 +616,28 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!Stream_EnsureCapacity(context->common.buffer, 2ull * buffer_size))
 		return FALSE;
 
+	mp3data_struct header = WINPR_C_ARRAY_INIT;
 	short* pcm_l = Stream_BufferAs(context->common.buffer, short);
 	short* pcm_r = Stream_BufferAs(context->common.buffer, short) + (buffer_size / sizeof(short));
-	const int rc = hip_decode(
+	int rc = hip_decode1_headers(
 	    context->hip,
 	    WINPR_CAST_CONST_PTR_AWAY(/* API is not modifying content */ src, unsigned char*), size,
-	    pcm_l, pcm_r);
+	    pcm_l, pcm_r, &header);
 
-	if (rc <= 0)
+	if ((rc <= 0) || (header.header_parsed != 1) || (header.samplerate <= 0) ||
+	    (header.framesize <= 0))
+		return FALSE;
+
+	if ((size_t)header.samplerate != context->common.format.nSamplesPerSec)
+		return FALSE;
+
+	if (context->common.format.nChannels != 2)
+		return FALSE;
+
+	if (header.stereo != context->common.format.nChannels)
+		return FALSE;
+
+	if ((size_t)header.framesize > buffer_size / sizeof(short))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(out, (size_t)rc * context->common.format.nChannels * 2ull))
@@ -631,6 +648,20 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		Stream_Write_UINT16(out, (UINT16)pcm_l[x]);
 		Stream_Write_UINT16(out, (UINT16)pcm_r[x]);
 	}
+
+	do
+	{
+		rc = hip_decode1(context->hip, nullptr, 0, pcm_l, pcm_r);
+		if (!Stream_EnsureRemainingCapacity(out,
+		                                    (size_t)rc * context->common.format.nChannels * 2ull))
+			return FALSE;
+
+		for (int x = 0; x < rc; x++)
+		{
+			Stream_Write_UINT16(out, (UINT16)pcm_l[x]);
+			Stream_Write_UINT16(out, (UINT16)pcm_r[x]);
+		}
+	} while (rc > 0);
 
 	return TRUE;
 }
@@ -681,6 +712,13 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!context || !src || !out)
 		return FALSE;
 
+	if (context->common.format.wBitsPerSample != 16)
+	{
+		WLog_ERR(TAG, "Encoder requires wBitsPerSample == 16");
+		return FALSE;
+	}
+
+	/* The encoder is configured with FAAC_INPUT_16BIT */
 	const unsigned int bpp = context->common.format.wBitsPerSample / 8;
 	const size_t nrSamples = size / bpp;
 
@@ -836,6 +874,12 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 		if (samplerate != context->common.format.nSamplesPerSec)
 			return FALSE;
+
+		if (context->common.format.wBitsPerSample != 16)
+		{
+			WLog_ERR(TAG, "Encoder requires wBitsPerSample == 16");
+			return FALSE;
+		}
 
 		context->faadSetup = TRUE;
 	}
@@ -1024,7 +1068,10 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 
 		if (Stream_GetPosition(context->common.buffer) >= context->adpcm.ima.packet_size)
 		{
-			BYTE* bsrc = Stream_Buffer(context->common.buffer);
+			const BYTE* bsrc = Stream_Buffer(context->common.buffer);
+			if (!Stream_EnsureRemainingCapacity(context->common.buffer,
+			                                    context->adpcm.ima.packet_size))
+				return FALSE;
 			Stream_Write(out, bsrc, context->adpcm.ima.packet_size);
 			Stream_ResetPosition(context->common.buffer);
 		}
@@ -1045,6 +1092,16 @@ static const INT32 ms_adpcm_adaptation_table[] = { 230, 230, 230, 230, 307, 409,
 static const INT32 ms_adpcm_coeffs1[7] = { 256, 512, 0, 192, 240, 460, 392 };
 
 static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
+
+static inline INT32 saturated_multiply(INT32 a, INT32 b)
+{
+	WINPR_ASSERT(b > 0);
+	if (a > INT32_MAX / b)
+		return INT32_MAX;
+	if (a < INT32_MIN / b)
+		return INT32_MIN;
+	return a * b;
+}
 
 static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
                                                        size_t channel)
@@ -1079,7 +1136,7 @@ static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adp
 	if (sample < ARRAYSIZE(ms_adpcm_adaptation_table))
 		tableval = ms_adpcm_adaptation_table[sample];
 
-	adpcm->ms.delta[channel] = adpcm->ms.delta[channel] * tableval / 256;
+	adpcm->ms.delta[channel] = saturated_multiply(adpcm->ms.delta[channel], tableval) / 256;
 
 	if (adpcm->ms.delta[channel] < 16)
 		adpcm->ms.delta[channel] = 16;

@@ -832,6 +832,76 @@ out:
 	return retCode;
 }
 
+static int test_union_empty_rectangle(void)
+{
+	REGION16 region;
+	REGION16 copy;
+	int retCode = -1;
+	const RECTANGLE_16 emptyRectangles[] = {
+		{ 0, 0, 0, 0 },       /* all zero */
+		{ 200, 10, 200, 20 }, /* no width */
+		{ 200, 10, 210, 10 }, /* no height */
+		{ 210, 10, 200, 20 }, /* right < left */
+		{ 200, 70, 210, 30 }, /* bottom < top, vertically inside of the band of firstRect */
+		{ 200, 69, 210, 31 },
+	};
+	const RECTANGLE_16 firstRect = { 0, 0, 100, 100 };
+	const RECTANGLE_16 emptyExtents = { 0, 0, 0, 0 };
+	region16_init(&region);
+	region16_init(&copy);
+
+	/* an empty region stays empty */
+	for (size_t i = 0; i < ARRAYSIZE(emptyRectangles); i++)
+	{
+		if (!region16_union_rect(&region, &region, &emptyRectangles[i]))
+			goto out;
+
+		if (!region16_is_empty(&region))
+			goto out;
+
+		if (!compareRectangles(region16_extents(&region), &emptyExtents, 1))
+			goto out;
+	}
+
+	/* a non empty region is not modified */
+	if (!region16_union_rect(&region, &region, &firstRect))
+		goto out;
+
+	for (size_t i = 0; i < ARRAYSIZE(emptyRectangles); i++)
+	{
+		if (!region16_union_rect(&region, &region, &emptyRectangles[i]))
+			goto out;
+
+		if (region16_n_rects(&region) != 1)
+			goto out;
+
+		if (!compareRectangles(region16_rects(&region, nullptr), &firstRect, 1))
+			goto out;
+
+		if (!compareRectangles(region16_extents(&region), &firstRect, 1))
+			goto out;
+	}
+
+	/* with different source and destination the source is copied */
+	if (!region16_union_rect(&copy, &region, &emptyRectangles[0]))
+		goto out;
+
+	if (region16_n_rects(&copy) != 1)
+		goto out;
+
+	if (!compareRectangles(region16_rects(&copy, nullptr), &firstRect, 1))
+		goto out;
+
+	if (!compareRectangles(region16_extents(&copy), &firstRect, 1))
+		goto out;
+
+	retCode = 0;
+out:
+	region16_uninit(&copy);
+	region16_uninit(&region);
+	return retCode;
+}
+
 typedef int (*TestFunction)(void);
 struct UnitaryTest
 {
@@ -853,6 +923,7 @@ static struct UnitaryTest tests[] = { { "Basic trivial tests", test_basic },
 	                                  { "norbert's case", test_norbert_case },
 	                                  { "norbert's case 2", test_norbert2_case },
 	                                  { "empty rectangle case", test_empty_rectangle },
+	                                  { "union with empty rectangles", test_union_empty_rectangle },
 
 	                                  { nullptr, nullptr } };
 

@@ -73,6 +73,8 @@ static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
+		if (!brush->data)
+			return FALSE;
 		brush->style = 0x03;
 	}
 
@@ -109,6 +111,8 @@ static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
+		if (!brush->data)
+			return FALSE;
 		brush->style = 0x03;
 	}
 

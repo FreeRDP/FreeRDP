@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -357,16 +359,46 @@ BOOL cliprdr_file_apple_offer(const char *directory, const char **paths, const B
 	return FALSE;
 }
 
+static NSString *const s_download_prefix = @"freerdp-clipboard-";
+
 static NSString *download_root(void)
 {
-	NSString *name = [NSString stringWithFormat:@"freerdp-clipboard-%d", getpid()];
+	NSString *name = [NSString stringWithFormat:@"%@%d", s_download_prefix, getpid()];
 	return [NSTemporaryDirectory() stringByAppendingPathComponent:name];
+}
+
+/* A process that crashed or was killed could not remove its downloads */
+static void remove_stale_downloads(void)
+{
+	NSFileManager *fm = [NSFileManager defaultManager];
+	NSString *tmp = NSTemporaryDirectory();
+
+	for (NSString *name in [fm contentsOfDirectoryAtPath:tmp error:nil])
+	{
+		if (![name hasPrefix:s_download_prefix])
+			continue;
+
+		const int pid = [[name substringFromIndex:[s_download_prefix length]] intValue];
+		if ((pid <= 0) || (pid == getpid()))
+			continue;
+		/* Keep it unless there is no such process (any more) */
+		if ((kill(pid, 0) == 0) || (errno != ESRCH))
+			continue;
+		[fm removeItemAtPath:[tmp stringByAppendingPathComponent:name] error:nil];
+	}
 }
 
 char *cliprdr_file_apple_new_download_dir(void)
 {
 	@autoreleasepool
 	{
+		static dispatch_once_t once;
+		dispatch_once(&once, ^{
+			dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+				remove_stale_downloads();
+			});
+		});
+
 		NSFileManager *fm = [NSFileManager defaultManager];
 		NSString *root = download_root();
 

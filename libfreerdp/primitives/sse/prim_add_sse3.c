@@ -51,6 +51,7 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 		/* Incrementing the pointer skips over 16-byte boundary. */
 		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, ulen);
 	}
+	size_t len = ulen;
 	/* Get to the 16-byte boundary now. */
 	const size_t rem = ((UINT_PTR)dptr1 & 0xf) / sizeof(INT16);
 	if (rem != 0)
@@ -61,9 +62,9 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 			return status;
 		dptr1 += add;
 		dptr2 += add;
+		len -= add;
 	}
 	/* Use 4 128-bit SSE registers. */
-	size_t len = ulen;
 	size_t count = len >> (7 - shifts);
 	len -= count << (7 - shifts);
 	if (((const ULONG_PTR)dptr1 & 0x0f) || ((const ULONG_PTR)dptr2 & 0x0f))
