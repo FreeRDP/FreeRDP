@@ -180,7 +180,7 @@ void SdlConnectionDialogWrapper::handleShow()
 
 		if (arg.hasTitle() && _connection_dialog)
 		{
-			std::ignore = _connection_dialog->setTitle(arg.title().c_str());
+			std::ignore = _connection_dialog->setTitle("%s", arg.title().c_str());
 		}
 
 		if (arg.hasType() && arg.hasMessage())
@@ -189,19 +189,19 @@ void SdlConnectionDialogWrapper::handleShow()
 			{
 				case SdlConnectionDialogWrapper::MSG_INFO:
 					if (_connection_dialog)
-						std::ignore = _connection_dialog->showInfo(arg.message().c_str());
+						std::ignore = _connection_dialog->showInfo("%s", arg.message().c_str());
 					else
 						WLog_Print(_log, WLOG_INFO, "%s", arg.message().c_str());
 					break;
 				case SdlConnectionDialogWrapper::MSG_WARN:
 					if (_connection_dialog)
-						std::ignore = _connection_dialog->showWarn(arg.message().c_str());
+						std::ignore = _connection_dialog->showWarn("%s", arg.message().c_str());
 					else
 						WLog_Print(_log, WLOG_WARN, "%s", arg.message().c_str());
 					break;
 				case SdlConnectionDialogWrapper::MSG_ERROR:
 					if (_connection_dialog)
-						std::ignore = _connection_dialog->showError(arg.message().c_str());
+						std::ignore = _connection_dialog->showError("%s", arg.message().c_str());
 					else
 						WLog_Print(_log, WLOG_ERROR, "%s", arg.message().c_str());
 					break;
