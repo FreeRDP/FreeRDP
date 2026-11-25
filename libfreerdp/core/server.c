@@ -1122,10 +1122,6 @@ static bool setup(void)
 
 static void wtsCloseVCM(WTSVirtualChannelManager* vcm, bool closeDrdynvc)
 {
-	WINPR_ASSERT(vcm);
-
-	HashTable_Lock(g_ServerHandles);
-
 /* clang analyzer does not like the check for INVALID_HANDLE_VALUE and considers the path not taken,
  * leading to false positives on memory leaks. */
 #ifdef __clang_analyzer__
@@ -1133,8 +1129,12 @@ static void wtsCloseVCM(WTSVirtualChannelManager* vcm, bool closeDrdynvc)
 #else
 	const BOOL valid = (vcm != nullptr) && (vcm != INVALID_HANDLE_VALUE);
 #endif
+
+	/* Closing a handle that was never opened is a no-op. This happens when a peer context is
+	 * freed after its setup failed, g_ServerHandles might not even exist then. */
 	if (valid)
 	{
+		HashTable_Lock(g_ServerHandles);
 		HashTable_Remove(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId);
 
 		wts_tunnel_free(vcm);
@@ -1150,8 +1150,8 @@ static void wtsCloseVCM(WTSVirtualChannelManager* vcm, bool closeDrdynvc)
 
 		MessageQueue_Free(vcm->queue);
 		free(vcm);
+		HashTable_Unlock(g_ServerHandles);
 	}
-	HashTable_Unlock(g_ServerHandles);
 }
 
 HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
