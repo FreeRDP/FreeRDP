@@ -116,7 +116,6 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPCVOID
 		{
 			/* FIXME:
 			 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff551803(v=vs.85).aspx */
-			*lpBytesReturned = nOutBufferSize; /* an empty OutputBuffer will be returned */
 			SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 			return FALSE;
 		}
@@ -670,6 +669,11 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPCVOID lpInBuff
 			CommLog_Print(WLOG_WARN,
 			              "[permissive]: IoControlCode=[0x%08" PRIX32 "] %s failed, ignoring",
 			              dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode));
+
+			/* a failed ioctl has not produced any output, do not let the
+			 * caller send lpOutBuffer back as if it had */
+			if (lpBytesReturned)
+				*lpBytesReturned = 0;
 		}
 
 		return TRUE; /* always! */
