@@ -694,12 +694,11 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 {
 	wMessage message = WINPR_C_ARRAY_INIT;
 	BOOL status = TRUE;
-	WTSVirtualChannelManager* vcm = nullptr;
 
 	if (!hServer || hServer == INVALID_HANDLE_VALUE)
 		return FALSE;
 
-	vcm = (WTSVirtualChannelManager*)hServer;
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*)hServer;
 
 	if (autoOpen)
 	{
@@ -713,7 +712,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 	while (MessageQueue_Peek(vcm->queue, &message, TRUE))
 	{
 		const UINT16 channelId = (UINT16)(UINT_PTR)message.context;
-		const BYTE* buffer = (BYTE*)message.wParam;
+		BYTE* buffer = (BYTE*)message.wParam;
 		const UINT32 length = (UINT32)(UINT_PTR)message.lParam;
 
 		/* wake up message, nothing to send */
