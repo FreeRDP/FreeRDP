@@ -191,7 +191,10 @@ static BOOL wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, wStr
 	/* we only support version 1 for now (no compression yet) */
 	vcm->dvc_spoken_version = MAX(Version, 1);
 
-	return SetEvent(MessageQueue_Event(vcm->queue));
+	/* Wake up the thread waiting on the queue with an empty message.
+	 * The queue only resets its event when the last message is removed, so setting the event
+	 * directly would leave it signalled as long as nothing else is queued. */
+	return MessageQueue_Post(vcm->queue, nullptr, 0, nullptr, nullptr);
 }
 
 static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s)
@@ -709,12 +712,13 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen
 
 	while (MessageQueue_Peek(vcm->queue, &message, TRUE))
 	{
-		BYTE* buffer = nullptr;
-		UINT32 length = 0;
-		UINT16 channelId = 0;
-		channelId = (UINT16)(UINT_PTR)message.context;
-		buffer = (BYTE*)message.wParam;
-		length = (UINT32)(UINT_PTR)message.lParam;
+		const UINT16 channelId = (UINT16)(UINT_PTR)message.context;
+		const BYTE* buffer = (BYTE*)message.wParam;
+		const UINT32 length = (UINT32)(UINT_PTR)message.lParam;
+
+		/* wake up message, nothing to send */
+		if (!buffer)
+			continue;
 
 		WINPR_ASSERT(vcm->client);
 		WINPR_ASSERT(vcm->client->SendChannelData);
