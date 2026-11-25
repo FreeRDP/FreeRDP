@@ -347,7 +347,11 @@ bool sdlInput::keyboard_focus_in()
 	SDL_GetMouseState(&fx, &fy);
 
 	auto w = SDL_GetMouseFocus();
-	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
+	auto id = SDL_GetWindowID(w);
+	const auto& pos = _sdl->screenToPixel(id, SDL_FPoint{ fx, fy });
+
+	if (!mouse_grab(id, true))
+		return false;
 
 	return sdl::utils::inputSent(
 	    _sdl->context(), _sdl->getWLog(),
@@ -710,6 +714,9 @@ bool sdlInput::mouse_focus(Uint32 windowID)
 {
 	if (_lastWindowID != windowID)
 	{
+		if (!mouse_grab(windowID, true))
+			return false;
+
 		_lastWindowID = windowID;
 		auto window = _sdl->getWindowForId(windowID);
 		if (window)
@@ -722,12 +729,13 @@ bool sdlInput::mouse_focus(Uint32 windowID)
 
 bool sdlInput::mouse_grab(Uint32 windowID, bool enable)
 {
+	auto cfg_enabled = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_GrabMouse);
+	auto status = enable && cfg_enabled;
+
 	auto window = _sdl->getWindowForId(windowID);
 	if (!window)
 		return false;
-	if (!_sdl->setGrabMouse(enable))
-		WLog_Print(_sdl->getWLog(), WLOG_WARN, "Failed to ungrab mouse");
-	return window->grabMouse(enable);
+	return _sdl->setGrabMouse(status);
 }
 
 sdlInput::sdlInput(SdlContext* sdl)

@@ -442,6 +442,11 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	BOOL ret = FALSE;
 	Status rc = 0;
 
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_GrabMouse))
+		return TRUE;
+	if (!xfc->common.mouse_grabbed)
+		return TRUE;
+
 	WLog_DBG(TAG, "%" PRIu32 "x%" PRIu32, x, y);
 	if (!xfc->focused)
 		return TRUE;

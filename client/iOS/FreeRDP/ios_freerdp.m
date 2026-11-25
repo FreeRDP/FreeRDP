@@ -240,6 +240,9 @@ static BOOL ios_Pointer_SetPosition(rdpContext *context, UINT32 x, UINT32 y)
 	if (!context || !context->instance)
 		return FALSE;
 
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse))
+		return TRUE;
+
 	mfInfo *mfi = MFI_FROM_INSTANCE(context->instance);
 	if (!mfi || !mfi->session)
 		return FALSE;
