@@ -1133,8 +1133,12 @@ void update_reset_state(rdpUpdate* update)
 		altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 		if (altsec->common.SwitchSurface)
 		{
+			/* Not within BeginPaint/EndPaint here: take the update lock like a switch surface
+			 * order does, a channel thread might be replacing the primary surface (resize) */
+			rdp_update_lock(update);
 			if (!altsec->common.SwitchSurface(update->context, &(altsec->switch_surface)))
 				WLog_Print(up->log, WLOG_WARN, "altsec->common.SwitchSurface failed");
+			rdp_update_unlock(update);
 		}
 	}
 }
@@ -1160,8 +1164,12 @@ BOOL update_post_connect(rdpUpdate* update)
 	}
 
 	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+
+	/* Channel threads are already running, see update_reset_state */
+	rdp_update_lock(update);
 	const BOOL rc = IFCALLRESULT(TRUE, update->altsec->SwitchSurface, update->context,
 	                             &(altsec->switch_surface));
+	rdp_update_unlock(update);
 	up->initialState = FALSE;
 	return rc;
 }
