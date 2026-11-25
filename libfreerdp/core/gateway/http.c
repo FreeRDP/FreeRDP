@@ -47,6 +47,13 @@
 
 #define RESPONSE_SIZE_LIMIT (64ULL * 1024ULL * 1024ULL)
 
+/* The peer chooses the names of cookies and authentication schemes and how many of them it sends.
+ * The containers they are kept in (a linked list, hash tables with an unkeyed hash) are only fast
+ * while they are small, so limit the number of entries. Browsers keep less than 200 cookies per
+ * domain, a gateway sends a handful. */
+#define COOKIE_COUNT_LIMIT 256
+#define AUTHENTICATE_COUNT_LIMIT 32
+
 #define WEBSOCKET_MAGIC_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 struct s_http_context
@@ -366,6 +373,12 @@ BOOL http_context_set_cookie(HttpContext* context, const char* CookieName, const
 	}
 	else
 	{
+		if (ListDictionary_Count(context->cookies) >= COOKIE_COUNT_LIMIT)
+		{
+			WLog_WARN(TAG, "Too many cookies (limit %d), ignoring '%s'", COOKIE_COUNT_LIMIT,
+			          CookieName);
+			return FALSE;
+		}
 		if (!ListDictionary_Add(context->cookies, CookieName, CookieValue))
 			return FALSE;
 	}
@@ -712,6 +725,19 @@ fail:
 	return rc;
 }
 
+static BOOL http_response_table_insert(wHashTable* table, const char* key, const char* value,
+                                       size_t limit, const char* what)
+{
+	WINPR_ASSERT(table);
+
+	if ((HashTable_Count(table) >= limit) && !HashTable_Contains(table, key))
+	{
+		WLog_ERR(TAG, "Too many %s headers (limit %" PRIuz ")! Aborting!", what, limit);
+		return FALSE;
+	}
+	return HashTable_Insert(table, key, value);
+}
+
 static BOOL http_response_parse_header_field(HttpResponse* response, const char* name,
                                              const char* value)
 {
@@ -787,7 +813,8 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			authValue = separator + 1;
 		}
 
-		return HashTable_Insert(response->Authenticates, authScheme, authValue);
+		return http_response_table_insert(response->Authenticates, authScheme, authValue,
+		                                  AUTHENTICATE_COUNT_LIMIT, "WWW-Authenticate");
 	}
 
 	if (_stricmp(name, "Set-Cookie") == 0)
@@ -825,7 +852,8 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			}
 			*p = '\0';
 		}
-		return HashTable_Insert(response->SetCookie, CookieName, CookieValue);
+		return http_response_table_insert(response->SetCookie, CookieName, CookieValue,
+		                                  COOKIE_COUNT_LIMIT, "Set-Cookie");
 	}
 
 	/* Ignore unknown lines */
