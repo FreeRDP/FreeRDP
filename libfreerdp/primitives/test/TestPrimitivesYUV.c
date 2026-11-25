@@ -1140,6 +1140,79 @@ fail:
 	return rc;
 }
 
+/* Check the generic YUV444ToRGB_8u_P3AC4R handles odd sizes for the formats
+ * without a dedicated implementation: same colors as for BGRX32 and no writes
+ * past the end of a line.
+ */
+static BOOL check_generic_yuv444_to_rgb(prim_size_t roi, UINT32 format)
+{
+	BOOL rc = FALSE;
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	const UINT32 yuvStep[3] = { roi.width, roi.width, roi.width };
+	const size_t padding = 16;
+	const size_t stride = 4ULL * roi.width + padding;
+
+	BYTE* expected = calloc(roi.height, stride);
+	BYTE* rgb = calloc(roi.height, stride);
+
+	primitives_t* soft = primitives_get_by_type(PRIMITIVES_PURE_SOFT);
+	if (!soft)
+		goto fail;
+	if (!allocate_yuv(yuv, roi) || !expected || !rgb)
+		goto fail;
+
+	memset(rgb, PADDING_FILL_VALUE, roi.height * stride);
+
+	const BYTE* cyuv[] = { yuv[0], yuv[1], yuv[2] };
+	if (soft->YUV444ToRGB_8u_P3AC4R(cyuv, yuvStep, expected, stride, PIXEL_FORMAT_BGRX32, &roi) !=
+	    PRIMITIVES_SUCCESS)
+		goto fail;
+	if (soft->YUV444ToRGB_8u_P3AC4R(cyuv, yuvStep, rgb, stride, format, &roi) != PRIMITIVES_SUCCESS)
+		goto fail;
+
+	for (size_t y = 0; y < roi.height; y++)
+	{
+		const BYTE* eline = &expected[y * stride];
+		const BYTE* line = &rgb[y * stride];
+
+		for (size_t x = 0; x < roi.width; x++)
+		{
+			BYTE e[3] = WINPR_C_ARRAY_INIT;
+			BYTE c[3] = WINPR_C_ARRAY_INIT;
+			FreeRDPSplitColor(FreeRDPReadColor(&eline[x * 4], PIXEL_FORMAT_BGRX32),
+			                  PIXEL_FORMAT_BGRX32, &e[0], &e[1], &e[2], nullptr, nullptr);
+			FreeRDPSplitColor(FreeRDPReadColor(&line[x * 4], format), format, &c[0], &c[1], &c[2],
+			                  nullptr, nullptr);
+			if (memcmp(e, c, sizeof(e)) != 0)
+			{
+				(void)fprintf(stderr, "[%s] %s color mismatch at %" PRIuz "x%" PRIuz "\n", __func__,
+				              FreeRDPGetColorFormatName(format), x, y);
+				goto fail;
+			}
+		}
+
+		for (size_t x = 4ULL * roi.width; x < stride; x++)
+		{
+			if (line[x] != PADDING_FILL_VALUE)
+			{
+				(void)fprintf(stderr, "[%s] %s write past the end of line %" PRIuz "\n", __func__,
+				              FreeRDPGetColorFormatName(format), y);
+				goto fail;
+			}
+		}
+	}
+
+	rc = TRUE;
+fail:
+	printf("%s [%" PRIu32 "x%" PRIu32 "] finished with %s\n", __func__, roi.width, roi.height,
+	       rc ? "SUCCESS" : "FAILURE");
+	free_yuv(yuv);
+	free(expected);
+	free(rgb);
+
+	return rc;
+}
+
 /* Check I444ToRGB_8u converts every pixel on its own (no AVC444 chroma
  * filter is reversed) and does not write past the end of a line.
  */
@@ -1941,6 +2014,15 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	}
 
 	prim_test_setup(FALSE);
+
+	const prim_size_t yuv444Rois[] = { { 1, 1 },  { 1, 2 },  { 13, 7 },
+		                               { 13, 8 }, { 16, 7 }, { 16, 8 } };
+	for (size_t x = 0; x < ARRAYSIZE(yuv444Rois); x++)
+	{
+		if (!check_generic_yuv444_to_rgb(yuv444Rois[x], PIXEL_FORMAT_RGBX32) ||
+		    !check_generic_yuv444_to_rgb(yuv444Rois[x], PIXEL_FORMAT_XRGB32))
+			goto end;
+	}
 
 	for (UINT32 type = PRIMITIVES_PURE_SOFT; type <= PRIMITIVES_AUTODETECT; type++)
 	{
