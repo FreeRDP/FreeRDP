@@ -198,7 +198,7 @@ static void rdpsnd_server_client_format_free(RdpsndServerContext* context)
  */
 static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(context);
 
@@ -232,7 +232,8 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	if (!context->client_formats)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out_free;
 	}
 
 	context->num_client_formats = wNumberOfFormats;
@@ -380,13 +381,13 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	EnterCriticalSection(&context->priv->lock);
 	if ((client_format_index >= context->num_client_formats) || (!context->src_format))
 	{
 		WLog_ERR(TAG, "index %" PRIu16 " is not correct.", client_format_index);
-		return ERROR_INVALID_DATA;
+		goto out;
 	}
 
-	EnterCriticalSection(&context->priv->lock);
 	// Invalidate currently selected format. Should anything fail no function will touch the
 	// buffers.
 	context->selected_client_format = UINT16_MAX;
@@ -1230,7 +1231,8 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 	}
 
 	free(context->server_formats);
-	rdpsnd_server_client_format_free(context);
+	if (context->priv)
+		rdpsnd_server_client_format_free(context);
 	free(context->priv);
 	free(context);
 }
@@ -1352,4 +1354,17 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 	LeaveCriticalSection(&priv->lock);
 	Stream_ResetPosition(s);
 	return ret;
+}
+
+void rdpsnd_server_context_lock(RdpsndServerContext* context)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	EnterCriticalSection(&context->priv->lock);
+}
+void rdpsnd_server_context_unlock(RdpsndServerContext* context)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	LeaveCriticalSection(&context->priv->lock);
 }

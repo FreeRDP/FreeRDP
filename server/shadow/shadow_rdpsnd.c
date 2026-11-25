@@ -35,6 +35,7 @@
 static void rdpsnd_activated(RdpsndServerContext* context)
 {
 	WINPR_ASSERT(context);
+	rdpsnd_server_context_lock(context);
 	for (size_t i = 0; i < context->num_client_formats; i++)
 	{
 		for (size_t j = 0; j < context->num_server_formats; j++)
@@ -42,12 +43,14 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
 				const UINT rc = context->SelectFormat(context, WINPR_ASSERTING_INT_CAST(UINT16, i));
+				rdpsnd_server_context_unlock(context);
 				if (rc != CHANNEL_RC_OK)
 					WLog_WARN(TAG, "SelectFormat failed with %" PRIu32, rc);
 				return;
 			}
 		}
 	}
+	rdpsnd_server_context_unlock(context);
 
 	WLog_ERR(TAG, "Could not agree on a audio format with the server\n");
 }
