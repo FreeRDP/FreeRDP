@@ -196,6 +196,9 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpsnd_server_handle_messages(RdpsndServerContext* context);
 
+	FREERDP_API void rdpsnd_server_context_lock(RdpsndServerContext* context);
+	FREERDP_API void rdpsnd_server_context_unlock(RdpsndServerContext* context);
+
 #ifdef __cplusplus
 }
 #endif
