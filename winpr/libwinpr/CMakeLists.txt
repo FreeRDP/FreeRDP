@@ -17,6 +17,7 @@
 
 include(CheckFunctionExists)
 include(JsonDetect)
+include(PackageConfigDependencies)
 
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
@@ -178,7 +179,6 @@ set(WINPR_CORE
     security
     environment
     crypto
-    registry
     path
     io
     memory
@@ -193,6 +193,10 @@ set(WINPR_CORE
     handle
     thread
 )
+
+if(NOT WITHOUT_WINPR_3x_DEPRECATED)
+  list(APPEND WINPR_CORE registry)
+endif()
 
 foreach(DIR ${WINPR_CORE})
   add_subdirectory(${DIR})
@@ -209,6 +213,7 @@ set(WINPR_LEVEL2
     wtsapi
     dsparse
     smartcard
+    ndr
     nt
     clipboard
 )
@@ -245,6 +250,7 @@ endif()
 if(WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR)
   target_compile_definitions(${MODULE_NAME} PRIVATE WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR)
 endif()
+target_compile_definitions(${MODULE_NAME} PRIVATE WINPR_THREAD_DEFAULT_STACK_SIZE=${WINPR_THREAD_DEFAULT_STACK_SIZE})
 
 if(APPLE)
   set_target_properties(${MODULE_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION FALSE)
@@ -264,6 +270,9 @@ target_compile_options(${MODULE_NAME} PRIVATE ${WINPR_COMPILE_OPTIONS})
 target_compile_definitions(${MODULE_NAME} PRIVATE ${WINPR_DEFINITIONS})
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_LIBS_PRIVATE} PUBLIC ${WINPR_LIBS_PUBLIC})
+# here, where the imported targets winpr links are visible; WinPRConfig.cmake is made one level up
+package_config_dependencies(${MODULE_NAME} WINPR_CMAKE_FIND_DEPENDENCIES)
+set(WINPR_CMAKE_FIND_DEPENDENCIES "${WINPR_CMAKE_FIND_DEPENDENCIES}" PARENT_SCOPE)
 installwithrpath(
   TARGETS
   ${MODULE_NAME}

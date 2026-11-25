@@ -24,6 +24,10 @@
 
 #include <freerdp/freerdp.h>
 
+#include <freerdp/server/proxy/proxy_context.h>
+
 void pf_server_register_input_callbacks(rdpInput* input);
+
+WINPR_ATTR_NODISCARD BOOL pf_client_process_input_message(pClientContext* pc, const wMessage* msg);
 
 #endif /* FREERDP_SERVER_PROXY_PFINPUT_H */

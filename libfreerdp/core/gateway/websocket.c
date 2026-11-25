@@ -45,6 +45,7 @@ static BOOL Stream_Reset(wStream* s)
 	return Stream_SetLength(s, Stream_Capacity(s));
 }
 
+WINPR_ATTR_NODISCARD
 static int websocket_write_all(BIO* bio, const BYTE* data, size_t length);
 
 BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataPacket,
@@ -203,6 +204,7 @@ int websocket_context_write(websocket_context* context, BIO* bio, const BYTE* bu
 	return isize;
 }
 
+WINPR_ATTR_NODISCARD
 static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
                                websocket_context* encodingContext)
 {
@@ -225,7 +227,17 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 
 	ERR_clear_error();
 	status = BIO_read(bio, pBuffer, (int)rlen);
-	if ((status <= 0) || ((size_t)status > encodingContext->payloadLength))
+	if (status <= 0)
+	{
+		if (status == 0)
+		{
+			if (!BIO_should_retry(bio))
+				return -1;
+		}
+		return status;
+	}
+
+	if ((size_t)status > encodingContext->payloadLength)
 		return status;
 
 	encodingContext->payloadLength -= (size_t)status;
@@ -236,6 +248,7 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int websocket_read_wstream(BIO* bio, websocket_context* encodingContext)
 {
 	WINPR_ASSERT(bio);
@@ -266,9 +279,11 @@ static int websocket_read_wstream(BIO* bio, websocket_context* encodingContext)
 	if (!Stream_SafeSeek(s, (size_t)status))
 		return -1;
 
+	Stream_SealLength(s);
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL websocket_reply_close(BIO* bio, websocket_context* context, wStream* s)
 {
 	WINPR_ASSERT(bio);
@@ -276,6 +291,7 @@ static BOOL websocket_reply_close(BIO* bio, websocket_context* context, wStream*
 	return websocket_context_write_wstream(context, bio, s, WebsocketCloseOpcode);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL websocket_reply_pong(BIO* bio, websocket_context* context, wStream* s)
 {
 	WINPR_ASSERT(bio);
@@ -287,6 +303,7 @@ static BOOL websocket_reply_pong(BIO* bio, websocket_context* context, wStream* 
 	return websocket_reply_close(bio, context, s);
 }
 
+WINPR_ATTR_NODISCARD
 static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
                                     websocket_context* encodingContext)
 {
@@ -318,7 +335,9 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 
 			if (encodingContext->payloadLength == 0)
 			{
-				websocket_reply_pong(bio, encodingContext, encodingContext->responseStreamBuffer);
+				if (!websocket_reply_pong(bio, encodingContext,
+				                          encodingContext->responseStreamBuffer))
+					return -1;
 				if (!Stream_Reset(encodingContext->responseStreamBuffer))
 					return -1;
 			}
@@ -342,7 +361,9 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 
 			if (encodingContext->payloadLength == 0)
 			{
-				websocket_reply_close(bio, encodingContext, encodingContext->responseStreamBuffer);
+				if (!websocket_reply_close(bio, encodingContext,
+				                           encodingContext->responseStreamBuffer))
+					return -1;
 				encodingContext->closeSent = TRUE;
 				if (!Stream_Reset(encodingContext->responseStreamBuffer))
 					return -1;
@@ -445,6 +466,8 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 				{
 					WLog_ERR(TAG, "received excessive payload size %" PRIuz ", aborting",
 					         encodingContext->payloadLength);
+					/* fatal, callers must not take a stale retry flag for a blocked read */
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 					return -1;
 				}
 				encodingContext->state =
@@ -455,6 +478,8 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 			{
 				WLog_WARN(
 				    TAG, "Websocket Server sends data with masking key. This is against RFC 6455.");
+				/* fatal, callers must not take a stale retry flag for a blocked read */
+				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				return -1;
 			}
 			case WebSocketStatePayload:

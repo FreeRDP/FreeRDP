@@ -20,6 +20,8 @@
 #ifndef FREERDP_LIB_CORE_CLIENT_H
 #define FREERDP_LIB_CORE_CLIENT_H
 
+#include <freerdp/config.h>
+
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
@@ -60,6 +62,15 @@ typedef struct
 	void* lpUserParam;
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc;
 	PCHANNEL_OPEN_EVENT_EX_FN pChannelOpenEventProcEx;
+#if defined(WITH_RDPEUDP)
+	/* The dynamic channel the data is sent on instead, see freerdp_channels_set_static_bridge.
+	 * Set under channels->channelsLock. */
+	struct rdp_channel_bridge* bridge;
+	/* Once a static channel is tunnelled its original transport must not be used again.
+	 * dataLock serializes delivery with the transition to the tunnel. */
+	BOOL tunneled;
+	CRITICAL_SECTION dataLock;
+#endif
 } CHANNEL_OPEN_DATA;
 
 typedef struct
@@ -106,6 +117,9 @@ struct rdp_channels
 
 	DrdynvcClientContext* drdynvc;
 	CRITICAL_SECTION channelsLock;
+#if defined(WITH_RDPEUDP)
+	size_t dataLockCount;
+#endif
 
 	wHashTable* channelEvents;
 };

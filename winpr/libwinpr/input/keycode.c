@@ -94,7 +94,7 @@ static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 	VK_LCONTROL,          /* APPLE_VK_Control (0x3B) */
 	VK_RSHIFT,            /* APPLE_VK_RightShift (0x3C) */
 	VK_RMENU | KBDEXT,    /* APPLE_VK_RightOption (0x3D) */
-	VK_RWIN | KBDEXT,     /* APPLE_VK_RightControl (0x3E) */
+	VK_RCONTROL | KBDEXT, /* APPLE_VK_RightControl (0x3E) */
 	VK_RWIN | KBDEXT,     /* APPLE_VK_Function (0x3F) */
 	VK_F17,               /* APPLE_VK_F17 (0x40) */
 	VK_DECIMAL,           /* APPLE_VK_ANSI_KeypadDecimal (0x41) */
@@ -419,8 +419,8 @@ static DWORD KEYCODE_TO_VKCODE_EVDEV[256] = {
 	VK_PAUSE | KBDEXT,             /* KEY_PAUSE (119) */
 	VK_NONE,                       /* KEY_SCALE (AL Compiz Scale (Expose)) (120) */
 	VK_ABNT_C2,                    /* KEY_KPCOMMA (121) */
-	VK_HANGUL,                     /* KEY_HANGEUL, KEY_HANGUEL (122) */
-	VK_HANJA,                      /* KEY_HANJA (123) */
+	VK_HANGUL | KBDEXT,            /* KEY_HANGEUL, KEY_HANGUEL (122) */
+	VK_HANJA | KBDEXT,             /* KEY_HANJA (123) */
 	VK_OEM_8,                      /* KEY_YEN (124) */
 	VK_LWIN | KBDEXT,              /* KEY_LEFTMETA (125) */
 	VK_RWIN | KBDEXT,              /* KEY_RIGHTMETA (126) */

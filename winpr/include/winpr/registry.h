@@ -20,7 +20,10 @@
 #ifndef WINPR_REGISTRY_H
 #define WINPR_REGISTRY_H
 
+#include <winpr/config.h>
 #include <winpr/windows.h>
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
 #if defined(_WIN32) && !defined(_UWP)
 
@@ -198,13 +201,18 @@ typedef VALENTA VALENT;
 typedef PVALENTA PVALENT;
 #endif
 
-	WINPR_API LONG RegCloseKey(HKEY hKey);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_API LONG RegCloseKey(HKEY hKey));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegCopyTreeW(HKEY hKeySrc, LPCWSTR lpSubKey, HKEY hKeyDest);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegCopyTreeW(HKEY hKeySrc,
+	                                                                      LPCWSTR lpSubKey,
+	                                                                      HKEY hKeyDest));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegCopyTreeA(HKEY hKeySrc, LPCSTR lpSubKey, HKEY hKeyDest);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegCopyTreeA(HKEY hKeySrc,
+	                                                                      LPCSTR lpSubKey,
+	                                                                      HKEY hKeyDest));
 
 #ifdef UNICODE
 #define RegCopyTree RegCopyTreeW
@@ -212,17 +220,19 @@ typedef PVALENTA PVALENT;
 #define RegCopyTree RegCopyTreeA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegCreateKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
-	                               DWORD dwOptions, REGSAM samDesired,
-	                               LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
-	                               LPDWORD lpdwDisposition);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegCreateKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved,
+	                                         LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired,
+	                                         LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	                                         PHKEY phkResult, LPDWORD lpdwDisposition));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
-	                               DWORD dwOptions, REGSAM samDesired,
-	                               LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
-	                               LPDWORD lpdwDisposition);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved,
+	                                         LPSTR lpClass, DWORD dwOptions, REGSAM samDesired,
+	                                         LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	                                         PHKEY phkResult, LPDWORD lpdwDisposition));
 
 #ifdef UNICODE
 #define RegCreateKeyEx RegCreateKeyExW
@@ -230,11 +240,13 @@ typedef PVALENTA PVALENT;
 #define RegCreateKeyEx RegCreateKeyExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDeleteKeyExW(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired, DWORD Reserved);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDeleteKeyExW(
+	                         HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired, DWORD Reserved));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDeleteKeyExA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired, DWORD Reserved);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDeleteKeyExA(
+	                         HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired, DWORD Reserved));
 
 #ifdef UNICODE
 #define RegDeleteKeyEx RegDeleteKeyExW
@@ -242,11 +254,13 @@ typedef PVALENTA PVALENT;
 #define RegDeleteKeyEx RegDeleteKeyExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDeleteTreeW(HKEY hKey, LPCWSTR lpSubKey);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDeleteTreeW(HKEY hKey,
+	                                                                        LPCWSTR lpSubKey));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDeleteTreeA(HKEY hKey, LPCSTR lpSubKey);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDeleteTreeA(HKEY hKey,
+	                                                                        LPCSTR lpSubKey));
 
 #ifdef UNICODE
 #define RegDeleteTree RegDeleteTreeW
@@ -254,11 +268,13 @@ typedef PVALENTA PVALENT;
 #define RegDeleteTree RegDeleteTreeA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDeleteValueW(HKEY hKey, LPCWSTR lpValueName);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDeleteValueW(HKEY hKey,
+	                                                                         LPCWSTR lpValueName));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDeleteValueA(HKEY hKey, LPCSTR lpValueName);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDeleteValueA(HKEY hKey,
+	                                                                         LPCSTR lpValueName));
 
 #ifdef UNICODE
 #define RegDeleteValue RegDeleteValueW
@@ -266,18 +282,20 @@ typedef PVALENTA PVALENT;
 #define RegDeleteValue RegDeleteValueA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegDisablePredefinedCacheEx(void);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegDisablePredefinedCacheEx(void));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpName, LPDWORD lpcName,
-	                             LPDWORD lpReserved, LPWSTR lpClass, LPDWORD lpcClass,
-	                             PFILETIME lpftLastWriteTime);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpName, LPDWORD lpcName,
+	                                       LPDWORD lpReserved, LPWSTR lpClass, LPDWORD lpcClass,
+	                                       PFILETIME lpftLastWriteTime));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpName, LPDWORD lpcName,
-	                             LPDWORD lpReserved, LPSTR lpClass, LPDWORD lpcClass,
-	                             PFILETIME lpftLastWriteTime);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpName, LPDWORD lpcName,
+	                                       LPDWORD lpReserved, LPSTR lpClass, LPDWORD lpcClass,
+	                                       PFILETIME lpftLastWriteTime));
 
 #ifdef UNICODE
 #define RegEnumKeyEx RegEnumKeyExW
@@ -285,15 +303,15 @@ typedef PVALENTA PVALENT;
 #define RegEnumKeyEx RegEnumKeyExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpValueName,
-	                             LPDWORD lpcchValueName, LPDWORD lpReserved, LPDWORD lpType,
-	                             LPBYTE lpData, LPDWORD lpcbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegEnumValueW(
+	                         HKEY hKey, DWORD dwIndex, LPWSTR lpValueName, LPDWORD lpcchValueName,
+	                         LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpValueName,
-	                             LPDWORD lpcchValueName, LPDWORD lpReserved, LPDWORD lpType,
-	                             LPBYTE lpData, LPDWORD lpcbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegEnumValueA(
+	                         HKEY hKey, DWORD dwIndex, LPSTR lpValueName, LPDWORD lpcchValueName,
+	                         LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData));
 
 #ifdef UNICODE
 #define RegEnumValue RegEnumValueW
@@ -301,21 +319,24 @@ typedef PVALENTA PVALENT;
 #define RegEnumValue RegEnumValueA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegFlushKey(HKEY hKey);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegFlushKey(HKEY hKey));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegGetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation,
-	                                 PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                 LPDWORD lpcbSecurityDescriptor);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegGetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation,
+	                                           PSECURITY_DESCRIPTOR pSecurityDescriptor,
+	                                           LPDWORD lpcbSecurityDescriptor));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegGetValueW(HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
-	                            LPDWORD pdwType, PVOID pvData, LPDWORD pcbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegGetValueW(
+	                         HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
+	                         LPDWORD pdwType, PVOID pvData, LPDWORD pcbData));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegGetValueA(HKEY hkey, LPCSTR lpSubKey, LPCSTR lpValue, DWORD dwFlags,
-	                            LPDWORD pdwType, PVOID pvData, LPDWORD pcbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegGetValueA(HKEY hkey, LPCSTR lpSubKey, LPCSTR lpValue, DWORD dwFlags,
+	                                      LPDWORD pdwType, PVOID pvData, LPDWORD pcbData));
 
 #ifdef UNICODE
 #define RegGetValue RegGetValueW
@@ -323,13 +344,15 @@ typedef PVALENTA PVALENT;
 #define RegGetValue RegGetValueA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegLoadAppKeyW(LPCWSTR lpFile, PHKEY phkResult, REGSAM samDesired,
-	                              DWORD dwOptions, DWORD Reserved);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegLoadAppKeyW(LPCWSTR lpFile, PHKEY phkResult, REGSAM samDesired,
+	                                        DWORD dwOptions, DWORD Reserved));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegLoadAppKeyA(LPCSTR lpFile, PHKEY phkResult, REGSAM samDesired,
-	                              DWORD dwOptions, DWORD Reserved);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegLoadAppKeyA(LPCSTR lpFile, PHKEY phkResult, REGSAM samDesired,
+	                                        DWORD dwOptions, DWORD Reserved));
 
 #ifdef UNICODE
 #define RegLoadAppKey RegLoadAppKeyW
@@ -337,11 +360,14 @@ typedef PVALENTA PVALENT;
 #define RegLoadAppKey RegLoadAppKeyA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegLoadKeyW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpFile);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegLoadKeyW(HKEY hKey,
+	                                                                     LPCWSTR lpSubKey,
+	                                                                     LPCWSTR lpFile));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegLoadKeyA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpFile);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegLoadKeyA(HKEY hKey, LPCSTR lpSubKey,
+	                                                                     LPCSTR lpFile));
 
 #ifdef UNICODE
 #define RegLoadKey RegLoadKeyW
@@ -349,13 +375,15 @@ typedef PVALENTA PVALENT;
 #define RegLoadKey RegLoadKeyA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegLoadMUIStringW(HKEY hKey, LPCWSTR pszValue, LPWSTR pszOutBuf, DWORD cbOutBuf,
-	                                 LPDWORD pcbData, DWORD Flags, LPCWSTR pszDirectory);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegLoadMUIStringW(
+	                         HKEY hKey, LPCWSTR pszValue, LPWSTR pszOutBuf, DWORD cbOutBuf,
+	                         LPDWORD pcbData, DWORD Flags, LPCWSTR pszDirectory));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegLoadMUIStringA(HKEY hKey, LPCSTR pszValue, LPSTR pszOutBuf, DWORD cbOutBuf,
-	                                 LPDWORD pcbData, DWORD Flags, LPCSTR pszDirectory);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegLoadMUIStringA(
+	                         HKEY hKey, LPCSTR pszValue, LPSTR pszOutBuf, DWORD cbOutBuf,
+	                         LPDWORD pcbData, DWORD Flags, LPCSTR pszDirectory));
 
 #ifdef UNICODE
 #define RegLoadMUIString RegLoadMUIStringW
@@ -363,20 +391,24 @@ typedef PVALENTA PVALENT;
 #define RegLoadMUIString RegLoadMUIStringA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegNotifyChangeKeyValue(HKEY hKey, BOOL bWatchSubtree, DWORD dwNotifyFilter,
-	                                       HANDLE hEvent, BOOL fAsynchronous);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegNotifyChangeKeyValue(
+	                         HKEY hKey, BOOL bWatchSubtree, DWORD dwNotifyFilter, HANDLE hEvent,
+	                         BOOL fAsynchronous));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegOpenCurrentUser(REGSAM samDesired, PHKEY phkResult);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegOpenCurrentUser(REGSAM samDesired,
+	                                                                            PHKEY phkResult));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired,
-	                             PHKEY phkResult);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions,
+	                                       REGSAM samDesired, PHKEY phkResult));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired,
-	                             PHKEY phkResult);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions,
+	                                       REGSAM samDesired, PHKEY phkResult));
 
 #ifdef UNICODE
 #define RegOpenKeyEx RegOpenKeyExW
@@ -384,23 +416,23 @@ typedef PVALENTA PVALENT;
 #define RegOpenKeyEx RegOpenKeyExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegOpenUserClassesRoot(HANDLE hToken, DWORD dwOptions, REGSAM samDesired,
-	                                      PHKEY phkResult);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegOpenUserClassesRoot(
+	                         HANDLE hToken, DWORD dwOptions, REGSAM samDesired, PHKEY phkResult));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegQueryInfoKeyW(HKEY hKey, LPWSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
-	                                LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen,
-	                                LPDWORD lpcMaxClassLen, LPDWORD lpcValues,
-	                                LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
-	                                LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegQueryInfoKeyW(
+	                         HKEY hKey, LPWSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
+	                         LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen, LPDWORD lpcMaxClassLen,
+	                         LPDWORD lpcValues, LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
+	                         LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
-	                                LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen,
-	                                LPDWORD lpcMaxClassLen, LPDWORD lpcValues,
-	                                LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
-	                                LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegQueryInfoKeyA(
+	                         HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
+	                         LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen, LPDWORD lpcMaxClassLen,
+	                         LPDWORD lpcValues, LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
+	                         LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime));
 
 #ifdef UNICODE
 #define RegQueryInfoKey RegQueryInfoKeyW
@@ -408,13 +440,15 @@ typedef PVALENTA PVALENT;
 #define RegQueryInfoKey RegQueryInfoKeyA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved,
-	                                LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved,
+	                                          LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
-	                                LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
+	                                          LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData));
 
 #ifdef UNICODE
 #define RegQueryValueEx RegQueryValueExW
@@ -422,11 +456,15 @@ typedef PVALENTA PVALENT;
 #define RegQueryValueEx RegQueryValueExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegRestoreKeyW(HKEY hKey, LPCWSTR lpFile, DWORD dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegRestoreKeyW(HKEY hKey,
+	                                                                        LPCWSTR lpFile,
+	                                                                        DWORD dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegRestoreKeyA(HKEY hKey, LPCSTR lpFile, DWORD dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegRestoreKeyA(HKEY hKey,
+	                                                                        LPCSTR lpFile,
+	                                                                        DWORD dwFlags));
 
 #ifdef UNICODE
 #define RegRestoreKey RegRestoreKeyW
@@ -434,13 +472,15 @@ typedef PVALENTA PVALENT;
 #define RegRestoreKey RegRestoreKeyA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegSaveKeyExW(HKEY hKey, LPCWSTR lpFile,
-	                             LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegSaveKeyExW(
+	                         HKEY hKey, LPCWSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	                         DWORD Flags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegSaveKeyExA(HKEY hKey, LPCSTR lpFile,
-	                             LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegSaveKeyExA(
+	                         HKEY hKey, LPCSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	                         DWORD Flags));
 
 #ifdef UNICODE
 #define RegSaveKeyEx RegSaveKeyExW
@@ -448,17 +488,20 @@ typedef PVALENTA PVALENT;
 #define RegSaveKeyEx RegSaveKeyExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegSetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation,
-	                                 PSECURITY_DESCRIPTOR pSecurityDescriptor);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegSetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation,
+	                                           PSECURITY_DESCRIPTOR pSecurityDescriptor));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegSetValueExW(HKEY hKey, LPCWSTR lpValueName, DWORD Reserved, DWORD dwType,
-	                              const BYTE* lpData, DWORD cbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegSetValueExW(HKEY hKey, LPCWSTR lpValueName, DWORD Reserved,
+	                                        DWORD dwType, const BYTE* lpData, DWORD cbData));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType,
-	                              const BYTE* lpData, DWORD cbData);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG
+	                         RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved,
+	                                        DWORD dwType, const BYTE* lpData, DWORD cbData));
 
 #ifdef UNICODE
 #define RegSetValueEx RegSetValueExW
@@ -466,11 +509,13 @@ typedef PVALENTA PVALENT;
 #define RegSetValueEx RegSetValueExA
 #endif
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegUnLoadKeyW(HKEY hKey, LPCWSTR lpSubKey);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegUnLoadKeyW(HKEY hKey,
+	                                                                       LPCWSTR lpSubKey));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API LONG RegUnLoadKeyA(HKEY hKey, LPCSTR lpSubKey);
+	WINPR_DEPRECATED_VAR("[since 3.33.0] use JSON based configuration instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API LONG RegUnLoadKeyA(HKEY hKey,
+	                                                                       LPCSTR lpSubKey));
 
 #ifdef UNICODE
 #define RegUnLoadKey RegUnLoadKeyW
@@ -483,5 +528,7 @@ typedef PVALENTA PVALENT;
 #endif
 
 #endif
+
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 #endif /* WINPR_REGISTRY_H */

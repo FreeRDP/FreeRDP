@@ -8,18 +8,8 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <UIKit/UIKit.h>
+#import "EditTextTableViewCell.h"
 
-@interface EditSecretTextTableViewCell : UITableViewCell
-{
-	IBOutlet UILabel *_label;
-	IBOutlet UITextField *_textfield;
-	IBOutlet UIButton *_unhide_button;
-}
-
-@property(retain, nonatomic) UILabel *label;
-@property(retain, nonatomic) UITextField *textfield;
-
-- (void)setEnabled:(BOOL)enabled;
+@interface EditSecretTextTableViewCell : EditTextTableViewCell
 
 @end

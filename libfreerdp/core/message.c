@@ -1237,8 +1237,8 @@ static RAIL_UNICODE_STRING rail_unicode_string_clone(const RAIL_UNICODE_STRING* 
 {
 	WINPR_ASSERT(str);
 	WINPR_ASSERT(((str->length == 0) && (str->string == nullptr)) ||
-	             (str->length == _wcsnlen(str->string, str->length)));
-	RAIL_UNICODE_STRING clone = { .string = wcsndup(str->string, str->length),
+	             (str->length == _wcsnlen(str->string, str->length / sizeof(WCHAR))));
+	RAIL_UNICODE_STRING clone = { .string = wcsndup(str->string, str->length / sizeof(WCHAR)),
 		                          .length = str->length };
 	return clone;
 }

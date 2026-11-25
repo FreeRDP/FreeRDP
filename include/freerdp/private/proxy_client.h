@@ -81,4 +81,6 @@ struct p_client_context
 		char* c;
 		void* v;
 	} computerName;
+
+	wMessageQueue* server_messages;
 };

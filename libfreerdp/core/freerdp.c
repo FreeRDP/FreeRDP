@@ -34,6 +34,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "message.h"
+#include "plugin_services.h"
 #include <freerdp/buildflags.h>
 #include "gateway/rpc_fault.h"
 #include "../cache/cache.h"
@@ -46,6 +47,7 @@
 #include <winpr/wtsapi.h>
 #include <winpr/ssl.h>
 #include <winpr/debug.h>
+#include <winpr/i18n.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/streamdump.h>
@@ -63,6 +65,11 @@
 
 #define TAG FREERDP_TAG("core")
 
+BOOL freerdp_enable_translation(const char* locale, const char* searchPath)
+{
+	return winpr_i18n_enable_translation(locale) && winpr_i18n_bind_domain("freerdp", searchPath);
+}
+
 static void sig_abort_connect(int signum, const char* signame, void* ctx)
 {
 	rdpContext* context = (rdpContext*)ctx;
@@ -70,7 +77,10 @@ static void sig_abort_connect(int signum, const char* signame, void* ctx)
 	WLog_INFO(TAG, "Signal %s [%d], terminating session %p", signame, signum,
 	          WINPR_CXX_COMPAT_CAST(const void*, context));
 	if (context)
+	{
+		freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 		freerdp_abort_connect_context(context);
+	}
 }
 
 /** Creates a new connection based on the settings found in the "instance" parameter
@@ -947,6 +957,10 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!context->dump)
 		goto fail;
 
+	context->pluginServiceProvider = plugin_services_new(context);
+	if (!context->pluginServiceProvider)
+		goto fail;
+
 	/* Fallback:
 	 * Client common library might set a function pointer to handle this, but here we provide a
 	 * default implementation that simply calls instance->GetAccessToken.
@@ -997,7 +1011,16 @@ void freerdp_context_free(freerdp* instance)
 
 	ctx = instance->context;
 
+	/* before the client frees its services: what channels still hold stops using them */
+	plugin_services_detach(ctx->pluginServiceProvider);
 	IFCALL(instance->ContextFree, instance, ctx);
+	if (ctx->windowInfoService || ctx->bitmapRenderService)
+	{
+		/* the client's to release, when its own state goes: they may use it */
+		WLog_Print(ctx->log, WLOG_WARN, "the client left its plugin services in the context");
+		ctx->windowInfoService = nullptr;
+		ctx->bitmapRenderService = nullptr;
+	}
 	rdp_free(ctx->rdp);
 	ctx->rdp = nullptr;
 	ctx->settings = nullptr; /* owned by rdpRdp */
@@ -1024,6 +1047,11 @@ void freerdp_context_free(freerdp* instance)
 	stream_dump_free(ctx->dump);
 	ctx->dump = nullptr;
 
+	/* last: channels are gone; plugins may still hold services, which keep the provider */
+	if (ctx->pluginServiceProvider)
+		WINPR_COM_RELEASE(ctx->pluginServiceProvider);
+	ctx->pluginServiceProvider = nullptr;
+
 	ctx->input = nullptr;      /* owned by rdpRdp */
 	ctx->update = nullptr;     /* owned by rdpRdp */
 	ctx->settings = nullptr;   /* owned by rdpRdp */
@@ -1044,6 +1072,15 @@ int freerdp_get_disconnect_ultimatum(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return context->disconnectUltimatum;
+}
+
+IWTSPluginServiceProvider* freerdp_get_plugin_service_provider(const rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	IWTSPluginServiceProvider* provider = context->pluginServiceProvider;
+	if (provider)
+		WINPR_COM_ADDREF(provider);
+	return provider;
 }
 
 UINT32 freerdp_error_info(const freerdp* instance)
@@ -1219,30 +1256,27 @@ const char* freerdp_get_logon_error_info_type(UINT32 type)
 		CASE_ENTRY(ERROR_CODE_ACCESS_DENIED);
 
 		default:
-			return "UNKNOWN";
+			return NtStatus2Tag((NTSTATUS)type);
 	}
 #undef CASE_ENTRY
 }
 
 const char* freerdp_get_logon_error_info_data(UINT32 data)
 {
+#define CASE_ENTRY(x) \
+	case x:           \
+		return #x
 	switch (data)
 	{
-		case LOGON_FAILED_BAD_PASSWORD:
-			return "LOGON_FAILED_BAD_PASSWORD";
-
-		case LOGON_FAILED_UPDATE_PASSWORD:
-			return "LOGON_FAILED_UPDATE_PASSWORD";
-
-		case LOGON_FAILED_OTHER:
-			return "LOGON_FAILED_OTHER";
-
-		case LOGON_WARNING:
-			return "LOGON_WARNING";
+		CASE_ENTRY(LOGON_FAILED_BAD_PASSWORD);
+		CASE_ENTRY(LOGON_FAILED_UPDATE_PASSWORD);
+		CASE_ENTRY(LOGON_FAILED_OTHER);
+		CASE_ENTRY(LOGON_WARNING);
 
 		default:
 			return "SESSION_ID";
 	}
+#undef CASE_ENTRY
 }
 
 const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer, size_t size)
@@ -1303,6 +1337,9 @@ BOOL freerdp_nla_impersonate(rdpContext* context)
 		return FALSE;
 
 	nla = transport_get_nla(context->rdp->transport);
+	if (!nla)
+		return FALSE;
+
 	return nla_impersonate(nla);
 }
 
@@ -1320,6 +1357,9 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 		return FALSE;
 
 	nla = transport_get_nla(context->rdp->transport);
+	if (!nla)
+		return FALSE;
+
 	return nla_revert_to_self(nla);
 }
 
@@ -1332,6 +1372,9 @@ UINT32 freerdp_get_nla_sspi_error(const rdpContext* context)
 	rdpNla* nla = context->rdp->nla;
 	if (!nla)
 		nla = transport_get_nla(context->rdp->transport);
+	if (!nla)
+		return (UINT32)SEC_E_INVALID_HANDLE;
+
 	return (UINT32)nla_get_sspi_error(nla);
 }
 
@@ -1340,7 +1383,11 @@ BOOL freerdp_nla_encrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuff
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
+	/* There is no NLA context on connections that did not use CredSSP (e.g. PROTOCOL_SSL) */
 	rdpNla* nla = context->rdp->nla;
+	if (!nla)
+		return FALSE;
+
 	return nla_encrypt(nla, inBuffer, outBuffer);
 }
 
@@ -1349,7 +1396,11 @@ BOOL freerdp_nla_decrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuff
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
+	/* There is no NLA context on connections that did not use CredSSP (e.g. PROTOCOL_SSL) */
 	rdpNla* nla = context->rdp->nla;
+	if (!nla)
+		return FALSE;
+
 	return nla_decrypt(nla, inBuffer, outBuffer);
 }
 
@@ -1361,8 +1412,8 @@ SECURITY_STATUS freerdp_nla_QueryContextAttributes(rdpContext* context, DWORD ul
 	rdpNla* nla = context->rdp->nla;
 	if (!nla)
 		nla = transport_get_nla(context->rdp->transport);
-
-	WINPR_ASSERT(nla);
+	if (!nla)
+		return SEC_E_INVALID_HANDLE;
 
 	return nla_QueryContextAttributes(nla, ulAttr, pBuffer);
 }
@@ -1375,8 +1426,8 @@ SECURITY_STATUS freerdp_nla_FreeContextBuffer(rdpContext* context, PVOID pBuffer
 	rdpNla* nla = context->rdp->nla;
 	if (!nla)
 		nla = transport_get_nla(context->rdp->transport);
-
-	WINPR_ASSERT(nla);
+	if (!nla)
+		return SEC_E_INVALID_HANDLE;
 
 	return nla_FreeContextBuffer(nla, pBuffer);
 }

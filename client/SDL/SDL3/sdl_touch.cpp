@@ -48,7 +48,7 @@
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 			cflags = (flags & 0xFF00) | (0x100 - cval);
 		if (!freerdp_client_send_wheel_event(sdl->common(), cflags))
-			return FALSE;
+			return sdl::utils::inputSent(sdl->context(), sdl->getWLog(), FALSE, "wheel event");
 
 		avalue -= cval;
 	}
@@ -69,40 +69,52 @@ bool SdlTouch::touchUp(SdlContext* sdl, const SDL_TouchFingerEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	return freerdp_client_handle_touch(sdl->common(), FREERDP_TOUCH_UP | FREERDP_TOUCH_HAS_PRESSURE,
-	                                   static_cast<INT32>(ev.fingerID),
-	                                   sdl_scale_pressure(ev.pressure), static_cast<Sint32>(ev.x),
-	                                   static_cast<Sint32>(ev.y));
+	return sdl::utils::inputSent(
+	    sdl->context(), sdl->getWLog(),
+	    freerdp_client_handle_touch(sdl->common(), FREERDP_TOUCH_UP | FREERDP_TOUCH_HAS_PRESSURE,
+	                                static_cast<INT32>(ev.fingerID),
+	                                sdl_scale_pressure(ev.pressure), static_cast<Sint32>(ev.x),
+	                                static_cast<Sint32>(ev.y)),
+	    "touch up");
 }
 
 bool SdlTouch::touchCancel(SdlContext* sdl, const SDL_TouchFingerEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	return freerdp_client_handle_touch(
-	    sdl->common(), FREERDP_TOUCH_CANCEL | FREERDP_TOUCH_HAS_PRESSURE,
-	    static_cast<INT32>(ev.fingerID), sdl_scale_pressure(ev.pressure), static_cast<Sint32>(ev.x),
-	    static_cast<Sint32>(ev.y));
+	return sdl::utils::inputSent(
+	    sdl->context(), sdl->getWLog(),
+	    freerdp_client_handle_touch(
+	        sdl->common(), FREERDP_TOUCH_CANCEL | FREERDP_TOUCH_HAS_PRESSURE,
+	        static_cast<INT32>(ev.fingerID), sdl_scale_pressure(ev.pressure),
+	        static_cast<Sint32>(ev.x), static_cast<Sint32>(ev.y)),
+	    "touch cancel");
 }
 
 bool SdlTouch::touchDown(SdlContext* sdl, const SDL_TouchFingerEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	return freerdp_client_handle_touch(
-	    sdl->common(), FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
-	    static_cast<INT32>(ev.fingerID), sdl_scale_pressure(ev.pressure), static_cast<Sint32>(ev.x),
-	    static_cast<Sint32>(ev.y));
+	return sdl::utils::inputSent(
+	    sdl->context(), sdl->getWLog(),
+	    freerdp_client_handle_touch(sdl->common(), FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
+	                                static_cast<INT32>(ev.fingerID),
+	                                sdl_scale_pressure(ev.pressure), static_cast<Sint32>(ev.x),
+	                                static_cast<Sint32>(ev.y)),
+	    "touch down");
 }
 
 bool SdlTouch::touchMotion(SdlContext* sdl, const SDL_TouchFingerEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	return freerdp_client_handle_touch(
-	    sdl->common(), FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
-	    static_cast<INT32>(ev.fingerID), sdl_scale_pressure(ev.pressure), static_cast<Sint32>(ev.x),
-	    static_cast<Sint32>(ev.y));
+	return sdl::utils::inputSent(
+	    sdl->context(), sdl->getWLog(),
+	    freerdp_client_handle_touch(
+	        sdl->common(), FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
+	        static_cast<INT32>(ev.fingerID), sdl_scale_pressure(ev.pressure),
+	        static_cast<Sint32>(ev.x), static_cast<Sint32>(ev.y)),
+	    "touch motion");
 }
 
 bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseMotionEvent& ev)
@@ -116,7 +128,10 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseMotionEvent& ev)
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? ev.xrel : ev.x);
 	auto y = static_cast<INT32>(relative ? ev.yrel : ev.y);
-	return freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y);
+	return sdl::utils::inputSent(
+	    sdl->context(), sdl->getWLog(),
+	    freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y),
+	    "mouse move");
 }
 
 bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
@@ -125,21 +140,23 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
 
 	const bool flipped = (ev.direction == SDL_MOUSEWHEEL_FLIPPED) &&
 	                     !SdlPref::instance()->get_bool("UseLocalMouseScrollDirection");
-	const auto x = static_cast<INT32>(ev.x * (flipped ? -1.0f : 1.0f) * 120.0f);
-	const auto y = static_cast<INT32>(ev.y * (flipped ? -1.0f : 1.0f) * 120.0f);
-	UINT16 flags = 0;
+	const float sign = flipped ? -1.0f : 1.0f;
+	const auto x = sdl->wheelAxis(true).add(ev.x * sign);
+	const auto y = sdl->wheelAxis(false).add(ev.y * sign);
 
+	/* [MS-RDPBCGR] 2.2.8.1.1.3.1.1.3 Pointer Event: a wheel rotation event carries no flags
+	 * besides PTR_FLAGS_WHEEL_NEGATIVE and the rotation itself, so the two axes cannot share
+	 * one event. Keep the flags apart, the horizontal rotation would otherwise be applied to
+	 * the vertical axis. */
 	if (y != 0)
 	{
-		flags |= PTR_FLAGS_WHEEL;
-		if (!send_mouse_wheel(sdl, flags, y))
+		if (!send_mouse_wheel(sdl, PTR_FLAGS_WHEEL, y))
 			return false;
 	}
 
 	if (x != 0)
 	{
-		flags |= PTR_FLAGS_HWHEEL;
-		if (!send_mouse_wheel(sdl, flags, x))
+		if (!send_mouse_wheel(sdl, PTR_FLAGS_HWHEEL, x))
 			return false;
 	}
 	return TRUE;
@@ -185,9 +202,14 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseButtonEvent& ev)
 	auto y = static_cast<INT32>(relative ? 0 : ev.y);
 
 	if ((flags & (~PTR_FLAGS_DOWN)) != 0)
-		return freerdp_client_send_button_event(sdl->common(), relative, flags, x, y);
+		return sdl::utils::inputSent(
+		    sdl->context(), sdl->getWLog(),
+		    freerdp_client_send_button_event(sdl->common(), relative, flags, x, y), "mouse button");
 	else if ((xflags & (~PTR_XFLAGS_DOWN)) != 0)
-		return freerdp_client_send_extended_button_event(sdl->common(), relative, xflags, x, y);
+		return sdl::utils::inputSent(
+		    sdl->context(), sdl->getWLog(),
+		    freerdp_client_send_extended_button_event(sdl->common(), relative, xflags, x, y),
+		    "mouse button");
 	else
 		return TRUE;
 }

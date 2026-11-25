@@ -36,14 +36,17 @@
 static pthread_once_t sTebOnceControl = PTHREAD_ONCE_INIT;
 static pthread_key_t sTebKey;
 
-static void sTebDestruct(void* teb)
-{
-	free(teb);
-}
-
 static void sTebInitOnce(void)
 {
-	pthread_key_create(&sTebKey, sTebDestruct);
+	/*
+	 * The C library keeps the key's destructor until the key is deleted, which
+	 * WinPR never does, and calls it for each thread that ends with a TEB. A
+	 * destructor inside WinPR would be called after dlclose() has unmapped it,
+	 * and WinPR's own unload destructors call SetLastError() (see
+	 * GetStdHandle_Uninit), so the thread that unloads WinPR always ends with
+	 * a TEB. free() itself stays mapped, and frees what calloc() allocated.
+	 */
+	pthread_key_create(&sTebKey, free);
 }
 
 PTEB NtCurrentTeb(void)

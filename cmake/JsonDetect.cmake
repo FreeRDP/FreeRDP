@@ -3,7 +3,7 @@ function(detect_package name)
   set(oneValueArgs HEADER LIBRARY PKGCONFIG CMAKE VERSION VERSION_STR)
   cmake_parse_arguments(PARSE_ARGV 0 arg "${options}" "${oneValueArgs}" "${multiValueArgs}")
 
-  find_package(${name} ${arg_VERSION})
+  find_package(${name} ${arg_VERSION} QUIET)
   if(NOT ${name}_FOUND)
     # Fallback detection:
     # some distributions only ship pkg-config and skip CMake config files.

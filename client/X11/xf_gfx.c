@@ -103,7 +103,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
 			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
 			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
-			(void)xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
+			(void)xf_rail_paint_surface(xfc, surface->gdi.windowId, rect, TRUE, FALSE);
 		}
 		else
 #ifdef WITH_XRENDER
@@ -299,6 +299,9 @@ static void DestroySurface(xfGfxSurface* surface)
 #if defined(WITH_GFX_AV1)
 	freerdp_av1_context_free(surface->gdi.av1);
 #endif
+#if defined(WITH_GFX_AV2)
+	freerdp_av2_context_free(surface->gdi.av2);
+#endif
 	if (surface->image)
 	{
 		surface->image->data = nullptr;
@@ -366,15 +369,18 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	const UINT32 pad = WINPR_ASSERTING_INT_CAST(uint32_t, xfc->scanline_pad);
-	if (surface->gdi.width > UINT32_MAX / FreeRDPGetBytesPerPixel(surface->gdi.format) - 16 - pad)
+	if (surface->gdi.width > UINT32_MAX / FreeRDPGetBytesPerPixel(surface->gdi.format) - 64 - pad)
+		goto fail;
+	if (surface->gdi.height > UINT32_MAX - 64)
 		goto fail;
 
 	/* Align to multiples of 16, but also add additional 16 bytes so SIMD implementations do not
 	 * accidentally read out of bound */
 	surface->gdi.scanline = surface->gdi.width * FreeRDPGetBytesPerPixel(surface->gdi.format);
-	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, pad) + 16ul;
+	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, pad) + 64ul;
 
-	surface->gdi.data = (BYTE*)winpr_aligned_calloc(surface->gdi.scanline, surface->gdi.height, 16);
+	surface->gdi.data =
+	    (BYTE*)winpr_aligned_calloc(surface->gdi.scanline, surface->gdi.height + 4ull, 16);
 
 	if (!surface->gdi.data)
 	{
@@ -449,6 +455,39 @@ fail:
 }
 
 /**
+ * Detaches the RemoteApp window showing a surface that is being deleted.
+ *
+ * Called from DeleteSurface with gfx->mux held, before the surface is freed. The server may
+ * already have mapped another surface to the window, which appWindow->surfaceId only picks up on
+ * that surface's first update (see xf_AppUpdateWindowFromSurface()), so only detach the window
+ * if it still shows the deleted surface.
+ */
+static void xf_DetachWindowFromSurface(RdpgfxClientContext* context, const gdiGfxSurface* surface)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(surface);
+
+	if (!surface->windowMapped)
+		return;
+
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
+
+	xfContext* xfc = (xfContext*)gdi->context;
+	WINPR_ASSERT(xfc);
+
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE, FALSE);
+	if (appWindow && (appWindow->surfaceId == surface->surfaceId))
+	{
+		/* With software GDI the window image wraps the surface data */
+		xf_AppWindowDestroyImage(appWindow);
+		appWindow->surfaceId = UINT32_MAX;
+		appWindow->surfaceStale = FALSE;
+	}
+	xf_rail_return_window(appWindow, FALSE, FALSE);
+}
+
+/**
  * Function description
  *
  * @return 0 on success, otherwise a Win32 error code
@@ -465,6 +504,8 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 
 	if (surface)
 	{
+		xf_DetachWindowFromSurface(context, &surface->gdi);
+
 		if (surface->gdi.windowMapped)
 		{
 			status = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
@@ -487,25 +528,34 @@ fail:
 	return status;
 }
 
-static UINT xf_UnmapWindowForSurface(RdpgfxClientContext* context, UINT64 windowID)
+/**
+ * DeleteSurface with software GDI: detach the RemoteApp window, then let gdi delete the surface
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_DeleteSurfaceSoftwareGdi(RdpgfxClientContext* context,
+                                        const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(deleteSurface);
+
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	WINPR_ASSERT(gdi);
 
 	xfContext* xfc = (xfContext*)gdi->context;
-	WINPR_ASSERT(gdi->context);
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->gdiDeleteSurface);
 
-	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
-	{
-		xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID, FALSE);
-		if (appWindow)
-			xf_AppWindowDestroyImage(appWindow);
-		xf_rail_return_window(appWindow, FALSE);
-	}
+	/* recursive, gdi's DeleteSurface takes it again */
+	EnterCriticalSection(&context->mux);
+	const gdiGfxSurface* surface =
+	    (const gdiGfxSurface*)context->GetSurfaceData(context, deleteSurface->surfaceId);
+	if (surface)
+		xf_DetachWindowFromSurface(context, surface);
 
-	WLog_WARN(TAG, "function not implemented");
-	return CHANNEL_RC_OK;
+	const UINT status = xfc->gdiDeleteSurface(context, deleteSurface);
+	LeaveCriticalSection(&context->mux);
+	return status;
 }
 
 static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurface* surface)
@@ -520,7 +570,7 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 	WINPR_ASSERT(gdi->context);
 
 	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
-		return xf_AppUpdateWindowFromSurface(xfc, surface);
+		return xf_AppUpdateWindowFromSurface(xfc, surface, FALSE, FALSE);
 
 	WLog_WARN(TAG, "function not implemented");
 	return CHANNEL_RC_OK;
@@ -546,9 +596,13 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 		gfx->CreateSurface = xf_CreateSurface;
 		gfx->DeleteSurface = xf_DeleteSurface;
 	}
+	else
+	{
+		xfc->gdiDeleteSurface = gfx->DeleteSurface;
+		gfx->DeleteSurface = xf_DeleteSurfaceSoftwareGdi;
+	}
 
 	gfx->UpdateWindowFromSurface = xf_UpdateWindowFromSurface;
-	gfx->UnmapWindowForSurface = xf_UnmapWindowForSurface;
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)

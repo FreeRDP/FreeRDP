@@ -68,6 +68,81 @@ static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpCha
 	return nullptr;
 }
 
+#if defined(WITH_RDPEUDP)
+/* A dynamic channel that carries a static channel's data, see
+ * freerdp_channels_set_static_bridge. The channel holds one reference and a send in progress
+ * another, so custom outlives both. */
+struct rdp_channel_bridge
+{
+	volatile LONG refs;
+	freerdp_channels_bridge_send_fkt_t send;
+	void (*fnFree)(void* custom);
+	void* custom;
+};
+
+static void channel_bridge_unref(struct rdp_channel_bridge* bridge)
+{
+	if (!bridge || (InterlockedDecrement(&bridge->refs) != 0))
+		return;
+	IFCALL(bridge->fnFree, bridge->custom);
+	free(bridge);
+}
+
+/* Drops the channel's bridge while the channel manager is shutting down. */
+static void channel_clear_bridge(CHANNEL_OPEN_DATA* pChannelOpenData)
+{
+	WINPR_ASSERT(pChannelOpenData);
+	WINPR_ASSERT(pChannelOpenData->channels);
+
+	EnterCriticalSection(&pChannelOpenData->dataLock);
+	EnterCriticalSection(&pChannelOpenData->channels->channelsLock);
+	struct rdp_channel_bridge* old = pChannelOpenData->bridge;
+	pChannelOpenData->bridge = nullptr;
+	pChannelOpenData->tunneled = FALSE;
+	LeaveCriticalSection(&pChannelOpenData->channels->channelsLock);
+	LeaveCriticalSection(&pChannelOpenData->dataLock);
+	channel_bridge_unref(old);
+}
+
+/* Sends a static channel's message on the dynamic channel that carries it. Once tunnelling was
+ * enabled, a missing bridge means that the message is discarded instead of falling back to the
+ * original static transport. */
+WINPR_ATTR_NODISCARD
+static BOOL channel_bridge_send(CHANNEL_OPEN_DATA* pChannelOpenData, const CHANNEL_OPEN_EVENT* item,
+                                BOOL* ret)
+{
+	WINPR_ASSERT(pChannelOpenData);
+	WINPR_ASSERT(pChannelOpenData->channels);
+	WINPR_ASSERT(item);
+	WINPR_ASSERT(ret);
+
+	rdpChannels* channels = pChannelOpenData->channels;
+	EnterCriticalSection(&pChannelOpenData->dataLock);
+	EnterCriticalSection(&channels->channelsLock);
+	struct rdp_channel_bridge* bridge = pChannelOpenData->bridge;
+	const BOOL tunneled = pChannelOpenData->tunneled;
+	if (bridge)
+		(void)InterlockedIncrement(&bridge->refs);
+	LeaveCriticalSection(&channels->channelsLock);
+	LeaveCriticalSection(&pChannelOpenData->dataLock);
+	if (!bridge)
+	{
+		if (!tunneled)
+			return FALSE;
+		*ret = TRUE;
+		return TRUE;
+	}
+
+	/* the send runs without the lock, the dynamic channel takes locks of its own */
+	pChannelOpenData->stats.bytesOut += item->DataLength;
+	pChannelOpenData->stats.packetsOut++;
+	pChannelOpenData->stats.fragmentsOut++;
+	*ret = bridge->send(bridge->custom, item->Data, item->DataLength);
+	channel_bridge_unref(bridge);
+	return TRUE;
+}
+#endif
+
 /* returns rdpChannel for the channel name passed in */
 static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
@@ -164,6 +239,14 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 		goto error;
 	if (!InitializeCriticalSectionAndSpinCount(&channels->channelsLock, 4000))
 		goto error;
+#if defined(WITH_RDPEUDP)
+	for (size_t x = 0; x < ARRAYSIZE(channels->openDataList); x++)
+	{
+		if (!InitializeCriticalSectionAndSpinCount(&channels->openDataList[x].dataLock, 4000))
+			goto error;
+		channels->dataLockCount++;
+	}
+#endif
 
 	channels->instance = instance;
 	channels->queue = MessageQueue_New(nullptr);
@@ -198,6 +281,10 @@ void freerdp_channels_free(rdpChannels* channels)
 
 	HashTable_Free(channels->channelEvents);
 
+#if defined(WITH_RDPEUDP)
+	for (size_t x = 0; x < channels->dataLockCount; x++)
+		DeleteCriticalSection(&channels->openDataList[x].dataLock);
+#endif
 	DeleteCriticalSection(&channels->channelsLock);
 
 	if (channels->queue)
@@ -562,8 +649,9 @@ fail:
 	return error;
 }
 
-BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdata, size_t dataSize,
-                           UINT32 flags, size_t totalSize)
+static BOOL freerdp_channels_data_internal(freerdp* instance, UINT16 channelId, const BYTE* cdata,
+                                           size_t dataSize, UINT32 flags, size_t totalSize,
+                                           BOOL fromBridge)
 {
 	union
 	{
@@ -619,6 +707,20 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 		return FALSE;
 	}
 
+#if defined(WITH_RDPEUDP)
+	/* Publish of a dynamic-to-static bridge takes this same lock.  It therefore waits for an
+	 * in-flight static callback to finish before marking the channel as tunnelled, and no later
+	 * static callback can enter the plugin. */
+	EnterCriticalSection(&pChannelOpenData->dataLock);
+	if (pChannelOpenData->tunneled && !fromBridge)
+	{
+		LeaveCriticalSection(&pChannelOpenData->dataLock);
+		return TRUE;
+	}
+#else
+	WINPR_UNUSED(fromBridge);
+#endif
+
 	pChannelOpenData->stats.bytesIn += dataSize;
 	pChannelOpenData->stats.fragmentsIn++;
 	if ((flags & CHANNEL_FLAG_LAST) != 0)
@@ -637,8 +739,106 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 		    CHANNEL_EVENT_DATA_RECEIVED, data.pb, (UINT32)dataSize, (UINT32)totalSize, flags);
 	}
 
+#if defined(WITH_RDPEUDP)
+	LeaveCriticalSection(&pChannelOpenData->dataLock);
+#endif
 	return TRUE;
 }
+
+BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdata, size_t dataSize,
+                           UINT32 flags, size_t totalSize)
+{
+	return freerdp_channels_data_internal(instance, channelId, cdata, dataSize, flags, totalSize,
+	                                      FALSE);
+}
+
+#if defined(WITH_RDPEUDP)
+BOOL freerdp_channels_data_bridge(freerdp* instance, UINT16 channelId, const BYTE* data,
+                                  size_t dataSize, UINT32 flags, size_t totalSize)
+{
+	return freerdp_channels_data_internal(instance, channelId, data, dataSize, flags, totalSize,
+	                                      TRUE);
+}
+#endif
+
+#if !defined(WITH_RDPEUDP)
+/* Static channels are only tunnelled along with UDP multitransport. */
+BOOL freerdp_channels_set_static_bridge(WINPR_ATTR_UNUSED freerdp* instance,
+                                        WINPR_ATTR_UNUSED const char* name,
+                                        WINPR_ATTR_UNUSED freerdp_channels_bridge_send_fkt_t send,
+                                        WINPR_ATTR_UNUSED void (*fnFree)(void* custom),
+                                        WINPR_ATTR_UNUSED void* custom)
+{
+	return FALSE;
+}
+#else
+BOOL freerdp_channels_set_static_bridge(freerdp* instance, const char* name,
+                                        freerdp_channels_bridge_send_fkt_t send,
+                                        void (*fnFree)(void* custom), void* custom)
+{
+	if (!instance || !name)
+		return FALSE;
+
+	WINPR_ASSERT(instance->context);
+	rdpChannels* channels = instance->context->channels;
+	if (!channels)
+		return FALSE;
+
+	struct rdp_channel_bridge* bridge = nullptr;
+	if (send)
+	{
+		bridge = calloc(1, sizeof(struct rdp_channel_bridge));
+		if (!bridge)
+			return FALSE;
+		bridge->refs = 1;
+		bridge->send = send;
+		bridge->fnFree = fnFree;
+		bridge->custom = custom;
+	}
+
+	/* Locate the fixed channel entry first.  Revalidate it under channelsLock after taking its
+	 * delivery lock so the transition waits for an in-flight static callback without reversing
+	 * the lock order used by channel delivery. */
+	CHANNEL_OPEN_DATA* pChannelOpenData = nullptr;
+	EnterCriticalSection(&channels->channelsLock);
+	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, name);
+	LeaveCriticalSection(&channels->channelsLock);
+	if (!pChannelOpenData)
+	{
+		free(bridge);
+		return FALSE;
+	}
+
+	struct rdp_channel_bridge* old = nullptr;
+	BOOL found = FALSE;
+	EnterCriticalSection(&pChannelOpenData->dataLock);
+	EnterCriticalSection(&channels->channelsLock);
+	CHANNEL_OPEN_DATA* current = freerdp_channels_find_channel_open_data_by_name(channels, name);
+	if (current == pChannelOpenData)
+	{
+		found = TRUE;
+		old = pChannelOpenData->bridge;
+		if (!send && custom && old && (old->custom != custom))
+			old = nullptr; /* another bridge was set since, it stays */
+		else
+		{
+			pChannelOpenData->bridge = bridge;
+			if (send)
+				pChannelOpenData->tunneled = TRUE;
+		}
+	}
+	LeaveCriticalSection(&channels->channelsLock);
+	LeaveCriticalSection(&pChannelOpenData->dataLock);
+
+	if (!found)
+	{
+		free(bridge);
+		return FALSE;
+	}
+	channel_bridge_unref(old);
+	return TRUE;
+}
+#endif
 
 UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name)
 {
@@ -733,6 +933,12 @@ static BOOL freerdp_channels_process_message(freerdp* instance, wMessage* messag
 		rdpMcsChannel* channel = freerdp_channels_find_channel_by_name(
 		    instance->context->rdp, pChannelOpenData->stats.channelName);
 
+#if defined(WITH_RDPEUDP)
+		/* a dynamic channel that carries the static channel sends it instead */
+		if (channel_bridge_send(pChannelOpenData, item, &ret))
+			channel = nullptr;
+#endif
+
 		if (channel)
 		{
 			pChannelOpenData->stats.bytesOut += item->DataLength;
@@ -769,7 +975,7 @@ static BOOL freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 
 	WINPR_ASSERT(channels);
 
-	while (MessageQueue_Peek(channels->queue, &message, TRUE))
+	if (MessageQueue_Peek(channels->queue, &message, TRUE))
 	{
 		if (!freerdp_channels_process_message(instance, &message))
 			status = FALSE;
@@ -980,6 +1186,10 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	MessageQueue_PostQuit(channels->queue, 0);
 	freerdp_channels_check_fds(channels, instance);
 
+	/* Clear all remaining messages from the queue. The wStream objects are owned by the channel
+	 * which is releasing the resources on CHANNEL_EVENT_TERMINATED */
+	MessageQueue_Clear(channels->queue);
+
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
 	{
@@ -1014,6 +1224,9 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	{
 		CHANNEL_OPEN_DATA* pChannelOpenData = &channels->openDataList[index];
 		HashTable_Remove(g_ChannelHandles, (void*)(UINT_PTR)pChannelOpenData->stats.channelId);
+#if defined(WITH_RDPEUDP)
+		channel_clear_bridge(pChannelOpenData);
+#endif
 	}
 
 	channels->openDataCount = 0;

@@ -27,6 +27,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "../crypto/tls.h"
+#include "../core/utils.h"
+#include "../core/tcp.h"
+
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("utils.http")
 
@@ -87,6 +91,29 @@ static int get_line(BIO* bio, char* buffer, size_t size)
 #endif
 }
 
+WINPR_ATTR_NODISCARD
+static int get_line_context(rdpContext* context, BIO* bio, char* buffer, size_t size)
+{
+	while (TRUE)
+	{
+		/* session terminated, abort */
+		if (freerdp_shall_disconnect_context(context))
+			return -1;
+
+		const int rc = get_line(bio, buffer, size);
+		if (rc <= 0)
+		{
+			if (BIO_should_retry(bio))
+			{
+				BIO_wait_read(bio, 10);
+				continue;
+			}
+		}
+		return rc;
+	}
+}
+
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL freerdp_http_request(const char* url, const char* body, long* status_code, BYTE** response,
                           size_t* response_length)
 {
@@ -110,6 +137,8 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 	*response = nullptr;
 
+	WLog_WARN(TAG, "This function is deprecated, use freerdp_http_request_context instead. "
+	               "Certificate checks are not properly performed when using this function");
 	if (!url || strnlen(url, 8) < 8 || strncmp(url, "https://", 8) != 0 ||
 	    !(path = strchr(url + 8, '/')))
 	{
@@ -322,6 +351,188 @@ out:
 	free(headers);
 	BIO_free_all(bio);
 	SSL_CTX_free(ssl_ctx);
+	return ret;
+}
+#endif
+
+BOOL freerdp_http_request_context(rdpContext* context, const char* url, const char* body,
+                                  long* status_code, BYTE** response, size_t* response_length)
+{
+	BOOL ret = FALSE;
+	char* hostname = nullptr;
+	const char* path = nullptr;
+	char* headers = nullptr;
+	size_t size = 0;
+	int status = 0;
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(status_code);
+	WINPR_ASSERT(response);
+	WINPR_ASSERT(response_length);
+	const rdpSettings* settings = context->settings;
+
+	wLog* log = WLog_Get(TAG);
+	WINPR_ASSERT(log);
+
+	*response = nullptr;
+
+	rdpTls* tls = freerdp_tls_new(context);
+	if (!tls || !url || strnlen(url, 8) < 8 || strncmp(url, "https://", 8) != 0 ||
+	    !(path = strchr(url + 8, '/')))
+	{
+		WLog_Print(log, WLOG_ERROR, "invalid url provided");
+		goto out;
+	}
+
+	{
+		const size_t len = WINPR_ASSERTING_INT_CAST(size_t, path - (url + 8));
+		hostname = strndup(&url[8], len);
+	}
+	if (!hostname)
+		goto out;
+
+	{
+		size_t blen = 0;
+		if (body)
+		{
+			blen = strlen(body);
+			if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, blen) < 0)
+				goto out;
+		}
+		else
+		{
+			if (winpr_asprintf(&headers, &size, get_header_fmt, path, hostname) < 0)
+				goto out;
+		}
+
+		tls->hostname = hostname;
+		tls->port = 443;
+		tls->isHttpRequest = TRUE;
+		UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
+		if (!utils_tls_connect(context, tls, log, hostname, tls->port, FALSE, TcpConnectTimeout))
+			goto out;
+
+		{
+			const size_t hlen = strnlen(headers, size);
+			if (hlen > INT32_MAX)
+				goto out;
+			WLog_Print(log, WLOG_DEBUG, "headers:\n%s", headers);
+			const int rc = freerdp_tls_write_all(tls, headers, hlen);
+			if ((rc < 0) || ((size_t)rc < hlen))
+				goto out;
+		}
+
+		if (body)
+		{
+			WLog_Print(log, WLOG_DEBUG, "body:\n%s", body);
+
+			if (blen > INT_MAX)
+			{
+				WLog_Print(log, WLOG_ERROR, "body too long!");
+				goto out;
+			}
+
+			const int rc = freerdp_tls_write_all(tls, body, blen);
+			if ((rc < 0) || ((size_t)rc < blen))
+				goto out;
+		}
+	}
+
+	BIO* bio = tls->bio;
+	status = get_line_context(context, bio, buffer, sizeof(buffer));
+	if (status <= 0)
+	{
+		log_errors(log, "could not read response");
+		goto out;
+	}
+
+	const char header[9] = { 'H', 'T', 'T', 'P', '/', '1', '.', '1', ' ' };
+	if ((status < (INT64)sizeof(header)) || (strncmp(header, buffer, sizeof(header)) != 0))
+	{
+		WLog_Print(log, WLOG_ERROR, "invalid HTTP status header");
+		goto out;
+	}
+
+	errno = 0;
+	*status_code = strtol(&buffer[sizeof(header)], nullptr, 0);
+	if (errno != 0)
+	{
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
+		WLog_Print(log, WLOG_ERROR, "invalid HTTP status line: %s [%d]",
+		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		goto out;
+	}
+
+	do
+	{
+		status = get_line_context(context, bio, buffer, sizeof(buffer));
+		if (status <= 0)
+		{
+			log_errors(log, "could not read response");
+			goto out;
+		}
+
+		char* val = nullptr;
+		char* name = strtok_s(buffer, ":", &val);
+		if (name && (_stricmp(name, "content-length") == 0))
+		{
+			errno = 0;
+			*response_length = strtoul(val, nullptr, 10);
+			if (errno)
+			{
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
+				WLog_Print(log, WLOG_ERROR, "could not parse content length (%s): %s [%d]", val,
+				           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+				goto out;
+			}
+		}
+	} while (strcmp(buffer, "\r\n") != 0);
+
+	if (*response_length > 0)
+	{
+		if (*response_length > INT_MAX)
+		{
+			WLog_Print(log, WLOG_ERROR, "response too long!");
+			goto out;
+		}
+
+		*response = calloc(1, *response_length + 1);
+		if (!*response)
+			goto out;
+
+		BYTE* p = *response;
+		size_t left = *response_length;
+		while (left > 0)
+		{
+			const int rd = (left < INT32_MAX) ? (int)left : INT32_MAX;
+			status = BIO_read(bio, p, rd);
+			if (status <= 0)
+			{
+				log_errors(log, "could not read response");
+				goto out;
+			}
+			p += status;
+			if ((size_t)status > left)
+				break;
+			left -= (size_t)status;
+		}
+	}
+
+	WLog_Print(log, WLOG_DEBUG, "response[%" PRIuz "]:\n%s", *response_length,
+	           (const char*)(*response));
+	ret = TRUE;
+
+out:
+	if (!ret)
+	{
+		free(*response);
+		*response = nullptr;
+		*response_length = 0;
+	}
+	free(hostname);
+	free(headers);
+	freerdp_tls_free(tls);
 	return ret;
 }
 

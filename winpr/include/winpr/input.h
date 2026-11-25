@@ -662,7 +662,7 @@
 #define KBD7_T6D VK_F22
 #define KBD7_T6E VK_F23
 #define KBD7_T6F VK_OEM_PA3
-#define KBD7_T70 VK_CONVERT
+#define KBD7_T70 VK_HKTG
 #define KBD7_T71 VK_OEM_RESET
 #define KBD7_T72 VK_NONE
 #define KBD7_T73 VK_ABNT_C1
@@ -671,7 +671,7 @@
 #define KBD7_T76 VK_F24
 #define KBD7_T77 VK_NONE
 #define KBD7_T78 VK_NONE
-#define KBD7_T79 VK_HKTG
+#define KBD7_T79 VK_CONVERT
 #define KBD7_T7A VK_NONE
 #define KBD7_T7B VK_NONCONVERT
 #define KBD7_T7C VK_TAB
@@ -882,6 +882,16 @@ extern "C"
 	/**
 	 * Functions
 	 */
+
+	/** @brief Checks whether the provided keyboard type is supported by WinPR
+	 *
+	 *  @param dwKeyboardType The keyboard type to check
+	 *
+	 *  @return TRUE, when the provided keyboard type is supported. Otherwise, FALSE.
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL WinPR_IsKeyboardTypeSupported(DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API const char* GetVirtualKeyName(DWORD vkcode);

@@ -36,7 +36,6 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size);
 
 WINPR_ATTR_MALLOC(Stream_Free, 1)
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, size_t dataLen);
 
 WINPR_ATTR_MALLOC(Stream_Free, 1)

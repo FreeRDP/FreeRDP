@@ -423,8 +423,8 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 		token = strtok_s(copy, ",", &context);
 		while (token)
 		{
-			DWORD key = 0;
-			DWORD value = 0;
+			UINT32 key = 0;
+			UINT32 value = 0;
 			if (!freerdp_extract_key_value(token, &key, &value))
 				goto fail;
 			if (key >= ARRAYSIZE(REMAPPING_TABLE))

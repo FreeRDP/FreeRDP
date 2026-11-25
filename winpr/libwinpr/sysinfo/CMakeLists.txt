@@ -32,6 +32,6 @@ if(APPLE AND (NOT IOS))
   winpr_library_add_private(${IOKIT_LIBRARY} ${CORE_FOUNDATION_LIBRARY})
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

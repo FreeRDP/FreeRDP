@@ -236,7 +236,7 @@ typedef struct
 	UINT32 NegotiateFlags;
 	BOOL UseSamFileDatabase;
 	int LmCompatibilityLevel;
-	int SuppressExtendedProtection;
+	BOOL SuppressExtendedProtection;
 	BOOL SendWorkstationName;
 	UNICODE_STRING Workstation;
 	UNICODE_STRING ServicePrincipalName;

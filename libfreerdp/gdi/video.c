@@ -32,6 +32,10 @@ void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom)
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(geom);
 
+	/* The geometry channel allows multiple instances, they all share the context of the plugin */
+	if (gdi->geometry != geom)
+		gdi->geometryInstances = 0;
+	gdi->geometryInstances++;
 	gdi->geometry = geom;
 
 	if (gdi->video)
@@ -48,8 +52,28 @@ void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom)
 {
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(geom);
-	WINPR_UNUSED(gdi);
-	WINPR_UNUSED(geom);
+
+	if (gdi->geometry != geom)
+		return;
+
+	if (gdi->geometryInstances > 0)
+		gdi->geometryInstances--;
+	if (gdi->geometryInstances > 0)
+		return;
+
+	/* The context is owned by the geometry plugin and freed with it (e.g. on a redirect or
+	 * reconnect, which the gdi survives), so drop our reference and the one of the video channel.
+	 */
+	gdi->geometry = nullptr;
+
+	if (gdi->video)
+	{
+		VideoClientContext* video = gdi->video;
+
+		WINPR_ASSERT(video);
+		WINPR_ASSERT(video->setGeometry);
+		video->setGeometry(video, nullptr);
+	}
 }
 
 static VideoSurface* gdiVideoCreateSurface(WINPR_ATTR_UNUSED VideoClientContext* video, UINT32 x,
@@ -81,17 +105,18 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
 	if ((gdi->width < 0) || (gdi->height < 0))
 		goto fail;
 
+	/* the surface position is server controlled, it must start inside the desktop
+	 * or the clipping below (and the destination offset) would wrap around */
+	if ((surface->x >= (UINT32)gdi->width) || (surface->y >= (UINT32)gdi->height))
+		goto fail;
+
 	{
 		const UINT32 nXSrc = surface->x;
 		const UINT32 nYSrc = surface->y;
 		const UINT32 nXDst = nXSrc;
 		const UINT32 nYDst = nYSrc;
-		const UINT32 width = (destinationWidth + surface->x < (UINT32)gdi->width)
-		                         ? destinationWidth
-		                         : (UINT32)gdi->width - surface->x;
-		const UINT32 height = (destinationHeight + surface->y < (UINT32)gdi->height)
-		                          ? destinationHeight
-		                          : (UINT32)gdi->height - surface->y;
+		const UINT32 width = MIN(destinationWidth, (UINT32)gdi->width - surface->x);
+		const UINT32 height = MIN(destinationHeight, (UINT32)gdi->height - surface->y);
 
 		WINPR_ASSERT(gdi->primary_buffer);
 		WINPR_ASSERT(gdi->primary);
@@ -163,6 +188,11 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 
 	WINPR_ASSERT(size >= sizeof(VideoSurface));
 
+	const UINT32 alignedWidth = w + 32 - w % 16;
+	const UINT32 alignedHeight = h + 32 - h % 16;
+	if ((alignedWidth > UINT16_MAX) || (alignedHeight > UINT16_MAX))
+		return nullptr;
+
 	VideoSurface* ret = calloc(1, size);
 	if (!ret)
 		return nullptr;
@@ -172,8 +202,8 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 	ret->y = y;
 	ret->w = w;
 	ret->h = h;
-	ret->alignedWidth = ret->w + 32 - ret->w % 16;
-	ret->alignedHeight = ret->h + 32 - ret->h % 16;
+	ret->alignedWidth = alignedWidth;
+	ret->alignedHeight = alignedHeight;
 
 	ret->scanline = ret->alignedWidth * FreeRDPGetBytesPerPixel(ret->format);
 	ret->data = winpr_aligned_calloc(ret->scanline, ret->alignedHeight, 64);

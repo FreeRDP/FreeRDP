@@ -31,7 +31,9 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/XKBlib.h>
 
+#include <winpr/endian.h>
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
@@ -159,6 +161,7 @@ WINPR_ATTR_NODISCARD
 static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
                                        const char* user, const char* domain, const char* password)
 {
+	int rc = -1;
 	int pam_status = 0;
 	SHADOW_PAM_AUTH_INFO info = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(subsystem);
@@ -177,7 +180,7 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	if (pam_status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_start failure: %s", pam_strerror(info.handle, pam_status));
-		return -1;
+		goto fail;
 	}
 
 	pam_status = pam_authenticate(info.handle, 0);
@@ -185,7 +188,7 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	if (pam_status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_authenticate failure: %s", pam_strerror(info.handle, pam_status));
-		return -1;
+		goto fail;
 	}
 
 	pam_status = pam_acct_mgmt(info.handle, 0);
@@ -193,12 +196,102 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	if (pam_status != PAM_SUCCESS)
 	{
 		WLog_ERR(TAG, "pam_acct_mgmt failure: %s", pam_strerror(info.handle, pam_status));
-		return -1;
+		goto fail;
 	}
 
-	return 1;
+	rc = 1;
+fail:
+	if (info.handle)
+	{
+		const int res = pam_end(info.handle, pam_status);
+		if (res != PAM_SUCCESS)
+			WLog_WARN(TAG, "pam_end failure: %s", pam_strerror(info.handle, pam_status));
+	}
+	free(info.service_name);
+	return rc;
 }
 
+#endif
+
+#if defined(WITH_XTEST)
+WINPR_ATTR_NODISCARD
+static BOOL isKeyPressed(Display* display, KeyCode code)
+{
+	char keys[32] = WINPR_C_ARRAY_INIT;
+	if (XQueryKeymap(display, keys) != 1)
+		return FALSE;
+
+	return (keys[code >> 3] >> (code & 7)) & 1;
+}
+
+static BOOL pressKey(Display* display, KeySym sym)
+{
+	WINPR_ASSERT(display);
+
+	KeyCode key = XKeysymToKeycode(display, sym);
+	if (key == AnyKey)
+	{
+		WLog_WARN(TAG, "No KeyCode mapped for KeySym=%lu", sym);
+		return FALSE;
+	}
+
+	Sleep(5);
+	const int rc1 = XTestFakeKeyEvent(display, key, True, CurrentTime);
+	Sleep(5);
+	const int rc2 = XTestFakeKeyEvent(display, key, False, CurrentTime);
+
+	if ((rc1 == 0) || (rc2 == 0))
+	{
+		WLog_WARN(TAG, "Failed to synghesize KeyCode=%u event", key);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_MALLOC(XFree, 1)
+static char* nameForIndicator(Display* display, unsigned int pos)
+{
+	WINPR_ASSERT(display);
+
+	XkbDescPtr xkb = XkbAllocKeyboard();
+	if (!xkb)
+	{
+		WLog_WARN(TAG, "Failed to allocate XkbDescPtr");
+		return nullptr;
+	}
+
+	if (XkbGetNames(display, XkbIndicatorNamesMask, xkb) != Success)
+	{
+		WLog_WARN(TAG, "Failed to get XkbGetNames");
+		XkbFreeKeyboard(xkb, 0, True);
+		return nullptr;
+	}
+
+	char* name = nullptr;
+	if (pos >= XkbNumIndicators)
+		WLog_WARN(TAG, "invalid indicator bit position %u", pos);
+	else
+	{
+		Atom atom = xkb->names->indicators[pos];
+		if (atom != None)
+			name = XGetAtomName(display, atom);
+		else
+			WLog_WARN(TAG, "Failed to map indicator position %u to atom", pos);
+	}
+	XkbFreeKeyboard(xkb, 0, True);
+	return name;
+}
+
+WINPR_ATTR_NODISCARD
+static unsigned int utf16_to_utf32(WCHAR lehigh, WCHAR lelow)
+{
+	const WCHAR high = winpr_Data_Get_UINT16(&lehigh);
+	const WCHAR low = winpr_Data_Get_UINT16(&lelow);
+	unsigned int u32 = high;
+	if ((high >= 0xD800u) && (high <= 0xDBFFu) && (low >= 0xDC00u) && (low <= 0xDFFFu))
+		u32 = ((high - 0xD800u) << 10u) + (low - 0xDC00u) + 0x10000u;
+	return u32;
+}
 #endif
 
 WINPR_ATTR_NODISCARD
@@ -206,8 +299,110 @@ static BOOL x11_shadow_input_synchronize_event(WINPR_ATTR_UNUSED rdpShadowSubsys
                                                WINPR_ATTR_UNUSED rdpShadowClient* client,
                                                WINPR_ATTR_UNUSED UINT32 flags)
 {
-	/* TODO: Implement */
-	WLog_WARN(TAG, "not implemented");
+#ifdef WITH_XTEST
+	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
+
+	if (!client || !subsystem)
+		return FALSE;
+
+	XLockDisplay(x11->display);
+	XTestGrabControl(x11->display, True);
+
+	/* Ensure every key is released */
+	for (KeyCode x = 0; x < 255; x++)
+	{
+		if (!isKeyPressed(x11->display, x))
+			continue;
+		Sleep(5);
+		XTestFakeKeyEvent(x11->display, x, False, CurrentTime);
+	}
+
+	/* Set all modifiers to off */
+	unsigned int state = WINPR_C_ARRAY_INIT;
+	const Status rc = XkbGetIndicatorState(x11->display, XkbUseCoreKbd, &state);
+	if (rc != Success)
+	{
+		WLog_WARN(TAG, "XkbGetIndicatorState failed, not syncing modifiers");
+	}
+	else
+	{
+		/* Reset all indicators currently set */
+		for (unsigned x = 0; x < XkbNumIndicators; x++)
+		{
+			unsigned bit = 1 << x;
+			if ((state & bit) == 0)
+				continue;
+			char* name = nameForIndicator(x11->display, x);
+			if (!name)
+				continue;
+
+			if (_stricmp(name, "Scroll Lock") == 0)
+			{
+				pressKey(x11->display, XK_Scroll_Lock);
+			}
+			else if (_stricmp(name, "Num Lock") == 0)
+			{
+				pressKey(x11->display, XK_Num_Lock);
+			}
+			else if (_stricmp(name, "Caps Lock") == 0)
+			{
+				pressKey(x11->display, XK_Caps_Lock);
+			}
+			else if (_stricmp(name, "Kana Lock") == 0)
+			{
+				pressKey(x11->display, XK_Kana_Lock);
+			}
+			XFree(name);
+		}
+
+		unsigned state2 = 0;
+		const Status rc2 = XkbGetIndicatorState(x11->display, XkbUseCoreKbd, &state2);
+		if (rc2 != Success)
+		{
+			WLog_WARN(TAG, "XkbGetIndicatorState failed, can not check modifiers were cleared");
+		}
+		else if (state2 != 0)
+		{
+			WLog_WARN(TAG, "XkbGetIndicatorState clear check returned 0x%08u, should be 0x00000000",
+			          state2);
+		}
+
+		/* Set requested modifiers on */
+		if ((flags & KBD_SYNC_SCROLL_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Scroll_Lock);
+		}
+		if ((flags & KBD_SYNC_NUM_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Num_Lock);
+		}
+		if ((flags & KBD_SYNC_CAPS_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Caps_Lock);
+		}
+		if ((flags & KBD_SYNC_KANA_LOCK) != 0)
+		{
+			pressKey(x11->display, XK_Kana_Lock);
+		}
+
+		unsigned state3 = 0;
+		const Status rc3 = XkbGetIndicatorState(x11->display, XkbUseCoreKbd, &state2);
+		if (rc3 != Success)
+		{
+			WLog_WARN(TAG, "XkbGetIndicatorState failed, can not check modifiers were applied");
+		}
+		else if (state3 != 0)
+		{
+			WLog_DBG(TAG, "XkbGetIndicatorState apply check returned 0x%08u", state3);
+		}
+	}
+
+	XTestGrabControl(x11->display, False);
+	XFlush(x11->display);
+	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "SynchronizeEvent not supported by backend, ignoring");
+#endif
 	return TRUE;
 }
 
@@ -217,9 +412,6 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 {
 #ifdef WITH_XTEST
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
-	DWORD vkcode = 0;
-	DWORD keycode = 0;
-	DWORD scancode = 0;
 	BOOL extended = FALSE;
 
 	if (!client || !subsystem)
@@ -228,26 +420,26 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
 
-	scancode = code;
+	DWORD scancode = code;
 	if (extended)
 		scancode |= KBDEXT;
 
-	vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, WINPR_KBD_TYPE_IBM_ENHANCED);
+	DWORD vkcode = GetVirtualKeyCodeFromVirtualScanCode(scancode, WINPR_KBD_TYPE_IBM_ENHANCED);
 
 	if (extended)
 		vkcode |= KBDEXT;
 
-	keycode = GetKeycodeFromVirtualKeyCode(vkcode, WINPR_KEYCODE_TYPE_XKB);
+	const DWORD keycode = GetKeycodeFromVirtualKeyCode(vkcode, WINPR_KEYCODE_TYPE_XKB);
 
 	if (keycode != 0)
 	{
 		XLockDisplay(x11->display);
 		XTestGrabControl(x11->display, True);
 
-		if (flags & KBD_FLAGS_RELEASE)
-			XTestFakeKeyEvent(x11->display, keycode, False, CurrentTime);
-		else
-			XTestFakeKeyEvent(x11->display, keycode, True, CurrentTime);
+		Sleep(5);
+
+		const Bool down = ((flags & KBD_FLAGS_RELEASE) == 0);
+		XTestFakeKeyEvent(x11->display, keycode, down, CurrentTime);
 
 		XTestGrabControl(x11->display, False);
 		XFlush(x11->display);
@@ -263,10 +455,156 @@ WINPR_ATTR_NODISCARD
 static BOOL x11_shadow_input_unicode_keyboard_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
                                                     WINPR_ATTR_UNUSED rdpShadowClient* client,
                                                     WINPR_ATTR_UNUSED UINT16 flags,
-                                                    WINPR_ATTR_UNUSED UINT16 code)
+                                                    WINPR_ATTR_UNUSED UINT16 lecode)
 {
-	/* TODO: Implement */
-	WLog_WARN(TAG, "not implemented");
+#ifdef WITH_XTEST
+	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
+	BOOL down = FALSE;
+
+	if (!client || !subsystem)
+		return FALSE;
+
+	if ((flags & KBD_FLAGS_RELEASE) == 0)
+		down = TRUE;
+
+	// Ensure native endianness
+	const WCHAR becode = winpr_Data_Get_UINT16(&lecode);
+	const WCHAR surrogate = x11->surrogate;
+	if ((becode >= 0xD800) && (becode <= 0xDBFF))
+	{
+		if (!down)
+		{
+			if (surrogate != becode)
+				WLog_WARN(TAG,
+				          "Invalid high surrogate: mismatch between key down and key up, ignoring");
+			return TRUE;
+		}
+		x11->surrogate = lecode;
+		return TRUE;
+	}
+	else if (!down)
+		x11->surrogate = 0;
+
+	BOOL isSurrogate = FALSE;
+	if (surrogate != 0)
+	{
+		if ((becode >= 0xDC00) && (becode <= 0xDFFF))
+			isSurrogate = TRUE;
+		else
+			WLog_WARN(TAG, "Received invalid surrogate sequence, discarding.");
+	}
+
+	XLockDisplay(x11->display);
+	/* Unicode keysym encoding: 0x01000000 | code point. */
+	KeySym unicode_keysym = NoSymbol;
+	KeyCode keycode = AnyKey;
+
+	if (!isSurrogate && ((becode < 0x20) || (becode == 0x7f)))
+	{
+		switch (becode)
+		{
+			case 0x7f:
+				unicode_keysym = XK_Delete;
+				break;
+			case 0x08:
+				unicode_keysym = XK_BackSpace;
+				break;
+			case 0x09:
+				unicode_keysym = XK_Tab;
+				break;
+			case 0x0a:
+				unicode_keysym = XK_Linefeed;
+				break;
+			case 0x0d:
+				unicode_keysym = XK_Return;
+				break;
+			case 0x18:
+				unicode_keysym = XK_Cancel;
+				break;
+			case 0x1e:
+				unicode_keysym = XK_Escape;
+				break;
+
+			default:
+				WLog_WARN(TAG, "ASCII control 0x%02x unmapped, ignoring", becode);
+				break;
+				/*
+				0x00	NUL		Null character
+				0x01	SOH		Start of Heading
+				0x02	STX		Start of Text
+				0x03	ETX		End of Text
+				0x04	EOT		End of Transmission
+				0x05	ENQ		Enquiry
+				0x06	ACK		Acknowledge
+				0x07	BEL		Bell, Alert
+				0x09	HT		Horizontal Tab
+				0x0B	VT		Vertical Tabulation
+				0x0C	FF		Form Feed
+				0x0E	SO		Shift Out
+				0x0F	SI		Shift In
+				0x10	DLE		Data Link Escape
+				0x11	DC1		Device Control One (XON)
+				0x12	DC2		Device Control Two
+				0x13	DC3		Device Control Three (XOFF)
+				0x14	DC4		Device Control Four
+				0x15	NAK		Negative Acknowledge
+				0x16	SYN		Synchronous Idle
+				0x17	ETB		End of Transmission Block
+				0x19	EM		End of medium
+				0x1A	SUB		Substitute
+				0x1C	FS		File Separator
+				0x1D	GS		Group Separator
+				0x1E	RS		Record Separator
+				0x1F	US		Unit Separator
+				*/
+		}
+		if (unicode_keysym != NoSymbol)
+		{
+			keycode = XKeysymToKeycode(x11->display, unicode_keysym);
+			if (keycode == AnyKey)
+			{
+				keycode = 255;
+				XChangeKeyboardMapping(x11->display, keycode, 1, &unicode_keysym, 1);
+				XSync(x11->display, False);
+			}
+		}
+	}
+	else
+	{
+		if (isSurrogate)
+			unicode_keysym = utf16_to_utf32(surrogate, lecode) | 0x01000000u;
+		else
+		{
+			char buffer[32] = WINPR_C_ARRAY_INIT;
+			(void)ConvertWCharNToUtf8(&lecode, 1, buffer, sizeof(buffer));
+			unicode_keysym = XStringToKeysym(buffer);
+		}
+
+		if (unicode_keysym != NoSymbol)
+			keycode = XKeysymToKeycode(x11->display, unicode_keysym);
+
+		if (keycode == AnyKey)
+		{
+			/* Map this keycode to the Unicode keysym. */
+			keycode = 255;
+			XChangeKeyboardMapping(x11->display, keycode, 1, &unicode_keysym, 1);
+			XSync(x11->display, False);
+		}
+	}
+
+	if (keycode != AnyKey)
+	{
+		XTestGrabControl(x11->display, True);
+		Sleep(5);
+		XTestFakeKeyEvent(x11->display, keycode, down, CurrentTime);
+		XTestGrabControl(x11->display, False);
+		XSync(x11->display, False);
+		XFlush(x11->display);
+	}
+	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "UnicodeKeyboardEvent not supported by backend, ignoring");
+#endif
 	return TRUE;
 }
 
@@ -278,22 +616,21 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	unsigned int button = 0;
 	BOOL down = FALSE;
-	rdpShadowServer* server = nullptr;
-	rdpShadowSurface* surface = nullptr;
 
 	if (!subsystem || !client)
 		return FALSE;
 
-	server = subsystem->server;
+	rdpShadowServer* server = subsystem->server;
 
 	if (!server)
 		return FALSE;
 
-	surface = server->surface;
+	rdpShadowSurface* surface = server->surface;
 
 	if (!surface)
 		return FALSE;
 
+	EnterCriticalSection(&surface->lock);
 	x11->lastMouseClient = client;
 	x += surface->x;
 	y += surface->y;
@@ -344,6 +681,7 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+	LeaveCriticalSection(&surface->lock);
 #else
 	WLog_WARN(TAG, "MouseEvent not supported by backend, ignoring");
 #endif
@@ -374,6 +712,7 @@ static BOOL x11_shadow_input_rel_mouse_event(rdpShadowSubsystem* subsystem, rdpS
 	if (!surface)
 		return FALSE;
 
+	EnterCriticalSection(&surface->lock);
 	x11->lastMouseClient = client;
 
 	XLockDisplay(x11->display);
@@ -402,6 +741,7 @@ static BOOL x11_shadow_input_rel_mouse_event(rdpShadowSubsystem* subsystem, rdpS
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+	LeaveCriticalSection(&surface->lock);
 #else
 	WLog_WARN(TAG, "RelMouseEvent not supported by backend, ignoring");
 #endif
@@ -417,22 +757,21 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	UINT button = 0;
 	BOOL down = FALSE;
-	rdpShadowServer* server = nullptr;
-	rdpShadowSurface* surface = nullptr;
 
 	if (!subsystem || !client)
 		return FALSE;
 
-	server = subsystem->server;
+	rdpShadowServer* server = subsystem->server;
 
 	if (!server)
 		return FALSE;
 
-	surface = server->surface;
+	rdpShadowSurface* surface = server->surface;
 
 	if (!surface)
 		return FALSE;
 
+	EnterCriticalSection(&surface->lock);
 	x11->lastMouseClient = client;
 	x += surface->x;
 	y += surface->y;
@@ -454,6 +793,7 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+	LeaveCriticalSection(&surface->lock);
 #else
 	WLog_WARN(TAG, "ExtendedMouseEvent not supported by backend, ignoring");
 #endif
@@ -561,10 +901,8 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	int x = 0;
 	int y = 0;
 	int n = 0;
-	rdpShadowServer* server = nullptr;
-	rdpShadowSurface* surface = nullptr;
-	server = subsystem->common.server;
-	surface = server->surface;
+	rdpShadowServer* server = subsystem->common.server;
+	rdpShadowSurface* surface = server->surface;
 
 	if (getImage)
 	{
@@ -633,8 +971,10 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	/* Convert to offset based on current surface */
 	if (surface)
 	{
+		EnterCriticalSection(&surface->lock);
 		x -= surface->x;
 		y -= surface->y;
+		LeaveCriticalSection(&surface->lock);
 	}
 
 	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))

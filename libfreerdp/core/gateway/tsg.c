@@ -29,6 +29,7 @@
 #include <winpr/error.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/log.h>
 
@@ -38,7 +39,7 @@
 #include "../utils.h"
 #include "../../crypto/opensslcompat.h"
 
-#define TAG FREERDP_TAG("core.gateway.tsg")
+#define TSG_TAG FREERDP_TAG("core.gateway.tsg")
 
 #define TSG_CAPABILITY_TYPE_NAP 0x00000001
 
@@ -674,8 +675,9 @@ static BOOL tsg_ndr_read_version_caps(wLog* log, wStream* s, UINT32* index,
 
 	if (caps->numCapabilities > 1)
 	{
-		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
-		         caps->numCapabilities);
+		WLog_Print(log, WLOG_ERROR,
+		           "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		           caps->numCapabilities);
 		return FALSE;
 	}
 
@@ -698,8 +700,9 @@ static BOOL tsg_ndr_write_version_caps(wLog* log, wStream* s, UINT32* index,
 
 	if (caps->numCapabilities > 1)
 	{
-		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
-		         caps->numCapabilities);
+		WLog_Print(log, WLOG_ERROR,
+		           "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		           caps->numCapabilities);
 		return FALSE;
 	}
 	Stream_Write_UINT32(s, caps->numCapabilities);
@@ -920,8 +923,9 @@ static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
 
 	if (caps->numCapabilities > 1)
 	{
-		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
-		         caps->numCapabilities);
+		tsg_print(buffer, length,
+		          "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		          caps->numCapabilities);
 		return FALSE;
 	}
 
@@ -1082,7 +1086,7 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 		return FALSE;
 
 	char uuid[64] = WINPR_C_ARRAY_INIT;
-	if (!guid2str(&caps->nonce, uuid, sizeof(uuid)))
+	if (!freerdp_guid2str(&caps->nonce, uuid, sizeof(uuid)))
 		goto fail;
 
 	if (caps->certChainLen > 0)
@@ -1596,7 +1600,7 @@ static BOOL tsg_ndr_read_tunnel_context(wLog* log, wStream* s, CONTEXT_HANDLE* t
 	INT32 ReturnValue = 0;
 	Stream_Read_INT32(s, ReturnValue); /* ReturnValue (4 bytes) */
 	if (ReturnValue != NO_ERROR)
-		WLog_WARN(TAG, "ReturnValue=%s", NtStatus2Tag(ReturnValue));
+		WLog_Print(log, WLOG_ERROR, "ReturnValue=%s", NtStatus2Tag(ReturnValue));
 	return TRUE;
 }
 
@@ -1615,10 +1619,10 @@ static BOOL tsg_ndr_read_TSG_PACKET_MSG_RESPONSE_header(wLog* log, wStream* s,
 
 	if (pkt->msgType != SwitchValue)
 	{
-		WLog_ERR(TAG,
-		         "[MS-TSGU] 2.2.9.2.1.9 TSG_PACKET_MSG_RESPONSE MsgType[0x%08" PRIx32
-		         "] != MessageSwitchValue [0x%08" PRIx32 "]",
-		         pkt->msgType, SwitchValue);
+		WLog_Print(log, WLOG_ERROR,
+		           "[MS-TSGU] 2.2.9.2.1.9 TSG_PACKET_MSG_RESPONSE MsgType[0x%08" PRIx32
+		           "] != MessageSwitchValue [0x%08" PRIx32 "]",
+		           pkt->msgType, SwitchValue);
 		return FALSE;
 	}
 
@@ -2513,7 +2517,6 @@ fail:
 	return FALSE;
 }
 
-WINPR_ATTR_NODISCARD
 static BOOL tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 {
 	WINPR_ASSERT(tsg);
@@ -2619,17 +2622,138 @@ static BOOL tsg_proxy_reauth(rdpTsg* tsg)
 	return tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 }
 
-BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
+WINPR_ATTR_NODISCARD
+static BOOL tsg_recv_authorized(rdpTsg* tsg, const RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
-	RpcClientCall* call = nullptr;
-	rdpRpc* rpc = nullptr;
 
 	WINPR_ASSERT(tsg);
 	WINPR_ASSERT(pdu);
-	WINPR_ASSERT(tsg->rpc);
 
-	rpc = tsg->rpc;
+	rdpRpc* rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
+
+	RpcClientCall* call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
+
+	if (!call)
+		return FALSE;
+
+	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
+	{
+		if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
+		{
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
+			return FALSE;
+		}
+
+		rc = TRUE;
+	}
+	else if (call->OpNum == TsProxyCreateChannelOpnum)
+	{
+		CONTEXT_HANDLE ChannelContext;
+
+		if (!TsProxyCreateChannelReadResponse(tsg->log, pdu, &ChannelContext, &tsg->ChannelId))
+		{
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCreateChannelReadResponse failure");
+			return FALSE;
+		}
+
+		if (!tsg->reauthSequence)
+			CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+		else
+			CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+
+		if (!tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED))
+			return FALSE;
+
+		if (!tsg->reauthSequence)
+		{
+			if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
+			{
+				WLog_Print(tsg->log, WLOG_ERROR, "TsProxySetupReceivePipe failure");
+				return FALSE;
+			}
+		}
+		else
+		{
+			if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
+			{
+				WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
+				return FALSE;
+			}
+
+			if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
+			{
+				WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelWriteRequest failure");
+				return FALSE;
+			}
+		}
+
+		rc = tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
+		tsg->reauthSequence = FALSE;
+	}
+	else
+	{
+		WLog_Print(tsg->log, WLOG_ERROR, "TSG_STATE_AUTHORIZED unexpected OpNum: %" PRIu32 "\n",
+		           call->OpNum);
+	}
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL tsg_recv_pipe_created(rdpTsg* tsg, const RPC_PDU* pdu)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(pdu);
+
+	rdpRpc* rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
+
+	RpcClientCall* call = rpc_client_call_find_by_id(rpc->log, rpc->client, pdu->CallId);
+
+	if (!call)
+		return FALSE;
+
+	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
+	{
+		rc = TsProxyMakeTunnelCallReadResponse(tsg, pdu);
+		if (!rc)
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
+		else if (tsg->ReauthTunnelContext)
+			rc = tsg_proxy_reauth(tsg);
+	}
+	else if (call->OpNum == TsProxyCloseChannelOpnum)
+	{
+		CONTEXT_HANDLE ChannelContext;
+
+		rc = TsProxyCloseChannelReadResponse(tsg->log, pdu, &ChannelContext);
+		if (!rc)
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelReadResponse failure");
+	}
+	else if (call->OpNum == TsProxyCloseTunnelOpnum)
+	{
+		CONTEXT_HANDLE TunnelContext = WINPR_C_ARRAY_INIT;
+
+		rc = TsProxyCloseTunnelReadResponse(tsg->log, pdu, &TunnelContext);
+		if (!rc)
+			WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelReadResponse failure");
+	}
+	else
+	{
+		WLog_Print(tsg->log, WLOG_ERROR, "TSG_STATE_PIPE_CREATED unexpected OpNum: %" PRIu32 "\n",
+		           call->OpNum);
+	}
+	return rc;
+}
+
+BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(pdu);
 
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 	{
@@ -2701,121 +2825,14 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 		break;
 
 		case TSG_STATE_AUTHORIZED:
-			call = rpc_client_call_find_by_id(rpc->client, pdu->CallId);
-
-			if (!call)
-				return FALSE;
-
-			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
-			{
-				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-			}
-			else if (call->OpNum == TsProxyCreateChannelOpnum)
-			{
-				CONTEXT_HANDLE ChannelContext;
-
-				if (!TsProxyCreateChannelReadResponse(tsg->log, pdu, &ChannelContext,
-				                                      &tsg->ChannelId))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCreateChannelReadResponse failure");
-					return FALSE;
-				}
-
-				if (!tsg->reauthSequence)
-					CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
-				else
-					CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
-
-				if (!tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED))
-					return FALSE;
-
-				if (!tsg->reauthSequence)
-				{
-					if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
-					{
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxySetupReceivePipe failure");
-						return FALSE;
-					}
-				}
-				else
-				{
-					if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
-					{
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
-						return FALSE;
-					}
-
-					if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
-					{
-						WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelWriteRequest failure");
-						return FALSE;
-					}
-				}
-
-				rc = tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
-				tsg->reauthSequence = FALSE;
-			}
-			else
-			{
-				WLog_Print(tsg->log, WLOG_ERROR,
-				           "TSG_STATE_AUTHORIZED unexpected OpNum: %" PRIu32 "\n", call->OpNum);
-			}
-
+			rc = tsg_recv_authorized(tsg, pdu);
 			break;
 
 		case TSG_STATE_CHANNEL_CREATED:
 			break;
 
 		case TSG_STATE_PIPE_CREATED:
-			call = rpc_client_call_find_by_id(rpc->client, pdu->CallId);
-
-			if (!call)
-				return FALSE;
-
-			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
-			{
-				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyMakeTunnelCallReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-
-				if (tsg->ReauthTunnelContext)
-					rc = tsg_proxy_reauth(tsg);
-			}
-			else if (call->OpNum == TsProxyCloseChannelOpnum)
-			{
-				CONTEXT_HANDLE ChannelContext;
-
-				if (!TsProxyCloseChannelReadResponse(tsg->log, pdu, &ChannelContext))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-			}
-			else if (call->OpNum == TsProxyCloseTunnelOpnum)
-			{
-				CONTEXT_HANDLE TunnelContext;
-
-				if (!TsProxyCloseTunnelReadResponse(tsg->log, pdu, &TunnelContext))
-				{
-					WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseTunnelReadResponse failure");
-					return FALSE;
-				}
-
-				rc = TRUE;
-			}
-
+			rc = tsg_recv_pipe_created(tsg, pdu);
 			break;
 
 		case TSG_STATE_TUNNEL_CLOSE_PENDING:
@@ -2831,7 +2848,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 			if (!tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CLOSE_PENDING))
 				return FALSE;
 
-			if (!TsProxyCloseChannelWriteRequest(tsg, nullptr))
+			if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->ChannelContext))
 			{
 				WLog_Print(tsg->log, WLOG_ERROR, "TsProxyCloseChannelWriteRequest failure");
 				return FALSE;
@@ -2876,6 +2893,11 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 			           tsg_state_to_string(oldState), rem);
 		}
 	}
+
+	rpc_client_call_advance(tsg->rpc->log, tsg->rpc->client, pdu->CallId,
+	                        RPC_CLIENT_CALL_STATE_RECEIVE_PDU, rc);
+	if (!rc)
+		rpc_client_call_discard(tsg->rpc->log, tsg->rpc->client, pdu->CallId);
 	return rc;
 }
 
@@ -2980,7 +3002,6 @@ static BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 {
-	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount = 0;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
@@ -3027,21 +3048,24 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 	if (nCount == 0)
 		return FALSE;
 
+	/* The connections are established, from here on we wait for responses of the gateway */
+	const UINT32 timeoutMS = freerdp_settings_get_uint32(settings, FreeRDP_GatewayResponseTimeout);
+	UINT64 remainingMS = timeoutMS;
+
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
 		const DWORD polltimeout = 250;
-		DWORD status = WaitForMultipleObjects(nCount, events, FALSE, polltimeout);
-		if (status == WAIT_TIMEOUT)
-		{
-			if (timeout > 0)
-			{
-				if (looptimeout < polltimeout)
-					return FALSE;
-				looptimeout -= polltimeout;
-			}
-		}
-		else
-			looptimeout = timeout * 1000ULL;
+		const TSG_STATE state = tsg->state;
+		const UINT64 startMS = GetTickCount64();
+
+		/* ignore read events, they are not handled here. */
+		const DWORD status = WaitForMultipleObjects(nCount - 1, &events[1], FALSE, polltimeout);
+		const UINT64 waitedMS = GetTickCount64() - startMS;
+		if (status == WAIT_FAILED)
+			return FALSE;
+
+		if (freerdp_shall_disconnect_context(context))
+			return FALSE;
 
 		if (!tsg_check_event_handles(tsg))
 		{
@@ -3049,6 +3073,19 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 			transport_set_layer(transport, TRANSPORT_LAYER_CLOSED);
 			return FALSE;
 		}
+
+		/* Only progress of the tunnel setup restarts the timeout, not just any traffic from
+		 * the gateway. Only the time spent waiting counts, so a gateway message presented to
+		 * the user from within tsg_check_event_handles does not use it up. */
+		if (tsg->state != state)
+			remainingMS = timeoutMS;
+		else if (remainingMS <= waitedMS)
+		{
+			WLog_Print(tsg->log, WLOG_ERROR, "timeout [%" PRIu32 "ms] exceeded", timeoutMS);
+			return FALSE;
+		}
+		else
+			remainingMS -= waitedMS;
 	}
 
 	WLog_Print(tsg->log, WLOG_INFO, "TS Gateway Connection Success");
@@ -3185,7 +3222,7 @@ rdpTsg* tsg_new(rdpTransport* transport)
 
 	if (!tsg)
 		return nullptr;
-	tsg->log = WLog_Get(TAG);
+	tsg->log = WLog_Get(TSG_TAG);
 	tsg->transport = transport;
 	tsg->rpc = rpc_new(tsg->transport);
 
@@ -3230,10 +3267,6 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 	{
 		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
-	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 	}
 
 	return status >= 0 ? status : -1;
@@ -3322,14 +3355,14 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 		case BIO_C_READ_BLOCKED:
 		{
-			BIO* cbio = outChannel->common.bio;
+			BIO* cbio = outChannel->common.tls->underlying;
 			status = BIO_read_blocked(cbio);
 		}
 		break;
 
 		case BIO_C_WRITE_BLOCKED:
 		{
-			BIO* cbio = inChannel->common.bio;
+			BIO* cbio = inChannel->common.tls->underlying;
 			status = BIO_write_blocked(cbio);
 		}
 		break;
@@ -3337,7 +3370,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_READ:
 		{
 			int timeout = (int)arg1;
-			BIO* cbio = outChannel->common.bio;
+			BIO* cbio = outChannel->common.tls->underlying;
 
 			if (BIO_read_blocked(cbio))
 				return BIO_wait_read(cbio, timeout);
@@ -3351,7 +3384,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_WRITE:
 		{
 			int timeout = (int)arg1;
-			BIO* cbio = inChannel->common.bio;
+			BIO* cbio = inChannel->common.tls->underlying;
 
 			if (BIO_write_blocked(cbio))
 				status = BIO_wait_write(cbio, timeout);

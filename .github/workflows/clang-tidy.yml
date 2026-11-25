@@ -24,5 +24,5 @@ jobs:
         cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -C ci/cmake-preloads/config-qa.cmake
 
     # Uploads an artefact containing clang_fixes.json
-    - uses: akallabeth/clang-tidy-review/upload@master
+    - uses: ZedThree/clang-tidy-review/upload@v0.23.1
       id: upload-review

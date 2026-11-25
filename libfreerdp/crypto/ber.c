@@ -676,7 +676,7 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 			return 0;
 
 		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, value >> 16));
-		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, value));
+		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, value & 0xFFFF));
 		return 5;
 	}
 	else if (value < 0x80000000)

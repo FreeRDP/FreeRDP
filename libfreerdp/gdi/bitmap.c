@@ -382,10 +382,10 @@ static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, 
 		nWidth = nWidth + nXSrc;
 	}
 
-	if (hSrcBmp->width < (nXSrc + nWidth))
+	if (hSrcBmp->width < (1LL * nXSrc + nWidth))
 		nXSrc = hSrcBmp->width - nWidth;
 
-	if (hSrcBmp->height < (nYSrc + nHeight))
+	if (hSrcBmp->height < (1LL * nYSrc + nHeight))
 		nYSrc = hSrcBmp->height - nHeight;
 
 	if ((nXSrc < 0) || (nYSrc < 0))

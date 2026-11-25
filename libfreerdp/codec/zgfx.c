@@ -69,6 +69,7 @@ struct S_ZGFX_CONTEXT
 	BYTE HistoryBuffer[2500000];
 	UINT32 HistoryIndex;
 	UINT32 HistoryBufferSize;
+	UINT32 HistoryFilled;
 };
 
 static const ZGFX_TOKEN ZGFX_TOKEN_TABLE[] = {
@@ -138,11 +139,21 @@ static inline BOOL zgfx_GetBits(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, UINT32 nbits)
 	return TRUE;
 }
 
+static inline void zgfx_history_buffer_filled(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, size_t count)
+{
+	if (count >= zgfx->HistoryBufferSize - zgfx->HistoryFilled)
+		zgfx->HistoryFilled = zgfx->HistoryBufferSize;
+	else
+		zgfx->HistoryFilled += (UINT32)count;
+}
+
 static inline void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
                                                   const BYTE* WINPR_RESTRICT src, size_t count)
 {
 	if (count <= 0)
 		return;
+
+	zgfx_history_buffer_filled(zgfx, count);
 
 	if (count > zgfx->HistoryBufferSize)
 	{
@@ -297,6 +308,7 @@ static inline BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 					zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
 					c = (BYTE)(ZGFX_TOKEN_TABLE[opIndex].valueBase + zgfx->bits);
 					zgfx->HistoryBuffer[zgfx->HistoryIndex] = c;
+					zgfx_history_buffer_filled(zgfx, 1);
 
 					if (++zgfx->HistoryIndex == zgfx->HistoryBufferSize)
 						zgfx->HistoryIndex = 0;
@@ -339,6 +351,15 @@ static inline BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 
 						if (count > sizeof(zgfx->OutputBuffer) - zgfx->OutputCount)
 							return FALSE;
+
+						if (distance > zgfx->HistoryFilled)
+						{
+							WLog_ERR(TAG,
+							         "match distance %" PRIu32 " beyond the %" PRIu32
+							         " bytes of history",
+							         distance, zgfx->HistoryFilled);
+							return FALSE;
+						}
 
 						zgfx_history_buffer_ring_read(zgfx, WINPR_ASSERTING_INT_CAST(int, distance),
 						                              &(zgfx->OutputBuffer[zgfx->OutputCount]),
@@ -599,6 +620,8 @@ int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT 
 {
 	int status = 0;
 	wStream* s = Stream_New(nullptr, SrcSize);
+	if (!s)
+		return -1;
 	status = zgfx_compress_to_stream(zgfx, s, pSrcData, SrcSize, pFlags);
 	const size_t pos = Stream_GetPosition(s);
 	if (pos > UINT32_MAX)
@@ -615,6 +638,7 @@ int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT 
 void zgfx_context_reset(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, WINPR_ATTR_UNUSED BOOL flush)
 {
 	zgfx->HistoryIndex = 0;
+	zgfx->HistoryFilled = 0;
 }
 
 ZGFX_CONTEXT* zgfx_context_new(BOOL Compressor)

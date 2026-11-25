@@ -51,22 +51,6 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
-typedef struct
-{
-	BOOL Shift;
-	BOOL LeftShift;
-	BOOL RightShift;
-	BOOL Alt;
-	BOOL LeftAlt;
-	BOOL RightAlt;
-	BOOL Ctrl;
-	BOOL LeftCtrl;
-	BOOL RightCtrl;
-	BOOL Super;
-	BOOL LeftSuper;
-	BOOL RightSuper;
-} XF_MODIFIER_KEYS;
-
 struct x11_key_scancode_t
 {
 	const char* name;
@@ -516,7 +500,9 @@ BOOL xf_keyboard_update_modifier_map(xfContext* xfc)
 	return xfc->modifierMap != nullptr;
 }
 
-static void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* ev);
+static BOOL xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* ev);
+static DWORD get_rdp_scancode_from_x11_keycode(xfContext* xfc, DWORD keycode);
+static int xf_keyboard_get_keymask(xfContext* xfc, KeySym keysym);
 
 static BOOL xf_sync_kbd_state(xfContext* xfc)
 {
@@ -530,6 +516,25 @@ static void xf_keyboard_clear(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 	ZeroMemory(xfc->KeyboardState, sizeof(xfc->KeyboardState));
+}
+
+static BOOL xf_keyboard_mapping_is_set(const xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	for (size_t i = 0; i < ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE); i++)
+	{
+		if (xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] != RDP_SCANCODE_UNKNOWN)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static void xf_keyboard_clear_mapping(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	ZeroMemory(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE, sizeof(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE));
 }
 
 static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size,
@@ -800,6 +805,8 @@ static BOOL compareKey(const struct x11_key_scancode_t* a, size_t counta,
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	rdpSettings* settings = nullptr;
+	DWORD previous_mapping[ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE)] = WINPR_C_ARRAY_INIT;
+	BOOL previous_mapping_is_set = FALSE;
 
 	WINPR_ASSERT(xfc);
 
@@ -849,12 +856,27 @@ BOOL xf_keyboard_init(xfContext* xfc)
 			return FALSE;
 	}
 
+	previous_mapping_is_set = xf_keyboard_mapping_is_set(xfc);
+	memcpy(previous_mapping, xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE, sizeof(previous_mapping));
+	xf_keyboard_clear_mapping(xfc);
+
 	const int rc = load_map_from_xkbfile(xfc);
 
 	const BOOL keysym_mapped = load_map_from_keysym(xfc);
 
 	if (rc != 0 && !keysym_mapped)
-		return FALSE;
+	{
+		if (!previous_mapping_is_set)
+			return FALSE;
+
+		/* A MappingNotify may carry a keymap without names or usable keysyms.
+		 * Keep the last working physical-key mapping instead of ending the RDP
+		 * session just because the new map cannot be decoded. */
+		memcpy(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE, previous_mapping,
+		       sizeof(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE));
+		WLog_Print(xfc->log, WLOG_WARN,
+		           "Could not map the new X11 keyboard map, keeping the previous mapping");
+	}
 
 	return xf_keyboard_update_modifier_map(xfc);
 }
@@ -865,20 +887,176 @@ void xf_keyboard_free(xfContext* xfc)
 	xf_keyboard_action_script_free(xfc);
 }
 
+/* Only ordinary Alt is deferred. Shift keeps the existing immediate path. */
+enum
+{
+	XF_ALT_LEFT = 0x01,
+	XF_ALT_RIGHT = 0x02
+};
+
+static UINT32 xf_keyboard_alt_mask(xfContext* xfc, KeyCode code)
+{
+	if (!code || (code == XKeysymToKeycode(xfc->display, XK_ISO_Level3_Shift)) ||
+	    (code == XKeysymToKeycode(xfc->display, XK_Mode_switch)))
+		return 0;
+
+	const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, code);
+	if ((code == XKeysymToKeycode(xfc->display, XK_Alt_L)) && (scancode == RDP_SCANCODE_LMENU))
+		return XF_ALT_LEFT;
+	if ((code == XKeysymToKeycode(xfc->display, XK_Alt_R)) && (scancode == RDP_SCANCODE_RMENU))
+		return XF_ALT_RIGHT;
+	return 0;
+}
+
+BOOL xf_keyboard_flush_deferred_alt(xfContext* xfc)
+{
+	if (!xfc->deferAlt)
+		return TRUE;
+
+	/* A fixed left/right order is sufficient; no modifier press queue is kept. */
+	const UINT32 masks[] = { XF_ALT_LEFT, XF_ALT_RIGHT };
+	for (size_t i = 0; i < ARRAYSIZE(masks); i++)
+	{
+		const UINT32 mask = masks[i];
+		if (!(xfc->deferredAlt.pending & mask))
+			continue;
+		const DWORD scancode = (mask == XF_ALT_LEFT) ? RDP_SCANCODE_LMENU : RDP_SCANCODE_RMENU;
+		if (!freerdp_input_send_keyboard_event_ex(xfc->common.context.input, TRUE, FALSE, scancode))
+			return FALSE;
+		xfc->deferredAlt.pending &= ~mask;
+		xfc->deferredAlt.sent |= mask;
+	}
+	return TRUE;
+}
+
+/* A key that another client has grabbed (for example mutter grabs the bare
+ * "locate pointer" modifier, Control_L by default) never reaches this client as
+ * a KeyPress event. Modifier state is tracked from the events that do arrive,
+ * so a grabbed modifier silently disappears from every combination sent to the
+ * remote application: it receives the plain key without the modifier.
+ *
+ * The X server still reports the physical key state, so compare the modifier
+ * mask carried by the event against the modifiers tracked here and forward any
+ * modifier that is physically pressed but was never seen pressed. */
+static void xf_keyboard_sync_pressed_modifiers(xfContext* xfc, UINT32 state, KeyCode skip)
+{
+	static const KeySym keysyms[] = { XK_Shift_L, XK_Shift_R, XK_Control_L, XK_Control_R,
+		                              XK_Alt_L,   XK_Alt_R,   XK_Super_L,   XK_Super_R };
+	char keys[32] = WINPR_C_ARRAY_INIT;
+	int expected = 0;
+	int tracked = 0;
+
+	WINPR_ASSERT(xfc);
+
+	if (!xfc->display)
+		return;
+
+	for (size_t i = 0; i < ARRAYSIZE(keysyms); i++)
+	{
+		/* Alt is deferred or forwarded by the deferred Alt logic. */
+		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
+			continue;
+
+		WINPR_ASSERT(sizeof(KeyCode) == 1);
+		WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) == 256);
+		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
+		if (keycode == 0)
+			continue;
+
+		const int mask = xf_keyboard_get_keymask(xfc, keysyms[i]);
+		if (mask == 0)
+			continue;
+
+		expected |= mask;
+		if ((keycode != skip) && xfc->KeyboardState[keycode])
+			tracked |= mask;
+	}
+
+	/* Fast path: the modifier state carried by the event matches the tracked keys. */
+	if (((int)state & expected) == tracked)
+		return;
+
+	if (XQueryKeymap(xfc->display, keys) == 0)
+		return;
+
+	for (size_t i = 0; i < ARRAYSIZE(keysyms); i++)
+	{
+		if (xfc->deferAlt && ((keysyms[i] == XK_Alt_L) || (keysyms[i] == XK_Alt_R)))
+			continue;
+
+		WINPR_ASSERT(sizeof(KeyCode) == 1);
+		WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) == 256);
+		const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
+		if ((keycode == 0) || (keycode == skip))
+			continue;
+		if (xfc->KeyboardState[keycode])
+			continue;
+
+		const int mask = xf_keyboard_get_keymask(xfc, keysyms[i]);
+		if ((mask != 0) && ((tracked & mask) == mask))
+			continue;
+
+		/* Only the keyboard reports the physical state, the event mask cannot tell
+		 * the left from the right key of the same modifier. */
+		if ((keys[keycode / 8] & (1 << (keycode % 8))) == 0)
+			continue;
+
+		const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, keycode);
+		if (scancode == 0)
+			continue;
+
+		xfc->KeyboardState[keycode] = TRUE;
+		if (!freerdp_input_send_keyboard_event_ex(xfc->common.context.input, TRUE, FALSE, scancode))
+			xfc->KeyboardState[keycode] = FALSE;
+		else
+			tracked |= mask;
+	}
+}
+
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	BOOL last = 0;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	last = xfc->KeyboardState[event->keycode];
+	xf_keyboard_sync_pressed_modifiers(xfc, event->state, (KeyCode)event->keycode);
+
+	const BOOL defer = xfc->deferAlt;
+	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
 
 	if (xf_keyboard_handle_special_keys(xfc, keysym))
+	{
+		if (defer)
+		{
+			xfc->deferredAlt.pending = 0;
+			xfc->KeyboardState[event->keycode] = last;
+		}
 		return;
-
+	}
+	if (defer)
+	{
+		const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)event->keycode);
+		if (mask)
+		{
+			if (!(xfc->deferredAlt.sent & mask))
+			{
+				xfc->deferredAlt.pending |= mask;
+				return;
+			}
+			const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, event->keycode);
+			(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, TRUE, last,
+			                                           scancode);
+			return;
+		}
+		/* Shift must not commit Alt before a host Alt+Shift+Tab shortcut. */
+		if ((keysym != XK_Shift_L) && (keysym != XK_Shift_R) &&
+		    !xf_keyboard_flush_deferred_alt(xfc))
+		{
+			xfc->KeyboardState[event->keycode] = last;
+			return;
+		}
+	}
 	xf_keyboard_send_key(xfc, TRUE, last, event);
 }
 
@@ -888,9 +1066,34 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 	WINPR_ASSERT(event);
 	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
-	BOOL last = xfc->KeyboardState[event->keycode];
+	const BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = FALSE;
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
+	if (xfc->deferAlt)
+	{
+		const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)event->keycode);
+		if (mask)
+		{
+			/* An unmatched release after cancellation must not create an Alt tap. */
+			if (xfc->deferredAlt.pending & mask)
+				(void)xf_keyboard_flush_deferred_alt(xfc);
+			if (xfc->deferredAlt.sent & mask)
+			{
+				const DWORD scancode = get_rdp_scancode_from_x11_keycode(xfc, event->keycode);
+				(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
+				                                           scancode);
+			}
+			xfc->deferredAlt.pending &= ~mask;
+			xfc->deferredAlt.sent &= ~mask;
+			return;
+		}
+		if (!last)
+			return;
+		/* Shift release commits Alt before Windows interprets Alt+Shift. */
+		if (((keysym == XK_Shift_L) || (keysym == XK_Shift_R)) &&
+		    !xf_keyboard_flush_deferred_alt(xfc))
+			return;
+	}
 	xf_keyboard_send_key(xfc, FALSE, last, event);
 }
 
@@ -958,6 +1161,16 @@ static void release_keys(xfContext* xfc, BOOL modifiers)
 	{
 		if (xfc->KeyboardState[keycode])
 		{
+			/* Physical Alt may never have been sent to the remote. */
+			if (xfc->deferAlt)
+			{
+				const UINT32 mask = xf_keyboard_alt_mask(xfc, (KeyCode)keycode);
+				if (mask && !(xfc->deferredAlt.sent & mask))
+				{
+					xfc->KeyboardState[keycode] = FALSE;
+					continue;
+				}
+			}
 			const DWORD rdp_scancode =
 			    get_rdp_scancode_from_x11_keycode(xfc, WINPR_ASSERTING_INT_CAST(UINT32, keycode));
 
@@ -975,8 +1188,11 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
+	if (xfc->deferAlt)
+		xfc->deferredAlt.pending = 0;
 	release_keys(xfc, FALSE);
 	release_keys(xfc, TRUE);
+	xfc->deferredAlt.sent = 0;
 }
 
 static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
@@ -986,19 +1202,20 @@ static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 	return xfc->KeyboardState[keycode];
 }
 
-static int xk_keyboard_get_modifier_keys(xfContext* xfc, XF_MODIFIER_KEYS* mod);
+WINPR_ATTR_NODISCARD
+static UINT32 xk_keyboard_get_modifier_keys(xfContext* xfc);
 
 static BOOL xf_keyboard_has_system_modifier(xfContext* xfc)
 {
-	XF_MODIFIER_KEYS mod = WINPR_C_ARRAY_INIT;
-
 	WINPR_ASSERT(xfc);
 
-	(void)xk_keyboard_get_modifier_keys(xfc, &mod);
-	return mod.Ctrl || mod.Alt || mod.Super;
+	const UINT32 mods = xk_keyboard_get_modifier_keys(xfc);
+	return (mods & (FREERDP_CLIENT_KBD_MOD_LCONTROL | FREERDP_CLIENT_KBD_MOD_RCONTROL |
+	                FREERDP_CLIENT_KBD_MOD_LMENU | FREERDP_CLIENT_KBD_MOD_RMENU |
+	                FREERDP_CLIENT_KBD_MOD_LWIN | FREERDP_CLIENT_KBD_MOD_RWIN)) == 0;
 }
 
-void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* event)
+BOOL xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* event)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -1015,9 +1232,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 		 * no code is sent on "release".
 		 */
 		if (down)
-		{
-			freerdp_input_send_keyboard_pause_event(input);
-		}
+			return freerdp_input_send_keyboard_pause_event(input);
 	}
 	else
 	{
@@ -1026,66 +1241,49 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 		{
 			wchar_t buffer[32] = WINPR_C_ARRAY_INIT;
 			int xwc = -1;
+			const UINT32 modmask = xk_keyboard_get_modifier_keys(xfc);
 
-			switch (rdp_scancode)
+			XIM xim = XOpenIM(xfc->display, nullptr, nullptr, nullptr);
+			if (!xim)
 			{
-				case RDP_SCANCODE_RETURN:
-					break;
-				default:
-				{
-					XIM xim = XOpenIM(xfc->display, nullptr, nullptr, nullptr);
-					if (!xim)
-					{
-						WLog_WARN(TAG, "Failed to XOpenIM");
-					}
-					else
-					{
-						XIC xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-						                    nullptr);
-						if (!xic)
-						{
-							WLog_WARN(TAG, "XCreateIC failed");
-						}
-						else
-						{
-							KeySym ignore = WINPR_C_ARRAY_INIT;
-							Status return_status = 0;
-							XKeyEvent ev = *event;
-							ev.type = KeyPress;
-							xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
-							                      &return_status);
-							XDestroyIC(xic);
-						}
-						XCloseIM(xim);
-					}
-				}
-				break;
-			}
-
-			if (xwc < 1)
-			{
-				if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
-					WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
-				else
-					freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
+				WLog_WARN(TAG, "Failed to XOpenIM");
 			}
 			else
 			{
-				char str[3 * ARRAYSIZE(buffer)] = WINPR_C_ARRAY_INIT;
-				// NOLINTNEXTLINE(concurrency-mt-unsafe)
-				const size_t rc = wcstombs(str, buffer, ARRAYSIZE(buffer));
-
-				WCHAR wbuffer[ARRAYSIZE(buffer)] = WINPR_C_ARRAY_INIT;
-				(void)ConvertUtf8ToWChar(str, wbuffer, rc);
-				freerdp_input_send_unicode_keyboard_event(input, down ? 0 : KBD_FLAGS_RELEASE,
-				                                          wbuffer[0]);
+				XIC xic =
+				    XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, nullptr);
+				if (!xic)
+				{
+					WLog_WARN(TAG, "XCreateIC failed");
+				}
+				else
+				{
+					KeySym ignore = WINPR_C_ARRAY_INIT;
+					Status return_status = 0;
+					XKeyEvent ev = *event;
+					ev.type = KeyPress;
+					xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
+					                      &return_status);
+					XDestroyIC(xic);
+				}
+				XCloseIM(xim);
 			}
+
+			char str[3 * ARRAYSIZE(buffer)] = WINPR_C_ARRAY_INIT;
+			if (xwc > 0)
+			{
+				// NOLINTNEXTLINE(concurrency-mt-unsafe)
+				(void)wcstombs(str, buffer, ARRAYSIZE(buffer));
+			}
+			return freerdp_client_send_key_as_unicode(&xfc->common, down ? 0 : KBD_FLAGS_RELEASE,
+			                                          str, rdp_scancode, modmask);
 		}
 		else if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 			WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
 		else
-			freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
+			return freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
 	}
+	return FALSE;
 }
 
 static int xf_keyboard_read_keyboard_state(xfContext* xfc)
@@ -1186,6 +1384,13 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 		                       XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
 
 	xf_keyboard_clear(xfc);
+	if (xfc->deferAlt)
+	{
+		/* Focus return starts a new sequence; do not restore held modifiers. */
+		xfc->deferredAlt.pending = 0;
+		xfc->deferredAlt.sent = 0;
+		return;
+	}
 
 	const int state = xf_keyboard_read_keyboard_state(xfc);
 
@@ -1276,7 +1481,7 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 	return TRUE;
 }
 
-static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, KeySym keysym)
+static int xf_keyboard_execute_action_script(xfContext* xfc, UINT32 mods, KeySym keysym)
 {
 	int status = 1;
 	BOOL match = FALSE;
@@ -1299,16 +1504,16 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 		return 1;
 	}
 
-	if (mod->Shift)
+	if ((mods & (FREERDP_CLIENT_KBD_MOD_LSHIFT | FREERDP_CLIENT_KBD_MOD_RSHIFT)) != 0)
 		winpr_str_append("Shift", combination, sizeof(combination), "+");
 
-	if (mod->Ctrl)
+	if ((mods & (FREERDP_CLIENT_KBD_MOD_LCONTROL | FREERDP_CLIENT_KBD_MOD_RCONTROL)) != 0)
 		winpr_str_append("Ctrl", combination, sizeof(combination), "+");
 
-	if (mod->Alt)
+	if ((mods & (FREERDP_CLIENT_KBD_MOD_LMENU | FREERDP_CLIENT_KBD_MOD_RMENU)) != 0)
 		winpr_str_append("Alt", combination, sizeof(combination), "+");
 
-	if (mod->Super)
+	if ((mods & (FREERDP_CLIENT_KBD_MOD_LWIN | FREERDP_CLIENT_KBD_MOD_RWIN)) != 0)
 		winpr_str_append("Super", combination, sizeof(combination), "+");
 
 	winpr_str_append(keyStr, combination, sizeof(combination), "+");
@@ -1339,33 +1544,39 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	return status;
 }
 
-static int xk_keyboard_get_modifier_keys(xfContext* xfc, XF_MODIFIER_KEYS* mod)
+UINT32 xk_keyboard_get_modifier_keys(xfContext* xfc)
 {
-	mod->LeftShift = xf_keyboard_key_pressed(xfc, XK_Shift_L);
-	mod->RightShift = xf_keyboard_key_pressed(xfc, XK_Shift_R);
-	mod->Shift = mod->LeftShift || mod->RightShift;
-	mod->LeftAlt = xf_keyboard_key_pressed(xfc, XK_Alt_L);
-	mod->RightAlt = xf_keyboard_key_pressed(xfc, XK_Alt_R);
-	mod->Alt = mod->LeftAlt || mod->RightAlt;
-	mod->LeftCtrl = xf_keyboard_key_pressed(xfc, XK_Control_L);
-	mod->RightCtrl = xf_keyboard_key_pressed(xfc, XK_Control_R);
-	mod->Ctrl = mod->LeftCtrl || mod->RightCtrl;
-	mod->LeftSuper = xf_keyboard_key_pressed(xfc, XK_Super_L);
-	mod->RightSuper = xf_keyboard_key_pressed(xfc, XK_Super_R);
-	mod->Super = mod->LeftSuper || mod->RightSuper;
-	return 0;
+	UINT32 mods = FREERDP_CLIENT_KBD_MOD_NONE;
+
+	if (xf_keyboard_key_pressed(xfc, XK_Shift_L))
+		mods |= FREERDP_CLIENT_KBD_MOD_LSHIFT;
+	if (xf_keyboard_key_pressed(xfc, XK_Shift_R))
+		mods |= FREERDP_CLIENT_KBD_MOD_RSHIFT;
+	if (xf_keyboard_key_pressed(xfc, XK_Alt_L))
+		mods |= FREERDP_CLIENT_KBD_MOD_LMENU;
+	if (xf_keyboard_key_pressed(xfc, XK_Alt_R))
+		mods |= FREERDP_CLIENT_KBD_MOD_RMENU;
+	if (xf_keyboard_key_pressed(xfc, XK_Control_L))
+		mods |= FREERDP_CLIENT_KBD_MOD_LCONTROL;
+	if (xf_keyboard_key_pressed(xfc, XK_Control_R))
+		mods |= FREERDP_CLIENT_KBD_MOD_RCONTROL;
+	if (xf_keyboard_key_pressed(xfc, XK_Super_L))
+		mods |= FREERDP_CLIENT_KBD_MOD_LWIN;
+	if (xf_keyboard_key_pressed(xfc, XK_Super_R))
+		mods |= FREERDP_CLIENT_KBD_MOD_RWIN;
+	return mods;
 }
 
 BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 {
-	XF_MODIFIER_KEYS mod = WINPR_C_ARRAY_INIT;
-	xk_keyboard_get_modifier_keys(xfc, &mod);
+	const UINT32 mods = xk_keyboard_get_modifier_keys(xfc);
 
 	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
 	// do not return anything such that the key could be used by client if ungrab is not the goal
 	if (keysym == XK_Control_R)
 	{
-		if (mod.RightCtrl && !xfc->wasRightCtrlAlreadyPressed)
+		const BOOL rctrl = (mods & FREERDP_CLIENT_KBD_MOD_RCONTROL) != 0;
+		if (rctrl && !xfc->wasRightCtrlAlreadyPressed)
 		{
 			// Right Ctrl is pressed, getting ready to ungrab
 			xfc->ungrabKeyboardWithRightCtrl = TRUE;
@@ -1379,18 +1590,21 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 			xfc->ungrabKeyboardWithRightCtrl = FALSE;
 	}
 
-	const int rc = xf_keyboard_execute_action_script(xfc, &mod, keysym);
+	const int rc = xf_keyboard_execute_action_script(xfc, mods, keysym);
 	if (rc < 0)
 		return FALSE;
 	if (rc == 0)
 		return TRUE;
 
+	const BOOL ctrl =
+	    (mods & (FREERDP_CLIENT_KBD_MOD_LCONTROL | FREERDP_CLIENT_KBD_MOD_RCONTROL)) != 0;
+	const BOOL alt = (mods & (FREERDP_CLIENT_KBD_MOD_LMENU | FREERDP_CLIENT_KBD_MOD_RMENU)) != 0;
 	if (!xfc->remote_app && xfc->fullscreen_toggle)
 	{
 		switch (keysym)
 		{
 			case XK_Return:
-				if (mod.Ctrl && mod.Alt)
+				if (ctrl && alt)
 				{
 					/* Ctrl-Alt-Enter: toggle full screen */
 					WLog_INFO(TAG, "<ctrl>+<alt>+<enter> pressed, toggling fullscreen state...");
@@ -1404,7 +1618,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		}
 	}
 
-	if (mod.Ctrl && mod.Alt)
+	if (ctrl && alt)
 	{
 		switch (keysym)
 		{
@@ -1433,7 +1647,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		}
 	}
 
-#if 0 /* set to 1 to enable multi touch gesture simulation via keyboard */
+#if defined(WITH_X11_MULTITOUCH_EMULATION) /* set to 1 to enable multi touch gesture simulation \
+                                              via keyboard */
 #ifdef WITH_XRENDER
 
     if (!xfc->remote_app && freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MultiTouchGestures))
@@ -1491,6 +1706,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				case XK_6:	/* Ctrl-Alt-6: Pan up */
 					pdy = 10;
 					break;
+				default:
+					break;
 			}
 
 			if (pdx != 0 || pdy != 0)
@@ -1533,10 +1750,9 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 		return;
 
 	// all requirements for ungrab are fulfilled, ungrabbing now
-	XF_MODIFIER_KEYS mod = WINPR_C_ARRAY_INIT;
-	xk_keyboard_get_modifier_keys(xfc, &mod);
+	const UINT32 mods = xk_keyboard_get_modifier_keys(xfc);
 
-	if (!mod.RightCtrl)
+	if (((mods & (FREERDP_CLIENT_KBD_MOD_RCONTROL)) == 0))
 	{
 		if (!xfc->fullscreen)
 		{
@@ -1578,6 +1794,8 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 BOOL xf_ungrab(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
+	if (xfc->deferAlt)
+		xf_keyboard_release_all_keypress(xfc);
 	XUngrabKeyboard(xfc->display, CurrentTime);
 	XUngrabPointer(xfc->display, CurrentTime);
 	xfc->common.mouse_grabbed = FALSE;

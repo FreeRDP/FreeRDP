@@ -1055,12 +1055,14 @@ static const ULONG SERIAL_SYS_SUPPORTED_EV_MASK =
     SERIAL_EV_EVENT2*/
     ;
 
-static BOOL is_wait_set(WINPR_COMM* pComm)
+static BOOL stop_wait(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
 
 	EnterCriticalSection(&pComm->EventsLock);
 	const BOOL isWaiting = (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING) != 0;
+	if (isWaiting)
+		pComm->PendingEvents |= SERIAL_EV_WINPR_STOP;
 	LeaveCriticalSection(&pComm->EventsLock);
 	return isWaiting;
 }
@@ -1075,22 +1077,8 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
 	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
 	 */
-	if (is_wait_set(pComm))
-	{
-		/* FIXME: any doubt on reading PendingEvents out of a critical section? */
-
-		EnterCriticalSection(&pComm->EventsLock);
-		pComm->PendingEvents |= SERIAL_EV_WINPR_STOP;
-		LeaveCriticalSection(&pComm->EventsLock);
-
-		/* waiting the end of the pending wait_on_mask() */
-		while (is_wait_set(pComm))
-			Sleep(10); /* 10ms */
-
-		EnterCriticalSection(&pComm->EventsLock);
-		pComm->PendingEvents &= (uint32_t)~SERIAL_EV_WINPR_STOP;
-		LeaveCriticalSection(&pComm->EventsLock);
-	}
+	while (stop_wait(pComm))
+		Sleep(10); /* 10ms */
 
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
@@ -1104,7 +1092,8 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 			return FALSE;
 		}
 
-		pComm->PendingEvents = 0;
+		/* NB: the state of a wait_on_mask() started meanwhile must be kept */
+		pComm->PendingEvents &= (SERIAL_EV_WINPR_WAITING | SERIAL_EV_WINPR_STOP);
 	}
 
 	possibleMask = *pWaitMask & SERIAL_SYS_SUPPORTED_EV_MASK;
@@ -1442,7 +1431,7 @@ static void consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
 static BOOL unlock_return(WINPR_COMM* pComm, BOOL res)
 {
 	EnterCriticalSection(&pComm->EventsLock);
-	pComm->PendingEvents &= (uint32_t)~SERIAL_EV_WINPR_WAITING;
+	pComm->PendingEvents &= (uint32_t)~(SERIAL_EV_WINPR_WAITING | SERIAL_EV_WINPR_STOP);
 	LeaveCriticalSection(&pComm->EventsLock);
 	return res;
 }
@@ -1456,6 +1445,13 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 	WINPR_ASSERT(*pOutputMask == 0);
 
 	EnterCriticalSection(&pComm->EventsLock);
+	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
+	{
+		/* only a single wait can be pending, set_wait_mask() could not stop any other */
+		LeaveCriticalSection(&pComm->EventsLock);
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 	pComm->PendingEvents |= SERIAL_EV_WINPR_WAITING;
 	LeaveCriticalSection(&pComm->EventsLock);
 

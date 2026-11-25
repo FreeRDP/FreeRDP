@@ -48,6 +48,7 @@ typedef struct
 	UINT32 ReqCompletion; /* An unique interface ID */
 	IWTSVirtualChannelManager* channelManager;
 	UINT32 channelID;
+	GENERIC_CHANNEL_CALLBACK* channelCallback;
 	UINT16 status;
 	BYTE bus_number;
 	BYTE dev_number;

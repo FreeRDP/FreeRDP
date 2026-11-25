@@ -32,6 +32,7 @@
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "server-decoration-client-protocol.h"
 #include "viewporter-client-protocol.h"
+#include "linux-dmabuf-v1-client-protocol.h"
 
 #ifdef BUILD_IVI
 #include "ivi-application-client-protocol.h"
@@ -110,6 +111,7 @@ struct uwac_display
 #endif
 
 	struct wl_shm* shm;
+	struct zwp_linux_dmabuf_v1* linux_dmabuf;
 	enum wl_shm_format* shm_formats;
 	uint32_t shm_formats_nb;
 	bool has_rgb565;

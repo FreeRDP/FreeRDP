@@ -121,18 +121,27 @@ UINT rdpgfx_write_point16(wStream* s, const RDPGFX_POINT16* point16)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_read_rect16(wLog* log, wStream* s, RECTANGLE_16* rect16)
+UINT rdpgfx_read_rect16(wLog* log, wStream* s, RECTANGLE_16* rect16, BOOL allowEmpty)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(rect16);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 8))
+	WINPR_STATIC_ASSERT(sizeof(RECTANGLE_16) == 8);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, sizeof(RECTANGLE_16)))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, rect16->left);   /* left (2 bytes) */
 	Stream_Read_UINT16(s, rect16->top);    /* top (2 bytes) */
 	Stream_Read_UINT16(s, rect16->right);  /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
+
+	if (allowEmpty)
+	{
+		const RECTANGLE_16 empty = WINPR_C_ARRAY_INIT;
+		if (memcmp(rect16, &empty, sizeof(RECTANGLE_16)) == 0)
+			return CHANNEL_RC_OK;
+	}
+
 	if (rect16->left >= rect16->right)
 	{
 		WLog_Print(log, WLOG_ERROR, "Invalid RECTANGLE_16: left(%" PRIu16 ") > right(%" PRIu16 ")",

@@ -394,7 +394,7 @@ static void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 		             (status == SEC_E_UNSUPPORTED_FUNCTION));
 
 		status = ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-		WINPR_ASSERT((status == SEC_E_OK) || (status = SEC_E_INVALID_HANDLE));
+		WINPR_ASSERT((status == SEC_E_OK) || (status == SEC_E_INVALID_HANDLE));
 
 		status = ntlm->table->DeleteSecurityContext(&ntlm->context);
 		WINPR_ASSERT((status == SEC_E_OK) || (status == SEC_E_SECPKG_NOT_FOUND) ||
@@ -471,6 +471,12 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 {
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 
+	if ((!ntlm) || (!ntlm->table))
+	{
+		(void)fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
+		return -1;
+	}
+
 	WINPR_ASSERT(ntlm);
 	if (ntlm->outputBuffer[0].pvBuffer)
 	{
@@ -494,12 +500,6 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 		ntlm->inputBufferDesc.cBuffers = 1;
 		ntlm->inputBufferDesc.pBuffers = ntlm->inputBuffer;
 		ntlm->inputBuffer[0].BufferType = SECBUFFER_TOKEN;
-	}
-
-	if ((!ntlm) || (!ntlm->table))
-	{
-		(void)fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
-		return -1;
 	}
 
 	status = ntlm->table->InitializeSecurityContext(
@@ -1082,8 +1082,8 @@ int TestSspiNTLM(int argc, char* argv[])
 		const BOOL res3 = test_default(cur, testFailCallback);
 		if (res3 != FALSE)
 		{
-			printf("%s [%" PRIuz "] fail 2!\n", __func__, x);
-			return -2;
+			printf("%s [%" PRIuz "] fail 3!\n", __func__, x);
+			return -3;
 		}
 	}
 	printf("%s success!\n", __func__);

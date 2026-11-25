@@ -12,6 +12,7 @@ endfunction()
 
 function(warn_experimental_print)
   if(WARN_EXPERIMENTAL_LIST_PRIVATE)
+    list(REMOVE_DUPLICATES WARN_EXPERIMENTAL_LIST_PRIVATE)
     foreach(_lib ${WARN_EXPERIMENTAL_LIST_PRIVATE})
       message(WARNING "[experimental] ${_lib}")
     endforeach()

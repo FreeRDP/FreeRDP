@@ -138,41 +138,47 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT16(s,
-	                    (UINT16)capabilities->cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
-	Stream_Write_UINT16(s, 0);                                    /* pad1 (2 bytes) */
-	for (UINT32 x = 0; x < capabilities->cCapabilitiesSets; x++)
+	if ((capabilities->common.msgFlags & CB_RESPONSE_FAIL) == 0)
 	{
-		const CLIPRDR_CAPABILITY_SET* cap = WINPR_PACKED_ALIGN_CAST(
-		    const CLIPRDR_CAPABILITY_SET*, (((const BYTE*)capabilities->capabilitySets) + offset));
-		offset += cap->capabilitySetLength;
-
-		switch (cap->capabilitySetType)
+		Stream_Write_UINT16(
+		    s, (UINT16)capabilities->cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
+		Stream_Write_UINT16(s, 0);                       /* pad1 (2 bytes) */
+		for (UINT32 x = 0; x < capabilities->cCapabilitiesSets; x++)
 		{
-			case CB_CAPSTYPE_GENERAL:
-			{
-				const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet =
-				    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_GENERAL_CAPABILITY_SET*, cap);
-				Stream_Write_UINT16(
-				    s, generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
-				Stream_Write_UINT16(
-				    s, generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
-				Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
-				Stream_Write_UINT32(
-				    s, generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
-			}
-			break;
+			const CLIPRDR_CAPABILITY_SET* cap =
+			    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_CAPABILITY_SET*,
+			                            (((const BYTE*)capabilities->capabilitySets) + offset));
+			offset += cap->capabilitySetLength;
 
-			default:
-				WLog_Print(cliprdr->log, WLOG_WARN, "Unknown capability set type %08" PRIx16,
-				           cap->capabilitySetType);
-				if (!Stream_SafeZero(s, cap->capabilitySetLength))
+			switch (cap->capabilitySetType)
+			{
+				case CB_CAPSTYPE_GENERAL:
 				{
-					WLog_Print(cliprdr->log, WLOG_ERROR, "short stream");
-					Stream_Free(s, TRUE);
-					return ERROR_NO_DATA;
+					const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet =
+					    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_GENERAL_CAPABILITY_SET*, cap);
+					Stream_Write_UINT16(
+					    s,
+					    generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
+					Stream_Write_UINT16(
+					    s,
+					    generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
+					Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
+					Stream_Write_UINT32(
+					    s, generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
 				}
 				break;
+
+				default:
+					WLog_Print(cliprdr->log, WLOG_WARN, "Unknown capability set type %08" PRIx16,
+					           cap->capabilitySetType);
+					if (!Stream_SafeZero(s, cap->capabilitySetLength))
+					{
+						WLog_Print(cliprdr->log, WLOG_ERROR, "short stream");
+						Stream_Free(s, TRUE);
+						return ERROR_NO_DATA;
+					}
+					break;
+			}
 		}
 	}
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerCapabilities");
@@ -347,7 +353,9 @@ static UINT cliprdr_server_format_data_request(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
+	if ((formatDataRequest->common.msgFlags & CB_RESPONSE_FAIL) == 0)
+		Stream_Write_UINT32(s,
+		                    formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataRequest");
 	return cliprdr_server_packet_send(cliprdr, s);
 }
@@ -379,7 +387,9 @@ cliprdr_server_format_data_response(CliprdrServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write(s, formatDataResponse->requestedFormatData, formatDataResponse->common.dataLen);
+	if ((formatDataResponse->common.msgFlags & CB_RESPONSE_FAIL) == 0)
+		Stream_Write(s, formatDataResponse->requestedFormatData,
+		             formatDataResponse->common.dataLen);
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
 	return cliprdr_server_packet_send(cliprdr, s);
 }

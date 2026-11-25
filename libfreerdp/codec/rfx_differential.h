@@ -22,8 +22,10 @@
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
+#include "rfx_types.h"
 
-static inline void rfx_differential_decode(INT16* WINPR_RESTRICT buffer, size_t size)
+WINPR_ATTR_NODISCARD
+static inline BOOL rfx_differential_decode(INT16* WINPR_RESTRICT buffer, size_t size)
 {
 	INT16* ptr = buffer;
 	INT16* end = &buffer[size - 1];
@@ -31,9 +33,15 @@ static inline void rfx_differential_decode(INT16* WINPR_RESTRICT buffer, size_t 
 	while (ptr != end)
 	{
 		const int tmp = ptr[0] + ptr[1];
+		if ((tmp > INT16_MAX) || (tmp < INT16_MIN))
+		{
+			WLog_ERR(RFX_TAG, "differental: %d <= %d <= %d\n", INT16_MIN, tmp, INT16_MAX);
+			return FALSE;
+		}
 		ptr[1] = WINPR_ASSERTING_INT_CAST(INT16, tmp);
 		ptr++;
 	}
+	return TRUE;
 }
 
 static inline void rfx_differential_encode(INT16* WINPR_RESTRICT buffer, size_t size)

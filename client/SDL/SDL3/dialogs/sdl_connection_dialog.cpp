@@ -34,7 +34,9 @@ static const Uint32 hpadding = 5;
 
 SDLConnectionDialog::SDLConnectionDialog(rdpContext* context) : _context(context)
 {
-	std::ignore = hide();
+	/* Nothing to hide yet: there is no window and no timer. Off the main thread hide()
+	 * would only queue a discard event that can arrive after the first message was shown
+	 * and tear it down again. */
 }
 
 SDLConnectionDialog::~SDLConnectionDialog()

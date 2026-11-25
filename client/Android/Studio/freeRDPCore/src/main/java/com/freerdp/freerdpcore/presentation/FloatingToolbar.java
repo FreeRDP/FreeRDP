@@ -11,6 +11,7 @@
 package com.freerdp.freerdpcore.presentation;
 
 import android.app.Activity;
+import android.os.Build;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -166,7 +167,8 @@ public class FloatingToolbar
 
 	private static void setTooltip(View v)
 	{
-		v.setTooltipText(v.getContentDescription());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+			v.setTooltipText(v.getContentDescription());
 	}
 
 	private View.OnTouchListener buildDragListener(Activity activity,

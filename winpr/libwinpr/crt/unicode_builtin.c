@@ -160,9 +160,10 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
                                                           const uint16_t* sourceEnd,
                                                           uint8_t** targetStart,
                                                           const uint8_t* targetEnd,
-                                                          ConversionFlags flags)
+                                                          ConversionFlags flags, size_t* computed)
 {
 	bool computeLength = (!targetEnd) ? true : false;
+	size_t count = 0; /* length-only mode: count, do not advance the null target */
 	const uint16_t* source = *sourceStart;
 	uint8_t* target = *targetStart;
 	ConversionResult result = conversionOK;
@@ -243,6 +244,12 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 			ch = UNI_REPLACEMENT_CHAR;
 		}
 
+		if (computeLength)
+		{
+			count += bytesToWrite;
+			continue;
+		}
+
 		target += bytesToWrite;
 
 		if ((target > targetEnd) && (!computeLength))
@@ -253,61 +260,31 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 			break;
 		}
 
-		if (!computeLength)
+		switch (bytesToWrite)
 		{
-			switch (bytesToWrite)
-			{
-					/* note: everything falls through. */
-				case 4:
-					*--target = (uint8_t)((ch | byteMark) & byteMask);
-					ch >>= 6;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-				case 3:
-					*--target = (uint8_t)((ch | byteMark) & byteMask);
-					ch >>= 6;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
+				/* note: everything falls through. */
+			case 4:
+				*--target = (uint8_t)((ch | byteMark) & byteMask);
+				ch >>= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
+			case 3:
+				*--target = (uint8_t)((ch | byteMark) & byteMask);
+				ch >>= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
-				case 2:
-					*--target = (uint8_t)((ch | byteMark) & byteMask);
-					ch >>= 6;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
+			case 2:
+				*--target = (uint8_t)((ch | byteMark) & byteMask);
+				ch >>= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
-				case 1:
-					*--target = (uint8_t)(ch | firstByteMark[bytesToWrite]);
-					break;
-				default:
-					return sourceIllegal;
-			}
-		}
-		else
-		{
-			switch (bytesToWrite)
-			{
-					/* note: everything falls through. */
-				case 4:
-					--target;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-
-				case 3:
-					--target;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-
-				case 2:
-					--target;
-					/* fallthrough */
-					WINPR_FALLTHROUGH
-
-				case 1:
-					--target;
-					break;
-				default:
-					return sourceIllegal;
-			}
+			case 1:
+				*--target = (uint8_t)(ch | firstByteMark[bytesToWrite]);
+				break;
+			default:
+				return sourceIllegal;
 		}
 
 		target += bytesToWrite;
@@ -315,6 +292,8 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 
 	*sourceStart = source;
 	*targetStart = target;
+	if (computed)
+		*computed = count;
 	return result;
 }
 
@@ -410,9 +389,10 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
                                                           const uint8_t* sourceEnd,
                                                           uint16_t** targetStart,
                                                           const uint16_t* targetEnd,
-                                                          ConversionFlags flags)
+                                                          ConversionFlags flags, size_t* computed)
 {
 	bool computeLength = (!targetEnd) ? true : false;
+	size_t count = 0; /* length-only mode: count, do not offset the null target */
 	ConversionResult result = conversionOK;
 	const uint8_t* source = *sourceStart;
 	uint16_t* target = *targetStart;
@@ -504,7 +484,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 					if (!computeLength)
 						*target++ = setWcharFrom(UNI_REPLACEMENT_CHAR);
 					else
-						target++;
+						count++;
 				}
 			}
 			else
@@ -512,7 +492,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				if (!computeLength)
 					*target++ = setWcharFrom((WCHAR)ch); /* normal case */
 				else
-					target++;
+					count++;
 			}
 		}
 		else if (ch > UNI_MAX_UTF16)
@@ -528,13 +508,13 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				if (!computeLength)
 					*target++ = setWcharFrom(UNI_REPLACEMENT_CHAR);
 				else
-					target++;
+					count++;
 			}
 		}
 		else
 		{
 			/* target is a character in range 0xFFFF - 0x10FFFF. */
-			if ((target + 1 >= targetEnd) && (!computeLength))
+			if ((!computeLength) && (target + 1 >= targetEnd))
 			{
 				source -= (extraBytesToRead + 1); /* Back up source pointer! */
 				result = targetExhausted;
@@ -549,15 +529,14 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				*target++ = setWcharFrom((WCHAR)((ch & halfMask) + UNI_SUR_LOW_START));
 			}
 			else
-			{
-				target++;
-				target++;
-			}
+				count += 2;
 		}
 	}
 
 	*sourceStart = source;
 	*targetStart = target;
+	if (computed)
+		*computed = count;
 	return result;
 }
 
@@ -582,18 +561,16 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 
 	if (cchDst == 0)
 	{
-		result =
-		    winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
-
-		length = dstBeg - (uint16_t*)nullptr;
+		result = winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, &length);
 	}
 	else
 	{
 		dstBeg = dst;
 		dstEnd = &dst[cchDst];
 
-		result =
-		    winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
+		result = winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, nullptr);
 
 		length = dstBeg - dst;
 	}
@@ -624,18 +601,16 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 
 	if (cchDst == 0)
 	{
-		result =
-		    winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
-
-		length = dstBeg - ((uint8_t*)nullptr);
+		result = winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, &length);
 	}
 	else
 	{
 		dstBeg = dst;
 		dstEnd = &dst[cchDst];
 
-		result =
-		    winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
+		result = winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd,
+		                                           strictConversion, nullptr);
 
 		length = dstBeg - dst;
 	}

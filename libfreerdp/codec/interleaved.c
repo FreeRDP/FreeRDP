@@ -604,6 +604,8 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 		return FALSE;
 	}
 
+	ZeroMemory(interleaved->TempBuffer, BufferSize);
+
 	switch (bpp)
 	{
 		case 24:

@@ -133,6 +133,12 @@ int TestGdiRegion(int argc, char* argv[])
 		goto fail;
 	if (rect2->bottom != (2 + 4 - 1))
 		goto fail;
+	if (!gdi_CRgnToRect(0, 0, 1, 1, rect2))
+		goto fail;
+	if ((rect2->left != 0) || (rect2->right != 0) || (rect2->top != 0) || (rect2->bottom != 0))
+		goto fail;
+	if (gdi_CRgnToRect(-1, -1, 1, 1, rect2))
+		goto fail;
 
 	if (!gdi_RgnToCRect(rgn1, &l, &t, &r, &b))
 		goto fail;

@@ -38,6 +38,12 @@
 
 #define CAM_ANDROID_FPS 30
 
+/* The smallest frame that the H.264 encoder of MediaCodec takes (MEDIACODEC_MINIMUM_WIDTH and
+ * MEDIACODEC_MINIMUM_HEIGHT of libfreerdp/codec/h264_mediacodec.c): a smaller one would never be
+ * encoded. */
+#define CAM_ANDROID_MIN_WIDTH 320
+#define CAM_ANDROID_MIN_HEIGHT 240
+
 typedef struct
 {
 	ICamHal iHal;
@@ -332,11 +338,12 @@ static UINT cam_android_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, C
 
 	UINT count = 0;
 
-	/* NV12 capture needs FFmpeg/swscale to be encoded; without it, offer no cameras. */
-	if (!freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_NV12,
-	                                        FREERDP_VIDEO_FORMAT_YUV420P))
+	/* The NV12 frames go to the server as H.264 (the first format of getSupportedFormats with NV12
+	 * as its input): encoded by MediaCodec, or by FFmpeg with swscale. Without either, offer no
+	 * cameras. */
+	if (!freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_NV12, FREERDP_VIDEO_FORMAT_H264))
 	{
-		WLog_WARN(TAG, "Camera redirection unavailable: video conversion (FFmpeg/swscale) missing");
+		WLog_WARN(TAG, "Camera redirection unavailable: no conversion of NV12 frames to H.264");
 		return 0;
 	}
 
@@ -649,6 +656,9 @@ static INT16 cam_android_get_media_type_descriptions(ICamHal* ihal, const char* 
 			continue;
 		/* Skip resolutions larger than 1080p to avoid saturating the RDP link */
 		if (w > 1920 || h > 1080)
+			continue;
+		/* Skip what the encoder would refuse: too small, or odd sides that NV12 cannot split */
+		if (w < CAM_ANDROID_MIN_WIDTH || h < CAM_ANDROID_MIN_HEIGHT || (w % 2) != 0 || (h % 2) != 0)
 			continue;
 
 		mediaTypes[nTypes].Format = CAM_MEDIA_FORMAT_NV12;

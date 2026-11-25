@@ -75,7 +75,7 @@ int TestSDLDialogs(int argc, char* argv[])
 	(void)argc;
 	(void)argv;
 
-#if 0
+#if ENABLE_SDL_DIALOG_TESTS
 	SDL_Init(SDL_INIT_VIDEO);
 	try
 	{

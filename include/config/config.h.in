@@ -40,6 +40,7 @@
 #cmakedefine WITH_IOSAUDIO
 #cmakedefine WITH_OPENSLES
 #cmakedefine WITH_AAUDIO
+#cmakedefine WITH_SDL_AUDIO
 #cmakedefine WITH_GSM
 #cmakedefine WITH_LAME
 /** If defined Opus codec support is available.
@@ -54,12 +55,25 @@
 #cmakedefine WITH_OPENH264
 #cmakedefine WITH_OPENH264_LOADING
 #cmakedefine WITH_VIDEO_FFMPEG
+#cmakedefine WITH_APPLE_VIDEOTOOLBOX
+#cmakedefine WITH_H264_WEBCODECS
 #cmakedefine WITH_DSP_EXPERIMENTAL
 #cmakedefine WITH_DSP_FFMPEG
 #cmakedefine WITH_OPENCL
 #cmakedefine WITH_MEDIA_FOUNDATION
 #cmakedefine WITH_MEDIACODEC
 #cmakedefine WITH_GFX_AV1
+#cmakedefine WITH_GFX_AV2
+#cmakedefine WITH_GFX_AV2_I444
+#cmakedefine WITH_GFX_AZURE
+#cmakedefine WITH_RDPEUDP
+/** If defined, the server supports UDP multitransport and freerdp/server/udp.h is installed.
+ *  This requires WITH_RDPEUDP, which only signified client support before version 3.34.0.
+ *  Use -DWITH_RDPEUDP_SERVER=OFF to exclude it.
+ *
+ *  \since version 3.34.0
+ */
+#cmakedefine WITH_RDPEUDP_SERVER
 
 #cmakedefine WITH_FFMPEG_HWACCEL
 

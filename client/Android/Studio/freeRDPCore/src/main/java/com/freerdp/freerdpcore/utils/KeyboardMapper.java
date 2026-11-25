@@ -15,6 +15,7 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 import com.freerdp.freerdpcore.R;
+import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 public class KeyboardMapper
 {
@@ -225,6 +226,10 @@ public class KeyboardMapper
 	private boolean isWinLocked = false;
 	private boolean isWinKeyDown = false;
 	private boolean isWinComboUsed = false;
+	private boolean physicalKeyboardDeviceLayout = false;
+	// Accent of a dead key waiting for the next character, and the virtual key that typed it.
+	private int pendingAccent = 0;
+	private int pendingAccentVk = 0;
 
 	public void init(Context context)
 	{
@@ -445,7 +450,14 @@ public class KeyboardMapper
 		winPressed = false;
 		isWinKeyDown = false;
 		isWinComboUsed = false;
+		pendingAccent = 0;
 		setKeyProcessingListener(listener);
+	}
+
+	// Whether physical keyboards follow this device's layout rather than the server's.
+	public void setPhysicalKeyboardDeviceLayout(boolean enabled)
+	{
+		physicalKeyboardDeviceLayout = enabled;
 	}
 
 	public void setKeyProcessingListener(KeyProcessingListener listener)
@@ -492,6 +504,60 @@ public class KeyboardMapper
 					isWinComboUsed = true;
 
 				boolean modifierActive = isModifierPressed();
+
+				// The library chooses between the character and the key's scancode
+				// (freerdp_client_send_key_as_unicode). Key combinations keep the virtual-key
+				// path below: aFreeRDP's toggles mean the user is building one on the server, and
+				// Ctrl, Alt, Meta or Win held on the Android side have not reached the server, so
+				// that path wraps the key in them. Shift alone is wrapped here, so Shift+Space or
+				// Shift+Tab keep it. A server without unicode input keeps the virtual-key path,
+				// since the library would drop the character.
+				if (sendsKeyAsUnicode(event) && !modifierActive && !isWinKeyDown)
+				{
+					int vk = getVirtualKeyCode(event.getKeyCode());
+					int unicode = event.getUnicodeChar();
+					boolean deadKey = (unicode & KeyCharacterMap.COMBINING_ACCENT) != 0;
+					if (unicode < 0x20 || (unicode >= 0x7F && unicode < 0xA0))
+						unicode = 0;
+					// Right Alt that yields a character is AltGr, part of the layout: send the
+					// character.
+					int meta = event.getMetaState();
+					boolean altGr = (unicode != 0 || deadKey) &&
+					                (meta & KeyEvent.META_ALT_RIGHT_ON) != 0 &&
+					                (meta & KeyEvent.META_ALT_LEFT_ON) == 0;
+					boolean combination =
+					    (meta & (KeyEvent.META_CTRL_ON | KeyEvent.META_META_ON)) != 0 ||
+					    ((meta & KeyEvent.META_ALT_ON) != 0 && !altGr);
+					if (vk > 0 && (vk & KEY_FLAG_UNICODE) == 0 && !combination &&
+					    (unicode == 0 || listener.isUnicodeInputSupported()))
+					{
+						boolean shift = event.isShiftPressed();
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, true);
+						// AltGr produced the character, so it is not a modifier the server should
+						// see: with it in the mask the library would send the scancode. The generic
+						// Alt bit goes too, or it would count as the left Alt.
+						int altGrBits = KeyEvent.META_ALT_RIGHT_ON | KeyEvent.META_ALT_ON;
+						int modmask = getKeyboardModifiers(altGr ? meta & ~altGrBits : meta);
+						if (deadKey && listener.isUnicodeInputSupported())
+							processDeadKey(event, vk, modmask);
+						else if (pendingAccent != 0 && unicode != 0)
+							processAccentedKey(vk, unicode, modmask);
+						else
+						{
+							if (!KeyEvent.isModifierKey(event.getKeyCode()))
+								pendingAccent = 0;
+							listener.processKeyAsUnicode(vk, unicode, modmask);
+						}
+						if (shift)
+							listener.processVirtualKey(VK_LSHIFT, false);
+						return true;
+					}
+				}
+
+				if (!KeyEvent.isModifierKey(event.getKeyCode()))
+					pendingAccent = 0;
+
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
 				// key. At the end we will reset all modifiers and notify our listener.
@@ -637,6 +703,94 @@ public class KeyboardMapper
 		listener.processVirtualKey(VK_F4, true);
 		listener.processVirtualKey(VK_F4, false);
 		listener.processVirtualKey(VK_LMENU, false);
+	}
+
+	// Text from the on-screen keyboard reaches us as key events Android builds from its virtual
+	// key character map, so their key codes encode US key positions, not what the user typed.
+	// A physical keyboard's positions are what the server's layout is meant to read, unless the
+	// user chose this device's layout for it.
+	private boolean sendsKeyAsUnicode(KeyEvent event)
+	{
+		return physicalKeyboardDeviceLayout ||
+		    event.getDeviceId() == KeyCharacterMap.VIRTUAL_KEYBOARD;
+	}
+
+	// Android reports a dead key as its accent, flagged COMBINING_ACCENT, and leaves composing it
+	// with the next character to the text field. Compose it here, as Android's own text fields
+	// do, so the server receives the accented character instead of reading the dead key's
+	// position in its own layout. Composed characters go with the dead key's virtual key: the
+	// library sends some keys, Space among them, as scancodes whatever their character.
+	private void processDeadKey(KeyEvent event, int vk, int modmask)
+	{
+		if (event.getRepeatCount() > 0)
+			return;
+		int accent = event.getUnicodeChar() & KeyCharacterMap.COMBINING_ACCENT_MASK;
+		if (pendingAccent != 0)
+		{
+			// The same dead key twice types the accent; two different ones, the first accent.
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent, modmask);
+			boolean same = accent == pendingAccent;
+			pendingAccent = 0;
+			if (same)
+				return;
+		}
+		pendingAccent = accent;
+		pendingAccentVk = vk;
+	}
+
+	// A character after a dead key: the composed character, or the accent and then the character
+	// when they do not compose. Space types the accent itself: getDeadChar returned an apostrophe
+	// for the acute accent and Space on a Pixel 9 Pro running Android 17.
+	private void processAccentedKey(int vk, int unicode, int modmask)
+	{
+		int composed =
+		    unicode == ' ' ? pendingAccent : KeyEvent.getDeadChar(pendingAccent, unicode);
+		if (composed != 0)
+			listener.processKeyAsUnicode(pendingAccentVk, composed, modmask);
+		else
+		{
+			listener.processKeyAsUnicode(pendingAccentVk, pendingAccent, modmask);
+			listener.processKeyAsUnicode(vk, unicode, modmask);
+		}
+		pendingAccent = 0;
+	}
+
+	// The modifiers Android reports for the event, as the library's FREERDP_CLIENT_KBD_MOD mask.
+	// Meta is the closest Android has to the Windows key. An event may carry only the generic bit
+	// (META_CTRL_ON without a side), which counts as the left key.
+	private static int getKeyboardModifiers(int metaState)
+	{
+		if ((metaState & KeyEvent.META_SHIFT_ON) != 0 &&
+		    (metaState & (KeyEvent.META_SHIFT_LEFT_ON | KeyEvent.META_SHIFT_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_SHIFT_LEFT_ON;
+		if ((metaState & KeyEvent.META_ALT_ON) != 0 &&
+		    (metaState & (KeyEvent.META_ALT_LEFT_ON | KeyEvent.META_ALT_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_ALT_LEFT_ON;
+		if ((metaState & KeyEvent.META_CTRL_ON) != 0 &&
+		    (metaState & (KeyEvent.META_CTRL_LEFT_ON | KeyEvent.META_CTRL_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_CTRL_LEFT_ON;
+		if ((metaState & KeyEvent.META_META_ON) != 0 &&
+		    (metaState & (KeyEvent.META_META_LEFT_ON | KeyEvent.META_META_RIGHT_ON)) == 0)
+			metaState |= KeyEvent.META_META_LEFT_ON;
+
+		int modmask = 0;
+		if ((metaState & KeyEvent.META_SHIFT_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LSHIFT;
+		if ((metaState & KeyEvent.META_SHIFT_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RSHIFT;
+		if ((metaState & KeyEvent.META_ALT_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LMENU;
+		if ((metaState & KeyEvent.META_ALT_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RMENU;
+		if ((metaState & KeyEvent.META_CTRL_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LCONTROL;
+		if ((metaState & KeyEvent.META_CTRL_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RCONTROL;
+		if ((metaState & KeyEvent.META_META_LEFT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_LWIN;
+		if ((metaState & KeyEvent.META_META_RIGHT_ON) != 0)
+			modmask |= LibFreeRDP.KBD_MOD_RWIN;
+		return modmask;
 	}
 
 	private boolean isModifierPressed()
@@ -797,6 +951,10 @@ public class KeyboardMapper
 		void processVirtualKey(int virtualKeyCode, boolean down);
 
 		void processUnicodeKey(int unicodeKey);
+
+		boolean isUnicodeInputSupported();
+
+		void processKeyAsUnicode(int virtualKeyCode, int unicodeKey, int modmask);
 
 		void switchKeyboard(int keyboardType);
 

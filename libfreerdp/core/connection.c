@@ -220,10 +220,11 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 		                                   settings->DesktopWidth, settings->DesktopHeight))
 			return FALSE;
 
-/* Runtime H264 detection. (only available if dynamic backend loading is defined)
+/* Runtime H264 detection. (only available if dynamic backend loading is defined, or
+ * in the browser, which might not decode H.264)
  * If no backend is available disable it before the channel is loaded.
  */
-#if defined(WITH_GFX_H264) && defined(WITH_OPENH264_LOADING)
+#if defined(WITH_GFX_H264) && (defined(WITH_OPENH264_LOADING) || defined(WITH_H264_WEBCODECS))
 		if (!context->codecs->h264)
 		{
 			settings->GfxH264 = FALSE;
@@ -498,7 +499,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!transport_set_recv_callbacks(rdp->transport, rdp_recv_callback, rdp))
 		return FALSE;
 
-	return rdp_client_wait_for_activation(rdp);
+	/* A tunnel the server asked for during the connection sequence is of no use when the
+	 * sequence fails. It is stopped now: the next disconnect, which would stop it too, can be a
+	 * long way off, an auto-reconnect waits between attempts. */
+	const BOOL activated = rdp_client_wait_for_activation(rdp);
+	if (!activated)
+		multitransport_reset(rdp->multitransport);
+	return activated;
 }
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
@@ -510,6 +517,12 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 	context = rdp->context;
 
+	/* Leave the active state before the transport goes away: input functions are called from
+	 * other threads and only check the state, so they must stop before rdp_reset() frees the
+	 * transport and fastpath they use. */
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
+		return FALSE;
+
 	if (rdp->nego)
 	{
 		if (!nego_disconnect(rdp->nego))
@@ -520,9 +533,6 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 		return FALSE;
 
 	if (!rdp_reset(rdp))
-		return FALSE;
-
-	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
 	if (context->channels)
@@ -644,10 +654,12 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 	return FALSE;
 }
 
-BOOL rdp_client_redirect(rdpRdp* rdp)
+WINPR_ATTR_NODISCARD
+static BOOL rdp_client_redirect_int(rdpRdp* rdp)
 {
+	WINPR_ASSERT(rdp);
+
 	BOOL status = 0;
-	rdpSettings* settings = nullptr;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -662,7 +674,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	WINPR_ASSERT(rdp);
 
-	settings = rdp->settings;
+	rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
 	if ((settings->RedirectionFlags & LB_LOAD_BALANCE_INFO) == 0)
@@ -716,6 +728,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	if (!ok)
 		return FALSE;
 
+	rdp->redirectionCount++;
 	status = rdp_client_connect(rdp);
 
 	if (status)
@@ -724,18 +737,103 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	return status;
 }
 
+BOOL rdp_client_redirect(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	if (rdp->is_redirecting)
+	{
+		WLog_Print(rdp->log, WLOG_ERROR, "recursive redirection detected, aborting");
+		return FALSE;
+	}
+	rdp->is_redirecting = TRUE;
+	const BOOL rc = rdp_client_redirect_int(rdp);
+	rdp->is_redirecting = FALSE;
+	return rc;
+}
+
+/* A redirection that carried a one-time RDSTLS token (LB_PASSWORD_IS_PK_ENCRYPTED) cannot be
+ * replayed: reconnecting straight to the redirected host is refused with SEC_E_INVALID_TOKEN.
+ * Go back to the server the connection was originally made to (the RD Connection Broker), which
+ * redirects again to the same session with a fresh token. Everything the redirection changed
+ * (host, load balance info, user, redirected session id, auto-reconnect cookie) has to go, so
+ * start again from the settings the connection began with, the way rdp_client_redirect() does:
+ * the channels are closed before the settings they use are freed, and loaded again after. */
+WINPR_ATTR_NODISCARD
+static BOOL rdp_client_reconnect_via_broker(rdpRdp* rdp, BOOL* viaBroker)
+{
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(viaBroker);
+	*viaBroker = FALSE;
+	const rdpSettings* settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	if (!rdp->originalSettings || !freerdp_settings_get_bool(settings, FreeRDP_RdstlsSecurity))
+		return TRUE;
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) &
+	     LB_PASSWORD_IS_PK_ENCRYPTED) == 0)
+		return TRUE;
+
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(rdp->context->instance);
+	WLog_INFO(TAG, "the redirection used a one-time RDSTLS token, reconnecting through %s",
+	          freerdp_settings_get_string(rdp->originalSettings, FreeRDP_ServerHostname));
+
+	freerdp_channels_disconnect(rdp->context->channels, rdp->context->instance);
+	freerdp_channels_close(rdp->context->channels, rdp->context->instance);
+
+	if (!rdp_reset_runtime_settings(rdp))
+		return FALSE;
+	if (!freerdp_settings_set_bool(rdp->settings, FreeRDP_SessionHasBeenReconnected, TRUE))
+		return FALSE;
+	if (!IFCALLRESULT(TRUE, rdp->context->instance->Redirect, rdp->context->instance))
+		return FALSE;
+	if (!utils_reload_channels(rdp->context))
+		return FALSE;
+
+	*viaBroker = TRUE;
+	return TRUE;
+}
+
+/* Pause before reconnecting a connection that its UDP tunnel ended, see rdp_client_reconnect. */
+#define TUNNEL_RECONNECT_PAUSE_MS 2000
+
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
+	/* A connection ended by its UDP tunnel closes TCP cleanly, and the server starts tearing
+	 * the session down at once. Windows drops a reconnect that arrives during that teardown,
+	 * and the auto-reconnect then waits out its whole retry delay. */
+	const BOOL tunnelEnded = multitransport_ended_connection(rdp->multitransport);
+
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
+
+	if (tunnelEnded)
+	{
+		WLog_DBG(TAG, "the UDP tunnel ended the connection, reconnecting in %d ms",
+		         TUNNEL_RECONNECT_PAUSE_MS);
+		if (WaitForSingleObject(utils_get_abort_event(rdp), TUNNEL_RECONNECT_PAUSE_MS) ==
+		    WAIT_OBJECT_0)
+			return FALSE;
+	}
 
 	if (!freerdp_settings_set_bool(rdp->settings, FreeRDP_SessionHasBeenReconnected, TRUE))
 		return FALSE;
 
+	BOOL viaBroker = FALSE;
+	if (!rdp_client_reconnect_via_broker(rdp, &viaBroker))
+		return FALSE;
+
+	const UINT32 redirectionCount = rdp->redirectionCount;
 	BOOL status = rdp_client_connect(rdp);
 
-	if (status)
-		status = rdp_client_reconnect_channels(rdp, FALSE);
+	/* When the broker redirected us, rdp_client_redirect() already reloaded and reconnected the
+	 * channels (rdp_check_fds() runs it from inside rdp_client_connect()); doing it a second time
+	 * fails with CHANNEL_RC_ALREADY_OPEN and makes the whole attempt fail. RedirectionFlags can't
+	 * tell: ARM sets them during the connect without any redirection. */
+	const BOOL redirected = rdp->redirectionCount != redirectionCount;
+	if (status && !redirected)
+		status = rdp_client_reconnect_channels(rdp, viaBroker);
 
 	return status;
 }
@@ -927,6 +1025,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 		return FALSE;
+
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return TRUE;
 
 	if (!rdp_read_security_header(rdp, s, &sec_flags, nullptr))
 	{
@@ -1226,6 +1327,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s, DWORD logLevel)
 		res = FALSE;
 	else
 	{
+		if (freerdp_shall_disconnect_context(rdp->context))
+			return TRUE;
+
 		const UINT16 messageChannelId = rdp->mcs->messageChannelId;
 		/* If the MCS message channel has been joined... */
 
@@ -1261,6 +1365,9 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return STATE_RUN_FAILED;
+
+	if (freerdp_shall_disconnect_context(rdp->context))
+		return STATE_RUN_QUIT_SESSION;
 
 	/* there might be autodetect messages mixed in between licensing messages.
 	 * that has been observed with 2k12 R2 and 2k19
@@ -1350,12 +1457,25 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_handle_optional_rdp_decryption(rdp, s, &length, nullptr))
 		return STATE_RUN_FAILED;
 
-	if (!rdp_read_share_control_header(rdp, s, nullptr, nullptr, &pduType, &pduSource))
+	UINT16 remainingLength = 0;
+	if (!rdp_read_share_control_header(rdp, s, nullptr, &remainingLength, &pduType, &pduSource))
 		return STATE_RUN_FAILED;
 
 	switch (pduType)
 	{
 		case PDU_TYPE_DEMAND_ACTIVE:
+			/* Demand Active consumes this entire payload. Check its Share Control
+			 * boundary after decryption, when security headers and FIPS padding
+			 * have been removed. Do not apply this to other, potentially batched
+			 * Share Control PDUs. */
+			if (remainingLength != Stream_GetRemainingLength(s))
+			{
+				WLog_Print(rdp->log, WLOG_ERROR,
+				           "Demand Active payload length %" PRIu16
+				           " differs from remaining data %" PRIuz,
+				           remainingLength, Stream_GetRemainingLength(s));
+				return STATE_RUN_FAILED;
+			}
 			if (!rdp_recv_demand_active(rdp, s, pduSource, length))
 				return STATE_RUN_FAILED;
 			return STATE_RUN_ACTIVE;
@@ -1364,7 +1484,8 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	}
 }
 
-state_run_t rdp_client_connect_finalize(rdpRdp* rdp)
+WINPR_ATTR_NODISCARD
+static state_run_t rdp_client_connect_finalize(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	/**
@@ -2051,8 +2172,14 @@ BOOL rdp_is_active_state(const rdpRdp* rdp)
 	const CONNECTION_STATE state = rdp_get_state(rdp);
 	if (freerdp_settings_get_bool(rdp->context->settings, FreeRDP_ServerMode))
 		return rdp_is_active_peer_state(state);
-	else
-		return rdp_is_active_client_state(state);
+
+	if (!rdp_is_active_client_state(state))
+		return FALSE;
+
+	/* A failed write closes the transport before the thread that reads notices and the reconnect
+	 * moves the state: from then on the session is no longer active. The state comes first: a
+	 * disconnect leaves the active state before rdp_reset() frees the transport. */
+	return !rdp->transport || (transport_get_layer(rdp->transport) != TRANSPORT_LAYER_CLOSED);
 }
 
 BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
@@ -2169,6 +2296,23 @@ const char* rdp_state_string(CONNECTION_STATE state)
 	}
 }
 
+const char* rdp_transport_type_string(RDP_TRANSPORT_TYPE type)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+	switch (type)
+	{
+		EVCASE(RDP_TRANSPORT_TCP);
+		EVCASE(RDP_TRANSPORT_UDP_R);
+		EVCASE(RDP_TRANSPORT_UDP_L);
+		default:
+			return "RDP_TRANSPORT_UNKNOWN";
+	}
+
+#undef EVCASE
+}
+
 CONNECTION_STATE rdp_get_state(const rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
@@ -2271,12 +2415,32 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 
 		rdp_update_internal* up = update_cast(rdp->update);
 		up->stats.base[RDP_STATS_RESIZE]++;
+
+		/* Keep the lock order of BeginPaint/EndPaint: update lock first, client locks second */
+		rdp_update_lock(rdp->update);
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
+		rdp_update_unlock(rdp->update);
 
 		if (!status)
 		{
 			WLog_ERR(TAG, "client desktop resize callback failed");
 			return STATE_RUN_FAILED;
+		}
+
+		/* The codecs for bitmap updates and surface bits were sized for the
+		 * old desktop when connecting. The GFX codecs are reset by the GFX
+		 * channel on ResetGraphics instead. */
+		rdpCodecs* codecs = rdp->context->codecs;
+		if (codecs)
+		{
+			const UINT32 flags = FREERDP_CODEC_INTERLEAVED | FREERDP_CODEC_PLANAR |
+			                     FREERDP_CODEC_NSCODEC | FREERDP_CODEC_REMOTEFX;
+			if (!freerdp_client_codecs_reset(codecs, flags, rdp->settings->DesktopWidth,
+			                                 rdp->settings->DesktopHeight))
+			{
+				WLog_ERR(TAG, "failed to reset codecs to the new desktop size");
+				return STATE_RUN_FAILED;
+			}
 		}
 	}
 
@@ -2287,10 +2451,9 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 	if (!cache_resize(rdp->context))
 		return STATE_RUN_FAILED;
 
-	state_run_t status = STATE_RUN_SUCCESS;
-	if (!rdp->settings->SupportMonitorLayoutPdu)
-		status = rdp_client_connect_finalize(rdp);
-	else
+	state_run_t status = rdp_client_connect_finalize(rdp);
+	if (state_run_success(status) &&
+	    freerdp_settings_get_bool(rdp->settings, FreeRDP_SupportMonitorLayoutPdu))
 	{
 		if (!rdp_client_transition_to_state(rdp,
 		                                    CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))

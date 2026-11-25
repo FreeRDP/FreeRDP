@@ -346,7 +346,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 
 	tls->hostname = settings->ServerHostname;
 	tls->serverName = settings->UserSpecifiedServerName;
-	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->ServerPort));
+	tls->port = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, settings->ServerPort));
 
 	if (tls->port == 0)
 		tls->port = 3389;
@@ -1139,7 +1139,7 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	}
 	else if (transport->earlyUserAuth)
 	{
-		if (!Stream_EnsureCapacity(s, 4))
+		if (!Stream_EnsureRemainingCapacity(s, 4))
 			return -1;
 		const SSIZE_T rc = transport_read_layer_bytes(transport, s, 4);
 		if (rc != 1)
@@ -1314,6 +1314,11 @@ out_cleanup:
 		/* A write error indicates that the peer has dropped the connection */
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		/* Wake the thread that reads: transport_check_fds() then reports the closed layer and
+		 * the client can reconnect. A socket that fails writing does not always wake a reader:
+		 * a WebSocket closed by the client stays CLOSING, without a close event, until the
+		 * browser gives up its closing handshake (60 s in Chromium). */
+		(void)SetEvent(transport->rereadEvent);
 	}
 
 	LeaveCriticalSection(&(transport->WriteLock));
@@ -1337,6 +1342,62 @@ static BOOL transport_default_get_public_key(rdpTransport* transport, const BYTE
 	*data = tls->PublicKey;
 	*length = tls->PublicKeyLength;
 
+	return TRUE;
+}
+
+BOOL transport_get_peer_address(rdpTransport* transport, struct sockaddr_storage* address,
+                                size_t* length)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(address);
+	WINPR_ASSERT(length);
+
+	if (transport->GatewayEnabled)
+		return FALSE;
+
+	int sockfd = -1;
+	if (transport->frontBio)
+		(void)BIO_get_fd(transport->frontBio, &sockfd);
+	if ((sockfd < 0) && transport->tls && transport->tls->underlying)
+		(void)BIO_get_fd(transport->tls->underlying, &sockfd);
+	if (sockfd < 0)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "no socket found for the peer address");
+		return FALSE;
+	}
+
+	socklen_t len = sizeof(*address);
+	if (getpeername(sockfd, (struct sockaddr*)address, &len) != 0)
+		return FALSE;
+	*length = len;
+	return TRUE;
+}
+
+BOOL transport_get_local_address(rdpTransport* transport, struct sockaddr_storage* address,
+                                 size_t* length)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(address);
+	WINPR_ASSERT(length);
+
+	if (transport->GatewayEnabled)
+		return FALSE;
+
+	int sockfd = -1;
+	if (transport->frontBio)
+		(void)BIO_get_fd(transport->frontBio, &sockfd);
+	if ((sockfd < 0) && transport->tls && transport->tls->underlying)
+		(void)BIO_get_fd(transport->tls->underlying, &sockfd);
+	if (sockfd < 0)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "could not find a socket for the local address");
+		return FALSE;
+	}
+
+	socklen_t len = WINPR_ASSERTING_INT_CAST(socklen_t, sizeof(*address));
+	if (getsockname(sockfd, (struct sockaddr*)address, &len) != 0)
+		return FALSE;
+	*length = WINPR_ASSERTING_INT_CAST(size_t, len);
 	return TRUE;
 }
 
@@ -1464,7 +1525,11 @@ int transport_drain_output_buffer(rdpTransport* transport)
 	WINPR_ASSERT(transport->frontBio);
 	if (BIO_write_blocked(transport->frontBio))
 	{
-		if (BIO_flush(transport->frontBio) < 1)
+		/* flushing writes to the output BIO, serialize it with transport_write */
+		EnterCriticalSection(&(transport->WriteLock));
+		const int flushed = BIO_flush(transport->frontBio);
+		LeaveCriticalSection(&(transport->WriteLock));
+		if (flushed < 1)
 			return -1;
 
 		const long rc = BIO_write_blocked(transport->frontBio);
@@ -1487,6 +1552,9 @@ int transport_check_fds(rdpTransport* transport)
 	{
 		WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport layer closed");
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		/* set by a failed write; the next connection must not find it set */
+		transport->haveMoreBytesToRead = FALSE;
+		(void)ResetEvent(transport->rereadEvent);
 		return -1;
 	}
 
@@ -2169,8 +2237,38 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			status = 1;
 			break;
 
-		default:
+		case BIO_CTRL_PUSH:
+		case BIO_CTRL_POP:
 			status = 0;
+			break;
+
+		case BIO_C_GET_FD:
+		case BIO_C_SET_FD:
+			status = -1;
+			break;
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+		/* queried by the TLS layer on every write; openssl internals test these with
+		 * if (!BIO_get_ktls_send(...)), so answer "no KTLS offloading" with 0, like rdg/wst */
+		case BIO_CTRL_GET_KTLS_SEND:
+		case BIO_CTRL_GET_KTLS_RECV:
+			status = 0;
+			break;
+#endif
+
+		case BIO_C_GET_SOCKET:
+		case BIO_C_SET_SOCKET:
+			status = -1;
+			break;
+
+		case BIO_CTRL_EOF:
+			status = -1;
+			break;
+
+		default:
+			WLog_ERR(TAG, "Unsupported BIO_CTRL %d", cmd);
+			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+			status = -1;
 			break;
 	}
 
@@ -2202,23 +2300,32 @@ static int transport_layer_bio_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_transport_layer(void)
+static BOOL CALLBACK bio_transport_register(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce, PVOID Parameter,
+                                            WINPR_ATTR_UNUSED PVOID* Context)
+{
+	BIO_METHOD** methods = (BIO_METHOD**)Parameter;
+	WINPR_ASSERT(methods);
+
+	BIO_METHOD* bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "TransportLayer");
+	*methods = bio_methods;
+	if (!bio_methods)
+		return FALSE;
+
+	BIO_meth_set_write(bio_methods, transport_layer_bio_write);
+	BIO_meth_set_read(bio_methods, transport_layer_bio_read);
+	BIO_meth_set_puts(bio_methods, transport_layer_bio_puts);
+	BIO_meth_set_gets(bio_methods, transport_layer_bio_gets);
+	BIO_meth_set_ctrl(bio_methods, transport_layer_bio_ctrl);
+	BIO_meth_set_create(bio_methods, transport_layer_bio_new);
+	BIO_meth_set_destroy(bio_methods, transport_layer_bio_free);
+	return TRUE;
+}
+
+const BIO_METHOD* BIO_s_transport_layer(void)
 {
 	static BIO_METHOD* bio_methods = nullptr;
-
-	if (bio_methods == nullptr)
-	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "TransportLayer")))
-			return nullptr;
-
-		BIO_meth_set_write(bio_methods, transport_layer_bio_write);
-		BIO_meth_set_read(bio_methods, transport_layer_bio_read);
-		BIO_meth_set_puts(bio_methods, transport_layer_bio_puts);
-		BIO_meth_set_gets(bio_methods, transport_layer_bio_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_layer_bio_ctrl);
-		BIO_meth_set_create(bio_methods, transport_layer_bio_new);
-		BIO_meth_set_destroy(bio_methods, transport_layer_bio_free);
-	}
-
+	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+	if (!InitOnceExecuteOnce(&once, bio_transport_register, (void*)&bio_methods, nullptr))
+		return nullptr;
 	return bio_methods;
 }

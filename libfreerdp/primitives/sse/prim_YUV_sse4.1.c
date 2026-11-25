@@ -525,6 +525,54 @@ static pstatus_t sse41_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[],
 	}
 }
 
+static inline void sse41_I444ToRGB_BGRX_ROW(BYTE* WINPR_RESTRICT pDst,
+                                            const BYTE* WINPR_RESTRICT YData,
+                                            const BYTE* WINPR_RESTRICT UData,
+                                            const BYTE* WINPR_RESTRICT VData, UINT32 nWidth)
+{
+	const UINT32 pad = nWidth % 16;
+
+	size_t x = 0;
+	for (; x < nWidth - pad; x += 16)
+	{
+		const __m128i Y = LOAD_SI128(&YData[x]);
+		const __m128i U = LOAD_SI128(&UData[x]);
+		const __m128i V = LOAD_SI128(&VData[x]);
+
+		sse41_BGRX_fillRGB_pixel(&pDst[x * 4], Y, U, V);
+	}
+
+	for (; x < nWidth; x++)
+	{
+		writeYUVPixel(&pDst[x * 4], PIXEL_FORMAT_BGRX32, YData[x], UData[x], VData[x],
+		              writePixelBGRX);
+	}
+}
+
+static pstatus_t sse41_I444ToRGB_8u(const BYTE* WINPR_RESTRICT pSrc[], const UINT32 srcStep[],
+                                    BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, UINT32 DstFormat,
+                                    const prim_size_t* WINPR_RESTRICT roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRX32:
+		case PIXEL_FORMAT_BGRA32:
+			for (size_t y = 0; y < roi->height; y++)
+			{
+				BYTE* dst = pDst + dstStep * y;
+				const BYTE* YData = pSrc[0] + y * srcStep[0];
+				const BYTE* UData = pSrc[1] + y * srcStep[1];
+				const BYTE* VData = pSrc[2] + y * srcStep[2];
+
+				sse41_I444ToRGB_BGRX_ROW(dst, YData, UData, VData, roi->width);
+			}
+			return PRIMITIVES_SUCCESS;
+
+		default:
+			return generic->I444ToRGB_8u(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
+
 /****************************************************************************/
 /* sse41 RGB -> YUV420 conversion                                          **/
 /****************************************************************************/
@@ -736,8 +784,12 @@ static pstatus_t sse41_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 
 		return !PRIMITIVES_SUCCESS;
 	}
 
-	size_t y = 0;
-	for (; y < roi->height - roi->height % 2; y += 2)
+	/* The loops below take 2x2 pixel blocks; an odd last column and an odd last row have U and V
+	 * too, which they would never reach, so the generic routine does those edges. */
+	const UINT32 width = roi->width - roi->width % 2;
+	const size_t height = roi->height - roi->height % 2;
+
+	for (size_t y = 0; y < height; y += 2)
 	{
 		const BYTE* line1 = &pSrc[y * srcStep];
 		const BYTE* line2 = &pSrc[(1ULL + y) * srcStep];
@@ -746,16 +798,34 @@ static pstatus_t sse41_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 
 		BYTE* udst = &pDst[1][y / 2 * dstStep[1]];
 		BYTE* vdst = &pDst[2][y / 2 * dstStep[2]];
 
-		sse41_RGBToYUV420_BGRX_UV(line1, line2, udst, vdst, roi->width);
-		sse41_RGBToYUV420_BGRX_Y(line1, ydst1, roi->width);
-		sse41_RGBToYUV420_BGRX_Y(line2, ydst2, roi->width);
+		sse41_RGBToYUV420_BGRX_UV(line1, line2, udst, vdst, width);
+		sse41_RGBToYUV420_BGRX_Y(line1, ydst1, width);
+		sse41_RGBToYUV420_BGRX_Y(line2, ydst2, width);
 	}
 
-	for (; y < roi->height; y++)
+	WINPR_ASSERT(generic);
+
+	/* the odd last column, every row */
+	if (width < roi->width)
 	{
-		const BYTE* line = &pSrc[y * srcStep];
-		BYTE* ydst = &pDst[0][1ULL * y * dstStep[0]];
-		sse41_RGBToYUV420_BGRX_Y(line, ydst, roi->width);
+		const BYTE* src = &pSrc[4ULL * width];
+		BYTE* dst[3] = { &pDst[0][width], &pDst[1][width / 2], &pDst[2][width / 2] };
+		const prim_size_t rest = { 1, roi->height };
+		const pstatus_t rc =
+		    generic->RGBToYUV420_8u_P3AC4R(src, PIXEL_FORMAT_BGRX32, srcStep, dst, dstStep, &rest);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+
+	/* the odd last row, left of that column */
+	if ((height < roi->height) && (width > 0))
+	{
+		const BYTE* src = &pSrc[height * srcStep];
+		BYTE* dst[3] = { &pDst[0][height * dstStep[0]], &pDst[1][(height / 2) * dstStep[1]],
+			             &pDst[2][(height / 2) * dstStep[2]] };
+		const prim_size_t rest = { width, 1 };
+		return generic->RGBToYUV420_8u_P3AC4R(src, PIXEL_FORMAT_BGRX32, srcStep, dst, dstStep,
+		                                      &rest);
 	}
 
 	return PRIMITIVES_SUCCESS;
@@ -1553,15 +1623,18 @@ static pstatus_t sse41_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 				const __m128i u = LOAD_SI128(&Ua[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
 				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
+				/* the mask selects the even bytes of u1/u2, which carry the
+				 * samples; B6 goes to the odd columns 2x + 1 */
+				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x + 1]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 17]);
 			}
 			{
 				const __m128i u = LOAD_SI128(&Va[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
 				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 16]);
+				/* B7 likewise to the odd columns */
+				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x + 1]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 17]);
 			}
 		}
 
@@ -1721,6 +1794,132 @@ static pstatus_t sse41_YUV420CombineToYUV444(avc444_frame_type type,
 			return -1;
 	}
 }
+
+/* RGBToI444_8u: one Y, U and V sample per pixel, with the exact integer math of
+ * RGB2Y/RGB2U/RGB2V (16 bit lanes are wide enough for every intermediate value),
+ * so the result matches the generic routine byte for byte. */
+
+/* a pshufb mask that moves byte off of each of four 32 bit pixels into the low
+ * byte of 16 bit lane first..first+3, and zeroes every other byte */
+static inline __m128i sse41_I444_mask(size_t off, size_t first)
+{
+	BYTE m[16];
+	memset(m, 0x80, sizeof(m));
+	for (size_t x = 0; x < 4; x++)
+		m[2 * (first + x)] = (BYTE)(4 * x + off);
+	return _mm_loadu_si128((const __m128i*)m);
+}
+
+/* Y, U and V of eight pixels given as 16 bit R, G and B lanes */
+static inline void sse41_I444_YUV(__m128i r, __m128i g, __m128i b, __m128i* WINPR_RESTRICT y,
+                                  __m128i* WINPR_RESTRICT u, __m128i* WINPR_RESTRICT v)
+{
+	const __m128i c128 = _mm_set1_epi16(128);
+
+	/* (54 R + 183 G + 18 B) >> 8: at most 65025, exact as unsigned 16 bit */
+	__m128i t = _mm_add_epi16(_mm_mullo_epi16(r, _mm_set1_epi16(54)),
+	                          _mm_mullo_epi16(g, _mm_set1_epi16(183)));
+	t = _mm_add_epi16(t, _mm_mullo_epi16(b, _mm_set1_epi16(18)));
+	*y = _mm_srli_epi16(t, 8);
+
+	/* ((128 B - (29 R + 99 G)) >> 8) + 128: both terms are at most 32640 */
+	t = _mm_add_epi16(_mm_mullo_epi16(r, _mm_set1_epi16(29)),
+	                  _mm_mullo_epi16(g, _mm_set1_epi16(99)));
+	t = _mm_sub_epi16(_mm_slli_epi16(b, 7), t);
+	*u = _mm_add_epi16(_mm_srai_epi16(t, 8), c128);
+
+	/* ((128 R - (116 G + 12 B)) >> 8) + 128 */
+	t = _mm_add_epi16(_mm_mullo_epi16(g, _mm_set1_epi16(116)),
+	                  _mm_mullo_epi16(b, _mm_set1_epi16(12)));
+	t = _mm_sub_epi16(_mm_slli_epi16(r, 7), t);
+	*v = _mm_add_epi16(_mm_srai_epi16(t, 8), c128);
+}
+
+/* eight pixels from two loads of four: lo picks a channel of the first four
+ * pixels into lanes 0-3, hi the same channel of the next four into lanes 4-7 */
+static inline void sse41_I444_8px(const BYTE* WINPR_RESTRICT src, const __m128i masks[6],
+                                  __m128i* WINPR_RESTRICT y, __m128i* WINPR_RESTRICT u,
+                                  __m128i* WINPR_RESTRICT v)
+{
+	const __m128i p0 = LOAD_SI128(src);
+	const __m128i p1 = LOAD_SI128(src + 16);
+	const __m128i r = _mm_or_si128(_mm_shuffle_epi8(p0, masks[0]), _mm_shuffle_epi8(p1, masks[1]));
+	const __m128i g = _mm_or_si128(_mm_shuffle_epi8(p0, masks[2]), _mm_shuffle_epi8(p1, masks[3]));
+	const __m128i b = _mm_or_si128(_mm_shuffle_epi8(p0, masks[4]), _mm_shuffle_epi8(p1, masks[5]));
+	sse41_I444_YUV(r, g, b, y, u, v);
+}
+
+static pstatus_t sse41_RGBToI444_32bpp(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcStep,
+                                       BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
+                                       const prim_size_t* WINPR_RESTRICT roi, size_t rOff,
+                                       size_t gOff, size_t bOff)
+{
+	const __m128i masks[6] = { sse41_I444_mask(rOff, 0), sse41_I444_mask(rOff, 4),
+		                       sse41_I444_mask(gOff, 0), sse41_I444_mask(gOff, 4),
+		                       sse41_I444_mask(bOff, 0), sse41_I444_mask(bOff, 4) };
+	const size_t width = roi->width;
+
+	for (size_t row = 0; row < roi->height; row++)
+	{
+		const BYTE* src = &pSrc[row * srcStep];
+		BYTE* yd = &pDst[0][row * dstStep[0]];
+		BYTE* ud = &pDst[1][row * dstStep[1]];
+		BYTE* vd = &pDst[2][row * dstStep[2]];
+
+		size_t x = 0;
+		for (; x + 16 <= width; x += 16)
+		{
+			__m128i y0 = _mm_setzero_si128();
+			__m128i u0 = _mm_setzero_si128();
+			__m128i v0 = _mm_setzero_si128();
+			__m128i y1 = _mm_setzero_si128();
+			__m128i u1 = _mm_setzero_si128();
+			__m128i v1 = _mm_setzero_si128();
+			sse41_I444_8px(&src[4 * x], masks, &y0, &u0, &v0);
+			sse41_I444_8px(&src[4 * x + 32], masks, &y1, &u1, &v1);
+			STORE_SI128(&yd[x], _mm_packus_epi16(y0, y1));
+			STORE_SI128(&ud[x], _mm_packus_epi16(u0, u1));
+			STORE_SI128(&vd[x], _mm_packus_epi16(v0, v1));
+		}
+
+		for (; x < width; x++)
+		{
+			const BYTE* px = &src[4 * x];
+			const BYTE R = px[rOff];
+			const BYTE G = px[gOff];
+			const BYTE B = px[bOff];
+			yd[x] = RGB2Y(R, G, B);
+			ud[x] = RGB2U(R, G, B);
+			vd[x] = RGB2V(R, G, B);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t sse41_RGBToI444_8u(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                    const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                    const UINT32 dstStep[3], const prim_size_t* WINPR_RESTRICT roi)
+{
+	/* byte offsets of R, G and B in memory, as in general_RGBToI444_8u */
+	switch (SrcFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return sse41_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 2, 1, 0);
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return sse41_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 0, 1, 2);
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return sse41_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 1, 2, 3);
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return sse41_RGBToI444_32bpp(pSrc, srcStep, pDst, dstStep, roi, 3, 2, 1);
+		default:
+			return generic->RGBToI444_8u(pSrc, SrcFormat, srcStep, pDst, dstStep, roi);
+	}
+}
 #endif
 
 void primitives_init_YUV_sse41_int(primitives_t* WINPR_RESTRICT prims)
@@ -1730,10 +1929,12 @@ void primitives_init_YUV_sse41_int(primitives_t* WINPR_RESTRICT prims)
 
 	WLog_VRB(PRIM_TAG, "SSE3/sse41 optimizations");
 	prims->RGBToYUV420_8u_P3AC4R = sse41_RGBToYUV420;
+	prims->RGBToI444_8u = sse41_RGBToI444_8u;
 	prims->RGBToAVC444YUV = sse41_RGBToAVC444YUV;
 	prims->RGBToAVC444YUVv2 = sse41_RGBToAVC444YUVv2;
 	prims->YUV420ToRGB_8u_P3AC4R = sse41_YUV420ToRGB;
 	prims->YUV444ToRGB_8u_P3AC4R = sse41_YUV444ToRGB_8u_P3AC4R;
+	prims->I444ToRGB_8u = sse41_I444ToRGB_8u;
 	prims->YUV420CombineToYUV444 = sse41_YUV420CombineToYUV444;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or sse41 intrinsics not available");

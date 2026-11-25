@@ -41,6 +41,7 @@
 #endif
 
 #include "shadow.h"
+#include "shadow_cliprdr.h"
 
 #define TAG SERVER_TAG("shadow")
 
@@ -206,6 +207,180 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 	}
 
 	return 1;
+}
+
+/* A whole number from min to max, nothing else */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_u32(const char* text, UINT32 min, UINT32 max, UINT32* value)
+{
+	WINPR_ASSERT(value);
+	if (!text)
+		return FALSE;
+
+	char* end = nullptr;
+	errno = 0;
+	const unsigned long long parsed = strtoull(text, &end, 0);
+	if ((errno != 0) || !end || (*end != '\0') || (parsed < min) || (parsed > max))
+		return FALSE;
+	*value = (UINT32)parsed;
+	return TRUE;
+}
+
+/* The text after prefix, or nullptr when text does not start with it */
+WINPR_ATTR_NODISCARD
+static const char* shadow_server_after(const char* text, const char* prefix)
+{
+	const size_t length = strlen(prefix);
+	return (strncmp(text, prefix, length) == 0) ? &text[length] : nullptr;
+}
+
+/* A bit rate given in kbit/s (1 to 1000000), stored in the unit of its field: unit 1 for kbit/s,
+ * 1000 for bit/s */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_bitrate(const char* text, UINT32 unit, UINT32* value)
+{
+	UINT32 kbits = 0;
+	if (!shadow_server_parse_u32(text, 1, 1000000, &kbits))
+		return FALSE;
+	*value = kbits * unit;
+	return TRUE;
+}
+
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+/* vbr, cbr, cq or q: the order of FREERDP_AV1_RATECONTROL and FREERDP_AV2_RATECONTROL */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_av_mode(const char* text, UINT32* mode)
+{
+	const char* names[] = { "vbr", "cbr", "cq", "q" };
+	for (UINT32 x = 0; x < ARRAYSIZE(names); x++)
+	{
+		if (strcmp(text, names[x]) == 0)
+		{
+			*mode = x;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+#endif
+
+/* /codec:<codec>:<key>:<value>[,<codec>:<key>:<value>...], for the codecs built in:
+ *   h264: rate-control:vbr|cqp, bitrate:<kbit/s>, qp:<0-51>
+ *   av1, av2: rate-control:vbr|cbr|cq|q, bitrate:<kbit/s>
+ *   hevc: rate-control:vbr, bitrate:<kbit/s>
+ * Nothing changes unless the whole value is right. */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_server_parse_codec(rdpShadowServer* server, const char* value)
+{
+	WINPR_ASSERT(server);
+
+	H264_RATECONTROL_MODE h264Mode = server->h264RateControlMode;
+	UINT32 h264BitRate = server->h264BitRate; /* bit/s */
+	UINT32 h264QP = server->h264QP;
+#if defined(WITH_GFX_AV1)
+	UINT32 av1Mode = (UINT32)server->AV1RateControlMode;
+	UINT32 av1BitRate = server->AV1BitRate; /* kbit/s */
+#endif
+#if defined(WITH_GFX_AV2)
+	UINT32 av2Mode = (UINT32)server->AV2RateControlMode;
+	UINT32 av2BitRate = server->AV2BitRate; /* kbit/s */
+#endif
+#if defined(WITH_GFX_AZURE)
+	FREERDP_HEVC_RATECONTROL hevcMode = server->HEVCRateControlMode;
+	UINT32 hevcBitRate = server->HEVCBitRate; /* bit/s: the H.264 context's */
+#endif
+
+	BOOL ok = (value != nullptr);
+	size_t count = 0;
+	char** args = ok ? CommandLineParseCommaSeparatedValues(value, &count) : nullptr;
+	if (ok && !args)
+		ok = FALSE;
+	for (size_t x = 0; ok && (x < count); x++)
+	{
+		const char* cur = args[x];
+		const char* rest = nullptr;
+		const char* v = nullptr;
+		if ((rest = shadow_server_after(cur, "h264:")) != nullptr)
+		{
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+			{
+				if (strcmp(v, "vbr") == 0)
+					h264Mode = H264_RATECONTROL_VBR;
+				else if (strcmp(v, "cqp") == 0)
+					h264Mode = H264_RATECONTROL_CQP;
+				else
+					ok = FALSE;
+			}
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1000, &h264BitRate);
+			else if ((v = shadow_server_after(rest, "qp:")) != nullptr)
+				ok = shadow_server_parse_u32(v, 0, 51, &h264QP);
+			else
+				ok = FALSE;
+		}
+#if defined(WITH_GFX_AV1)
+		else if ((rest = shadow_server_after(cur, "av1:")) != nullptr)
+		{
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+				ok = shadow_server_parse_av_mode(v, &av1Mode);
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1, &av1BitRate);
+			else
+				ok = FALSE;
+		}
+#endif
+#if defined(WITH_GFX_AV2)
+		else if ((rest = shadow_server_after(cur, "av2:")) != nullptr)
+		{
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+				ok = shadow_server_parse_av_mode(v, &av2Mode);
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1, &av2BitRate);
+			else
+				ok = FALSE;
+		}
+#endif
+#if defined(WITH_GFX_AZURE)
+		else if ((rest = shadow_server_after(cur, "hevc:")) != nullptr)
+		{
+			/* only vbr: the HEVC encoder hands its mode to the H.264 context, which knows VBR
+			 * and CQP only, and FREERDP_HEVC_CBR has CQP's value */
+			if ((v = shadow_server_after(rest, "rate-control:")) != nullptr)
+			{
+				if (strcmp(v, "vbr") == 0)
+					hevcMode = FREERDP_HEVC_VBR;
+				else
+					ok = FALSE;
+			}
+			else if ((v = shadow_server_after(rest, "bitrate:")) != nullptr)
+				ok = shadow_server_parse_bitrate(v, 1000, &hevcBitRate);
+			else
+				ok = FALSE;
+		}
+#endif
+		else
+			ok = FALSE; /* an unknown codec, or one not built in */
+	}
+	CommandLineParserFree(args);
+
+	if (!ok)
+		return FALSE;
+	server->h264RateControlMode = h264Mode;
+	server->h264BitRate = h264BitRate;
+	server->h264QP = h264QP;
+#if defined(WITH_GFX_AV1)
+	server->AV1RateControlMode = (FREERDP_AV1_RATECONTROL)av1Mode;
+	server->AV1BitRate = av1BitRate;
+#endif
+#if defined(WITH_GFX_AV2)
+	server->AV2RateControlMode = (FREERDP_AV2_RATECONTROL)av2Mode;
+	server->AV2BitRate = av2BitRate;
+#endif
+#if defined(WITH_GFX_AZURE)
+	server->HEVCRateControlMode = hevcMode;
+	server->HEVCBitRate = hevcBitRate;
+#endif
+	return TRUE;
 }
 
 int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
@@ -509,6 +684,20 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			                               arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "codec")
+		{
+			if (!shadow_server_parse_codec(server, arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#if defined(WITH_RDPEUDP_SERVER)
+		CommandLineSwitchCase(arg, "multitransport")
+		{
+			if ((arg->Value != nullptr) &&
+			    !freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
+			                                 TRANSPORT_TYPE_UDP_FECR | SOFTSYNC_TCP_TO_UDP))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, arg->Value != nullptr))
@@ -567,6 +756,59 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 #endif
+#if defined(WITH_GFX_AV2)
+		CommandLineSwitchCase(arg, "gfx-av2")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			UINT32 profile = freerdp_settings_get_uint32(settings, FreeRDP_GfxCodecAV2Profile);
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (strncmp("profile:", cur, 8) == 0)
+					{
+						const char* val = &cur[8];
+						if (strcmp("high", val) == 0)
+							profile = 1;
+						else if (strcmp("low", val) == 0)
+							profile = 0;
+						else
+						{
+							const unsigned long v = strtoul(val, nullptr, 0);
+							if ((errno != 0) || (v >= UINT32_MAX))
+							{
+								parseFailed = TRUE;
+								break;
+							}
+							else
+								profile = WINPR_ASSERTING_INT_CAST(UINT32, v);
+						}
+					}
+					else if (strcmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile, profile))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "gfx-rfx")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, arg->Value != nullptr))
@@ -589,6 +831,57 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+#if defined(WITH_GFX_AZURE)
+		CommandLineSwitchCase(arg, "gfx-hevc")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			BOOL enabled444 = TRUE;
+
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (_stricmp("on", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = TRUE;
+					}
+					else if (_stricmp("i444", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = TRUE;
+					}
+					else if (_stricmp("i420", cur) == 0)
+					{
+						enabled = TRUE;
+						enabled444 = FALSE;
+					}
+					else if (_stricmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+						enabled444 = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444, enabled444))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "keytab")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKeytab, arg->Value))
@@ -610,6 +903,23 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
+	/* Before /monitors: the subsystem decides which monitors there are */
+	arg = CommandLineFindArgumentA(cargs, "subsystem");
+
+	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			if (!shadow_subsystem_set_order(arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+		else
+		{
+			shadow_subsystem_list();
+			status = COMMAND_LINE_STATUS_PRINT;
+		}
+	}
+
 	arg = CommandLineFindArgumentA(cargs, "monitors");
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
@@ -620,11 +930,17 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
-			/* Select monitors */
+			/* Select monitors. errno may hold anything from what ran before
+			 * (enumerating the monitors makes system calls of its own) */
+			errno = 0;
 			long val = strtol(arg->Value, nullptr, 0);
 
 			if ((val < 0) || (errno != 0) || ((UINT32)val >= numMonitors))
+			{
+				WLog_ERR(TAG, "no monitor '%s': there are %" PRIu32 " (/monitors lists them)",
+				         arg->Value, numMonitors);
 				status = COMMAND_LINE_STATUS_PRINT;
+			}
 
 			server->selectedMonitor = (UINT32)val;
 		}
@@ -1113,6 +1429,8 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*)server;
 	server->listener->CheckPeerAcceptRestrictions = shadow_server_check_peer_restrictions;
 	server->listener->PeerAccepted = shadow_client_accepted;
+	server->clipboard = shadow_clipboard_new(server);
+
 	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
@@ -1139,6 +1457,8 @@ int shadow_server_uninit(rdpShadowServer* server)
 	shadow_subsystem_uninit(server->subsystem);
 	shadow_subsystem_free(server->subsystem);
 	server->subsystem = nullptr;
+	shadow_clipboard_free(server->clipboard);
+	server->clipboard = nullptr;
 	freerdp_listener_free(server->listener);
 	server->listener = nullptr;
 	free(server->CertificateFile);
@@ -1174,8 +1494,16 @@ rdpShadowServer* shadow_server_new(void)
 	server->h264HwAccel = FALSE;
 	server->authentication = TRUE;
 #if defined(WITH_GFX_AV1)
-	server->AV1BitRate = 500;
+	server->AV1BitRate = 3000; /* kbit/s */
 	server->AV1RateControlMode = FREERDP_AV1_VBR;
+#endif
+#if defined(WITH_GFX_AV2)
+	server->AV2BitRate = 500;
+	server->AV2RateControlMode = FREERDP_AV2_VBR;
+#endif
+#if defined(WITH_GFX_AZURE)
+	server->HEVCBitRate = 500000;
+	server->HEVCRateControlMode = FREERDP_HEVC_VBR;
 #endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
 	return server;

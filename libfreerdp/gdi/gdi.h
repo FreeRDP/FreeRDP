@@ -43,9 +43,10 @@ static inline BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
-		BYTE* p = hBmp->data + (WINPR_ASSERTING_INT_CAST(size_t, y) * hBmp->scanline) +
-		          (WINPR_ASSERTING_INT_CAST(size_t, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
-		return p;
+		const size_t offset =
+		    (WINPR_ASSERTING_INT_CAST(size_t, y) * hBmp->scanline) +
+		    (WINPR_ASSERTING_INT_CAST(size_t, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
+		return &hBmp->data[offset];
 	}
 	else
 	{

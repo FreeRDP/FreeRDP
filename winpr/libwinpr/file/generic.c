@@ -662,6 +662,20 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 	if (fchmod(fd, st.st_mode) != 0)
 		goto fail;
 
+#ifdef UF_HIDDEN
+	if (dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+	{
+		st.st_flags |= UF_HIDDEN;
+	}
+	else
+	{
+		st.st_flags &= ~UF_HIDDEN;
+	}
+	if (fchflags(fd, st.st_flags) != 0)
+		if (errno != ENOTSUP && errno != EOPNOTSUPP && errno != EINVAL && errno != ENOTTY)
+			goto fail;
+#endif
+
 	rc = TRUE;
 fail:
 	close(fd);
@@ -1128,6 +1142,9 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 WINPR_ATTR_NODISCARD
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
+	if (S_ISFIFO(fileStat->st_mode))
+		return INVALID_FILE_ATTRIBUTES;
+
 	DWORD dwFileAttributes = GetDosAttributesFromXAttr(path);
 
 	if (S_ISDIR(fileStat->st_mode))
@@ -1146,9 +1163,21 @@ static DWORD FileAttributesFromStat(const char* path, const struct stat* fileSta
 			dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
 	}
 
+#ifdef UF_HIDDEN
+	if (fileStat->st_flags & UF_HIDDEN)
+		dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+#endif
+
 	if (!(fileStat->st_mode & S_IWUSR))
 		dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
+	struct stat lFileStat = WINPR_C_ARRAY_INIT;
+	const int rc = lstat(path, &lFileStat);
+	if (rc == 0)
+	{
+		if (S_ISLNK(lFileStat.st_mode))
+			dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
+	}
 	return dwFileAttributes;
 }
 
@@ -1156,6 +1185,13 @@ WINPR_ATTR_NODISCARD
 static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
                              LPWIN32_FIND_DATAA lpFindFileData)
 {
+	WINPR_ASSERT(path);
+	WINPR_ASSERT(fileStat);
+	WINPR_ASSERT(lpFindFileData);
+
+	if (S_ISFIFO(fileStat->st_mode))
+		return FALSE;
+
 	UINT64 ft = 0;
 	lpFindFileData->dwFileAttributes = FileAttributesFromStat(path, fileStat);
 

@@ -30,7 +30,7 @@
 
 - (id)initWithBookmark:(ComputerBookmark *)bookmark
 {
-	if ((self = [super initWithStyle:UITableViewStyleGrouped]))
+	if ((self = [super initWithStyle:UITableViewStyleInsetGrouped]))
 	{
 		// set additional settings state according to bookmark data
 		if ([[bookmark uuid] length] == 0)
@@ -223,8 +223,6 @@
 			NSLog(@"Invalid row index in settings table!");
 			break;
 	}
-
-	[self adjustEditTextTableViewCell:textCell];
 }
 
 // updates credentials in the UI
@@ -234,9 +232,9 @@
 	switch (indexPath.row)
 	{
 		case 0:
-			[[selCell label]
-			    setText:NSLocalizedString(@"Credentials", @"'Credentials': Bookmark credentials")];
-			[[selCell selection] setText:[_params StringForKey:@"username"]];
+			[selCell
+			    setTitle:NSLocalizedString(@"Credentials", @"'Credentials': Bookmark credentials")];
+			[selCell setValue:[_params StringForKey:@"username"]];
 			break;
 		default:
 			NSLog(@"Invalid row index in settings table!");
@@ -252,29 +250,26 @@
 		case 0:
 		{
 			EditSelectionTableViewCell *selCell = (EditSelectionTableViewCell *)cell;
-			[[selCell label]
-			    setText:NSLocalizedString(@"Screen", @"'Screen': Bookmark Screen settings")];
+			[selCell setTitle:NSLocalizedString(@"Screen", @"'Screen': Bookmark Screen settings")];
 			NSString *resolution = ScreenResolutionDescription(
 			    [_params intForKey:@"screen_resolution_type"], [_params intForKey:@"width"],
 			    [_params intForKey:@"height"]);
 			int colorBits = [_params intForKey:@"colors"];
-			[[selCell selection]
-			    setText:[NSString stringWithFormat:@"%@@%d", resolution, colorBits]];
+			[selCell setValue:[NSString stringWithFormat:@"%@@%d", resolution, colorBits]];
 			break;
 		}
 		case 1:
 		{
 			EditSubEditTableViewCell *editCell = (EditSubEditTableViewCell *)cell;
-			[[editCell label]
-			    setText:NSLocalizedString(@"Performance",
-			                              @"'Performance': Bookmark Performance Settings")];
+			[editCell setTitle:NSLocalizedString(@"Performance",
+			                                     @"'Performance': Bookmark Performance Settings")];
 			break;
 		}
 		case 2:
 		{
 			EditSubEditTableViewCell *editCell = (EditSubEditTableViewCell *)cell;
-			[[editCell label]
-			    setText:NSLocalizedString(@"Advanced", @"'Advanced': Bookmark Advanced Settings")];
+			[editCell
+			    setTitle:NSLocalizedString(@"Advanced", @"'Advanced': Bookmark Advanced Settings")];
 			break;
 		}
 		default:

@@ -326,12 +326,15 @@ static BOOL CALLBACK winpr_openssl_initialize(WINPR_ATTR_UNUSED PINIT_ONCE once,
 #endif
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-	/* The legacy provider is needed for MD4. */
+	/* The legacy provider has MD4 and RC4, which are needed unless WinPR uses
+	 * its own implementations of both (WITH_INTERNAL_MD4, WITH_INTERNAL_RC4). */
 	s_winpr_openssl_provider_legacy = OSSL_PROVIDER_load(nullptr, "legacy");
+#if !defined(WITH_INTERNAL_MD4) || !defined(WITH_INTERNAL_RC4)
 	if (s_winpr_openssl_provider_legacy == nullptr)
 	{
-		WLog_WARN(TAG, "OpenSSL LEGACY provider failed to load, no md4 support available!");
+		WLog_WARN(TAG, "OpenSSL LEGACY provider failed to load, no md4/rc4 support available!");
 	}
+#endif
 	s_winpr_openssl_provider_default = OSSL_PROVIDER_load(nullptr, "default");
 	if (s_winpr_openssl_provider_default == nullptr)
 	{

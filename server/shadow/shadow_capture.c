@@ -87,49 +87,6 @@ int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UIN
 #endif
 
 WINPR_ATTR_NODISCARD
-static BOOL color_equal(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
-{
-	BYTE ar = 0;
-	BYTE ag = 0;
-	BYTE ab = 0;
-	BYTE aa = 0;
-	BYTE br = 0;
-	BYTE bg = 0;
-	BYTE bb = 0;
-	BYTE ba = 0;
-	FreeRDPSplitColor(colorA, formatA, &ar, &ag, &ab, &aa, nullptr);
-	FreeRDPSplitColor(colorB, formatB, &br, &bg, &bb, &ba, nullptr);
-
-	if (ar != br)
-		return FALSE;
-	if (ag != bg)
-		return FALSE;
-	if (ab != bb)
-		return FALSE;
-	if (aa != ba)
-		return FALSE;
-	return TRUE;
-}
-
-WINPR_ATTR_NODISCARD
-static BOOL pixel_equal(const BYTE* WINPR_RESTRICT a, UINT32 formatA, const BYTE* WINPR_RESTRICT b,
-                        UINT32 formatB, size_t count)
-{
-	const size_t bppA = FreeRDPGetBytesPerPixel(formatA);
-	const size_t bppB = FreeRDPGetBytesPerPixel(formatB);
-
-	for (size_t x = 0; x < count; x++)
-	{
-		const UINT32 colorA = FreeRDPReadColor(&a[bppA * x], formatA);
-		const UINT32 colorB = FreeRDPReadColor(&b[bppB * x], formatB);
-		if (!color_equal(colorA, formatA, colorB, formatB))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-WINPR_ATTR_NODISCARD
 static BOOL color_equal_no_alpha(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
 {
 	BYTE ar = 0;
@@ -178,6 +135,26 @@ static BOOL pixel_equal_same_format(const BYTE* WINPR_RESTRICT a, UINT32 formatA
 	return memcmp(a, b, count * bppA) == 0;
 }
 
+/* 32 bpp formats that differ only in having alpha (e.g. BGRX32 and BGRA32) keep the colour
+ * channels at the same bits, so compare the colours under a mask of those bits, never the alpha
+ * or padding byte: an X server leaves it 0 in a depth 24 image, while the X format of the
+ * surface reads as opaque. */
+WINPR_ATTR_NODISCARD
+static BOOL pixel_equal_32_ignore_alpha(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
+                                        const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count)
+{
+	const UINT32 mask = FreeRDPGetColor(formatA, 0xFF, 0xFF, 0xFF, 0x00);
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const UINT32 colorA = FreeRDPReadColor(&a[4 * x], formatA);
+		const UINT32 colorB = FreeRDPReadColor(&b[4 * x], formatB);
+		if (((colorA ^ colorB) & mask) != 0)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 typedef BOOL (*pixel_equal_fn_t)(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
                                  const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count);
 
@@ -192,8 +169,8 @@ static pixel_equal_fn_t get_comparison_fn(DWORD format1, DWORD format2)
 
 	if (!FreeRDPColorHasAlpha(format1) || !FreeRDPColorHasAlpha(format2))
 	{
-		/* In case we have RGBA32 and RGBX32 or similar assume the alpha data is equal.
-		 * This allows us to use the fast memcmp comparison. */
+		/* RGBA32 and RGBX32 or similar: the alpha or padding byte differs (0 vs opaque), so
+		 * comparing it would report every pixel as changed. Compare the colour bytes only. */
 		if ((bpp1 == 32) && FreeRDPAreColorFormatsEqualNoAlpha(format1, format2))
 		{
 			switch (format1)
@@ -202,12 +179,11 @@ static pixel_equal_fn_t get_comparison_fn(DWORD format1, DWORD format2)
 				case PIXEL_FORMAT_XRGB32:
 				case PIXEL_FORMAT_ABGR32:
 				case PIXEL_FORMAT_XBGR32:
-					return pixel_equal;
 				case PIXEL_FORMAT_RGBA32:
 				case PIXEL_FORMAT_RGBX32:
 				case PIXEL_FORMAT_BGRA32:
 				case PIXEL_FORMAT_BGRX32:
-					return pixel_equal;
+					return pixel_equal_32_ignore_alpha;
 				default:
 					break;
 			}

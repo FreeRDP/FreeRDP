@@ -115,6 +115,16 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return json_object_get_double((const json_object*)item);
 }
 
+INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item)
+{
+	return json_object_get_int64(item);
+}
+
+UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item)
+{
+	return json_object_get_uint64(item);
+}
+
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 	if (WINPR_JSON_IsArray(item))
@@ -279,6 +289,17 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
 {
 	struct json_object* obj = json_object_new_int64(number);
+	if (json_object_object_add((json_object*)object, name, obj) != 0)
+	{
+		json_object_put(obj);
+		return nullptr;
+	}
+	return obj;
+}
+
+WINPR_JSON* WINPR_JSON_AddUIntegerToObject(WINPR_JSON* object, const char* name, uint64_t number)
+{
+	struct json_object* obj = json_object_new_uint64(number);
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);

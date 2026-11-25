@@ -76,5 +76,4 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert,
                                                          const BYTE* input, size_t cbInput,
                                                          BYTE** poutput, size_t* pcbOutput);
-
 #endif /* FREERDP_LIB_CORE_CERTIFICATE_H */

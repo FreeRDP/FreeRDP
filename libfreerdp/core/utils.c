@@ -19,6 +19,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include "settings.h"
 
@@ -38,6 +39,7 @@
 #endif
 
 #include "../core/rdp.h"
+#include "../core/proxy.h"
 
 BOOL utils_str_copy(const char* value, char** dst)
 {
@@ -595,7 +597,7 @@ BOOL utils_reload_channels(rdpContext* context)
 	return rc;
 }
 
-const char* guid2str(const GUID* guid, char* buffer, size_t len)
+const char* freerdp_guid2str(const GUID* guid, char* buffer, size_t len)
 {
 	if (!guid)
 		return nullptr;
@@ -612,24 +614,52 @@ const char* guid2str(const GUID* guid, char* buffer, size_t len)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL isValidIPv4(const char* ipAddress)
+BOOL freerdp_is_valid_ipV4(const char* ipAddress)
 {
+	if (!ipAddress)
+		return FALSE;
+	const size_t len = strnlen(ipAddress, INET_ADDRSTRLEN + 1);
+	if (len > INET_ADDRSTRLEN)
+		return FALSE;
+
 	struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
 	int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
 	return result != 0;
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL isValidIPv6(const char* ipAddress)
+BOOL freerdp_is_valid_ipV6(const char* ipAddress)
 {
+	if (!ipAddress)
+		return FALSE;
+	const size_t len = strnlen(ipAddress, INET6_ADDRSTRLEN + 1);
+	if (len > INET6_ADDRSTRLEN)
+		return FALSE;
 	struct sockaddr_in6 sa = WINPR_C_ARRAY_INIT;
 	int result = inet_pton(AF_INET6, ipAddress, &(sa.sin6_addr));
 	return result != 0;
 }
 
-BOOL utils_is_valid_ip(const char* ipAddress)
+BOOL freerdp_is_valid_ipV4N(const char* ipAddress, size_t len)
 {
-	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
+	if (!ipAddress || (len == 0))
+		return FALSE;
+	if (strnlen(ipAddress, len) > INET_ADDRSTRLEN)
+		return FALSE;
+	return freerdp_is_valid_ipV4(ipAddress);
+}
+
+BOOL freerdp_is_valid_ipV6N(const char* ipAddress, size_t len)
+{
+	if (!ipAddress || (len == 0))
+		return FALSE;
+	if (strnlen(ipAddress, len) > INET6_ADDRSTRLEN)
+		return FALSE;
+	return freerdp_is_valid_ipV6(ipAddress);
+}
+
+BOOL freerdp_is_valid_ip(const char* ipAddress)
+{
+	return freerdp_is_valid_ipV4(ipAddress) || freerdp_is_valid_ipV6(ipAddress);
 }
 
 BOOL utils_set_umask(void)
@@ -638,4 +668,152 @@ BOOL utils_set_umask(void)
 	(void)umask(S_IRWXG | S_IRWXO);
 #endif
 	return TRUE;
+}
+
+BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA, const char* ipAddressB,
+                              size_t lenB)
+{
+	if (!ipAddressA || (lenA == 0))
+		return FALSE;
+	if (!ipAddressB || (lenB == 0))
+		return FALSE;
+	if (strnlen(ipAddressA, lenA + 1) > lenA)
+		return FALSE;
+	if (strnlen(ipAddressB, lenB + 1) > lenB)
+		return FALSE;
+
+	if (freerdp_is_valid_ipV4(ipAddressA) && freerdp_is_valid_ipV4(ipAddressB))
+	{
+		struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
+		struct sockaddr_in sb = WINPR_C_ARRAY_INIT;
+		const int resultA = inet_pton(AF_INET, ipAddressA, &(sa.sin_addr));
+		const int resultB = inet_pton(AF_INET, ipAddressB, &(sb.sin_addr));
+		if ((resultA != resultB) || (resultA != 1))
+			return FALSE;
+		return memcmp(&sa, &sb, sizeof(sa)) == 0;
+	}
+	if (freerdp_is_valid_ipV6(ipAddressA) && freerdp_is_valid_ipV6(ipAddressB))
+	{
+		struct sockaddr_in6 sa = WINPR_C_ARRAY_INIT;
+		struct sockaddr_in6 sb = WINPR_C_ARRAY_INIT;
+		const int resultA = inet_pton(AF_INET6, ipAddressA, &(sa.sin6_addr));
+		const int resultB = inet_pton(AF_INET6, ipAddressB, &(sb.sin6_addr));
+		if ((resultA != resultB) || (resultA != 1))
+			return FALSE;
+		return memcmp(&sa, &sb, sizeof(sa)) == 0;
+	}
+	return FALSE;
+}
+
+BOOL freerdp_is_valid_ipN(const char* ipAddress, size_t len)
+{
+	if (!ipAddress || (len == 0))
+		return FALSE;
+	if (strnlen(ipAddress, len) > INET6_ADDRSTRLEN)
+		return FALSE;
+	return freerdp_is_valid_ip(ipAddress);
+}
+
+WINPR_ATTR_NODISCARD
+static BIO* utils_tls_layer_bio(rdpContext* context, const char* hostname, UINT16 port,
+                                UINT32 timeout)
+{
+	WINPR_ASSERT(context);
+	rdpTransport* transport = freerdp_get_transport(context);
+	rdpTransportLayer* layer = transport_connect_layer(transport, hostname, port, timeout);
+
+	if (!layer)
+		return nullptr;
+
+	BIO* layerBio = BIO_new(BIO_s_transport_layer());
+	if (!layerBio)
+	{
+		transport_layer_free(layer);
+		return nullptr;
+	}
+	BIO_set_data(layerBio, layer);
+	return layerBio;
+}
+
+WINPR_ATTR_NODISCARD
+static BIO* utils_tls_socket_bio(rdpContext* context, const char* hostname, UINT16 port,
+                                 UINT32 timeout)
+{
+	int sockfd = freerdp_tcp_connect(context, hostname, port, timeout);
+
+	if (sockfd < 0)
+		return nullptr;
+
+	BIO* socketBio = BIO_new(BIO_s_simple_socket());
+
+	if (!socketBio)
+	{
+		closesocket((SOCKET)sockfd);
+		return nullptr;
+	}
+
+	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+	return socketBio;
+}
+
+BOOL utils_tls_connect(rdpContext* context, rdpTls* tls, wLog* log, const char* hostname,
+                       UINT16 port, BOOL layerConnect, UINT32 timeout)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(tls);
+
+	long status = 0;
+	rdpSettings* settings = context->settings;
+	const char* peerHostname = hostname;
+	UINT16 peerPort = port;
+	const char* proxyUsername = nullptr;
+	const char* proxyPassword = nullptr;
+	BOOL isProxyConnection =
+	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
+
+	WLog_Print(log, WLOG_DEBUG, "connecting to %s %d", peerHostname, peerPort);
+	BIO* bufferedBio = BIO_new(BIO_s_buffered_socket());
+
+	if (!bufferedBio)
+		return FALSE;
+
+	BIO* bio = nullptr;
+	if (layerConnect)
+		bio = utils_tls_layer_bio(context, hostname, port, timeout);
+	else
+		bio = utils_tls_socket_bio(context, hostname, port, timeout);
+	if (!bio)
+	{
+		BIO_free_all(bufferedBio);
+		return FALSE;
+	}
+	bufferedBio = BIO_push(bufferedBio, bio);
+	status = BIO_set_nonblock(bufferedBio, TRUE);
+
+	if (isProxyConnection)
+	{
+		if (!proxy_connect(context, bufferedBio, proxyUsername, proxyPassword, hostname, port))
+		{
+			BIO_free_all(bufferedBio);
+			return FALSE;
+		}
+	}
+
+	if (!status)
+	{
+		BIO_free_all(bufferedBio);
+		return FALSE;
+	}
+
+	status = freerdp_tls_connect(tls, bufferedBio);
+	if (status < 1)
+	{
+		if (status < 0)
+			freerdp_set_last_error_if_not(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		else
+			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
+
+		return FALSE;
+	}
+	return (status >= 1);
 }

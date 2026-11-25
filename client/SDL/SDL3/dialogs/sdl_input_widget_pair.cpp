@@ -72,7 +72,7 @@ bool SdlInputWidgetPair::remove_str(size_t count)
 	if (readonly())
 		return true;
 
-	auto text = _text;
+	const auto& text = _text;
 	if (text.empty())
 		return true;
 

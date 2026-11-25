@@ -179,7 +179,6 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	wStream* buffer = nullptr;
 	UINT32 offset = 0;
 	RpcClientCall* clientCall = nullptr;
-	p_cont_elem_t* p_cont_elem = nullptr;
 	rpcconn_bind_hdr_t bind_pdu = WINPR_C_ARRAY_INIT;
 	RpcVirtualConnection* connection = nullptr;
 	RpcInChannel* inChannel = nullptr;
@@ -209,46 +208,52 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	bind_pdu.header.ptype = initial ? PTYPE_BIND : PTYPE_ALTER_CONTEXT;
 	bind_pdu.header.pfc_flags =
 	    PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
-	bind_pdu.header.call_id = 2;
+	bind_pdu.header.call_id = rpc->CallId++;
 	bind_pdu.max_xmit_frag = rpc->max_xmit_frag;
 	bind_pdu.max_recv_frag = rpc->max_recv_frag;
 	bind_pdu.assoc_group_id = 0;
-	bind_pdu.p_context_elem.n_context_elem = 2;
 	bind_pdu.p_context_elem.reserved = 0;
 	bind_pdu.p_context_elem.reserved2 = 0;
-	bind_pdu.p_context_elem.p_cont_elem =
-	    calloc(bind_pdu.p_context_elem.n_context_elem, sizeof(p_cont_elem_t));
+	bind_pdu.p_context_elem.p_cont_elem = rts_context_elem_new(2);
 
 	if (!bind_pdu.p_context_elem.p_cont_elem)
 		goto fail;
+	bind_pdu.p_context_elem.n_context_elem = 2;
 
-	p_cont_elem = &bind_pdu.p_context_elem.p_cont_elem[0];
-	p_cont_elem->p_cont_id = 0;
-	p_cont_elem->n_transfer_syn = 1;
-	p_cont_elem->reserved = 0;
-	CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
-	p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
-	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	{
+		p_cont_elem_t* p_cont_elem = &bind_pdu.p_context_elem.p_cont_elem[0];
+		p_cont_elem->p_cont_id = 0;
+		p_cont_elem->n_transfer_syn = 1;
+		p_cont_elem->reserved = 0;
+		CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
+		p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
+		rts_syntax_id_free(p_cont_elem->transfer_syntaxes);
+		p_cont_elem->transfer_syntaxes = rts_syntax_id_new(1);
 
-	if (!p_cont_elem->transfer_syntaxes)
-		goto fail;
+		if (!p_cont_elem->transfer_syntaxes)
+			goto fail;
 
-	CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &NDR_UUID, sizeof(p_uuid_t));
-	p_cont_elem->transfer_syntaxes[0].if_version = NDR_SYNTAX_IF_VERSION;
-	p_cont_elem = &bind_pdu.p_context_elem.p_cont_elem[1];
-	p_cont_elem->p_cont_id = 1;
-	p_cont_elem->n_transfer_syn = 1;
-	p_cont_elem->reserved = 0;
-	CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
-	p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
-	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+		CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &NDR_UUID, sizeof(p_uuid_t));
+		p_cont_elem->transfer_syntaxes[0].if_version = NDR_SYNTAX_IF_VERSION;
+	}
+	{
+		p_cont_elem_t* p_cont_elem = &bind_pdu.p_context_elem.p_cont_elem[1];
+		p_cont_elem->p_cont_id = 1;
+		p_cont_elem->n_transfer_syn = 1;
+		p_cont_elem->reserved = 0;
+		CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
+		p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
 
-	if (!p_cont_elem->transfer_syntaxes)
-		goto fail;
+		rts_syntax_id_free(p_cont_elem->transfer_syntaxes);
+		p_cont_elem->transfer_syntaxes = rts_syntax_id_new(1);
 
-	CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &BTFN_UUID, sizeof(p_uuid_t));
-	p_cont_elem->transfer_syntaxes[0].if_version = BTFN_SYNTAX_IF_VERSION;
-	offset = 116;
+		if (!p_cont_elem->transfer_syntaxes)
+			goto fail;
+
+		CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &BTFN_UUID, sizeof(p_uuid_t));
+		p_cont_elem->transfer_syntaxes[0].if_version = BTFN_SYNTAX_IF_VERSION;
+		offset = 116;
+	}
 
 	bind_pdu.auth_verifier.auth_type =
 	    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
@@ -273,7 +278,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	if (!clientCall)
 		goto fail;
 
-	if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
+	if (!rpc_client_call_add(rpc->log, rpc->client, clientCall))
 	{
 		rpc_client_call_free(clientCall);
 		goto fail;
@@ -282,14 +287,12 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	Stream_SealLength(buffer);
 	status = rpc_in_channel_send_pdu(inChannel, Stream_Buffer(buffer), Stream_Length(buffer));
 fail:
+	if (status <= 0)
+		rpc_client_call_discard(rpc->log, rpc->client, bind_pdu.header.call_id);
 
-	if (bind_pdu.p_context_elem.p_cont_elem)
-	{
-		free(bind_pdu.p_context_elem.p_cont_elem[0].transfer_syntaxes);
-		free(bind_pdu.p_context_elem.p_cont_elem[1].transfer_syntaxes);
-	}
-
-	free(bind_pdu.p_context_elem.p_cont_elem);
+	rts_context_elem_free(bind_pdu.p_context_elem.p_cont_elem,
+	                      bind_pdu.p_context_elem.n_context_elem);
+	bind_pdu.p_context_elem.n_context_elem = 0;
 	bind_pdu.p_context_elem.p_cont_elem = nullptr;
 
 	Stream_Free(buffer, TRUE);
@@ -412,14 +415,14 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	sbuffer = credssp_auth_get_output_buffer(rpc->auth);
 
 	if (!sbuffer)
-		return -1;
+		goto fail;
 
 	auth_3_pdu.header = rpc_pdu_header_init(rpc);
 	auth_3_pdu.header.auth_length = (UINT16)sbuffer->cbBuffer;
 	auth_3_pdu.auth_verifier.auth_value = sbuffer->pvBuffer;
 	auth_3_pdu.header.ptype = PTYPE_RPC_AUTH_3;
 	auth_3_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
-	auth_3_pdu.header.call_id = 2;
+	auth_3_pdu.header.call_id = rpc->CallId++;
 	auth_3_pdu.max_xmit_frag = rpc->max_xmit_frag;
 	auth_3_pdu.max_recv_frag = rpc->max_recv_frag;
 	offset = 20;
@@ -440,20 +443,24 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	buffer = Stream_New(nullptr, auth_3_pdu.header.frag_length);
 
 	if (!buffer)
-		return -1;
+		goto fail;
 
 	if (!rts_write_pdu_auth3(buffer, &auth_3_pdu))
 		goto fail;
 
 	clientCall = rpc_client_call_new(auth_3_pdu.header.call_id, 0);
 
-	if (ArrayList_Append(rpc->client->ClientCallList, clientCall))
+	if (rpc_client_call_add(rpc->log, rpc->client, clientCall))
 	{
 		Stream_SealLength(buffer);
 		status = rpc_in_channel_send_pdu(inChannel, Stream_Buffer(buffer), Stream_Length(buffer));
 	}
+	else
+		rpc_client_call_free(clientCall);
 
 fail:
+	if (status <= 0)
+		rpc_client_call_discard(rpc->log, rpc->client, auth_3_pdu.header.call_id);
 	Stream_Free(buffer, TRUE);
 	return (status > 0) ? 1 : -1;
 }

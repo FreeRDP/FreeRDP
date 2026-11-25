@@ -78,15 +78,18 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32
 
 	if (!surface)
 		return FALSE;
+	EnterCriticalSection(&surface->lock);
 
 	if ((width == surface->width) && (height == surface->height))
 	{
 		/* We don't need to reset frame buffer, just update left top */
 		surface->x = x;
 		surface->y = y;
+		LeaveCriticalSection(&surface->lock);
 		return TRUE;
 	}
 
+	/* a client thread may be encoding from these pixels under the lock */
 	buffer = (BYTE*)realloc(surface->data, 1ull * scanline * ALIGN_SCREEN_SIZE(height, 4ull));
 
 	if (buffer)
@@ -97,8 +100,8 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32
 		surface->height = height;
 		surface->scanline = scanline;
 		surface->data = buffer;
-		return TRUE;
 	}
+	LeaveCriticalSection(&surface->lock);
 
-	return FALSE;
+	return buffer != nullptr;
 }

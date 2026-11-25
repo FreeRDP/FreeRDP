@@ -121,7 +121,9 @@ static const BYTE APDU_PIV_GET_CHUID[] = { 0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C,
 	                                       0x03, 0x5F, 0xC1, 0x02, 0x00 };
 static const BYTE APDU_PIV_GET_MSCMAP[] = { 0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C,
 	                                        0x03, 0x5F, 0xFF, 0x10, 0x00 };
+/* currently not used
 static const BYTE APDU_GET_RESPONSE[] = { 0x00, 0xC0, 0x00, 0x00, 0x00 };
+*/
 
 #define PIV_CONTAINER_NAME_LEN 36
 #define MAX_CONTAINER_NAME_LEN 39
@@ -454,7 +456,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 
 	WLog_DBG(TAG, "checking %lx slots for valid keys...", state->nslots);
 	state->nKeys = 0;
-	for (CK_ULONG i = 0; (i < state->nslots) && (state->nKeys < state->nslots); i++)
+	for (CK_ULONG i = 0; (i < state->nslots) && (state->nKeys < ARRAYSIZE(state->keys)); i++)
 	{
 		CK_SESSION_HANDLE session = 0;
 		CK_SLOT_INFO slotInfo = WINPR_C_ARRAY_INIT;
@@ -521,7 +523,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 			}
 
 			WLog_DBG(TAG, "slot has %lu objects", nslotObjects);
-			for (CK_ULONG j = 0; (j < nslotObjects) && (state->nKeys < state->nslots); j++)
+			for (CK_ULONG j = 0; (j < nslotObjects) && (state->nKeys < ARRAYSIZE(state->keys)); j++)
 			{
 				NCryptKeyEnum* key = &state->keys[state->nKeys];
 				CK_OBJECT_CLASS dataClass = CKO_PUBLIC_KEY;

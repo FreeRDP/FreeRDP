@@ -20,14 +20,17 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <atomic>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client/window_info_service.h>
 
 #include <SDL3/SDL.h>
 
@@ -38,6 +41,8 @@
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
 #include "sdl_rail.hpp"
+#include "sdl_overlay.hpp"
+#include "sdl_wheel.hpp"
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
@@ -53,8 +58,8 @@ class SdlContext
 
 	explicit SdlContext(rdpContext* context);
 	SdlContext(const SdlContext& other) = delete;
+	~SdlContext();
 	SdlContext(SdlContext&& other) = delete;
-	~SdlContext() = default;
 
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
@@ -63,6 +68,7 @@ class SdlContext
 
 	void setConnected(bool val);
 	[[nodiscard]] bool isConnected() const;
+	[[nodiscard]] bool abortConnect() const;
 	void cleanup();
 
 	[[nodiscard]] bool resizeable() const;
@@ -74,6 +80,11 @@ class SdlContext
 	[[nodiscard]] bool setFullscreen(bool enter, bool forceOriginalDisplay = false);
 
 	[[nodiscard]] bool setMinimized();
+
+	/** The stats and info overlay, SDL's thread */
+	[[nodiscard]] bool toggleOverlay();
+	[[nodiscard]] bool showOverlay(bool on);
+	[[nodiscard]] bool updateOverlay();
 
 	[[nodiscard]] bool grabMouse() const;
 	[[nodiscard]] bool toggleGrabMouse();
@@ -99,6 +110,7 @@ class SdlContext
 	[[nodiscard]] std::vector<SDL_Rect> pop();
 
 	void setHasCursor(bool val);
+	[[nodiscard]] std::optional<bool> allowScreenSaver() const;
 	[[nodiscard]] bool hasCursor() const;
 
 	void setMetadata();
@@ -108,6 +120,27 @@ class SdlContext
 	[[nodiscard]] bool shallAbort(bool ignoreDialogs = false);
 
 	[[nodiscard]] bool createWindows();
+
+	/** main thread: recomputes what rdpContext::windowInfoService tells about the session
+	 *  window after it was created, resized or rescaled, and tells the subscriber */
+	void updateWindowInfo();
+	/** any thread: a RemoteApp window (`remoteId`) was created, moved, resized or deleted; its
+	 *  window info is refreshed on the main thread (flushWindowInfo) */
+	void railWindowInfoChanged(uint64_t remoteId);
+	/** main thread: refreshes the RemoteApp windows' info railWindowInfoChanged() queued */
+	void flushWindowInfo();
+
+	/** main thread: draws the mapped renderers (rdpContext::bitmapRenderService) where the
+	 *  Geometry Tracking channel puts them */
+	[[nodiscard]] bool presentRenderers();
+	[[nodiscard]] bool hasRenderers();
+
+	/* rdpContext::bitmapRenderService's renderers (sdl_render_service.cpp), any thread */
+	[[nodiscard]] Uint64 rendererAdd(UINT64 mappingId, IWTSBitmapRendererCallback* callback);
+	[[nodiscard]] bool rendererFrame(Uint64 id, const BYTE* data, UINT32 width, UINT32 height,
+	                                 LONG stride);
+	void rendererRemove(Uint64 id);
+
 	[[nodiscard]] bool updateWindowList();
 	[[nodiscard]] bool updateWindow(SDL_WindowID id);
 
@@ -119,6 +152,7 @@ class SdlContext
 
 	[[nodiscard]] const SdlWindow* getWindowForId(SDL_WindowID id) const;
 	[[nodiscard]] SdlWindow* getWindowForId(SDL_WindowID id);
+	[[nodiscard]] bool allWindowsHidden() const;
 	[[nodiscard]] SdlWindow* getFirstWindow();
 
 	[[nodiscard]] bool addDisplayWindow(SDL_DisplayID id);
@@ -126,6 +160,7 @@ class SdlContext
 	[[nodiscard]] bool detectDisplays();
 	[[nodiscard]] rdpMonitor getDisplay(SDL_DisplayID id) const;
 	[[nodiscard]] std::vector<SDL_DisplayID> getDisplayIds() const;
+	void applyMonitorScaleOverride(rdpMonitor& monitor) const;
 
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();
@@ -159,7 +194,12 @@ class SdlContext
 	[[nodiscard]] bool credentialsRead() const;
 	void setCredentialsRead();
 
+	/* the wheel rotation not yet sent, one axis each */
+	[[nodiscard]] SdlWheelAxis& wheelAxis(bool horizontal);
+
   private:
+	/** The window that shows the overlay, nullptr for none (RemoteApp) */
+	[[nodiscard]] SdlWindow* overlayWindow();
 	[[nodiscard]] bool resizeToScale(SdlWindow* window);
 	[[nodiscard]] bool useLocalScale() const;
 
@@ -202,9 +242,7 @@ class SdlContext
 
 	void applyMonitorOffset(SDL_WindowID window, float& x, float& y) const;
 
-	[[nodiscard]] std::vector<SDL_DisplayID>
-	updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
-	                                  const std::vector<SDL_DisplayID>& ignore = {});
+	void updateDisplayOffsets();
 	void updateMonitorDataFromOffsets();
 
 	rdpContext* _context = nullptr;
@@ -222,6 +260,20 @@ class SdlContext
 	bool _resizeable = false;
 	bool _grabMouse = false;
 	bool _grabKeyboard = false;
+
+	/* RemoteApp pointer state */
+	struct
+	{
+		SDL_WindowID window = 0;
+		SDL_FPoint local = {};
+		SDL_FPoint server = {};
+		uint32_t epoch = 0;
+	} _lastMotion; /* last motion forwarded to the server */
+	struct
+	{
+		SDL_WindowID window = 0;
+		Uint64 time = 0;
+	} _lastRelease;
 	int _exitCode = -1;
 	std::atomic<bool> _rdpThreadRunning = false;
 	SDL_PixelFormat _sdlPixelFormat = SDL_PIXELFORMAT_UNKNOWN;
@@ -242,13 +294,47 @@ class SdlContext
 
 	std::map<SDL_DisplayID, rdpMonitor> _displays;
 	std::map<SDL_WindowID, SdlWindow> _windows;
+
+	/* the mapped renderers: what they were last given, under _rendererLock */
+	struct MappedRenderer
+	{
+		UINT64 mappingId = 0; /* MS-RDPEGT */
+		std::vector<Uint8> pixels;
+		int pitch = 0;
+		int width = 0;
+		int height = 0;
+		bool dirty = false;
+		IWTSBitmapRendererCallback* callback = nullptr; /* a reference */
+		SDL_Rect target{};                              /* last OnTargetSizeChanged */
+	};
+	void renderersChanged();
+	std::mutex _rendererLock;
+	std::map<Uint64, MappedRenderer> _renderers;
+	Uint64 _nextRenderer = 1;
+	std::atomic<bool> _renderersPending = false;
+	/* rdpContext::windowInfoService: answered from these snapshots (channel threads), which
+	 * the main thread refreshes. _windowInfoLock is a leaf lock. */
+	static HRESULT windowInfoGet(void* custom, UINT64 remoteHwnd, WTS_WINDOW_INFO* info);
+	static UINT32 windowInfoSessionType(void* custom);
+	std::mutex _windowInfoLock;
+	WTS_WINDOW_INFO _desktopWindowInfo{};
+	std::map<uint64_t, WTS_WINDOW_INFO> _railWindowInfo;
+	std::set<uint64_t> _railWindowInfoPending;
+
 	std::map<SDL_DisplayID, std::pair<SDL_Rect, SDL_Rect>> _offsets;
+	std::map<SDL_DisplayID, SDL_Rect> _displayBounds;
+	SDL_DisplayID _primaryDisplay = 0;
 
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeight = 0;
 	WinPREvent _windowsCreatedEvent;
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
+	std::optional<bool> _connectionDialog;
+	std::optional<bool> _allowScreenSaver;
+	SdlOverlay _overlay{ this };
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
+	SdlWheelAxis _wheelX;
+	SdlWheelAxis _wheelY;
 };

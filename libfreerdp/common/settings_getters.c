@@ -282,6 +282,18 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_GfxCodecAV1:
 			return settings->GfxCodecAV1;
 
+		case FreeRDP_GfxCodecAV2:
+			return settings->GfxCodecAV2;
+
+		case FreeRDP_GfxCodecAVCMM:
+			return settings->GfxCodecAVCMM;
+
+		case FreeRDP_GfxCodecHEVC:
+			return settings->GfxCodecHEVC;
+
+		case FreeRDP_GfxCodecHEVC444:
+			return settings->GfxCodecHEVC444;
+
 		case FreeRDP_GfxH264:
 			return settings->GfxH264;
 
@@ -471,6 +483,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_RemoteAppLanguageBarSupported:
 			return settings->RemoteAppLanguageBarSupported;
 
+		case FreeRDP_RemoteApplicationExecFromPipe:
+			return settings->RemoteApplicationExecFromPipe;
+
 		case FreeRDP_RemoteApplicationMode:
 			return settings->RemoteApplicationMode;
 
@@ -572,6 +587,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 
 		case FreeRDP_SupportMultitransport:
 			return settings->SupportMultitransport;
+
+		case FreeRDP_SupportMultitransportUdp:
+			return settings->SupportMultitransportUdp;
 
 		case FreeRDP_SupportSSHAgentChannel:
 			return settings->SupportSSHAgentChannel;
@@ -971,6 +989,22 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->GfxCodecAV1 = cnv.c;
 			break;
 
+		case FreeRDP_GfxCodecAV2:
+			settings->GfxCodecAV2 = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecAVCMM:
+			settings->GfxCodecAVCMM = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecHEVC:
+			settings->GfxCodecHEVC = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecHEVC444:
+			settings->GfxCodecHEVC444 = cnv.c;
+			break;
+
 		case FreeRDP_GfxH264:
 			settings->GfxH264 = cnv.c;
 			break;
@@ -1223,6 +1257,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->RemoteAppLanguageBarSupported = cnv.c;
 			break;
 
+		case FreeRDP_RemoteApplicationExecFromPipe:
+			settings->RemoteApplicationExecFromPipe = cnv.c;
+			break;
+
 		case FreeRDP_RemoteApplicationMode:
 			settings->RemoteApplicationMode = cnv.c;
 			break;
@@ -1357,6 +1395,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_SupportMultitransport:
 			settings->SupportMultitransport = cnv.c;
+			break;
+
+		case FreeRDP_SupportMultitransportUdp:
+			settings->SupportMultitransportUdp = cnv.c;
 			break;
 
 		case FreeRDP_SupportSSHAgentChannel:
@@ -1794,6 +1836,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_GfxCodecAV1Profile:
 			return settings->GfxCodecAV1Profile;
 
+		case FreeRDP_GfxCodecAV2Profile:
+			return settings->GfxCodecAV2Profile;
+
 		case FreeRDP_GlyphSupportLevel:
 			return settings->GlyphSupportLevel;
 
@@ -1898,6 +1943,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 
 		case FreeRDP_RdpVersion:
 			return settings->RdpVersion;
+
+		case FreeRDP_RdstlsEnabledModes:
+			return settings->RdstlsEnabledModes;
 
 		case FreeRDP_ReceivedCapabilitiesSize:
 			return settings->ReceivedCapabilitiesSize;
@@ -2030,13 +2078,19 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftX:
 			return (UINT32)settings->MonitorLocalShiftX;
 
-		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_POP
+			// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftY:
 			return (UINT32)settings->MonitorLocalShiftY;
 
+			WINPR_PRAGMA_DIAG_POP
 #endif
 		default:
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
@@ -2258,6 +2312,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->GfxCodecAV1Profile = cnv.c;
 			break;
 
+		case FreeRDP_GfxCodecAV2Profile:
+			settings->GfxCodecAV2Profile = cnv.c;
+			break;
+
 		case FreeRDP_GlyphSupportLevel:
 			settings->GlyphSupportLevel = cnv.c;
 			break;
@@ -2396,6 +2454,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RdpVersion:
 			settings->RdpVersion = cnv.c;
+			break;
+
+		case FreeRDP_RdstlsEnabledModes:
+			settings->RdstlsEnabledModes = cnv.c;
 			break;
 
 		case FreeRDP_ReceivedCapabilitiesSize:
@@ -2572,15 +2634,21 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case FreeRDP_MonitorLocalShiftX:
 			settings->MonitorLocalShiftX = (int32_t)cnv.c;
 			break;
 
-		// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_POP
+			// API Compatibility section, remove with FreeRDP 4.x
+			WINPR_PRAGMA_DIAG_PUSH
+			WINPR_PRAGMA_DIAG("-Wswitch")
 		case FreeRDP_MonitorLocalShiftY:
 			settings->MonitorLocalShiftY = (int32_t)cnv.c;
 			break;
 
+			WINPR_PRAGMA_DIAG_POP
 #endif
 		default:
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
@@ -2759,6 +2827,9 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 		case FreeRDP_AadAuthHelper:
 			return settings->AadAuthHelper;
 
+		case FreeRDP_AadAuthUserAgent:
+			return settings->AadAuthUserAgent;
+
 		case FreeRDP_AadServerHostname:
 			return settings->AadServerHostname;
 
@@ -2950,6 +3021,9 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
+
+		case FreeRDP_LicenseStorePath:
+			return settings->LicenseStorePath;
 
 		case FreeRDP_NtlmSamFile:
 			return settings->NtlmSamFile;
@@ -3103,6 +3177,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 		case FreeRDP_AadAuthHelper:
 			return settings->AadAuthHelper;
 
+		case FreeRDP_AadAuthUserAgent:
+			return settings->AadAuthUserAgent;
+
 		case FreeRDP_AadServerHostname:
 			return settings->AadServerHostname;
 
@@ -3294,6 +3371,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
+
+		case FreeRDP_LicenseStorePath:
+			return settings->LicenseStorePath;
 
 		case FreeRDP_NtlmSamFile:
 			return settings->NtlmSamFile;
@@ -3458,6 +3538,9 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 	{
 		case FreeRDP_AadAuthHelper:
 			return update_string_(&settings->AadAuthHelper, cnv.c, len);
+
+		case FreeRDP_AadAuthUserAgent:
+			return update_string_(&settings->AadAuthUserAgent, cnv.c, len);
 
 		case FreeRDP_AadServerHostname:
 			return update_string_(&settings->AadServerHostname, cnv.c, len);
@@ -3651,6 +3734,9 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 		case FreeRDP_KeyboardRemappingList:
 			return update_string_(&settings->KeyboardRemappingList, cnv.c, len);
 
+		case FreeRDP_LicenseStorePath:
+			return update_string_(&settings->LicenseStorePath, cnv.c, len);
+
 		case FreeRDP_NtlmSamFile:
 			return update_string_(&settings->NtlmSamFile, cnv.c, len);
 
@@ -3828,6 +3914,9 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 	{
 		case FreeRDP_AadAuthHelper:
 			return update_string_copy_(&settings->AadAuthHelper, cnv.cc, len, cleanup);
+
+		case FreeRDP_AadAuthUserAgent:
+			return update_string_copy_(&settings->AadAuthUserAgent, cnv.cc, len, cleanup);
 
 		case FreeRDP_AadServerHostname:
 			return update_string_copy_(&settings->AadServerHostname, cnv.cc, len, cleanup);
@@ -4026,6 +4115,9 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 		case FreeRDP_KeyboardRemappingList:
 			return update_string_copy_(&settings->KeyboardRemappingList, cnv.cc, len, cleanup);
 
+		case FreeRDP_LicenseStorePath:
+			return update_string_copy_(&settings->LicenseStorePath, cnv.cc, len, cleanup);
+
 		case FreeRDP_NtlmSamFile:
 			return update_string_copy_(&settings->NtlmSamFile, cnv.cc, len, cleanup);
 
@@ -4213,6 +4305,9 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, FreeRDP_Setti
 		case FreeRDP_MonitorIds:
 			return (void*)settings->MonitorIds;
 
+		case FreeRDP_MonitorScales:
+			return (void*)settings->MonitorScales;
+
 		case FreeRDP_OrderSupport:
 			return (void*)settings->OrderSupport;
 
@@ -4339,6 +4434,10 @@ BOOL freerdp_settings_set_pointer(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_MonitorIds:
 			settings->MonitorIds = (UINT32*)cnv.v;
+			break;
+
+		case FreeRDP_MonitorScales:
+			settings->MonitorScales = (rdpMonitorScale*)cnv.v;
 			break;
 
 		case FreeRDP_OrderSupport:

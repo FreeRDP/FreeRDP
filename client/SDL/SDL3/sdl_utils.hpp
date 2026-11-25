@@ -46,7 +46,14 @@ enum
 	SDL_EVENT_USER_POINTER_POSITION,
 	SDL_EVENT_USER_POINTER_SET,
 	SDL_EVENT_USER_RAIL_MOVE,
+	SDL_EVENT_USER_OVERLAY,
 	SDL_EVENT_USER_QUIT,
+	/* a mapped renderer (rdpContext::bitmapRenderService) got a frame. Before the dialogs:
+	 * sdl_run() only takes the events up to SDL_EVENT_USER_RETRY_DIALOG, the *_RESULT ones are
+	 * for the dialogs' wait loops */
+	SDL_EVENT_USER_RENDERER,
+	/* RemoteApp windows' info (rdpContext::windowInfoService) to refresh */
+	SDL_EVENT_USER_WINDOW_INFO,
 	SDL_EVENT_USER_CERT_DIALOG,
 	SDL_EVENT_USER_SHOW_DIALOG,
 	SDL_EVENT_USER_AUTH_DIALOG,
@@ -73,6 +80,9 @@ typedef struct
 [[nodiscard]] bool sdl_push_user_event(Uint32 type, ...);
 
 [[nodiscard]] bool sdl_push_quit();
+
+/* Push SDL_EVENT_USER_UPDATE once after `ms`, so the main loop re-checks a deadline. */
+[[nodiscard]] bool sdl_push_update_after(Uint32 ms);
 
 [[nodiscard]] const char* sdl_error_string(Sint32 res);
 
@@ -107,8 +117,16 @@ namespace sdl::utils
 	[[nodiscard]] bool isWaylandDriver();
 	/* True on the X11 backend. */
 	[[nodiscard]] bool isX11Driver();
+	[[nodiscard]] bool isWindowsDriver();
 
 	[[nodiscard]] std::string windowTitle(const rdpSettings* settings);
+
+	/* A key press, a mouse move or click, a wheel turn or a focus change is sent to the
+	 * server as it happens. When the connection is lost (a dropped network, a reconnect)
+	 * the session is no longer active and the send fails: the event is lost, the connection
+	 * reports its own state and the reconnect recovers, so handling the event succeeds.
+	 * A send that fails while the session is active is still a failure. */
+	[[nodiscard]] bool inputSent(rdpContext* context, wLog* log, BOOL sent, const char* what);
 
 } // namespace sdl::utils
 

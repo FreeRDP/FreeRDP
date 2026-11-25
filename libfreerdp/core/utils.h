@@ -23,6 +23,9 @@
 
 #include <winpr/winpr.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/helpers.h>
+
+#include "../crypto/tls.h"
 
 /* HTTP tunnel redir flags. */
 #define HTTP_TUNNEL_REDIR_ENABLE_ALL 0x80000000
@@ -78,6 +81,7 @@ WINPR_ATTR_NODISCARD FREERDP_LOCAL char* utils_redir_flags_to_string(UINT32 flag
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL utils_reload_channels(rdpContext* context);
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 /** @brief generate a registry key string of format 'someting\\%s\\foo'
  *
  *  @param fmt A format string that must contain a single '%s' being replaced by the
@@ -89,6 +93,7 @@ WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL utils_reload_channels(rdpContext* contex
 WINPR_ATTR_MALLOC(free, 1)
 FREERDP_LOCAL
 char* freerdp_getApplicatonDetailsRegKey(WINPR_FORMAT_ARG const char* fmt);
+#endif
 
 /** @brief generate a 'vendor/product' string with desired separator
  *
@@ -112,10 +117,8 @@ FREERDP_LOCAL
 BOOL freerdp_areApplicationDetailsCustomized(void);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL const char* guid2str(const GUID* guid, char* buffer, size_t len);
-
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL utils_is_valid_ip(const char* ipAddress);
+FREERDP_LOCAL BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA,
+                                            const char* ipAddressB, size_t lenB);
 
 /** @brief sets a file umask so newly created files are only user read/writeable
  *
@@ -123,5 +126,10 @@ FREERDP_LOCAL BOOL utils_is_valid_ip(const char* ipAddress);
  */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL utils_set_umask(void);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL utils_tls_connect(rdpContext* context, rdpTls* tls, wLog* log,
+                                     const char* hostname, UINT16 port, BOOL layerConnect,
+                                     UINT32 timeout);
 
 #endif /* FREERDP_LIB_CORE_UTILS_H */

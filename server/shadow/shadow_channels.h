@@ -28,6 +28,7 @@
 #include "shadow_remdesk.h"
 #include "shadow_rdpsnd.h"
 #include "shadow_audin.h"
+#include "shadow_disp.h"
 #include "shadow_rdpgfx.h"
 
 #ifdef __cplusplus

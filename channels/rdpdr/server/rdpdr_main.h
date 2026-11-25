@@ -42,10 +42,14 @@ struct S_RDPDR_IRP
 	UINT32 DeviceId;             /**< Target device identifier */
 	UINT32 FileId;               /**< File handle identifier */
 	UINT32 IoControlCode;        /**< I/O control code */
-	char PathName[256];          /**< File path name */
-	char ExtraBuffer[256];       /**< Data buffer */
+	char* PathName;              /**< File path name */
+	char* ExtraBuffer;           /**< Data buffer */
 	void* CallbackData;          /**< User callback data */
 	RDPDR_IRP_Callback Callback; /**< Completion callback function */
+	BOOL ReplaceIfExists;        /**< Rename: replace an existing target @since version 3.33.0 */
+	UINT32 InfoClass;            /**< Set information: FsInformationClass @since version 3.33.0 */
+	UINT32 InfoLength;   /**< Set information: bytes used in InfoBuffer @since version 3.33.0 */
+	BYTE InfoBuffer[64]; /**< Set information: the information to set @since version 3.33.0 */
 };
 
 #endif /* FREERDP_CHANNEL_RDPDR_SERVER_MAIN_H */

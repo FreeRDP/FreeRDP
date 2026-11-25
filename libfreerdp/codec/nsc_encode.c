@@ -121,6 +121,17 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
 	const UINT16 rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	const BYTE ccl = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel);
 
+	switch (context->format)
+	{
+		case PIXEL_FORMAT_A4:
+		case PIXEL_FORMAT_RGB8:
+			if (!context->palette)
+				return FALSE;
+			break;
+		default:
+			break;
+	}
+
 	for (; y < context->height; y++)
 	{
 		src = data + (context->height - 1 - y) * scanline;
@@ -378,6 +389,16 @@ static UINT32 nsc_rle_encode(const BYTE* WINPR_RESTRICT in, BYTE* WINPR_RESTRICT
 	return planeSize;
 }
 
+static BOOL nsc_plane_is_opaque(const BYTE* WINPR_RESTRICT plane, UINT32 size)
+{
+	for (UINT32 x = 0; x < size; x++)
+	{
+		if (plane[x] != 0xFF)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static void nsc_rle_compress_data(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 	UINT32 planeSize = 0;
@@ -387,7 +408,9 @@ static void nsc_rle_compress_data(NSC_CONTEXT* WINPR_RESTRICT context)
 	{
 		originalSize = context->OrgByteCount[i];
 
-		if (originalSize == 0)
+		/* an empty alpha plane is decoded as fully opaque */
+		if ((originalSize == 0) ||
+		    ((i == 3) && nsc_plane_is_opaque(context->priv->PlaneBuffers[i], originalSize)))
 		{
 			planeSize = 0;
 		}

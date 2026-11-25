@@ -1,5 +1,9 @@
 #include <winpr/file.h>
 #include <winpr/string.h>
+#include <winpr/print.h>
+
+#include <freerdp/crypto/certificate.h>
+
 #include "../x509_utils.h"
 
 typedef char* (*get_field_pr)(const X509*);
@@ -218,6 +222,243 @@ fail:
 	return success;
 }
 
+/*
+for alg in ed25519 ed448 ML-DSA-87; do
+  openssl req -x509 -newkey $alg -keyout /dev/null -days 3650 -nodes -subj "/CN=Test" \
+    -out "$(echo $alg | tr 'A-Z-' 'a-z_')_cert.pem"
+done
+
+Signature algorithms without a hash: RFC 5929 leaves tls-server-end-point undefined for them, the
+hash X509_digest_sig() picks is used. NULL: no such hash, the caller uses the signature's own hash
+(or none). Ed448 (SHAKE256) has none: X509_digest_sig() needs an output length for it.
+*/
+typedef struct
+{
+	const char* filename;
+	const char* hash;
+	size_t len;
+	const char* data;
+} hashless_test_t;
+
+static const hashless_test_t hashless_tests[] = {
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L) && !defined(LIBRESSL_VERSION_NUMBER)
+	{ "ed25519_cert.pem", "sha512", 64,
+	  "C90BB22E50EB78613F5653A90F62DEF03E08BCFDC125748980073D0ECEACE02AE31EAA9EA13A199BAAB11B1241DE"
+	  "9FEDECEE70C6B1A26D661B27FAF70DD8687F" },
+	{ "ed448_cert.pem", "SHAKE256", 32,
+	  "C72FF0B946C03583BAB0827497EE9601F8E45551A9C2E6E20C2AC95C31688298" },
+#if OPENSSL_VERSION_NUMBER >= 0x30500000L
+	{ "ml_dsa_87_cert.pem", "sha256", 32,
+	  "8862AE0B056198D99A0FBEC3596B59683E79EB3863058BD57896AAEBBD761931" },
+#endif
+#endif
+	{ "rsa_pkcs1_sha256_cert.pem", nullptr, 0, nullptr },
+	{ "ecdsa_sha384_cert.pem", nullptr, 0, nullptr },
+	{ "rsa_pss_sha256_mgf1_sha384_cert.pem", nullptr, 0, nullptr },
+};
+
+static int TestHashlessSignatureHash(const hashless_test_t* test)
+{
+	int rc = -1;
+	size_t length = 0;
+	BYTE* hash = nullptr;
+	BYTE* expected = nullptr;
+	size_t expected_length = 0;
+	char* path = certificate_path(test->filename);
+	X509* certificate = path ? x509_utils_from_pem(path, strlen(path), TRUE) : nullptr;
+
+	if (!certificate)
+	{
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__,
+		       path ? path : "(null)");
+		goto fail;
+	}
+
+	hash = x509_utils_get_hashless_signature_hash(certificate, &length);
+	if (test->len != length)
+	{
+		printf("%s: failure: \"%s\" has a return length %" PRIuz ", but expected %" PRIuz "\n",
+		       __func__, test->filename, length, test->len);
+		goto fail;
+	}
+
+	if (!test->hash)
+	{
+		if (hash)
+		{
+			printf("%s: failure: \"%s\" has a hash in its signature algorithm\n", __func__,
+			       test->filename);
+			goto fail;
+		}
+		rc = 0;
+		goto fail;
+	}
+	else
+	{
+		char* cmp = winpr_BinToHexString(hash, length, FALSE);
+		if (!cmp)
+		{
+			printf("%s: failure: \"%s\" has a hash of type %s but could not convert data to HEX\n",
+			       __func__, test->filename, test->hash);
+			goto fail;
+		}
+		const int c = memcmp(cmp, test->data, test->len);
+		free(cmp);
+		if (c != 0)
+			goto fail;
+	}
+
+	expected = x509_utils_get_hash(certificate, test->hash, &expected_length);
+	winpr_HexDump("testtest", WLOG_INFO, expected, expected_length);
+	if (!hash || !expected || (length != expected_length) || (memcmp(hash, expected, length) != 0))
+	{
+		printf("%s: failure: \"%s\" is not hashed with %s\n", __func__, test->filename, test->hash);
+		goto fail;
+	}
+	rc = 0;
+fail:
+	free(expected);
+	free(hash);
+	X509_free(certificate);
+	free(path);
+	return rc;
+}
+
+/* The public key CredSSP binds is the certificate's SubjectPublicKey, for any key type */
+static int TestPublicKey(const char* filename)
+{
+	int rc = -1;
+	BYTE* key = nullptr;
+	DWORD key_length = 0;
+	const unsigned char* spk = nullptr;
+	int spk_length = 0;
+	char* path = certificate_path(filename);
+	X509* x509 = path ? x509_utils_from_pem(path, strlen(path), TRUE) : nullptr;
+	rdpCertificate* certificate = path ? freerdp_certificate_new_from_file(path) : nullptr;
+
+	if (!x509 || !certificate ||
+	    (X509_PUBKEY_get0_param(nullptr, &spk, &spk_length, nullptr, X509_get_X509_PUBKEY(x509)) !=
+	     1))
+	{
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__,
+		       path ? path : "(null)");
+		goto fail;
+	}
+
+	if (!freerdp_certificate_get_public_key(certificate, &key, &key_length) ||
+	    (key_length != (DWORD)spk_length) || (memcmp(key, spk, key_length) != 0))
+	{
+		printf("%s: failure: \"%s\" public key is not its SubjectPublicKey\n", __func__, filename);
+		goto fail;
+	}
+	rc = 0;
+fail:
+	free(key);
+	freerdp_certificate_free(certificate);
+	X509_free(x509);
+	free(path);
+	return rc;
+}
+
+static const char* public_key_tests[] = {
+	"rsa_pkcs1_sha256_cert.pem",
+	"ecdsa_sha256_cert.pem",
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L) && !defined(LIBRESSL_VERSION_NUMBER)
+	"ed25519_cert.pem",
+#if OPENSSL_VERSION_NUMBER >= 0x30500000L
+	"ml_dsa_87_cert.pem",
+#endif
+#endif
+};
+
+/*
+SAN='DNS:*.wildcard.example.com,DNS:*.com,DNS:*..com,DNS:*.com.,DNS:host.example.com'
+openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes \
+  -subj "/CN=*.wildcard.example.com" -addext "subjectAltName=$SAN" \
+  -out Test_x509_wildcard_cert.pem
+*/
+static int TestWildcardNames(void)
+{
+	int rc = -1;
+	size_t count = 0;
+	size_t* lengths = nullptr;
+	char** names = nullptr;
+	char* common_name = nullptr;
+	char* path = certificate_path("Test_x509_wildcard_cert.pem");
+	X509* certificate = path ? x509_utils_from_pem(path, strlen(path), TRUE) : nullptr;
+
+	if (!certificate)
+	{
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__,
+		       path ? path : "(null)");
+		goto fail;
+	}
+
+	common_name = x509_utils_get_common_name(certificate, nullptr);
+	if (!common_name || (strcmp(common_name, "*.wildcard.example.com") != 0))
+	{
+		printf("%s: failure: wildcard common name not returned: \"%s\"\n", __func__,
+		       common_name ? common_name : "(null)");
+		goto fail;
+	}
+
+	names = x509_utils_get_dns_names(certificate, &count, &lengths);
+	if (!names || (count != 2) || (strcmp(names[0], "*.wildcard.example.com") != 0) ||
+	    (strcmp(names[1], "host.example.com") != 0))
+	{
+		printf("%s: failure: expected only the valid wildcard and host names, got %" PRIuz "\n",
+		       __func__, count);
+		goto fail;
+	}
+
+	rc = 0;
+fail:
+	x509_utils_dns_names_free(count, lengths, names);
+	free(common_name);
+	X509_free(certificate);
+	free(path);
+	return rc;
+}
+
+/*
+SAN='IP:192.0.2.1,IP:2001:db8::1'
+openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes \
+  -subj "/CN=Test" -addext "subjectAltName=$SAN" \
+  -out Test_x509_ip_san_cert.pem
+*/
+static int TestIPNames(void)
+{
+	int rc = -1;
+	size_t count = 0;
+	size_t* lengths = nullptr;
+	char** names = nullptr;
+	char* path = certificate_path("Test_x509_ip_san_cert.pem");
+	X509* certificate = path ? x509_utils_from_pem(path, strlen(path), TRUE) : nullptr;
+
+	if (!certificate)
+	{
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__,
+		       path ? path : "(null)");
+		goto fail;
+	}
+
+	names = x509_utils_get_ip_names(certificate, &count, &lengths);
+	if (!names || (count != 2) || (strcmp(names[0], "192.0.2.1") != 0) ||
+	    (strcmp(names[1], "2001:db8::1") != 0) || (lengths[0] != strlen(names[0])) ||
+	    (lengths[1] != strlen(names[1])))
+	{
+		printf("%s: failure: expected the IPv4 and IPv6 SANs, got %" PRIuz "\n", __func__, count);
+		goto fail;
+	}
+
+	rc = 0;
+fail:
+	x509_utils_ip_names_free(count, lengths, names);
+	X509_free(certificate);
+	free(path);
+	return rc;
+}
+
 int Test_x509_utils(int argc, char* argv[])
 {
 	char* cert_path = certificate_path("Test_x509_cert_info.pem");
@@ -230,9 +471,31 @@ int Test_x509_utils(int argc, char* argv[])
 	if (ret != 0)
 		return ret;
 
+	ret = TestWildcardNames();
+	if (ret != 0)
+		return ret;
+
+	ret = TestIPNames();
+	if (ret != 0)
+		return ret;
+
 	for (size_t i = 0; i < ARRAYSIZE(signature_alg_tests); i++)
 	{
 		ret = TestSignatureAlgorithm(&signature_alg_tests[i]);
+		if (ret != 0)
+			return ret;
+	}
+
+	for (size_t i = 0; i < ARRAYSIZE(hashless_tests); i++)
+	{
+		ret = TestHashlessSignatureHash(&hashless_tests[i]);
+		if (ret != 0)
+			return ret;
+	}
+
+	for (size_t i = 0; i < ARRAYSIZE(public_key_tests); i++)
+	{
+		ret = TestPublicKey(public_key_tests[i]);
 		if (ret != 0)
 			return ret;
 	}

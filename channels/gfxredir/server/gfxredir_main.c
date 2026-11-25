@@ -125,20 +125,23 @@ static UINT gfxredir_recv_present_buffer_ack_pdu(wStream* s, GfxRedirServerConte
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT gfxredir_server_receive_pdu(GfxRedirServerContext* context, wStream* s)
+static UINT gfxredir_server_receive_pdu(GfxRedirServerContext* context, wStream* data)
 {
 	UINT error = CHANNEL_RC_OK;
 	GFXREDIR_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
-	const size_t beg = Stream_GetPosition(s);
-
-	if ((error = gfxredir_read_header(s, &header)))
+	size_t packetLen = 0;
+	if ((error = gfxredir_read_header(data, &header, &packetLen)))
 	{
 		WLog_ERR(TAG, "gfxredir_read_header failed with error %" PRIu32 "!", error);
 		return error;
 	}
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_ConstPointer(data), packetLen);
+	Stream_Seek(data, packetLen);
 
 	switch (header.cmdId)
 	{
@@ -175,12 +178,10 @@ static UINT gfxredir_server_receive_pdu(GfxRedirServerContext* context, wStream*
 
 	const size_t end = Stream_GetPosition(s);
 
-	if (end != (beg + header.length))
+	if (end != packetLen)
 	{
 		WLog_ERR(TAG, "Unexpected GFXREDIR pdu end: Actual: %" PRIuz ", Expected: %" PRIuz "", end,
-		         (beg + header.length));
-		if (!Stream_SetPosition(s, (beg + header.length)))
-			return ERROR_INVALID_DATA;
+		         packetLen);
 	}
 
 	return error;

@@ -368,19 +368,12 @@
 
 static int VKFromHIDUsage(UIKeyboardHIDUsage usage)
 {
-	const CFIndex index = (usage - UIKeyboardHIDUsageKeyboardA);
-	if (index < 0)
-		return 0;
-	if (index > INT32_MAX)
-		return 0;
-
-	const int cidx = WINPR_ASSERTING_INT_CAST(int, index);
 	if (usage >= UIKeyboardHIDUsageKeyboardA && usage <= UIKeyboardHIDUsageKeyboardZ)
-		return VK_KEY_A + cidx;
+		return VK_KEY_A + WINPR_ASSERTING_INT_CAST(int, usage - UIKeyboardHIDUsageKeyboardA);
 	if (usage >= UIKeyboardHIDUsageKeyboard1 && usage <= UIKeyboardHIDUsageKeyboard9)
-		return VK_KEY_1 + cidx;
+		return VK_KEY_1 + WINPR_ASSERTING_INT_CAST(int, usage - UIKeyboardHIDUsageKeyboard1);
 	if (usage >= UIKeyboardHIDUsageKeyboardF1 && usage <= UIKeyboardHIDUsageKeyboardF12)
-		return VK_F1 + cidx;
+		return VK_F1 + WINPR_ASSERTING_INT_CAST(int, usage - UIKeyboardHIDUsageKeyboardF1);
 
 	switch (usage)
 	{

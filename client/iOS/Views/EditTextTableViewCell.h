@@ -12,11 +12,13 @@
 
 @interface EditTextTableViewCell : UITableViewCell
 {
-	IBOutlet UILabel *_label;
-	IBOutlet UITextField *_textfield;
+	UILabel *_label;
+	UITextField *_textfield;
+	BOOL _enabled;
 }
 
-@property(retain, nonatomic) UILabel *label;
-@property(retain, nonatomic) UITextField *textfield;
+@property(readonly, nonatomic) UILabel *label;
+@property(readonly, nonatomic) UITextField *textfield;
+@property(assign, nonatomic) BOOL enabled;
 
 @end

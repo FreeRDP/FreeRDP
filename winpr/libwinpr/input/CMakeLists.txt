@@ -17,6 +17,6 @@
 
 winpr_module_add(virtualkey.c scancode.c keycode.c)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

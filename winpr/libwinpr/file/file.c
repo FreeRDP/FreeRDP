@@ -57,9 +57,23 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
-static WINPR_FILE* pStdHandleFile = nullptr;
+/* one handle per standard stream (stdin, stdout, stderr), created on first use */
+static WINPR_FILE* pStdHandleFiles[3] = WINPR_C_ARRAY_INIT;
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG("-Wglobal-constructors")
 static void GetStdHandle_Uninit(void) __attribute__((destructor));
+WINPR_PRAGMA_DIAG_POP
+
+static BOOL FileIsStdHandle(HANDLE handle)
+{
+	for (size_t x = 0; x < ARRAYSIZE(pStdHandleFiles); x++)
+	{
+		if (handle == pStdHandleFiles[x])
+			return TRUE;
+	}
+	return FALSE;
+}
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -85,7 +99,7 @@ static BOOL FileCloseHandleInt(HANDLE handle, BOOL force)
 
 	if (!force)
 	{
-		if (handle == pStdHandleFile)
+		if (FileIsStdHandle(handle))
 		{
 			return FALSE;
 		}
@@ -129,7 +143,7 @@ static BOOL log_error_(const char* name, const WINPR_FILE* pFile, const char* fi
 
 	if (WLog_IsLevelActive(log, level))
 	{
-		WLog_PrintTextMessage(log, level, line, file, fkt, "%s %s failed with %s [0x08%x]", name,
+		WLog_PrintTextMessage(log, level, line, file, fkt, "%s %s failed with %s [0x%08x]", name,
 		                      pFile->lpFileName, winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
 		                      WINPR_CXX_COMPAT_CAST(unsigned, errno));
 	}
@@ -640,20 +654,19 @@ static struct timeval filetimeToTimeval(const FILETIME* ftime)
 	return tv;
 }
 
-static struct timeval statToTimeval(const struct stat* sval)
+static struct timeval statToTimeval(const struct stat* sval, BOOL modification)
 {
 	WINPR_ASSERT(sval);
 	struct timeval tv = WINPR_C_ARRAY_INIT;
 #if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-	tv.tv_sec = sval->st_atime;
 #ifdef _POSIX_SOURCE
-	TIMESPEC_TO_TIMEVAL(&tv, &sval->st_atim);
+	TIMESPEC_TO_TIMEVAL(&tv, modification ? &sval->st_mtim : &sval->st_atim);
 #else
-	TIMESPEC_TO_TIMEVAL(&tv, &sval->st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tv, modification ? &sval->st_mtimespec : &sval->st_atimespec);
 #endif
 #elif defined(ANDROID)
-	tv.tv_sec = sval->st_atime;
-	tv.tv_usec = sval->st_atimensec / 1000UL;
+	tv.tv_sec = modification ? sval->st_mtime : sval->st_atime;
+	tv.tv_usec = (modification ? sval->st_mtimensec : sval->st_atimensec) / 1000UL;
 #endif
 	return tv;
 }
@@ -678,7 +691,8 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 		return FALSE;
 	}
 
-	struct timeval timevals[2] = { statToTimeval(&buf), statToTimeval(&buf) };
+	/* Keep the times that are not set */
+	struct timeval timevals[2] = { statToTimeval(&buf, FALSE), statToTimeval(&buf, TRUE) };
 	if (lpLastAccessTime)
 		timevals[0] = filetimeToTimeval(lpLastAccessTime);
 
@@ -1066,35 +1080,44 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 
 void GetStdHandle_Uninit(void)
 {
-	FileCloseHandleInt(pStdHandleFile, TRUE);
-	free(pStdHandleFile);
+	for (size_t x = 0; x < ARRAYSIZE(pStdHandleFiles); x++)
+	{
+		(void)FileCloseHandleInt(pStdHandleFiles[x], TRUE);
+		free(pStdHandleFiles[x]);
+		pStdHandleFiles[x] = nullptr;
+	}
 }
 
 HANDLE GetStdHandle(DWORD nStdHandle)
 {
+	size_t idx = 0;
 	FILE* fp = nullptr;
 
 	switch (nStdHandle)
 	{
 		case STD_INPUT_HANDLE:
+			idx = 0;
 			fp = stdin;
 			break;
 		case STD_OUTPUT_HANDLE:
+			idx = 1;
 			fp = stdout;
 			break;
 		case STD_ERROR_HANDLE:
+			idx = 2;
 			fp = stderr;
 			break;
 		default:
 			return INVALID_HANDLE_VALUE;
 	}
-	if (!pStdHandleFile)
-		pStdHandleFile = FileHandle_New(fp);
 
-	if (!pStdHandleFile)
+	if (!pStdHandleFiles[idx])
+		pStdHandleFiles[idx] = FileHandle_New(fp);
+
+	if (!pStdHandleFiles[idx])
 		return INVALID_HANDLE_VALUE;
 
-	return (HANDLE)pStdHandleFile;
+	return (HANDLE)pStdHandleFiles[idx];
 }
 
 BOOL SetStdHandle(WINPR_ATTR_UNUSED DWORD nStdHandle, WINPR_ATTR_UNUSED HANDLE hHandle)

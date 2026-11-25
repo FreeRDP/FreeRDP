@@ -102,6 +102,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define NTLM_SSP_NAME _T("NTLM")
 #define KERBEROS_SSP_NAME _T("Kerberos")
 #define NEGO_SSP_NAME _T("Negotiate")
+#define TSSSP_SSP_NAME _T("TSSSP")
 
 #define SECPKG_ID_NONE 0xFFFF
 
@@ -913,35 +914,41 @@ typedef SECURITY_STATUS (*psSspiNtlmHashCallback)(void* client,
 
 #if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
-WINPR_DEPRECATED_VAR(
-    "[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2", typedef struct {
-	    char* samFile; /**< File name (with path) of a SAM file */
-	    WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
-	        hashCallback;      /**< Callback to be called to generate a NTLM hash. */
-	    void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
-    } SEC_WINPR_NTLM_SETTINGS);
+struct SEC_WINPR_NTLM_SETTINGS
+{
+	char* samFile; /**< File name (with path) of a SAM file */
+	WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
+	    hashCallback;      /**< Callback to be called to generate a NTLM hash. */
+	void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
+};
+WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2",
+                     typedef struct SEC_WINPR_NTLM_SETTINGS SEC_WINPR_NTLM_SETTINGS);
 
-WINPR_DEPRECATED_VAR(
-    "[since 3.31.0] use SEC_WINPR_KERBEROS_SETTINGS_V2", typedef struct {
-	    char* kdcUrl;
-	    char* keytab;
-	    char* cache;
-	    char* armorCache;
-	    char* pkinitX509Anchors;
-	    char* pkinitX509Identity;
-	    BOOL withPac;
-	    INT32 startTime;
-	    INT32 renewLifeTime;
-	    INT32 lifeTime;
-	    BYTE certSha1[20];
-    } SEC_WINPR_KERBEROS_SETTINGS);
+struct SEC_WINPR_KERBEROS_SETTINGS
+{
+	char* kdcUrl;
+	char* keytab;
+	char* cache;
+	char* armorCache;
+	char* pkinitX509Anchors;
+	char* pkinitX509Identity;
+	BOOL withPac;
+	INT32 startTime;
+	INT32 renewLifeTime;
+	INT32 lifeTime;
+	BYTE certSha1[20];
+};
+WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINPR_KERBEROS_SETTINGS_V2",
+                     typedef struct SEC_WINPR_KERBEROS_SETTINGS SEC_WINPR_KERBEROS_SETTINGS);
 
-WINPR_DEPRECATED_VAR(
-    "[since 3.31.0] use SEC_WINNT_AUTH_IDENTITY_WINPR_V2", typedef struct {
-	    SEC_WINNT_AUTH_IDENTITY_EXW identity;
-	    SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
-	    SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
-    } SEC_WINNT_AUTH_IDENTITY_WINPR);
+struct SEC_WINNT_AUTH_IDENTITY_WINPR
+{
+	SEC_WINNT_AUTH_IDENTITY_EXW identity;
+	struct SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
+	struct SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+};
+WINPR_DEPRECATED_VAR("[since 3.31.0] use SEC_WINNT_AUTH_IDENTITY_WINPR_V2",
+                     typedef struct SEC_WINNT_AUTH_IDENTITY_WINPR SEC_WINNT_AUTH_IDENTITY_WINPR);
 
 #endif
 
@@ -1500,6 +1507,12 @@ extern "C"
 	};
 
 #define SECPKG_CRED_ATTR_TICKET_LOGON 1200
+
+/* WinPR-private context attribute: the per-context handle value that [MS-RDPEAR]
+ * servicing places in the TSRemoteGuardPacket TsPkgContext field. On Windows the
+ * TSSSP forwarder returns the native context's dwUpper; the POSIX proxy returns
+ * the lsa4posix context id. */
+#define SECPKG_ATTR_WINPR_TSPKG_CONTEXT 1201
 
 	typedef struct
 	{

@@ -66,9 +66,10 @@
  * The call_id MUST be set to 0 by senders and MUST be 0 on receipt.
  *
  */
-
+WINPR_ATTR_NODISCARD
 static int rts_destination_command_read(rdpRpc* rpc, wStream* buffer, UINT32* Destination);
 
+WINPR_ATTR_NODISCARD
 static const char* rts_command_to_string(UINT32 cmd, char* buffer, size_t len)
 {
 	const char* str = nullptr;
@@ -108,6 +109,7 @@ static const char* rts_command_to_string(UINT32 cmd, char* buffer, size_t len)
 	return buffer;
 }
 
+WINPR_ATTR_NODISCARD
 static const char* rts_pdu_ptype_to_string(UINT32 ptype)
 {
 	switch (ptype)
@@ -159,6 +161,7 @@ static const char* rts_pdu_ptype_to_string(UINT32 ptype)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 {
 	rpcconn_rts_hdr_t header = WINPR_C_ARRAY_INIT;
@@ -176,6 +179,7 @@ static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 	return header;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 {
 	size_t pos = 0;
@@ -189,20 +193,7 @@ static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 	return Stream_ConditionalSafeSeek(s, pad, silent);
 }
 
-static char* sdup(const void* src, size_t length)
-{
-	char* dst = nullptr;
-	WINPR_ASSERT(src || (length == 0));
-	if (length == 0)
-		return nullptr;
-
-	dst = calloc(length + 1, sizeof(char));
-	if (!dst)
-		return nullptr;
-	memcpy(dst, src, length);
-	return dst;
-}
-
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_common_pdu_header(wStream* s, const rpcconn_common_hdr_t* header)
 {
 	WINPR_ASSERT(s);
@@ -280,6 +271,7 @@ rts_pdu_status_t rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* he
 	return RTS_PDU_VALID;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* auth,
                                              const rpcconn_common_hdr_t* header, size_t* startPos,
                                              BOOL silent)
@@ -288,7 +280,8 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(header);
 
-	WINPR_ASSERT(header->frag_length > header->auth_length + 8);
+	if (header->frag_length < header->auth_length + 8ull)
+		return FALSE;
 
 	if (startPos)
 		*startPos = Stream_GetPosition(s);
@@ -314,7 +307,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 		const void* ptr = Stream_Pointer(s);
 		if (!Stream_ConditionalSafeSeek(s, header->auth_length, silent))
 			return FALSE;
-		auth->auth_value = (BYTE*)sdup(ptr, header->auth_length);
+		auth->auth_value = (BYTE*)strndup(ptr, header->auth_length);
 		if (auth->auth_value == nullptr)
 			return FALSE;
 	}
@@ -322,6 +315,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
                                    const rpcconn_common_hdr_t* header, BOOL silent)
 {
@@ -334,16 +328,15 @@ static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
 		return FALSE;
 
 	const size_t expected = header->frag_length - header->auth_length - 8;
-	WINPR_ASSERT(pos + auth->auth_pad_length == expected);
 	return pos + auth->auth_pad_length == expected;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* auth,
                                              rpcconn_common_hdr_t* header, BOOL silent)
 {
 	size_t pos = 0;
 	size_t alloc_hint = 0;
-	BYTE** ptr = nullptr;
 
 	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos, silent))
 		return FALSE;
@@ -354,21 +347,18 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 		{
 			rpcconn_fault_hdr_t* hdr = (rpcconn_fault_hdr_t*)header;
 			alloc_hint = hdr->alloc_hint;
-			ptr = &hdr->stub_data;
 		}
 		break;
 		case PTYPE_RESPONSE:
 		{
 			rpcconn_response_hdr_t* hdr = (rpcconn_response_hdr_t*)header;
 			alloc_hint = hdr->alloc_hint;
-			ptr = &hdr->stub_data;
 		}
 		break;
 		case PTYPE_REQUEST:
 		{
 			rpcconn_request_hdr_t* hdr = (rpcconn_request_hdr_t*)header;
 			alloc_hint = hdr->alloc_hint;
-			ptr = &hdr->stub_data;
 		}
 		break;
 		default:
@@ -379,7 +369,6 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 	{
 		const size_t off = header->auth_length + 8 + auth->auth_pad_length + pos;
 		const size_t size = header->frag_length - MIN(header->frag_length, off);
-		const void* src = Stream_Buffer(s) + pos;
 
 		if (off > header->frag_length)
 			WLog_WARN(TAG,
@@ -387,14 +376,6 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 			          ", frag_length %" PRIu16 ", offset %" PRIuz,
 			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), size, header->frag_length,
 			          off);
-
-		*ptr = nullptr;
-		if (size > 0)
-		{
-			*ptr = (BYTE*)sdup(src, size);
-			if (!*ptr)
-				return FALSE;
-		}
 	}
 
 	return TRUE;
@@ -405,8 +386,10 @@ static void rts_free_auth_verifier(auth_verifier_co_t* auth)
 	if (!auth)
 		return;
 	free(auth->auth_value);
+	memset(auth, 0, sizeof(auth_verifier_co_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_auth_verifier(wStream* s, const auth_verifier_co_t* auth,
                                     const rpcconn_common_hdr_t* header)
 {
@@ -452,6 +435,7 @@ static BOOL rts_write_auth_verifier(wStream* s, const auth_verifier_co_t* auth,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_version(wStream* s, p_rt_version_t* version, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -469,9 +453,10 @@ static void rts_free_supported_versions(p_rt_versions_supported_t* versions)
 	if (!versions)
 		return;
 	free(versions->p_protocols);
-	versions->p_protocols = nullptr;
+	memset(versions, 0, sizeof(p_rt_versions_supported_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* versions,
                                         BOOL silent)
 {
@@ -502,6 +487,7 @@ static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* v
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_port_any(wStream* s, port_any_t* port, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -517,7 +503,7 @@ static BOOL rts_read_port_any(wStream* s, port_any_t* port, BOOL silent)
 	const void* ptr = Stream_ConstPointer(s);
 	if (!Stream_ConditionalSafeSeek(s, port->length, silent))
 		return FALSE;
-	port->port_spec = sdup(ptr, port->length);
+	port->port_spec = strndup(ptr, port->length);
 	return port->port_spec != nullptr;
 }
 
@@ -526,8 +512,10 @@ static void rts_free_port_any(port_any_t* port)
 	if (!port)
 		return;
 	free(port->port_spec);
+	memset(port, 0, sizeof(port_any_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_uuid(wStream* s, p_uuid_t* uuid, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -545,6 +533,7 @@ static BOOL rts_read_uuid(wStream* s, p_uuid_t* uuid, BOOL silent)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_uuid(wStream* s, const p_uuid_t* uuid)
 {
 	WINPR_ASSERT(s);
@@ -562,16 +551,17 @@ static BOOL rts_write_uuid(wStream* s, const p_uuid_t* uuid)
 	return TRUE;
 }
 
-static p_syntax_id_t* rts_syntax_id_new(size_t count)
-{
-	return calloc(count, sizeof(p_syntax_id_t));
-}
-
-static void rts_syntax_id_free(p_syntax_id_t* ptr)
+void rts_syntax_id_free(p_syntax_id_t* ptr)
 {
 	free(ptr);
 }
 
+p_syntax_id_t* rts_syntax_id_new(size_t count)
+{
+	return calloc(count, sizeof(p_syntax_id_t));
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_syntax_id(wStream* s, p_syntax_id_t* syntax_id, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -587,6 +577,7 @@ static BOOL rts_read_syntax_id(wStream* s, p_syntax_id_t* syntax_id, BOOL silent
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_syntax_id(wStream* s, const p_syntax_id_t* syntax_id)
 {
 	WINPR_ASSERT(s);
@@ -602,22 +593,25 @@ static BOOL rts_write_syntax_id(wStream* s, const p_syntax_id_t* syntax_id)
 	return TRUE;
 }
 
-static void rts_context_elem_free(p_cont_elem_t* ptr)
+void rts_context_elem_free(p_cont_elem_t* ptr, size_t count)
 {
 	if (!ptr)
 		return;
-	rts_syntax_id_free(ptr->transfer_syntaxes);
+	for (size_t x = 0; x < count; x++)
+	{
+		p_cont_elem_t* cur = &ptr[x];
+		rts_syntax_id_free(cur->transfer_syntaxes);
+	}
 	free(ptr);
 }
 
-WINPR_ATTR_MALLOC(rts_context_elem_free, 1)
-WINPR_ATTR_NODISCARD
-static p_cont_elem_t* rts_context_elem_new(size_t count)
+p_cont_elem_t* rts_context_elem_new(size_t count)
 {
 	p_cont_elem_t* ctx = calloc(count, sizeof(p_cont_elem_t));
 	return ctx;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -635,6 +629,7 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 
 	if (element->n_transfer_syn > 0)
 	{
+		rts_syntax_id_free(element->transfer_syntaxes);
 		element->transfer_syntaxes = rts_syntax_id_new(element->n_transfer_syn);
 		if (!element->transfer_syntaxes)
 			return FALSE;
@@ -649,6 +644,7 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 {
 	WINPR_ASSERT(s);
@@ -672,6 +668,7 @@ static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -679,15 +676,18 @@ static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 
 	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
-	Stream_Read_UINT8(s, list->n_context_elem); /* number of items */
+
+	const UINT8 n_context_elem = Stream_Get_UINT8(s); /* number of items */
 	Stream_Read_UINT8(s, list->reserved);       /* alignment pad, m.b.z. */
 	Stream_Read_UINT16(s, list->reserved2);     /* alignment pad, m.b.z. */
 
-	if (list->n_context_elem > 0)
+	if (n_context_elem > 0)
 	{
-		list->p_cont_elem = rts_context_elem_new(list->n_context_elem);
+		list->p_cont_elem = rts_context_elem_new(n_context_elem);
 		if (!list->p_cont_elem)
 			return FALSE;
+		list->n_context_elem = n_context_elem;
+
 		for (BYTE x = 0; x < list->n_context_elem; x++)
 		{
 			p_cont_elem_t* element = &list->p_cont_elem[x];
@@ -702,9 +702,11 @@ static void rts_free_context_list(p_cont_list_t* list)
 {
 	if (!list)
 		return;
-	rts_context_elem_free(list->p_cont_elem);
+	rts_context_elem_free(list->p_cont_elem, list->n_context_elem);
+	memset(list, 0, sizeof(p_cont_list_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_context_list(wStream* s, const p_cont_list_t* list)
 {
 	WINPR_ASSERT(s);
@@ -725,18 +727,18 @@ static BOOL rts_write_context_list(wStream* s, const p_cont_list_t* list)
 	return TRUE;
 }
 
+static void rts_result_free(p_result_t* results)
+{
+	free(results);
+}
+
+WINPR_ATTR_MALLOC(rts_result_free, 1)
 static p_result_t* rts_result_new(size_t count)
 {
 	return calloc(count, sizeof(p_result_t));
 }
 
-static void rts_result_free(p_result_t* results)
-{
-	if (!results)
-		return;
-	free(results);
-}
-
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_result(wStream* s, p_result_t* result, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -784,6 +786,7 @@ static void rts_free_result(p_result_t* result)
 		return;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -822,6 +825,7 @@ static void rts_free_result_list(p_result_list_t* list)
 		rts_free_result(result);
 	}
 	rts_result_free(list->p_results);
+	memset(list, 0, sizeof(p_result_list_t));
 }
 
 static void rts_free_pdu_alter_context(rpcconn_alter_context_hdr_t* ctx)
@@ -831,8 +835,10 @@ static void rts_free_pdu_alter_context(rpcconn_alter_context_hdr_t* ctx)
 
 	rts_free_context_list(&ctx->p_context_elem);
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_alter_context_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_alter_context(wStream* s, rpcconn_alter_context_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -855,6 +861,7 @@ static BOOL rts_read_pdu_alter_context(wStream* s, rpcconn_alter_context_hdr_t* 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_alter_context_response(wStream* s,
                                                 rpcconn_alter_context_response_hdr_t* ctx,
                                                 BOOL silent)
@@ -893,8 +900,10 @@ static void rts_free_pdu_alter_context_response(rpcconn_alter_context_response_h
 	rts_free_port_any(&ctx->sec_addr);
 	rts_free_result_list(&ctx->p_result_list);
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_alter_context_response_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_bind(wStream* s, rpcconn_bind_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -922,8 +931,10 @@ static void rts_free_pdu_bind(rpcconn_bind_hdr_t* ctx)
 		return;
 	rts_free_context_list(&ctx->p_context_elem);
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_bind_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_bind_ack(wStream* s, rpcconn_bind_ack_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -955,8 +966,10 @@ static void rts_free_pdu_bind_ack(rpcconn_bind_ack_hdr_t* ctx)
 	rts_free_port_any(&ctx->sec_addr);
 	rts_free_result_list(&ctx->p_result_list);
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_bind_ack_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_bind_nak(wStream* s, rpcconn_bind_nak_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -975,8 +988,10 @@ static void rts_free_pdu_bind_nak(rpcconn_bind_nak_hdr_t* ctx)
 		return;
 
 	rts_free_supported_versions(&ctx->versions);
+	memset(ctx, 0, sizeof(rpcconn_bind_nak_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_auth3(wStream* s, rpcconn_rpc_auth_3_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -996,8 +1011,10 @@ static void rts_free_pdu_auth3(rpcconn_rpc_auth_3_hdr_t* ctx)
 	if (!ctx)
 		return;
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_rpc_auth_3_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_fault(wStream* s, rpcconn_fault_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -1020,8 +1037,10 @@ static void rts_free_pdu_fault(rpcconn_fault_hdr_t* ctx)
 	if (!ctx)
 		return;
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_fault_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_cancel_ack(wStream* s, rpcconn_cancel_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -1038,8 +1057,10 @@ static void rts_free_pdu_cancel_ack(rpcconn_cancel_hdr_t* ctx)
 	if (!ctx)
 		return;
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_cancel_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_orphaned(wStream* s, rpcconn_orphaned_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -1056,8 +1077,10 @@ static void rts_free_pdu_orphaned(rpcconn_orphaned_hdr_t* ctx)
 	if (!ctx)
 		return;
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_orphaned_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_request(wStream* s, rpcconn_request_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -1080,8 +1103,10 @@ static void rts_free_pdu_request(rpcconn_request_hdr_t* ctx)
 	if (!ctx)
 		return;
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_request_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_response(wStream* s, rpcconn_response_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -1105,10 +1130,11 @@ static void rts_free_pdu_response(rpcconn_response_hdr_t* ctx)
 {
 	if (!ctx)
 		return;
-	free(ctx->stub_data);
 	rts_free_auth_verifier(&ctx->auth_verifier);
+	memset(ctx, 0, sizeof(rpcconn_response_hdr_t));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_read_pdu_rts(wStream* s, rpcconn_rts_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
@@ -1126,6 +1152,7 @@ static BOOL rts_read_pdu_rts(wStream* s, rpcconn_rts_hdr_t* ctx, BOOL silent)
 static void rts_free_pdu_rts(rpcconn_rts_hdr_t* ctx)
 {
 	WINPR_UNUSED(ctx);
+	memset(ctx, 0, sizeof(rpcconn_rts_hdr_t));
 }
 
 void rts_free_pdu_header(rpcconn_hdr_t* header, BOOL allocated)
@@ -1267,6 +1294,7 @@ BOOL rts_read_pdu_header_ex(wStream* s, rpcconn_hdr_t* header, BOOL silent)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 {
 	WINPR_ASSERT(s);
@@ -1283,6 +1311,7 @@ static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 }
 
 /* [MS-RPCH] 2.2.3.5.1 ReceiveWindowSize */
+WINPR_ATTR_NODISCARD
 static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
                                                  UINT32* ReceiveWindowSize)
 {
@@ -1309,6 +1338,7 @@ static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
 }
 
 /* [MS-RPCH] 2.2.3.5.1 ReceiveWindowSize */
+WINPR_ATTR_NODISCARD
 static BOOL rts_receive_window_size_command_write(wStream* s, UINT32 ReceiveWindowSize)
 {
 	WINPR_ASSERT(s);
@@ -1323,6 +1353,7 @@ static BOOL rts_receive_window_size_command_write(wStream* s, UINT32 ReceiveWind
 }
 
 /* [MS-RPCH] 2.2.3.5.2 FlowControlAck */
+WINPR_ATTR_NODISCARD
 static int rts_flow_control_ack_command_read(rdpRpc* rpc, wStream* buffer, UINT32* BytesReceived,
                                              UINT32* AvailableWindow, BYTE* ChannelCookie)
 {
@@ -1366,6 +1397,7 @@ static int rts_flow_control_ack_command_read(rdpRpc* rpc, wStream* buffer, UINT3
 }
 
 /* [MS-RPCH] 2.2.3.5.2 FlowControlAck */
+WINPR_ATTR_NODISCARD
 static BOOL rts_flow_control_ack_command_write(wStream* s, UINT32 BytesReceived,
                                                UINT32 AvailableWindow, BYTE* ChannelCookie)
 {
@@ -1383,6 +1415,7 @@ static BOOL rts_flow_control_ack_command_write(wStream* s, UINT32 BytesReceived,
 }
 
 /* [MS-RPCH] 2.2.3.5.3 ConnectionTimeout */
+WINPR_ATTR_NODISCARD
 static BOOL rts_connection_timeout_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* buffer,
                                                 UINT32* ConnectionTimeout)
 {
@@ -1409,6 +1442,7 @@ static BOOL rts_connection_timeout_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, w
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_cookie_command_write(wStream* s, const BYTE* Cookie)
 {
 	WINPR_ASSERT(s);
@@ -1422,6 +1456,7 @@ static BOOL rts_cookie_command_write(wStream* s, const BYTE* Cookie)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_channel_lifetime_command_write(wStream* s, UINT32 ChannelLifetime)
 {
 	WINPR_ASSERT(s);
@@ -1434,6 +1469,7 @@ static BOOL rts_channel_lifetime_command_write(wStream* s, UINT32 ChannelLifetim
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_client_keepalive_command_write(wStream* s, UINT32 ClientKeepalive)
 {
 	WINPR_ASSERT(s);
@@ -1453,6 +1489,7 @@ static BOOL rts_client_keepalive_command_write(wStream* s, UINT32 ClientKeepaliv
 }
 
 /* [MS-RPCH] 2.2.3.5.7 Version */
+WINPR_ATTR_NODISCARD
 static BOOL rts_version_command_read(rdpRpc* rpc, wStream* buffer, uint32_t* pversion)
 {
 	WINPR_ASSERT(rpc);
@@ -1484,6 +1521,7 @@ static BOOL rts_version_command_read(rdpRpc* rpc, wStream* buffer, uint32_t* pve
 }
 
 /* [MS-RPCH] 2.2.3.5.7 Version */
+WINPR_ATTR_NODISCARD
 static BOOL rts_version_command_write(wStream* buffer)
 {
 	WINPR_ASSERT(buffer);
@@ -1497,6 +1535,7 @@ static BOOL rts_version_command_write(wStream* buffer)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_empty_command_write(wStream* s)
 {
 	WINPR_ASSERT(s);
@@ -1509,6 +1548,7 @@ static BOOL rts_empty_command_write(wStream* s)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_padding_command_read(wStream* s, size_t* length, BOOL silent)
 {
 	UINT32 ConformanceCount = 0;
@@ -1521,6 +1561,7 @@ static BOOL rts_padding_command_read(wStream* s, size_t* length, BOOL silent)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_client_address_command_read(wStream* s, size_t* length, BOOL silent)
 {
 	UINT32 AddressType = 0;
@@ -1547,6 +1588,7 @@ static BOOL rts_client_address_command_read(wStream* s, size_t* length, BOOL sil
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_association_group_id_command_write(wStream* s, const BYTE* AssociationGroupId)
 {
 	WINPR_ASSERT(s);
@@ -1560,6 +1602,7 @@ static BOOL rts_association_group_id_command_write(wStream* s, const BYTE* Assoc
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_destination_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* buffer,
                                         UINT32* Destination)
 {
@@ -1576,6 +1619,7 @@ static int rts_destination_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* 
 	return 4;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rts_destination_command_write(wStream* s, UINT32 Destination)
 {
 	WINPR_ASSERT(s);
@@ -1591,6 +1635,8 @@ static BOOL rts_destination_command_write(wStream* s, UINT32 Destination)
 
 #define rts_send_buffer(channel, s, frag_length) \
 	rts_send_buffer_int((channel), (s), (frag_length), __FILE__, __LINE__, __func__)
+
+WINPR_ATTR_NODISCARD
 static BOOL rts_send_buffer_int(RpcChannel* channel, wStream* s, size_t frag_length,
                                 const char* file, size_t line, const char* fkt)
 {
@@ -1898,6 +1944,7 @@ fail:
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, wStream* buffer)
 {
 	int rc = 0;
@@ -1922,6 +1969,7 @@ static int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, wStream* buffer)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* buffer)
 {
 	UINT32 Command = 0;
@@ -2029,6 +2077,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
@@ -2145,6 +2194,7 @@ BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length, BOOL sil
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
@@ -2190,6 +2240,7 @@ fail:
 	return (status) ? 1 : -1;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
@@ -2286,6 +2337,7 @@ fail:
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 {
 	int status = 0;
@@ -2320,6 +2372,7 @@ static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, WINPR_ATTR_UNUSED wStream* buffer)
 {
 	int status = 0;
@@ -2355,6 +2408,7 @@ static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, WINPR_ATTR_UNUSED wStream* buffer
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, WINPR_ATTR_UNUSED wStream* buffer)
 {
 	RpcVirtualConnection* connection = nullptr;

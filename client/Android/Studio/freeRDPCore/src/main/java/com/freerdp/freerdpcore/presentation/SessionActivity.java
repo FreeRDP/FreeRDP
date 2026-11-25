@@ -166,7 +166,8 @@ public class SessionActivity extends AppCompatActivity
 
 		getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
 		getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-		getWindow().setNavigationBarContrastEnforced(false);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+			getWindow().setNavigationBarContrastEnforced(false);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 		{
@@ -216,7 +217,7 @@ public class SessionActivity extends AppCompatActivity
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 			lp.layoutInDisplayCutoutMode =
 			    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-		else
+		else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
 			lp.layoutInDisplayCutoutMode =
 			    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 		getWindow().setAttributes(lp);
@@ -329,6 +330,8 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onStart();
 		Log.v(TAG, "Session.onStart");
+		if (session != null)
+			LibFreeRDP.setForeground(session.getInstance(), true);
 	}
 
 	@Override protected void onRestart()
@@ -358,6 +361,8 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onStop();
 		Log.v(TAG, "Session.onStop");
+		if (session != null)
+			LibFreeRDP.setForeground(session.getInstance(), false);
 	}
 
 	@Override protected void onDestroy()
@@ -567,7 +572,16 @@ public class SessionActivity extends AppCompatActivity
 		}
 
 		// RECORD_AUDIO / CAMERA: only if the matching redirect is enabled.
+
 		java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+		{
+			final String permission = Manifest.permission.ACCESS_LOCAL_NETWORK;
+
+			if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
+				needed.add(permission);
+		}
+
 		if (bookmark.getAdvancedSettings().getRedirectMicrophone() &&
 		    checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
 		        PackageManager.PERMISSION_GRANTED)
@@ -773,6 +787,13 @@ public class SessionActivity extends AppCompatActivity
 		 */
 
 		uiHandler.sendEmptyMessage(REFRESH_SESSIONVIEW);
+	}
+
+	@Override public void OnReconnecting()
+	{
+		railManager.onSessionEnd();
+		uiHandler.sendMessage(Message.obtain(null, DISPLAY_TOAST,
+		                                     getResources().getText(R.string.info_reconnecting)));
 	}
 
 	@Override public void OnGraphicsResize(int width, int height, int bpp)

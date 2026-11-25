@@ -62,7 +62,15 @@ extern "C"
 		H264_CONTEXT_OPTION_QP,
 		H264_CONTEXT_OPTION_USAGETYPE, /** @since version 3.6.0 */
 		H264_CONTEXT_OPTION_HW_ACCEL,  /** set to request hw accel, get to check if hw accel is on,
+		                                  Apple VideoToolbox ignores set and reports get when the
+		                                  system supports querying it (otherwise FALSE),
 		                                  @since version 3.11.0 */
+		H264_CONTEXT_OPTION_HEVC,      /** set to decode H.265/HEVC (Annex B) instead of H.264 with
+		                                  avc420_decompress, fails if no subsystem supports it,
+		                                  decoder only */
+		H264_CONTEXT_OPTION_HEVC444,   /** with H264_CONTEXT_OPTION_HEVC: the stream is HEVC 4:4:4
+		                                  (Range Extensions), select a subsystem that can decode it,
+		                                  fails if none can, decoder only */
 	} H264_CONTEXT_OPTION;
 
 	FREERDP_API void free_h264_metablock(RDPGFX_H264_METABLOCK* meta);

@@ -12,13 +12,11 @@
 
 @interface BookmarkTableCell : UITableViewCell
 {
-	IBOutlet UILabel *_title;
-	IBOutlet UILabel *_sub_title;
-	IBOutlet UIImageView *_connection_state_icon;
+	NSString *_title;
+	NSString *_sub_title;
 }
 
-@property(retain, nonatomic) UILabel *title;
-@property(retain, nonatomic) UILabel *subTitle;
-@property(retain, nonatomic) UIImageView *connectionStateIcon;
+@property(copy, nonatomic) NSString *title;
+@property(copy, nonatomic) NSString *subTitle;
 
 @end

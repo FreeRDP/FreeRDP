@@ -24,6 +24,7 @@
 #include <vector>
 #include <atomic>
 #include <queue>
+#include <deque>
 #include <map>
 
 #include <winpr/wtypes.h>
@@ -33,6 +34,7 @@
 
 #include "sdl_types.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_web_clip_offers.hpp"
 
 /** @brief a clipboard format request */
 class ClipRequest
@@ -89,6 +91,24 @@ class sdlClip
 
 	[[nodiscard]] bool handleEvent(const SDL_ClipboardEvent& ev);
 
+	/* Answers the queued server CB_FORMAT_DATA_REQUESTs. Runs on the SDL main thread: the SDL
+	 * clipboard API is main-thread only, and ReceiveFormatDataRequest only queues them. */
+	void handleDataRequests();
+#if defined(__EMSCRIPTEN__)
+	/* SDL3 has no clipboard driver for the browser: the page exchanges text with the
+	 * browser clipboard and these functions connect it to the cliprdr channel. */
+	[[nodiscard]] static bool webOffer(const char* utf8, const BYTE* dib, size_t dibSize);
+
+  private:
+	[[nodiscard]] bool webRequestServerText();
+	[[nodiscard]] bool webAnswerDataRequest(const CLIPRDR_FORMAT_DATA_REQUEST* request);
+	[[nodiscard]] bool webTakeDataResponse(const CLIPRDR_FORMAT_DATA_RESPONSE* response);
+	std::string _web_local;           /* text from the browser clipboard, offered to the server */
+	std::vector<BYTE> _web_local_dib; /* image from the browser clipboard as CF_DIB */
+	std::deque<size_t> _web_recent;   /* hashes of recent offers, to recognise late echoes */
+	SdlWebClipOffers _web_offers;
+#endif
+
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
 	void clearServerFormats();
@@ -100,6 +120,7 @@ class sdlClip
 	[[nodiscard]] uint32_t serverIdForMime(const std::string& mime);
 
 	[[nodiscard]] bool contains(const char** mime_types, Sint32 count);
+	[[nodiscard]] bool ownsClipboard() const;
 
 	[[nodiscard]] static UINT MonitorReady(CliprdrClientContext* context,
 	                                       const CLIPRDR_MONITOR_READY* monitorReady);
@@ -111,8 +132,7 @@ class sdlClip
 	[[nodiscard]] static UINT
 	ReceiveFormatListResponse(CliprdrClientContext* context,
 	                          const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
-	[[nodiscard]] static std::shared_ptr<BYTE> ReceiveFormatDataRequestHandle(
-	    sdlClip* clipboard, const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest, uint32_t& len);
+	[[nodiscard]] std::shared_ptr<BYTE> getLocalData(uint32_t formatId, uint32_t& len);
 	[[nodiscard]] static UINT
 	ReceiveFormatDataRequest(CliprdrClientContext* context,
 	                         const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
@@ -126,6 +146,7 @@ class sdlClip
 
 	[[nodiscard]] static bool mime_is_file(const std::string& mime);
 	[[nodiscard]] static bool mime_is_text(const std::string& mime);
+	[[nodiscard]] static bool mime_is_utf8(const std::string& mime);
 	[[nodiscard]] static bool mime_is_image(const std::string& mime);
 	[[nodiscard]] static bool mime_is_bmp(const std::string& mime);
 	[[nodiscard]] static bool mime_is_html(const std::string& mime);
@@ -154,7 +175,12 @@ class sdlClip
 		std::shared_ptr<void> ptr;
 	};
 	std::map<std::string, cache_entry> _cache_data;
-	std::vector<const char*> _current_mimetypes;
+	/* mime types of the latest server format list, not yet handed to SDL (guarded by _lock) */
+	std::vector<std::string> _current_mimetypes;
+	/* guarded by _lock: server data requests not answered yet, and whether ClipDataCb is
+	 * waiting for the server (a local application is reading our offer of server data) */
+	std::deque<uint32_t> _server_requests;
+	bool _reading_server = false;
 	std::string _uuid;
 	std::string _mime_uuid;
 };

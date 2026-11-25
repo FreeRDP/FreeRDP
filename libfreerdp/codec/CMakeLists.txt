@@ -55,6 +55,40 @@ if(WITH_GFX_AV1)
   include(WarnExperimental)
   warn_experimental("AV1 codec support for GFX channel" "-DWITH_GFX_AV1=OFF")
   list(APPEND CODEC_SRCS av1.c)
+  if(EMSCRIPTEN)
+    # in the browser, decode AV1 with WebCodecs (dav1d stays as the fallback)
+    option(WITH_AV1_WEBCODECS "Decode AV1 with the browser's WebCodecs API" ON)
+    if(WITH_AV1_WEBCODECS)
+      add_compile_definitions(WITH_AV1_WEBCODECS)
+      list(APPEND CODEC_SRCS av1_webcodecs.c av1_webcodecs.h)
+      # The JavaScript side, for the executable's link: a link item, so that it
+      # also reaches the executable through static libraries (link options of
+      # their private dependencies don't).
+      freerdp_library_add_public(
+        "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/av1_webcodecs.js"
+      )
+      # so that editing the JavaScript recompiles this file, and so relinks the
+      # executables
+      set_source_files_properties(
+        av1_webcodecs.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/av1_webcodecs.js
+      )
+      if(NOT BUILD_SHARED_LIBS)
+        install(FILES av1_webcodecs.js DESTINATION ${FREERDP_PLUGIN_PATH})
+      endif()
+    endif()
+  endif()
+endif()
+
+if(WITH_GFX_AV2)
+  include(WarnExperimental)
+  warn_experimental("AV2 codec support for GFX channel" "-DWITH_GFX_AV2=OFF")
+  list(APPEND CODEC_SRCS av2.c)
+endif()
+
+if(WITH_GFX_AZURE)
+  include(WarnExperimental)
+  warn_experimental("HEVC codec support for GFX channel" "-DWITH_GFX_AZURE=OFF")
+  list(APPEND CODEC_SRCS hevc.c)
 endif()
 
 set(CODEC_SSE3_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
@@ -116,6 +150,8 @@ if(FAAC_FOUND)
   freerdp_pc_add_requires_private("faac")
 endif()
 
+cmake_dependent_option(WITH_AOM "[AV1] compile with AOM" OFF "WITH_GFX_AV1" OFF)
+cmake_dependent_option(WITH_DAV1D "[AV1] compile with DAV1D" OFF "WITH_GFX_AV1" OFF)
 if(WITH_AOM AND AOM_FOUND)
   add_compile_definitions(WITH_LIBAOM)
   list(APPEND CODEC_LIBS aom)
@@ -138,10 +174,92 @@ if(WITH_GFX_AV1)
   endif()
 endif()
 
+# Hardware AV1 decoding on Apple silicon (M3, A17 Pro and later); dav1d or libaom stays the
+# fallback for older machines and streams the hardware doesn't take.
+set(_av1_software_decoder OFF)
+if((WITH_DAV1D AND DAV1D_FOUND) OR (WITH_AOM AND AOM_FOUND))
+  set(_av1_software_decoder ON)
+endif()
+cmake_dependent_option(
+  WITH_AV1_VIDEOTOOLBOX "[AV1] decode with Apple VideoToolbox when the hardware can" ON
+  "WITH_GFX_AV1;_videotoolbox_platform_supported;_av1_software_decoder" OFF
+)
+if(WITH_AV1_VIDEOTOOLBOX)
+  add_compile_definitions(WITH_AV1_VIDEOTOOLBOX)
+  list(APPEND CODEC_SRCS av1_videotoolbox.c av1_videotoolbox.h)
+  find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
+  find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
+  find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
+  find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+  list(APPEND CODEC_LIBS ${VIDEOTOOLBOX_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${COREVIDEO_FRAMEWORK}
+       ${COREFOUNDATION_FRAMEWORK}
+  )
+  message(STATUS "AV1 decoder: VideoToolbox first")
+endif()
+
+cmake_dependent_option(WITH_AVM "[AV2] compile with AVM" OFF "WITH_GFX_AV2" OFF)
+cmake_dependent_option(WITH_DAV2D "[AV2] compile with DAV2D" OFF "WITH_GFX_AV2" OFF)
+if(WITH_GFX_AV2)
+  if(WITH_AVM AND AVM_FOUND)
+    add_compile_definitions(WITH_LIBAVM)
+    list(APPEND CODEC_LIBS avm)
+    include_directories(SYSTEM ${AVM_INCLUDE_DIRS})
+    freerdp_pc_add_requires_private("avm")
+    # a libavm built with CONFIG_AV2_ENCODER=0 decodes only (a client, a
+    # browser): it has neither the encoder's headers nor its functions, and AV2
+    # encoding is then unavailable
+    option(WITH_AVM_ENCODER "libavm has its encoder (OFF for a decoder-only libavm)" ON)
+    if(WITH_AVM_ENCODER)
+      add_compile_definitions(WITH_LIBAVM_ENCODER)
+    endif()
+  endif()
+
+  # libavm, the reference, decodes when present: dav2d is the decoder without it
+  if(WITH_AVM AND AVM_FOUND)
+    message(STATUS "AV2 decoder: libavm")
+  elseif(WITH_DAV2D AND DAV2D_FOUND)
+    add_compile_definitions(WITH_DAV2D)
+    list(APPEND CODEC_LIBS dav2d)
+    include_directories(SYSTEM ${DAV2D_INCLUDE_DIRS})
+    freerdp_pc_add_requires_private("dav2d")
+    message(STATUS "AV2 decoder: dav2d")
+  else()
+    message(STATUS "AV2 decoder: none (need -DWITH_DAV2D=ON or -DWITH_AVM=ON)")
+  endif()
+endif()
+
+option(WITH_YUV "compile with YUV" OFF)
 if(WITH_YUV AND YUV_FOUND)
   add_compile_definitions(WITH_LIBYUV)
   list(APPEND CODEC_LIBS yuv)
   freerdp_pc_add_requires_private("yuv")
+endif()
+
+if(WITH_APPLE_VIDEOTOOLBOX)
+  list(APPEND CODEC_SRCS h264_videotoolbox.m)
+  find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
+  find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
+  find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
+  find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+  list(APPEND CODEC_LIBS ${VIDEOTOOLBOX_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${COREVIDEO_FRAMEWORK}
+       ${COREFOUNDATION_FRAMEWORK}
+  )
+endif()
+
+if(WITH_H264_WEBCODECS)
+  list(APPEND CODEC_SRCS h264_webcodecs.c)
+  # The JavaScript side, for the executable's link: a link item, so that it also
+  # reaches the executable through static libraries (link options of their
+  # private dependencies don't).
+  freerdp_library_add_public(
+    "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${FREERDP_PLUGIN_PATH}>/h264_webcodecs.js"
+  )
+  # so that editing the JavaScript recompiles this file, and so relinks the
+  # executables
+  set_source_files_properties(h264_webcodecs.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/h264_webcodecs.js)
+  if(NOT BUILD_SHARED_LIBS)
+    install(FILES h264_webcodecs.js DESTINATION ${FREERDP_PLUGIN_PATH})
+  endif()
 endif()
 
 if(WITH_OPENH264)
@@ -186,8 +304,8 @@ endif()
 
 if(ANDROID AND WITH_MEDIACODEC)
   include(WarnExperimental)
-  warn_experimental("Experimental encoders/decoders for H264" "-DWITH_MEDIACODEC=OFF")
-  list(APPEND CODEC_SRCS h264_mediacodec.c)
+  warn_experimental("Experimental encoders/decoders for H264 and AAC" "-DWITH_MEDIACODEC=OFF")
+  list(APPEND CODEC_SRCS h264_mediacodec.c dsp_mediacodec.c)
 
   find_library(MEDIACODEC mediandk REQUIRED)
   list(APPEND CODEC_LIBS ${MEDIACODEC})
@@ -197,6 +315,6 @@ add_library(freerdp-codecs OBJECT ${CODEC_SRCS})
 freerdp_library_add(${CODEC_LIBS})
 freerdp_object_library_add(freerdp-codecs)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

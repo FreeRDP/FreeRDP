@@ -107,6 +107,19 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	         tracker->channel->channel_name, xsize, firstPacket, lastPacket);
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
+		/* A new packet may only start once the previous one was completed with
+		 * CHANNEL_FLAG_LAST, same as drdynvc_virtual_channel_event_data_received */
+		if (tracker->currentPacketFragments != 0)
+		{
+			WLog_WARN(TAG,
+			          "new packet started while the previous one is incomplete (%" PRIuz
+			          " of %" PRIuz " bytes received)",
+			          tracker->currentPacketReceived, channelTracker_getCurrentPacketSize(tracker));
+			return PF_CHANNEL_RESULT_ERROR;
+		}
+
+		/* The mode is a decision about the current packet only */
+		channelTracker_setMode(tracker, CHANNEL_TRACKER_PEEK);
 		if (!channelTracker_resetCurrentPacket(tracker))
 			return PF_CHANNEL_RESULT_ERROR;
 		channelTracker_setCurrentPacketSize(tracker, totalSize);
@@ -177,6 +190,9 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 		if (tracker->currentPacketReceived != currentPacketSize)
 			WLog_INFO(TAG, "cumulated size(%" PRIuz ") does not match total size (%" PRIuz ")",
 			          tracker->currentPacketReceived, currentPacketSize);
+
+		/* the packet is complete, the next fragment must start a new one */
+		tracker->currentPacketFragments = 0;
 	}
 
 	return result;

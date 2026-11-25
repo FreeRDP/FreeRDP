@@ -35,6 +35,7 @@ set(SRCS
     sdl_pointer.hpp
     sdl_disp.cpp
     sdl_disp.hpp
+    sdl_display_offsets.hpp
     sdl_monitor.cpp
     sdl_monitor.hpp
     sdl_freerdp.hpp
@@ -43,18 +44,28 @@ set(SRCS
     sdl_channels.cpp
     sdl_window.hpp
     sdl_window.cpp
+    sdl_overlay.hpp
+    sdl_overlay.cpp
+    sdl_overlay_model.hpp
+    sdl_overlay_model.cpp
     sdl_clip.hpp
     sdl_clip.cpp
+    sdl_web_clip_offers.hpp
     sdl_context.hpp
     sdl_context.cpp
+    sdl_render_service.cpp
+    sdl_render_service.hpp
     sdl_rail.hpp
     sdl_rail.cpp
     sdl_rail_platform.hpp
     sdl_rail_platform.cpp
     sdl_rail_window.hpp
     sdl_rail_window.cpp
+    sdl_rail_window_style.hpp
     sdl_wayland.hpp
     sdl_wayland.cpp
+    sdl_win32.hpp
+    sdl_win32.cpp
     sdl_x11.hpp
     sdl_x11.cpp
 )
@@ -155,6 +166,23 @@ endif()
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
+if(EMSCRIPTEN)
+  # JavaScript side of the browser clipboard in sdl_clip.cpp and of the page's monitors in
+  # sdl_context.cpp
+  foreach(_js sdl_clip_emscripten.js sdl_monitors_emscripten.js)
+    target_link_options(${MODULE_NAME} PRIVATE "--js-library=${CMAKE_CURRENT_SOURCE_DIR}/${_js}")
+    set_property(TARGET ${MODULE_NAME} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_js})
+  endforeach()
+  get_property(_assets GLOBAL PROPERTY FREERDP_EMSCRIPTEN_ASSETS)
+  foreach(_asset ${_assets})
+    add_custom_command(
+      TARGET ${MODULE_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_asset}
+                                               $<TARGET_FILE_DIR:${MODULE_NAME}>
+    )
+  endforeach()
+  install(FILES ${_assets} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+endif()
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")
 get_target_property(SDL_CLIENT_BINARY_NAME ${MODULE_NAME} OUTPUT_NAME)
 if(NOT WITH_CLIENT_SDL_VERSIONED)
@@ -168,5 +196,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sdl_config.hpp.in ${CMAKE_CURRENT_BIN
 
 installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 install_freerdp_desktop("${MODULE_NAME}" "${SDL_CLIENT_UUID}")
+
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+  add_executable(TestSDLDisplayOffsets test/TestSDLDisplayOffsets.cpp)
+  target_link_libraries(TestSDLDisplayOffsets PRIVATE freerdp SDL3::Headers)
+  set_target_properties(TestSDLDisplayOffsets PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  add_test(NAME TestSDLDisplayOffsets COMMAND ${TESTING_OUTPUT_DIRECTORY}/TestSDLDisplayOffsets)
+  set_property(TARGET TestSDLDisplayOffsets PROPERTY FOLDER "FreeRDP/Client/Test")
+endif()
 
 add_subdirectory(man)

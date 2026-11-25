@@ -210,23 +210,24 @@ out:
 	return error;
 }
 
-static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
+static UINT disp_server_receive_pdu(DispServerContext* context, wStream* data)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t beg = 0;
-	size_t end = 0;
 	DISPLAY_CONTROL_HEADER header = WINPR_C_ARRAY_INIT;
 
-	WINPR_ASSERT(s);
+	WINPR_ASSERT(data);
 	WINPR_ASSERT(context);
 
-	beg = Stream_GetPosition(s);
-
-	if ((error = disp_read_header(s, &header)))
+	size_t packetLen = 0;
+	if ((error = disp_read_header(data, &header, &packetLen)))
 	{
 		WLog_ERR(TAG, "disp_read_header failed with error %" PRIu32 "!", error);
 		return error;
 	}
+
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Pointer(data), packetLen);
+	Stream_Seek(data, packetLen);
 
 	switch (header.type)
 	{
@@ -245,14 +246,12 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 			break;
 	}
 
-	end = Stream_GetPosition(s);
+	const size_t end = Stream_GetPosition(s);
 
-	if (end != (beg + header.length))
+	if (end != packetLen)
 	{
 		WLog_ERR(TAG, "Unexpected DISP pdu end: Actual: %" PRIuz ", Expected: %" PRIuz "", end,
-		         (beg + header.length));
-		if (!Stream_SetPosition(s, (beg + header.length)))
-			return ERROR_INVALID_DATA;
+		         packetLen);
 	}
 
 	return error;
@@ -357,6 +356,34 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 	priv = context->priv;
 	WINPR_ASSERT(priv);
 
+	/* Wait for the client to take the channel. It says nothing on it until it has
+	 * the caps, so the channel event would not fire. */
+	while (!priv->isReady)
+	{
+		void* buffer = nullptr;
+		DWORD BytesReturned = 0;
+
+		if (WaitForSingleObject(priv->stopEvent, 100) == WAIT_OBJECT_0)
+			goto out;
+
+		if (!WTSVirtualChannelQuery(priv->disp_channel, WTSVirtualChannelReady, &buffer,
+		                            &BytesReturned))
+		{
+			WLog_INFO(TAG, "the client did not take the channel");
+			goto out;
+		}
+
+		priv->isReady = *((BOOL*)buffer);
+		WTSFreeMemory(buffer);
+	}
+
+	error = context->DisplayControlCaps(context);
+	if (error != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "DisplayControlCaps failed with error %" PRIu32 "", error);
+		goto out;
+	}
+
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 
@@ -383,6 +410,7 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 		}
 	}
 
+out:
 	ExitThread(error);
 	return error;
 }

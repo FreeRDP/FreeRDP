@@ -77,11 +77,12 @@ struct rdp_tls
 	BIO* underlying;
 	const char* hostname;
 	const char* serverName;
-	int port;
+	UINT16 port;
 	int alertLevel;
 	int alertDescription;
 	BOOL isGatewayTransport;
 	BOOL isClientMode;
+	BOOL isHttpRequest;
 };
 
 /** @brief result of a handshake operation */
@@ -122,7 +123,7 @@ extern "C"
 	FREERDP_LOCAL BOOL freerdp_tls_send_alert(rdpTls* tls);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_LOCAL int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length);
+	FREERDP_LOCAL int freerdp_tls_write_all(rdpTls* tls, const void* data, size_t length);
 
 	FREERDP_LOCAL int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description);
 

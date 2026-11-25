@@ -97,17 +97,14 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRIC
 			const INT32 Cb = (*pCb++);
 			const INT32 Cr = (*pCr++);
 
-			const INT32 CrR = WINPR_ASSERTING_INT_CAST(
-			    int32_t, Cr* ycbcr_constants[divisor][0]); //(1.402525f * 2^divisor);
-			const INT32 CrG = WINPR_ASSERTING_INT_CAST(
-			    int32_t, Cr* ycbcr_constants[divisor][1]); //(0.714401f * 2^divisor);
-			const INT32 CbG = WINPR_ASSERTING_INT_CAST(
-			    int32_t, Cb* ycbcr_constants[divisor][2]); //(0.343730f * 2^divisor);
-			const INT32 CbB = WINPR_ASSERTING_INT_CAST(
-			    int32_t, Cb* ycbcr_constants[divisor][3]); //(1.769905f * 2^divisor);
-			const INT16 R = WINPR_ASSERTING_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
-			const INT16 G = WINPR_ASSERTING_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
-			const INT16 B = WINPR_ASSERTING_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
+			/* unsigned arithmetic: wraps instead of overflowing for out of range input */
+			const UINT32 CrR = (UINT32)Cr * (UINT32)ycbcr_constants[divisor][0];
+			const UINT32 CrG = (UINT32)Cr * (UINT32)ycbcr_constants[divisor][1];
+			const UINT32 CbG = (UINT32)Cb * (UINT32)ycbcr_constants[divisor][2];
+			const UINT32 CbB = (UINT32)Cb * (UINT32)ycbcr_constants[divisor][3];
+			const INT32 R = (INT32)(CrR + (UINT32)Y) >> (divisor + 5);
+			const INT32 G = (INT32)((UINT32)Y - CbG - CrG) >> (divisor + 5);
+			const INT32 B = (INT32)(CbB + (UINT32)Y) >> (divisor + 5);
 			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 
@@ -142,13 +139,14 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* WINPR_REST
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
 			const INT32 Cr = (*pCr++);
-			const INT32 CrR = Cr * ycbcr_constants[divisor][0];
-			const INT32 CrG = Cr * ycbcr_constants[divisor][1];
-			const INT32 CbG = Cb * ycbcr_constants[divisor][2];
-			const INT32 CbB = Cb * ycbcr_constants[divisor][3];
-			const INT32 R = (CrR + Y) >> (divisor + 5);
-			const INT32 G = (Y - CbG - CrG) >> (divisor + 5);
-			const INT32 B = (CbB + Y) >> (divisor + 5);
+			/* unsigned arithmetic: wraps instead of overflowing for out of range input */
+			const UINT32 CrR = (UINT32)Cr * (UINT32)ycbcr_constants[divisor][0];
+			const UINT32 CrG = (UINT32)Cr * (UINT32)ycbcr_constants[divisor][1];
+			const UINT32 CbG = (UINT32)Cb * (UINT32)ycbcr_constants[divisor][2];
+			const UINT32 CbB = (UINT32)Cb * (UINT32)ycbcr_constants[divisor][3];
+			const INT32 R = (INT32)(CrR + (UINT32)Y) >> (divisor + 5);
+			const INT32 G = (INT32)((UINT32)Y - CbG - CrG) >> (divisor + 5);
+			const INT32 B = (INT32)(CbB + (UINT32)Y) >> (divisor + 5);
 			pRGB = writePixel(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 

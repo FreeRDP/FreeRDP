@@ -7,6 +7,10 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS TestPathShell.c TestPathMakePath.c)
 
+if(NOT WIN32)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestPathRemoveDirectoryRecursive.c)
+endif()
+
 if(NOT WITHOUT_WINPR_3x_DEPRECATED)
   list(
     APPEND
@@ -49,7 +53,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
   get_filename_component(TestName ${test} NAME_WE)
-  add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
+  add_test(NAME ${TestName} COMMAND ${MODULE_NAME} ${TestName})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")

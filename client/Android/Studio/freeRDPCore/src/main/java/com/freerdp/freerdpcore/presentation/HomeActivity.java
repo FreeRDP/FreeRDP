@@ -226,7 +226,7 @@ public class HomeActivity extends AppCompatActivity
 			Toast.makeText(this, R.string.export_failed, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		Uri uri = FileProvider.getUriForFile(this, "com.freerdp.afreerdp.fileprovider", file);
+		Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
 		Intent share = new Intent(Intent.ACTION_SEND);
 		share.setType("application/x-rdp");
 		share.putExtra(Intent.EXTRA_STREAM, uri);

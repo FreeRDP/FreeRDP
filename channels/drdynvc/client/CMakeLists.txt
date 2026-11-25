@@ -21,6 +21,6 @@ set(${MODULE_PREFIX}_SRCS drdynvc_main.c drdynvc_main.h)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")
 
-if(BUILD_FUZZERS)
+if(BUILD_FUZZERS OR BUILD_TESTING_INTERNAL)
   add_subdirectory(test)
 endif()

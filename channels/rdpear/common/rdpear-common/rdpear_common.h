@@ -23,11 +23,11 @@
 #include <winpr/asn1.h>
 #include <winpr/wlog.h>
 #include <winpr/sspi.h>
+#include <winpr/ndr.h>
 
 #include <freerdp/api.h>
 
-#include <rdpear-common/ndr.h>
-
+/** @brief kind of EAR package */
 typedef enum
 {
 	RDPEAR_PACKAGE_KERBEROS,
@@ -79,23 +79,17 @@ typedef enum
 	// End NTLM remote calls
 } RemoteGuardCallId;
 
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RdpEarPackageType rdpear_packageType_from_name(const WinPrAsn1_OctetString* package);
-
-WINPR_ATTR_MALLOC(Stream_Free, 1)
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload);
+FREERDP_LOCAL wStream* rdpear_encodePayload(RdpEarPackageType packageType, wStream* payload);
 
 #define RDPEAR_COMMON_MESSAGE_DECL(V)                                                            \
-	WINPR_ATTR_NODISCARD                                                                         \
-	FREERDP_LOCAL BOOL ndr_read_##V(NdrContext* context, wStream* s, const void* hints, V* obj); \
-	WINPR_ATTR_NODISCARD                                                                         \
-	FREERDP_LOCAL BOOL ndr_write_##V(NdrContext* context, wStream* s, const void* hints,         \
-	                                 const V* obj);                                              \
-	FREERDP_LOCAL void ndr_destroy_##V(NdrContext* context, const void* hints, V* obj);          \
+	FREERDP_LOCAL BOOL ndr_decoder_read_##V(WinPrNdrDecoder* context, wStream* s,                \
+	                                        const void* hints, V* obj);                          \
+	FREERDP_LOCAL BOOL ndr_encoder_write_##V(WinPrNdrEncoder* context, wStream* s,               \
+	                                         const void* hints, const V* obj);                   \
+	FREERDP_LOCAL void ndr_destroy_##V(const void* hints, V* obj);                               \
 	FREERDP_LOCAL void ndr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const V* obj); \
-	WINPR_ATTR_NODISCARD                                                                         \
-	FREERDP_LOCAL NdrMessageType ndr_##V##_descr(void)
+	FREERDP_LOCAL WinPrNdrMessageType ndr_##V##_descr(void)
 
 /** @brief 2.2.1.2.2 KERB_RPC_OCTET_STRING */
 typedef struct
@@ -110,7 +104,7 @@ RDPEAR_COMMON_MESSAGE_DECL(KERB_RPC_OCTET_STRING);
 typedef struct
 {
 	UINT32 Pdu;
-	NdrArrayHints Asn1BufferHints;
+	WinPrNdrArrayHints Asn1BufferHints;
 	BYTE* Asn1Buffer;
 } KERB_ASN1_DATA;
 
@@ -119,7 +113,7 @@ RDPEAR_COMMON_MESSAGE_DECL(KERB_ASN1_DATA);
 /** @brief 2.3.10 RPC_UNICODE_STRING (MS-DTYP) */
 typedef struct
 {
-	NdrVaryingArrayHints lenHints;
+	WinPrNdrVaryingArrayHints lenHints;
 	UINT32 strLength;
 	WCHAR* Buffer;
 } RPC_UNICODE_STRING;
@@ -130,7 +124,7 @@ RDPEAR_COMMON_MESSAGE_DECL(RPC_UNICODE_STRING);
 typedef struct
 {
 	UINT16 NameType;
-	NdrArrayHints nameHints;
+	WinPrNdrArrayHints nameHints;
 	RPC_UNICODE_STRING* Names;
 } KERB_RPC_INTERNAL_NAME;
 
@@ -232,12 +226,198 @@ RDPEAR_COMMON_MESSAGE_DECL(PackApReplyReq);
 
 typedef struct
 {
-	NdrArrayHints PackedReplyHints;
+	WinPrNdrArrayHints PackedReplyHints;
 	BYTE* PackedReply;
 } PackApReplyResp;
 
 RDPEAR_COMMON_MESSAGE_DECL(PackApReplyResp);
 
 #undef RDPEAR_COMMON_MESSAGE_DECL
+
+/** @brief 2.2.1.2.9 KerbCredIsoRemoteInput
+ *
+ * The calls that are not described are decoded without their arm.
+ */
+typedef union
+{
+	UINT32 NegotiateVersion; /** MaxSupportedVersion */
+	CreateApReqAuthenticatorReq CreateApReqAuthenticator;
+	DecryptApReplyReq DecryptApReply;
+	UnpackKdcReplyBodyReq UnpackKdcReplyBody;
+	ComputeTgsChecksumReq ComputeTgsChecksum;
+	BuildEncryptedAuthDataReq BuildEncryptedAuthData;
+	PackApReplyReq PackApReply;
+} KerbCredIsoRemoteInputUnion;
+
+typedef struct
+{
+	UINT16 CallId; /** RemoteGuardCallId */
+	KerbCredIsoRemoteInputUnion Input;
+} KerbCredIsoRemoteInput;
+
+/** @brief 2.2.1.2.10 KerbCredIsoRemoteOutput
+ *
+ * The calls that are not described are encoded without their arm.
+ */
+typedef union
+{
+	UINT32 NegotiateVersion; /** VersionToUse */
+	CreateApReqAuthenticatorResp CreateApReqAuthenticator;
+	KERB_ASN1_DATA DecryptApReply; /** ApReply */
+	UnpackKdcReplyBodyResp UnpackKdcReplyBody;
+	KERB_ASN1_DATA ComputeTgsChecksum;     /** Checksum */
+	KERB_ASN1_DATA BuildEncryptedAuthData; /** EncryptedAuthData */
+	PackApReplyResp PackApReply;
+} KerbCredIsoRemoteOutputUnion;
+
+typedef struct
+{
+	UINT16 CallId; /** RemoteGuardCallId */
+	UINT32 Status; /** NTSTATUS */
+	KerbCredIsoRemoteOutputUnion Output;
+} KerbCredIsoRemoteOutput;
+
+#define RDPEAR_MSV1_0_CREDENTIAL_KEY_LENGTH 20
+#define RDPEAR_MSV1_0_CHALLENGE_LENGTH 8
+#define RDPEAR_MSV1_0_RESPONSE_LENGTH 24
+#define RDPEAR_MSV1_0_NTLM3_RESPONSE_LENGTH 16
+#define RDPEAR_MSV1_0_USER_SESSION_KEY_LENGTH 16
+
+/** @brief 2.2.1.3.6 MSV1_0_REMOTE_ENCRYPTED_SECRETS, opaque for the CredSSP server */
+typedef struct
+{
+	BYTE reserved1;
+	BYTE reserved2;
+	BYTE reserved3;
+	UINT16 reserved4; /** MSV1_0_CREDENTIAL_KEY_TYPE */
+	BYTE reserved5[RDPEAR_MSV1_0_CREDENTIAL_KEY_LENGTH];
+	WinPrNdrArrayHints reservedSize;
+	BYTE* reserved6;
+} MSV1_0_REMOTE_ENCRYPTED_SECRETS;
+
+/** @brief 2.2.1.3.1 NT_CHALLENGE, also LM_SESSION_KEY */
+typedef struct
+{
+	BYTE Data[RDPEAR_MSV1_0_CHALLENGE_LENGTH];
+} NT_CHALLENGE;
+
+/** @brief 2.2.1.3.2 NT_RESPONSE */
+typedef struct
+{
+	BYTE Data[RDPEAR_MSV1_0_RESPONSE_LENGTH];
+} NT_RESPONSE;
+
+/** @brief 2.2.1.3.3 MSV1_0_LM3_RESPONSE */
+typedef struct
+{
+	BYTE Response[RDPEAR_MSV1_0_NTLM3_RESPONSE_LENGTH];
+	BYTE ChallengeFromClient[RDPEAR_MSV1_0_CHALLENGE_LENGTH];
+} MSV1_0_LM3_RESPONSE;
+
+/** @brief 2.2.1.3.4 USER_SESSION_KEY */
+typedef struct
+{
+	BYTE Data[RDPEAR_MSV1_0_USER_SESSION_KEY_LENGTH];
+} USER_SESSION_KEY;
+
+/** @brief 2.2.2.2.2 Lm20GetNtlm3ChallengeResponse */
+typedef struct
+{
+	MSV1_0_REMOTE_ENCRYPTED_SECRETS* Credential;
+	RPC_UNICODE_STRING* UserName;
+	RPC_UNICODE_STRING* LogonDomainName;
+	RPC_UNICODE_STRING* ServerName;
+	BYTE ChallengeToClient[RDPEAR_MSV1_0_CHALLENGE_LENGTH];
+} Lm20GetNtlm3ChallengeResponseReq;
+
+typedef struct
+{
+	WinPrNdrArrayHints Ntlm3ResponseLength; /** a USHORT on the wire */
+	BYTE* Ntlm3Response;
+	MSV1_0_LM3_RESPONSE Lm3Response;
+	USER_SESSION_KEY UserSessionKey;
+	NT_CHALLENGE LmSessionKey;
+} Lm20GetNtlm3ChallengeResponseResp;
+
+/** @brief 2.2.2.2.3 CalculateNtResponse */
+typedef struct
+{
+	NT_CHALLENGE* NtChallenge;
+	MSV1_0_REMOTE_ENCRYPTED_SECRETS* Credential;
+} CalculateNtResponseReq;
+
+/** @brief 2.2.2.2.4 CalculateUserSessionKeyNt */
+typedef struct
+{
+	NT_RESPONSE* NtResponse;
+	MSV1_0_REMOTE_ENCRYPTED_SECRETS* Credential;
+} CalculateUserSessionKeyNtReq;
+
+/** @brief 2.2.2.2.5 CompareCredentials */
+typedef struct
+{
+	MSV1_0_REMOTE_ENCRYPTED_SECRETS* LhsCredential;
+	MSV1_0_REMOTE_ENCRYPTED_SECRETS* RhsCredential;
+} CompareCredentialsReq;
+
+typedef struct
+{
+	BOOL AreNtOwfsEqual;
+	BOOL AreLmOwfsEqual;
+	BOOL AreShaOwfsEqual;
+} CompareCredentialsResp;
+
+/** @brief 2.2.1.3.7 NtlmCredIsoRemoteInput */
+typedef union
+{
+	UINT32 NegotiateVersion; /** MaxSupportedVersion */
+	Lm20GetNtlm3ChallengeResponseReq Lm20GetNtlm3ChallengeResponse;
+	CalculateNtResponseReq CalculateNtResponse;
+	CalculateUserSessionKeyNtReq CalculateUserSessionKeyNt;
+	CompareCredentialsReq CompareCredentials;
+} NtlmCredIsoRemoteInputUnion;
+
+typedef struct
+{
+	UINT16 CallId; /** RemoteGuardCallId */
+	NtlmCredIsoRemoteInputUnion Input;
+} NtlmCredIsoRemoteInput;
+
+/** @brief 2.2.1.3.8 NtlmCredIsoRemoteOutput */
+typedef union
+{
+	UINT32 NegotiateVersion; /** VersionToUse */
+	Lm20GetNtlm3ChallengeResponseResp Lm20GetNtlm3ChallengeResponse;
+	NT_RESPONSE CalculateNtResponse;            /** NtResponse */
+	USER_SESSION_KEY CalculateUserSessionKeyNt; /** UserSessionKey */
+	CompareCredentialsResp CompareCredentials;
+} NtlmCredIsoRemoteOutputUnion;
+
+typedef struct
+{
+	UINT16 CallId; /** RemoteGuardCallId */
+	UINT32 Status; /** NTSTATUS */
+	NtlmCredIsoRemoteOutputUnion Output;
+} NtlmCredIsoRemoteOutput;
+
+/* The messages are type serialized (MS-RPCE 2.2.6): the decoder is created from the type
+ * serialization header and the reader reads the object that follows. The writer writes the type
+ * serialization header and the object. The decoded pointers are NDR referents, released by the
+ * free functions.
+ */
+
+FREERDP_LOCAL BOOL rdpear_kerb_input_read(WinPrNdrDecoder* decoder, wStream* s,
+                                          KerbCredIsoRemoteInput* input);
+FREERDP_LOCAL void rdpear_kerb_input_free(KerbCredIsoRemoteInput* input);
+FREERDP_LOCAL BOOL rdpear_kerb_output_write(WinPrNdrEncoder* encoder, wStream* s,
+                                            const KerbCredIsoRemoteOutput* output);
+FREERDP_LOCAL void rdpear_kerb_output_free(KerbCredIsoRemoteOutput* output);
+
+FREERDP_LOCAL BOOL rdpear_ntlm_input_read(WinPrNdrDecoder* decoder, wStream* s,
+                                          NtlmCredIsoRemoteInput* input);
+FREERDP_LOCAL void rdpear_ntlm_input_free(NtlmCredIsoRemoteInput* input);
+FREERDP_LOCAL BOOL rdpear_ntlm_output_write(WinPrNdrEncoder* encoder, wStream* s,
+                                            const NtlmCredIsoRemoteOutput* output);
+FREERDP_LOCAL void rdpear_ntlm_output_free(NtlmCredIsoRemoteOutput* output);
 
 #endif /* FREERDP_CHANNEL_RDPEAR_COMMON_H */

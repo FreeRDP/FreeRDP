@@ -373,12 +373,12 @@ rdpBulk* bulk_new(rdpContext* context)
 fail:
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
-	bulk_free(bulk);
+	freerdp_bulk_free(bulk);
 	WINPR_PRAGMA_DIAG_POP
 	return nullptr;
 }
 
-void bulk_free(rdpBulk* bulk)
+void freerdp_bulk_free(rdpBulk* bulk)
 {
 	if (!bulk)
 		return;

@@ -7,11 +7,13 @@
 #include <winpr/assert.h>
 #include "../log.h"
 
-#if defined(__EMSCRIPTEN__)
-#include <emscripten.h>
-#endif
-
 #define TAG WINPR_TAG("sync.pollset")
+
+#if defined(__EMSCRIPTEN__)
+/* in pollset_emscripten.js: returns once the browser's event loop has run the tasks that were
+ * waiting, without the 4 ms that emscripten_sleep(0) (setTimeout) costs there */
+extern void winpr_pollset_js_yield(void);
+#endif
 
 #ifdef WINPR_HAVE_POLL_H
 static INT16 handle_mode_to_pollevent(ULONG mode)
@@ -154,7 +156,7 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 			{
 				if (++set->yieldCounter > 10)
 				{
-					emscripten_sleep(0);
+					winpr_pollset_js_yield();
 					set->yieldCounter = 0;
 				}
 			}

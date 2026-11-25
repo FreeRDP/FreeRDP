@@ -295,21 +295,24 @@ static UINT audin_winmm_close(IAudinDevice* device)
 	if (!winmm)
 		return ERROR_INVALID_PARAMETER;
 
-	(void)SetEvent(winmm->stopEvent);
-	status = WaitForSingleObject(winmm->thread, INFINITE);
-
-	if (status == WAIT_FAILED)
+	if (winmm->thread)
 	{
-		error = GetLastError();
-		WLog_Print(winmm->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
-		           error);
-		return error;
-	}
+		(void)SetEvent(winmm->stopEvent);
+		status = WaitForSingleObject(winmm->thread, INFINITE);
 
-	(void)CloseHandle(winmm->thread);
-	(void)CloseHandle(winmm->stopEvent);
-	winmm->thread = nullptr;
-	winmm->stopEvent = nullptr;
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_Print(winmm->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
+			           error);
+			return error;
+		}
+
+		(void)CloseHandle(winmm->thread);
+		(void)CloseHandle(winmm->stopEvent);
+		winmm->thread = nullptr;
+		winmm->stopEvent = nullptr;
+	}
 	winmm->receive = nullptr;
 	winmm->user_data = nullptr;
 	return error;

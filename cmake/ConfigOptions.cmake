@@ -39,12 +39,9 @@ endif()
 
 option(BUILD_BENCHMARK "Build benchmark tools (for debugging and development only)" OFF)
 option(BUILD_TESTING "Build unit tests (compatible with packaging)" OFF)
+cmake_dependent_option(BUILD_TESTING_INTERNAL "Build unit tests (CI only, not for packaging!)" OFF "BUILD_TESTING" OFF)
 cmake_dependent_option(
-  BUILD_TESTING_INTERNAL "Build unit tests (CI only, not for packaging!)" OFF "NOT BUILD_TESTING" OFF
-)
-cmake_dependent_option(
-  BUILD_TESTING_NO_H264 "Skip building h264 unit tests (no implementation during packaging)" OFF
-  "BUILD_TESTING OR BUILD_TESTING_INTERNAL" OFF
+  BUILD_TESTING_NO_H264 "Skip building h264 unit tests (no implementation during packaging)" OFF "BUILD_TESTING" OFF
 )
 cmake_dependent_option(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING_INTERNAL" OFF)
 cmake_dependent_option(BUILD_COMM_TESTS "Build comm related tests (require comm port)" OFF "BUILD_TESTING_INTERNAL" OFF)
@@ -141,13 +138,16 @@ option(WITH_CLANG_FORMAT "Detect clang-format. run 'cmake --build . --target cla
 option(WITH_DSP_EXPERIMENTAL "Enable experimental sound encoder/decoder formats" OFF)
 
 option(WITH_GFX_AV1 "[experimental,unstable ABI/API] Enable AV1 support for GFX channel encoding/decoding" OFF)
+option(WITH_GFX_AV2 "[experimental,unstable ABI/API] Enable AV2 support for GFX channel encoding/decoding" OFF)
 option(WITH_GFX_AZURE "[experimental,unstable ABI/API] Enable Azure extension support for GFX channel" OFF)
+include(ConfigOptionsVideoToolbox)
+include(DetectIntrinsicSupport)
+cmake_dependent_option(WITH_H264_WEBCODECS "Decode H.264 with the browser's WebCodecs API" ON "EMSCRIPTEN" OFF)
+option(WITH_RDPEUDP "[experimental] Client UDP multitransport (MS-RDPEUDP, MS-RDPEUDP2, MS-RDPEMT), needs OpenSSL" OFF)
+cmake_dependent_option(WITH_RDPEUDP_SERVER "[experimental] Server UDP multitransport" ON "WITH_RDPEUDP" OFF)
 option(WITH_FFMPEG "Enable FFMPEG for audio/video encoding/decoding" ON)
 cmake_dependent_option(WITH_DSP_FFMPEG "Use FFMPEG for audio encoding/decoding" ON "WITH_FFMPEG" OFF)
 cmake_dependent_option(WITH_VIDEO_FFMPEG "Use FFMPEG for video encoding/decoding" ON "WITH_FFMPEG" OFF)
-cmake_dependent_option(
-  WITH_FFMPEG_HWACCEL "[experimental] Use FFMPEG hardware acceleration" OFF "WITH_VIDEO_FFMPEG" OFF
-)
 
 if(WITH_VIDEOTOOLBOX OR WITH_VAAPI OR WITH_VAAPI_H264_ENCODING)
   message(
@@ -156,6 +156,9 @@ if(WITH_VIDEOTOOLBOX OR WITH_VAAPI OR WITH_VAAPI_H264_ENCODING)
   )
   set(WITH_FFMPEG_HWACCEL ON CACHE BOOL "externally set")
 endif()
+cmake_dependent_option(
+  WITH_FFMPEG_HWACCEL "[experimental] Use FFMPEG hardware acceleration" OFF "WITH_VIDEO_FFMPEG" OFF
+)
 
 option(WITH_CAIRO "Use CAIRO image library for screen resizing" OFF)
 option(WITH_SWSCALE "Use SWScale image library for screen resizing" ON)
@@ -178,6 +181,9 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
   option(WITH_OSS "use OSS for sound" ${OSS_FOUND})
   option(WITH_SNDIO "use Sndio for sound" ${SNDIO_FOUND})
 endif()
+
+find_package(SDL3 QUIET)
+cmake_dependent_option(WITH_SDL_AUDIO "use SDL3 for sound and microphone redirection" OFF "SDL3_FOUND" OFF)
 
 option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
 

@@ -43,7 +43,7 @@ target_link_libraries(${MODULE_NAME} PUBLIC winpr)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 

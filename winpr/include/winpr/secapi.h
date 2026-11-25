@@ -102,6 +102,94 @@ typedef struct
 	UCHAR EncryptedCreds[1];
 } MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL, *PMSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL;
 
+/* LSA authentication package client API, mirroring <ntsecapi.h>. On non-Windows
+ * it is backed by the per-user lsa4posix daemon (winpr/libwinpr/sspicli/lsa.c). */
+
+typedef struct
+{
+	USHORT Length;
+	USHORT MaximumLength;
+	PCHAR Buffer;
+} LSA_STRING, *PLSA_STRING;
+
+typedef LONG LSA_OPERATIONAL_MODE, *PLSA_OPERATIONAL_MODE;
+
+#include <winpr/winpr.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	/** @brief Open an untrusted connection to the LSA (the lsa4posix daemon of the user).
+	 *  @param LsaHandle receives the connection handle, closed with LsaDeregisterLogonProcess
+	 *  @return \b STATUS_SUCCESS, or an error status (\b STATUS_NO_SUCH_PACKAGE when the daemon
+	 *  cannot be reached)
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API NTSTATUS LsaConnectUntrusted(PHANDLE LsaHandle);
+
+	/** @brief Look up the identifier of an authentication package by name.
+	 *  @param LsaHandle a handle from LsaConnectUntrusted
+	 *  @param PackageName the package name
+	 *  @param AuthenticationPackage receives the package identifier
+	 *  @return \b STATUS_SUCCESS, or an error status (\b STATUS_NO_SUCH_PACKAGE for an unknown
+	 *  package)
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API NTSTATUS LsaLookupAuthenticationPackage(HANDLE LsaHandle, PLSA_STRING PackageName,
+	                                                  PULONG AuthenticationPackage);
+
+	/** @brief Send a package-specific request to an authentication package.
+	 *  @param LsaHandle a handle from LsaConnectUntrusted
+	 *  @param AuthenticationPackage the package identifier
+	 *  @param ProtocolSubmitBuffer the request
+	 *  @param SubmitBufferLength the length of the request in bytes
+	 *  @param ProtocolReturnBuffer receives the reply (may be \b nullptr), freed with
+	 *  LsaFreeReturnBuffer
+	 *  @param ReturnBufferLength receives the length of the reply in bytes
+	 *  @param ProtocolStatus receives the status the package returned
+	 *  @return \b STATUS_SUCCESS when the call reached the package, an error status otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API NTSTATUS LsaCallAuthenticationPackage(HANDLE LsaHandle, ULONG AuthenticationPackage,
+	                                                PVOID ProtocolSubmitBuffer,
+	                                                ULONG SubmitBufferLength,
+	                                                PVOID* ProtocolReturnBuffer,
+	                                                PULONG ReturnBufferLength,
+	                                                PNTSTATUS ProtocolStatus);
+
+	/** @brief Free a reply returned by LsaCallAuthenticationPackage.
+	 *  @param Buffer the reply, may be \b nullptr
+	 *  @return \b STATUS_SUCCESS
+	 *  @since version 3.34.0
+	 */
+	WINPR_API NTSTATUS LsaFreeReturnBuffer(PVOID Buffer);
+
+	/** @brief Close a connection opened with LsaConnectUntrusted.
+	 *  @param LsaHandle the handle
+	 *  @return \b STATUS_SUCCESS, or \b STATUS_INVALID_HANDLE
+	 *  @since version 3.34.0
+	 */
+	WINPR_API NTSTATUS LsaDeregisterLogonProcess(HANDLE LsaHandle);
+
+	/** @brief Map an NTSTATUS from the functions above to a Win32 error code.
+	 *
+	 *  The parameter is unnamed: Xlib's <X11/Xlib.h> typedefs 'Status', which collides with a
+	 *  parameter named Status when this header is pulled into an X11 translation unit.
+	 *  @return the Win32 error code
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API ULONG LsaNtStatusToWinError(NTSTATUS);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _WIN32 */
 
 #ifndef KERB_LOGON_FLAG_REDIRECTED

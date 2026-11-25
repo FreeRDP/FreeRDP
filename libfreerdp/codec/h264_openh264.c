@@ -65,7 +65,8 @@ static const char* openh264_library_names[] = {
 #elif defined(__APPLE__)
 	"libopenh264.dylib"
 #else
-	"libopenh264.so.7",     "libopenh264.so.2.5.0", "libopenh264.so.2.4.1", "libopenh264.so.2.4.0",
+	"libopenh264.so.8",     "libopenh264.so.2.6.0", "libopenh264.so.7",
+	"libopenh264.so.2.5.0", "libopenh264.so.2.4.1", "libopenh264.so.2.4.0",
 	"libopenh264.so.2.3.1", "libopenh264.so.2.3.0", "libopenh264.so",
 
 #endif
@@ -103,6 +104,13 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	if (!sys->pDecoder)
 		return -2001;
+
+	/* DecodeFrame2 takes the size as int */
+	if (SrcSize > INT32_MAX)
+	{
+		WLog_Print(h264->log, WLOG_WARN, "SrcSize %" PRIu32 " exceeds INT32_MAX", SrcSize);
+		return -2007;
+	}
 
 	/*
 	 * Decompress the image.  The RDP host only seems to send I420 format.
@@ -521,6 +529,9 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 
 static BOOL openh264_init(H264_CONTEXT* h264)
 {
+	if (h264->hevc || h264->hevc444)
+		return FALSE;
+
 #if defined(WITH_OPENH264_LOADING)
 	BOOL success = FALSE;
 #endif

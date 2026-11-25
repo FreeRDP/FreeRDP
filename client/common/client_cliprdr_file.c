@@ -41,11 +41,13 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/assert.h>
+#include <winpr/interlocked.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
 #include <winpr/clipboard.h>
 #include <winpr/path.h>
 
+#include <freerdp/utils/helpers.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
@@ -53,6 +55,18 @@
 #include <freerdp/channels/cliprdr.h>
 
 #include <freerdp/client/client_cliprdr_file.h>
+
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+#include <sys/time.h>
+
+#include <winpr/file.h>
+
+#include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
+#include <freerdp/utils/cliprdr_utils.h>
+
+#include "client_cliprdr_file_apple.h"
+#endif
 
 #define NO_CLIP_DATA_ID (UINT64_C(1) << 32)
 #define WIN32_FILETIME_TO_UNIX_EPOCH INT64_C(11644473600)
@@ -157,6 +171,7 @@ struct cliprdr_file_context
 	HANDLE fuse_start_sync;
 	HANDLE fuse_stop_sync;
 	HANDLE fuse_thread;
+	LONG fuse_failed; /* no mount: what the server copies cannot be pasted here */
 	struct fuse_session* fuse_sess;
 #if FUSE_USE_VERSION < 30
 	struct fuse_chan* ch;
@@ -173,6 +188,19 @@ struct cliprdr_file_context
 	fuse_ino_t next_ino;
 	UINT32 next_clip_data_id;
 	UINT32 next_stream_id;
+#endif
+
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	/* The pending FILECONTENTS request of the download queue, answered on the channel
+	 * thread */
+	CRITICAL_SECTION apple_lock;
+	BOOL apple_cancelled;
+	UINT32 apple_generation; /* changes with the server clipboard, see apple_lock */
+	HANDLE apple_contents_event;
+	UINT32 apple_stream_id;
+	BOOL apple_contents_success;
+	BYTE* apple_contents_data;
+	UINT32 apple_contents_size;
 #endif
 
 	/* File clipping */
@@ -624,6 +652,21 @@ static UINT prepare_clip_data_entry_without_id(CliprdrFileContext* file_context)
 }
 #endif
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+/* The clipboard the server files were offered from is gone: their list indices would address
+ * the files of another copy now. Fail the pending FILECONTENTS request of such an offer and
+ * every later one. */
+static void apple_new_generation(CliprdrFileContext* file)
+{
+	WINPR_ASSERT(file);
+
+	EnterCriticalSection(&file->apple_lock);
+	file->apple_generation++;
+	(void)SetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+}
+#endif
+
 UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file_context)
 {
 	UINT rc = CHANNEL_RC_OK;
@@ -643,6 +686,9 @@ UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file
 	else
 		rc = prepare_clip_data_entry_without_id(file_context);
 #endif
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	apple_new_generation(file_context);
+#endif
 	return rc;
 }
 
@@ -651,6 +697,9 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(file_context->context);
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	apple_new_generation(file_context);
+#endif
 #if defined(WITH_FUSE)
 	if (!clear_no_cdi_entry(file_context))
 		return ERROR_INTERNAL_ERROR;
@@ -808,12 +857,13 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
 	return TRUE;
 }
 
-static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
+WINPR_ATTR_NODISCARD
+static BOOL write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 {
 	memset(attr, 0, sizeof(struct stat));
 
-	if (!fuse_file)
-		return;
+	if (!fuse_file || (fuse_file->size > INT64_MAX))
+		return FALSE;
 
 	attr->st_ino = fuse_file->ino;
 	if (fuse_file->is_directory)
@@ -831,6 +881,7 @@ static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 	attr->st_gid = getgid();
 	attr->st_atime = attr->st_mtime = attr->st_ctime =
 	    (fuse_file->has_last_write_time ? fuse_file->last_write_time_unix : time(nullptr));
+	return TRUE;
 }
 
 static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino, const char* name)
@@ -875,7 +926,12 @@ static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino,
 	}
 
 	entry.ino = fuse_file->ino;
-	write_file_attributes(fuse_file, &entry.attr);
+	if (!write_file_attributes(fuse_file, &entry.attr))
+	{
+		HashTable_Unlock(file_context->inode_table);
+		fuse_reply_err(fuse_req, ERANGE);
+		return;
+	}
 	entry.attr_timeout = 1.0;
 	entry.entry_timeout = 1.0;
 	HashTable_Unlock(file_context->inode_table);
@@ -917,7 +973,12 @@ static void cliprdr_file_fuse_getattr(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 		return;
 	}
 
-	write_file_attributes(fuse_file, &attr);
+	if (!write_file_attributes(fuse_file, &attr))
+	{
+		fuse_reply_err(fuse_req, ERANGE);
+		HashTable_Unlock(file_context->inode_table);
+		return;
+	}
 	HashTable_Unlock(file_context->inode_table);
 
 	fuse_reply_attr(fuse_req, &attr, 1.0);
@@ -1127,12 +1188,25 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	{
 		if (i == 0)
 		{
-			write_file_attributes(fuse_file, &attr);
+			if (!write_file_attributes(fuse_file, &attr))
+			{
+				HashTable_Unlock(file_context->inode_table);
+				fuse_reply_err(fuse_req, ERANGE);
+				free(buf);
+				return;
+			}
+
 			filename = ".";
 		}
 		else if (i == 1)
 		{
-			write_file_attributes(fuse_file->parent, &attr);
+			if (!write_file_attributes(fuse_file->parent, &attr))
+			{
+				HashTable_Unlock(file_context->inode_table);
+				fuse_reply_err(fuse_req, ERANGE);
+				free(buf);
+				return;
+			}
 			attr.st_ino = fuse_file->parent ? attr.st_ino : FUSE_ROOT_ID;
 			attr.st_mode = fuse_file->parent ? attr.st_mode : 0555;
 			filename = "..";
@@ -1161,7 +1235,14 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 
 		child = ArrayList_GetItem(fuse_file->children, j);
 
-		write_file_attributes(child, &attr);
+		if (!write_file_attributes(child, &attr))
+		{
+			HashTable_Unlock(file_context->inode_table);
+			fuse_reply_err(fuse_req, ERANGE);
+			free(buf);
+			return;
+		}
+
 		entry_size =
 		    fuse_add_direntry(fuse_req, buf + written_size, max_size - written_size,
 		                      child->filename, &attr, WINPR_ASSERTING_INT_CAST(off_t, i + 1));
@@ -1197,6 +1278,13 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 
 	struct fuse_args args = FUSE_ARGS_INIT(0, nullptr);
 	fuse_opt_add_arg(&args, file->path);
+#if defined(__linux__)
+	/* fusermount3 releases the mount point if this process dies without unmounting it (SIGKILL,
+	 * a crash): otherwise it stays behind, and every access to it fails with ENOTCONN.
+	 * Only libfuse's Linux mount code knows the option: elsewhere (mount_bsd.c) it would stay in
+	 * the arguments and fuse_session_new would refuse them. */
+	fuse_opt_add_arg(&args, "-oauto_unmount");
+#endif
 	file->fuse_sess = fuse_session_new(&args, &cliprdr_file_fuse_oper,
 	                                   sizeof(cliprdr_file_fuse_oper), (void*)file);
 	(void)SetEvent(file->fuse_start_sync);
@@ -1209,6 +1297,14 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 			{
 				fuse_session_loop(file->fuse_sess);
 				fuse_session_unmount(file->fuse_sess);
+			}
+			else
+			{
+				const LONG old = InterlockedExchange(&file->fuse_failed, 1);
+				WLog_Print(
+				    file->log, WLOG_WARN,
+				    "cannot mount '%s': files from the server cannot be pasted here (%" PRId32 ")",
+				    file->path, old);
 			}
 			freerdp_del_signal_cleanup_handler(file, fuse_abort);
 		}
@@ -1224,6 +1320,31 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 
 	ExitThread(0);
 	return 0;
+}
+
+WINPR_ATTR_NODISCARD
+WINPR_ATTR_FORMAT_ARG(4, 5)
+static UINT cliprdr_fail_content_reponse(CliprdrFileContext* file_context,
+                                         CliprdrFuseRequest* fuse_request, UINT32 streamID,
+                                         WINPR_FORMAT_ARG const char* format, ...)
+{
+	WINPR_ASSERT(file_context);
+	WINPR_ASSERT(fuse_request);
+	WINPR_ASSERT(format);
+
+	const DWORD level = WLOG_WARN;
+	if (WLog_IsLevelActive(file_context->log, level))
+	{
+		va_list ap;
+		va_start(ap, format);
+		WLog_PrintVA(file_context->log, WLOG_WARN, format, ap);
+		va_end(ap);
+	}
+
+	fuse_reply_err(fuse_request->fuse_req, EIO);
+	HashTable_Remove(file_context->request_table, (void*)(uintptr_t)streamID);
+	HashTable_Unlock(file_context->inode_table);
+	return CHANNEL_RC_OK;
 }
 
 static UINT cliprdr_file_context_server_file_contents_response(
@@ -1251,29 +1372,20 @@ static UINT cliprdr_file_context_server_file_contents_response(
 
 	if (!(file_contents_response->common.msgFlags & CB_RESPONSE_OK))
 	{
-		WLog_Print(file_context->log, WLOG_WARN,
-		           "FileContentsRequests for file \"%s\" was unsuccessful",
-		           fuse_request->fuse_file->filename);
-
-		fuse_reply_err(fuse_request->fuse_req, EIO);
-		HashTable_Remove(file_context->request_table,
-		                 (void*)(uintptr_t)file_contents_response->streamId);
-		HashTable_Unlock(file_context->inode_table);
-		return CHANNEL_RC_OK;
+		return cliprdr_fail_content_reponse(file_context, fuse_request,
+		                                    file_contents_response->streamId,
+		                                    "FileContentsRequests for file \"%s\" was unsuccessful",
+		                                    fuse_request->fuse_file->filename);
 	}
 
 	if ((fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
 	     fuse_request->operation_type == FUSE_LL_OPERATION_GETATTR) &&
 	    file_contents_response->cbRequested != sizeof(UINT64))
 	{
-		WLog_Print(file_context->log, WLOG_WARN,
-		           "Received invalid file size for file \"%s\" from the client",
-		           fuse_request->fuse_file->filename);
-		fuse_reply_err(fuse_request->fuse_req, EIO);
-		HashTable_Remove(file_context->request_table,
-		                 (void*)(uintptr_t)file_contents_response->streamId);
-		HashTable_Unlock(file_context->inode_table);
-		return CHANNEL_RC_OK;
+		return cliprdr_fail_content_reponse(
+		    file_context, fuse_request, file_contents_response->streamId,
+		    "Received invalid file size for file \"%s\" from the client",
+		    fuse_request->fuse_file->filename);
 	}
 
 	if (fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
@@ -1283,11 +1395,17 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 
 		fuse_request->fuse_file->size =
-		    *(WINPR_PACKED_ALIGN_CAST(const UINT64*, file_contents_response->requestedData));
+		    winpr_Data_Get_UINT64(file_contents_response->requestedData);
 		fuse_request->fuse_file->has_size = TRUE;
 
 		entry.ino = fuse_request->fuse_file->ino;
-		write_file_attributes(fuse_request->fuse_file, &entry.attr);
+		if (!write_file_attributes(fuse_request->fuse_file, &entry.attr))
+		{
+			return cliprdr_fail_content_reponse(
+			    file_context, fuse_request, file_contents_response->streamId,
+			    "Received invalid file size for file \"%s\" from the client",
+			    fuse_request->fuse_file->filename);
+		}
 		entry.attr_timeout = 1.0;
 		entry.entry_timeout = 1.0;
 	}
@@ -1296,31 +1414,510 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		DEBUG_CLIPRDR(file_context->log, "Received file range for file \"%s\" with stream id %u",
 		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 	}
+
+	/* request_table is only accessed under the inode_table lock and owns fuse_request, so
+	 * keep what the reply needs and remove the request before releasing the lock */
+	const FuseLowlevelOperationType operation_type = fuse_request->operation_type;
+	fuse_req_t fuse_req = fuse_request->fuse_req;
+	HashTable_Remove(file_context->request_table,
+	                 (void*)(uintptr_t)file_contents_response->streamId);
 	HashTable_Unlock(file_context->inode_table);
 
-	switch (fuse_request->operation_type)
+	switch (operation_type)
 	{
 		case FUSE_LL_OPERATION_NONE:
 			break;
 		case FUSE_LL_OPERATION_LOOKUP:
-			fuse_reply_entry(fuse_request->fuse_req, &entry);
+			fuse_reply_entry(fuse_req, &entry);
 			break;
 		case FUSE_LL_OPERATION_GETATTR:
-			fuse_reply_attr(fuse_request->fuse_req, &entry.attr, entry.attr_timeout);
+			fuse_reply_attr(fuse_req, &entry.attr, entry.attr_timeout);
 			break;
 		case FUSE_LL_OPERATION_READ:
-			fuse_reply_buf(fuse_request->fuse_req,
-			               (const char*)file_contents_response->requestedData,
+			fuse_reply_buf(fuse_req, (const char*)file_contents_response->requestedData,
 			               file_contents_response->cbRequested);
 			break;
 		default:
 			break;
 	}
 
-	HashTable_Remove(file_context->request_table,
-	                 (void*)(uintptr_t)file_contents_response->streamId);
-
 	return CHANNEL_RC_OK;
+}
+#endif
+
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+/* The files of one server copy. Empty placeholders for them are on the pasteboard, the
+ * contents are downloaded when an application (the Finder) starts to read one of them.
+ * Owned by the pasteboard part, which calls apple_download() on its download queue only. */
+typedef struct
+{
+	CliprdrFileContext* file;
+	UINT32 generation; /* the server clipboard the files are from */
+	FILEDESCRIPTORW* files;
+	UINT32 count;
+	char** paths; /* the local path of every entry, nullptr if it can not be offered */
+	BYTE* done;   /* the entries downloaded already */
+} AppleOffer;
+
+static void apple_offer_free(void* userdata)
+{
+	AppleOffer* offer = userdata;
+	if (!offer)
+		return;
+
+	for (UINT32 x = 0; offer->paths && (x < offer->count); x++)
+		free(offer->paths[x]);
+	free(offer->paths);
+	free(offer->done);
+	free(offer->files);
+	free(offer);
+}
+
+static char* apple_descriptor_name(const FILEDESCRIPTORW* descriptor)
+{
+	WINPR_ASSERT(descriptor);
+	return ConvertWCharNToUtf8Alloc(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName),
+	                                nullptr);
+}
+
+static BOOL apple_is_directory(const FILEDESCRIPTORW* descriptor)
+{
+	WINPR_ASSERT(descriptor);
+	return (descriptor->dwFlags & FD_ATTRIBUTES) &&
+	       (descriptor->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+/* Map a server relative path (dir\file) to a local relative path (dir/file) */
+static char* apple_local_relative_path(const char* name)
+{
+	WINPR_ASSERT(name);
+
+	const size_t len = strlen(name);
+	if (len == 0)
+		return nullptr;
+
+	char* path = _strdup(name);
+	if (!path)
+		return nullptr;
+
+	size_t start = 0;
+	for (size_t x = 0; x <= len; x++)
+	{
+		if ((x < len) && (name[x] == '/'))
+			goto fail;
+		if ((x < len) && (name[x] != '\\'))
+			continue;
+
+		const char* component = &name[start];
+		const size_t clen = x - start;
+		if ((clen == 0) || ((clen == 1) && (component[0] == '.')) ||
+		    ((clen == 2) && (strncmp(component, "..", 2) == 0)))
+			goto fail;
+		if (x < len)
+			path[x] = '/';
+		start = x + 1;
+	}
+	return path;
+
+fail:
+	free(path);
+	return nullptr;
+}
+
+static BOOL apple_request_file_contents(CliprdrFileContext* file, UINT32 generation,
+                                        UINT32 listIndex, UINT32 flags, UINT64 offset, UINT32 size,
+                                        BYTE** pdata, UINT32* plen)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(plen);
+
+	*pdata = nullptr;
+	*plen = 0;
+
+	CLIPRDR_FILE_CONTENTS_REQUEST request = WINPR_C_ARRAY_INIT;
+	request.common.msgType = CB_FILECONTENTS_REQUEST;
+	request.listIndex = listIndex;
+	request.dwFlags = flags;
+	request.nPositionLow = (UINT32)(offset & 0xFFFFFFFF);
+	request.nPositionHigh = (UINT32)(offset >> 32);
+	request.cbRequested = size;
+
+	/* cliprdr_file_context_uninit() cancels under this lock and then waits for the download
+	 * queue, so the channel is valid for as long as this request is not cancelled. */
+	EnterCriticalSection(&file->apple_lock);
+	CliprdrClientContext* cliprdr = file->apple_cancelled ? nullptr : file->context;
+	if (!cliprdr || !cliprdr->ClientFileContentsRequest || (generation != file->apple_generation))
+	{
+		LeaveCriticalSection(&file->apple_lock);
+		return FALSE;
+	}
+	request.streamId = ++file->apple_stream_id;
+	file->apple_contents_success = FALSE;
+	free(file->apple_contents_data);
+	file->apple_contents_data = nullptr;
+	file->apple_contents_size = 0;
+	(void)ResetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+
+	if (cliprdr->ClientFileContentsRequest(cliprdr, &request) != CHANNEL_RC_OK)
+		return FALSE;
+
+	rdpContext* context = cliprdr->rdpcontext;
+	WINPR_ASSERT(context);
+
+	HANDLE hdl[2] = { freerdp_abort_event(context), file->apple_contents_event };
+	const UINT32 timeout = freerdp_settings_get_uint32(context->settings, FreeRDP_TcpAckTimeout);
+	if (WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, timeout) != WAIT_OBJECT_0 + 1)
+	{
+		WLog_Print(file->log, WLOG_ERROR, "no file contents reply for stream %" PRIu32,
+		           request.streamId);
+		return FALSE;
+	}
+
+	EnterCriticalSection(&file->apple_lock);
+	const BOOL rc = file->apple_contents_success && !file->apple_cancelled &&
+	                (generation == file->apple_generation);
+	if (rc)
+	{
+		*pdata = file->apple_contents_data;
+		*plen = file->apple_contents_size;
+		file->apple_contents_data = nullptr;
+		file->apple_contents_size = 0;
+	}
+	LeaveCriticalSection(&file->apple_lock);
+	return rc;
+}
+
+/* Fail the pending FILECONTENTS request and every later one */
+static void apple_cancel_downloads(CliprdrFileContext* file)
+{
+	WINPR_ASSERT(file);
+
+	EnterCriticalSection(&file->apple_lock);
+	file->apple_cancelled = TRUE;
+	file->apple_generation++;
+	(void)SetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+}
+
+static UINT
+cliprdr_file_context_apple_contents_response(CliprdrClientContext* cliprdr_context,
+                                             const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
+{
+	WINPR_ASSERT(cliprdr_context);
+	WINPR_ASSERT(response);
+
+	CliprdrFileContext* file = cliprdr_context->custom;
+	WINPR_ASSERT(file);
+
+	EnterCriticalSection(&file->apple_lock);
+	if (response->streamId != file->apple_stream_id)
+	{
+		/* A late reply to a request that already timed out */
+		WLog_Print(file->log, WLOG_WARN,
+		           "file contents response for stale stream %" PRIu32 ", ignoring",
+		           response->streamId);
+		LeaveCriticalSection(&file->apple_lock);
+		return CHANNEL_RC_OK;
+	}
+
+	BOOL success = (response->common.msgFlags & CB_RESPONSE_OK) &&
+	               !(response->common.msgFlags & CB_RESPONSE_FAIL);
+	if (success && response->requestedData && (response->cbRequested > 0))
+	{
+		file->apple_contents_data = malloc(response->cbRequested);
+		if (file->apple_contents_data)
+		{
+			memcpy(file->apple_contents_data, response->requestedData, response->cbRequested);
+			file->apple_contents_size = response->cbRequested;
+		}
+		else
+			success = FALSE;
+	}
+	file->apple_contents_success = success;
+	(void)SetEvent(file->apple_contents_event);
+	LeaveCriticalSection(&file->apple_lock);
+	return CHANNEL_RC_OK;
+}
+
+/* An application that copies the file (the Finder) keeps its modification time */
+static BOOL apple_set_write_time(const FILEDESCRIPTORW* descriptor, const char* path)
+{
+	WINPR_ASSERT(descriptor);
+	WINPR_ASSERT(path);
+
+	if ((descriptor->dwFlags & FD_WRITESTIME) == 0)
+		return TRUE;
+
+	const UINT64 filetime = ((1ull * descriptor->ftLastWriteTime.dwHighDateTime) << 32u) |
+	                        descriptor->ftLastWriteTime.dwLowDateTime;
+	UINT64 seconds = filetime / (10ULL * 1000ULL * 1000ULL);
+	const int32_t usec = (filetime % (10ll * 1000ll * 1000ll)) / 10ll;
+
+	if (seconds < WIN32_FILETIME_TO_UNIX_EPOCH)
+		seconds = 0;
+	else
+		seconds -= WIN32_FILETIME_TO_UNIX_EPOCH;
+
+	struct timeval times[2] = { { .tv_sec = (time_t)seconds, .tv_usec = usec },
+		                        { .tv_sec = (time_t)seconds, .tv_usec = usec } };
+	return utimes(path, times) == 0;
+}
+
+static BOOL apple_download_file(CliprdrFileContext* file, UINT32 generation, UINT32 listIndex,
+                                const FILEDESCRIPTORW* descriptor, const char* path)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(descriptor);
+	WINPR_ASSERT(path);
+
+	UINT64 size = 0;
+	if (descriptor->dwFlags & FD_FILESIZE)
+		size = ((UINT64)descriptor->nFileSizeHigh << 32) | descriptor->nFileSizeLow;
+	else
+	{
+		BYTE* data = nullptr;
+		UINT32 len = 0;
+		const BOOL rc = apple_request_file_contents(file, generation, listIndex, FILECONTENTS_SIZE,
+		                                            0, sizeof(UINT64), &data, &len);
+		if (rc && (len >= sizeof(UINT64)))
+			memcpy(&size, data, sizeof(size));
+		free(data);
+		if (!rc || (len < sizeof(UINT64)))
+			return FALSE;
+	}
+
+	FILE* fp = winpr_fopen(path, "wb");
+	if (!fp)
+		return FALSE;
+
+	BOOL rc = TRUE;
+	const UINT32 chunk = 1024 * 1024;
+	for (UINT64 offset = 0; offset < size;)
+	{
+		const UINT32 requested = (size - offset < chunk) ? (UINT32)(size - offset) : chunk;
+		BYTE* data = nullptr;
+		UINT32 len = 0;
+		if (!apple_request_file_contents(file, generation, listIndex, FILECONTENTS_RANGE, offset,
+		                                 requested, &data, &len) ||
+		    (len == 0) || (len > requested) || (fwrite(data, 1, len, fp) != len))
+		{
+			free(data);
+			rc = FALSE;
+			break;
+		}
+		free(data);
+		offset += len;
+	}
+
+	if (fclose(fp) != 0)
+		rc = FALSE;
+	if (!rc)
+		(void)winpr_DeleteFile(path);
+	else if (!apple_set_write_time(descriptor, path))
+		WLog_Print(file->log, WLOG_WARN, "failed to set the modification time of %s", path);
+	return rc;
+}
+
+/* Download file x unless that was done already. A file that is not complete is removed:
+ * better no file than an empty one. A later read creates and downloads it again. */
+static BOOL apple_download_entry(AppleOffer* offer, UINT32 x)
+{
+	WINPR_ASSERT(offer);
+
+	if (offer->done[x])
+		return TRUE;
+
+	if (!apple_download_file(offer->file, offer->generation, x, &offer->files[x], offer->paths[x]))
+	{
+		WLog_Print(offer->file->log, WLOG_ERROR, "failed to download %s", offer->paths[x]);
+		(void)winpr_DeleteFile(offer->paths[x]);
+		return FALSE;
+	}
+	offer->done[x] = 1;
+	return TRUE;
+}
+
+/* Called on the download queue when an application starts to read entry index: download
+ * the file, or every file below the directory. The reader waits until this returns. */
+static BOOL apple_download(void* userdata, size_t index)
+{
+	AppleOffer* offer = userdata;
+	WINPR_ASSERT(offer);
+
+	if ((index >= offer->count) || !offer->paths[index])
+		return FALSE;
+
+	if (!apple_is_directory(&offer->files[index]))
+		return apple_download_entry(offer, (UINT32)index);
+
+	const char* top = offer->paths[index];
+	const size_t toplen = strlen(top);
+
+	BOOL rc = TRUE;
+	for (UINT32 x = 0; x < offer->count; x++)
+	{
+		const char* path = offer->paths[x];
+		if (!path || apple_is_directory(&offer->files[x]) || (strncmp(path, top, toplen) != 0) ||
+		    (path[toplen] != '/'))
+			continue;
+
+		/* After a failure keep what was downloaded, but leave no empty files behind */
+		if (rc)
+			rc = apple_download_entry(offer, x);
+		else if (!offer->done[x])
+			(void)winpr_DeleteFile(path);
+	}
+	return rc;
+}
+
+/* Create the directory, or an empty placeholder for the file */
+static BOOL apple_create_placeholder(const FILEDESCRIPTORW* descriptor, char* path)
+{
+	WINPR_ASSERT(descriptor);
+	WINPR_ASSERT(path);
+
+	if (apple_is_directory(descriptor))
+		return winpr_PathMakePath(path, nullptr);
+
+	char* slash = strrchr(path, '/');
+	WINPR_ASSERT(slash);
+	*slash = '\0';
+	const BOOL parent = winpr_PathMakePath(path, nullptr);
+	*slash = '/';
+	if (!parent)
+		return FALSE;
+
+	FILE* fp = winpr_fopen(path, "wb");
+	if (!fp)
+		return FALSE;
+	if (fclose(fp) != 0)
+		return FALSE;
+	/* The Finder may read the attributes of the files below a directory before their
+	 * contents: the placeholder already has the modification time of the server file */
+	(void)apple_set_write_time(descriptor, path);
+	return TRUE;
+}
+
+/* Parse the server file list and create the placeholders below dir */
+static AppleOffer* apple_offer_new(CliprdrFileContext* file, UINT32 generation, const void* data,
+                                   size_t size, const char* dir)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(dir);
+
+	if (size > UINT32_MAX)
+		return nullptr;
+
+	AppleOffer* offer = calloc(1, sizeof(AppleOffer));
+	if (!offer)
+		return nullptr;
+	offer->file = file;
+	offer->generation = generation;
+
+	if (cliprdr_parse_file_list(data, (UINT32)size, &offer->files, &offer->count) != 0)
+		goto fail;
+	if (offer->count == 0)
+		goto fail;
+
+	offer->paths = calloc(offer->count, sizeof(char*));
+	offer->done = calloc(offer->count, sizeof(BYTE));
+	if (!offer->paths || !offer->done)
+		goto fail;
+
+	for (UINT32 x = 0; x < offer->count; x++)
+	{
+		char* name = apple_descriptor_name(&offer->files[x]);
+		char* relative = name ? apple_local_relative_path(name) : nullptr;
+		if (!relative)
+		{
+			WLog_Print(file->log, WLOG_WARN, "skipping invalid server file name %s",
+			           name ? name : "(null)");
+			free(name);
+			continue;
+		}
+		free(name);
+
+		size_t pathlen = 0;
+		const int rc = winpr_asprintf(&offer->paths[x], &pathlen, "%s/%s", dir, relative);
+		free(relative);
+		if (rc < 0)
+		{
+			offer->paths[x] = nullptr;
+			goto fail;
+		}
+		if (!apple_create_placeholder(&offer->files[x], offer->paths[x]))
+		{
+			/* e.g. a name that is too long here: offer the other files */
+			WLog_Print(file->log, WLOG_WARN, "skipping %s, failed to create it", offer->paths[x]);
+			free(offer->paths[x]);
+			offer->paths[x] = nullptr;
+		}
+	}
+	return offer;
+
+fail:
+	apple_offer_free(offer);
+	return nullptr;
+}
+
+/* Put the server files on the pasteboard, the pasteboard part takes the offer */
+static BOOL apple_offer_server_files(CliprdrFileContext* file, UINT32 generation, const void* data,
+                                     size_t size, const char** mime_types, size_t mime_count,
+                                     cliprdr_file_context_data_fkt fkt, void* userdata)
+{
+	WINPR_ASSERT(file);
+
+	char* dir = cliprdr_file_apple_new_download_dir();
+	if (!dir)
+		return FALSE;
+
+	BOOL rc = FALSE;
+	BOOL taken = FALSE;
+	size_t* top_level = nullptr;
+	BOOL* present = nullptr;
+	size_t top_level_count = 0;
+	AppleOffer* offer = apple_offer_new(file, generation, data, size, dir);
+	if (!offer)
+		goto fail;
+
+	top_level = calloc(offer->count, sizeof(size_t));
+	present = calloc(offer->count, sizeof(BOOL));
+	if (!top_level || !present)
+		goto fail;
+
+	for (UINT32 x = 0; x < offer->count; x++)
+	{
+		if (!offer->paths[x])
+			continue;
+
+		/* Only the top level entries are on the pasteboard. An application reading a
+		 * directory might announce that for the directory or for the files in it. */
+		const BOOL top = (strchr(offer->paths[x] + strlen(dir) + 1, '/') == nullptr);
+		if (top)
+			top_level[top_level_count++] = x;
+		present[x] = top || !apple_is_directory(&offer->files[x]);
+	}
+	if (top_level_count == 0)
+		goto fail;
+
+	WLog_Print(file->log, WLOG_DEBUG, "offering %" PRIuz " server files (%" PRIu32 " entries)",
+	           top_level_count, offer->count);
+	taken = TRUE;
+	rc = cliprdr_file_apple_offer(dir, (const char**)offer->paths, present, offer->count, top_level,
+	                              top_level_count, apple_download, apple_offer_free, offer,
+	                              mime_types, mime_count, fkt, userdata);
+	offer = nullptr;
+
+fail:
+	if (!taken)
+		(void)winpr_RemoveDirectory_RecursiveA(dir);
+	apple_offer_free(offer);
+	free(top_level);
+	free(present);
+	free(dir);
+	return rc;
 }
 #endif
 
@@ -1516,10 +2113,12 @@ static UINT cliprdr_file_context_server_file_range_request(
 
 	WINPR_ASSERT(fileContentsRequest);
 
-	HashTable_Lock(file->local_streams);
-	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
-	                      ((UINT64)fileContentsRequest->nPositionLow);
+	const UINT64 offset = ((1ull * fileContentsRequest->nPositionHigh) << 32) |
+	                      (1ull * fileContentsRequest->nPositionLow);
+	if (offset > INT64_MAX)
+		return ERROR_INVALID_DATA;
 
+	HashTable_Lock(file->local_streams);
 	CliprdrLocalFile* rfile =
 	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
 	if (!rfile)
@@ -1664,6 +2263,12 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 
 	CliprdrFuseFile* root_dir = fuse_file_new_root(file);
 	return root_dir != nullptr;
+#elif defined(WITH_CLIPRDR_FILE_APPLE)
+	cliprdr->ServerFileContentsResponse = cliprdr_file_context_apple_contents_response;
+	EnterCriticalSection(&file->apple_lock);
+	file->apple_cancelled = FALSE;
+	LeaveCriticalSection(&file->apple_lock);
+	return TRUE;
 #else
 	return TRUE;
 #endif
@@ -1701,6 +2306,11 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 			return FALSE;
 	}
 #endif
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	/* A download uses the channel: fail it, then wait until the download queue is idle */
+	apple_cancel_downloads(file);
+	cliprdr_file_apple_detach();
+#endif
 
 	HashTable_Clear(file->local_streams);
 
@@ -1709,8 +2319,8 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 
 	if (cliprdr)
 	{
-#if defined(WITH_FUSE)
-	cliprdr->ServerFileContentsResponse = nullptr;
+#if defined(WITH_FUSE) || defined(WITH_CLIPRDR_FILE_APPLE)
+		cliprdr->ServerFileContentsResponse = nullptr;
 #endif
 	}
 
@@ -1910,7 +2520,7 @@ static BOOL selection_handle_file(CliprdrFileContext* file_context,
 		fuse_file->is_readonly = TRUE;
 	if (file->dwFlags & FD_FILESIZE)
 	{
-		fuse_file->size = ((UINT64)file->nFileSizeHigh << 32) + file->nFileSizeLow;
+		fuse_file->size = (1ull * file->nFileSizeHigh << 32) + 1ull * file->nFileSizeLow;
 		fuse_file->has_size = TRUE;
 	}
 	if (file->dwFlags & FD_WRITESTIME)
@@ -1948,7 +2558,9 @@ end:
 	if (!crc)
 	{
 		fuse_file_free(fuse_file);
-		return clear_entry_selection(clip_data_entry);
+		if (!clear_entry_selection(clip_data_entry))
+			WLog_Print(file_context->log, WLOG_WARN, "failed to clear selection");
+		return FALSE;
 	}
 	return TRUE;
 }
@@ -2026,6 +2638,15 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	if (size > UINT32_MAX)
 		return FALSE;
 
+	/* paths below the mount point would lead nowhere: without a base there are none */
+	if (InterlockedCompareExchange(&file_context->fuse_failed, 0, 0) != 0)
+	{
+		wClipboardDelegate* delegate = ClipboardGetDelegate(clip);
+		WINPR_ASSERT(delegate);
+		delegate->basePath = nullptr;
+		return FALSE;
+	}
+
 	if (cliprdr_parse_file_list(data, (UINT32)size, &files, &n_files))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to parse file list");
@@ -2040,7 +2661,13 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	else
 		clip_data_entry = file_context->clip_data_entry_without_id;
 
-	WINPR_ASSERT(clip_data_entry);
+	/* The entry is prepared when the server format list arrives. It is gone if the clipboard
+	 * owner or the server capabilities changed since then. */
+	if (!clip_data_entry)
+	{
+		WLog_Print(file_context->log, WLOG_WARN, "No clipDataEntry for the server file list");
+		goto fail;
+	}
 
 	if (!clear_entry_selection(clip_data_entry))
 		goto fail;
@@ -2130,6 +2757,20 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	HashTable_Free(file->inode_table);
 
 #endif
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	if (file->apple_contents_event)
+	{
+		/* An offer made after cliprdr_file_context_uninit() still refers to this context */
+		apple_cancel_downloads(file);
+		cliprdr_file_apple_detach();
+	}
+	free(file->apple_contents_data);
+	if (file->apple_contents_event)
+	{
+		(void)CloseHandle(file->apple_contents_event);
+		DeleteCriticalSection(&file->apple_lock);
+	}
+#endif
 	HashTable_Free(file->local_streams);
 	winpr_RemoveDirectory(file->path);
 	free(file->path);
@@ -2141,11 +2782,19 @@ static BOOL create_base_path(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 
-	char base[64] = WINPR_C_ARRAY_INIT;
-	(void)_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32,
-	                GetCurrentProcessId());
+	const char* details = freerdp_getApplicationDetailsString();
+	WINPR_ASSERT(details);
+
+	/* Multiple RDP sessions can share a process, so include the clipboard
+	 * context address to keep their FUSE mount points separate. */
+	char* base = nullptr;
+	size_t blen = 0;
+	winpr_asprintf(&base, &blen, "%s.%" PRIu32 ".%p", details, GetCurrentProcessId(), (void*)file);
+	if (!base)
+		return FALSE;
 
 	file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
+	winpr_znfree(base, blen);
 	if (!file->path)
 		return FALSE;
 
@@ -2181,7 +2830,7 @@ static BOOL cliprdr_local_file_new(CliprdrFileContext* context, CliprdrLocalFile
 
 	*f = empty;
 	f->context = context;
-	f->name = winpr_str_url_decode(path, strlen(path));
+	f->name = _strdup(path);
 	if (!f->name)
 		goto fail;
 
@@ -2491,6 +3140,16 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	if (!create_base_path(file))
 		goto fail;
 
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	if (!InitializeCriticalSectionAndSpinCount(&file->apple_lock, 4000))
+		goto fail;
+	if (!(file->apple_contents_event = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
+	{
+		DeleteCriticalSection(&file->apple_lock);
+		goto fail;
+	}
+#endif
+
 #if defined(WITH_FUSE)
 	if (!(file->fuse_start_sync = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail;
@@ -2608,11 +3267,70 @@ UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file)
 
 BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
 {
-	WINPR_UNUSED(file);
-
 #if defined(WITH_FUSE)
-	return TRUE;
+	WINPR_ASSERT(file);
+	return InterlockedCompareExchange(&file->fuse_failed, 0, 0) == 0;
 #else
+	WINPR_UNUSED(file);
 	return FALSE;
+#endif
+}
+
+BOOL cliprdr_file_context_set_local_clipboard_data(CliprdrFileContext* file,
+                                                   cliprdr_file_context_data_fkt fkt,
+                                                   void* userdata, const char** mime_types,
+                                                   size_t count)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(fkt);
+	WINPR_ASSERT(mime_types || (count == 0));
+
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	if (!file->context)
+		return FALSE;
+
+	BOOL files = FALSE;
+	for (size_t x = 0; x < count; x++)
+	{
+		if (mime_types[x] && (strcmp(mime_types[x], "text/uri-list") == 0))
+			files = TRUE;
+	}
+	if (!files)
+		return FALSE;
+
+	/* Taken before the file list: if the server clipboard changes meanwhile, the offer is
+	 * outdated and must not download anything */
+	EnterCriticalSection(&file->apple_lock);
+	const UINT32 generation = file->apple_generation;
+	LeaveCriticalSection(&file->apple_lock);
+
+	/* Only the file list is fetched now, the contents follow when the files are read */
+	size_t size = 0;
+	const void* data = fkt(userdata, "FileGroupDescriptorW", &size);
+	if (!data)
+		return FALSE;
+
+	return apple_offer_server_files(file, generation, data, size, mime_types, count, fkt, userdata);
+#else
+	WINPR_UNUSED(file);
+	WINPR_UNUSED(fkt);
+	WINPR_UNUSED(userdata);
+	WINPR_UNUSED(mime_types);
+	WINPR_UNUSED(count);
+	return FALSE;
+#endif
+}
+
+char* cliprdr_file_context_get_local_uri_list(CliprdrFileContext* file, size_t* size)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(size);
+
+	*size = 0;
+#if defined(WITH_CLIPRDR_FILE_APPLE)
+	return cliprdr_file_apple_get_uri_list(size);
+#else
+	WINPR_UNUSED(file);
+	return nullptr;
 #endif
 }

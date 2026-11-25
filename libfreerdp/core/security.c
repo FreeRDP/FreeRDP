@@ -399,6 +399,7 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
 		goto out;
 
+	WINPR_ASSERT(rdp->rc4_key_len <= sizeof(rdp->sign_key));
 	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
 
@@ -421,6 +422,7 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
 		goto out;
 
+	WINPR_ASSERT(rdp->rc4_key_len <= sizeof(rdp->sign_key));
 	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
 
@@ -484,6 +486,7 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
 		goto out;
 
+	WINPR_ASSERT(rdp->rc4_key_len <= sizeof(rdp->sign_key));
 	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
 
@@ -509,6 +512,7 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
 		goto out;
 
+	WINPR_ASSERT(rdp->rc4_key_len <= sizeof(rdp->sign_key));
 	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
 		goto out;
 
@@ -623,8 +627,6 @@ BOOL security_establish_keys(rdpRdp* rdp)
 
 	const BYTE* server_random = freerdp_settings_get_pointer(settings, FreeRDP_ServerRandom);
 	const BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
-	WINPR_ASSERT(client_random);
-	WINPR_ASSERT(server_random);
 
 	const UINT32 ClientRandomLength =
 	    freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength);
@@ -632,9 +634,11 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	    freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength);
 	/* The server random is peer supplied (gcc_read_server_security_data rejects only a length
 	 * of 0) while both randoms are consumed below as fixed 32 byte values, so a shorter buffer
-	 * would be read past its end. WINPR_ASSERT is compiled out in release builds, enforce the
-	 * length at runtime. */
-	if ((ClientRandomLength != 32) || (ServerRandomLength != 32))
+	 * would be read past its end. It is missing altogether if the server did not send a security
+	 * data block. WINPR_ASSERT is compiled out in release builds and aborts in all others, enforce
+	 * presence and length at runtime. */
+	if (!client_random || !server_random || (ClientRandomLength != 32) ||
+	    (ServerRandomLength != 32))
 	{
 		WLog_ERR(TAG, "invalid client (%" PRIu32 ") or server (%" PRIu32 ") random length",
 		         ClientRandomLength, ServerRandomLength);
@@ -845,6 +849,7 @@ BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 
 	if (rdp->encrypt_use_count >= 4096)
 	{
+		WINPR_ASSERT(rdp->rc4_key_len <= sizeof(rdp->encrypt_update_key));
 		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
 			goto fail;
 
@@ -877,6 +882,7 @@ BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 
 	if (rdp->decrypt_use_count >= 4096)
 	{
+		WINPR_ASSERT(rdp->rc4_key_len <= sizeof(rdp->encrypt_update_key));
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
 			goto fail;
 
@@ -933,12 +939,34 @@ out:
 	return result;
 }
 
+/* The 3DES CBC contexts live as long as the connection and have padding disabled. An incomplete
+ * block would be kept in the context and prepended to the data of the next call, which then
+ * writes more output than it got input. The sender pads the data to whole blocks (padlen). */
+static BOOL security_fips_check_length(size_t length)
+{
+	if ((length % 8) != 0)
+	{
+		WLog_ERR(TAG, "FIPS data length %" PRIuz " is not a multiple of the 3DES block size",
+		         length);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 {
 	BOOL rc = FALSE;
 	size_t olen = 0;
 
+	if (!security_fips_check_length(length))
+		goto fail;
+
+	if (!rdp->fips_encrypt)
+		goto fail;
 	if (!winpr_Cipher_Update(rdp->fips_encrypt, data, length, data, &olen))
+		goto fail;
+
+	if (olen != length)
 		goto fail;
 
 	rdp->encrypt_use_count++;
@@ -958,10 +986,13 @@ BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 		return FALSE;
 	}
 
+	if (!security_fips_check_length(length))
+		return FALSE;
+
 	if (!winpr_Cipher_Update(rdp->fips_decrypt, data, length, data, &olen))
 		return FALSE;
 
-	return TRUE;
+	return olen == length;
 }
 
 BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig, size_t sig_len,

@@ -101,7 +101,7 @@ static BOOL json_get_object(wLog* wlog, WINPR_JSON* json, const char* key, WINPR
 	return TRUE;
 }
 
-static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, double* result)
+static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, UINT64* result)
 {
 	BOOL rc = FALSE;
 	WINPR_JSON* prop = nullptr;
@@ -114,7 +114,7 @@ static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, doubl
 		goto fail;
 	}
 
-	*result = WINPR_JSON_GetNumberValue(prop);
+	*result = WINPR_JSON_GetUIntegerValue(prop);
 
 	rc = TRUE;
 fail:
@@ -226,8 +226,8 @@ static BOOL aad_get_nonce(rdpAad* aad)
 		return FALSE;
 	}
 
-	if (!freerdp_http_request(url, "grant_type=srv_challenge", &resp_code, &response,
-	                          &response_length))
+	if (!freerdp_http_request_context(aad->rdpcontext, url, "grant_type=srv_challenge", &resp_code,
+	                                  &response, &response_length))
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "nonce request failed");
 		goto fail;
@@ -564,7 +564,7 @@ fail:
 static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 {
 	int rc = -1;
-	double result = 0;
+	UINT64 result = 0;
 	DWORD error_code = 0;
 	WINPR_JSON* json = nullptr;
 	const char* jstr = Stream_PointerAs(s, char);
@@ -790,7 +790,7 @@ int aad_client_begin(rdpAad* aad)
 	return -1;
 }
 
-int aad_recv(rdpAad* aad, wStream* s)
+int aad_recv(rdpAad* aad, WINPR_ATTR_UNUSED wStream* s)
 {
 	WINPR_ASSERT(aad);
 	WLog_Print(aad->log, WLOG_ERROR, "AAD security not compiled in, aborting!");
@@ -894,6 +894,7 @@ cleanup:
 	return token;
 }
 
+#if defined(WITH_AAD)
 BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 {
 	WINPR_ASSERT(context);
@@ -911,9 +912,10 @@ BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 	const char* tenantid = "common";
 	if (useTenant)
 		tenantid = freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdAadtenantid);
-	rdp->wellknown = freerdp_utils_aad_get_wellknown(log, base, tenantid);
+	rdp->wellknown = freerdp_utils_aad_get_wellknown_context(context, log, base, tenantid);
 	return rdp->wellknown != nullptr;
 }
+#endif
 
 const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)
 {
@@ -1008,13 +1010,15 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 	return WINPR_JSON_GetObjectItemCaseSensitive(context->rdp->wellknown, which);
 }
 
-WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-WINPR_ATTR_NODISCARD
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
 {
 	WINPR_ASSERT(base);
 	WINPR_ASSERT(tenantid);
 
+	WLog_Print(log, WLOG_ERROR,
+	           "This function is deprecated, use freerdp_utils_aad_get_wellknown_context instead. "
+	           "Certificate checks are not properly performed when using this function");
 	char* str = nullptr;
 	size_t len = 0;
 	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", base,
@@ -1041,11 +1045,54 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const c
 	free(str);
 
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
-	free(response);
 
 	if (!json)
 		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON: %s",
 		           WINPR_JSON_GetErrorPtr());
+	free(response);
+
+	return json;
+}
+#endif
+
+WINPR_JSON* freerdp_utils_aad_get_wellknown_context(rdpContext* context, wLog* log,
+                                                    const char* base, const char* tenantid)
+{
+	WINPR_ASSERT(base);
+	WINPR_ASSERT(tenantid);
+
+	char* str = nullptr;
+	size_t len = 0;
+	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", base,
+	               tenantid);
+
+	if (!str)
+	{
+		WLog_Print(log, WLOG_ERROR, "failed to create request URL for tenantid='%s'", tenantid);
+		return nullptr;
+	}
+
+	BYTE* response = nullptr;
+	long resp_code = 0;
+	size_t response_length = 0;
+	const BOOL rc = freerdp_http_request_context(context, str, nullptr, &resp_code, &response,
+	                                             &response_length);
+	if (!rc || (resp_code != HTTP_STATUS_OK))
+	{
+		WLog_Print(log, WLOG_ERROR, "request for '%s' failed with: %s", str,
+		           freerdp_http_status_string(resp_code));
+		free(str);
+		free(response);
+		return nullptr;
+	}
+	free(str);
+
+	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
+
+	if (!json)
+		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON: %s",
+		           WINPR_JSON_GetErrorPtr());
+	free(response);
 
 	return json;
 }

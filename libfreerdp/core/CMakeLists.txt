@@ -91,6 +91,8 @@ set(${MODULE_PREFIX}_SRCS
     orders.c
     orders.h
     freerdp.c
+    plugin_services.c
+    plugin_services.h
     graphics.c
     client.c
     client.h
@@ -110,6 +112,7 @@ set(${MODULE_PREFIX}_SRCS
     heartbeat.h
     multitransport.c
     multitransport.h
+    multitransport_internal.h
     timezone.c
     timezone.h
     childsession.c
@@ -149,11 +152,44 @@ set(${MODULE_PREFIX}_SRCS
     rdstls.h
     aad.c
     aad.h
+    aad_cloud.c
+    aad_cloud.h
     timer.c
     timer.h
 )
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
+
+if(WITH_RDPEUDP)
+  if(WITH_LIBRESSL OR NOT OPENSSL_FOUND)
+    message(FATAL_ERROR "-DWITH_RDPEUDP=ON requires OpenSSL, it does not work with LibreSSL")
+  endif()
+  include(WarnExperimental)
+  warn_experimental("UDP multitransport" "-DWITH_RDPEUDP=OFF")
+  list(
+    APPEND
+    ${MODULE_PREFIX}_SRCS
+    rdpudp.c
+    rdpudp.h
+    rdpemt.c
+    rdpemt.h
+    udplistener.h
+  )
+  if(WITH_RDPEUDP_SERVER)
+    list(
+      APPEND
+      ${MODULE_PREFIX}_SRCS
+      udplistener.c
+      udplistener_internal.h
+      udplistener_relay.c
+      udpflow.c
+      udpsocket.c
+      multitransport_server.c
+      server_tunnel.c
+      server_tunnel.h
+    )
+  endif()
+endif()
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
@@ -165,6 +201,6 @@ endif()
 freerdp_library_add(${OPENSSL_LIBRARIES})
 freerdp_pc_add_requires_private("libssl")
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

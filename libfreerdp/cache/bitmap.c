@@ -80,7 +80,7 @@ static BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	if (!bitmap)
 		return TRUE;
 
-	const BYTE style = WINPR_ASSERTING_INT_CAST(UINT8, brush->style);
+	const rdpBrush save = *brush;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -94,7 +94,7 @@ static BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	mem3blt->bitmap = bitmap;
 	IFCALLRET(cache->bitmap->Mem3Blt, ret, context, mem3blt);
-	brush->style = style;
+	*brush = save;
 	return ret;
 }
 
@@ -422,6 +422,9 @@ BOOL bitmap_cache_resize(rdpBitmapCache* bitmapCache)
 	{
 		const BITMAP_CACHE_V2_CELL_INFO* info =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, i);
+		if (!info)
+			return FALSE;
+
 		BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
 		UINT32 nr = info->numEntries;
 		/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */

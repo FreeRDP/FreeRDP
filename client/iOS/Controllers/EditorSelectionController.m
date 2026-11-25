@@ -22,7 +22,7 @@
                        entries:(NSArray *)entries
                     selections:(NSArray *)selections
 {
-	self = [super initWithStyle:UITableViewStyleGrouped];
+	self = [super initWithStyle:UITableViewStyleInsetGrouped];
 	if (self)
 	{
 		_params = [params retain];

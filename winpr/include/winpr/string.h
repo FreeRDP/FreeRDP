@@ -73,6 +73,25 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_str_is_valid_urlN(const char* str, size_t len);
 
+	/** @brief checks if a string is a valid FQDN/hostname
+	 *
+	 *  @param str The string to check
+	 *  @return \b TRUE if valid, \b FALSE otherwise
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL winpr_str_is_valid_hostname(const char* str);
+
+	/** @brief checks if a string is a valid FQDN/hostname
+	 *
+	 *  @param str The string to check
+	 *  @param len The length of the string in bytes
+	 *  @return \b TRUE if valid, \b FALSE otherwise
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL winpr_str_is_valid_hostnameN(const char* str, size_t len);
+
 	/** @brief checks if a string contains newlines
 	 *
 	 *  @param str The string to check
@@ -166,9 +185,9 @@ extern "C"
 
 	/**! @brief _wcschr for non '\0' terminated strings
 	 *
-	 * @param str The string to search in
+	 * @param str The string to search in (UTF-16LE)
 	 * @param charLen The length of the string in characters
-	 * @param c The character to search for
+	 * @param c The character to search for (UTF-16LE)
 	 * @return A pointer to the first location found or NULL
 	 * @since version 3.32.0
 	 */
@@ -177,9 +196,9 @@ extern "C"
 
 	/**! @brief _wcrschr for non '\0' terminated strings
 	 *
-	 * @param str The string to search in
+	 * @param str The string to search in (UTF-16LE)
 	 * @param charLen The length of the string in characters
-	 * @param c The character to search for
+	 * @param c The character to search for (UTF-16LE)
 	 * @return A pointer to the first location found or NULL
 	 * @since version 3.32.0
 	 */

@@ -36,6 +36,10 @@
 #include "dsp_fdk_aac.h"
 #endif
 
+#if defined(WITH_MEDIACODEC)
+#include "dsp_mediacodec.h"
+#endif
+
 #if !defined(WITH_DSP_FFMPEG)
 #if defined(WITH_GSM)
 #include <gsm/gsm.h>
@@ -104,6 +108,8 @@ struct S_FREERDP_DSP_CONTEXT
 #if defined(WITH_OPUS)
 	OpusDecoder* opus_decoder;
 	OpusEncoder* opus_encoder;
+	wStream* opus_input;       /* samples not encoded yet */
+	size_t opus_packet_frames; /* the shortest packet to encode */
 #endif
 #if defined(WITH_FAAD2)
 	NeAACDecHandle faad;
@@ -258,6 +264,12 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	}
 
 #if defined(WITH_SOXR)
+	if (srcFormat->wBitsPerSample != 16)
+	{
+		WLog_ERR(TAG, "requires 16 bit samples for input, got %" PRIu16, srcFormat->wBitsPerSample);
+		return FALSE;
+	}
+
 	const size_t srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
 	const size_t dstBytesPerFrame = (context->common.format.wBitsPerSample > 8) ? 2 : 1;
 	const size_t srcChannels = srcFormat->nChannels;
@@ -266,9 +278,9 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	const size_t sframes = size / sbytes;
 	const size_t rbytes = dstBytesPerFrame * dstChannels;
 	/* Integer rounding correct division */
-	const size_t rframes =
-	    (sframes * context->common.format.nSamplesPerSec + (srcFormat->nSamplesPerSec + 1) / 2) /
-	    srcFormat->nSamplesPerSec;
+	const size_t rframes = (sframes * context->common.format.nSamplesPerSec +
+	                        (context->common.format.nSamplesPerSec + 1) / 2) /
+	                       context->common.format.nSamplesPerSec;
 	const size_t rsize = rframes * rbytes;
 
 	if (!Stream_EnsureCapacity(context->common.resample, rsize))
@@ -485,6 +497,8 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 }
 
 #if defined(WITH_GSM)
+#define GSM_FRAME_SAMPLES 160
+
 static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT src, size_t size,
                                       wStream* WINPR_RESTRICT out)
@@ -493,7 +507,16 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 
 	while (offset < size)
 	{
-		gsm_signal gsmBlockBuffer[160] = WINPR_C_ARRAY_INIT;
+		/* gsm_decode(GSM_OPT_WAV49) requires alternating fixed 33/32 bytes as input.
+		 * It keeps track of that across calls, a previous call might have ended with 33 bytes.
+		 * abort if the data supplied was inconsistent.
+		 */
+		const BOOL large = gsm_option(context->gsm, GSM_OPT_FRAME_INDEX, nullptr) == 0;
+		const size_t toadd = large ? 33 : 32;
+		if (size - offset < toadd)
+			return FALSE;
+
+		gsm_signal gsmBlockBuffer[GSM_FRAME_SAMPLES] = WINPR_C_ARRAY_INIT;
 		const int rc =
 		    gsm_decode(context->gsm,
 		               WINPR_CAST_CONST_PTR_AWAY(/* API does not modify */ &src[offset], gsm_byte*),
@@ -502,10 +525,7 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 		if (rc < 0)
 			return FALSE;
 
-		if ((offset % 65) == 0)
-			offset += 33;
-		else
-			offset += 32;
+		offset += toadd;
 
 		if (!Stream_EnsureRemainingCapacity(out, sizeof(gsmBlockBuffer)))
 			return FALSE;
@@ -516,32 +536,44 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 	return TRUE;
 }
 
+/*
+ * gsm_encode() always reads GSM_FRAME_SAMPLES samples, but callers hand over what their capture
+ * device delivered. With GSM_OPT_WAV49 two frames of 32 and 33 bytes form one block (nBlockAlign)
+ * and every packet starts with a new block. Collect the samples, only encode whole blocks and keep
+ * the rest for the next call. Nothing is written until enough samples arrived.
+ */
 static BOOL freerdp_dsp_encode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT src, size_t size,
                                       wStream* WINPR_RESTRICT out)
 {
-	size_t offset = 0;
+	wStream* input = context->common.buffer;
+	const size_t blockSize = 2 * GSM_FRAME_SAMPLES * sizeof(gsm_signal);
+	const size_t blockBytes = 32 + 33;
 
-	while (offset < size)
+	if (!Stream_EnsureRemainingCapacity(input, size))
+		return FALSE;
+	Stream_Write(input, src, size);
+
+	const size_t blocks = Stream_GetPosition(input) / blockSize;
+	if (!Stream_EnsureRemainingCapacity(out, blocks * blockBytes))
+		return FALSE;
+
+	gsm_signal* signal = Stream_BufferAs(input, gsm_signal);
+	for (size_t x = 0; x < blocks; x++)
 	{
-		const gsm_signal* signal = WINPR_PACKED_ALIGN_CAST(const gsm_signal*, &src[offset]);
+		gsm_encode(context->gsm, signal, Stream_Pointer(out));
+		Stream_Seek(out, 32);
+		signal += GSM_FRAME_SAMPLES;
 
-		if (!Stream_EnsureRemainingCapacity(out, sizeof(gsm_frame)))
-			return FALSE;
-
-		gsm_encode(context->gsm,
-		           WINPR_CAST_CONST_PTR_AWAY(/* API does not modify */ signal, gsm_signal*),
-		           Stream_Pointer(out));
-
-		if ((offset % 65) == 0)
-			Stream_Seek(out, 33);
-		else
-			Stream_Seek(out, 32);
-
-		offset += 160;
+		gsm_encode(context->gsm, signal, Stream_Pointer(out));
+		Stream_Seek(out, 33);
+		signal += GSM_FRAME_SAMPLES;
 	}
 
-	return TRUE;
+	const size_t used = blocks * blockSize;
+	const size_t left = Stream_GetPosition(input) - used;
+	memmove(Stream_Buffer(input), Stream_Buffer(input) + used, left);
+	return Stream_SetPosition(input, left);
 }
 #endif
 
@@ -553,9 +585,13 @@ static BOOL valid_mp3_format(const FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 		return FALSE;
 	if (context->common.format.nChannels < 1)
 		return FALSE;
+	if (context->common.format.nChannels > 128) // Arbitrary upper bound, way out of anything in use
+		return FALSE;
 	if (context->common.format.wBitsPerSample == 0)
 		return FALSE;
 	if (context->common.format.nSamplesPerSec == 0)
+		return FALSE;
+	if (context->common.format.nSamplesPerSec > SIZE_MAX / 4ull / context->common.format.nChannels)
 		return FALSE;
 	return TRUE;
 }
@@ -564,24 +600,44 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                    const BYTE* WINPR_RESTRICT src, size_t size,
                                    wStream* WINPR_RESTRICT out)
 {
+	/* constant from lame source. This is the definition used in hip_decode1_headersB as output
+	 * buffer length.
+	 */
+	const size_t OUTSIZE_CLIPPED = (4096 * sizeof(short));
+
 	if (!context || !src || !out)
 		return FALSE;
 	if (!valid_mp3_format(context))
 		return FALSE;
-	const size_t buffer_size =
-	    2ull * context->common.format.nChannels * context->common.format.nSamplesPerSec;
+
+	const size_t buffer_size = MAX(OUTSIZE_CLIPPED, 2ull * context->common.format.nChannels *
+	                                                    context->common.format.nSamplesPerSec);
 
 	if (!Stream_EnsureCapacity(context->common.buffer, 2ull * buffer_size))
 		return FALSE;
 
+	mp3data_struct header = WINPR_C_ARRAY_INIT;
 	short* pcm_l = Stream_BufferAs(context->common.buffer, short);
 	short* pcm_r = Stream_BufferAs(context->common.buffer, short) + (buffer_size / sizeof(short));
-	const int rc = hip_decode(
+	int rc = hip_decode1_headers(
 	    context->hip,
 	    WINPR_CAST_CONST_PTR_AWAY(/* API is not modifying content */ src, unsigned char*), size,
-	    pcm_l, pcm_r);
+	    pcm_l, pcm_r, &header);
 
-	if (rc <= 0)
+	if ((rc <= 0) || (header.header_parsed != 1) || (header.samplerate <= 0) ||
+	    (header.framesize <= 0))
+		return FALSE;
+
+	if ((size_t)header.samplerate != context->common.format.nSamplesPerSec)
+		return FALSE;
+
+	if (context->common.format.nChannels != 2)
+		return FALSE;
+
+	if (header.stereo != context->common.format.nChannels)
+		return FALSE;
+
+	if ((size_t)header.framesize > buffer_size / sizeof(short))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(out, (size_t)rc * context->common.format.nChannels * 2ull))
@@ -592,6 +648,20 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		Stream_Write_UINT16(out, (UINT16)pcm_l[x]);
 		Stream_Write_UINT16(out, (UINT16)pcm_r[x]);
 	}
+
+	do
+	{
+		rc = hip_decode1(context->hip, nullptr, 0, pcm_l, pcm_r);
+		if (!Stream_EnsureRemainingCapacity(out,
+		                                    (size_t)rc * context->common.format.nChannels * 2ull))
+			return FALSE;
+
+		for (int x = 0; x < rc; x++)
+		{
+			Stream_Write_UINT16(out, (UINT16)pcm_l[x]);
+			Stream_Write_UINT16(out, (UINT16)pcm_r[x]);
+		}
+	} while (rc > 0);
 
 	return TRUE;
 }
@@ -642,6 +712,13 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!context || !src || !out)
 		return FALSE;
 
+	if (context->common.format.wBitsPerSample != 16)
+	{
+		WLog_ERR(TAG, "Encoder requires wBitsPerSample == 16");
+		return FALSE;
+	}
+
+	/* The encoder is configured with FAAC_INPUT_16BIT */
 	const unsigned int bpp = context->common.format.wBitsPerSample / 8;
 	const size_t nrSamples = size / bpp;
 
@@ -680,7 +757,7 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                     const BYTE* WINPR_RESTRICT src, size_t size,
                                     wStream* WINPR_RESTRICT out)
 {
-	if (!context || !src || !out)
+	if (!context || !context->opus_decoder || !src || !out)
 		return FALSE;
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
@@ -699,27 +776,68 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	return TRUE;
 }
 
+/* Packet durations opus_encode() takes, in units of 2.5 ms, longest first. */
+static const UINT32 opus_packet_units[] = { 24, 16, 8, 4, 2, 1 };
+
+static BOOL opus_is_packet_frames(UINT32 rate, size_t frames)
+{
+	for (size_t x = 0; x < ARRAYSIZE(opus_packet_units); x++)
+	{
+		if (frames == 1ull * rate * opus_packet_units[x] / 400)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/*
+ * opus_encode() only takes 2.5, 5, 10, 20, 40 or 60 ms of audio, but callers hand over what their
+ * capture device delivered. Collect the samples and encode the longest valid packet, at least
+ * opus_packet_frames long; keep the rest for the next call. Nothing is written until enough
+ * samples arrived.
+ */
 static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                     const BYTE* WINPR_RESTRICT src, size_t size,
                                     wStream* WINPR_RESTRICT out)
 {
-	if (!context || !src || !out)
+	if (!context || !context->opus_encoder || !context->opus_input || !src || !out)
 		return FALSE;
+
+	wStream* input = context->opus_input;
+	const UINT32 rate = context->common.format.nSamplesPerSec;
+	const size_t frame_bytes = sizeof(opus_int16) * context->common.format.nChannels;
+	if (!Stream_EnsureRemainingCapacity(input, size))
+		return FALSE;
+	Stream_Write(input, src, size);
+
+	const size_t available = Stream_GetPosition(input) / frame_bytes;
+	if (available < context->opus_packet_frames)
+		return TRUE;
+
+	size_t frames = 0;
+	for (size_t x = 0; x < ARRAYSIZE(opus_packet_units); x++)
+	{
+		frames = 1ull * rate * opus_packet_units[x] / 400;
+		if (frames <= available)
+			break;
+	}
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
 	const size_t max_size = OPUS_MAX_FRAMES * context->common.format.nChannels * sizeof(int16_t);
 	if (!Stream_EnsureRemainingCapacity(out, max_size))
 		return FALSE;
 
-	const size_t src_frames = size / sizeof(opus_int16) / context->common.format.nChannels;
-	const opus_int16* src_data = WINPR_PACKED_ALIGN_CAST(const opus_int16*, src);
-	const opus_int32 frames = opus_encode(
-	    context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, src_frames),
-	    Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
-	if (frames < 0)
+	const opus_int16* src_data = WINPR_PACKED_ALIGN_CAST(const opus_int16*, Stream_Buffer(input));
+	const opus_int32 bytes =
+	    opus_encode(context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, frames),
+	                Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
+	if (bytes < 0)
 		return FALSE;
-	return Stream_SafeSeek(out,
-	                       (size_t)frames * context->common.format.nChannels * sizeof(int16_t));
+	Stream_Seek(out, (size_t)bytes);
+
+	const size_t used = frames * frame_bytes;
+	const size_t left = Stream_GetPosition(input) - used;
+	memmove(Stream_Buffer(input), Stream_Buffer(input) + used, left);
+	return Stream_SetPosition(input, left);
 }
 #endif
 
@@ -756,6 +874,12 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 		if (samplerate != context->common.format.nSamplesPerSec)
 			return FALSE;
+
+		if (context->common.format.wBitsPerSample != 16)
+		{
+			WLog_ERR(TAG, "Encoder requires wBitsPerSample == 16");
+			return FALSE;
+		}
 
 		context->faadSetup = TRUE;
 	}
@@ -944,7 +1068,10 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 
 		if (Stream_GetPosition(context->common.buffer) >= context->adpcm.ima.packet_size)
 		{
-			BYTE* bsrc = Stream_Buffer(context->common.buffer);
+			const BYTE* bsrc = Stream_Buffer(context->common.buffer);
+			if (!Stream_EnsureRemainingCapacity(context->common.buffer,
+			                                    context->adpcm.ima.packet_size))
+				return FALSE;
 			Stream_Write(out, bsrc, context->adpcm.ima.packet_size);
 			Stream_ResetPosition(context->common.buffer);
 		}
@@ -965,6 +1092,16 @@ static const INT32 ms_adpcm_adaptation_table[] = { 230, 230, 230, 230, 307, 409,
 static const INT32 ms_adpcm_coeffs1[7] = { 256, 512, 0, 192, 240, 460, 392 };
 
 static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
+
+static inline INT32 saturated_multiply(INT32 a, INT32 b)
+{
+	WINPR_ASSERT(b > 0);
+	if (a > INT32_MAX / b)
+		return INT32_MAX;
+	if (a < INT32_MIN / b)
+		return INT32_MIN;
+	return a * b;
+}
 
 static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
                                                        size_t channel)
@@ -999,7 +1136,7 @@ static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adp
 	if (sample < ARRAYSIZE(ms_adpcm_adaptation_table))
 		tableval = ms_adpcm_adaptation_table[sample];
 
-	adpcm->ms.delta[channel] = adpcm->ms.delta[channel] * tableval / 256;
+	adpcm->ms.delta[channel] = saturated_multiply(adpcm->ms.delta[channel], tableval) / 256;
 
 	if (adpcm->ms.delta[channel] < 16)
 		adpcm->ms.delta[channel] = 16;
@@ -1321,6 +1458,10 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 	fdk_aac_dsp_uninit(ctx);
 #endif
 
+#if defined(WITH_MEDIACODEC)
+	mediacodec_aac_dsp_uninit((FREERDP_DSP_COMMON_CONTEXT*)context);
+#endif
+
 #if defined(WITH_DSP_FFMPEG)
 	freerdp_dsp_ffmpeg_context_free(context);
 #else
@@ -1344,6 +1485,7 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 			opus_decoder_destroy(context->opus_decoder);
 		if (context->opus_encoder)
 			opus_encoder_destroy(context->opus_encoder);
+	    Stream_Free(context->opus_input, TRUE);
 
 #endif
 #if defined(WITH_FAAD2)
@@ -1371,6 +1513,12 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                         const BYTE* WINPR_RESTRICT pdata, size_t length,
                         wStream* WINPR_RESTRICT out)
 {
+#if defined(WITH_MEDIACODEC)
+	FREERDP_DSP_COMMON_CONTEXT* mcctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
+	if (mcctx && (mcctx->format.wFormatTag == WAVE_FORMAT_AAC_MS))
+		return mediacodec_aac_dsp_encode(mcctx, srcFormat, pdata, length, out);
+#endif
+
 #if defined(WITH_FDK_AAC)
 	FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
 	WINPR_ASSERT(ctx);
@@ -1448,6 +1596,12 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                         const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
                         const BYTE* WINPR_RESTRICT data, size_t length, wStream* WINPR_RESTRICT out)
 {
+#if defined(WITH_MEDIACODEC)
+	FREERDP_DSP_COMMON_CONTEXT* mcctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
+	if (mcctx && (mcctx->format.wFormatTag == WAVE_FORMAT_AAC_MS))
+		return mediacodec_aac_dsp_decode(mcctx, srcFormat, data, length, out);
+#endif
+
 #if defined(WITH_FDK_AAC)
 	FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
 	WINPR_ASSERT(ctx);
@@ -1511,6 +1665,15 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL encode)
 {
+	WINPR_ASSERT(format);
+	if (!audio_format_is_valid(format))
+		return FALSE;
+
+#if defined(WITH_MEDIACODEC)
+	if (format && (format->wFormatTag == WAVE_FORMAT_AAC_MS))
+		return mediacodec_aac_dsp_supports_format(format, encode);
+#endif
+
 #if defined(WITH_FDK_AAC)
 	switch (format->wFormatTag)
 	{
@@ -1593,24 +1756,32 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,
                                WINPR_ATTR_UNUSED UINT32 FramesPerPacket)
 {
-#if defined(WITH_FDK_AAC)
-	WINPR_ASSERT(targetFormat);
+	if (!context || !targetFormat)
+		return FALSE;
+	if (!audio_format_is_valid(targetFormat))
+		return FALSE;
+
 	if (targetFormat->wFormatTag == WAVE_FORMAT_AAC_MS)
 	{
+#if defined(WITH_MEDIACODEC)
+		FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
+		mediacodec_aac_dsp_uninit(ctx);
+		ctx->format = *targetFormat;
+		return mediacodec_aac_dsp_init(ctx, FramesPerPacket);
+#endif
+
+#if defined(WITH_FDK_AAC)
 		FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
 		fdk_aac_dsp_uninit(ctx);
 		ctx->format = *targetFormat;
 		return fdk_aac_dsp_init(ctx, FramesPerPacket);
-	}
 #endif
+	}
 
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_context_reset(context, targetFormat);
 #else
-
-	if (!context || !targetFormat)
-		return FALSE;
-
+	ZeroMemory(&context->adpcm, sizeof(context->adpcm));
 	context->common.format = *targetFormat;
 
 	switch (context->common.format.wFormatTag)
@@ -1649,14 +1820,35 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 			Stream_ResetPosition(context->common.buffer);
 		}
 		break;
+#if defined(WITH_GSM)
+		case WAVE_FORMAT_GSM610:
+		{
+			/* start with a new block */
+			int index = 0;
+			if (gsm_option(context->gsm, GSM_OPT_FRAME_INDEX, &index) < 0)
+				return FALSE;
+			Stream_ResetPosition(context->common.buffer);
+		}
+		break;
+#endif
 		default:
 			break;
 	}
 
 #if defined(WITH_OPUS)
 
-	if (opus_is_valid_samplerate(&context->common.format))
+	if (context->opus_decoder)
+		opus_decoder_destroy(context->opus_decoder);
+	context->opus_decoder = nullptr;
+	if (context->opus_encoder)
+		opus_encoder_destroy(context->opus_encoder);
+	context->opus_encoder = nullptr;
+
+	if (context->common.format.wFormatTag == WAVE_FORMAT_OPUS)
 	{
+		if (!opus_is_valid_samplerate(&context->common.format))
+			return FALSE;
+
 		if (!context->common.encoder)
 		{
 			int opus_error = OPUS_OK;
@@ -1682,6 +1874,17 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 			                     OPUS_SET_BITRATE(context->common.format.nAvgBytesPerSec * 8));
 			if (opus_error != OPUS_OK)
 				return FALSE;
+
+			/* the packets the peer asked for if Opus allows them, else 20 ms */
+			const UINT32 rate = context->common.format.nSamplesPerSec;
+			context->opus_packet_frames =
+			    opus_is_packet_frames(rate, FramesPerPacket) ? FramesPerPacket : rate / 50;
+			if (!context->opus_input)
+				context->opus_input = Stream_New(nullptr, OPUS_MAX_FRAMES * sizeof(opus_int16) *
+				                                              context->common.format.nChannels);
+			if (!context->opus_input)
+				return FALSE;
+			Stream_ResetPosition(context->opus_input);
 		}
 	}
 
@@ -1694,6 +1897,9 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (context->common.encoder)
 	{
 		faacEncConfigurationPtr cfg = nullptr;
+
+		if (targetFormat->wBitsPerSample != 16)
+			return FALSE;
 
 		if (context->faac)
 			faacEncClose(context->faac);
@@ -1720,6 +1926,9 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	{
 		soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
 		soxr_error_t error = nullptr;
+
+		if (context->common.format.wBitsPerSample != 16)
+			return FALSE;
 
 		soxr_delete(context->sox);
 		context->sox =

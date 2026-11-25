@@ -25,12 +25,16 @@
 #include "settings.h"
 #include <freerdp/build-config.h>
 #include <freerdp/peer.h>
+#include <freerdp/utils/helpers.h>
+#include <winpr/config-readers.h>
 
 #include <winpr/crt.h>
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/library.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/sspi.h>
 
 #include <freerdp/log.h>
@@ -40,7 +44,9 @@
 
 #define TAG FREERDP_TAG("core.auth")
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #define SERVER_KEY "Software\\%s\\Server"
+#endif
 
 enum AUTH_STATE
 {
@@ -72,6 +78,8 @@ struct rdp_credssp_auth
 	enum AUTH_STATE state;
 	char* pkgNameA;
 };
+
+static const char credssp_config_file_name[] = "credssp.json";
 
 static const char* credssp_auth_state_string(const rdpCredsspAuth* auth)
 {
@@ -300,6 +308,37 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 	return TRUE;
 }
 
+/* With smartcard logon the password of the identity is the PIN of the card. Kerberos needs it
+ * for PKINIT, but it must never be used as NTLM password: NTLM can not authenticate with a
+ * smartcard and a peer could recover the PIN offline from the NTLM response. */
+static BOOL credssp_auth_client_disable_ntlm(rdpCredsspAuth* auth)
+{
+	WINPR_ASSERT(auth);
+	WINPR_ASSERT(auth->rdp_ctx);
+
+	const rdpSettings* settings = auth->rdp_ctx->settings;
+	WINPR_ASSERT(settings);
+
+	const char* pkg = credssp_auth_pkg_name(auth);
+	if (pkg && (_stricmp(pkg, CREDSSP_AUTH_PKG_NTLM) == 0))
+	{
+		WLog_ERR(TAG, "%s authentication is not supported with smartcard logon", pkg);
+		return FALSE;
+	}
+
+	char* list = nullptr;
+	size_t len = 0;
+	const char* cur = settings->AuthenticationPackageList;
+	const BOOL empty = utils_str_is_empty(cur);
+	if (winpr_asprintf(&list, &len, "%s%s!ntlm", empty ? "" : cur, empty ? "" : ",") < 0)
+		return FALSE;
+
+	free(auth->package_list);
+	auth->package_list = ConvertUtf8ToWCharAlloc(list, nullptr);
+	free(list);
+	return auth->package_list != nullptr;
+}
+
 BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* target_hostname, const SEC_WINNT_AUTH_IDENTITY* identity,
                                const char* pkinit)
@@ -310,8 +349,15 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
 	WINPR_ASSERT(auth->info);
+	WINPR_ASSERT(auth->rdp_ctx);
+	WINPR_ASSERT(auth->rdp_ctx->settings);
 
 	WINPR_ASSERT(auth->state == AUTH_STATE_INITIAL);
+
+	/* Checked here and not in credssp_auth_init as the authentication callbacks might have
+	 * changed the logon to smartcard in between */
+	if (auth->rdp_ctx->settings->SmartcardLogon && !credssp_auth_client_disable_ntlm(auth))
+		return FALSE;
 
 	/* Construct the service principal name */
 	if (!credssp_auth_set_spn(auth, target_service, target_hostname))
@@ -611,8 +657,12 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 			break;
 	}
 
+	if (plaintext->cbBuffer > SIZE_MAX - auth->sizes.cbSecurityTrailer)
+		return FALSE;
+	const size_t len = 1ull * plaintext->cbBuffer + auth->sizes.cbSecurityTrailer;
+
 	/* Allocate consecutive memory for ciphertext and signature */
-	buf = calloc(1, plaintext->cbBuffer + auth->sizes.cbSecurityTrailer);
+	buf = calloc(1, len);
 	if (!buf)
 		return FALSE;
 
@@ -848,6 +898,19 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 	free(auth);
 }
 
+static void auth_get_sspi_module_from_config(char** sspi_module)
+{
+	WINPR_ASSERT(sspi_module);
+
+	WINPR_JSON* json = freerdp_GetJSONConfigFile(TRUE, credssp_config_file_name);
+	if (!json)
+		return;
+
+	winpr_config_apply_string(credssp_config_file_name, json, "SspiModule", sspi_module);
+	WINPR_JSON_Delete(json);
+}
+
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 static void auth_get_sspi_module_from_reg(char** sspi_module)
 {
 	HKEY hKey = nullptr;
@@ -855,7 +918,6 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	DWORD dwSize = 0;
 
 	WINPR_ASSERT(sspi_module);
-	*sspi_module = nullptr;
 
 	char* key = freerdp_getApplicatonDetailsRegKey(SERVER_KEY);
 	if (!key)
@@ -867,6 +929,8 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	if (rc != ERROR_SUCCESS)
 		return;
 
+	WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION: Use %s instead!",
+	          credssp_config_file_name);
 	if (RegQueryValueExA(hKey, "SspiModule", nullptr, &dwType, nullptr, &dwSize) != ERROR_SUCCESS)
 	{
 		RegCloseKey(hKey);
@@ -889,8 +953,11 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	}
 
 	RegCloseKey(hKey);
+
+	free(*sspi_module);
 	*sspi_module = module;
 }
+#endif
 
 static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings)
 {
@@ -899,7 +966,12 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 	WINPR_ASSERT(settings);
 
 	if (settings->ServerMode)
+	{
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		auth_get_sspi_module_from_reg(&sspi_module);
+#endif
+		auth_get_sspi_module_from_config(&sspi_module);
+	}
 
 	if (sspi_module || settings->SspiModule)
 	{

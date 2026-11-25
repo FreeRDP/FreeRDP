@@ -218,6 +218,39 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 		         bitmapData->height);
 		return FALSE;
 	}
+	if ((bitmapData->destLeft > bitmapData->destRight) ||
+	    (bitmapData->destRight < bitmapData->destLeft))
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: left=%" PRIu16 " > right=%" PRIu16,
+		         bitmapData->destLeft, bitmapData->destRight);
+		return FALSE;
+	}
+	if ((bitmapData->destTop > bitmapData->destBottom) ||
+	    (bitmapData->destBottom < bitmapData->destTop))
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: top=%" PRIu16 " > bottom=%" PRIu16, bitmapData->destTop,
+		         bitmapData->destBottom);
+		return FALSE;
+	}
+
+	/* The bitmap may be wider than the rectangle it is drawn to: servers pad
+	 * the width (xrdp to a multiple of 4, as the interleaved codec needs), and
+	 * only right - left + 1 columns are painted. It must not be smaller. */
+	const UINT32 w = 1u + bitmapData->destRight - bitmapData->destLeft;
+	if (w > bitmapData->width)
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: width=%" PRIu16 " < right - left + 1=%" PRIu32,
+		         bitmapData->width, w);
+		return FALSE;
+	}
+
+	const UINT32 h = 1u + bitmapData->destBottom - bitmapData->destTop;
+	if (h > bitmapData->height)
+	{
+		WLog_ERR(TAG, "Invalid BITMAP_DATA: height=%" PRIu16 " < bottom - top + 1=%" PRIu32,
+		         bitmapData->height, h);
+		return FALSE;
+	}
 
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
@@ -685,6 +718,12 @@ WINPR_ATTR_NODISCARD static BOOL s_update_read_pointer_large(wStream* s,
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer->xorBpp);
+	if ((pointer->xorBpp < 1) || (pointer->xorBpp > 32))
+	{
+		WLog_ERR(TAG, "invalid xorBpp %" PRIu32 "", pointer->xorBpp);
+		goto fail;
+	}
+
 	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
 	Stream_Read_UINT16(s, pointer->hotSpotX);   /* hotSpot.xPos (2 bytes) */
 	Stream_Read_UINT16(s, pointer->hotSpotY);   /* hotSpot.yPos (2 bytes) */
@@ -2568,6 +2607,13 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	RECTANGLE_16 areas[256] = WINPR_C_ARRAY_INIT;
 	rdp_update_internal* up = update_cast(update);
 
+	if (!freerdp_is_active_state(update->context))
+	{
+		WLog_Print(up->log, WLOG_ERROR,
+		           "refresh rect request from client before activation, aborting");
+		return FALSE;
+	}
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
@@ -2607,6 +2653,11 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 	WINPR_ASSERT(up);
 	WINPR_ASSERT(s);
 
+	if (!freerdp_is_active_state(update->context))
+	{
+		WLog_Print(up->log, WLOG_ERROR, "suppress output from client before activation, aborting");
+		return FALSE;
+	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
@@ -2938,22 +2989,41 @@ WINPR_ATTR_NODISCARD static BOOL update_send_window_update(rdpContext* context,
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
 
-WINPR_ATTR_NODISCARD static UINT16
+WINPR_ATTR_NODISCARD static BOOL
 update_calculate_window_icon_order(WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo,
-                                   const WINDOW_ICON_ORDER* iconOrder)
+                                   const WINDOW_ICON_ORDER* iconOrder, UINT16* pOrderSize)
 {
 	UINT16 orderSize = 23;
 
 	WINPR_ASSERT(iconOrder);
+	WINPR_ASSERT(pOrderSize);
+
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
 	WINPR_ASSERT(iconInfo);
 
-	orderSize += iconInfo->cbBitsColor + iconInfo->cbBitsMask;
+	*pOrderSize = 0;
+
+	if (iconInfo->cbBitsColor > 1ul * UINT16_MAX - orderSize)
+		return FALSE;
+
+	orderSize += iconInfo->cbBitsColor;
+
+	if (iconInfo->cbBitsMask > 1ul * UINT16_MAX - orderSize)
+		return FALSE;
 
 	if (iconInfo->bpp <= 8)
-		orderSize += 2 + iconInfo->cbColorTable;
+	{
+		if (iconInfo->cbColorTable > 1ul * UINT16_MAX - orderSize)
+			return FALSE;
+		orderSize += iconInfo->cbColorTable;
 
-	return orderSize;
+		if (2 > UINT16_MAX - orderSize)
+			return FALSE;
+		orderSize += 2;
+	}
+
+	*pOrderSize = orderSize;
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD static BOOL update_send_window_icon(rdpContext* context,
@@ -2964,7 +3034,9 @@ WINPR_ATTR_NODISCARD static BOOL update_send_window_icon(rdpContext* context,
 
 	WINPR_ASSERT(iconOrder);
 	ICON_INFO* iconInfo = iconOrder->iconInfo;
-	UINT16 orderSize = update_calculate_window_icon_order(orderInfo, iconOrder);
+	UINT16 orderSize = 0;
+	if (!update_calculate_window_icon_order(orderInfo, iconOrder, &orderSize))
+		return FALSE;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(orderInfo);

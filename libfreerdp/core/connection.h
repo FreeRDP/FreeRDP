@@ -72,9 +72,6 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL state_run_t rdp_client_connect_finalize(rdpRdp* rdp);
-
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 WINPR_ATTR_NODISCARD
@@ -82,6 +79,9 @@ FREERDP_LOCAL CONNECTION_STATE rdp_get_state(const rdpRdp* rdp);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* rdp_state_string(CONNECTION_STATE state);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* rdp_transport_type_string(RDP_TRANSPORT_TYPE type);
 
 /**
  * @brief checks if the current state is the requested (or any later) one.

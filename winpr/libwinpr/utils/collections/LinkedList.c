@@ -141,6 +141,15 @@ static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* 
 	if (node == list->tail)
 		list->tail = node->prev;
 
+	if (node == list->current)
+	{
+		/* Never leave the enumerator on a freed node: the next MoveNext continues after the removed
+		 * node. */
+		list->current = prev;
+		if (!prev)
+			list->initial = 1;
+	}
+
 	if (list->object.fnObjectUninit)
 		list->object.fnObjectUninit(node);
 
@@ -309,7 +318,7 @@ void LinkedList_Enumerator_Reset(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	list->initial = 1;
-	list->current = list->head;
+	list->current = nullptr;
 }
 
 /*
@@ -336,7 +345,10 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->initial)
+	{
 		list->initial = 0;
+		list->current = list->head;
+	}
 	else if (list->current)
 		list->current = list->current->next;
 

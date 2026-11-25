@@ -134,6 +134,25 @@ static void rdpsnd_mac_release(rdpsndMacPlugin *mac)
 	mac->engine = nullptr;
 }
 
+static BOOL rdpsnd_mac_connect_player(rdpsndMacPlugin *mac)
+{
+	/* AVAudioPlayerNode does not resample scheduled buffers, so the connection
+	 * must use the sample rate of the stream instead of the default format. */
+	AVAudioFormat *format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
+	                                                         sampleRate:mac->format.nSamplesPerSec
+	                                                           channels:mac->format.nChannels
+	                                                        interleaved:NO];
+	if (!format)
+	{
+		WLog_ERR(TAG, "AVAudioFormat::init() failed");
+		return FALSE;
+	}
+
+	[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:format];
+	[format release];
+	return TRUE;
+}
+
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *format, UINT32 latency)
 {
 	@autoreleasepool
@@ -192,7 +211,11 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 
 		[mac->engine attachNode:mac->player];
 
-		[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
+		if (!rdpsnd_mac_connect_player(mac))
+		{
+			rdpsnd_mac_release(mac);
+			return FALSE;
+		}
 
 		[mac->engine prepare];
 
@@ -288,7 +311,11 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin *device)
 		if (!mac->engine.isRunning)
 		{
 			NSError *error;
-			[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
+			if (!rdpsnd_mac_connect_player(mac))
+			{
+				device->Close(device);
+				return;
+			}
 			[mac->engine prepare];
 			if (![mac->engine startAndReturnError:&error])
 			{
@@ -362,16 +389,28 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin *device, const BYTE *data, size_t
 			}
 		}
 
-		rdpsnd_mac_start(device);
+		/* AVAudioEngine reports some failures as exceptions, e.g. "player did not see an IO
+		 * cycle" from [player play] when the output device runs no IO for this process.
+		 * Uncaught, one ends the whole client process. */
+		@try
+		{
+			rdpsnd_mac_start(device);
 
-		[mac->player scheduleBuffer:buffer
-		          completionHandler:^{
-			          UINT64 stop = GetTickCount64();
-			          if (start > stop)
-				          mac->diff = 0;
-			          else
-				          mac->diff = stop - start;
-		          }];
+			[mac->player scheduleBuffer:buffer
+			          completionHandler:^{
+				          UINT64 stop = GetTickCount64();
+				          if (start > stop)
+					          mac->diff = 0;
+				          else
+					          mac->diff = stop - start;
+			          }];
+		}
+		@catch (NSException *e)
+		{
+			WLog_ERR(TAG, "audio output failed, dropping sound until the device is closed: %s",
+			         [e.reason UTF8String]);
+			mac->device.Close(&mac->device);
+		}
 
 		[buffer release];
 

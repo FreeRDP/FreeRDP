@@ -959,8 +959,11 @@ static UINT rdpei_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
 		if (rdpei && rdpei->base.listener_callback)
 		{
+			/* Lock here to ensure that no frame is being sent with this callback. */
+			EnterCriticalSection(&rdpei->lock);
 			if (rdpei->base.listener_callback->channel_callback == callback)
 				rdpei->base.listener_callback->channel_callback = nullptr;
+			LeaveCriticalSection(&rdpei->lock);
 		}
 	}
 	free(callback);

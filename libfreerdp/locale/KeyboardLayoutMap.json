@@ -125,7 +125,7 @@
 			"name": "Central Atlas Tamazight"
 		},
 		{
-			"code": 1065.0,
+			"code": 1170.0,
 			"name": "Central Kurdish"
 		},
 		{
@@ -383,6 +383,10 @@
 		{
 			"code": 2058.0,
 			"name": "Latin American"
+		},
+		{
+			"code": 1062.0,
+			"name": "Latvian"
 		},
 		{
 			"code": 132134.0,
@@ -727,10 +731,6 @@
 		{
 			"code": 1090.0,
 			"name": "Turkmen"
-		},
-		{
-			"code": 66568.0,
-			"name": "Uyghur"
 		},
 		{
 			"code": 1152.0,

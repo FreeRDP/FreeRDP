@@ -794,20 +794,20 @@ static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** 
 {
 	/* Cap to a maximum of 256 bytes and set status to more data */
 	UINT16 status = ISO_STATUS_SUCCESS;
-	DWORD remainingBytes = (DWORD)Stream_Length(context->responseData);
+	DWORD remainingBytes = (DWORD)Stream_GetRemainingLength(context->responseData);
 	if (remainingBytes > 256)
 	{
 		status = ISO_STATUS_MORE_DATA;
 		remainingBytes = 256;
 	}
 
-	*response = Stream_Buffer(context->responseData);
+	*response = Stream_ConstPointer(context->responseData);
 	*responseSize = remainingBytes;
 	Stream_Seek(context->responseData, remainingBytes);
 
 	/* Check if there are more than 256 bytes left or if we can already provide the remaining length
 	 * in the status word */
-	remainingBytes = (DWORD)(Stream_Length(context->responseData) - remainingBytes);
+	remainingBytes = (DWORD)Stream_GetRemainingLength(context->responseData);
 	if (remainingBytes < 256 && remainingBytes != 0)
 		status |= (remainingBytes & 0xFF);
 	return status;
@@ -916,7 +916,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 
 			/* the function only returns if the ID was found in the list and iteration aborted early
 			 * or not. we can ignore this here. */
-			(void)vgids_read_do(context, fileId, doId);
+			if (!vgids_read_do(context, fileId, doId))
+				WLog_WARN(TAG, "vgids_read_do failed");
 			break;
 		}
 		case 0xA:
@@ -1207,7 +1208,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		const size_t inlen = Stream_Length(context->commandData);
 		size_t outlen = 0;
 		res = EVP_PKEY_decrypt(ctx, nullptr, &outlen, Stream_Buffer(context->commandData), inlen);
-		if (res < 0)
+		if (res <= 0)
 		{
 			WLog_ERR(TAG, "Failed to decrypt data");
 			goto decrypt_failed;
@@ -1226,7 +1227,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		res = EVP_PKEY_decrypt(ctx, Stream_Buffer(context->responseData), &outlen,
 		                       Stream_Buffer(context->commandData), inlen);
 
-		if (res < 0)
+		if (res <= 0)
 		{
 			WLog_ERR(TAG, "Failed to decrypt data");
 			goto decrypt_failed;
@@ -1259,6 +1260,9 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 	/* Perform security operation */
 	if (!vgids_parse_apdu_header(s, &cla, nullptr, &p1, &p2, &lc, nullptr))
 		return FALSE;
+
+	/* free any previous response, a new command invalidates it */
+	vgids_reset_context_response(context);
 
 	if (lc == 0)
 	{

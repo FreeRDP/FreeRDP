@@ -628,10 +628,11 @@ BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 			if (!pair->markedForRemove && !fn(pair->key, pair->value, arg))
 			{
 				ret = FALSE;
-				goto out;
+				goto endOfLoop;
 			}
 		}
 	}
+endOfLoop:
 	table->foreachRecursionLevel--;
 
 	if (!table->foreachRecursionLevel && table->pendingRemoves)
@@ -661,7 +662,6 @@ BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 		table->pendingRemoves = 0;
 	}
 
-out:
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
 	return ret;

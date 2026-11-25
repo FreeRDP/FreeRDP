@@ -445,7 +445,7 @@ static DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE
 	 * provided by OS X and check for a character to key code mismatch: for instance,
 	 * when the output character is '0' for the key code corresponding to the 'i' key.
 	 */
-#if 0
+#if defined(WITH_APPLE_SCANCODE_SWITCH)
 	switch (keyChar)
 	{
 		case '0':
@@ -754,7 +754,7 @@ static BOOL releaseFlagStates(rdpInput *input, UINT32 aKbdModFlags)
 
 			const char *data = [formatString cStringUsingEncoding:NSUTF8StringEncoding];
 			const size_t dataLen = [formatString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-			formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
+			formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain;charset=utf-8");
 			ClipboardSetData(mfc->clipboard, formatId, data, dataLen + 1);
 			[formatString release];
 
@@ -1360,6 +1360,9 @@ static BOOL mf_Pointer_SetPosition(rdpContext *context, UINT32 x, UINT32 y)
 
 	if (!mfc)
 		return FALSE;
+
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse))
+		return TRUE;
 
 	/* TODO: Set pointer position */
 	return TRUE;

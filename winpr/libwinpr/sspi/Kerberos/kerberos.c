@@ -38,7 +38,6 @@
 #include <winpr/print.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
-#include <winpr/registry.h>
 #include <winpr/endian.h>
 #include <winpr/crypto.h>
 #include <winpr/path.h>
@@ -127,6 +126,8 @@ struct s_KRB_CONTEXT
 static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
 static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
 	                                            (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
+
+WINPR_ATTR_NODISCARD
 krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, const char* what,
                                  const char* file, const char* fkt, size_t line)
 {
@@ -219,6 +220,7 @@ static void kerberos_ContextFree(KRB_CONTEXT* ctx, BOOL allocated)
 		free(ctx);
 }
 
+WINPR_ATTR_MALLOC(kerberos_ContextFree, 1)
 static KRB_CONTEXT* kerberos_ContextNew(KRB_CREDENTIALS* credentials)
 {
 	KRB_CONTEXT* context = nullptr;
@@ -232,6 +234,7 @@ static KRB_CONTEXT* kerberos_ContextNew(KRB_CREDENTIALS* credentials)
 	return context;
 }
 
+WINPR_ATTR_NODISCARD
 static krb5_error_code krb5_prompter(krb5_context context, void* data,
                                      WINPR_ATTR_UNUSED const char* name,
                                      WINPR_ATTR_UNUSED const char* banner, int num_prompts,
@@ -242,24 +245,30 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data,
 		krb5_prompt_type type = krb5glue_get_prompt_type(context, prompts, i);
 		if (type && (type == KRB5_PROMPT_TYPE_PREAUTH || type == KRB5_PROMPT_TYPE_PASSWORD) && data)
 		{
-			prompts[i].reply->data = _strdup((const char*)data);
-
+			/* the reply buffer is allocated by the library, it holds reply->length bytes */
+			krb5_data* reply = prompts[i].reply;
 			const size_t len = strlen((const char*)data);
-			if (len > UINT32_MAX)
+			if (!reply->data || (len > reply->length))
 				return KRB5KRB_ERR_GENERIC;
-			prompts[i].reply->length = (UINT32)len;
+
+			memcpy(reply->data, data, len);
+			if (len < reply->length)
+				reply->data[len] = '\0';
+			reply->length = (UINT32)len;
 		}
 	}
 	return 0;
 }
 
-WINPR_ATTR_NODISCARD static inline krb5glue_key get_key(struct krb5glue_keyset* keyset)
+WINPR_ATTR_NODISCARD
+static inline krb5glue_key get_key(struct krb5glue_keyset* keyset)
 {
 	return keyset->acceptor_key    ? keyset->acceptor_key
 	       : keyset->initiator_key ? keyset->initiator_key
 	                               : keyset->session_key;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL isValidIPv4(const char* ipAddress)
 {
 	struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
@@ -267,6 +276,7 @@ static BOOL isValidIPv4(const char* ipAddress)
 	return result != 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL isValidIPv6(const char* ipAddress)
 {
 	struct sockaddr_in6 sa = WINPR_C_ARRAY_INIT;
@@ -274,6 +284,7 @@ static BOOL isValidIPv6(const char* ipAddress)
 	return result != 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL isValidIP(const char* ipAddress)
 {
 	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
@@ -281,7 +292,6 @@ static BOOL isValidIP(const char* ipAddress)
 
 #if defined(WITH_KRB5_MIT)
 WINPR_ATTR_MALLOC(free, 1)
-WINPR_ATTR_NODISCARD
 static char* get_realm_name(krb5_data realm, size_t* plen)
 {
 	WINPR_ASSERT(plen);
@@ -296,7 +306,6 @@ static char* get_realm_name(krb5_data realm, size_t* plen)
 }
 #elif defined(WITH_KRB5_HEIMDAL)
 WINPR_ATTR_MALLOC(free, 1)
-WINPR_ATTR_NODISCARD
 static char* get_realm_name(Realm realm, size_t* plen)
 {
 	WINPR_ASSERT(plen);
@@ -310,6 +319,7 @@ static char* get_realm_name(Realm realm, size_t* plen)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static int build_krbtgt(krb5_context ctx, krb5_principal principal, krb5_principal* ptarget)
 {
 	/* "krbtgt/" + realm + "@" + realm */
@@ -332,6 +342,65 @@ fail:
 
 #endif /* WITH_KRB5 */
 
+#ifdef WITH_KRB5
+/* parses the client principal name, as an RFC 6806 enterprise principal (name@domain in
+ * the default realm) if requested and the name has no realm of its own */
+WINPR_ATTR_NODISCARD
+static krb5_error_code kerberos_parse_principal(krb5_context ctx, const char* name,
+                                                const char* domain, BOOL enterprise,
+                                                krb5_principal* principal)
+{
+	krb5_error_code rv = 0;
+
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(principal);
+
+	if (enterprise && domain && !strchr(name, '@'))
+	{
+		char* upn = nullptr;
+		size_t upnlen = 0;
+		(void)winpr_asprintf(&upn, &upnlen, "%s@%s", name, domain);
+		if (!upn)
+			return ENOMEM;
+
+		/* e.g. "user@example.com" becomes "user\@example.com@CORP.EXAMPLE.NET" */
+		rv = krb_log_exec(krb5_parse_name_flags, ctx, upn, KRB5_PRINCIPAL_PARSE_ENTERPRISE,
+		                  principal);
+		free(upn);
+	}
+	else
+	{
+		char* cpszPrincipal = _strdup(name);
+		if (!cpszPrincipal)
+			return ENOMEM;
+
+		/* Find realm component if included and convert to uppercase */
+		char* p = strchr(cpszPrincipal, '@');
+		if (p)
+			CharUpperA(p);
+
+		rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, principal);
+		free(cpszPrincipal);
+	}
+	return rv;
+}
+
+/** @brief errors telling that the realm of a client principal is not a realm we can talk to */
+static BOOL kerberos_is_realm_error(krb5_error_code rv)
+{
+	switch (rv)
+	{
+		case KRB5_REALM_UNKNOWN:
+		case KRB5_KDC_UNREACH:
+		case KRB5KDC_ERR_WRONG_REALM:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+#endif
+
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     WINPR_ATTR_UNUSED SEC_CHAR* pszPrincipal, WINPR_ATTR_UNUSED SEC_CHAR* pszPackage,
     WINPR_ATTR_UNUSED ULONG fCredentialUse, WINPR_ATTR_UNUSED void* pvLogonID,
@@ -354,6 +423,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	char* username = nullptr;
 	char* password = nullptr;
 	BOOL own_ccache = FALSE;
+	BOOL ccache_initialized = FALSE;
+	char* upn_realm = nullptr;
 	const char* const default_ccache_type = "MEMORY";
 
 	if (pAuthData)
@@ -414,8 +485,41 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 
 		CharUpperA(udomain);
+
+		/* the realm of a DNS-style domain, from the domain_realm mapping of krb5.conf */
+		const char* realm = udomain;
+		char** host_realms = nullptr;
+		if (strchr(udomain, '.') && (krb5_get_host_realm(ctx, domain, &host_realms) == 0) &&
+		    host_realms && host_realms[0] && (strnlen(host_realms[0], 1) > 0))
+			realm = host_realms[0];
+		else
+		{
+			/* A DNS-style domain that maps to no realm and differs from the configured
+			 * default realm is either a realm missing from krb5.conf (found via DNS) or a UPN
+			 * suffix, e.g. user@example.com for an account in realm CORP.EXAMPLE.NET, which
+			 * is what /smartcard-logon takes from the certificate. AD rejects a UPN suffix as
+			 * a realm ("Realm not local to KDC") and only accepts it as an enterprise
+			 * principal in the account's realm, as Windows clients send it. Try the domain as
+			 * the realm first and keep the configured realm for that fallback. */
+			char* default_realm = nullptr;
+			if (strchr(udomain, '.') && (krb5_get_default_realm(ctx, &default_realm) == 0) &&
+			    default_realm && (strcmp(default_realm, udomain) != 0))
+			{
+				upn_realm = _strdup(default_realm);
+				if (!upn_realm)
+				{
+					krb5_free_default_realm(ctx, default_realm);
+					free(udomain);
+					goto cleanup;
+				}
+			}
+			krb5_free_default_realm(ctx, default_realm);
+		}
+
 		/* Will use domain if realm is not specified in username */
-		krb5_error_code rv = krb_log_exec(krb5_set_default_realm, ctx, udomain);
+		const krb5_error_code rv = krb_log_exec(krb5_set_default_realm, ctx, realm);
+		if (host_realms)
+			krb5_free_host_realm(ctx, host_realms);
 		free(udomain);
 
 		if (rv)
@@ -424,19 +528,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (pszPrincipal)
 	{
-		char* cpszPrincipal = _strdup(pszPrincipal);
-		if (!cpszPrincipal)
-			goto cleanup;
-
-		/* Find realm component if included and convert to uppercase */
-		char* p = strchr(cpszPrincipal, '@');
-		if (p)
-			CharUpperA(p);
-
-		krb5_error_code rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, &principal);
-		free(cpszPrincipal);
-
-		if (rv)
+		if (kerberos_parse_principal(ctx, pszPrincipal, domain, FALSE, &principal))
 			goto cleanup;
 		WINPR_ASSERT(principal);
 	}
@@ -467,6 +559,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 			if (krb_log_exec(krb5_cc_initialize, ctx, ccache, principal))
 				goto cleanup;
+			ccache_initialized = TRUE;
 		}
 		else
 		{
@@ -535,8 +628,33 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		krb5_free_cred_contents(ctx, &creds);
 		if (rv)
 		{
-			if (krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache, krb5_prompter,
-			                 password, krb_settings))
+			krb5_error_code ret = krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache,
+			                                   krb5_prompter, password, krb_settings);
+
+			/* The domain is no realm we can reach: retry it as a UPN suffix, see above. Only
+			 * with a ccache this call initialized, a cache found by principal is not ours to
+			 * reset. */
+			if (ret && upn_realm && pszPrincipal && ccache_initialized &&
+			    kerberos_is_realm_error(ret))
+			{
+				WLog_INFO(TAG,
+				          "domain %s is not a reachable Kerberos realm, retrying as an "
+				          "enterprise principal in realm %s",
+				          domain, upn_realm);
+
+				krb5_free_principal(ctx, principal);
+				principal = nullptr;
+				if (krb_log_exec(krb5_set_default_realm, ctx, upn_realm))
+					goto cleanup;
+				if (kerberos_parse_principal(ctx, pszPrincipal, domain, TRUE, &principal))
+					goto cleanup;
+				if (krb_log_exec(krb5_cc_initialize, ctx, ccache, principal))
+					goto cleanup;
+				ret = krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache, krb5_prompter,
+				                   password, krb_settings);
+			}
+
+			if (ret)
 				goto cleanup;
 		}
 	}
@@ -552,6 +670,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 cleanup:
 
+	free(upn_realm);
 	free(domain);
 	free(username);
 	free(password);
@@ -590,6 +709,7 @@ cleanup:
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
     SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
@@ -648,6 +768,7 @@ static void credentials_unref(KRB_CREDENTIALS* credentials)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS
     SEC_ENTRY kerberos_FreeCredentialsHandle(WINPR_ATTR_UNUSED PCredHandle phCredential)
 {
@@ -665,6 +786,7 @@ static SECURITY_STATUS
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(
     WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED ULONG ulAttribute,
     WINPR_ATTR_UNUSED void* pBuffer)
@@ -685,6 +807,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCredential,
                                                                       ULONG ulAttribute,
                                                                       void* pBuffer)
@@ -693,7 +816,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandl
 }
 
 #ifdef WITH_KRB5
-
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_mk_tgt_token(SecBuffer* buf, int msg_type, char* sname, char* host,
                                   const krb5_data* ticket)
 {
@@ -780,6 +903,7 @@ cleanup:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL append(char* dst, size_t dstSize, const char* src)
 {
 	const size_t dlen = strnlen(dst, dstSize);
@@ -791,6 +915,7 @@ static BOOL append(char* dst, size_t dstSize, const char* src)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_rd_tgt_req_tag2(WinPrAsn1Decoder* dec, char* buf, size_t len)
 {
 	BOOL rc = FALSE;
@@ -847,6 +972,7 @@ end:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_rd_tgt_req_tag3(WinPrAsn1Decoder* dec, char* buf, size_t len)
 {
 	/* realm [3] Realm */
@@ -866,6 +992,7 @@ end:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_rd_tgt_req(WinPrAsn1Decoder* dec, char** target)
 {
 	BOOL rc = FALSE;
@@ -919,6 +1046,7 @@ static BOOL kerberos_rd_tgt_req(WinPrAsn1Decoder* dec, char** target)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_rd_tgt_rep(WinPrAsn1Decoder* dec, krb5_data* ticket)
 {
 	if (!ticket)
@@ -943,6 +1071,7 @@ static BOOL kerberos_rd_tgt_rep(WinPrAsn1Decoder* dec, krb5_data* ticket)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb5_data* ticket)
 {
 	BOOL error = 0;
@@ -981,6 +1110,7 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BINDINGS* bindings)
 {
 	BYTE buf[4];
@@ -1025,6 +1155,7 @@ static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BI
 
 #endif /* WITH_KRB5 */
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
     WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED PCtxtHandle phContext,
     WINPR_ATTR_UNUSED SEC_CHAR* pszTargetName, WINPR_ATTR_UNUSED ULONG fContextReq,
@@ -1349,6 +1480,7 @@ bad_token:
 #endif /* WITH_KRB5 */
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
     PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR* pszTargetName, ULONG fContextReq,
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
@@ -1375,6 +1507,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
 }
 
 #ifdef WITH_KRB5
+WINPR_ATTR_NODISCARD
 static BOOL retrieveTgtForPrincipal(KRB_CREDENTIALS* credentials, krb5_principal principal,
                                     krb5_creds* creds)
 {
@@ -1418,11 +1551,17 @@ cleanup:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, krb5_creds* creds)
 {
 	BOOL ret = TRUE;
 	krb5_principal target_princ = WINPR_C_ARRAY_INIT;
 	char* default_realm = nullptr;
+
+	/* server-name is optional in a KERB-TGT-REQUEST, without one there is no principal to look
+	 * up a TGT for */
+	if (!target)
+		return FALSE;
 
 	krb5_error_code rv =
 	    krb_log_exec(krb5_parse_name_flags, credentials->ctx, target, 0, &target_princ);
@@ -1445,8 +1584,13 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 		if (rv)
 			goto out;
 
-		target_princ->realm.data = default_realm;
-		target_princ->realm.length = (unsigned int)strlen(default_realm);
+		const size_t len = strnlen(default_realm, MAX_KEYTAB_NAME_LEN + 1);
+		if ((len == 0) || !default_realm)
+			goto out;
+		target_princ->realm.data = strndup(default_realm, len);
+		if (!target_princ->realm.data)
+			goto out;
+		target_princ->realm.length = (unsigned int)len;
 	}
 #endif
 
@@ -1490,6 +1634,7 @@ out:
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
     WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED PCtxtHandle phContext,
     WINPR_ATTR_UNUSED PSecBufferDesc pInput, WINPR_ATTR_UNUSED ULONG fContextReq,
@@ -1671,6 +1816,7 @@ bad_token:
 }
 
 #ifdef WITH_KRB5
+WINPR_ATTR_NODISCARD
 static KRB_CONTEXT* get_context(PCtxtHandle phContext)
 {
 	if (!phContext)
@@ -1685,6 +1831,7 @@ static KRB_CONTEXT* get_context(PCtxtHandle phContext)
 	return sspi_SecureHandleGetLowerPointer(phContext);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL copy_krb5_data(krb5_data* data, PUCHAR* ptr, ULONG* psize)
 {
 	WINPR_ASSERT(data);
@@ -1701,6 +1848,7 @@ static BOOL copy_krb5_data(krb5_data* data, PUCHAR* ptr, ULONG* psize)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS
     SEC_ENTRY kerberos_DeleteSecurityContext(WINPR_ATTR_UNUSED PCtxtHandle phContext)
 {
@@ -1720,6 +1868,7 @@ static SECURITY_STATUS
 
 #ifdef WITH_KRB5
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS krb5_error_to_SECURITY_STATUS(krb5_error_code code)
 {
 	switch (code)
@@ -1731,6 +1880,7 @@ static SECURITY_STATUS krb5_error_to_SECURITY_STATUS(krb5_error_code code)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS kerberos_ATTR_SIZES(KRB_CONTEXT* context, KRB_CREDENTIALS* credentials,
                                            SecPkgContext_Sizes* ContextSizes)
 {
@@ -1787,6 +1937,7 @@ static SECURITY_STATUS kerberos_ATTR_SIZES(KRB_CONTEXT* context, KRB_CREDENTIALS
 	return SEC_E_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
                                                    KRB_CREDENTIALS* credentials,
                                                    SecPkgContext_AuthIdentity* AuthIdentity)
@@ -1862,6 +2013,7 @@ fail:
 	return krb5_error_to_SECURITY_STATUS(rv);
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO_A(WINPR_ATTR_UNUSED KRB_CONTEXT* context,
                                                     WINPR_ATTR_UNUSED KRB_CREDENTIALS* credentials,
                                                     SecPkgContext_PackageInfoA* PackageInfo)
@@ -1889,6 +2041,7 @@ static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO_A(WINPR_ATTR_UNUSED KRB_CONTEX
 	return SEC_E_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO_W(WINPR_ATTR_UNUSED KRB_CONTEXT* context,
                                                     WINPR_ATTR_UNUSED KRB_CREDENTIALS* credentials,
                                                     SecPkgContext_PackageInfoW* PackageInfo)
@@ -1916,6 +2069,7 @@ static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO_W(WINPR_ATTR_UNUSED KRB_CONTEX
 	return SEC_E_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
                                                   KRB_CREDENTIALS* credentials,
                                                   KERB_TICKET_LOGON* ticketLogon)
@@ -1936,10 +2090,16 @@ static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
 	if (rv)
 		goto out;
 
-	/* try from the cache first, and then do a new request */
+	/* Try from the cache first, then do a new request. A cache miss on the first pass is
+	 * expected (the service ticket may not be cached yet), so bypass the logging wrapper there
+	 * to avoid reporting it as an error; the KDC-fetch retry below is still logged on failure. */
 again:
-	rv = krb_log_exec(krb5_get_credentials, credentials->ctx, getCredsFlags, credentials->ccache,
-	                  &matchCred, &hostCred);
+	if (firstRun)
+		rv = krb5_get_credentials(credentials->ctx, getCredsFlags, credentials->ccache, &matchCred,
+		                          &hostCred);
+	else
+		rv = krb_log_exec(krb5_get_credentials, credentials->ctx, getCredsFlags,
+		                  credentials->ccache, &matchCred, &hostCred);
 	switch (rv)
 	{
 		case 0:
@@ -1965,6 +2125,8 @@ again:
 		if (krb_log_exec(krb5_fwd_tgt_creds, credentials->ctx, authContext, context->targetHost,
 		                 matchCred.client, matchCred.server, credentials->ccache, 1, &derOut))
 		{
+			WLog_ERR(TAG, "forwarding the TGT failed: the ticket must be forwardable (kinit -f, or "
+			              "forwardable = true in krb5.conf for an explicit password)");
 			ret = SEC_E_LOGON_DENIED;
 			goto out;
 		}
@@ -2032,6 +2194,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesCommon(
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(
     PCtxtHandle phContext, WINPR_ATTR_UNUSED ULONG ulAttribute, void* pBuffer)
 {
@@ -2060,6 +2223,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(
 	return kerberos_QueryContextAttributesCommon(phContext, ulAttribute, pBuffer);
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext,
                                                                   ULONG ulAttribute, void* pBuffer)
 {
@@ -2088,6 +2252,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle ph
 	return kerberos_QueryContextAttributesCommon(phContext, ulAttribute, pBuffer);
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesW(
     WINPR_ATTR_UNUSED PCtxtHandle phContext, WINPR_ATTR_UNUSED ULONG ulAttribute,
     WINPR_ATTR_UNUSED void* pBuffer, WINPR_ATTR_UNUSED ULONG cbBuffer)
@@ -2095,6 +2260,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesW(
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesA(
     WINPR_ATTR_UNUSED PCtxtHandle phContext, WINPR_ATTR_UNUSED ULONG ulAttribute,
     WINPR_ATTR_UNUSED void* pBuffer, WINPR_ATTR_UNUSED ULONG cbBuffer)
@@ -2102,6 +2268,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesA(
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(
     WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED ULONG ulAttribute,
     WINPR_ATTR_UNUSED void* pBuffer, WINPR_ATTR_UNUSED ULONG cbBuffer,
@@ -2167,6 +2334,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesW(PCredHandle phCredential,
                                                                     ULONG ulAttribute,
                                                                     void* pBuffer, ULONG cbBuffer)
@@ -2174,6 +2342,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesW(PCredHandle 
 	return kerberos_SetCredentialsAttributesX(phCredential, ulAttribute, pBuffer, cbBuffer, TRUE);
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesA(PCredHandle phCredential,
                                                                     ULONG ulAttribute,
                                                                     void* pBuffer, ULONG cbBuffer)
@@ -2181,6 +2350,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesA(PCredHandle 
 	return kerberos_SetCredentialsAttributesX(phCredential, ulAttribute, pBuffer, cbBuffer, FALSE);
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(WINPR_ATTR_UNUSED PCtxtHandle phContext,
                                                          WINPR_ATTR_UNUSED ULONG fQOP,
                                                          WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
@@ -2272,6 +2442,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(WINPR_ATTR_UNUSED PCtxt
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxtHandle phContext,
                                                          WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
                                                          WINPR_ATTR_UNUSED ULONG MessageSeqNo,
@@ -2290,7 +2461,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 	const PSecBuffer sig_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_TOKEN);
 	PSecBuffer data_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
 
-	if (!sig_buffer || !data_buffer || sig_buffer->cbBuffer < 16)
+	if (!sig_buffer || !data_buffer || (sig_buffer->cbBuffer < 16) || !sig_buffer->pvBuffer ||
+	    ((data_buffer->cbBuffer > 0) && !data_buffer->pvBuffer))
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header information */
@@ -2315,68 +2487,100 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 	if (!(flags & FLAG_WRAP_CONFIDENTIAL))
 		return SEC_E_INVALID_TOKEN;
 
-	/* We don't expect a trailer buffer; the encrypted header must be rotated */
-	if (rrc < 16)
-		return SEC_E_INVALID_TOKEN;
-
 	/* Find the proper key and key usage */
 	krb5glue_key key = get_key(&context->keyset);
 	if (!key || ((flags & FLAG_ACCEPTOR_SUBKEY) && (context->keyset.acceptor_key != key)))
 		return SEC_E_INTERNAL_ERROR;
 	krb5_keyusage usage = context->acceptor ? KG_USAGE_INITIATOR_SEAL : KG_USAGE_ACCEPTOR_SEAL;
 
-	/* Fill in the lengths of the iov array */
+	/* CredSSP splits the wire token at cbSecurityTrailer, not at a Kerberos boundary. */
+	const size_t token_body_length = sig_buffer->cbBuffer - 16;
+	if (data_buffer->cbBuffer > (SIZE_MAX - token_body_length))
+		return SEC_E_INVALID_TOKEN;
+	const size_t body_length = token_body_length + data_buffer->cbBuffer;
+	if (body_length == 0)
+		return SEC_E_INVALID_TOKEN;
+
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_HEADER, WINPR_C_ARRAY_INIT },
-		                      { KRB5_CRYPTO_TYPE_DATA, WINPR_C_ARRAY_INIT },
 		                      { KRB5_CRYPTO_TYPE_DATA, WINPR_C_ARRAY_INIT },
 		                      { KRB5_CRYPTO_TYPE_PADDING, WINPR_C_ARRAY_INIT },
 		                      { KRB5_CRYPTO_TYPE_TRAILER, WINPR_C_ARRAY_INIT } };
-	iov[1].data.length = data_buffer->cbBuffer;
-	iov[2].data.length = 16;
-	if (krb_log_exec(krb5glue_crypto_length_iov, creds->ctx, key, iov, ARRAYSIZE(iov)))
+	unsigned int crypto_header_length = 0;
+	unsigned int crypto_trailer_length = 0;
+	if ((krb_log_exec(krb5glue_crypto_length, creds->ctx, key, KRB5_CRYPTO_TYPE_HEADER,
+	                  &crypto_header_length) != 0) ||
+	    (krb_log_exec(krb5glue_crypto_length, creds->ctx, key, KRB5_CRYPTO_TYPE_TRAILER,
+	                  &crypto_trailer_length) != 0))
 		return SEC_E_INTERNAL_ERROR;
 
-	/* We don't expect a trailer buffer; everything must be in sig_buffer */
-	if (rrc != 16 + iov[3].data.length + iov[4].data.length)
+	if ((crypto_header_length > body_length) ||
+	    (crypto_trailer_length > (body_length - crypto_header_length)))
 		return SEC_E_INVALID_TOKEN;
-	if (sig_buffer->cbBuffer != 16 + rrc + iov[0].data.length)
+	const size_t clear_length = body_length - crypto_header_length - crypto_trailer_length;
+	/* MIT krb5_data.length cannot represent more than UINT32_MAX bytes. */
+	if ((clear_length > UINT32_MAX) || (clear_length < 16) || (ec > (clear_length - 16)))
 		return SEC_E_INVALID_TOKEN;
-
-	/* Locate the parts of the message */
-	const size_t iov0Offset = 16ull + rrc + ec;
-	if (iov0Offset + iov[0].data.length > sig_buffer->cbBuffer)
-		return SEC_E_INVALID_TOKEN;
-
-	const size_t iov2Offset = 16ull + ec;
-	if (iov2Offset + iov[2].data.length > sig_buffer->cbBuffer)
+	const size_t data_length = clear_length - 16 - ec;
+	if (data_length > data_buffer->cbBuffer)
 		return SEC_E_INVALID_TOKEN;
 
-	iov[0].data.data = WINPR_CAST_CONST_PTR_AWAY(&header[iov0Offset], char*);
-	iov[1].data.data = data_buffer->pvBuffer;
-	iov[2].data.data = WINPR_CAST_CONST_PTR_AWAY(&header[iov2Offset], char*);
-	char* data2 = iov[2].data.data;
-	iov[3].data.data = &data2[iov[2].data.length];
-
-	char* data3 = iov[3].data.data;
-	iov[4].data.data = &data3[iov[3].data.length];
-
-	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)))
+	iov[1].data.length = WINPR_ASSERTING_INT_CAST(unsigned int, clear_length);
+	if (krb_log_exec(krb5glue_crypto_length_iov, creds->ctx, key, iov, ARRAYSIZE(iov)) != 0)
 		return SEC_E_INTERNAL_ERROR;
+	/* RFC 4121 filler must eliminate crypto-system residue. */
+	if ((iov[0].data.length != crypto_header_length) || (iov[2].data.length != 0) ||
+	    (iov[3].data.length != crypto_trailer_length))
+		return SEC_E_INVALID_TOKEN;
 
-	/* Validate the encrypted header */
-	winpr_Data_Write_UINT16_BE(iov[2].data.data + 4, ec);
-	winpr_Data_Write_UINT16_BE(iov[2].data.data + 6, rrc);
-	if (memcmp(iov[2].data.data, header, 16) != 0)
-		return SEC_E_MESSAGE_ALTERED;
+	BYTE* body = calloc(body_length, sizeof(BYTE));
+	if (!body)
+		return SEC_E_INSUFFICIENT_MEMORY;
 
+	/* Undo the wire rotation, including counts larger than the body (RFC 4121 4.2.5). */
+	const BYTE* encrypted_data = data_buffer->pvBuffer;
+	size_t source = rrc % body_length;
+	for (size_t offset = 0; offset < body_length; offset++)
+	{
+		body[offset] = (source < token_body_length) ? header[16 + source]
+		                                            : encrypted_data[source - token_body_length];
+		if (++source == body_length)
+			source = 0;
+	}
+
+	iov[0].data.data = (char*)body;
+	iov[1].data.data = (char*)body + crypto_header_length;
+	iov[2].data.data = iov[1].data.data + clear_length;
+	iov[3].data.data = iov[2].data.data;
+
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
+	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)) != 0)
+		goto out;
+
+	/* The authenticated header includes EC, but its RRC is zero before rotation. */
+	BYTE expected_header[16] = WINPR_C_ARRAY_INIT;
+	CopyMemory(expected_header, header, sizeof(expected_header));
+	winpr_Data_Write_UINT16_BE(&expected_header[6], 0);
+	if (memcmp(iov[1].data.data + clear_length - 16, expected_header, sizeof(expected_header)) != 0)
+	{
+		status = SEC_E_MESSAGE_ALTERED;
+		goto out;
+	}
+
+	if (data_length > 0)
+		CopyMemory(data_buffer->pvBuffer, iov[1].data.data, data_length);
+	data_buffer->cbBuffer = WINPR_ASSERTING_INT_CAST(ULONG, data_length);
 	*pfQOP = 0;
+	status = SEC_E_OK;
 
-	return SEC_E_OK;
+out:
+	winpr_znfree(body, body_length);
+	return status;
 #else
 	return SEC_E_UNSUPPORTED_FUNCTION;
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(WINPR_ATTR_UNUSED PCtxtHandle phContext,
                                                         WINPR_ATTR_UNUSED ULONG fQOP,
                                                         WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
@@ -2449,6 +2653,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(WINPR_ATTR_UNUSED PCtxtH
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(WINPR_ATTR_UNUSED PCtxtHandle phContext,
                                                           WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
                                                           WINPR_ATTR_UNUSED ULONG MessageSeqNo,

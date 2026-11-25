@@ -99,6 +99,18 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return nan("");
 }
 
+INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item)
+{
+	WINPR_UNUSED(item);
+	return 0;
+}
+
+UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item)
+{
+	WINPR_UNUSED(item);
+	return 0;
+}
+
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 	WINPR_UNUSED(item);
@@ -240,6 +252,15 @@ WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, 
 	WINPR_UNUSED(number);
 	return nullptr;
 }
+
+WINPR_JSON* WINPR_JSON_AddUIntegerToObject(WINPR_JSON* object, const char* name, uint64_t number)
+{
+	WINPR_UNUSED(object);
+	WINPR_UNUSED(name);
+	WINPR_UNUSED(number);
+	return nullptr;
+}
+
 WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
 {
 	WINPR_UNUSED(object);

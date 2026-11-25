@@ -22,7 +22,7 @@
 
 - (id)initWithBookmark:(ComputerBookmark *)bookmark
 {
-	if ((self = [super initWithStyle:UITableViewStyleGrouped]))
+	if ((self = [super initWithStyle:UITableViewStyleInsetGrouped]))
 	{
 		// set additional settings state according to bookmark data
 		_bookmark = [bookmark retain];
@@ -195,8 +195,6 @@
 			NSLog(@"Invalid row index in settings table!");
 			break;
 	}
-
-	[self adjustEditTextTableViewCell:textCell];
 }
 
 #pragma mark -

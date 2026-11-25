@@ -88,6 +88,7 @@ typedef struct
 	SSHAGENT_LISTENER_CALLBACK* listener_callback;
 
 	rdpContext* rdpcontext;
+	BOOL connected;
 } SSHAGENT_PLUGIN;
 
 /**
@@ -250,6 +251,10 @@ static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	(void)CloseHandle(callback->thread);
 	LeaveCriticalSection(&callback->lock);
 	DeleteCriticalSection(&callback->lock);
+
+	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*)callback->generic.plugin;
+	WINPR_ASSERT(sshagent);
+	sshagent->connected = FALSE;
 	free(callback);
 	return CHANNEL_RC_OK;
 }
@@ -269,6 +274,15 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	SSHAGENT_LISTENER_CALLBACK* listener_callback = (SSHAGENT_LISTENER_CALLBACK*)pListenerCallback;
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
+
+	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*)listener_callback->plugin;
+	WINPR_ASSERT(sshagent);
+
+	if (sshagent->connected)
+	{
+		WLog_ERR(TAG, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
 
 	SSHAGENT_CHANNEL_CALLBACK* callback =
 	    (SSHAGENT_CHANNEL_CALLBACK*)calloc(1, sizeof(SSHAGENT_CHANNEL_CALLBACK));
@@ -308,7 +322,8 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
-	*ppCallback = (IWTSVirtualChannelCallback*)callback;
+	*ppCallback = &callback->generic.iface;
+	sshagent->connected = TRUE;
 	return CHANNEL_RC_OK;
 }
 

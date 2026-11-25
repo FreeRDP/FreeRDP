@@ -108,9 +108,14 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 	}
 	else if (count < 0)
 	{
-		MoveMemory(
-		    &pool->aArray[index], &pool->aArray[index + WINPR_ASSERTING_INT_CAST(size_t, -count)],
-		    (WINPR_ASSERTING_INT_CAST(size_t, pool->aSize) - index) * sizeof(wBufferPoolItem));
+		const size_t size = WINPR_ASSERTING_INT_CAST(size_t, pool->aSize);
+		const size_t offset = index + WINPR_ASSERTING_INT_CAST(size_t, -count);
+		// the removed entries must lie within the array
+		if (offset > size)
+			return FALSE;
+
+		MoveMemory(&pool->aArray[index], &pool->aArray[offset],
+		           (size - offset) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
 	return TRUE;
@@ -152,8 +157,14 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
-		           WINPR_ASSERTING_INT_CAST(size_t, pool->uSize - index) * sizeof(wBufferPoolItem));
+		const SSIZE_T offset = index - count;
+		// the removed entries must lie within the array
+		if (offset > pool->uSize)
+			return FALSE;
+
+		MoveMemory(&pool->uArray[index], &pool->uArray[offset],
+		           WINPR_ASSERTING_INT_CAST(size_t, pool->uSize - offset) *
+		               sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
 	return TRUE;
@@ -255,6 +266,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 	else
 	{
 		/* variable size buffers */
+		SSIZE_T bufferSize = 0;
 
 		maxSize = 0;
 		maxIndex = 0;
@@ -286,6 +298,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 		if (!found)
 		{
+			bufferSize = size;
 			if (!size)
 				buffer = nullptr;
 			else
@@ -300,6 +313,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		else
 		{
 			buffer = pool->aArray[foundIndex].buffer;
+			bufferSize = pool->aArray[foundIndex].size;
 
 			if (maxSize < size)
 			{
@@ -311,6 +325,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 					goto out_error_no_free;
 
 				buffer = newBuffer;
+				bufferSize = size;
 			}
 
 			if (!BufferPool_ShiftAvailable(pool, WINPR_ASSERTING_INT_CAST(size_t, foundIndex), -1))
@@ -336,7 +351,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		}
 
 		pool->uArray[pool->uSize].buffer = buffer;
-		pool->uArray[pool->uSize].size = size;
+		pool->uArray[pool->uSize].size = bufferSize;
 		(pool->uSize)++;
 	}
 

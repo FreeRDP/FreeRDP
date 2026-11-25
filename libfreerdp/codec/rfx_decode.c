@@ -60,7 +60,8 @@ static inline BOOL rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
 
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode)
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode)
-	rfx_differential_decode(buffer + 4032, 64);
+	if (!rfx_differential_decode(buffer + 4032, 64))
+		goto fail;
 	PROFILER_EXIT(context->priv->prof_rfx_differential_decode)
 	PROFILER_ENTER(context->priv->prof_rfx_quantization_decode)
 	if (!context->quantization_decode(buffer, quantization_values, nrQuantValues))

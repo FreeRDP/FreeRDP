@@ -27,7 +27,7 @@
 
 - (id)initWithBookmark:(ComputerBookmark *)bookmark
 {
-	if ((self = [super initWithStyle:UITableViewStyleGrouped]))
+	if ((self = [super initWithStyle:UITableViewStyleInsetGrouped]))
 	{
 		// set additional settings state according to bookmark data
 		_bookmark = [bookmark retain];
@@ -164,9 +164,9 @@
 		case 0:
 		{
 			EditFlagTableViewCell *flagCell = (EditFlagTableViewCell *)cell;
-			[[flagCell label]
-			    setText:NSLocalizedString(@"Enable TS Gateway",
-			                              @"'Enable TS Gateway': Bookmark enable TSG settings")];
+			[flagCell
+			    setTitle:NSLocalizedString(@"Enable TS Gateway",
+			                               @"'Enable TS Gateway': Bookmark enable TSG settings")];
 			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[flagCell toggle] setOn:[_params boolForKey:@"enable_tsg_settings"]];
 			[[flagCell toggle] addTarget:self
@@ -178,10 +178,10 @@
 		{
 			BOOL enable_tsg_settings = [_params boolForKey:@"enable_tsg_settings"];
 			EditSubEditTableViewCell *editCell = (EditSubEditTableViewCell *)cell;
-			[[editCell label]
-			    setText:NSLocalizedString(@"TS Gateway Settings",
-			                              @"'TS Gateway Settings': Bookmark TS Gateway Settings")];
-			[[editCell label] setEnabled:enable_tsg_settings];
+			[editCell
+			    setTitle:NSLocalizedString(@"TS Gateway Settings",
+			                               @"'TS Gateway Settings': Bookmark TS Gateway Settings")];
+			[editCell setEnabled:enable_tsg_settings];
 			[editCell setSelectionStyle:enable_tsg_settings ? UITableViewCellSelectionStyleBlue
 			                                                : UITableViewCellSelectionStyleNone];
 			break;
@@ -189,9 +189,8 @@
 		case 2:
 		{
 			EditFlagTableViewCell *flagCell = (EditFlagTableViewCell *)cell;
-			[[flagCell label]
-			    setText:NSLocalizedString(@"3G Settings",
-			                              @"'3G Settings': Bookmark enable 3G settings")];
+			[flagCell setTitle:NSLocalizedString(@"3G Settings",
+			                                     @"'3G Settings': Bookmark enable 3G settings")];
 			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[flagCell toggle] setOn:[_params boolForKey:@"enable_3g_settings"]];
 			[[flagCell toggle] addTarget:self
@@ -202,18 +201,15 @@
 		case 3:
 		{
 			EditSelectionTableViewCell *selCell = (EditSelectionTableViewCell *)cell;
-			[[selCell label]
-			    setText:NSLocalizedString(@"3G Screen",
-			                              @"'3G Screen': Bookmark 3G Screen settings")];
+			[selCell setTitle:NSLocalizedString(@"3G Screen",
+			                                    @"'3G Screen': Bookmark 3G Screen settings")];
 			NSString *resolution = ScreenResolutionDescription(
 			    [_params intForKeyPath:@"settings_3g.screen_resolution_type"],
 			    [_params intForKeyPath:@"settings_3g.width"],
 			    [_params intForKeyPath:@"settings_3g.height"]);
 			int colorBits = [_params intForKeyPath:@"settings_3g.colors"];
-			[[selCell selection]
-			    setText:[NSString stringWithFormat:@"%@@%d", resolution, colorBits]];
-			[[selCell label] setEnabled:enable_3G_settings];
-			[[selCell selection] setEnabled:enable_3G_settings];
+			[selCell setValue:[NSString stringWithFormat:@"%@@%d", resolution, colorBits]];
+			[selCell setEnabled:enable_3G_settings];
 			[selCell setSelectionStyle:enable_3G_settings ? UITableViewCellSelectionStyleBlue
 			                                              : UITableViewCellSelectionStyleNone];
 			break;
@@ -221,10 +217,10 @@
 		case 4:
 		{
 			EditSubEditTableViewCell *editCell = (EditSubEditTableViewCell *)cell;
-			[[editCell label]
-			    setText:NSLocalizedString(@"3G Performance",
-			                              @"'3G Performance': Bookmark 3G Performance Settings")];
-			[[editCell label] setEnabled:enable_3G_settings];
+			[editCell
+			    setTitle:NSLocalizedString(@"3G Performance",
+			                               @"'3G Performance': Bookmark 3G Performance Settings")];
+			[editCell setEnabled:enable_3G_settings];
 			[editCell setSelectionStyle:enable_3G_settings ? UITableViewCellSelectionStyleBlue
 			                                               : UITableViewCellSelectionStyleNone];
 			break;
@@ -232,11 +228,9 @@
 		case 5:
 		{
 			EditSelectionTableViewCell *selCell = (EditSelectionTableViewCell *)cell;
-			[[selCell label]
-			    setText:NSLocalizedString(@"Security",
-			                              @"'Security': Bookmark protocol security settings")];
-			[[selCell selection]
-			    setText:ProtocolSecurityDescription([_params intForKey:@"security"])];
+			[selCell setTitle:NSLocalizedString(
+			                      @"Security", @"'Security': Bookmark protocol security settings")];
+			[selCell setValue:ProtocolSecurityDescription([_params intForKey:@"security"])];
 			break;
 		}
 		case 6:
@@ -249,7 +243,6 @@
 			[[textCell textfield] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[textCell textfield]
 			    setPlaceholder:NSLocalizedString(@"not set", @"not set placeholder")];
-			[self adjustEditTextTableViewCell:textCell];
 			break;
 		}
 		case 7:
@@ -263,15 +256,14 @@
 			[[textCell textfield] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[textCell textfield]
 			    setPlaceholder:NSLocalizedString(@"not set", @"not set placeholder")];
-			[self adjustEditTextTableViewCell:textCell];
 			break;
 		}
 		case 8:
 		{
 			EditFlagTableViewCell *flagCell = (EditFlagTableViewCell *)cell;
-			[[flagCell label]
-			    setText:NSLocalizedString(@"Console Mode",
-			                              @"'Console Mode': Bookmark console mode settings")];
+			[flagCell
+			    setTitle:NSLocalizedString(@"Console Mode",
+			                               @"'Console Mode': Bookmark console mode settings")];
 			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[flagCell toggle] setOn:[_params boolForKey:@"console"]];
 			[[flagCell toggle] addTarget:self
@@ -370,10 +362,9 @@
 		case GET_TAG(SECTION_ADVANCED_SETTINGS, 0):
 		{
 			[_params setBool:[valueSwitch isOn] forKey:@"enable_tsg_settings"];
+			// TS gateway settings row
 			NSArray *indexPaths =
 			    [NSArray arrayWithObjects:[NSIndexPath indexPathForRow:1
-			                                                 inSection:SECTION_ADVANCED_SETTINGS],
-			                              [NSIndexPath indexPathForRow:2
 			                                                 inSection:SECTION_ADVANCED_SETTINGS],
 			                              nil];
 			[[self tableView] reloadRowsAtIndexPaths:indexPaths
@@ -384,10 +375,11 @@
 		case GET_TAG(SECTION_ADVANCED_SETTINGS, 2):
 		{
 			[_params setBool:[valueSwitch isOn] forKey:@"enable_3g_settings"];
+			// 3G screen and 3G performance rows
 			NSArray *indexPaths =
 			    [NSArray arrayWithObjects:[NSIndexPath indexPathForRow:3
 			                                                 inSection:SECTION_ADVANCED_SETTINGS],
-			                              [NSIndexPath indexPathForRow:2
+			                              [NSIndexPath indexPathForRow:4
 			                                                 inSection:SECTION_ADVANCED_SETTINGS],
 			                              nil];
 			[[self tableView] reloadRowsAtIndexPaths:indexPaths

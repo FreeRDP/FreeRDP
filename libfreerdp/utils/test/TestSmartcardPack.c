@@ -154,12 +154,12 @@ int TestSmartcardPack(int argc, char* argv[])
 		return -1;
 
 	/* Unaligned pbAttr lengths must not let cbAttrLen reach into the NDR padding. */
-	if (!run_set_attrib_case(1, 0xFFFFFFFF))
+	if (!run_set_attrib_case(1, 65536))
 		return -1;
-	if (!run_set_attrib_case(5, 0xFFFFFFFF))
+	if (!run_set_attrib_case(5, 65536))
 		return -1;
 	/* Aligned length and a small cbAttrLen must be preserved. */
-	if (!run_set_attrib_case(4, 0xFFFFFFFF))
+	if (!run_set_attrib_case(4, 65536))
 		return -1;
 	if (!run_set_attrib_case(8, 2))
 		return -1;

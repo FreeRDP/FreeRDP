@@ -293,7 +293,7 @@ BOOL sdl_present_gateway_message(freerdp* instance, [[maybe_unused]] UINT32 type
 		flags = SHOW_DIALOG_ACCEPT_REJECT;
 	else if (isDisplayMandatory)
 		flags = SHOW_DIALOG_TIMED_ACCEPT;
-	char* message = ConvertWCharNToUtf8Alloc(wmessage, length, nullptr);
+	char* message = ConvertWCharNToUtf8Alloc(wmessage, length / sizeof(WCHAR), nullptr);
 
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);
 	free(title);
@@ -303,30 +303,25 @@ BOOL sdl_present_gateway_message(freerdp* instance, [[maybe_unused]] UINT32 type
 
 int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	int rc = -1;
-	const char* str_data = freerdp_get_logon_error_info_data(data);
-	const char* str_type = freerdp_get_logon_error_info_type(type);
-
 	if (!instance || !instance->context)
 		return -1;
 
 	/* ignore LOGON_MSG_SESSION_CONTINUE message */
-	if (type == LOGON_MSG_SESSION_CONTINUE)
-		return 0;
+	switch (type)
+	{
+		case LOGON_MSG_SESSION_CONTINUE:
+			return 0;
+		default:
+			break;
+	}
 
-	char* title = nullptr;
-	size_t tlen = 0;
-	winpr_asprintf(&title, &tlen, "[%s] info",
-	               freerdp_settings_get_server_name(instance->context->settings));
-
-	char* message = nullptr;
-	size_t mlen = 0;
-	winpr_asprintf(&message, &mlen, "Logon Error Info %s [%s]", str_data, str_type);
-
-	rc = sdl_show_dialog(instance->context, title, message, SHOW_DIALOG_ACCEPT_REJECT);
-	free(title);
-	free(message);
-	return rc;
+	const char* str_data = freerdp_get_logon_error_info_data(data);
+	const char* str_type = freerdp_get_logon_error_info_type(type);
+	/* The server shows its own logon UI: show the desktop, a local dialog would block it. */
+	auto sdl = get_context(instance);
+	sdl->getRailChannelContext().noteLogonPrompt();
+	WLog_Print(sdl->getWLog(), WLOG_INFO, "Logon Error Info %s [%s]", str_data, str_type);
+	return 1;
 }
 
 static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,

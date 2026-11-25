@@ -74,6 +74,16 @@ static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
 	return formats;
 }
 
+/* DecodingRequired describes the transmitted format: compressed H.264 and MJPEG
+ * samples need decoding on the server; raw samples do not. */
+WINPR_ATTR_NODISCARD
+static CAM_MEDIA_TYPE_DESCRIPTION_FLAGS ecam_media_type_flags(CAM_MEDIA_FORMAT format)
+{
+	if ((format == CAM_MEDIA_FORMAT_H264) || (format == CAM_MEDIA_FORMAT_MJPG))
+		return CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+	return AM_MEDIA_TYPE_DESCRIPTION_FLAG_Invalid;
+}
+
 static void ecam_dev_write_media_type(wStream* s, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 {
 	WINPR_ASSERT(mediaType);
@@ -326,10 +336,10 @@ static void ecam_dev_stop_stream(CameraDevice* dev, size_t streamIndex)
 		stream->streaming = FALSE;
 		stream->captureRunning = FALSE;
 		dev->ihal->StopStream(dev->ihal, dev->deviceId, 0);
-
-		DeleteCriticalSection(&stream->lock);
 	}
 
+	stream->haveSample = FALSE;
+	stream->samplesRequested = FALSE;
 	Stream_Free(stream->sampleRespBuffer, TRUE);
 	stream->sampleRespBuffer = nullptr;
 
@@ -378,7 +388,8 @@ static BOOL media_type_valid(CameraDevice* dev, UINT8 streamIndex,
 	{
 		CAM_MEDIA_TYPE_DESCRIPTION cur = supported[x];
 		cur.Format = supportedFormats[formatIndex].outputFormat;
-		cur.Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+		/* Validate the same wire-format flags advertised in the media type list. */
+		cur.Flags = ecam_media_type_flags(cur.Format);
 		if (memcmp(&cur, type, sizeof(CAM_MEDIA_TYPE_DESCRIPTION)) == 0)
 			return TRUE;
 	}
@@ -461,14 +472,6 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 	stream->samplesRequested = 0;
 	stream->lastSampleRequestTime = GetTickCount64();
 	stream->haveSample = FALSE;
-
-	if (!InitializeCriticalSectionEx(&stream->lock, 0, 0))
-	{
-		WLog_ERR(TAG, "InitializeCriticalSectionEx failed");
-		ecam_dev_stop_stream(dev, streamIndex);
-		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_OutOfMemory);
-		return ERROR_INVALID_DATA;
-	}
 
 	stream->pendingSample = Stream_New(nullptr, 4ull * mediaType.Width * mediaType.Height);
 	if (!stream->pendingSample)
@@ -565,6 +568,19 @@ static UINT ecam_dev_process_sample_request(CameraDevice* dev, GENERIC_CHANNEL_C
 	CameraDeviceStream* stream = &dev->streams[streamIndex];
 	BOOL startCapture = FALSE;
 	CAM_MEDIA_TYPE_DESCRIPTION mediaType = WINPR_C_ARRAY_INIT;
+
+	/* MS-RDPECAM 2.2.3.13: each Sample Request gets a Sample Response or a Sample Error Response.
+	 * A stream never started, refused or stopped has no sample to give. Only the requests of the
+	 * server, handled on this thread, start and stop a stream while the channel is open. */
+	if (!stream->streaming)
+	{
+		WLog_WARN(TAG,
+		          "Sample request for stream %" PRIu8
+		          ", which is not started: sample error response",
+		          streamIndex);
+		return ecam_dev_send_sample_error_response(dev, hchannel, streamIndex,
+		                                           CAM_ERROR_CODE_NotInitialized);
+	}
 
 	EnterCriticalSection(&stream->lock);
 
@@ -733,7 +749,8 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 	for (size_t i = 0; i < nMediaTypes; i++)
 	{
 		mediaTypes[i].Format = streamOutputFormat(stream);
-		mediaTypes[i].Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+		/* Set decoding requirements for the transmitted format, not the capture format. */
+		mediaTypes[i].Flags = ecam_media_type_flags(mediaTypes[i].Format);
 	}
 
 	if (stream->currMediaType.Format == 0)
@@ -984,6 +1001,17 @@ static UINT ecam_dev_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 }
 
 /**
+ * Deletes the locks of the first nStreams streams of a device, which ecam_dev_create initialized
+ */
+static void ecam_dev_delete_locks(CameraDevice* dev, size_t nStreams)
+{
+	WINPR_ASSERT(dev);
+
+	for (size_t i = 0; i < nStreams; i++)
+		DeleteCriticalSection(&dev->streams[i].lock);
+}
+
+/**
  * Function description
  *
  * @return CameraDevice pointer or nullptr in case of error
@@ -1010,10 +1038,25 @@ CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
 	dev->ecam = ecam;
 	dev->ihal = ecam->ihal;
 	strncpy(dev->deviceId, deviceId, sizeof(dev->deviceId) - 1);
+
+	/* The lock of each stream lives as long as the device: a request of the server can take it
+	 * before the stream starts, or after it stopped */
+	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
+	{
+		if (!InitializeCriticalSectionEx(&dev->streams[i].lock, 0, 0))
+		{
+			ecam_dev_delete_locks(dev, i);
+			free(dev);
+			WLog_ERR(TAG, "InitializeCriticalSectionEx failed");
+			return nullptr;
+		}
+	}
+
 	dev->hlistener = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 
 	if (!dev->hlistener)
 	{
+		ecam_dev_delete_locks(dev, ECAM_DEVICE_MAX_STREAMS);
 		free(dev);
 		WLog_ERR(TAG, "calloc failed");
 		return nullptr;
@@ -1026,6 +1069,7 @@ CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
 	                                                 &dev->hlistener->iface, &dev->listener))
 	{
 		free(dev->hlistener);
+		ecam_dev_delete_locks(dev, ECAM_DEVICE_MAX_STREAMS);
 		free(dev);
 		WLog_ERR(TAG, "CreateListener failed");
 		return nullptr;
@@ -1059,5 +1103,6 @@ void ecam_dev_destroy(CameraDevice* dev)
 	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
 		ecam_dev_stop_stream(dev, i);
 
+	ecam_dev_delete_locks(dev, ECAM_DEVICE_MAX_STREAMS);
 	free(dev);
 }

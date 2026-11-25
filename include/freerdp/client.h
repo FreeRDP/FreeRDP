@@ -42,6 +42,10 @@
 #include <freerdp/client/encomsp.h>
 #endif
 
+#if defined(CHANNEL_RAIL_CLIENT)
+#include <freerdp/client/rail.h>
+#endif
+
 /** @brief Opaqye handle for AAD wrapper
  * @since version 3.16.0
  */
@@ -119,6 +123,7 @@ extern "C"
 	 * @since version 3.32.0
 	 */
 	typedef struct rdp_client_oauth2 rdpClientOAuth2;
+	typedef struct rdp_client_rail_ipc rdpClientRailIpc;
 
 	struct rdp_client_context
 	{
@@ -153,7 +158,17 @@ extern "C"
 		ALIGN64 BOOL pressed_buttons[5];            /**< (offset 11) @since version 3.17.0 */
 		ALIGN64 rdpClientOAuth2* oauth2;            /**< (offset 16) @since version 3.32.0 */
 		ALIGN64 AadAuthHelper* aadHelper;           /**< (offset 17) @since version 3.32.0 */
-		UINT64 reserved[129 - 18];                  /**< (offset 18) */
+		ALIGN64 pConnectCallback PreConnect;        /**< (offset 18) @since version 3.33.0 */
+		ALIGN64 pConnectCallback PostConnect;       /**< (offset 19) @since version 3.33.0 */
+		ALIGN64 pPostDisconnect PostDisconnect;     /**< (offset 20) @since version 3.33.0 */
+		ALIGN64 pPostDisconnect PostFinalDisconnect; /**< (offset 21) @since version 3.33.0 */
+		ALIGN64 HANDLE pipethread;                   /**< (offset 22) @since version 3.33.0 */
+#if defined(CHANNEL_RAIL_CLIENT)
+		ALIGN64 rdpClientRailIpc* railIpc; /**< (offset 23) @since version 3.34.0 */
+#else
+	    UINT64 reserved4[1];
+#endif
+		UINT64 reserved[129 - 24]; /**< (offset 24) */
 	};
 
 	typedef BOOL (*window_events_fkt_t)(freerdp* instance);
@@ -169,6 +184,17 @@ extern "C"
 	FREERDP_API int freerdp_client_start(rdpContext* context);
 
 	FREERDP_API int freerdp_client_stop(rdpContext* context);
+
+	/**
+	 * Initialize the client-common and dependent FreeRDP translation domains.
+	 *
+	 * @param locale Locale name, or NULL/empty to use the environment locale.
+	 * @param searchPath Optional gettext catalog directory for this module.
+	 * @return TRUE on success, otherwise FALSE.
+	 * @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_enable_translation(const char* locale, const char* searchPath);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
@@ -294,9 +320,22 @@ extern "C"
 	FREERDP_API BOOL client_common_save_session_info(rdpContext* context, UINT32 type,
 	                                                 const void* data);
 
-	FREERDP_API void
-	freerdp_client_OnChannelConnectedEventHandler(void* context,
-	                                              const ChannelConnectedEventArgs* e);
+	/** @brief Call from your clients OnChannelConnected event handler after setting up all client
+	 * specific handling. This allows client/common to inject channel specific handlers.
+	 *
+	 *  @param context A user provided context, may be NULL
+	 *  @param e The \ref ChannelConnectedEventArgs provided
+	 */
+	FREERDP_API void freerdp_client_OnChannelConnectedEventHandler(
+	    void* context,
+
+	    /** @brief Call from your clients OnChannelDisconnected event handler after setting up all
+	     * client specific handling. This allows client/common to inject channel specific handlers.
+	     *
+	     *  @param context A user provided context, may be NULL
+	     *  @param e The \ref ChannelConnectedEventArgs provided
+	     */
+	    const ChannelConnectedEventArgs* e);
 	FREERDP_API void
 	freerdp_client_OnChannelDisconnectedEventHandler(void* context,
 	                                                 const ChannelDisconnectedEventArgs* e);
@@ -456,6 +495,86 @@ extern "C"
 	WINPR_ATTR_MALLOC(winpr_zfree, 1)
 	FREERDP_API char* freerdp_client_extract_aad_code(rdpClientContext* cctx, const char* data,
 	                                                  size_t length);
+
+	typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+	{
+		FREERDP_CLIENT_KBD_MOD_NONE = 0x00,
+		FREERDP_CLIENT_KBD_MOD_LSHIFT = 0x01,
+		FREERDP_CLIENT_KBD_MOD_RSHIFT = 0x02,
+		FREERDP_CLIENT_KBD_MOD_LMENU = 0x04,
+		FREERDP_CLIENT_KBD_MOD_RMENU = 0x08,
+		FREERDP_CLIENT_KBD_MOD_LCONTROL = 0x10,
+		FREERDP_CLIENT_KBD_MOD_RCONTROL = 0x20,
+		FREERDP_CLIENT_KBD_MOD_LWIN = 0x40,
+		FREERDP_CLIENT_KBD_MOD_RWIN = 0x80
+	} FREERDP_CLIENT_KBD_MOD;
+
+	/** @brief Helper to send unicode input.
+	 *
+	 *  Checks the input for certain conditions and sends the input as unicode if the conditions do
+	 * not match, otherwise fall back to scancodes to send.
+	 *
+	 *  @param cctx The client context to use for sending
+	 *  @param flags The flags (KEY_RELEASE, ..)
+	 *  @param str A UTF-8 string to send as unicode
+	 *  @param scancode The RDP scancode of the current key
+	 *  @param modmask The keyboard modifiers currently pressed
+	 *
+	 *  @return TRUE if sent successfully, FALSE otherwise
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_send_key_as_unicode(rdpClientContext* cctx, UINT16 flags,
+	                                                    const char* str, UINT32 scancode,
+	                                                    UINT32 modmask);
+
+	/** @brief Get the number of runtime statistics of a client session.
+	 *
+	 *  They hold what the libraries count anyway: the network figures, then the graphics
+	 *  channel's (\ref rdpgfx_stats_max_index), if it is built in.
+	 *
+	 *  An index can differ between versions, as a list can grow in the middle. A name means the
+	 *  same in all of them, so use it to find a statistic; slots for unused codec IDs share one
+	 *  name and stay 0. Named NETWORK_*:
+	 *  - _BYTES_RECEIVED, _BYTES_SENT: what passed the transport, without TLS and gateway overhead
+	 *  - _PACKETS_RECEIVED, _PACKETS_SENT: PDUs on the slow path only, the fast path has no counter
+	 *  - _BANDWIDTH_KBPS, _RTT_BASE_MS, _RTT_AVERAGE_MS: what the server measured and reported,
+	 *    0 until it does
+	 *
+	 *  GFX_CAPS_VERSION: the RDPGFX_CAPVERSION_* the server confirmed, 0 before the caps confirm
+	 *  and without a graphics channel. It tells what the RDPGFX_CODECID_AV1 counters count: AV2
+	 *  with RDPGFX_CAPVERSION_FRDP_2, AV1 with any other version.
+	 *
+	 *  @return The number of statistics
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API size_t freerdp_client_stats_max_index(void);
+
+	/** @brief Get the name of a runtime statistic.
+	 *
+	 *  @param index The index, less than \ref freerdp_client_stats_max_index
+	 *
+	 *  @return The name, valid for the lifetime of the process
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_client_stats_name_for_index(size_t index);
+
+	/** @brief Get the value of a runtime statistic.
+	 *
+	 *  Reads the session's own structures, so call it where they can not go away, as on the
+	 *  thread that runs the session. No lock: a value can be off for one reading.
+	 *
+	 *  @param context The session, may be \b nullptr
+	 *  @param index The index, less than \ref freerdp_client_stats_max_index
+	 *
+	 *  @return The value, 0 for what the session does not have
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API uint64_t freerdp_client_stats_value_for_index(const rdpContext* context,
+	                                                          size_t index);
 
 #ifdef __cplusplus
 }

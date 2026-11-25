@@ -140,6 +140,7 @@ const char* freerdp_getApplicationDetailsProduct(void)
 	return s_freerdp_product_string;
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 char* freerdp_getApplicatonDetailsRegKey(const char* fmt)
 {
 	char* val = freerdp_getApplicatonDetailsCombined('\\');
@@ -152,6 +153,7 @@ char* freerdp_getApplicatonDetailsRegKey(const char* fmt)
 	free(val);
 	return str;
 }
+#endif
 
 char* freerdp_getApplicatonDetailsCombined(char separator)
 {
@@ -305,4 +307,69 @@ WINPR_JSON* freerdp_GetJSONConfigFile(BOOL system, const char* filename)
 	WINPR_JSON* json = WINPR_JSON_ParseFromFile(path);
 	free(path);
 	return json;
+}
+
+WINPR_ATTR_NODISCARD
+BOOL freerdp_path_contains_dotdot(const WCHAR* path, size_t path_length)
+{
+	const WCHAR dot = winpr_wchar_ToLE('.');
+	const WCHAR slash = winpr_wchar_ToLE('/');
+	const WCHAR backslash = winpr_wchar_ToLE('\\');
+	const WCHAR zero = winpr_wchar_ToLE('\0');
+
+	if (path_length < 2)
+		return FALSE;
+
+	size_t tstlen = path_length;
+	const WCHAR* tst = path;
+	do
+	{
+		tst = winpr_wcsnchr(tst, tstlen, dot);
+		if (!tst)
+			return FALSE;
+		const size_t diff = WINPR_ASSERTING_INT_CAST(size_t, tst - path);
+		tstlen = _wcsnlen(tst, path_length - diff);
+		if (tstlen < 2)
+			return FALSE;
+		if (tst[1] != dot)
+		{
+			tst++;
+			tstlen--;
+			continue;
+		}
+
+		/* Filter .. sequences in file or directory names */
+		if ((tst == path) || (*(tst - 1) == slash) || (*(tst - 1) == backslash))
+		{
+			if (tst + 2 < path + path_length)
+			{
+				if ((tst[2] == slash) || (tst[2] == backslash) || (tst[2] == zero))
+					return TRUE;
+#if defined(_WIN32)
+				const WCHAR space = winpr_wchar_ToLE(' ');
+				const WCHAR colon = winpr_wchar_ToLE(':');
+				const WCHAR dollar = winpr_wchar_ToLE('$');
+
+				// Windows strips space and dot from end of path
+				if (tst + 3 >= path + path_length)
+				{
+					if ((tst[2] == space) || (tst[2] == dot))
+						return TRUE;
+				}
+
+				// Windows strips alternate file stream syntax ::$ID from path
+				if (tst + 5 < path + path_length)
+				{
+					if ((tst[2] == colon) && (tst[3] == colon) && (tst[4] == dollar))
+						return TRUE;
+				}
+#endif
+			}
+			else
+				return TRUE;
+		}
+		tst += 2;
+	} while (TRUE);
+
+	return FALSE;
 }

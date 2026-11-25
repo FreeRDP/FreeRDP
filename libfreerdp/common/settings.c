@@ -34,6 +34,7 @@
 
 #include "../core/settings.h"
 #include "../core/capabilities.h"
+#include "../core/aad_cloud.h"
 
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/settings.h>
@@ -41,6 +42,8 @@
 #include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("common")
+
+static const char magic[] = "RDPDR_DEVICE_EX";
 
 struct RDPDR_DEVICE_EX
 {
@@ -53,6 +56,7 @@ struct RDPDR_DEVICE_EX
 		ALIGN64 RDPDR_PARALLEL parallel;
 		ALIGN64 RDPDR_SMARTCARD smartcard;
 	} u;
+	char magic[16];
 	ALIGN64 ADDIN_ARGV* args;
 };
 
@@ -339,6 +343,9 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* const ar
 	device->u.base.Id = 0;
 	device->u.base.Type = Type;
 
+	WINPR_STATIC_ASSERT(sizeof(magic) == sizeof(device->magic));
+	memcpy(device->magic, magic, sizeof(device->magic));
+
 	if (count > 0)
 	{
 		device->u.base.Name = _strdup(args[0]);
@@ -452,7 +459,15 @@ void freerdp_device_free(RDPDR_DEVICE* device)
 		default:
 			break;
 	}
-	freerdp_addin_argv_free(cnv.ex->args);
+
+	WINPR_STATIC_ASSERT(sizeof(magic) == sizeof(cnv.ex->magic));
+	if (memcmp(magic, cnv.ex->magic, sizeof(magic)) == 0)
+		freerdp_addin_argv_free(cnv.ex->args);
+	else
+		WLog_WARN(TAG,
+		          "freerdp_device_free called with argument not allocated by freerdp_device_new! "
+		          "This is not supported with FreeRDP 3.x and might crash your application");
+
 	free(cnv.dev->Name);
 	free(cnv.dev);
 }
@@ -998,6 +1013,47 @@ BOOL freerdp_target_net_addresses_resize(rdpSettings* settings, size_t count)
 	return TRUE;
 }
 
+/* MonitorScales has one entry per MonitorIds entry and shares NumMonitorIds. A new monitor ID
+ * list therefore starts without scale overrides. */
+static BOOL monitor_ids_set(rdpSettings* settings, const UINT32* ids, size_t count)
+{
+	WINPR_ASSERT(settings);
+
+	free(settings->MonitorScales);
+	settings->MonitorScales = nullptr;
+	if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_MonitorIds, FreeRDP_NumMonitorIds, ids,
+	                                       count, sizeof(UINT32)))
+		return FALSE;
+	if (count == 0)
+		return TRUE;
+	settings->MonitorScales = calloc(count, sizeof(rdpMonitorScale));
+	return settings->MonitorScales != nullptr;
+}
+
+static BOOL monitor_scales_set(rdpSettings* settings, const rdpMonitorScale* scales, size_t count)
+{
+	WINPR_ASSERT(settings);
+
+	const UINT32 ids = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if ((count == 0) || !settings->MonitorScales)
+	{
+		if (settings->MonitorScales)
+			memset(settings->MonitorScales, 0, ids * sizeof(rdpMonitorScale));
+		return (count == 0) || !scales;
+	}
+	if (count != ids)
+	{
+		WLog_ERR(TAG, "FreeRDP_MonitorScales::len must be %" PRIu32 ", but have %" PRIuz, ids,
+		         count);
+		return FALSE;
+	}
+	if (scales)
+		memcpy(settings->MonitorScales, scales, count * sizeof(rdpMonitorScale));
+	else
+		memset(settings->MonitorScales, 0, count * sizeof(rdpMonitorScale));
+	return TRUE;
+}
+
 void freerdp_server_license_issuers_free(rdpSettings* settings)
 {
 	WINPR_ASSERT(settings);
@@ -1016,6 +1072,8 @@ BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** issuers, 
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(issuers || (count == 0));
+	if (count > UINT32_MAX / sizeof(char*))
+		return FALSE;
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerLicenseProductIssuers, nullptr,
 	                                      count))
@@ -1553,6 +1611,8 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_ChannelDefArray,
 			                                         FreeRDP_ChannelDefArraySize, data, len,
 			                                         sizeof(CHANNEL_DEF));
+		case FreeRDP_MonitorScales:
+			return monitor_scales_set(settings, data, len);
 		case FreeRDP_MonitorDefArray:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_MonitorDefArraySize,
 			                                         data, len, sizeof(rdpMonitor));
@@ -1571,6 +1631,11 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
 			                                         sizeof(TIME_ZONE_INFORMATION));
 		case FreeRDP_BitmapCacheV2CellInfo:
+			if (len > 5)
+			{
+				WLog_ERR(TAG, "FreeRDP_BitmapCacheV2CellInfo::len must be >= 0 and <= 5");
+				return FALSE;
+			}
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_BitmapCacheV2NumCells,
 			                                         data, len, sizeof(BITMAP_CACHE_V2_CELL_INFO));
 		case FreeRDP_GlyphCache:
@@ -1623,8 +1688,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			                                         sizeof(char));
 
 		case FreeRDP_MonitorIds:
-			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_NumMonitorIds, data, len,
-			                                         sizeof(UINT32));
+			return monitor_ids_set(settings, data, len);
 
 		case FreeRDP_ReceivedCapabilityDataSizes:
 			if (!freerdp_capability_buffer_resize(settings, len, FALSE))
@@ -1707,6 +1771,11 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings,
 			if (offset >= max)
 				goto fail;
 			return &settings->OrderSupport[offset];
+		case FreeRDP_MonitorScales:
+			max = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+			if (!settings->MonitorScales || (offset >= max))
+				goto fail;
+			return &settings->MonitorScales[offset];
 		case FreeRDP_MonitorIds:
 			max = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 			if (offset >= max)
@@ -1937,6 +2006,12 @@ BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, FreeRDP_Settings_
 			if ((offset >= maxOffset) || !data)
 				goto fail;
 			settings->FragCache[offset] = *(const GLYPH_CACHE_DEFINITION*)data;
+			return TRUE;
+		case FreeRDP_MonitorScales:
+			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+			if (!settings->MonitorScales || (offset >= maxOffset) || !data)
+				goto fail;
+			settings->MonitorScales[offset] = *(const rdpMonitorScale*)data;
 			return TRUE;
 		case FreeRDP_MonitorIds:
 			maxOffset = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
@@ -2560,7 +2635,7 @@ static WINPR_JSON* json_from_addin_item(const ADDIN_ARGV* val)
 
 	if (val)
 	{
-		if (!WINPR_JSON_AddNumberToObject(obj, "argc", val->argc))
+		if (!WINPR_JSON_AddIntegerToObject(obj, "argc", val->argc))
 			goto fail;
 
 		WINPR_JSON* array = WINPR_JSON_AddArrayToObject(obj, "argv");
@@ -2635,9 +2710,9 @@ static WINPR_JSON* json_from_device_item(const RDPDR_DEVICE* val)
 
 		device.base = val;
 
-		if (!WINPR_JSON_AddNumberToObject(obj, "Id", val->Id))
+		if (!WINPR_JSON_AddIntegerToObject(obj, "Id", val->Id))
 			goto fail;
-		if (!WINPR_JSON_AddNumberToObject(obj, "Type", val->Type))
+		if (!WINPR_JSON_AddIntegerToObject(obj, "Type", val->Type))
 			goto fail;
 		if (!add_string_or_null(obj, "Name", val->Name))
 			goto fail;
@@ -2757,14 +2832,7 @@ static int64_t int_from_json_item(const WINPR_JSON* item, int64_t min, int64_t m
 		return 0;
 	}
 
-	const double val = WINPR_JSON_GetNumberValue(item);
-	if (isinf(val) || isnan(val))
-	{
-		errno = ERANGE;
-		return 0;
-	}
-
-	const int64_t ival = (int64_t)val;
+	const INT64 ival = WINPR_JSON_GetIntegerValue(item);
 	if ((ival < min) || (ival > max))
 	{
 		errno = ERANGE;
@@ -2793,14 +2861,7 @@ static uint64_t uint_from_json_item(const WINPR_JSON* item, uint64_t max)
 		return 0;
 	}
 
-	const double val = WINPR_JSON_GetNumberValue(item);
-	if (isinf(val) || isnan(val) || (val < 0.0))
-	{
-		errno = ERANGE;
-		return 0;
-	}
-
-	const uint64_t uval = (uint64_t)val;
+	const uint64_t uval = WINPR_JSON_GetUIntegerValue(item);
 	if (uval > max)
 	{
 		errno = ERANGE;
@@ -2829,21 +2890,21 @@ static WINPR_JSON* systemtime_to_json(WINPR_JSON* parent, const char* key, const
 	if (!obj)
 		return nullptr;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "wYear", st->wYear))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wYear", st->wYear))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wMonth", st->wMonth))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wMonth", st->wMonth))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wDayOfWeek", st->wDayOfWeek))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wDayOfWeek", st->wDayOfWeek))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wDay", st->wDay))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wDay", st->wDay))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wHour", st->wHour))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wHour", st->wHour))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wMinute", st->wMinute))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wMinute", st->wMinute))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wSecond", st->wSecond))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wSecond", st->wSecond))
 		goto fail;
-	if (!WINPR_JSON_AddNumberToObject(obj, "wMilliseconds", st->wMilliseconds))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "wMilliseconds", st->wMilliseconds))
 		goto fail;
 
 	return obj;
@@ -2934,7 +2995,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (ptz)
 		tz = *ptz;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "Bias", tz.Bias))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "Bias", tz.Bias))
 		return FALSE;
 
 	if (!wchar_to_json(obj, "StandardName", tz.StandardName, ARRAYSIZE(tz.StandardName)))
@@ -2943,7 +3004,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (!systemtime_to_json(obj, "StandardDate", &tz.StandardDate))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "StandardBias", tz.Bias))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "StandardBias", tz.Bias))
 		return FALSE;
 
 	if (!wchar_to_json(obj, "DaylightName", tz.DaylightName, ARRAYSIZE(tz.DaylightName)))
@@ -2952,7 +3013,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (!systemtime_to_json(obj, "DaylightDate", &tz.DaylightDate))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "DaylightBias", tz.Bias))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "DaylightBias", tz.Bias))
 		return FALSE;
 	return TRUE;
 }
@@ -2969,9 +3030,9 @@ static BOOL glyph_cache_def_to_json(WINPR_JSON* json, const GLYPH_CACHE_DEFINITI
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "cacheEntries", def->cacheEntries))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cacheEntries", def->cacheEntries))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "cacheMaximumCellSize", def->cacheMaximumCellSize))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cacheMaximumCellSize", def->cacheMaximumCellSize))
 		return FALSE;
 	return TRUE;
 }
@@ -3283,6 +3344,31 @@ static BOOL monitor_def_array_from_json(rdpSettings* settings, FreeRDP_Settings_
 	return TRUE;
 }
 
+static BOOL monitor_scales_from_json(rdpSettings* settings, const WINPR_JSON* json)
+{
+	if (WINPR_JSON_IsNull(json))
+		return freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorScales, nullptr, 0);
+	if (!json || !WINPR_JSON_IsArray(json))
+		return FALSE;
+	const size_t count = WINPR_JSON_GetArraySize(json);
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorScales, nullptr, count))
+		return FALSE;
+	for (size_t x = 0; x < count; x++)
+	{
+		rdpMonitorScale* scale =
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorScales, x);
+		if (!scale)
+			return FALSE;
+		const WINPR_JSON* obj = WINPR_JSON_GetArrayItem(json, x);
+		errno = 0;
+		scale->desktopScaleFactor = (UINT32)uint_from_json(obj, "desktopScaleFactor", UINT32_MAX);
+		scale->deviceScaleFactor = (UINT32)uint_from_json(obj, "deviceScaleFactor", UINT32_MAX);
+		if (errno != 0)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL client_cookie_to_json(WINPR_JSON* json, const ARC_CS_PRIVATE_PACKET* cs)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
@@ -3291,11 +3377,11 @@ static BOOL client_cookie_to_json(WINPR_JSON* json, const ARC_CS_PRIVATE_PACKET*
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "cbLen", cs->cbLen))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cbLen", cs->cbLen))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "version", cs->version))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "version", cs->version))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "logonId", cs->logonId))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "logonId", cs->logonId))
 		return FALSE;
 	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(obj, "securityVerifier");
 	if (!array)
@@ -3331,11 +3417,11 @@ static BOOL server_cookie_to_json(WINPR_JSON* json, const ARC_SC_PRIVATE_PACKET*
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "cbLen", cs->cbLen))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "cbLen", cs->cbLen))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "version", cs->version))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "version", cs->version))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "logonId", cs->logonId))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "logonId", cs->logonId))
 		return FALSE;
 	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(obj, "arcRandomBits");
 	if (!array)
@@ -3371,7 +3457,7 @@ static BOOL bitmap_cache_v2_to_json(WINPR_JSON* json, const BITMAP_CACHE_V2_CELL
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "numEntries", info->numEntries))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "numEntries", info->numEntries))
 		return FALSE;
 	if (!WINPR_JSON_AddBoolToObject(obj, "persistent", info->persistent))
 		return FALSE;
@@ -3395,15 +3481,15 @@ static BOOL monitor_attributes_to_json(WINPR_JSON* pobj, const MONITOR_ATTRIBUTE
 	WINPR_JSON* obj = WINPR_JSON_AddObjectToObject(pobj, "attributes");
 	if (!obj)
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "physicalWidth", attributes->physicalWidth))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "physicalWidth", attributes->physicalWidth))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "physicalHeight", attributes->physicalHeight))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "physicalHeight", attributes->physicalHeight))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "orientation", attributes->orientation))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "orientation", attributes->orientation))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "desktopScaleFactor", attributes->desktopScaleFactor))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "desktopScaleFactor", attributes->desktopScaleFactor))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "deviceScaleFactor", attributes->deviceScaleFactor))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "deviceScaleFactor", attributes->deviceScaleFactor))
 		return FALSE;
 	return TRUE;
 }
@@ -3417,17 +3503,17 @@ static BOOL monitor_def_to_json(WINPR_JSON* json, const rdpMonitor* monitor)
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	if (!WINPR_JSON_AddNumberToObject(obj, "x", monitor->x))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "x", monitor->x))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "y", monitor->y))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "y", monitor->y))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "width", monitor->width))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "width", monitor->width))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "height", monitor->height))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "height", monitor->height))
 		return FALSE;
 	if (!WINPR_JSON_AddBoolToObject(obj, "is_primary", monitor->is_primary != 0))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "orig_screen", monitor->orig_screen))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "orig_screen", monitor->orig_screen))
 		return FALSE;
 	return monitor_attributes_to_json(obj, &monitor->attributes);
 }
@@ -3437,6 +3523,26 @@ static BOOL monitor_def_array_to_json(WINPR_JSON* json, const rdpMonitor* monito
 	for (size_t x = 0; x < count; x++)
 	{
 		if (!monitor_def_to_json(json, &monitors[x]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL monitor_scales_to_json(WINPR_JSON* json, const rdpMonitorScale* scales, size_t count)
+{
+	for (size_t x = 0; x < count; x++)
+	{
+		const rdpMonitorScale* scale = &scales[x];
+		WINPR_JSON* obj = WINPR_JSON_CreateObject();
+		if (!obj)
+			return FALSE;
+		if (!WINPR_JSON_AddItemToArray(json, obj))
+		{
+			WINPR_JSON_Delete(obj);
+			return FALSE;
+		}
+		if (!WINPR_JSON_AddIntegerToObject(obj, "desktopScaleFactor", scale->desktopScaleFactor) ||
+		    !WINPR_JSON_AddIntegerToObject(obj, "deviceScaleFactor", scale->deviceScaleFactor))
 			return FALSE;
 	}
 	return TRUE;
@@ -3453,7 +3559,7 @@ static BOOL channel_def_to_json(WINPR_JSON* json, const CHANNEL_DEF* channel)
 
 	if (!WINPR_JSON_AddStringToObject(obj, "name", channel->name))
 		return FALSE;
-	if (!WINPR_JSON_AddNumberToObject(obj, "options", channel->options))
+	if (!WINPR_JSON_AddIntegerToObject(obj, "options", channel->options))
 		return FALSE;
 	return TRUE;
 }
@@ -3595,6 +3701,9 @@ static BOOL serialize_pointer(const rdpSettings* settings, WINPR_JSON* json,
 			    freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 			return fill_uint32_array(jval, val, len);
 		}
+		case FreeRDP_MonitorScales:
+			return monitor_scales_to_json(
+			    jval, val, freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds));
 		case FreeRDP_MonitorDefArray:
 		{
 			const uint32_t len = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
@@ -3762,42 +3871,42 @@ char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty, size_
 			case RDP_SETTINGS_TYPE_UINT16:
 			{
 				const uint16_t val = freerdp_settings_get_uint16(settings, iter.u16);
-				if (!WINPR_JSON_AddNumberToObject(juint16, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(juint16, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_INT16:
 			{
 				const int16_t val = freerdp_settings_get_int16(settings, iter.i16);
-				if (!WINPR_JSON_AddNumberToObject(jint16, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(jint16, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_UINT32:
 			{
 				const uint32_t val = freerdp_settings_get_uint32(settings, iter.u32);
-				if (!WINPR_JSON_AddNumberToObject(juint32, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(juint32, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_INT32:
 			{
 				const int32_t val = freerdp_settings_get_int32(settings, iter.i32);
-				if (!WINPR_JSON_AddNumberToObject(jint32, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(jint32, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_UINT64:
 			{
 				const uint64_t val = freerdp_settings_get_uint64(settings, iter.u64);
-				if (!WINPR_JSON_AddNumberToObject(juint64, name, (double)val))
+				if (!WINPR_JSON_AddUIntegerToObject(juint64, name, val))
 					goto fail;
 			}
 			break;
 			case RDP_SETTINGS_TYPE_INT64:
 			{
 				const int64_t val = freerdp_settings_get_int64(settings, iter.i64);
-				if (!WINPR_JSON_AddNumberToObject(jint64, name, (double)val))
+				if (!WINPR_JSON_AddIntegerToObject(jint64, name, val))
 					goto fail;
 			}
 			break;
@@ -4262,6 +4371,8 @@ static BOOL deserialize_pointer(const WINPR_JSON* json, rdpSettings* settings,
 			return client_cookie_array_from_json(settings, id, jval);
 		case FreeRDP_ServerAutoReconnectCookie:
 			return server_cookie_array_from_json(settings, id, jval);
+		case FreeRDP_MonitorScales:
+			return monitor_scales_from_json(settings, jval);
 		case FreeRDP_MonitorDefArray:
 			return monitor_def_array_from_json(settings, id, jval);
 		case FreeRDP_ChannelDefArray:
@@ -4537,6 +4648,32 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 		return nullptr;
 	}
 
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+	{
+		WLog_Print(log, WLOG_ERROR, "freerdp_settings_new failed");
+		goto fail;
+	}
+
+	if (!freerdp_settings_apply_from_json(settings, json))
+		goto fail;
+
+	WINPR_JSON_Delete(json);
+	return settings;
+
+fail:
+	freerdp_settings_free(settings);
+	WINPR_JSON_Delete(json);
+	return nullptr;
+}
+
+BOOL freerdp_settings_apply_from_json(rdpSettings* settings, WINPR_JSON* json)
+{
+	wLog* log = WLog_Get(TAG);
+
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(json);
+
 	WINPR_JSON* jbool = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_BOOL));
 	WINPR_JSON* juint16 = WINPR_JSON_GetObjectItemCaseSensitive(
@@ -4556,12 +4693,6 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 	WINPR_JSON* jpointer = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_POINTER));
 
-	rdpSettings* settings = freerdp_settings_new(0);
-	if (!settings)
-	{
-		WLog_Print(log, WLOG_ERROR, "freerdp_settings_new failed");
-		goto fail;
-	}
 	if (!jbool || !juint16 || !jint16 || !juint32 || !jint32 || !juint64 || !jint64 || !jstring ||
 	    !jpointer)
 		goto fail;
@@ -4656,13 +4787,10 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 		}
 	}
 
-	WINPR_JSON_Delete(json);
-	return settings;
+	return TRUE;
 
 fail:
-	freerdp_settings_free(settings);
-	WINPR_JSON_Delete(json);
-	return nullptr;
+	return FALSE;
 }
 
 const ADDIN_ARGV* freerdp_device_get_args(const RDPDR_DEVICE* device)
@@ -4677,4 +4805,143 @@ const ADDIN_ARGV* freerdp_device_get_args(const RDPDR_DEVICE* device)
 
 	cnv.dev = device;
 	return cnv.ex->args;
+}
+
+BOOL freerdp_utils_aad_apply_known_configuration(rdpSettings* settings, const char* name)
+{
+	const FreeRDP_AadCloud* cloud = freerdp_utils_aad_cloud_by_name(name);
+	if (!cloud)
+		return FALSE;
+	return freerdp_utils_aad_apply_cloud(settings, cloud);
+}
+
+BOOL freerdp_utils_aad_apply_known_configuration_by_url(rdpSettings* settings, const char* url)
+{
+	const FreeRDP_AadCloud* cloud = freerdp_utils_aad_cloud_for_gateway(url);
+	if (!cloud)
+		return FALSE;
+	return freerdp_utils_aad_apply_cloud(settings, cloud);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL append_str_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                            const FreeRDP_Settings_Keys_String* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_Settings_Keys_String key = keys[x];
+		const char* skey = freerdp_settings_get_string(settings, key);
+		if (!skey)
+			continue;
+		const size_t len = strlen(skey);
+		if (!winpr_Digest_Update(md, skey, len))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL append_uint32_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                               const FreeRDP_Settings_Keys_UInt32* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_Settings_Keys_UInt32 key = keys[x];
+		const UINT32 ukey = freerdp_settings_get_uint32(settings, key);
+		if (!winpr_Digest_Update(md, &ukey, sizeof(ukey)))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL append_bool_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                             const FreeRDP_Settings_Keys_Bool* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_Settings_Keys_Bool key = keys[x];
+		const BOOL ukey = freerdp_settings_get_bool(settings, key);
+		if (!winpr_Digest_Update(md, &ukey, sizeof(ukey)))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+struct key_pair
+{
+	FreeRDP_Settings_Keys_Pointer ptr;
+	FreeRDP_Settings_Keys_UInt32 len;
+};
+
+WINPR_ATTR_NODISCARD
+static BOOL append_byte_keys(const rdpSettings* settings, WINPR_DIGEST_CTX* md,
+                             const struct key_pair* keys, size_t count)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(md);
+	WINPR_ASSERT(keys || (count == 0));
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const struct key_pair* key = &keys[x];
+		const void* pvval = freerdp_settings_get_pointer(settings, key->ptr);
+		const UINT32 uval = freerdp_settings_get_uint32(settings, key->len);
+		if (!winpr_Digest_Update(md, pvval, uval))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+char* freerdp_settings_get_unique_id(const rdpSettings* settings)
+{
+	const FreeRDP_Settings_Keys_String strkeys[] = {
+		FreeRDP_ServerHostname,    FreeRDP_Username,        FreeRDP_Domain,
+		FreeRDP_GatewayHostname,   FreeRDP_GatewayUsername, FreeRDP_GatewayDomain,
+		FreeRDP_GatewayAccessToken
+	};
+	const FreeRDP_Settings_Keys_UInt32 u32keys[] = { FreeRDP_ServerPort, FreeRDP_GatewayPort };
+	const FreeRDP_Settings_Keys_Bool boolkeys[] = { FreeRDP_RemoteApplicationMode,
+		                                            FreeRDP_GatewayEnabled,
+		                                            FreeRDP_RemoteAssistanceMode };
+	const struct key_pair ptrkeys[] = { { FreeRDP_LoadBalanceInfo,
+		                                  FreeRDP_LoadBalanceInfoLength } };
+
+	char* str = nullptr;
+	WINPR_DIGEST_CTX* md = winpr_Digest_New();
+	if (!md)
+		return nullptr;
+
+	if (!winpr_Digest_Init(md, WINPR_MD_SHA256))
+		goto fail;
+
+	if (!append_str_keys(settings, md, strkeys, ARRAYSIZE(strkeys)))
+		goto fail;
+	if (!append_byte_keys(settings, md, ptrkeys, ARRAYSIZE(ptrkeys)))
+		goto fail;
+	if (!append_uint32_keys(settings, md, u32keys, ARRAYSIZE(u32keys)))
+		goto fail;
+	if (!append_bool_keys(settings, md, boolkeys, ARRAYSIZE(boolkeys)))
+		goto fail;
+
+	char hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	if (!winpr_Digest_Final(md, hash, sizeof(hash)))
+		goto fail;
+
+	str = winpr_BinToHexString(hash, sizeof(hash), FALSE);
+fail:
+	winpr_Digest_Free(md);
+	return str;
 }

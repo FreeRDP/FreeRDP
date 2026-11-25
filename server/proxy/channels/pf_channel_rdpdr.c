@@ -58,6 +58,7 @@ typedef struct
 	UINT32 SpecialDeviceCount;
 	UINT32 capabilityVersions[6];
 	size_t totalLength;
+	CRITICAL_SECTION lock;
 } pf_channel_common_context;
 
 typedef enum
@@ -320,7 +321,7 @@ static BOOL rdpdr_process_server_header(BOOL server, wLog* log, wStream* s, UINT
 		       "got %" PRIuz,
 		       rdpdr_component_string(component), rdpdr_packetid_string(PacketId), expect,
 		       Stream_GetRemainingLength(s));
-		return ERROR_INVALID_DATA;
+		return FALSE;
 	}
 
 	return TRUE;
@@ -464,6 +465,7 @@ WINPR_ATTR_NODISCARD
 static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, wStream* s,
                                               pClientContext* pc)
 {
+	UINT rc = ERROR_INVALID_DATA;
 	UINT32 unicodeFlag = 0;
 	UINT32 codePage = 0;
 
@@ -471,9 +473,10 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(pc);
 
+	EnterCriticalSection(&rdpdr->common.lock);
 	if (!rdpdr_process_server_header(TRUE, rdpdr->log, s, RDPDR_CTYP_CORE, PAKID_CORE_CLIENT_NAME,
 	                                 12))
-		return ERROR_INVALID_DATA;
+		goto fail;
 
 	Stream_Read_UINT32(s, unicodeFlag);
 	rdpdr->common.computerNameUnicode = ((unicodeFlag & 1) != 0);
@@ -487,47 +490,63 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 		    rdpdr->log, WLOG_WARN, "[%s | %s]: missing data, got %" PRIuz ", expected %" PRIu32,
 		    rdpdr_component_string(RDPDR_CTYP_CORE), rdpdr_packetid_string(PAKID_CORE_CLIENT_NAME),
 		    Stream_GetRemainingLength(s), rdpdr->common.computerNameLen);
-		return ERROR_INVALID_DATA;
+		goto fail;
 	}
 	void* tmp = realloc(rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
 	if (!tmp)
-		return CHANNEL_RC_NO_MEMORY;
+	{
+		rc = CHANNEL_RC_NO_MEMORY;
+		goto fail;
+	}
 	rdpdr->common.computerName.v = tmp;
 
 	Stream_Read(s, rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
 
-	pc->computerNameLen = rdpdr->common.computerNameLen;
-	pc->computerNameUnicode = rdpdr->common.computerNameUnicode;
-	tmp = realloc(pc->computerName.v, pc->computerNameLen);
+	UINT32 len = rdpdr->common.computerNameLen;
+	tmp = realloc(pc->computerName.v, len);
 	if (!tmp)
-		return CHANNEL_RC_NO_MEMORY;
+	{
+		rc = CHANNEL_RC_NO_MEMORY;
+		goto fail;
+	}
+	pc->computerNameLen = len;
 	pc->computerName.v = tmp;
+	pc->computerNameUnicode = rdpdr->common.computerNameUnicode;
 	memcpy(pc->computerName.v, rdpdr->common.computerName.v, pc->computerNameLen);
 
-	return CHANNEL_RC_OK;
+	rc = CHANNEL_RC_OK;
+fail:
+	LeaveCriticalSection(&rdpdr->common.lock);
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client_context* rdpdr)
 {
-	wStream* s = nullptr;
-
+	UINT rc = ERROR_INTERNAL_ERROR;
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pc);
 
+	EnterCriticalSection(&rdpdr->common.lock);
 	{
 		void* tmp = realloc(rdpdr->common.computerName.v, pc->computerNameLen);
 		if (!tmp)
-			return CHANNEL_RC_NO_MEMORY;
+		{
+			rc = CHANNEL_RC_NO_MEMORY;
+			goto fail;
+		}
 		rdpdr->common.computerName.v = tmp;
 		rdpdr->common.computerNameLen = pc->computerNameLen;
 		rdpdr->common.computerNameUnicode = pc->computerNameUnicode;
 		memcpy(rdpdr->common.computerName.v, pc->computerName.v, pc->computerNameLen);
 	}
-	s = rdpdr_client_get_send_buffer(rdpdr, RDPDR_CTYP_CORE, PAKID_CORE_CLIENT_NAME,
-	                                 12U + rdpdr->common.computerNameLen);
+	wStream* s = rdpdr_client_get_send_buffer(rdpdr, RDPDR_CTYP_CORE, PAKID_CORE_CLIENT_NAME,
+	                                          12U + rdpdr->common.computerNameLen);
 	if (!s)
-		return CHANNEL_RC_NO_MEMORY;
+	{
+		rc = CHANNEL_RC_NO_MEMORY;
+		goto fail;
+	}
 
 	Stream_Write_UINT32(s, rdpdr->common.computerNameUnicode
 	                           ? 1
@@ -535,7 +554,11 @@ static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client
 	Stream_Write_UINT32(s, 0);       /* codePage, must be set to zero */
 	Stream_Write_UINT32(s, rdpdr->common.computerNameLen);
 	Stream_Write(s, rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
-	return rdpdr_client_send(rdpdr->log, pc, s);
+	rc = rdpdr_client_send(rdpdr->log, pc, s);
+
+fail:
+	LeaveCriticalSection(&rdpdr->common.lock);
+	return rc;
 }
 
 #define rdpdr_ignore_capset(srv, log, s, header) \
@@ -1538,7 +1561,11 @@ static void pf_channel_rdpdr_common_context_free(pf_channel_common_context* comm
 {
 	if (!common)
 		return;
+	EnterCriticalSection(&common->lock);
 	free(common->computerName.v);
+	common->computerName.v = nullptr;
+	LeaveCriticalSection(&common->lock);
+	DeleteCriticalSection(&common->lock);
 	Stream_Free(common->s, TRUE);
 	Stream_Free(common->buffer, TRUE);
 }
@@ -1561,6 +1588,7 @@ static BOOL pf_channel_rdpdr_common_context_new(pf_channel_common_context* commo
 {
 	if (!common)
 		return FALSE;
+	InitializeCriticalSection(&common->lock);
 	common->base.free = fkt;
 	common->s = Stream_New(nullptr, 1024);
 	if (!common->s)
@@ -1590,21 +1618,30 @@ static BOOL pf_channel_rdpdr_client_pass_message(pServerContext* ps, pClientCont
                                                  WINPR_ATTR_UNUSED UINT16 channelId,
                                                  const char* channel_name, wStream* s)
 {
-	pf_channel_client_context* rdpdr = nullptr;
-
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(pc);
 
-	rdpdr = HashTable_GetItemValue(pc->interceptContextMap, channel_name);
+	BOOL rc = FALSE;
+
+	HashTable_Lock(pc->interceptContextMap);
+	pf_channel_client_context* rdpdr =
+	    HashTable_GetItemValue(pc->interceptContextMap, channel_name);
 	if (!rdpdr)
-		return TRUE; /* Ignore data for channels not available on proxy -> server connection */
+		goto fail; /* Ignore data for channels not available on proxy -> server connection */
 	WINPR_ASSERT(rdpdr->queue);
 
 	if (!pf_channel_rdpdr_rewrite_device_list(rdpdr, ps, s, FALSE))
-		return FALSE;
+		goto fail;
 	if (!Queue_Enqueue(rdpdr->queue, s))
-		return FALSE;
-	return pf_channel_send_client_queue(pc, rdpdr);
+		goto fail;
+	if (!pf_channel_send_client_queue(pc, rdpdr))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	HashTable_Unlock(pc->interceptContextMap);
+	return rc || !rdpdr;
 }
 
 #if defined(WITH_PROXY_EMULATE_SMARTCARD)
@@ -1774,11 +1811,14 @@ WINPR_ATTR_NODISCARD
 static void* stream_copy(const void* obj)
 {
 	const wStream* src = obj;
-	wStream* dst = Stream_New(nullptr, Stream_Capacity(src));
+	/* src is the (reused, never shrinking) reassembly buffer of the session,
+	 * only copy the data of the current PDU and not the whole capacity */
+	const size_t len = Stream_Length(src);
+	wStream* dst = Stream_New(nullptr, len);
 	if (!dst)
 		return nullptr;
-	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), Stream_Capacity(dst));
-	if (!Stream_SetLength(dst, Stream_Length(src)))
+	memcpy(Stream_Buffer(dst), Stream_ConstBuffer(src), len);
+	if (!Stream_SetLength(dst, len))
 		goto fail;
 	if (!Stream_SetPosition(dst, Stream_GetPosition(src)))
 		goto fail;
@@ -1885,6 +1925,16 @@ BOOL pf_channel_rdpdr_server_new(pServerContext* ps)
 
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->interceptContextMap);
+
+	/* WTSVirtualChannelOpenEx returns the same handle for every open of a static channel and
+	 * pf_channel_rdpdr_server_context_free closes it, so replacing an existing context in
+	 * interceptContextMap would leave the new one with a dangling handle. */
+	if (HashTable_Contains(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME))
+	{
+		WLog_Print(WLog_Get(RTAG), WLOG_ERROR, "Channel %s already set up in interceptContextMap",
+		           RDPDR_SVC_CHANNEL_NAME);
+		return FALSE;
+	}
 
 	rdpdr = calloc(1, sizeof(pf_channel_server_context));
 	if (!rdpdr)

@@ -219,19 +219,16 @@ BOOL sdl_handle_mouse_wheel(SdlContext* sdl, const SDL_MouseWheelEvent* ev)
 	const BOOL flipped = (ev->direction == SDL_MOUSEWHEEL_FLIPPED);
 	const INT32 x = ev->x * (flipped ? -1 : 1) * 0x78;
 	const INT32 y = ev->y * (flipped ? -1 : 1) * 0x78;
-	UINT16 flags = 0;
 
+	/* [MS-RDPBCGR] 2.2.8.1.1.3.1.1.3 Pointer Event: a wheel rotation event carries no flags
+	 * besides PTR_FLAGS_WHEEL_NEGATIVE and the rotation itself, so the two axes cannot share
+	 * one event. Keep the flags apart, the horizontal rotation would otherwise be applied to
+	 * the vertical axis. */
 	if (y != 0)
-	{
-		flags |= PTR_FLAGS_WHEEL;
-		send_mouse_wheel(sdl, flags, y);
-	}
+		send_mouse_wheel(sdl, PTR_FLAGS_WHEEL, y);
 
 	if (x != 0)
-	{
-		flags |= PTR_FLAGS_HWHEEL;
-		send_mouse_wheel(sdl, flags, x);
-	}
+		send_mouse_wheel(sdl, PTR_FLAGS_HWHEEL, x);
 	return TRUE;
 }
 

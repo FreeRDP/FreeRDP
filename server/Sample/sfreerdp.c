@@ -47,6 +47,9 @@
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/settings.h>
+#include <freerdp/build-config.h>
+#include <freerdp/version.h>
+#include <freerdp/utils/helpers.h>
 
 #include "sf_ainput.h"
 #include "sf_audin.h"
@@ -54,6 +57,7 @@
 #include "sf_encomsp.h"
 
 #include "sfreerdp.h"
+#include "sf_udp.h"
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("sample")
@@ -69,6 +73,9 @@ struct server_info
 	const char* replay_dump;
 	const char* cert;
 	const char* key;
+#if defined(WITH_RDPEUDP_SERVER)
+	BOOL udp;
+#endif
 };
 
 static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
@@ -97,6 +104,10 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 			(void)WTSVirtualChannelClose(context->debug_channel);
 
 		sf_peer_audin_uninit(context);
+
+#if defined(WITH_RDPEUDP_SERVER)
+		sf_udp_free(context);
+#endif
 
 #if defined(CHANNEL_AINPUT_SERVER)
 		sf_peer_ainput_uninit(context);
@@ -1157,14 +1168,20 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	{
 		rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, nullptr);
 		if (!key)
+		{
+			WLog_ERR(TAG, "Failed to load private key '%s'", info->key);
 			goto fail;
+		}
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
 			goto fail;
 	}
 	{
 		rdpCertificate* cert = freerdp_certificate_new_from_file(info->cert);
 		if (!cert)
+		{
+			WLog_ERR(TAG, "Failed to load public cert '%s'", info->cert);
 			goto fail;
+		}
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 			goto fail;
 	}
@@ -1195,6 +1212,11 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, TRUE))
 		goto fail;
+
+#if defined(WITH_RDPEUDP_SERVER)
+	if (!sf_udp_configure(settings, info->udp))
+		goto fail;
+#endif
 
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
@@ -1260,7 +1282,12 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 		HANDLE channelHandle = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 		handles[count++] = channelHandle;
-		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+#if defined(WITH_RDPEUDP_SERVER)
+		const DWORD timeout = sf_udp_wait_ms(info->udp);
+#else
+		const DWORD timeout = INFINITE;
+#endif
+		status = WaitForMultipleObjects(count, handles, FALSE, timeout);
 
 		if (status == WAIT_FAILED)
 		{
@@ -1272,8 +1299,10 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 
-		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+#if defined(WITH_RDPEUDP_SERVER)
+		if (sf_udp_check_channels(context->vcm, info->udp, context->activated) != TRUE)
 			break;
+#endif
 
 		/* Handle dynamic virtual channel initializations */
 		if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, DRDYNVC_SVC_CHANNEL_NAME))
@@ -1307,6 +1336,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 					}
 #endif
 
+#if defined(WITH_RDPEUDP_SERVER)
+					sf_udp_tick(context, info->udp);
+#endif
 					break;
 
 				case DRDYNVC_STATE_FAILED:
@@ -1424,6 +1456,9 @@ static int usage(const char* app, const char* invalid)
 	print_entry(fp, "\t%s\n", options.sfast, sizeof(options.sfast));
 	print_entry(fp, "\t%s<port>\n", options.sport, sizeof(options.sport));
 	print_entry(fp, "\t%s\n", options.slocal_only, sizeof(options.slocal_only));
+#if defined(WITH_RDPEUDP_SERVER)
+	sf_udp_usage(fp);
+#endif
 	return -1;
 }
 
@@ -1441,6 +1476,20 @@ int main(int argc, char* argv[])
 	const char* app = argv[0];
 
 	info.test_dump_rfx_realtime = TRUE;
+
+	/*
+	 * Set custom application details at first thing in main.
+	 * This will initialize a new namespace within FreeRDP and WinPR.
+	 * As a result all configuration files will be searched in different locations.
+	 *
+	 * The location is <prefix>/<vendor>/<product> or <prefix>/<vendor>/<product><version> for
+	 * config file search directories. An example for a system wide configuration file would be
+	 * /etc/FreeRDP/TFreeRDP3/ or ~/.config//FreeRDP/TFreeRDP3/ for user config files.
+	 *
+	 * Consult \ref GetKnownPath for <prefix> locations on different operating systems
+	 */
+	if (!freerdp_setApplicationDetails(FREERDP_VENDOR_STRING, "TFreeRDP", FREERDP_VERSION_MAJOR))
+		return -1;
 
 	errno = 0;
 
@@ -1460,6 +1509,11 @@ int main(int argc, char* argv[])
 		}
 		else if (strncmp(arg, options.slocal_only, sizeof(options.slocal_only)) == 0)
 			localOnly = TRUE;
+#if defined(WITH_RDPEUDP_SERVER)
+		else if (sf_udp_parse_option(arg, &info.udp))
+		{
+		}
+#endif
 		else if (strncmp(arg, options.spcap, sizeof(options.spcap)) == 0)
 		{
 			info.test_pcap_file = &arg[sizeof(options.spcap)];

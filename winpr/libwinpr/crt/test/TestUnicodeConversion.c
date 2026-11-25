@@ -7,6 +7,10 @@
 #include <winpr/print.h>
 #include <winpr/windows.h>
 
+#if defined(BUILD_TESTING_INTERNAL)
+#include "../unicode.h"
+#endif
+
 #define TESTCASE_BUFFER_SIZE 8192
 
 #ifndef MIN
@@ -65,7 +69,7 @@ static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
 
 		(void)fprintf(stderr,
 		              "%s length does not match buffersize: %" PRId32 " != %" PRIuz
-		              ", unexpected GetLastError() 0x08%" PRIx32 "\n",
+		              ", unexpected GetLastError() 0x%08" PRIx32 "\n",
 		              prefix, rc, buffersize, err);
 		return FALSE;
 	}
@@ -324,13 +328,28 @@ static BOOL test_conversion(const testcase_t* testcases, size_t count)
 
 		printf("Running test case %" PRIuz " [%s]\n", x, test->utf8);
 		if (!test_convert_to_utf16(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF16 failed\n",
+			              test->utf8);
 			return FALSE;
+		}
 		if (!test_convert_to_utf16_n(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF16N failed\n",
+			              test->utf8);
 			return FALSE;
+		}
 		if (!test_convert_to_utf8(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF8 failed\n", test->utf8);
 			return FALSE;
+		}
 		if (!test_convert_to_utf8_n(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF8N failed\n",
+			              test->utf8);
 			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -1157,6 +1176,130 @@ fail:
 }
 #endif
 
+#if defined(BUILD_TESTING_INTERNAL)
+typedef struct
+{
+	char* utf8;
+	size_t utf8len;
+	char* esc;
+	size_t esclen;
+} test_case_t;
+
+WINPR_ATTR_NODISCARD
+static BOOL testEscapeCase(const test_case_t* test)
+{
+	WINPR_ASSERT(test);
+
+	BOOL rc = FALSE;
+	size_t dlen = 0;
+	char* cmp = nullptr;
+	WINPR_ASSERT(test->utf8len == strlen(test->utf8));
+	char* str = winpr_utf8ToUtfEscapedString(test->utf8, test->utf8len, &dlen);
+	if (dlen != test->esclen)
+	{
+		(void)fprintf(stderr, "[%s] length 1 mismatch %" PRIuz " vs %" PRIuz, __func__, dlen,
+		              test->esclen);
+		goto fail;
+	}
+	if (strncmp(test->esc, str, test->esclen + 1) != 0)
+	{
+		(void)fprintf(stderr, "[%s] strcmp 1 mismatch %s vs %s", __func__, str, test->esc);
+		goto fail;
+	}
+
+	cmp = strndup(str, dlen);
+	if (!cmp)
+	{
+		(void)fprintf(stderr, "[%s] strndup(%s, %" PRIuz ") mismatch", __func__, str, dlen);
+		goto fail;
+	}
+	WINPR_ASSERT(test->esclen == strlen(test->esc));
+	const SSIZE_T res = winpr_utfEscapedStringToUtf8(cmp, dlen);
+	if (res < 0)
+	{
+		(void)fprintf(stderr, "[%s] winpr_utfEscapedStringToUtf8(%s, %" PRIuz ") failed", __func__,
+		              cmp, dlen);
+		goto fail;
+	}
+
+	if ((size_t)res != test->utf8len)
+	{
+		(void)fprintf(stderr, "[%s] length 2 mismatch %" PRIdz " vs %" PRIuz, __func__, res,
+		              test->utf8len);
+		goto fail;
+	}
+	if (strncmp(test->utf8, cmp, test->utf8len + 1) != 0)
+	{
+		(void)fprintf(stderr, "[%s] strcmp 2 mismatch %s vs %s", __func__, cmp, test->utf8);
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	free(cmp);
+	free(str);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL testEscape(void)
+{
+	const test_case_t tests[] = {
+		{ "abc", 3, "abc", 3 },
+		{ "՞", 2, "\\u055e", 6 },
+		{ "⟷", 3, "\\u27f7", 6 },
+		{ "𒀀", 4, "\\ud808\\udc00", 12 },
+		{ "՞a⟷b𒀀c", 12, "\\u055ea\\u27f7b\\ud808\\udc00c", 27 },
+		{ "՞⟷𒀀𒀀⟷⟷՞՞", 23, "\\u055e\\u27f7\\ud808\\udc00\\ud808\\udc00\\u27f7\\u27f7\\u055e\\u055e",
+		  60 }
+	};
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const test_case_t* cur = &tests[x];
+		if (!testEscapeCase(cur))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " %s escaped string failed\n", x, cur->utf8);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL testUnescapeLiteral(void)
+{
+	/* Text that is not a valid \uXXXX escape must pass through unchanged */
+	const struct
+	{
+		const char* in;
+		const char* out;
+	} tests[] = { { "C:\\users\\test", "C:\\users\\test" },
+		          { "see \\utils here", "see \\utils here" },
+		          { "end \\u12", "end \\u12" },
+		          { "\\uzzzz\\u0041", "\\uzzzzA" },
+		          { "\\u005cu0041", "\\u0041" } };
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		char* str = _strdup(tests[x].in);
+		if (!str)
+			return FALSE;
+
+		const SSIZE_T res = winpr_utfEscapedStringToUtf8(str, strlen(str));
+		const BOOL ok =
+		    (res >= 0) && ((size_t)res == strlen(tests[x].out)) && (strcmp(str, tests[x].out) == 0);
+		if (!ok)
+			(void)fprintf(stderr, "unescape '%s': got '%s', expected '%s'\n", tests[x].in, str,
+			              tests[x].out);
+		free(str);
+		if (!ok)
+			return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 int TestUnicodeConversion(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -1300,6 +1443,13 @@ int TestUnicodeConversion(int argc, char* argv[])
 
 	    }
 	*/
+
+#if defined(BUILD_TESTING_INTERNAL)
+	if (!testEscape())
+		return -1;
+	if (!testUnescapeLiteral())
+		return -1;
+#endif
 
 	return 0;
 }

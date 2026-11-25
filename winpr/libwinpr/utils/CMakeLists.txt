@@ -79,7 +79,7 @@ endif()
 
 option(WINPR_UTILS_IMAGE_JPEG "Add Jpeg <--> BMP conversion support to clipboard" OFF)
 if(WINPR_UTILS_IMAGE_JPEG)
-  find_package(libjpeg-turbo)
+  find_package(libjpeg-turbo QUIET)
   if(libjpeg-turbo_FOUND)
     set_target_properties(libjpeg-turbo::jpeg PROPERTIES IMPORTED_GLOBAL TRUE)
     winpr_library_add_private(libjpeg-turbo::jpeg)
@@ -119,12 +119,10 @@ option(WITH_SYSTEMD "allows to export wLog to systemd journal" ${libsystemd_FOUN
 if(WITH_SYSTEMD)
   find_package(libsystemd REQUIRED)
   winpr_pc_add_requires_private("libsystemd")
-  set(WINPR_HAVE_JOURNALD_H TRUE)
+  winpr_definition_add(WINPR_HAVE_JOURNALD_H)
   set(JOURNALD_SRCS wlog/JournaldAppender.c wlog/JournaldAppender.h)
   winpr_system_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
   winpr_library_add_private(${LIBSYSTEMD_LIBRARY})
-else()
-  unset(WINPR_HAVE_JOURNALD_H)
 endif()
 
 set(WLOG_SRCS
@@ -160,6 +158,8 @@ set(ASN1_SRCS asn1/asn1.c)
 
 set(SRCS
     atexit.c
+    com.c
+    i18n.c
     ini.c
     sam.c
     ntlm.c
@@ -172,7 +172,20 @@ set(SRCS
     winpr.c
     cmdline.c
     ssl.c
+    config-readers.c
 )
+
+option(WITH_WINPR_I18N "Enable gettext localization support in WinPR" OFF)
+if(WITH_WINPR_I18N)
+  find_package(Intl REQUIRED)
+  if(TARGET Intl::Intl)
+    set_property(TARGET Intl::Intl PROPERTY IMPORTED_GLOBAL TRUE)
+    winpr_library_add_public(Intl::Intl)
+  else()
+    winpr_system_include_directory_add(${Intl_INCLUDE_DIRS})
+    winpr_library_add_public(${Intl_LIBRARIES})
+  endif()
+endif()
 
 if(ANDROID)
   list(APPEND SRCS android.h android.c)
@@ -267,6 +280,6 @@ if(WIN32)
   winpr_library_add_public(dbghelp)
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

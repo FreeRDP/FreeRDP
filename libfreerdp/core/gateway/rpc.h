@@ -481,8 +481,6 @@ typedef struct
 
 	/* align(8) */
 
-	BYTE* stub_data;
-
 	auth_verifier_co_t auth_verifier;
 } rpcconn_fault_hdr_t;
 
@@ -507,7 +505,7 @@ typedef struct
 
 	/* align(8) */
 
-	BYTE* stub_data;
+	const BYTE* stub_data;
 
 	auth_verifier_co_t auth_verifier;
 } rpcconn_request_hdr_t;
@@ -523,8 +521,6 @@ typedef struct
 	BYTE reserved;
 
 	/* align(8) */
-
-	BYTE* stub_data;
 
 	auth_verifier_co_t auth_verifier;
 } rpcconn_response_hdr_t;
@@ -599,7 +595,7 @@ typedef struct
 	RingBuffer ReceivePipe;
 	wStream* ReceiveFragment;
 	CRITICAL_SECTION PipeLock;
-	wArrayList* ClientCallList;
+	wHashTable* ClientCallList;
 	char* host;
 	UINT16 port;
 	BOOL isProxy;
@@ -608,7 +604,6 @@ typedef struct
 typedef struct
 {
 	RpcClient* client;
-	BIO* bio;
 	rdpTls* tls;
 	rdpCredsspAuth* auth;
 	HttpContext* http;
@@ -813,7 +808,14 @@ FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout);
 FREERDP_LOCAL void rpc_free(rdpRpc* rpc);
 
 WINPR_ATTR_MALLOC(rpc_free, 1)
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpRpc* rpc_new(rdpTransport* transport);
+
+void rts_syntax_id_free(p_syntax_id_t* ptr);
+
+WINPR_ATTR_MALLOC(rts_syntax_id_free, 1)
+p_syntax_id_t* rts_syntax_id_new(size_t count);
+
+WINPR_ATTR_NODISCARD
+const char* rpc_client_call_state_str(uint32_t state);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_H */

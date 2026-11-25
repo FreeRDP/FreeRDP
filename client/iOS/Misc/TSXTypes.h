@@ -34,9 +34,11 @@ typedef enum
 // that the actual session dimensions are calculated when connecting.
 typedef enum
 {
-	TSXScreenOptionFixed = 0,     // A static resolution, like 1024x768
-	TSXScreenOptionFitScreen = 1, // Upon connection, fit the session to the entire screen size
-	TSXScreenOptionCustom = 2,    // Like fixed just specified by the user
+	TSXScreenOptionFixed = 0,       // A static resolution, like 1024x768
+	TSXScreenOptionFitScreen = 1,   // Upon connection, fit the session to the entire screen size
+	TSXScreenOptionCustom = 2,      // Like fixed just specified by the user
+	TSXScreenOptionFitScreen75 = 3, // Like fit screen, but at 75% of the screen's pixel size
+	TSXScreenOptionFitScreen50 = 4, // Like fit screen, but at 50% of the screen's pixel size
 } TSXScreenOptions;
 
 typedef enum

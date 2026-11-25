@@ -1363,6 +1363,10 @@ LONG smartcard_irp_device_control_encode_request(wStream* s, const SMARTCARD_OPE
 	const UINT32 ioControlCode = operation->ioControlCode;
 
 	const size_t headerPos = Stream_GetPosition(s);
+	if (!Stream_EnsureRemainingCapacity(s, SMARTCARD_COMMON_TYPE_HEADER_LENGTH +
+	                                           SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH))
+		return SCARD_E_NO_MEMORY;
+
 	Stream_Zero(s, SMARTCARD_COMMON_TYPE_HEADER_LENGTH);  /* CommonTypeHeader (8 bytes) */
 	Stream_Zero(s, SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH); /* PrivateTypeHeader (8 bytes) */
 

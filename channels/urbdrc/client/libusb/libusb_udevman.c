@@ -73,6 +73,8 @@ typedef struct
 	LPCSTR devices_vid_pid;
 	LPCSTR devices_addr;
 	wArrayList* hotplug_vid_pids;
+	BOOL hotplug_class_filter_set;
+	BYTE hotplug_class_filter[256 / 8];
 	UINT16 flags;
 	UINT32 device_num;
 	UINT32 next_device_id;
@@ -461,14 +463,16 @@ static void udevman_free(UDEVMAN* udevman)
 	if (!udevman)
 		return;
 
+	/* unregister all devices before tearing down the libusb handling.
+	 */
+	udevman_unregister_all_udevices(&udevman->iface);
+
 	udevman->running = FALSE;
 	if (udevman->thread)
 	{
 		(void)WaitForSingleObject(udevman->thread, INFINITE);
 		(void)CloseHandle(udevman->thread);
 	}
-
-	udevman_unregister_all_udevices(&udevman->iface);
 
 	if (udevman->devman_loading)
 		(void)CloseHandle(udevman->devman_loading);
@@ -485,8 +489,14 @@ static void idevman_free(IUDEVMAN* idevman)
 	udevman_free(udevman);
 }
 
-static BOOL filter_by_class(uint8_t bDeviceClass, uint8_t bDeviceSubClass)
+static BOOL filter_by_class(const UDEVMAN* udevman, uint8_t bDeviceClass, uint8_t bDeviceSubClass)
 {
+	WINPR_ASSERT(udevman);
+
+	/* user supplied list of classes (/usb:auto,filter:...) replaces the default */
+	if (udevman->hotplug_class_filter_set)
+		return (udevman->hotplug_class_filter[bDeviceClass / 8] & (1u << (bDeviceClass % 8))) != 0;
+
 	switch (bDeviceClass)
 	{
 		case LIBUSB_CLASS_AUDIO:
@@ -513,7 +523,7 @@ static BOOL append(char* dst, size_t length, const char* src)
 	return winpr_str_append(src, dst, length, nullptr);
 }
 
-static BOOL device_is_filtered(struct libusb_device* dev,
+static BOOL device_is_filtered(const UDEVMAN* udevman, struct libusb_device* dev,
                                const struct libusb_device_descriptor* desc,
                                libusb_hotplug_event event)
 {
@@ -521,7 +531,7 @@ static BOOL device_is_filtered(struct libusb_device* dev,
 	char* what = nullptr;
 	BOOL filtered = FALSE;
 	append(buffer, sizeof(buffer), usb_interface_class_to_string(desc->bDeviceClass));
-	if (filter_by_class(desc->bDeviceClass, desc->bDeviceSubClass))
+	if (filter_by_class(udevman, desc->bDeviceClass, desc->bDeviceSubClass))
 		filtered = TRUE;
 
 	switch (desc->bDeviceClass)
@@ -538,7 +548,7 @@ static BOOL device_is_filtered(struct libusb_device* dev,
 					for (int y = 0; y < ifc->num_altsetting; y++)
 					{
 						const struct libusb_interface_descriptor* const alt = &ifc->altsetting[y];
-						if (filter_by_class(alt->bInterfaceClass, alt->bInterfaceSubClass))
+						if (filter_by_class(udevman, alt->bInterfaceClass, alt->bInterfaceSubClass))
 							filtered = TRUE;
 
 						append(buffer, sizeof(buffer), "|");
@@ -599,7 +609,7 @@ static int LIBUSB_CALL hotplug_callback(struct libusb_context* ctx, struct libus
 			pair.pid = desc.idProduct;
 			if ((ArrayList_Contains(udevman->hotplug_vid_pids, &pair)) ||
 			    (udevman->iface.isAutoAdd(&udevman->iface) &&
-			     !device_is_filtered(dev, &desc, event)))
+			     !device_is_filtered(udevman, dev, &desc, event)))
 			{
 				add_device(&udevman->iface, DEVICE_ADD_FLAG_ALL, bus, addr, desc.idVendor,
 				           desc.idProduct);
@@ -625,8 +635,10 @@ static BOOL udevman_initialize(IUDEVMAN* idevman, UINT32 channelId)
 	if (!udevman)
 		return FALSE;
 
+	idevman->loading_lock(idevman);
 	idevman->status &= (uint32_t)~URBDRC_DEVICE_CHANNEL_CLOSED;
 	idevman->controlChannelId = channelId;
+	idevman->loading_unlock(idevman);
 	return TRUE;
 }
 
@@ -714,6 +726,36 @@ static UINT urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 	return CHANNEL_RC_OK;
 }
 
+static BOOL urbdrc_udevman_parse_class_filter(UDEVMAN* udevman, const char* list)
+{
+	WINPR_ASSERT(udevman);
+	WINPR_ASSERT(list);
+
+	memset(udevman->hotplug_class_filter, 0, sizeof(udevman->hotplug_class_filter));
+	udevman->hotplug_class_filter_set = TRUE;
+
+	/* filter:none = every device class plugged in later is redirected */
+	if (_stricmp(list, "none") == 0)
+		return TRUE;
+
+	const char* pos = list;
+	while (*pos != '\0')
+	{
+		char* end = nullptr;
+		errno = 0;
+		const unsigned long cls = strtoul(pos, &end, 16);
+		if ((errno != 0) || (end == pos) || (cls > UINT8_MAX) || ((*end != '\0') && (*end != '#')))
+		{
+			WLog_ERR(TAG, "Invalid USB class filter: \"%s\"", list);
+			return FALSE;
+		}
+		udevman->hotplug_class_filter[cls / 8] |= (BYTE)(1u << (cls % 8));
+		pos = (*end == '#') ? end + 1 : end;
+	}
+
+	return TRUE;
+}
+
 static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* args)
 {
 	LPCSTR devices = nullptr;
@@ -767,6 +809,12 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* 
 		else if (strcmp(arg, "auto") == 0)
 		{
 			udevman->flags |= UDEVMAN_FLAG_ADD_BY_AUTO;
+		}
+		else if (_strnicmp(arg, "filter:", 7) == 0)
+		{
+			/* USB base classes (hex, '#' separated) that auto hotplug keeps local */
+			if (!urbdrc_udevman_parse_class_filter(udevman, &arg[7]))
+				return ERROR_INVALID_PARAMETER;
 		}
 		else
 		{
@@ -871,7 +919,12 @@ static DWORD WINAPI poll_thread(LPVOID lpThreadParameter)
 		    LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, udevman, &handle);
 
 		if (rc != LIBUSB_SUCCESS)
-			udevman->running = FALSE;
+		{
+			WLog_WARN(TAG,
+			          "Failed to register hotplug handler (%s). USB devices plugged in later "
+			          "will not be detected.",
+			          libusb_strerror(rc));
+		}
 	}
 	else
 		WLog_WARN(TAG, "Platform does not support libusb hotplug. USB devices plugged in later "

@@ -45,6 +45,6 @@ if(PCSC_WINPR_FOUND)
   winpr_library_add_private(${PCSC_WINPR_LIBRARY})
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

@@ -21,7 +21,7 @@
 @implementation RDPKeyboard
 
 @synthesize delegate = _delegate, ctrlPressed = _ctrl_pressed, altPressed = _alt_pressed,
-            shiftPressed = _shift_pressed, winPressed = _win_pressed;
+            shiftPressed = _shift_pressed, winPressed = _win_pressed, altGrPressed = _altgr_pressed;
 
 - (id)init
 {
@@ -136,6 +136,7 @@
 	_ctrl_pressed = NO;
 	_shift_pressed = NO;
 	_win_pressed = NO;
+	_altgr_pressed = NO;
 
 	_session = session;
 	_delegate = delegate;
@@ -143,7 +144,7 @@
 
 - (void)reset
 {
-	// reset pressed ctrl, alt, shift or win key
+	// reset pressed ctrl, alt, alt gr, shift or win key
 	if (_shift_pressed)
 		[self toggleShiftKey];
 	if (_alt_pressed)
@@ -152,6 +153,8 @@
 		[self toggleCtrlKey];
 	if (_win_pressed)
 		[self toggleWinKey];
+	if (_altgr_pressed)
+		[self toggleAltGrKey];
 }
 
 // handles button pressed input event from the iOS keyboard
@@ -166,11 +169,14 @@
 	[self reset];
 }
 
-// send a backspace key press
+// send a key press and release modifier key
 - (void)sendVirtualKeyCode:(NSInteger)keyCode
 {
 	[self sendVirtualKey:keyCode up:NO];
 	[self sendVirtualKey:keyCode up:YES];
+
+	// release modifier key
+	[self reset];
 }
 
 // sends the vk code to the session
@@ -225,6 +231,14 @@
 	[self notifyDelegateModifiersChanged];
 }
 
+// toggle alt gr (RightAlt) key, returns true if pressed, otherwise false
+- (void)toggleAltGrKey
+{
+	[self sendVirtualKey:(VK_RMENU | KBDEXT) up:_altgr_pressed];
+	_altgr_pressed = !_altgr_pressed;
+	[self notifyDelegateModifiersChanged];
+}
+
 #pragma mark Sending special key strokes
 
 - (void)sendEnterKeyStroke
@@ -240,6 +254,16 @@
 - (void)sendBackspaceKeyStroke
 {
 	[self sendVirtualKeyCode:VK_BACK];
+}
+
+- (void)sendDeleteKeyStroke
+{
+	[self sendVirtualKeyCode:(VK_DELETE | KBDEXT)];
+}
+
+- (void)sendTabKeyStroke
+{
+	[self sendVirtualKeyCode:VK_TAB];
 }
 
 @end

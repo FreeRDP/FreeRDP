@@ -176,16 +176,20 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL HasMonitorAttributes);    /*    397 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorFlags);          /* 398 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorAttributeFlags); /* 399 */
-	UINT64 padding0448[448 - 400];                             /* 400 */
+	SETTINGS_DEPRECATED(ALIGN64 rdpMonitorScale* MonitorScales); /* 400 */
+	UINT64 padding0448[448 - 401];                               /* 401 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */
 
 	/* Client Multitransport Channel Data */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 MultitransportFlags); /* 512 */
-	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportMultitransport); /* 513 */
-	UINT64 padding0576[576 - 514];                           /* 514 */
-	UINT64 padding0640[640 - 576];                           /* 576 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 MultitransportFlags);    /* 512 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportMultitransport);    /* 513 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportMultitransportUdp); /** 514
+		                                                         * @since version 3.33.0
+		                                                         */
+	UINT64 padding0576[576 - 515];                              /* 515 */
+	UINT64 padding0640[640 - 576];                              /* 576 */
 
 	/*
 	 * Client Info
@@ -303,7 +307,11 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteCredentialGuard);        /* 1114 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RestrictedAdminModeSupported); /** 1115
 		                                                             * @since version 3.16.0 */
-	UINT64 padding1152[1152 - 1116];                                /* 1116 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 RdstlsEnabledModes);         /** 1116
+		                                                             * Allowed server side modes for RDSTLS
+		                                                             * auth. By default all are allowed.
+		                                                             * @since version 3.33.0 */
+	UINT64 padding1152[1152 - 1117];                                /* 1117 */
 
 	/* Connection Cookie */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL MstscCookieMode);      /* 1152 */
@@ -434,7 +442,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL MouseUseRelativeMove);    /* 1607 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL UseCommonStdioCallbacks); /* 1608 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL ConnectChildSession);     /* 1609 */
-	UINT64 padding1664[1664 - 1610];                           /* 1610 */
+	SETTINGS_DEPRECATED(ALIGN64 char* LicenseStorePath);       /* 1610 */
+	UINT64 padding1664[1664 - 1611];                           /* 1611 */
 
 	/* Names */
 	SETTINGS_DEPRECATED(ALIGN64 char* ComputerName); /* 1664 */
@@ -547,7 +556,15 @@ struct rdp_settings
 		                                                             * the default when unset).
 		                                                             * @since version 3.32.0
 		                                                             */
-	UINT64 padding2112[2112 - 2029];                                /* 2029 */
+	SETTINGS_DEPRECATED(ALIGN64 char* AadAuthUserAgent);            /** 2029
+		                                                             * User-Agent the out-of-process
+		                                                             * AAD auth helper's embedded
+		                                                             * browser presents. NULL (the
+		                                                             * default) keeps the helper's
+		                                                             * native UA.
+		                                                             * @since version 3.32.2
+		                                                             */
+	UINT64 padding2112[2112 - 2030];                                /* 2030 */
 
 	/**
 	 * RemoteApp
@@ -571,7 +588,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteApplicationSupportLevel);     /* 2126 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteApplicationSupportMask);      /* 2127 */
 	SETTINGS_DEPRECATED(ALIGN64 char* RemoteApplicationWorkingDir);        /* 2128 */
-	UINT64 padding2176[2176 - 2129];                                       /* 2129 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteApplicationExecFromPipe);       /* 2129 */
+	UINT64 padding2176[2176 - 2130];                                       /* 2130 */
 	UINT64 padding2240[2240 - 2176];                                       /* 2176 */
 
 	/**
@@ -775,7 +793,19 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 GfxCodecAV1Profile); /** 3852
 		                                                     * @since version 3.25.0
 		                                                     */
-	UINT64 padding3904[3904 - 3853];                        /* 3853 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecAV2);          /** 3853
+		                                                     * @since version 3.33.0
+		                                                     */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 GfxCodecAV2Profile); /** 3854
+		                                                     * @since version 3.33.0
+		                                                     */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecHEVC);         /** 3855
+		                                                     * @since version 3.34.0 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecHEVC444);      /** 3856
+		                                                     * @since version 3.34.0 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxCodecAVCMM);        /** 3857
+		                                                     * @since version 3.34.0 */
+	UINT64 padding3904[3904 - 3858];                        /* 3858 */
 
 	/**
 	 * Caches

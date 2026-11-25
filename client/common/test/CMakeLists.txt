@@ -5,7 +5,19 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
-set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCmdLine.c TestClientCmdLineStatus.c)
+set(${MODULE_PREFIX}_TESTS
+    TestClientRdpFile.c
+    TestClientChannels.c
+    TestClientCmdLine.c
+    TestClientCmdLineStatus.c
+    TestClientAutoReconnect.c
+    TestClientWindowInfoService.c
+    TestClientStats.c
+    TestClientMonitorScale.c
+)
+if(BUILD_TESTING_INTERNAL)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestClientTouch.c)
+endif()
 
 set(FUZZERS TestFuzzClientRdpFile.c)
 
@@ -25,7 +37,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
   get_filename_component(TestName ${test} NAME_WE)
-  add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
+  add_test(NAME ${TestName} COMMAND ${MODULE_NAME} ${TestName})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Client/Test")

@@ -126,6 +126,85 @@ extern "C"
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const WCHAR* freerdp_getApplicationDetailsStringW(void);
 
+	/** @brief convert a \ref GUID to a string representation
+	 *
+	 * @param guid A pointer to a GUID to stringify. May be NULL
+	 * @param buffer A pointer to a string buffer to use
+	 * @param len The length of \ref buffer in bytes
+	 *
+	 * @return A pointer to \ref buffer for success, NULL otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_guid2str(const GUID* guid, char* buffer, size_t len);
+
+	/** @brief check if a string is a valid IPv4 or IPv6 address
+	 *
+	 * @param ipAddress The address string to check
+	 * @return TRUE if it is an IP address, FALSE otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_is_valid_ip(const char* ipAddress);
+
+	/** @brief check if a string is a valid IPv4 address
+	 *
+	 * @param ipAddress The address string to check
+	 * @return TRUE if it is an IP address, FALSE otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_is_valid_ipV4(const char* ipAddress);
+
+	/** @brief check if a string is a valid IPv6 address
+	 *
+	 * @param ipAddress The address string to check
+	 * @return TRUE if it is an IP address, FALSE otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_is_valid_ipV6(const char* ipAddress);
+
+	/** @brief check if a string is a valid IPv4 or IPv6 address
+	 *
+	 * @param ipAddress The address string to check
+	 * @param len The length of \ref address in bytes
+	 * @return TRUE if it is an IP address, FALSE otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_is_valid_ipN(const char* ipAddress, size_t len);
+
+	/** @brief check if a string is a valid IPv4 address
+	 *
+	 * @param ipAddress The address string to check
+	 * @param len The length of \ref address in bytes
+	 * @return TRUE if it is an IP address, FALSE otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_is_valid_ipV4N(const char* ipAddress, size_t len);
+
+	/** @brief check if a string is a valid IPv6 address
+	 *
+	 * @param ipAddress The address string to check
+	 * @param len The length of \ref address in bytes
+	 * @return TRUE if it is an IP address, FALSE otherwise
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_is_valid_ipV6N(const char* ipAddress, size_t len);
+
+	/** @brief check if a path contains '..' or similar constructs that would allow escaping root
+	 *
+	 *  @param path The path to check. Windows or Unix syntax allowed
+	 *  @param path_length The length of the path in characters
+	 *  @return TRUE if the path is invalid, e.g. contains forbidden sequences
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_path_contains_dotdot(const WCHAR* path, size_t path_length);
+
 #ifdef __cplusplus
 }
 #endif

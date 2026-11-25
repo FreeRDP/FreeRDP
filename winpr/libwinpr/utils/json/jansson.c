@@ -17,9 +17,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <math.h>
+#include <float.h>
+
 #include <winpr/file.h>
 #include <winpr/json.h>
 #include <winpr/assert.h>
+
+#include "../log.h"
+#define TAG WINPR_TAG("utils.json.jansson")
 
 #if !defined(WITH_JANSSON)
 #error "This file must only be compiled if jansson library is linked in"
@@ -180,6 +186,98 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return json_number_value(ccast(item));
 }
 
+WINPR_ATTR_NODISCARD
+static INT64 checked_int(double val)
+{
+	if (isnan(val) || isinf(val))
+	{
+		WLog_WARN(TAG,
+		          "WINPR_JSON should read an integer, but a fractional NaN / INF number %lf was "
+		          "found. Returning 0",
+		          val);
+		return 0;
+	}
+
+	double intpart = NAN;
+	double fraction = modf(val, &intpart);
+	if (fabs(fraction) <= DBL_EPSILON)
+		return (INT64)val;
+	WLog_WARN(TAG,
+	          "WINPR_JSON should read an integer, but a fractional number %lf was found. Dropping "
+	          "fraction %lf.",
+	          val, fraction);
+	return (INT64)intpart;
+}
+
+INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item)
+{
+	const json_t* it = ccast(item);
+	if (json_is_integer(it))
+		return (INT64)json_integer_value(it);
+	if (json_is_real(it))
+	{
+		double val = json_real_value(it);
+		return checked_int(val);
+	}
+	if (json_is_number(it))
+	{
+		double val = json_number_value(it);
+		return checked_int(val);
+	}
+	return 0;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT64 checked_uint(double val)
+{
+	if (isnan(val) || isinf(val))
+	{
+		WLog_WARN(TAG,
+		          "WINPR_JSON should read an unsigned, but a fractional negative number %lf was "
+		          "found. Returning 0",
+		          val);
+		return 0;
+	}
+
+	if (val < 0.0)
+	{
+		WLog_WARN(TAG,
+		          "WINPR_JSON should read an unsigned, but a fractional NaN / INF number %lf was "
+		          "found. Returning 0",
+		          val);
+		return 0;
+	}
+
+	double intpart = NAN;
+	double fraction = modf(val, &intpart);
+	if (fabs(fraction) <= DBL_EPSILON)
+		return (UINT64)val;
+
+	WLog_WARN(TAG,
+	          "WINPR_JSON should read an unsigned, but a fractional number %lf was found. Dropping "
+	          "fraction %lf.",
+	          val, fraction);
+	return (UINT64)intpart;
+}
+
+UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item)
+{
+	const json_t* it = ccast(item);
+	if (json_is_integer(it))
+		return (UINT64)json_integer_value(it);
+	if (json_is_real(it))
+	{
+		double val = json_real_value(it);
+		return checked_uint(val);
+	}
+	if (json_is_number(it))
+	{
+		double val = json_number_value(it);
+		return checked_uint(val);
+	}
+	return 0;
+}
+
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 	const json_t* jitem = ccast(item);
@@ -260,6 +358,9 @@ WINPR_JSON* WINPR_JSON_CreateBool(BOOL boolean)
 
 WINPR_JSON* WINPR_JSON_CreateNumber(double num)
 {
+	double intpart;
+	if (modf(num, &intpart) == 0.0)
+		return revcast(json_integer((json_int_t)intpart));
 	return revcast(json_real(num));
 }
 
@@ -321,6 +422,18 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
 {
 	json_t* obj = json_integer(number);
+	return add_to_object(object, name, obj);
+}
+
+WINPR_JSON* WINPR_JSON_AddUIntegerToObject(WINPR_JSON* object, const char* name, uint64_t number)
+{
+	if (number > INT64_MAX)
+	{
+		WLog_ERR(TAG, "jansson does not support integers > %" PRId64, INT64_MAX);
+		return nullptr;
+	}
+
+	json_t* obj = json_integer((int64_t)number);
 	return add_to_object(object, name, obj);
 }
 

@@ -442,6 +442,15 @@ extern "C"
 	UWAC_API const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index);
 
 	/**
+	 * Checks whether the compositor advertises the linux-dmabuf protocol.
+	 *
+	 * @param display the display to query
+	 * @return true if linux-dmabuf is available
+	 * @since version 3.33.0
+	 */
+	UWAC_API bool UwacDisplayHasLinuxDmabuf(const UwacDisplay* display);
+
+	/**
 	 * retrieve the resolution of a given UwacOutput
 	 *
 	 * @param output the UwacOutput

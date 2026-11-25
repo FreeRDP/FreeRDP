@@ -21,12 +21,15 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
+#include <winpr/path.h>
 
 #include <freerdp/config.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/message.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/client/cmdline.h>
 
@@ -51,6 +54,10 @@
 #include "channels/pf_channel_smartcard.h"
 
 #define TAG PROXY_TAG("client")
+
+/* Upper bound for pClientContext::server_messages, the proxy server thread queues whatever the
+ * client sends while the proxy client thread might be busy (re)connecting */
+#define PF_CLIENT_MAX_SERVER_MESSAGES 4096ul
 
 static void channel_data_free(void* obj);
 
@@ -271,6 +278,21 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	if (!pf_client_use_peer_load_balance_info(pc))
 		return FALSE;
 
+	/* For each proxy client create a unique session configuration directory.
+	 * This will (mostly) be used to store license data, so the directory should stay consistent
+	 * over multiple sessions. */
+	char* sessionid = freerdp_settings_get_unique_id(settings);
+	if (!sessionid)
+		return FALSE;
+
+	char* cfg = GetKnownSubPath(KNOWN_PATH_XDG_RUNTIME_DIR, sessionid);
+	winpr_zfree(sessionid);
+
+	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, cfg);
+	winpr_zfree(cfg);
+	if (!rc)
+		return FALSE;
+
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 
@@ -468,7 +490,19 @@ static BOOL pf_client_send_channel_data(pClientContext* pc, const proxyChannelDa
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(ev);
 
-	return Queue_Enqueue(pc->cached_server_channel_data, ev);
+	Queue_Lock(pc->cached_server_channel_data);
+	const BOOL rc = Queue_Enqueue(pc->cached_server_channel_data, ev);
+	const size_t count = Queue_Count(pc->cached_server_channel_data);
+	Queue_Unlock(pc->cached_server_channel_data);
+	if (count > PF_CLIENT_MAX_SERVER_MESSAGES)
+	{
+		PROXY_LOG_INFO(TAG, pc,
+		               "Remote not responding, %" PRIuz
+		               "[%lu max] packets queued. Assuming dead, terminating connection",
+		               count, PF_CLIENT_MAX_SERVER_MESSAGES);
+		return FALSE;
+	}
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
@@ -504,6 +538,68 @@ static BOOL sendQueuedChannelData(pClientContext* pc)
 		}
 
 		Queue_Unlock(pc->cached_server_channel_data);
+	}
+
+	return rc;
+}
+
+static void server_message_free(void* obj)
+{
+	wMessage* msg = obj;
+
+	if (msg && (GetMessageClass(msg->id) == Update_Class))
+		free(msg->lParam);
+}
+
+BOOL pf_client_post_message(pClientContext* pc, UINT32 id, size_t wParam, void* lParam)
+{
+	wMessage msg = { .id = id, .context = pc, .wParam = (void*)wParam, .lParam = lParam };
+
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(pc->server_messages);
+
+	/* The proxy client thread does not keep up, drop the message like for a connection that is
+	 * not active */
+	if (MessageQueue_Size(pc->server_messages) >= PF_CLIENT_MAX_SERVER_MESSAGES)
+	{
+		server_message_free(&msg);
+		return TRUE;
+	}
+
+	if (!MessageQueue_Dispatch(pc->server_messages, &msg))
+	{
+		server_message_free(&msg);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL sendQueuedServerMessages(pClientContext* pc)
+{
+	BOOL rc = TRUE;
+	wMessage msg = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(pc);
+
+	/* Only what is queued right now, new messages must not keep this thread from receiving */
+	size_t count = MessageQueue_Size(pc->server_messages);
+	while (rc && (count-- > 0) && (MessageQueue_Peek(pc->server_messages, &msg, TRUE) > 0))
+	{
+		switch (GetMessageClass(msg.id))
+		{
+			case Update_Class:
+				rc = pf_client_process_update_message(pc, &msg);
+				break;
+			case Input_Class:
+				rc = pf_client_process_input_message(pc, &msg);
+				break;
+			default:
+				rc = FALSE;
+				break;
+		}
+		server_message_free(&msg);
 	}
 
 	return rc;
@@ -806,6 +902,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 		goto end;
 	}
 	handles[nCount++] = Queue_Event(pc->cached_server_channel_data);
+	handles[nCount++] = MessageQueue_Event(pc->server_messages);
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
@@ -845,6 +942,8 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 		}
 		if (!sendQueuedChannelData(pc))
 			break;
+		if (!sendQueuedServerMessages(pc))
+			break;
 	}
 
 	freerdp_disconnect(instance);
@@ -878,6 +977,7 @@ static void pf_client_context_free(freerdp* instance, rdpContext* context)
 
 	pc->sendChannelData = nullptr;
 	Queue_Free(pc->cached_server_channel_data);
+	MessageQueue_Free(pc->server_messages);
 	Stream_Free(pc->remote_pem, TRUE);
 	free(pc->remote_hostname);
 	free(pc->computerName.v);
@@ -900,8 +1000,80 @@ static BOOL pf_client_try_compare_hash(rdpCertificate* cert, const char* hash,
 	return rc;
 }
 
+WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+static rdpCertificate* fromPem(const char* policy, pClientContext* pc, const char* hostname,
+                               UINT16 port, const BYTE* data, size_t length)
+{
+	if (!data || (length == 0))
+	{
+		PROXY_LOG_WARN(TAG, pc, "certificate policy %s: empty PEM, deny access to %s:%" PRIu16,
+		               policy, hostname, port);
+		return nullptr;
+	}
+	char* copy = strndup((const char*)data, length);
+	if (!copy)
+	{
+		PROXY_LOG_WARN(TAG, pc,
+		               "certificate policy %s: remote PEM clone failed, deny access to %s:%" PRIu16,
+		               policy, hostname, port);
+		return nullptr;
+	}
+	rdpCertificate* cert = freerdp_certificate_new_from_pem(copy);
+	winpr_znfree(copy, length);
+	if (!cert)
+	{
+		PROXY_LOG_WARN(
+		    TAG, pc, "certificate policy %s: remote PEM parsing failed, deny access to %s:%" PRIu16,
+		    policy, hostname, port);
+	}
+	return cert;
+}
+
 WINPR_ATTR_NODISCARD
-static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t length)
+static int pf_client_verify_strict(pClientContext* pc, const proxyConfig* config,
+                                   const char* hostname, UINT16 port, const BYTE* data,
+                                   size_t length, BOOL hostMustMatch)
+{
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(config);
+
+	char* policy = _strdup(pf_config_policy_to_str(config->TargetCertPolicy));
+	if (!policy)
+		return 0;
+	const size_t len = strlen(policy);
+	for (size_t x = 0; x < len; x++)
+		policy[x] = WINPR_ASSERTING_INT_CAST(char, toupper(policy[x]));
+
+	rdpCertificate* cert = fromPem(policy, pc, hostname, port, data, length);
+	if (!cert)
+	{
+		free(policy);
+		return 0;
+	}
+	BOOL rc = freerdp_certificate_verify(cert, config->CertStorePath);
+	if (rc && hostMustMatch)
+	{
+		size_t hostlen = 0;
+		if (hostname)
+			hostlen = strlen(hostname);
+		rc = freerdp_certificate_matches_hostname(cert, hostname, hostlen);
+		if (!rc)
+			PROXY_LOG_WARN(TAG, pc,
+			               "certificate policy %s: hostname mismatch, deny access to %s:%" PRIu16,
+			               policy, hostname, port);
+	}
+	else
+		PROXY_LOG_WARN(TAG, pc,
+		               "certificate policy %s: certificate not valid, deny access to %s:%" PRIu16,
+		               policy, hostname, port);
+	freerdp_certificate_free(cert);
+	free(policy);
+	return rc ? 1 : 0;
+}
+
+WINPR_ATTR_NODISCARD
+static int pf_client_verify_pinned(pClientContext* pc, const char* hostname, UINT16 port,
+                                   const BYTE* data, size_t length)
 {
 	int rc = 0;
 	WINPR_ASSERT(pc);
@@ -913,20 +1085,9 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 	const proxyConfig* config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
-	char* copy = strndup((const char*)data, length);
-	if (!copy)
-	{
-		PROXY_LOG_WARN(TAG, pc, "certificate policy PINNED: remote PEM clone failed, deny access");
-		return 0;
-	}
-	rdpCertificate* cert = freerdp_certificate_new_from_pem(copy);
-	winpr_znfree(copy, length);
+	rdpCertificate* cert = fromPem("PINNED", pc, hostname, port, data, length);
 	if (!cert)
-	{
-		PROXY_LOG_WARN(TAG, pc,
-		               "certificate policy PINNED: remote PEM parsing failed, deny access");
 		return 0;
-	}
 
 	if (config->TargetCertPEM && (config->TargetCertPEMLength > 0))
 	{
@@ -939,17 +1100,23 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 			{
 				const BOOL match = strcmp(remote, target) == 0;
 				if (!match)
-					PROXY_LOG_WARN(TAG, pc, "certificate policy PINNED: PEM mismatch, deny access");
+					PROXY_LOG_WARN(
+					    TAG, pc,
+					    "certificate policy PINNED: PEM mismatch, deny access to %s:%" PRIu16,
+					    hostname, port);
 				else
-					PROXY_LOG_INFO(TAG, pc, "certificate policy PINNED: PEM matches, allow access");
+					PROXY_LOG_INFO(
+					    TAG, pc,
+					    "certificate policy PINNED: PEM matches, allow access to %s:%" PRIu16,
+					    hostname, port);
 				rc = match ? 1 : 0;
 			}
 			else
 			{
 				PROXY_LOG_WARN(TAG, pc,
 				               "certificate policy PINNED: PEM hashing failed (remote=%p, "
-				               "target=%p), deny access",
-				               (void*)remote, (void*)target);
+				               "target=%p), deny accessto %s:%" PRIu16,
+				               (void*)remote, (void*)target, hostname, port);
 			}
 			winpr_zfree(remote);
 			winpr_zfree(target);
@@ -958,8 +1125,10 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 		}
 		else
 		{
-			PROXY_LOG_WARN(TAG, pc,
-			               "certificate policy PINNED: config PEM parsing failed, deny access");
+			PROXY_LOG_WARN(
+			    TAG, pc,
+			    "certificate policy PINNED: config PEM parsing failed, deny access to %s:%" PRIu16,
+			    hostname, port);
 		}
 	}
 
@@ -981,16 +1150,21 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 
 		winpr_zfree(str);
 		if (rc == 1)
-			PROXY_LOG_INFO(TAG, pc, "certificate policy PINNED: hash matches, allow access");
+			PROXY_LOG_INFO(TAG, pc,
+			               "certificate policy PINNED: hash matches, allow access to %s:%" PRIu16,
+			               hostname, port);
 		else
-			PROXY_LOG_WARN(TAG, pc,
-			               "certificate policy PINNED: certificate hash mismatch, deny access");
+			PROXY_LOG_WARN(
+			    TAG, pc,
+			    "certificate policy PINNED: certificate hash mismatch, deny access to %s:%" PRIu16,
+			    hostname, port);
 	}
 	else
 	{
 		PROXY_LOG_WARN(TAG, pc,
 		               "certificate policy PINNED: neigter PEM nor HASH set for "
-		               "comparison, deny access");
+		               "comparison, deny access to %s:%" PRIu16,
+		               hostname, port);
 	}
 
 	freerdp_certificate_free(cert);
@@ -998,7 +1172,8 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 }
 
 WINPR_ATTR_NODISCARD
-static int pf_client_verify_by_policy(pClientContext* pc, const BYTE* data, size_t length)
+static int pf_client_verify_by_policy(pClientContext* pc, const char* hostname, UINT16 port,
+                                      const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
@@ -1011,14 +1186,20 @@ static int pf_client_verify_by_policy(pClientContext* pc, const BYTE* data, size
 
 	switch (config->TargetCertPolicy)
 	{
+		case FREERDP_PROXY_CERT_POLICY_VERIFIED_HOST_MATCH:
+			return pf_client_verify_strict(pc, config, hostname, port, data, length, TRUE);
+		case FREERDP_PROXY_CERT_POLICY_VERIFIED:
+			return pf_client_verify_strict(pc, config, hostname, port, data, length, FALSE);
 		case FREERDP_PROXY_CERT_POLICY_PINNED:
-			return pf_client_verify_pinned(pc, data, length);
+			return pf_client_verify_pinned(pc, hostname, port, data, length);
 		case FREERDP_PROXY_CERT_POLICY_ALLOW:
-			PROXY_LOG_INFO(TAG, pc, "certificate policy ALLOW: allow access");
+			PROXY_LOG_INFO(TAG, pc, "certificate policy ALLOW: allow access to %s:%" PRIu16,
+			               hostname, port);
 			return 1;
 		case FREERDP_PROXY_CERT_POLICY_DENY:
 		default:
-			PROXY_LOG_WARN(TAG, pc, "certificate policy DENY: deny access");
+			PROXY_LOG_WARN(TAG, pc, "certificate policy DENY: deny access to %s:%" PRIu16, hostname,
+			               port);
 			return 0;
 	}
 }
@@ -1034,15 +1215,18 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 
 	pClientContext* pc = (pClientContext*)instance->context;
 
-	if (!Stream_EnsureCapacity(pc->remote_pem, length))
-		return 0;
 	Stream_ResetPosition(pc->remote_pem);
+	if (!Stream_EnsureRemainingCapacity(pc->remote_pem, length))
+		return 0;
 
 	free(pc->remote_hostname);
 	pc->remote_hostname = nullptr;
 
 	if (length > 0)
 		Stream_Write(pc->remote_pem, data, length);
+	if (!Stream_EnsureRemainingCapacity(pc->remote_pem, 1))
+		return 0;
+	Stream_Zero(pc->remote_pem, 1);
 
 	if (hostname)
 		pc->remote_hostname = _strdup(hostname);
@@ -1058,7 +1242,7 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 		return 1;
 	}
 
-	return pf_client_verify_by_policy(pc, data, length);
+	return pf_client_verify_by_policy(pc, hostname, port, data, length);
 }
 
 WINPR_ATTR_NODISCARD
@@ -1208,7 +1392,14 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	obj->fnObjectNew = channel_data_copy;
 	obj->fnObjectFree = channel_data_free;
 
-	pc->interceptContextMap = HashTable_New(FALSE);
+	pc->server_messages = MessageQueue_New(nullptr);
+	if (!pc->server_messages)
+		return FALSE;
+	obj = MessageQueue_Object(pc->server_messages);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = server_message_free;
+
+	pc->interceptContextMap = HashTable_New(TRUE);
 	if (!pc->interceptContextMap)
 		return FALSE;
 

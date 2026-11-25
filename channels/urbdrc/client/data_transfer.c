@@ -361,7 +361,6 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* 
 
 		case IOCTL_INTERNAL_USB_RESET_PORT: /** 0x00220007 */
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "ioctl: IOCTL_INTERNAL_USB_RESET_PORT");
-			success = pdev->reset_device(pdev);
 			break;
 
 		case IOCTL_INTERNAL_USB_GET_PORT_STATUS: /** 0x00220013 */
@@ -702,7 +701,9 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 		return ERROR_INVALID_DATA;
 
 	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
-	const UINT32 ConfigurationHandle = Stream_Get_UINT32(s);
+	// Currently unused, so just skip the data
+	// const UINT32 ConfigurationHandle = Stream_Get_UINT32(s);
+	Stream_Seek_UINT32(s);
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = msusb_msinterface_read(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4) || !MsInterface)
@@ -734,7 +735,10 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig = pdev->get_MsConfig(pdev);
 	const uint8_t InterfaceNumber = MsInterface->InterfaceNumber;
 	if (!msusb_msinterface_replace(MsConfig, InterfaceNumber, MsInterface))
+	{
+		msusb_msinterface_free(MsInterface);
 		return ERROR_BAD_CONFIGURATION;
+	}
 
 	/* complete configuration setup */
 	if (!pdev->complete_msconfig_setup(pdev, MsConfig))
@@ -906,16 +910,28 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	return (uint32_t)rc;
 }
 
-static void urb_isoch_transfer_cb(WINPR_ATTR_UNUSED IUDEVICE* pdev,
-                                  GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
+static void urb_isoch_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                   UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                   UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
                                   UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize,
                                   int transferDir)
 {
+	/* The channel (and with it the callback) is gone, nobody to report to. */
+	if (pdev->isChannelClosed(pdev))
+	{
+		Stream_Free(out, TRUE);
+		return;
+	}
+
 	if (!noAck)
 	{
-		UINT32 packetSize = (status == 0) ? NumberOfPackets * 12 : 0;
+		const UINT32 packetSize = (status == 0) ? NumberOfPackets * 12u : 0;
+		if ((NumberOfPackets > UINT32_MAX / 12) || (packetSize > UINT16_MAX - 20))
+		{
+			Stream_Free(out, TRUE);
+			return;
+		}
+
 		const UINT32 payloadSize = urb_completion_payload_size(transferDir, OutputBufferSize);
 		Stream_ResetPosition(out);
 
@@ -991,6 +1007,15 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callbac
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, NumberOfPackets, 12ull))
 		return ERROR_INVALID_DATA;
+
+	if (NumberOfPackets > (UINT16_MAX - 20) / 12)
+	{
+		WLog_ERR(TAG,
+		         "[MS-RDPEUSB] 2.2.9.8 TS_URB_ISOCH_TRANSFER::NumberOfPackets %" PRIu32
+		         " too large, maximum allowed is %d",
+		         NumberOfPackets, (UINT16_MAX - 20) / 12);
+		return ERROR_INVALID_DATA;
+	}
 
 	packetDescriptorData = Stream_Pointer(s);
 	Stream_Seek(s, 12ULL * NumberOfPackets);
@@ -1335,7 +1360,11 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CA
 	                                          &OutputBufferSize, Stream_Pointer(out), 1000);
 
 	if (ret < 0)
-		WLog_Print(urbdrc->log, WLOG_DEBUG, "os_feature_descriptor_request: error num %d", ret);
+	{
+		WLog_Print(urbdrc->log, WLOG_ERROR, "os_feature_descriptor_request: error num %d", ret);
+		Stream_Free(out, TRUE);
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
 	                            usbd_status, OutputBufferSize, transferDir);
@@ -2050,6 +2079,18 @@ UINT urbdrc_process_udev_data_transfer(GENERIC_CHANNEL_CALLBACK* callback, URBDR
 
 	/* Device has been removed, ignore this request. */
 	if (pdev->isChannelClosed(pdev))
+	{
+		error = ERROR_SUCCESS;
+		goto fail;
+	}
+
+	/* Whatever channel the request arrived on, answer on the channel the device is bound to: a
+	 * pending transfer keeps the callback of that channel and closing it drains the device before
+	 * the callback is freed. Any other channel may go away while the transfer is still pending. */
+	callback = pdev->get_channelCallback(pdev);
+
+	/* Device has not been announced yet, ignore this request. */
+	if (callback == nullptr)
 	{
 		error = ERROR_SUCCESS;
 		goto fail;

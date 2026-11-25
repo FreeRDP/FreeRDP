@@ -49,6 +49,39 @@ NSString *LocalizedFitScreen()
 	                                       @"(Full Screen on iPad, reasonable size on iPhone)");
 }
 
+NSString *LocalizedFitScreen75()
+{
+	return NSLocalizedString(@"Automatic (75%)",
+	                         @"Screen resolution selector: Automatic resolution at 75% of the "
+	                         @"screen's pixel size (larger text)");
+}
+
+NSString *LocalizedFitScreen50()
+{
+	return NSLocalizedString(@"Automatic (50%)",
+	                         @"Screen resolution selector: Automatic resolution at 50% of the "
+	                         @"screen's pixel size (larger text)");
+}
+
+BOOL IsFitScreenOption(TSXScreenOptions type)
+{
+	return (type == TSXScreenOptionFitScreen || type == TSXScreenOptionFitScreen75 ||
+	        type == TSXScreenOptionFitScreen50);
+}
+
+CGFloat FitScreenScale(TSXScreenOptions type)
+{
+	switch (type)
+	{
+		case TSXScreenOptionFitScreen75:
+			return 0.75f;
+		case TSXScreenOptionFitScreen50:
+			return 0.5f;
+		default:
+			return 1.0f;
+	}
+}
+
 NSString *LocalizedCustom()
 {
 	return NSLocalizedString(@"Custom", @"Screen resolution selector: Custom");
@@ -63,6 +96,16 @@ BOOL ScanScreenResolution(NSString *description, int *width, int *height, TSXScr
 	if ([description isEqualToString:LocalizedFitScreen()])
 	{
 		*type = TSXScreenOptionFitScreen;
+		return YES;
+	}
+	else if ([description isEqualToString:LocalizedFitScreen75()])
+	{
+		*type = TSXScreenOptionFitScreen75;
+		return YES;
+	}
+	else if ([description isEqualToString:LocalizedFitScreen50()])
+	{
+		*type = TSXScreenOptionFitScreen50;
 		return YES;
 	}
 	else if ([description isEqualToString:LocalizedCustom()])
@@ -87,6 +130,10 @@ NSString *ScreenResolutionDescription(TSXScreenOptions type, int width, int heig
 {
 	if (type == TSXScreenOptionFitScreen)
 		return LocalizedFitScreen();
+	else if (type == TSXScreenOptionFitScreen75)
+		return LocalizedFitScreen75();
+	else if (type == TSXScreenOptionFitScreen50)
+		return LocalizedFitScreen50();
 	else if (type == TSXScreenOptionCustom)
 		return LocalizedCustom();
 
@@ -113,6 +160,8 @@ NSArray *ResolutionModes()
 {
 	NSArray *array =
 	    [NSArray arrayWithObjects:ScreenResolutionDescription(TSXScreenOptionFitScreen, 0, 0),
+	                              ScreenResolutionDescription(TSXScreenOptionFitScreen75, 0, 0),
+	                              ScreenResolutionDescription(TSXScreenOptionFitScreen50, 0, 0),
 	                              ScreenResolutionDescription(TSXScreenOptionFixed, 640, 480),
 	                              ScreenResolutionDescription(TSXScreenOptionFixed, 800, 600),
 	                              ScreenResolutionDescription(TSXScreenOptionFixed, 1024, 768),
@@ -254,20 +303,12 @@ NSString *TSXAppFullVersion()
 
 BOOL IsPad()
 {
-#ifdef UI_USER_INTERFACE_IDIOM
 	return ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad);
-#else
-	return NO;
-#endif
 }
 
 BOOL IsPhone()
 {
-#ifdef UI_USER_INTERFACE_IDIOM
 	return ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone);
-#else
-	return NO;
-#endif
 }
 
 // set mouse buttons swapped flag

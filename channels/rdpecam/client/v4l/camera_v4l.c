@@ -493,6 +493,7 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 	int fd = stream->fd;
 	BOOL releaseDevice = FALSE;
 
+	BOOL streaming = TRUE;
 	do
 	{
 		int retVal = 0;
@@ -524,21 +525,22 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 		}
 
 		EnterCriticalSection(&stream->lock);
-		if (stream->streaming)
+		streaming = stream->streaming;
+		if (streaming)
 		{
 			struct v4l2_buffer buf = WINPR_C_ARRAY_INIT;
 			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory = V4L2_MEMORY_MMAP;
 
 			/* dequeue buffers until empty, or until we are asked to stop */
-			while (stream->streaming && ioctl(fd, VIDIOC_DQBUF, &buf) != -1)
+			while (streaming && ioctl(fd, VIDIOC_DQBUF, &buf) != -1)
 			{
 				const UINT error =
 				    stream->sampleCallback(stream->dev, stream->streamIndex,
 				                           stream->buffers[buf.index].start, buf.bytesused);
 				if (error == ECAM_SAMPLE_CAPTURE_DRAINED)
 				{
-					stream->streaming = FALSE;
+					streaming = stream->streaming = FALSE;
 					releaseDevice = TRUE;
 					break;
 				}
@@ -558,7 +560,7 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 		}
 		LeaveCriticalSection(&stream->lock);
 
-	} while (stream->streaming);
+	} while (streaming);
 
 	if (releaseDevice)
 	{
@@ -625,7 +627,9 @@ CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream)
 	if (!stream)
 		return CAM_ERROR_CODE_None;
 
+	EnterCriticalSection(&stream->lock);
 	stream->streaming = FALSE; /* this will terminate capture thread */
+	LeaveCriticalSection(&stream->lock);
 
 	if (stream->captureThread)
 	{
@@ -757,7 +761,9 @@ static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, siz
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
+	EnterCriticalSection(&stream->lock);
 	stream->streaming = TRUE;
+	LeaveCriticalSection(&stream->lock);
 
 	/* start streaming */
 	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;

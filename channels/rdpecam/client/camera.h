@@ -73,6 +73,7 @@ typedef struct
 	UINT32 version;
 	wHashTable* devices;
 
+	BOOL connected;
 } CameraPlugin;
 
 typedef struct

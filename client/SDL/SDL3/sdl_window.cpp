@@ -23,6 +23,7 @@
 
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_overlay.hpp"
 
 #include <freerdp/utils/string.h>
 
@@ -73,12 +74,14 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
-    : _window(other._window), _renderer(other._renderer), _renderTarget(other._renderTarget),
-      _gdiTexture(other._gdiTexture), _gdiTextureW(other._gdiTextureW),
-      _gdiTextureH(other._gdiTextureH), _initialW(other._initialW), _initialH(other._initialH),
-      _displayID(other._displayID), _offset_x(other._offset_x), _offset_y(other._offset_y),
-      _monitor(other._monitor)
+    : _window(other._window), _videoOverlays(std::move(other._videoOverlays)),
+      _renderer(other._renderer), _renderTarget(other._renderTarget),
+      _gdiTexture(other._gdiTexture), _overlayPainter(std::move(other._overlayPainter)),
+      _gdiTextureW(other._gdiTextureW), _gdiTextureH(other._gdiTextureH),
+      _initialW(other._initialW), _initialH(other._initialH), _displayID(other._displayID),
+      _offset_x(other._offset_x), _offset_y(other._offset_y), _monitor(other._monitor)
 {
+	other._videoOverlays.clear();
 	other._window = nullptr;
 	other._renderer = nullptr;
 	other._renderTarget = nullptr;
@@ -87,6 +90,10 @@ SdlWindow::SdlWindow(SdlWindow&& other) noexcept
 
 SdlWindow::~SdlWindow()
 {
+	for (auto& o : _videoOverlays)
+		SDL_DestroyTexture(o.second.texture);
+	/* its text lives in the renderer */
+	_overlayPainter.reset();
 	if (_gdiTexture)
 		SDL_DestroyTexture(_gdiTexture);
 	if (_renderTarget)
@@ -206,7 +213,9 @@ void SdlWindow::setBordered(bool bordered)
 {
 	if (_window)
 		SDL_SetWindowBordered(_window, bordered);
-	std::ignore = SDL_SyncWindow(_window);
+	/* No SDL_SyncWindow: this runs for every window event, and on macOS each one waited for SDL's
+	 * sync timeout (2.5 s) while a full screen change was pending. SDL ignores an unchanged border
+	 * anyway. */
 }
 
 void SdlWindow::raise()
@@ -337,8 +346,7 @@ bool SdlWindow::drawRects(SDL_Surface* surface, SDL_Point offset,
 	return true;
 }
 
-bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
-                               const SDL_Rect& srcRect)
+static SDL_Rect scaledDstRect(const SDL_FPoint& scale, const SDL_Rect& srcRect)
 {
 	SDL_Rect dstRect = {};
 	float ix = 0.0f;
@@ -351,6 +359,13 @@ bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
 	dstRect.w = static_cast<Sint32>(sw);
 	dstRect.y = static_cast<Sint32>(iy);
 	dstRect.h = static_cast<Sint32>(sh);
+	return dstRect;
+}
+
+bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
+                               const SDL_Rect& srcRect)
+{
+	auto dstRect = scaledDstRect(scale, srcRect);
 	return blit(surface, srcRect, dstRect);
 }
 
@@ -361,9 +376,19 @@ bool SdlWindow::drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
 	{
 		return drawScaledRect(surface, scale, { 0, 0, surface->w, surface->h });
 	}
+
+	/* Upload every dirty rect before drawing any of them: scaling filters linearly, so the
+	 * edge of each drawn rect also samples the texels just outside it. Drawn one by one,
+	 * those can be a neighbouring dirty rect that is not uploaded yet, and the old picture
+	 * stays behind as a faint line along the edge until that area changes again. */
 	for (const auto& srcRect : rects)
 	{
-		if (!drawScaledRect(surface, scale, srcRect))
+		if (!upload(surface, srcRect))
+			return false;
+	}
+	for (const auto& srcRect : rects)
+	{
+		if (!render(srcRect, scaledDstRect(scale, srcRect)))
 			return false;
 	}
 	return true;
@@ -394,17 +419,19 @@ bool SdlWindow::fill(SDL_Window* window, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	return SDL_FillSurfaceRect(surface, &rect, color);
 }
 
-rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+static rdpMonitor makeMonitor(SDL_DisplayID id, const SDL_Rect& r, float factor,
+                              bool forceAsPrimary)
 {
-	if (!window)
-		return {};
-
-	const auto& r = rect(window, forceAsPrimary);
-	const float factor = SDL_GetWindowDisplayScale(window);
 	const float dpi = std::roundf(factor * 100.0f);
 
-	WINPR_ASSERT(r.w > 0);
-	WINPR_ASSERT(r.h > 0);
+	/* A compositor without an output can report a display of 0x0 (Xwayland in a headless
+	 * mutter), the caller skips such a display. */
+	if ((r.w <= 0) || (r.h <= 0))
+	{
+		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "display %" PRIu32 ": invalid size %dx%d", id, r.w,
+		            r.h);
+		return {};
+	}
 
 	const auto primary = SDL_GetPrimaryDisplay();
 	const auto orientation = SDL_GetCurrentDisplayOrientation(id);
@@ -420,8 +447,11 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	monitor.attributes.desktopScaleFactor = static_cast<UINT32>(dpi);
 	monitor.attributes.deviceScaleFactor = 100;
 	monitor.attributes.orientation = rdp_orientation;
-	monitor.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, r.w);
-	monitor.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, r.h);
+	/* The physical size is in millimetres and ignored outside 10 to 10000 ([MS-RDPBCGR]
+	 * 2.2.1.3.9.1, [MS-RDPEDISP] 2.2.2.2.1). SDL3 does not know a display's physical size, so
+	 * leave it at 0 (not given) instead of sending the size in pixels as millimetres. */
+	monitor.attributes.physicalWidth = 0;
+	monitor.attributes.physicalHeight = 0;
 
 	const auto cat = SDL_LOG_CATEGORY_APPLICATION;
 	SDL_LogDebug(cat, "monitor.orig_screen                   %" PRIu32, monitor.orig_screen);
@@ -443,6 +473,34 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	return monitor;
 }
 
+rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+{
+	if (!window)
+		return {};
+	return makeMonitor(id, rect(window, forceAsPrimary), SDL_GetWindowDisplayScale(window),
+	                   forceAsPrimary);
+}
+
+/* Dummy windows report wrong sizes on Wayland and X11, use the display. */
+static rdpMonitor queryDisplay(SDL_DisplayID id, bool forceAsPrimary)
+{
+	SDL_Rect r = {};
+	const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(id);
+	if (!mode || !SDL_GetDisplayBounds(id, &r))
+	{
+		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "display %" PRIu32 ": %s", id, SDL_GetError());
+		return {};
+	}
+	if (forceAsPrimary)
+	{
+		r.x = 0;
+		r.y = 0;
+	}
+	r.w = static_cast<int>(std::roundf(static_cast<float>(r.w) * mode->pixel_density));
+	r.h = static_cast<int>(std::roundf(static_cast<float>(r.h) * mode->pixel_density));
+	return makeMonitor(id, r, mode->pixel_density * SDL_GetDisplayContentScale(id), forceAsPrimary);
+}
+
 SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 {
 	SDL_Rect rect = {};
@@ -458,10 +516,8 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 	if (!SDL_GetWindowSizeInPixels(window, &rect.w, &rect.h))
 		return {};
 
-	const auto flags = SDL_GetWindowFlags(window);
-	const auto mask = SDL_WINDOW_FULLSCREEN;
-	const auto fs = (flags & mask) == mask;
-	if (tryFallback(fs))
+	const bool placeholder = (rect.w < 200) || (rect.h < 200);
+	if (placeholder && tryFallback(true))
 	{
 		/* On wlroots compositors (Sway, river, etc.), windows that are hidden/unmapped
 		 * don't get their actual display dimensions. The dummy window returns its creation size
@@ -488,13 +544,22 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 			rect.w = displayBounds.w;
 			rect.h = displayBounds.h;
 
-			const float contentScale = SDL_GetDisplayContentScale(displayID);
-			if (contentScale > 1.0f)
+			float factor = 1.0f;
+			const auto mode = SDL_GetCurrentDisplayMode(displayID);
+			if (mode && (mode->pixel_density > 1.0f))
+				factor = mode->pixel_density;
+			else
+			{
+				const float contentScale = SDL_GetDisplayContentScale(displayID);
+				if (contentScale > 1.0f)
+					factor = contentScale;
+			}
+			if (factor > 1.0f)
 			{
 				const auto fw = static_cast<float>(rect.w);
 				const auto fh = static_cast<float>(rect.h);
-				rect.w = static_cast<int>(std::roundf(fw * contentScale));
-				rect.h = static_cast<int>(std::roundf(fh * contentScale));
+				rect.w = static_cast<int>(std::roundf(fw * factor));
+				rect.h = static_cast<int>(std::roundf(fh * factor));
 			}
 		}
 	}
@@ -549,6 +614,11 @@ bool SdlWindow::ensureGdiTexture(SDL_Surface* surface)
 
 bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
 {
+	return upload(surface, srcRect) && render(srcRect, dstRect);
+}
+
+bool SdlWindow::upload(SDL_Surface* surface, const SDL_Rect& srcRect)
+{
 	if (!_renderer || !surface)
 		return false;
 
@@ -567,6 +637,13 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_UpdateTexture: %s", SDL_GetError());
 		return false;
 	}
+	return true;
+}
+
+bool SdlWindow::render(const SDL_Rect& srcRect, const SDL_Rect& dstRect)
+{
+	if (!_renderer || !_gdiTexture)
+		return false;
 
 	/* Render onto persistent render target to accumulate dirty rects */
 	if (!SDL_SetRenderTarget(_renderer, _renderTarget))
@@ -584,7 +661,7 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 	return true;
 }
 
-void SdlWindow::updateSurface()
+void SdlWindow::updateSurface(const SdlOverlay* overlay)
 {
 	if (!_renderer)
 		return;
@@ -596,8 +673,105 @@ void SdlWindow::updateSurface()
 		return;
 	if (!SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr))
 		return;
+	drawVideoOverlays();
+	/* over the picture, never into it */
+	if (overlay && overlay->visible())
+		drawOverlay(*overlay);
 	if (!SDL_RenderPresent(_renderer))
 		return;
+}
+
+void SdlWindow::drawVideoOverlays()
+{
+	for (const auto& entry : _videoOverlays)
+	{
+		const auto& o = entry.second;
+		if (!o.visible || !o.texture || (o.dst.w <= 0) || (o.dst.h <= 0))
+			continue;
+		if (o.clip.empty())
+		{
+			std::ignore = SDL_RenderTexture(_renderer, o.texture, nullptr, &o.dst);
+			continue;
+		}
+		/* each visible part, with the part of the texture it shows */
+		const float sx = static_cast<float>(o.w) / o.dst.w;
+		const float sy = static_cast<float>(o.h) / o.dst.h;
+		for (const auto& c : o.clip)
+		{
+			SDL_FRect part{};
+			if (!SDL_GetRectIntersectionFloat(&c, &o.dst, &part))
+				continue;
+			const SDL_FRect src{ (part.x - o.dst.x) * sx, (part.y - o.dst.y) * sy, part.w * sx,
+				                 part.h * sy };
+			std::ignore = SDL_RenderTexture(_renderer, o.texture, &src, &part);
+		}
+	}
+}
+
+bool SdlWindow::setVideoOverlay(Uint64 id, const void* pixels, int pitch, int w, int h,
+                                const SDL_FRect& dst, const std::vector<SDL_FRect>& clip,
+                                bool visible)
+{
+	if (!_renderer || (w <= 0) || (h <= 0))
+		return false;
+	auto& o = _videoOverlays[id];
+	if (!o.texture || (o.w != w) || (o.h != h))
+	{
+		if (o.texture)
+			SDL_DestroyTexture(o.texture);
+		o.texture =
+		    SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, w, h);
+		if (!o.texture)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
+			_videoOverlays.erase(id);
+			return false;
+		}
+		/* the video is opaque: its alpha is not for us to blend */
+		std::ignore = SDL_SetTextureBlendMode(o.texture, SDL_BLENDMODE_NONE);
+		o.w = w;
+		o.h = h;
+	}
+	if (pixels && !SDL_UpdateTexture(o.texture, nullptr, pixels, pitch))
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_UpdateTexture: %s", SDL_GetError());
+		return false;
+	}
+	o.dst = dst;
+	o.clip = clip;
+	o.visible = visible;
+	return true;
+}
+
+void SdlWindow::pruneVideoOverlays(const std::function<bool(Uint64)>& keep)
+{
+	for (auto it = _videoOverlays.begin(); it != _videoOverlays.end();)
+	{
+		if (keep(it->first))
+			++it;
+		else
+		{
+			SDL_DestroyTexture(it->second.texture);
+			it = _videoOverlays.erase(it);
+		}
+	}
+}
+
+const char* SdlWindow::rendererName() const
+{
+	return _renderer ? SDL_GetRendererName(_renderer) : nullptr;
+}
+
+void SdlWindow::drawOverlay(const SdlOverlay& overlay)
+{
+	if (!_overlayPainter)
+		_overlayPainter = std::make_unique<SdlOverlayPainter>(_renderer);
+
+	int w = 0;
+	int h = 0;
+	if (!SDL_GetCurrentRenderOutputSize(_renderer, &w, &h))
+		return;
+	_overlayPainter->draw(overlay, w, h, SDL_GetWindowDisplayScale(_window));
 }
 
 bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
@@ -680,6 +854,7 @@ bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool conte
 	if (!SDL_SetRenderTarget(_renderer, nullptr))
 		return false;
 	std::ignore = SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr);
+	drawVideoOverlays();
 	std::ignore = SDL_RenderPresent(_renderer);
 	return true;
 }
@@ -726,6 +901,10 @@ SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent,
 	                               : SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN,
 	                       true);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, false);
+#if defined(SDL_PROP_WINDOW_CREATE_CONSTRAIN_POPUP_BOOLEAN)
+	/* The server places RemoteApp popups; a moved one would map clicks to other points. */
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_CONSTRAIN_POPUP_BOOLEAN, false);
+#endif
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
 	/* Transparent so menus' genuine per-pixel alpha (corners/shadow) isn't rendered black. */
 	if (transparent)
@@ -792,6 +971,9 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 
 rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 {
+	if (sdl::utils::isWaylandDriver() || sdl::utils::isX11Driver())
+		return queryDisplay(id, forceAsPrimary);
+
 	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
 	if (!window)
 		return {};

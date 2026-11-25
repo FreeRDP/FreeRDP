@@ -18,7 +18,6 @@
 #cmakedefine WINPR_HAVE_AIO_H
 #cmakedefine WINPR_HAVE_POLL_H
 #cmakedefine WINPR_HAVE_SYSLOG_H
-#cmakedefine WINPR_HAVE_JOURNALD_H
 #cmakedefine WINPR_HAVE_PTHREAD_MUTEX_TIMEDLOCK
 #cmakedefine WINPR_HAVE_EXECINFO_H
 #cmakedefine WINPR_HAVE_GETLOGIN_R
@@ -42,6 +41,7 @@
 #cmakedefine WITH_INTERNAL_MD5
 
 #cmakedefine WITH_WINPR_JSON /** @since version 3.6.0 */
+#cmakedefine WITH_WINPR_I18N /** @since version 3.33.0 */
 
 #cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_THREADS

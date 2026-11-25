@@ -22,15 +22,19 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/config.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL jpeg_decompress(const BYTE* input, BYTE* output, int width, int height,
-	                                 int size, int bpp);
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+	WINPR_DEPRECATED_VAR("[since 3.34.0] function unused and API insecure",
+	                     WINPR_ATTR_NODISCARD FREERDP_API BOOL
+	                         jpeg_decompress(const BYTE* input, BYTE* output, int width, int height,
+	                                         int size, int bpp));
+#endif
 
 #ifdef __cplusplus
 }

@@ -340,12 +340,12 @@ BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, GDI_RECT* rect)
 	if ((w <= 0) || (h <= 0))
 		invalid = TRUE;
 
-	if (r > 0)
+	if (r >= 0)
 		rect->right = (INT32)r;
 	else
 		invalid = TRUE;
 
-	if (b > 0)
+	if (b >= 0)
 		rect->bottom = (INT32)b;
 	else
 		invalid = TRUE;
@@ -610,7 +610,7 @@ inline BOOL gdi_PtInRect(const GDI_RECT* rc, INT32 x, INT32 y)
  * @return nonzero on success, 0 otherwise
  */
 
-inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h)
+BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h)
 {
 	GDI_RECT inv = WINPR_C_ARRAY_INIT;
 	GDI_RECT rgn = WINPR_C_ARRAY_INIT;
@@ -621,32 +621,40 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	if (!hdc->hwnd->invalid)
 		return TRUE;
 
-	if (w == 0 || h == 0)
+	if ((w <= 0) || (h <= 0))
 		return TRUE;
 
 	GDI_RGN* cinvalid = hdc->hwnd->cinvalid;
-
-	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
+	if (hdc->hwnd->ninvalid < 0)
 	{
-		GDI_RGN* new_rgn = nullptr;
-		size_t new_cnt = 2ULL * hdc->hwnd->count;
+		WLog_ERR(TAG, "ninvalid %" PRId32 " < 0", hdc->hwnd->ninvalid);
+		return FALSE;
+	}
+
+	if ((hdc->hwnd->ninvalid + 1ll) > (INT64)hdc->hwnd->count)
+	{
+		const size_t new_cnt = (size_t)hdc->hwnd->ninvalid + 128ull;
 		if (new_cnt > UINT32_MAX)
 			return FALSE;
 
-		new_rgn = (GDI_RGN*)realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
+		const size_t diff = new_cnt - hdc->hwnd->count;
+		GDI_RGN* new_rgn = (GDI_RGN*)realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
 
 		if (!new_rgn)
 			return FALSE;
 
-		hdc->hwnd->count = (UINT32)new_cnt;
 		cinvalid = new_rgn;
+		memset(&cinvalid[hdc->hwnd->count], 0, sizeof(GDI_RGN) * diff);
+		hdc->hwnd->count = (UINT32)new_cnt;
 	}
 
 	hdc->hwnd->cinvalid = cinvalid;
 	GDI_RGN* invalid = hdc->hwnd->invalid;
 
-	if (!gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h))
+	if (!gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid], x, y, w, h))
 		return FALSE;
+
+	hdc->hwnd->ninvalid++;
 
 	if (!gdi_CRgnToRect(x, y, w, h, &rgn))
 	{

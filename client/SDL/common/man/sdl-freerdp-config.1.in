@@ -127,4 +127,21 @@ A string as defined at
 \fI@SDL_WIKI_BASE_URL@/SDL_Scancode\fR
 .RE
 .RE
+.PP
+\fISDL_Info\fR
+.RS 4
+.PP
+.RS 4
+Shows and hides the stats and info overlay of the SDL3 client (\fI+sdl-info\fR shows it from the start)\&.
+Like every shortcut, the modifier and the key no longer reach the session: with the default right Shift, a capital I has to be typed with the left one\&.
+.br
+
+Default
+\fISDL_SCANCODE_I\fR\&.
+.br
+
+A string as defined at
+\fI@SDL_WIKI_BASE_URL@/SDL_Scancode\fR
+.RE
+.RE
 .RE

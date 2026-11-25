@@ -15,4 +15,8 @@
         android:defaultValue="false"
         android:key="@string/preference_key_power_keep_screen_on_when_connected"
         android:title="@string/settings_power_keep_screen_on_when_connected" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="@string/preference_key_power_auto_reconnect"
+        android:title="@string/settings_power_auto_reconnect" />
 </PreferenceScreen>

@@ -32,6 +32,42 @@
 
 #define TAG CHANNELS_TAG("rdpewa.client")
 
+WINPR_ATTR_NODISCARD
+static BOOL check_duplicate(size_t offset, const char* key, BOOL* array, size_t arraylen)
+{
+	if (offset >= arraylen)
+	{
+		WLog_ERR(TAG, "Invalid offset %" PRIuz " for key '%s', maximum is %" PRIuz, offset, key,
+		         arraylen);
+		return FALSE;
+	}
+	if (array[offset])
+	{
+		WLog_ERR(TAG, "Duplicate key '%s' at offset %" PRIuz, key, offset);
+		return FALSE;
+	}
+	array[offset] = TRUE;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_is_uint32(const char* what, cbor_item_t* value)
+{
+	if (!cbor_isa_uint(value))
+	{
+		WLog_ERR(TAG, "\"%s\"is not an unsigned int", what);
+		return FALSE;
+	}
+	const uint64_t val = cbor_get_int(value);
+	if (val > UINT32_MAX)
+	{
+		WLog_ERR(TAG, "\"%s\"is out of range: 0x%16" PRIx64 " > 0x%08" PRIx32, what, val,
+		         UINT32_MAX);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST* out)
 {
 	struct cbor_load_result result = WINPR_C_ARRAY_INIT;
@@ -40,7 +76,7 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(out);
 
-	memset(out, 0, sizeof(*out));
+	memset(out, 0, sizeof(RDPEWA_REQUEST));
 
 	cbor_item_t* root = cbor_load(data, length, &result);
 	if (!root || result.error.code != CBOR_ERR_NONE)
@@ -61,6 +97,7 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 
 	WLog_DBG(TAG, "Request CBOR map has %" PRIuz " entries", mapSize);
 
+	BOOL keyAlreadyUsed[14] = WINPR_C_ARRAY_INIT;
 	for (size_t i = 0; i < mapSize; i++)
 	{
 		cbor_item_t* key = pairs[i].key;
@@ -71,6 +108,8 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 
 		const char* keyStr = (const char*)cbor_string_handle(key);
 		const size_t keyLen = cbor_string_length(key);
+		if (keyLen > INT32_MAX)
+			goto out;
 
 		WLog_DBG(TAG, "  key[%" PRIuz "]: \"%.*s\" type=%u", i,
 		         WINPR_ASSERTING_INT_CAST(int, keyLen), keyStr, cbor_typeof(value));
@@ -80,6 +119,9 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 			case 4:
 				if (memcmp(keyStr, "rpId", 4) == 0)
 				{
+					if (!check_duplicate(0, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
+						goto out;
+
 					if (cbor_isa_string(value))
 					{
 						size_t slen = cbor_string_length(value);
@@ -93,32 +135,36 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 			case 5:
 				if (memcmp(keyStr, "flags", 5) == 0)
 				{
-					if (!cbor_isa_uint(value))
-					{
-						WLog_ERR(TAG, "\"flags\"is not an unsigned int");
+					if (!check_duplicate(1, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
-					}
+
+					if (!check_is_uint32("flags", value))
+						goto out;
 					out->flags = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
 				break;
 			case 7:
 				if (memcmp(keyStr, "command", 7) == 0)
 				{
-					if (!cbor_isa_uint(value))
-					{
-						WLog_ERR(TAG, "\"command\"is not an unsigned int");
+					if (!check_duplicate(2, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
-					}
+
+					if (!check_is_uint32("command", value))
+						goto out;
 					out->command = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
 				else if (memcmp(keyStr, "request", 7) == 0)
 				{
+					if (!check_duplicate(3, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
+						goto out;
+
 					if (!cbor_isa_bytestring(value))
 					{
 						WLog_ERR(TAG, "\"request\"is not a byte string");
 						goto out;
 					}
 					out->requestLen = cbor_bytestring_length(value);
+					free(out->request);
 					out->request = malloc(out->requestLen);
 					if (!out->request)
 					{
@@ -129,17 +175,20 @@ BOOL rdpewa_cbor_decode_request(const BYTE* data, size_t length, RDPEWA_REQUEST*
 				}
 				else if (memcmp(keyStr, "timeout", 7) == 0)
 				{
-					if (!cbor_isa_uint(value))
-					{
-						WLog_ERR(TAG, "\"timeout\"is not an unsigned int");
+					if (!check_duplicate(4, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
 						goto out;
-					}
+
+					if (!check_is_uint32("timeout", value))
+						goto out;
 					out->timeout = WINPR_ASSERTING_INT_CAST(UINT32, cbor_get_int(value));
 				}
 				break;
 			case 13:
 				if (memcmp(keyStr, "transactionId", 13) == 0)
 				{
+					if (!check_duplicate(5, keyStr, keyAlreadyUsed, sizeof(keyAlreadyUsed)))
+						goto out;
+
 					if (!cbor_isa_bytestring(value) || cbor_bytestring_length(value) != 16)
 					{
 						WLog_ERR(TAG, "\"transactionId\"is not a 16-byte byte string");

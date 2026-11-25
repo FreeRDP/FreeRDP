@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/interlocked.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -58,6 +59,13 @@ struct s_wStreamPool
 	wLog* log;
 };
 
+static inline void ispoolvalid(WINPR_ATTR_UNUSED wStreamPool* pool)
+{
+	WINPR_ASSERT(pool);
+	WINPR_ASSERT(pool->aSize <= pool->aCapacity);
+	WINPR_ASSERT(pool->uSize <= pool->uCapacity);
+}
+
 static void discard_entry(struct s_StreamPoolEntry* entry, BOOL discardStream)
 {
 	if (!entry)
@@ -95,7 +103,8 @@ static struct s_StreamPoolEntry add_entry(wStream* s)
 
 static inline void StreamPool_Lock(wStreamPool* pool)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
+
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 }
@@ -106,7 +115,8 @@ static inline void StreamPool_Lock(wStreamPool* pool)
 
 static inline void StreamPool_Unlock(wStreamPool* pool)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
+
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 }
@@ -121,7 +131,7 @@ static BOOL StreamPool_ShrinkToCommonLimit(wStream* s)
 
 static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL usedOrAvailable)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
 
 	size_t* cap = (usedOrAvailable) ? &pool->uCapacity : &pool->aCapacity;
 	size_t* size = (usedOrAvailable) ? &pool->uSize : &pool->aSize;
@@ -158,7 +168,7 @@ static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL used
 
 static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
 
 	const size_t pcount = 1;
 	const size_t off = index + pcount;
@@ -181,6 +191,8 @@ static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index)
 
 static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 {
+	ispoolvalid(pool);
+
 	StreamPool_EnsureCapacity(pool, 1, TRUE);
 	pool->uArray[pool->uSize] = add_entry(s);
 	pool->uSize++;
@@ -192,7 +204,8 @@ static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 
 static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
+
 	for (size_t index = 0; index < pool->uSize; index++)
 	{
 		struct s_StreamPoolEntry* cur = &pool->uArray[index];
@@ -202,11 +215,13 @@ static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 			break;
 		}
 	}
+
+	ispoolvalid(pool);
 }
 
 static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
 
 	const size_t pcount = 1;
 	const size_t off = index + pcount;
@@ -222,6 +237,8 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index)
 		           (pool->aSize - index - pcount) * sizeof(struct s_StreamPoolEntry));
 		pool->aSize -= pcount;
 	}
+
+	ispoolvalid(pool);
 }
 
 /**
@@ -230,6 +247,8 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index)
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
+	ispoolvalid(pool);
+
 	BOOL found = FALSE;
 	size_t foundIndex = 0;
 	wStream* s = nullptr;
@@ -285,6 +304,8 @@ out_fail:
 
 static void StreamPool_Remove(wStreamPool* pool, wStream* s)
 {
+	ispoolvalid(pool);
+
 	StreamPool_EnsureCapacity(pool, 1, FALSE);
 	Stream_EnsureValidity(s);
 	StreamPool_ShrinkToCommonLimit(s);
@@ -295,11 +316,15 @@ static void StreamPool_Remove(wStreamPool* pool, wStream* s)
 			return;
 	}
 	pool->aArray[(pool->aSize)++] = add_entry(s);
+	ispoolvalid(pool);
+
 	StreamPool_RemoveUsed(pool, s);
 }
 
 static void StreamPool_ReleaseOrReturn(wStreamPool* pool, wStream* s)
 {
+	ispoolvalid(pool);
+
 	StreamPool_Lock(pool);
 	StreamPool_Remove(pool, s);
 	StreamPool_Unlock(pool);
@@ -307,7 +332,7 @@ static void StreamPool_ReleaseOrReturn(wStreamPool* pool, wStream* s)
 
 void StreamPool_Return(wStreamPool* pool, wStream* s)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
 	if (!s)
 		return;
 
@@ -323,7 +348,7 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 void Stream_AddRef(wStream* s)
 {
 	WINPR_ASSERT(s);
-	s->count++;
+	InterlockedIncrement(&s->count);
 }
 
 /**
@@ -334,15 +359,15 @@ void Stream_Release(wStream* s)
 {
 	WINPR_ASSERT(s);
 
-	if (s->count > 0)
-		s->count--;
-	if (s->count == 0)
+	const LONG val = InterlockedDecrement(&s->count);
+	if (val == 0)
 	{
 		if (s->pool)
 			StreamPool_ReleaseOrReturn(s->pool, s);
 		else
 			Stream_Free(s, TRUE);
 	}
+	WINPR_ASSERT(val >= 0);
 }
 
 /**
@@ -351,6 +376,7 @@ void Stream_Release(wStream* s)
 
 wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr)
 {
+	ispoolvalid(pool);
 	wStream* s = nullptr;
 
 	StreamPool_Lock(pool);
@@ -378,6 +404,8 @@ wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr)
 
 void StreamPool_Clear(wStreamPool* pool)
 {
+	ispoolvalid(pool);
+
 	StreamPool_Lock(pool);
 
 	for (size_t x = 0; x < pool->aSize; x++)
@@ -405,6 +433,8 @@ void StreamPool_Clear(wStreamPool* pool)
 
 size_t StreamPool_UsedCount(wStreamPool* pool)
 {
+	ispoolvalid(pool);
+
 	StreamPool_Lock(pool);
 	size_t usize = pool->uSize;
 	StreamPool_Unlock(pool);
@@ -451,6 +481,8 @@ void StreamPool_Free(wStreamPool* pool)
 	if (!pool)
 		return;
 
+	ispoolvalid(pool);
+
 	StreamPool_Clear(pool);
 
 	DeleteCriticalSection(&pool->lock);
@@ -464,7 +496,7 @@ void StreamPool_Free(wStreamPool* pool)
 
 char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 {
-	WINPR_ASSERT(pool);
+	ispoolvalid(pool);
 
 	if (!buffer || (size < 1))
 		return nullptr;
@@ -523,6 +555,8 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 
 BOOL StreamPool_WaitForReturn(wStreamPool* pool, UINT32 timeoutMS)
 {
+	ispoolvalid(pool);
+
 	/* HACK: We disconnected the transport above, now wait without a read or write lock until all
 	 * streams in use have been returned to the pool. */
 	while (timeoutMS > 0)

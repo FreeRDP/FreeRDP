@@ -27,6 +27,6 @@ add_library(sdl-common-prefs STATIC ${SRCS})
 target_link_libraries(sdl-common-prefs PRIVATE freerdp freerdp-cxx-filesystem)
 set_property(TARGET sdl-common-prefs PROPERTY FOLDER "Client/Common")
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

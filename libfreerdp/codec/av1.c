@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <winpr/sysinfo.h>
+
 #include <freerdp/codec/av1.h>
 #include <freerdp/primitives.h>
 #include <freerdp/log.h>
@@ -36,8 +38,18 @@
 #include <aom/aomdx.h>
 #endif
 
+#include "h264.h"
+
 #if defined(WITH_DAV1D)
 #include <dav1d/dav1d.h>
+#endif
+
+#if defined(WITH_AV1_WEBCODECS)
+#include "av1_webcodecs.h"
+#endif
+
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+#include "av1_videotoolbox.h"
 #endif
 
 #if defined(WITH_LIBAOM) || defined(WITH_DAV1D)
@@ -58,12 +70,32 @@ struct S_FREERDP_AV1_CONTEXT
 	aom_enc_frame_flags_t eflags;
 	aom_codec_flags_t flags;
 	aom_codec_iface_t* iface;
+	/* the next frame converts the whole surface to YUV (after a reset or a failure) */
+	bool fullFrameNext;
+	UINT32 cqLevel; /* FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL, 0: libaom's */
+	UINT32 speed;   /* FREERDP_AV1_CONTEXT_OPTION_SPEED */
+	/* encoder statistics, see av1_encoder_stats() */
+	struct
+	{
+		UINT64 startNS;
+		UINT64 encodeNS;
+		UINT64 maxEncodeNS;
+		UINT64 bytes;
+		UINT32 frames;
+	} stats;
 #endif
 #if defined(WITH_LIBAOM) && !defined(WITH_DAV1D)
 	aom_codec_dec_cfg_t dcfg;
 #endif
 #if defined(WITH_DAV1D)
 	Dav1dContext* dav1d;
+#endif
+#if defined(WITH_AV1_WEBCODECS)
+	int webcodecs; /* VideoDecoder handle, 0 if unused */
+#endif
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	AV1_VT* vt;    /* nullptr without a hardware AV1 decoder */
+	bool vtStream; /* the current stream is VideoToolbox's (else the software decoder's) */
 #endif
 	BYTE* yuvdata[3];
 	UINT32 yuvWidth;
@@ -79,40 +111,84 @@ static void av1_aom_destroy(FREERDP_AV1_CONTEXT* av1)
 		WLog_Print(av1->log, WLOG_WARN, "aom_codec_destroy: %s", aom_codec_err_to_string(rc));
 }
 
-WINPR_ATTR_NODISCARD
-static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
-                                    RDPGFX_H264_METABLOCK* meta, size_t count)
+/* Speed preset for AOM_USAGE_REALTIME, 0 (slowest) to 12 (fastest). libaom defaults to 0 and
+ * raises it to 7 only for frames of 1080 lines or more, so smaller desktops got the slowest
+ * search. */
+#define AV1_AOM_RT_SPEED 10
+
+/* libaom encodes on one thread by default; more than 4 did not make 1080p faster. */
+#define AV1_AOM_MAX_THREADS 4
+
+static unsigned int av1_aom_threads(void)
 {
-	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
-	if (!meta || (QP > UINT8_MAX))
+	SYSTEM_INFO sysInfo = WINPR_C_ARRAY_INIT;
+	GetNativeSystemInfo(&sysInfo);
+	if (sysInfo.dwNumberOfProcessors < 1)
+		return 1;
+	if (sysInfo.dwNumberOfProcessors > AV1_AOM_MAX_THREADS)
+		return AV1_AOM_MAX_THREADS;
+	return sysInfo.dwNumberOfProcessors;
+}
+
+/* aom_codec_enc_init() starts from the defaults again, so apply these after every init. */
+WINPR_ATTR_NODISCARD
+static BOOL av1_aom_apply_controls(FREERDP_AV1_CONTEXT* av1)
+{
+	const struct
 	{
-		free(rectangles);
-		return FALSE;
-	}
+		int id;
+		int value;
+		const char* name;
+	} controls[] = {
+		{ AOME_SET_CPUUSED, (int)av1->speed, "AOME_SET_CPUUSED" },
+		/* screen content tools (palette, intra block copy): sharp text at a lower bit rate */
+		{ AV1E_SET_TUNE_CONTENT, AOM_CONTENT_SCREEN, "AV1E_SET_TUNE_CONTENT" },
+		{ AV1E_SET_ROW_MT, 1, "AV1E_SET_ROW_MT" },
+		/* the quality the two quality modes keep; the other modes ignore it */
+		{ AOME_SET_CQ_LEVEL, (int)av1->cqLevel, "AOME_SET_CQ_LEVEL" },
+	};
 
-	meta->regionRects = rectangles;
-	if (count == 0)
-		return TRUE;
-
-	if (count > UINT32_MAX)
-		return FALSE;
-
-	meta->quantQualityVals = calloc(count, sizeof(RDPGFX_H264_QUANT_QUALITY));
-
-	if (!meta->quantQualityVals || !meta->regionRects)
-		return FALSE;
-	meta->numRegionRects = (UINT32)count;
-	for (size_t x = 0; x < count; x++)
+	const bool quality = (av1->ecfg.rc_end_usage == AOM_Q) || (av1->ecfg.rc_end_usage == AOM_CQ);
+	for (size_t x = 0; x < ARRAYSIZE(controls); x++)
 	{
-		RDPGFX_H264_QUANT_QUALITY* cur = &meta->quantQualityVals[x];
-		cur->qp = (UINT8)QP;
-
-		/* qpVal bit 6 and 7 are flags, so mask them out here.
-		 * qualityVal is [0-100] so 100 - qpVal [0-64] is always in range */
-		cur->qualityVal = 100 - (QP & 0x3F);
+		if ((controls[x].id == AOME_SET_CQ_LEVEL) && (!quality || (av1->cqLevel == 0)))
+			continue;
+		const aom_codec_err_t rc = aom_codec_control(&av1->ctx, controls[x].id, controls[x].value);
+		if (rc != AOM_CODEC_OK)
+		{
+			WLog_Print(av1->log, WLOG_WARN, "aom_codec_control(%s, %d): %s", controls[x].name,
+			           controls[x].value, aom_codec_err_to_string(rc));
+			return FALSE;
+		}
 	}
 	return TRUE;
 }
+
+/* Clip the damaged rectangle to the frame and round it out to even coordinates, so the
+ * I420 chroma samples it touches are whole. FALSE: encode the whole frame. */
+WINPR_ATTR_NODISCARD
+static BOOL av1_aom_damage(const FREERDP_AV1_CONTEXT* av1, const RECTANGLE_16* regionRect,
+                           UINT32 width, UINT32 height, RECTANGLE_16* damage)
+{
+	if (av1->fullFrameNext || !regionRect)
+		return FALSE;
+
+	const UINT32 left = regionRect->left & ~1u;
+	const UINT32 top = regionRect->top & ~1u;
+	const UINT32 right = MIN(width, (regionRect->right + 1u) & ~1u);
+	const UINT32 bottom = MIN(height, (regionRect->bottom + 1u) & ~1u);
+	if ((left >= right) || (top >= bottom))
+		return FALSE;
+	if ((left == 0) && (top == 0) && (right == width) && (bottom == height))
+		return FALSE;
+
+	damage->left = (UINT16)left;
+	damage->top = (UINT16)top;
+	damage->right = (UINT16)right;
+	damage->bottom = (UINT16)bottom;
+	return TRUE;
+}
+
 #endif
 
 BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEXT_OPTION option,
@@ -145,7 +221,7 @@ BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEX
 					           value);
 					return FALSE;
 			}
-			av1->ecfg.rc_end_usage = value;
+			av1->ecfg.rc_end_usage = WINPR_ASSERTING_INT_CAST(enum aom_rc_mode, value);
 			break;
 		case FREERDP_AV1_CONTEXT_OPTION_BITRATE:
 			if (!av1->encoder)
@@ -157,11 +233,29 @@ BOOL freerdp_av1_context_set_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONTEX
 				return FALSE;
 			av1->ecfg.g_usage = value;
 			break;
+		case FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL:
+			if (!av1->encoder || (value > 63))
+				return FALSE;
+			av1->cqLevel = value;
+			break;
+		case FREERDP_AV1_CONTEXT_OPTION_THREADS:
+			if (!av1->encoder || (value > 64))
+				return FALSE;
+			av1->ecfg.g_threads = (value > 0) ? value : av1_aom_threads();
+			break;
+		case FREERDP_AV1_CONTEXT_OPTION_SPEED:
+			if (!av1->encoder || (value > 12))
+				return FALSE;
+			av1->speed = value;
+			break;
 		default:
 			WLog_Print(av1->log, WLOG_ERROR, "Unknown FREERDP_AV1_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
 			return TRUE;
 	}
+	/* before the first reset only kept: the encoder starts once, with all of them */
+	if (!av1->initialized)
+		return TRUE;
 	return freerdp_av1_context_reset(av1, av1->ecfg.g_w, av1->ecfg.g_h);
 #else
 	WLog_Print(av1->log, WLOG_WARN, "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
@@ -192,6 +286,18 @@ UINT32 freerdp_av1_context_get_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONT
 			if (!av1->encoder)
 				return 0;
 			return av1->ecfg.g_usage;
+		case FREERDP_AV1_CONTEXT_OPTION_CQ_LEVEL:
+			if (!av1->encoder)
+				return 0;
+			return av1->cqLevel;
+		case FREERDP_AV1_CONTEXT_OPTION_THREADS:
+			if (!av1->encoder)
+				return 0;
+			return av1->ecfg.g_threads;
+		case FREERDP_AV1_CONTEXT_OPTION_SPEED:
+			if (!av1->encoder)
+				return 0;
+			return av1->speed;
 		default:
 			WLog_Print(av1->log, WLOG_ERROR, "Unknown FREERDP_AV1_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -202,6 +308,49 @@ UINT32 freerdp_av1_context_get_option(FREERDP_AV1_CONTEXT* av1, FREERDP_AV1_CONT
 	return 0;
 #endif
 }
+
+#if defined(WITH_LIBAOM)
+/* Encoder statistics, logged every few seconds at debug level to com.freerdp.codec.av1
+ * (e.g. with WLOG_LEVEL=DEBUG) */
+#define AV1_STATS_INTERVAL_NS (5ull * 1000ull * 1000ull * 1000ull)
+
+static void av1_encoder_stats(FREERDP_AV1_CONTEXT* av1, UINT64 startNS, size_t bytes)
+{
+	WINPR_ASSERT(av1);
+
+	if (!WLog_IsLevelActive(av1->log, WLOG_DEBUG))
+		return;
+
+	const UINT64 endNS = winpr_GetTickCount64NS();
+	const UINT64 encodeNS = endNS - startNS;
+	if (av1->stats.frames == 0)
+		av1->stats.startNS = startNS;
+	av1->stats.frames++;
+	av1->stats.encodeNS += encodeNS;
+	av1->stats.bytes += bytes;
+	if (encodeNS > av1->stats.maxEncodeNS)
+		av1->stats.maxEncodeNS = encodeNS;
+
+	const UINT64 elapsedNS = endNS - av1->stats.startNS;
+	if (elapsedNS < AV1_STATS_INTERVAL_NS)
+		return;
+
+	const double seconds = (double)elapsedNS / 1e9;
+	WLog_Print(av1->log, WLOG_DEBUG,
+	           "AV1 %" PRIu32 "x%" PRIu32 " %s: %" PRIu32 " frames in %.1f s (%.1f fps), "
+	           "encode avg %.1f ms max %.1f ms, %.0f kbit/s",
+	           av1->yuvWidth, av1->yuvHeight, (av1->ecfg.g_profile == 1) ? "I444" : "I420",
+	           av1->stats.frames, seconds, av1->stats.frames / seconds,
+	           (double)av1->stats.encodeNS / av1->stats.frames / 1e6,
+	           (double)av1->stats.maxEncodeNS / 1e6,
+	           (double)av1->stats.bytes * 8.0 / 1000.0 / seconds);
+
+	av1->stats.frames = 0;
+	av1->stats.encodeNS = 0;
+	av1->stats.maxEncodeNS = 0;
+	av1->stats.bytes = 0;
+}
+#endif
 
 INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD SrcFormat,
                            UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
@@ -217,7 +366,16 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 		return -1;
 	}
 
+	if ((nSrcWidth == 0) || (nSrcWidth > UINT16_MAX) || (nSrcHeight == 0) ||
+	    (nSrcHeight > UINT16_MAX))
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "%" PRIu32 "x%" PRIu32 " out of range, maximum %dx%d",
+		           nSrcWidth, nSrcHeight, UINT16_MAX, UINT16_MAX);
+		return -1;
+	}
+
 #if defined(WITH_LIBAOM)
+	const UINT64 startNS = winpr_GetTickCount64NS();
 	primitives_t* primitives = primitives_get();
 	if (!primitives)
 	{
@@ -239,7 +397,34 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 		return -1;
 	}
 
-	const prim_size_t roi = { .width = nSrcWidth, .height = nSrcHeight };
+	/* Only the damaged part is converted: the YUV planes still hold the previous frame. */
+	RECTANGLE_16 damage = WINPR_C_ARRAY_INIT;
+	const BOOL partial = av1_aom_damage(av1, regionRect, nSrcWidth, nSrcHeight, &damage);
+	if (!partial)
+	{
+		damage.left = 0;
+		damage.top = 0;
+		damage.right = WINPR_ASSERTING_INT_CAST(UINT16, nSrcWidth);
+		damage.bottom = WINPR_ASSERTING_INT_CAST(UINT16, nSrcHeight);
+	}
+
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+	if (bpp == 0)
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "Unsupported source format %s",
+		           FreeRDPGetColorFormatName(SrcFormat));
+		return -1;
+	}
+
+	const prim_size_t roi = { .width = damage.right - damage.left,
+		                      .height = damage.bottom - damage.top };
+	const UINT32 chromaShift = (av1->ecfg.g_profile == 0) ? 1 : 0;
+	const size_t chromaX = damage.left >> chromaShift;
+	const size_t chromaY = damage.top >> chromaShift;
+	const BYTE* pSrc = &pSrcData[1ull * damage.top * nSrcStep + 1ull * damage.left * bpp];
+	BYTE* pDst[3] = { &av1->yuvdata[0][1ull * damage.top * av1->yuvStride[0] + damage.left],
+		              &av1->yuvdata[1][chromaY * av1->yuvStride[1] + chromaX],
+		              &av1->yuvdata[2][chromaY * av1->yuvStride[2] + chromaX] };
 
 	aom_image_t buffer = WINPR_C_ARRAY_INIT;
 
@@ -257,16 +442,16 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 				img->fmt = AOM_IMG_FMT_I420;
 				img->x_chroma_shift = 1;
 				img->y_chroma_shift = 1;
-				rec = ARGBToI420(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
-				                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
+				rec = ARGBToI420(pSrc, nSrcStep, pDst[0], av1->yuvStride[0], pDst[1],
+				                 av1->yuvStride[1], pDst[2],
 				                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.width),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.height));
 				break;
 			case 1:
 				img->fmt = AOM_IMG_FMT_I444;
-				rec = ARGBToI444(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
-				                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
+				rec = ARGBToI444(pSrc, nSrcStep, pDst[0], av1->yuvStride[0], pDst[1],
+				                 av1->yuvStride[1], pDst[2],
 				                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.width),
 				                 WINPR_ASSERTING_INT_CAST(int, roi.height));
@@ -286,13 +471,13 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 				img->fmt = AOM_IMG_FMT_I420;
 				img->x_chroma_shift = 1;
 				img->y_chroma_shift = 1;
-				rec = primitives->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
+				rec = primitives->RGBToYUV420_8u_P3AC4R(pSrc, SrcFormat, nSrcStep, pDst,
 				                                        av1->yuvStride, &roi);
 				break;
 			case 1:
 				img->fmt = AOM_IMG_FMT_I444;
-				rec = primitives->RGBToI444_8u(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
-				                               av1->yuvStride, &roi);
+				rec =
+				    primitives->RGBToI444_8u(pSrc, SrcFormat, nSrcStep, pDst, av1->yuvStride, &roi);
 				break;
 			default:
 				WLog_Print(av1->log, WLOG_ERROR, "Unsupoorted AV1 profile %" PRIu32,
@@ -303,11 +488,13 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	if (rec != 0)
 	{
 		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
+		av1->fullFrameNext = true;
 		return -1;
 	}
+	av1->fullFrameNext = false;
 	img->bit_depth = 8;
-	img->d_w = img->r_w = img->w = roi.width;
-	img->d_h = img->r_h = img->h = roi.height;
+	img->d_w = img->r_w = img->w = nSrcWidth;
+	img->d_h = img->r_h = img->h = nSrcHeight;
 	img->stride[0] = WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[0]);
 	img->stride[1] = WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[1]);
 	img->stride[2] = WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]);
@@ -331,17 +518,21 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 		if (pkt->kind != AOM_CODEC_CX_FRAME_PKT)
 			continue;
 
+		if (pkt->data.frame.sz > UINT32_MAX)
+			return -1;
 		*ppDstData = pkt->data.frame.buf;
-		*pDstSize = pkt->data.frame.sz;
-	};
+		*pDstSize = WINPR_ASSERTING_INT_CAST(UINT32, pkt->data.frame.sz);
+	}
 	if (*pDstSize == 0)
 		return 0;
+
+	av1_encoder_stats(av1, startNS, *pDstSize);
 
 	RECTANGLE_16* rect = calloc(1, sizeof(RECTANGLE_16));
 	if (rect)
 	{
-		rect->right = nSrcWidth;
-		rect->bottom = nSrcHeight;
+		rect->right = WINPR_ASSERTING_INT_CAST(UINT16, nSrcWidth);
+		rect->bottom = WINPR_ASSERTING_INT_CAST(UINT16, nSrcHeight);
 	}
 	return allocate_h264_metablock(10, rect, meta, 1);
 #else
@@ -394,6 +585,71 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 	return TRUE;
 }
 
+#if defined(WITH_DAV1D) || defined(WITH_AV1_VIDEOTOOLBOX)
+/* Convert a decoded 8 bit 4:2:0 or 4:4:4 picture to RGB, bounded to the destination surface */
+static INT32 av1_convert_planar(FREERDP_AV1_CONTEXT* av1, BOOL i444, const BYTE* const planes[3],
+                                const UINT32 strides[3], UINT32 dw, UINT32 dh, BYTE* pDstData,
+                                DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
+                                UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                                UINT32 numRegionRect)
+{
+	/* The decoded frame may be smaller than the destination surface, so
+	 * bound the converted region to it. Otherwise the colour conversion
+	 * reads past the decoded image planes. */
+	const UINT32 nWidth = (dw < nDstWidth) ? dw : nDstWidth;
+	const UINT32 nHeight = (dh < nDstHeight) ? dh : nDstHeight;
+	const prim_size_t roi = { .width = nWidth, .height = nHeight };
+
+	if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
+		return -2;
+
+	pstatus_t rec = -1;
+#if defined(WITH_LIBYUV)
+	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
+	 * DstFormat, so the fast path only applies for that layout; anything else must go
+	 * through the format-aware primitives conversion below. */
+	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
+	{
+		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
+		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
+		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
+		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
+		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
+		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
+
+		if (i444)
+			rec = J444ToARGB(planes[0], stride0, planes[1], stride1, planes[2], stride2, pDstData,
+			                 iDstStep, iWidth, iHeight);
+		else
+			rec = J420ToARGB(planes[0], stride0, planes[1], stride1, planes[2], stride2, pDstData,
+			                 iDstStep, iWidth, iHeight);
+	}
+	else
+#endif
+	{
+		primitives_t* primitives = primitives_get();
+		if (!primitives)
+		{
+			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
+			return -1;
+		}
+
+		const BYTE* pSrc[] = { planes[0], planes[1], planes[2] };
+		if (i444)
+			rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
+		else
+			rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
+			                                        &roi);
+	}
+	if (rec != 0)
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "YUV to RGB conversion failed: %d", rec);
+		return -1;
+	}
+	return TRUE;
+}
+#endif
+
 #if defined(WITH_DAV1D)
 static void av1_dav1d_data_free(WINPR_ATTR_UNUSED const uint8_t* buf,
                                 WINPR_ATTR_UNUSED void* cookie)
@@ -411,89 +667,20 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 		WLog_Print(av1->log, WLOG_ERROR, "dav1d picture bpc %d not supported", pic->p.bpc);
 		return -1;
 	}
-
-	/* The decoded frame may be smaller than the destination surface, so
-	 * bound the converted region to it. Otherwise the colour conversion
-	 * reads past the decoded image planes. */
-	const UINT32 dw = (UINT32)pic->p.w;
-	const UINT32 dh = (UINT32)pic->p.h;
-	const UINT32 nWidth = (dw < nDstWidth) ? dw : nDstWidth;
-	const UINT32 nHeight = (dh < nDstHeight) ? dh : nDstHeight;
-	const prim_size_t roi = { .width = nWidth, .height = nHeight };
-
-	if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
-		return -2;
-
-	const UINT32 strides[] = { (UINT32)pic->stride[0], (UINT32)pic->stride[1],
-		                       (UINT32)pic->stride[1] };
-
-	pstatus_t rec = -1;
-#if defined(WITH_LIBYUV)
-	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
-	 * DstFormat, so the fast path only applies for that layout; anything else must go
-	 * through the format-aware primitives conversion below. */
-	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
+	if ((pic->p.layout != DAV1D_PIXEL_LAYOUT_I420) && (pic->p.layout != DAV1D_PIXEL_LAYOUT_I444))
 	{
-		const uint8_t* y = pic->data[0];
-		const uint8_t* u = pic->data[1];
-		const uint8_t* v = pic->data[2];
-
-		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
-		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
-		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
-		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
-		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
-		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
-
-		switch (pic->p.layout)
-		{
-			case DAV1D_PIXEL_LAYOUT_I420:
-				rec = J420ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
-				                 iHeight);
-				break;
-			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = J444ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
-				                 iHeight);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
-				           pic->p.layout);
-				return -1;
-		}
-	}
-	else
-#endif
-	{
-		primitives_t* primitives = primitives_get();
-		if (!primitives)
-		{
-			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
-			return -1;
-		}
-
-		const BYTE* pSrc[] = { pic->data[0], pic->data[1], pic->data[2] };
-		switch (pic->p.layout)
-		{
-			case DAV1D_PIXEL_LAYOUT_I420:
-				rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
-				break;
-			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
-				           pic->p.layout);
-				return -1;
-		}
-	}
-	if (rec != 0)
-	{
-		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
+		WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %u not supported", pic->p.layout);
 		return -1;
 	}
-	return TRUE;
+
+	const BYTE* const planes[] = { pic->data[0], pic->data[1], pic->data[2] };
+	const UINT32 strides[] = { WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[0]),
+		                       WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[1]),
+		                       WINPR_ASSERTING_INT_CAST(UINT32, pic->stride[1]) };
+	return av1_convert_planar(av1, pic->p.layout == DAV1D_PIXEL_LAYOUT_I444, planes, strides,
+	                          WINPR_ASSERTING_INT_CAST(UINT32, pic->p.w),
+	                          WINPR_ASSERTING_INT_CAST(UINT32, pic->p.h), pDstData, DstFormat,
+	                          nDstStep, nDstWidth, nDstHeight, regionRects, numRegionRect);
 }
 
 /* Return: TRUE if a picture was converted, FALSE if none was ready (EAGAIN), <0 on error. */
@@ -533,6 +720,55 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 	if (!areRectsValid(av1->log, nDstWidth, nDstHeight, regionRects, numRegionRect))
 		return -2;
 
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	if (av1->vt && av1->vtStream)
+	{
+		AV1_VT_PICTURE pic = WINPR_C_ARRAY_INIT;
+		const INT32 vrc = av1_vt_decode(av1->vt, pSrcData, SrcSize, &pic);
+		if (vrc == TRUE)
+			return av1_convert_planar(av1, pic.i444, pic.planes, pic.strides, pic.width, pic.height,
+			                          pDstData, DstFormat, nDstStep, nDstWidth, nDstHeight,
+			                          regionRects, numRegionRect);
+		if (vrc == FALSE)
+			return TRUE;
+		/* bad input: refused, the stream stays with VideoToolbox */
+		if (vrc == AV1_VT_INVALID)
+			return -1;
+
+		/* The software decoder takes the rest of this stream (until the next reset). */
+		av1->vtStream = false;
+		if (vrc != AV1_VT_UNSUPPORTED)
+		{
+			/* In the middle of the stream: the software decoder has none of its references,
+			 * it only picks up at a new sequence header. */
+			WLog_Print(av1->log, WLOG_WARN,
+			           "VideoToolbox AV1 decode failed (%" PRId32 "), software decoder from the "
+			           "next sequence header",
+			           vrc);
+			return vrc;
+		}
+		/* This temporal unit starts the stream, the software decoder starts with it. */
+	}
+#endif
+
+#if defined(WITH_AV1_WEBCODECS)
+	if (av1->webcodecs > 0)
+	{
+		const INT32 wrc = av1_wc_decode(av1->webcodecs, pSrcData, SrcSize, pDstData, DstFormat,
+		                                nDstStep, nDstWidth, nDstHeight);
+		if (wrc >= 0)
+			return TRUE;
+		/* fall back to the software decoder for the rest of the session */
+		if (wrc == AV1_WC_UNSUPPORTED)
+			WLog_Print(av1->log, WLOG_DEBUG, "surface format needs dav1d instead of WebCodecs");
+		else
+			WLog_Print(av1->log, WLOG_WARN,
+			           "WebCodecs AV1 decode failed (%" PRId32 "), using dav1d", wrc);
+		av1_wc_close(av1->webcodecs);
+		av1->webcodecs = 0;
+	}
+#endif
+
 #if defined(WITH_DAV1D)
 	Dav1dData data = WINPR_C_ARRAY_INIT;
 	const int wrc = dav1d_data_wrap(&data, pSrcData, SrcSize, av1_dav1d_data_free, nullptr);
@@ -560,6 +796,7 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			return rc;
 		}
 	}
+	dav1d_data_unref(&data);
 
 	/* Drain any picture the decoder buffered internally before it consumed the last input. */
 	for (;;)
@@ -639,8 +876,8 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 					                                        DstFormat, &roi);
 					break;
 				case AOM_IMG_FMT_I444:
-					rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-					                                        DstFormat, &roi);
+					rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat,
+					                               &roi);
 					break;
 				default:
 					WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);
@@ -689,6 +926,10 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 		av1->framecount = 0;
 		av1->eflags = 0; // AOM_EFLAG_FORCE_KF;
 		av1->initialized = true;
+		av1->fullFrameNext = true;
+
+		if (!av1_aom_apply_controls(av1))
+			return FALSE;
 #else
 		WLog_Print(av1->log, WLOG_ERROR,
 		           "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");
@@ -697,6 +938,26 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 	}
 	else
 	{
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+		if (!av1->vt)
+		{
+			av1->vt = av1_vt_new(av1->log);
+			WLog_Print(av1->log, WLOG_INFO, "AV1 decoder: %s",
+			           av1->vt ? "VideoToolbox (hardware), software as fallback"
+			                   : "software (no VideoToolbox AV1 decoder)");
+		}
+		else
+			av1_vt_reset(av1->vt);
+		av1->vtStream = (av1->vt != nullptr);
+#endif
+#if defined(WITH_AV1_WEBCODECS)
+		if (av1->webcodecs == 0)
+		{
+			av1->webcodecs = av1_wc_open();
+			WLog_Print(av1->log, WLOG_INFO, "AV1 decoder: %s",
+			           av1->webcodecs > 0 ? "WebCodecs (browser), dav1d as fallback" : "dav1d");
+		}
+#endif
 #if defined(WITH_DAV1D)
 		if (av1->initialized)
 		{
@@ -780,6 +1041,12 @@ void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1)
 #endif
 		}
 	}
+#if defined(WITH_AV1_WEBCODECS)
+	av1_wc_close(av1->webcodecs);
+#endif
+#if defined(WITH_AV1_VIDEOTOOLBOX)
+	av1_vt_free(av1->vt);
+#endif
 	winpr_aligned_free(av1->yuvdata[0]);
 	winpr_aligned_free(av1->yuvdata[1]);
 	winpr_aligned_free(av1->yuvdata[2]);
@@ -814,6 +1081,8 @@ FREERDP_AV1_CONTEXT* freerdp_av1_context_new(BOOL Compressor)
 			           aom_codec_err_to_string(rc));
 			goto fail;
 		}
+		ctx->ecfg.g_threads = av1_aom_threads();
+		ctx->speed = AV1_AOM_RT_SPEED;
 #else
 		WLog_Print(ctx->log, WLOG_ERROR,
 		           "AV1 encoder requires libaom, recompile with '-DWITH_AOM=ON'");

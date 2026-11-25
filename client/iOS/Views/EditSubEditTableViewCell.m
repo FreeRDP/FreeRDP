@@ -10,9 +10,13 @@
 
 #import "EditSubEditTableViewCell.h"
 
+@interface EditSubEditTableViewCell (Private)
+- (void)updateContent;
+@end
+
 @implementation EditSubEditTableViewCell
 
-@synthesize label = _label;
+@synthesize title = _title, enabled = _enabled;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
@@ -20,15 +24,53 @@
 	if (self)
 	{
 		// Initialization code
+		_enabled = YES;
+		[self setAccessoryType:UITableViewCellAccessoryDisclosureIndicator];
 	}
+
 	return self;
 }
 
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+- (void)dealloc
 {
-	[super setSelected:selected animated:animated];
+	[_title release];
+	[super dealloc];
+}
 
-	// Configure the view for the selected state
+- (void)prepareForReuse
+{
+	[super prepareForReuse];
+
+	[_title release];
+	_title = nil;
+	_enabled = YES;
+	[self setSelectionStyle:UITableViewCellSelectionStyleDefault];
+	[self updateContent];
+}
+
+- (void)setTitle:(NSString *)title
+{
+	if (_title != title)
+	{
+		[_title release];
+		_title = [title copy];
+	}
+	[self updateContent];
+}
+
+- (void)setEnabled:(BOOL)enabled
+{
+	_enabled = enabled;
+	[self updateContent];
+}
+
+- (void)updateContent
+{
+	UIListContentConfiguration *content = [self defaultContentConfiguration];
+	[content setText:_title];
+	if (!_enabled)
+		[[content textProperties] setColor:[UIColor tertiaryLabelColor]];
+	[self setContentConfiguration:content];
 }
 
 @end

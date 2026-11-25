@@ -17,12 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
-  option(WITH_OPAQUE_SETTINGS "Hide rdpSettings struct definition, only allow getter/setter access" OFF)
-else()
-  set(WITH_OPAQUE_SETTINGS ON CACHE INTERNAL "NOT WITHOUT_FREERDP_3x_DEPRECATED")
-endif()
-
 # prepare paths for C
 file(TO_NATIVE_PATH "${FREERDP_DATA_PATH}" NATIVE_FREERDP_DATA_PATH)
 file(TO_NATIVE_PATH "${FREERDP_KEYMAP_PATH}" NATIVE_FREERDP_KEYMAP_PATH)
@@ -56,6 +50,10 @@ cleaning_configure_file(
 )
 
 file(STRINGS freerdp/settings_types_private.h SETTINGS_KEYS REGEX "ALIGN64[ \ta-zA-Z0-9]*")
+# settings_keys.h is generated from this header, so re-run CMake when it changes
+set_property(
+  DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/freerdp/settings_types_private.h
+)
 
 set(SETTINGS_KEYS_BOOL "")
 set(SETTINGS_KEYS_INT16 "")
@@ -152,6 +150,28 @@ endif()
 file(GLOB_RECURSE PUBLIC_COMMON_BIN_HEADERS LIST_DIRECTORIES false "${CMAKE_CURRENT_BINARY_DIR}/freerdp/*.h")
 list(SORT PUBLIC_COMMON_HEADERS)
 
+if(NOT WITH_GFX_AV1)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/codec/av1.h")
+  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/av1\\.h$" EXCLUDE)
+endif()
+
+if(NOT WITH_GFX_AV2)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/codec/av2.h")
+  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/av2\\.h$" EXCLUDE)
+endif()
+
+if(NOT WITH_GFX_AZURE)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/codec/hevc.h")
+  set(PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/codec/hevc\\.h$" EXCLUDE)
+endif()
+
+# Install udp.h only when UDP support is enabled. Users should check for the
+# WITH_RDPEUDP_SERVER definition in freerdp/config.h before including the header.
+if(NOT WITH_RDPEUDP_SERVER)
+  list(REMOVE_ITEM PUBLIC_COMMON_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/freerdp/server/udp.h")
+  list(APPEND PUBLIC_HEADERS_EXCLUDE REGEX "freerdp/server/udp\\.h$" EXCLUDE)
+endif()
+
 if(WITH_SERVER)
   set(PUBLIC_SERVER_HEADERS ${PUBLIC_COMMON_HEADERS})
   list(FILTER PUBLIC_SERVER_HEADERS INCLUDE REGEX ".*freerdp/server.*")
@@ -184,6 +204,8 @@ set_property(TARGET freerdp APPEND PROPERTY SOURCES ${PUBLIC_COMMON_HEADERS})
 add_library(freerdp-headers INTERFACE)
 target_sources(freerdp-headers INTERFACE ${PUBLIC_COMMON_HEADERS})
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/freerdp DESTINATION ${FREERDP_INCLUDE_DIR} FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/freerdp DESTINATION ${FREERDP_INCLUDE_DIR} FILES_MATCHING
+        PATTERN "*.h" ${PUBLIC_HEADERS_EXCLUDE}
+)
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/freerdp DESTINATION ${FREERDP_INCLUDE_DIR} FILES_MATCHING PATTERN "*.h")

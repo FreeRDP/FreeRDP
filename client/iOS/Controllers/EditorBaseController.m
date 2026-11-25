@@ -20,7 +20,6 @@ NSString *TableCellIdentifierYesNo = @"cellIdYesNo";
 NSString *TableCellIdentifierSelection = @"cellIdSelection";
 NSString *TableCellIdentifierSubEditor = @"cellIdSubEditor";
 NSString *TableCellIdentifierMultiChoice = @"cellIdMultiChoice";
-NSString *TableCellIdentifierButton = @"cellIdButton";
 
 @implementation EditorBaseController
 
@@ -40,39 +39,34 @@ NSString *TableCellIdentifierButton = @"cellIdButton";
 	// we have to create a new cell
 	if ([identifier isEqualToString:TableCellIdentifierText])
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"EditTextTableViewCell" owner:self options:nil];
-		cell = _textTableViewCell;
-		_textTableViewCell = nil;
+		EditTextTableViewCell *textCell =
+		    [[[EditTextTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+		                                  reuseIdentifier:identifier] autorelease];
+		[[textCell textfield] setDelegate:self];
+		cell = textCell;
 	}
 	else if ([identifier isEqualToString:TableCellIdentifierSecretText])
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"EditSecretTextTableViewCell" owner:self options:nil];
-		cell = _secretTextTableViewCell;
-		_secretTextTableViewCell = nil;
+		EditSecretTextTableViewCell *secretCell =
+		    [[[EditSecretTextTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+		                                        reuseIdentifier:identifier] autorelease];
+		[[secretCell textfield] setDelegate:self];
+		cell = secretCell;
 	}
 	else if ([identifier isEqualToString:TableCellIdentifierYesNo])
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"EditFlagTableViewCell" owner:self options:nil];
-		cell = _flagTableViewCell;
-		_flagTableViewCell = nil;
+		cell = [[[EditFlagTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+		                                     reuseIdentifier:identifier] autorelease];
 	}
 	else if ([identifier isEqualToString:TableCellIdentifierSelection])
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"EditSelectionTableViewCell" owner:self options:nil];
-		cell = _selectionTableViewCell;
-		_selectionTableViewCell = nil;
+		cell = [[[EditSelectionTableViewCell alloc] initWithStyle:UITableViewCellStyleValue1
+		                                          reuseIdentifier:identifier] autorelease];
 	}
 	else if ([identifier isEqualToString:TableCellIdentifierSubEditor])
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"EditSubEditTableViewCell" owner:self options:nil];
-		cell = _subEditTableViewCell;
-		_subEditTableViewCell = nil;
-	}
-	else if ([identifier isEqualToString:TableCellIdentifierButton])
-	{
-		[[NSBundle mainBundle] loadNibNamed:@"EditButtonTableViewCell" owner:self options:nil];
-		cell = _buttonTableViewCell;
-		_buttonTableViewCell = nil;
+		cell = [[[EditSubEditTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+		                                        reuseIdentifier:identifier] autorelease];
 	}
 	else if ([identifier isEqualToString:TableCellIdentifierMultiChoice])
 	{
@@ -85,26 +79,6 @@ NSString *TableCellIdentifierButton = @"cellIdButton";
 	}
 
 	return cell;
-}
-
-#pragma mark - Utility functions
-- (void)adjustEditTextTableViewCell:(EditTextTableViewCell *)cell
-{
-	UILabel *label = [cell label];
-	UITextField *textField = [cell textfield];
-
-	// adjust label
-	CGFloat width = [[label text] sizeWithAttributes:@{ NSFontAttributeName: [label font] }].width;
-	CGRect frame = [label frame];
-	CGFloat delta = width - frame.size.width;
-	frame.size.width = width;
-	[label setFrame:frame];
-
-	// adjust text field
-	frame = [textField frame];
-	frame.origin.x += delta;
-	frame.size.width -= delta;
-	[textField setFrame:frame];
 }
 
 @end

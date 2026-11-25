@@ -18,26 +18,25 @@
  */
 
 #include <winpr/assert.h>
+#include <winpr/collections.h>
+#include <winpr/synch.h>
+#include <winpr/winsock.h>
 #include <freerdp/config.h>
+
+#if !defined(_WIN32)
+#include <netdb.h>
+#include <sys/socket.h>
+#endif
 #include <freerdp/log.h>
+#include <freerdp/multitransport.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include "settings.h"
 #include "rdp.h"
+#include "transport.h"
+#include "rdpemt.h"
 #include "multitransport.h"
-
-struct rdp_multitransport
-{
-	rdpRdp* rdp;
-
-	MultiTransportRequestCb MtRequest;
-	MultiTransportResponseCb MtResponse;
-
-	/* server-side data */
-	UINT32 reliableReqId;
-
-	BYTE reliableCookie[RDPUDP_COOKIE_LEN];
-	BYTE reliableCookieHash[RDPUDP_COOKIE_HASHLEN];
-};
+#include "multitransport_internal.h"
 
 enum
 {
@@ -93,10 +92,12 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	return multi->MtRequest(multi, requestId, requestedProto, cookie);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, UINT16 reqProto,
                                         const BYTE* cookie)
 {
 	WINPR_ASSERT(multi);
+	WINPR_ASSERT(cookie);
 	UINT16 sec_flags = 0;
 	wStream* s = rdp_message_channel_pdu_init(multi->rdp, &sec_flags);
 	if (!s)
@@ -129,9 +130,15 @@ state_run_t multitransport_server_request(rdpMultitransport* multi, UINT16 reqPr
 		if (winpr_RAND(multi->reliableCookie, sizeof(multi->reliableCookie)) < 0)
 			return STATE_RUN_FAILED;
 
+		const MT_REQUEST_MODE mode = multitransport_server_request_mode(multi);
+		if (mode == MT_REQUEST_NONE)
+			return STATE_RUN_CONTINUE;
+
+		const state_run_t sent =
+		    (mode == MT_REQUEST_TUNNEL) ? STATE_RUN_CONTINUE : STATE_RUN_SUCCESS;
 		return multitransport_request_send(multi, multi->reliableReqId, reqProto,
 		                                   multi->reliableCookie)
-		           ? STATE_RUN_SUCCESS
+		           ? sent
 		           : STATE_RUN_FAILED;
 	}
 
@@ -191,19 +198,556 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	return res;
 }
 
-static state_run_t multitransport_no_udp(rdpMultitransport* multi, UINT32 reqId,
-                                         WINPR_ATTR_UNUSED UINT16 reqProto,
-                                         WINPR_ATTR_UNUSED const BYTE* cookie)
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_soft_sync(const rdpMultitransport* multi)
 {
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
+	const UINT32 flags =
+	    freerdp_settings_get_uint32(multi->rdp->settings, FreeRDP_MultitransportFlags);
+	return (flags & SOFTSYNC_TCP_TO_UDP) != 0;
+}
+
+WINPR_ATTR_NODISCARD
+static state_run_t multitransport_decline(rdpMultitransport* multi, UINT32 reqId)
+{
+	WINPR_ASSERT(multi);
 	return multitransport_client_send_response(multi, reqId, E_ABORT) ? STATE_RUN_SUCCESS
 	                                                                  : STATE_RUN_FAILED;
 }
 
+static void mt_event_free(void* obj)
+{
+	mt_event* ev = obj;
+	if (!ev)
+		return;
+	if (ev->s)
+		Stream_Release(ev->s);
+	free(ev);
+}
+
+/* Runs on the tunnel thread, once multitransport_direct has let it. */
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_direct_data(void* custom, wStream* s)
+{
+	rdpMultitransport* multi = custom;
+	WINPR_ASSERT(multi);
+	return multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, s);
+}
+
+MT_SHARED void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT event,
+                                           const BYTE* data, size_t length)
+{
+	rdpMultitransport* multi = custom;
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(emt);
+
+	mt_event* ev = calloc(1, sizeof(mt_event));
+	if (!ev)
+		goto fail;
+	ev->tunnel = rdpemt_get_serial(emt);
+
+	switch (event)
+	{
+		case RDPEMT_EVENT_READY:
+			ev->type = MT_EVENT_READY;
+			break;
+		case RDPEMT_EVENT_FAILED:
+			ev->type = MT_EVENT_FAILED;
+			break;
+		case RDPEMT_EVENT_AUTODETECT:
+		case RDPEMT_EVENT_DATA:
+		default:
+			ev->type = (event == RDPEMT_EVENT_AUTODETECT) ? MT_EVENT_AUTODETECT : MT_EVENT_DATA;
+			if (length == 0)
+				break; /* nothing to hand up, malloc(0) may return nullptr */
+			WINPR_ASSERT(data);
+			/* the receiver takes this stream over, the data is not copied again on the way */
+			ev->s = Stream_New(nullptr, length);
+			if (!ev->s)
+				goto fail;
+			Stream_Write(ev->s, data, length);
+			Stream_SealLength(ev->s);
+			Stream_ResetPosition(ev->s);
+			ev->length = length;
+			break;
+	}
+
+	if (!Queue_Enqueue(multi->events, ev))
+		goto fail;
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue takes ownership of ev
+	(void)SetEvent(multi->event);
+	return;
+
+fail:
+	/* A lost event leaves the tunnel in an unknown state, the main loop ends the connection. */
+	mt_event_free(ev);
+	/* compare-exchange: WinPR's InterlockedExchange reads the old value non-atomically */
+	if (InterlockedCompareExchange(&multi->tunnelEventLost, 1, 0) == 0)
+		WLog_ERR(TAG, "out of memory, a UDP tunnel event was lost");
+	(void)SetEvent(multi->event);
+}
+
+/* The UDP listener sits on the same address and port as the TCP one. */
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_resolve_server(const rdpSettings* settings,
+                                          struct sockaddr_storage* address, size_t* length)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(address);
+	WINPR_ASSERT(length);
+
+	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
+	if (!hostname)
+		return FALSE;
+
+	char port[16] = WINPR_C_ARRAY_INIT;
+	(void)_snprintf(port, sizeof(port), "%" PRIu32,
+	                freerdp_settings_get_uint32(settings, FreeRDP_ServerPort));
+
+	struct addrinfo hints = WINPR_C_ARRAY_INIT;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	struct addrinfo* result = nullptr;
+	if ((getaddrinfo(hostname, port, &hints, &result) != 0) || !result)
+		return FALSE;
+
+	BOOL rc = FALSE;
+	if (result->ai_addrlen <= sizeof(*address))
+	{
+		memcpy(address, result->ai_addr, result->ai_addrlen);
+		*length = result->ai_addrlen;
+		rc = TRUE;
+	}
+	freeaddrinfo(result);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static state_run_t multitransport_client_request(rdpMultitransport* multi, UINT32 reqId,
+                                                 UINT16 reqProto, const BYTE* cookie)
+{
+	WINPR_ASSERT(multi);
+	rdpRdp* rdp = multi->rdp;
+	WINPR_ASSERT(rdp);
+	rdpSettings* settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	WLog_DBG(TAG, "Initiate Multitransport Request: requestId %" PRIu32 ", protocol 0x%04" PRIx16,
+	         reqId, reqProto);
+
+	if (reqProto != INITIATE_REQUEST_PROTOCOL_UDPFECR)
+	{
+		WLog_INFO(TAG, "declining lossy UDP, only the reliable transport is implemented");
+		return multitransport_decline(multi, reqId);
+	}
+
+	if (!rdpemt_is_supported())
+	{
+		WLog_DBG(TAG, "declining UDP, built without -DWITH_RDPEUDP=ON");
+		return multitransport_decline(multi, reqId);
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransportUdp))
+	{
+		WLog_DBG(TAG, "declining UDP, switching transport disabled (/multitransport:tcp-only)");
+		return multitransport_decline(multi, reqId);
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport) ||
+	    !(freerdp_settings_get_uint32(settings, FreeRDP_MultitransportFlags) &
+	      TRANSPORT_TYPE_UDP_FECR))
+		return multitransport_decline(multi, reqId);
+
+	EnterCriticalSection(&multi->lock);
+	const BOOL busy = (multi->reliable != nullptr);
+	LeaveCriticalSection(&multi->lock);
+	if (busy)
+	{
+		WLog_WARN(TAG, "a reliable UDP tunnel already exists, declining request %" PRIu32, reqId);
+		return multitransport_decline(multi, reqId);
+	}
+
+	/* The tunnel's TLS session has to end at the server the main connection was verified
+	 * against, which needs the main connection to be TLS directly to that server. */
+	const BYTE* publicKey = nullptr;
+	DWORD publicKeyLength = 0;
+	if (!transport_get_public_key(rdp->transport, &publicKey, &publicKeyLength) || !publicKey ||
+	    (publicKeyLength == 0))
+	{
+		WLog_INFO(TAG, "declining UDP, the main connection does not use TLS");
+		return multitransport_decline(multi, reqId);
+	}
+
+	/* The transport says whether the gateway is used: with /gateway:usage-method:detect the
+	 * connection can go to the server directly while FreeRDP_GatewayEnabled stays set. */
+	const TRANSPORT_LAYER layer = transport_get_layer(rdp->transport);
+	if ((layer == TRANSPORT_LAYER_TSG) || (layer == TRANSPORT_LAYER_TSG_TLS))
+	{
+		WLog_INFO(TAG, "declining UDP, the main connection goes through a gateway");
+		return multitransport_decline(multi, reqId);
+	}
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
+	{
+		/* the TCP peer is the proxy, the server's UDP port is not reachable through it */
+		WLog_INFO(TAG, "declining UDP, the main connection goes through a proxy");
+		return multitransport_decline(multi, reqId);
+	}
+
+	struct sockaddr_storage address = WINPR_C_ARRAY_INIT;
+	size_t addressLength = 0;
+	if (!transport_get_peer_address(rdp->transport, &address, &addressLength) &&
+	    !multitransport_resolve_server(settings, &address, &addressLength))
+	{
+		WLog_INFO(TAG, "declining UDP, the server address is unknown");
+		return multitransport_decline(multi, reqId);
+	}
+
+	rdpEmt* emt = rdpemt_new(WLog_Get(TAG), reqId, cookie,
+	                         freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
+	                         publicKey, publicKeyLength, multitransport_tunnel_event, multi);
+	if (!emt)
+		return multitransport_decline(multi, reqId);
+
+	EnterCriticalSection(&multi->lock);
+	multi->reliable = emt;
+	multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_PENDING;
+	multi->reliableResponseSent = FALSE;
+	LeaveCriticalSection(&multi->lock);
+
+	if (!rdpemt_start(emt, (const struct sockaddr*)&address, addressLength))
+	{
+		EnterCriticalSection(&multi->lock);
+		multi->reliable = nullptr;
+		multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_NONE;
+		LeaveCriticalSection(&multi->lock);
+		rdpemt_free(emt);
+		return multitransport_decline(multi, reqId);
+	}
+
+	/* The response goes out once the tunnel is up, or has failed. Answering before the server
+	 * has accepted the tunnel makes it drop the session. */
+	WLog_INFO(TAG, "setting up a reliable UDP tunnel for request %" PRIu32, reqId);
+	return STATE_RUN_SUCCESS;
+}
+
+/* A failed callback ends the connection like a broken main transport. */
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_callback_failed(rdpMultitransport* multi, const char* what)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
+	WINPR_ASSERT(what);
+
+	WLog_ERR(TAG, "the dynamic channel code failed to handle %s, ending the connection", what);
+	freerdp_set_last_error_if_not(multi->rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+MT_SHARED BOOL multitransport_notify_state(rdpMultitransport* multi,
+                                           FreeRDP_MultitransportTunnelState state)
+{
+	WINPR_ASSERT(multi);
+
+	EnterCriticalSection(&multi->hooksLock);
+	const BOOL ok = !multi->callbacks.TunnelStateChanged ||
+	                multi->callbacks.TunnelStateChanged(multi->custom, TUNNELTYPE_UDPFECR, state);
+	LeaveCriticalSection(&multi->hooksLock);
+	if (!ok)
+		return multitransport_callback_failed(multi, "a tunnel state change");
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_deliver_data(rdpMultitransport* multi, mt_event* ev)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
+	WINPR_ASSERT(ev);
+
+	/* [MS-RDPBCGR] 3.2.5.17: a bandwidth measurement counts the data after the tunnel header */
+	rdpAutoDetect* autodetect = multi->rdp->autodetect;
+	if (autodetect && autodetect->bandwidthMeasureStarted)
+		autodetect->bandwidthMeasureByteCount += WINPR_ASSERTING_INT_CAST(UINT32, ev->length);
+
+	EnterCriticalSection(&multi->hooksLock);
+	if (!multi->callbacks.TunnelDataReceived || !ev->s)
+	{
+		LeaveCriticalSection(&multi->hooksLock);
+		WLog_DBG(TAG, "dropping %" PRIuz " bytes of tunnel data, no receiver", ev->length);
+		return TRUE;
+	}
+	/* The data was acknowledged to the server, losing it leaves a hole in the channel stream. */
+	wStream* s = ev->s;
+	ev->s = nullptr; /* the callback owns it now */
+	const BOOL ok = multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, s);
+	LeaveCriticalSection(&multi->hooksLock);
+	if (!ok)
+		return multitransport_callback_failed(multi, "tunnel data");
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_deliver_autodetect(rdpMultitransport* multi, const mt_event* ev)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
+	WINPR_ASSERT(ev);
+
+	if (!ev->s)
+		return TRUE;
+	if (multitransport_is_server(multi))
+		return !state_run_failed(
+		    autodetect_recv_tunnel_response(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, ev->s));
+	return !state_run_failed(
+	    autodetect_recv_tunnel_request(multi->rdp->autodetect, RDP_TRANSPORT_UDP_R, ev->s));
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_handle_event(rdpMultitransport* multi, mt_event* ev)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(ev);
+
+	/* Events for a freed tunnel may remain queued. Since the handlers below operate on
+	 * multi->reliable, they must not process events from a previous tunnel. */
+	EnterCriticalSection(&multi->lock);
+	const BOOL current = multi->reliable && (rdpemt_get_serial(multi->reliable) == ev->tunnel);
+	LeaveCriticalSection(&multi->lock);
+	if (!current)
+	{
+		WLog_DBG(TAG, "dropping an event of a UDP tunnel that is gone");
+		return TRUE;
+	}
+
+	BOOL rc = TRUE;
+	if ((ev->type == MT_EVENT_READY) && multitransport_server_tunnel_ready(multi, &rc))
+		return rc;
+
+	switch (ev->type)
+	{
+		case MT_EVENT_READY:
+		{
+			EnterCriticalSection(&multi->lock);
+			const UINT32 reqId = multi->reliable ? rdpemt_get_request_id(multi->reliable) : 0;
+			const BOOL haveTunnel = multi->reliable != nullptr;
+			LeaveCriticalSection(&multi->lock);
+			if (!haveTunnel)
+				return TRUE;
+
+			/* [MS-RDPBCGR] 2.2.15.2: S_OK only goes to a server that does Soft-Sync. Without
+			 * it, success is not reported at all. */
+			if (multitransport_soft_sync(multi))
+			{
+				if (!multitransport_client_send_response(multi, reqId, S_OK))
+					return FALSE;
+			}
+
+			EnterCriticalSection(&multi->lock);
+			multi->reliableResponseSent = TRUE;
+			multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_READY;
+			LeaveCriticalSection(&multi->lock);
+			if (!multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_READY))
+				return FALSE;
+		}
+		break;
+
+		case MT_EVENT_FAILED:
+		{
+			EnterCriticalSection(&multi->lock);
+			rdpEmt* emt = multi->reliable;
+			const BOOL responseSent = multi->reliableResponseSent;
+			const BOOL wasReady = multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY;
+			multi->reliable = nullptr;
+			multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_NONE;
+			LeaveCriticalSection(&multi->lock);
+			if (!emt)
+				return TRUE;
+
+			const UINT32 reqId = rdpemt_get_request_id(emt);
+			/* Ensure the application stops using the flow before it is freed. */
+			multitransport_server_tunnel_closed(multi);
+			rdpemt_free(emt);
+
+			/* Soft-Sync only moves channels from TCP to UDP ([MS-RDPEDYC] 3.1.5.3), there is no
+			 * way back. What was in flight on the tunnel is lost in both directions, so the
+			 * channels on it cannot carry on over TCP: the connection ends like a broken main
+			 * transport, and the client reconnects. */
+			/* If no channels moved to the tunnel, the session continues on TCP; otherwise,
+			 * the state callback terminates the connection. */
+			if (wasReady && multitransport_is_server(multi))
+			{
+				if (multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_NONE))
+				{
+					WLog_INFO(TAG, "UDP tunnel failed, continuing session on TCP");
+					return TRUE;
+				}
+				multi->endedConnection = TRUE;
+				freerdp_set_last_error_if_not(multi->rdp->context,
+				                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+				return FALSE;
+			}
+			if (wasReady)
+			{
+				WLog_WARN(TAG, "the UDP tunnel broke down, ending the connection");
+				multi->endedConnection = TRUE;
+				freerdp_set_last_error_if_not(multi->rdp->context,
+				                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+				return FALSE;
+			}
+			if (!responseSent && !multitransport_is_server(multi))
+			{
+				if (!multitransport_client_send_response(multi, reqId, E_ABORT))
+					return FALSE;
+			}
+			if (!multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_NONE))
+				return FALSE;
+		}
+		break;
+
+		case MT_EVENT_AUTODETECT:
+			return multitransport_deliver_autodetect(multi, ev);
+
+		case MT_EVENT_DATA:
+		default:
+			return multitransport_deliver_data(multi, ev);
+	}
+	return TRUE;
+}
+
+/* Once channels are notified that the tunnel is ready and no events are pending, channel
+ * plugins with their own threads receive data directly on the tunnel thread, bypassing
+ * the main loop.
+ * Lock order: hooksLock, multi->lock, tunnel lock. */
+static void multitransport_direct(rdpMultitransport* multi)
+{
+	WINPR_ASSERT(multi);
+
+	EnterCriticalSection(&multi->hooksLock);
+	EnterCriticalSection(&multi->lock);
+	if (multi->reliable && (multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY) &&
+	    multi->callbacks.DataOnTunnelThread && multi->callbacks.TunnelDataReceived &&
+	    !rdpemt_set_receiver(multi->reliable, multitransport_direct_data, multi, multi->events))
+		WLog_DBG(TAG, "tunnel data still waits in events, the main loop comes back for it");
+	LeaveCriticalSection(&multi->lock);
+	LeaveCriticalSection(&multi->hooksLock);
+}
+
+BOOL multitransport_check(rdpMultitransport* multi)
+{
+	WINPR_ASSERT(multi);
+
+	(void)ResetEvent(multi->event);
+	if (InterlockedCompareExchange(&multi->tunnelEventLost, 0, 0) != 0)
+	{
+		WLog_ERR(TAG, "out of memory queueing UDP tunnel events, ending the connection");
+		freerdp_set_last_error_if_not(multi->rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		return FALSE;
+	}
+	multitransport_tunnel_check(multi);
+
+	BOOL handled = FALSE;
+	while (Queue_Count(multi->events) > 0)
+	{
+		mt_event* ev = Queue_Dequeue(multi->events);
+		if (!ev)
+			break;
+		multitransport_server_event_taken(multi, ev);
+		const BOOL rc = multitransport_handle_event(multi, ev);
+		mt_event_free(ev);
+		if (!rc)
+			return FALSE;
+		handled = TRUE;
+	}
+	if (handled)
+		multitransport_direct(multi);
+	return TRUE;
+}
+
+HANDLE multitransport_get_event_handle(rdpMultitransport* multi)
+{
+	WINPR_ASSERT(multi);
+	return multi->event;
+}
+
+BOOL multitransport_send_autodetect_response(rdpMultitransport* multi, const BYTE* data,
+                                             size_t length)
+{
+	WINPR_ASSERT(multi);
+
+	BOOL rc = FALSE;
+	EnterCriticalSection(&multi->lock);
+	if (multi->reliable && (multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY))
+		rc = rdpemt_send_subheader(multi->reliable, data, length);
+	LeaveCriticalSection(&multi->lock);
+	return rc;
+}
+
+BOOL multitransport_ended_connection(const rdpMultitransport* multi)
+{
+	WINPR_ASSERT(multi);
+	return multi->endedConnection;
+}
+
+void multitransport_reset(rdpMultitransport* multi)
+{
+	if (!multi)
+		return;
+
+	EnterCriticalSection(&multi->lock);
+	rdpEmt* emt = multi->reliable;
+	multi->reliable = nullptr;
+	multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_NONE;
+	multi->reliableResponseSent = FALSE;
+	LeaveCriticalSection(&multi->lock);
+	multi->endedConnection = FALSE;
+
+	rdpemt_free(emt);
+	if (multi->events)
+	{
+		/* not Queue_Clear(), it misses the events of a queue that is exactly full */
+		mt_event* ev = nullptr;
+		while ((ev = Queue_Dequeue(multi->events)))
+		{
+			multitransport_server_event_taken(multi, ev);
+			mt_event_free(ev);
+		}
+	}
+	if (InterlockedCompareExchange(&multi->tunnelEventLost, 0, 1) != 0)
+		WLog_DBG(TAG, "a lost UDP tunnel event no longer matters, the tunnel is gone");
+	if (multi->event)
+		(void)ResetEvent(multi->event);
+}
+
+WINPR_ATTR_NODISCARD
 static state_run_t multitransport_server_handle_response(rdpMultitransport* multi,
                                                          WINPR_ATTR_UNUSED UINT32 reqId,
                                                          WINPR_ATTR_UNUSED UINT32 hrResponse)
 {
+	WINPR_ASSERT(multi);
 	rdpRdp* rdp = multi->rdp;
+
+	if (multitransport_server_tunnel_offered(multi))
+		return multitransport_server_tunnel_response(multi, reqId, hrResponse);
+
+	/* Only the answer to the request sent in MULTITRANSPORT_BOOTSTRAPPING_REQUEST continues the
+	 * connection sequence. The message channel stays open for the whole session, a response in
+	 * any other state must not restart the capability exchange. */
+	if (rdp_get_state(rdp) != CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE)
+	{
+		WLog_WARN(TAG, "ignoring multi-transport response in state %s, expected %s",
+		          rdp_get_state_string(rdp),
+		          rdp_state_string(CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE));
+		return STATE_RUN_FAILED;
+	}
+
+	if (reqId != multi->reliableReqId)
+	{
+		WLog_WARN(
+		    TAG, "multi-transport response for request %" PRIu32 ", expected %" PRIu32 ", ignoring",
+		    reqId, multi->reliableReqId);
+	}
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
 		return STATE_RUN_FAILED;
@@ -222,20 +766,127 @@ rdpMultitransport* multitransport_new(rdpRdp* rdp, WINPR_ATTR_UNUSED UINT16 prot
 	if (!multi)
 		return nullptr;
 
+	if (!InitializeCriticalSectionAndSpinCount(&multi->lock, 4000))
+	{
+		free(multi);
+		return nullptr;
+	}
+	if (!InitializeCriticalSectionAndSpinCount(&multi->hooksLock, 4000))
+	{
+		DeleteCriticalSection(&multi->lock);
+		free(multi);
+		return nullptr;
+	}
+
+	multi->rdp = rdp;
+	multi->event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	multi->events = Queue_New(TRUE, -1, -1);
+	if (!multi->event || !multi->events)
+		goto fail;
+	{
+		wObject* obj = Queue_Object(multi->events);
+		obj->fnObjectFree = mt_event_free;
+	}
+
 	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		multi->MtResponse = multitransport_server_handle_response;
 	}
 	else
 	{
-		multi->MtRequest = multitransport_no_udp;
+		multi->MtRequest = multitransport_client_request;
 	}
 
-	multi->rdp = rdp;
 	return multi;
+fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
+	multitransport_free(multi);
+	WINPR_PRAGMA_DIAG_POP
+	return nullptr;
 }
 
 void multitransport_free(rdpMultitransport* multitransport)
 {
+	if (!multitransport)
+		return;
+
+	/* Application callbacks may have been removed, so LinkChanged is not called here
+	 * (udp.h requires Disconnect first). Settings may also be gone; the offer check
+	 * is used because only a server offers a tunnel. */
+	if (multitransport_server_tunnel_offered(multitransport) && multitransport->reliable)
+		WLog_WARN(TAG, "UDP tunnel peer was freed without calling Disconnect, see udp.h");
+	multitransport_reset(multitransport);
+	Queue_Free(multitransport->events);
+	if (multitransport->event)
+		(void)CloseHandle(multitransport->event);
+	DeleteCriticalSection(&multitransport->hooksLock);
+	DeleteCriticalSection(&multitransport->lock);
 	free(multitransport);
+}
+
+WINPR_ATTR_NODISCARD
+static rdpMultitransport* multitransport_from_context(rdpContext* context)
+{
+	if (!context || !context->rdp)
+		return nullptr;
+	return context->rdp->multitransport;
+}
+
+BOOL freerdp_multitransport_set_dvc_callbacks(rdpContext* context,
+                                              const FreeRDP_MultitransportDvcCallbacks* callbacks,
+                                              void* custom)
+{
+	rdpMultitransport* multi = multitransport_from_context(context);
+	if (!multi)
+		return FALSE;
+
+	/* The main loop invokes hooks while holding hooksLock, so we wait for any currently running
+	 * hook (which may be called from any thread, e.g., WTSCloseServer). rdpemt_clear_receiver()
+	 * is used to wait for the tunnel thread to return from TunnelDataReceived. */
+	EnterCriticalSection(&multi->hooksLock);
+	EnterCriticalSection(&multi->lock);
+	if (multi->reliable)
+		rdpemt_clear_receiver(multi->reliable);
+	LeaveCriticalSection(&multi->lock);
+	if (callbacks)
+		multi->callbacks = *callbacks;
+	else
+		memset(&multi->callbacks, 0, sizeof(multi->callbacks));
+	multi->custom = callbacks ? custom : nullptr;
+
+	multitransport_direct(multi);
+	LeaveCriticalSection(&multi->hooksLock);
+	return TRUE;
+}
+
+FreeRDP_MultitransportTunnelState freerdp_multitransport_get_tunnel_state(rdpContext* context,
+                                                                          UINT32 tunnelType)
+{
+	rdpMultitransport* multi = multitransport_from_context(context);
+	if (!multi || (tunnelType != TUNNELTYPE_UDPFECR))
+		return FREERDP_MULTITRANSPORT_TUNNEL_NONE;
+
+	EnterCriticalSection(&multi->lock);
+	const FreeRDP_MultitransportTunnelState state = multi->reliableState;
+	LeaveCriticalSection(&multi->lock);
+	return state;
+}
+
+BOOL freerdp_multitransport_send_dvc(rdpContext* context, UINT32 tunnelType, const BYTE* data,
+                                     size_t length)
+{
+	rdpMultitransport* multi = multitransport_from_context(context);
+	if (!multi || (tunnelType != TUNNELTYPE_UDPFECR))
+		return FALSE;
+
+	BOOL rc = FALSE;
+	EnterCriticalSection(&multi->lock);
+	if (multi->reliable && (multi->reliableState == FREERDP_MULTITRANSPORT_TUNNEL_READY))
+		rc = rdpemt_send_data(multi->reliable, data, length);
+	/* Server batches sends; see multitransport_queue_dvc. */
+	if (rc && multitransport_is_server(multi))
+		rc = rdpemt_flush(multi->reliable);
+	LeaveCriticalSection(&multi->lock);
+	return rc;
 }

@@ -26,7 +26,9 @@
 
 #include <SDL3/SDL_oldnames.h>
 
+#include <array>
 #include <map>
+#include <tuple>
 
 #include <freerdp/utils/string.h>
 #include <freerdp/scancode.h>
@@ -168,7 +170,6 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_MEDIA_PLAY, RDP_SCANCODE_MEDIA_PLAY_PAUSE),
 	ENTRY(SDL_SCANCODE_MEDIA_PAUSE, RDP_SCANCODE_MEDIA_PLAY_PAUSE),
 	ENTRY(SDL_SCANCODE_MEDIA_PLAY_PAUSE, RDP_SCANCODE_MEDIA_PLAY_PAUSE),
-	ENTRY(SDL_SCANCODE_MUTE, RDP_SCANCODE_VOLUME_MUTE),
 	ENTRY(SDL_SCANCODE_MEDIA_SELECT, RDP_SCANCODE_LAUNCH_MEDIA_SELECT),
 	ENTRY(SDL_SCANCODE_SYSREQ, RDP_SCANCODE_SYSREQ),
 	ENTRY(SDL_SCANCODE_LEFTBRACKET, RDP_SCANCODE_OEM_4),
@@ -187,7 +188,7 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_AC_STOP, RDP_SCANCODE_BROWSER_STOP),
 
 	ENTRY(SDL_SCANCODE_NONUSHASH, RDP_SCANCODE_UNKNOWN),
-	ENTRY(SDL_SCANCODE_APPLICATION, RDP_SCANCODE_UNKNOWN),
+	ENTRY(SDL_SCANCODE_APPLICATION, RDP_SCANCODE_APPS),
 	ENTRY(SDL_SCANCODE_POWER, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_KP_EQUALS, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_EXECUTE, RDP_SCANCODE_UNKNOWN),
@@ -202,10 +203,10 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_PASTE, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_KP_EQUALSAS400, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_INTERNATIONAL1, RDP_SCANCODE_ABNT_C1),
-	ENTRY(SDL_SCANCODE_INTERNATIONAL2, RDP_SCANCODE_UNKNOWN),
+	ENTRY(SDL_SCANCODE_INTERNATIONAL2, RDP_SCANCODE_HIRAGANA),
 	ENTRY(SDL_SCANCODE_INTERNATIONAL3, RDP_SCANCODE_BACKSLASH_JP),
-	ENTRY(SDL_SCANCODE_INTERNATIONAL4, RDP_SCANCODE_UNKNOWN),
-	ENTRY(SDL_SCANCODE_INTERNATIONAL5, RDP_SCANCODE_UNKNOWN),
+	ENTRY(SDL_SCANCODE_INTERNATIONAL4, RDP_SCANCODE_CONVERT_JP),
+	ENTRY(SDL_SCANCODE_INTERNATIONAL5, RDP_SCANCODE_NONCONVERT_JP),
 	ENTRY(SDL_SCANCODE_INTERNATIONAL6, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_INTERNATIONAL7, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_INTERNATIONAL8, RDP_SCANCODE_UNKNOWN),
@@ -299,10 +300,35 @@ static const scancode_entry_t map[] = {
 	return flags;
 }
 
+[[nodiscard]] static UINT32 sdl_get_kbd_modmask(SDL_Keymod mod)
+{
+	static const std::array<std::pair<SDL_Keymod, uint32_t>, 8> masks = {
+		{ { SDL_KMOD_LSHIFT, FREERDP_CLIENT_KBD_MOD_LSHIFT },
+		  { SDL_KMOD_RSHIFT, FREERDP_CLIENT_KBD_MOD_RSHIFT },
+		  { SDL_KMOD_LALT, FREERDP_CLIENT_KBD_MOD_LMENU },
+		  { SDL_KMOD_RALT, FREERDP_CLIENT_KBD_MOD_RMENU },
+		  { SDL_KMOD_LCTRL, FREERDP_CLIENT_KBD_MOD_LCONTROL },
+		  { SDL_KMOD_RCTRL, FREERDP_CLIENT_KBD_MOD_RCONTROL },
+		  { SDL_KMOD_LGUI, FREERDP_CLIENT_KBD_MOD_LWIN },
+		  { SDL_KMOD_RGUI, FREERDP_CLIENT_KBD_MOD_RWIN } }
+	};
+
+	uint32_t modmask = FREERDP_CLIENT_KBD_MOD_NONE;
+	for (const auto& [sdl, rdp] : masks)
+	{
+		if ((mod & sdl) != 0)
+			modmask |= rdp;
+	}
+	return modmask;
+}
+
 bool sdlInput::keyboard_sync_state()
 {
 	const UINT32 syncFlags = sdl_get_kbd_flags();
-	return freerdp_input_send_synchronize_event(_sdl->context()->input, syncFlags);
+	return sdl::utils::inputSent(
+	    _sdl->context(), _sdl->getWLog(),
+	    freerdp_input_send_synchronize_event(_sdl->context()->input, syncFlags),
+	    "keyboard synchronize");
 }
 
 bool sdlInput::keyboard_focus_in()
@@ -312,7 +338,7 @@ bool sdlInput::keyboard_focus_in()
 
 	auto syncFlags = sdl_get_kbd_flags();
 	if (!freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(uint16_t, syncFlags)))
-		return false;
+		return sdl::utils::inputSent(_sdl->context(), _sdl->getWLog(), FALSE, "focus in");
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
 	// TODO: fullscreen/remote app
@@ -321,10 +347,14 @@ bool sdlInput::keyboard_focus_in()
 	SDL_GetMouseState(&fx, &fy);
 
 	auto w = SDL_GetMouseFocus();
-	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
+	auto id = SDL_GetWindowID(w);
+	const auto& pos = _sdl->screenToPixel(id, SDL_FPoint{ fx, fy });
 
-	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
-	                                        static_cast<Sint32>(pos.x), static_cast<Sint32>(pos.y));
+	return sdl::utils::inputSent(
+	    _sdl->context(), _sdl->getWLog(),
+	    freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
+	                                     static_cast<Sint32>(pos.x), static_cast<Sint32>(pos.y)),
+	    "mouse move");
 }
 
 /* This function is called to update the keyboard indicator LED */
@@ -558,7 +588,10 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 	if ((rdp_scancode == RDP_SCANCODE_UNKNOWN) && (ev.raw == 0xE036))
 		rdp_scancode = RDP_SCANCODE_RSHIFT;
 #endif
-	const SDL_Keymod mods = SDL_GetModState();
+	/* The modifiers held when this key was pressed: SDL_GetModState() is the state after every
+	 * event already queued, so a hotkey could be missed, or fire on a plain key typed just
+	 * before a modifier. */
+	const SDL_Keymod mods = ev.mod;
 
 	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{
@@ -595,8 +628,16 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
 				if (!keyboard_sync_state())
 					return false;
-				freerdp_abort_connect_context(_sdl->context());
+				std::ignore = _sdl->abortConnect();
 				return true;
+			}
+			if (ev.scancode == _hotkeyInfo)
+			{
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling the overlay",
+				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyInfo));
+				if (!keyboard_sync_state())
+					return false;
+				return _sdl->toggleOverlay();
 			}
 			if (ev.scancode == _hotkeyMinimize)
 			{
@@ -630,8 +671,26 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 		           ev.scancode, scancode, sc, ex ? " extended" : "");
 	}
 #endif
-	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input,
-	                                            ev.type == SDL_EVENT_KEY_DOWN, ev.repeat, scancode);
+	if (freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_UnicodeInput))
+	{
+		/* With key_event false the keycode follows the layout, also for non-Latin ones, where key
+		 * events carry the QWERTY letter (SDL_HINT_KEYCODE_OPTIONS). */
+		const auto key = SDL_GetKeyFromScancode(ev.scancode, mods, false);
+		std::array<char, 5> str = {};
+		if ((key >= 0x20) && (key != SDLK_DELETE) && (key <= 0x10FFFF))
+			std::ignore = SDL_UCS4ToUTF8(key, str.data());
+		return sdl::utils::inputSent(_sdl->context(), _sdl->getWLog(),
+		                             freerdp_client_send_key_as_unicode(
+		                                 _sdl->common(),
+		                                 (ev.type == SDL_EVENT_KEY_DOWN) ? 0 : KBD_FLAGS_RELEASE,
+		                                 str.data(), scancode, sdl_get_kbd_modmask(mods)),
+		                             "key event");
+	}
+	return sdl::utils::inputSent(_sdl->context(), _sdl->getWLog(),
+	                             freerdp_input_send_keyboard_event_ex(_sdl->context()->input,
+	                                                                  ev.type == SDL_EVENT_KEY_DOWN,
+	                                                                  ev.repeat, scancode),
+	                             "key event");
 }
 
 bool sdlInput::keyboard_grab(Uint32 windowID, bool enable)
@@ -652,6 +711,9 @@ bool sdlInput::mouse_focus(Uint32 windowID)
 {
 	if (_lastWindowID != windowID)
 	{
+		if (!mouse_grab(windowID, true))
+			return false;
+
 		_lastWindowID = windowID;
 		auto window = _sdl->getWindowForId(windowID);
 		if (window)
@@ -664,12 +726,17 @@ bool sdlInput::mouse_focus(Uint32 windowID)
 
 bool sdlInput::mouse_grab(Uint32 windowID, bool enable)
 {
+	auto cfg_enabled = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_GrabMouse);
+	auto status = enable && cfg_enabled;
+
 	auto window = _sdl->getWindowForId(windowID);
 	if (!window)
+	{
+		WLog_Print(_sdl->getWLog(), WLOG_WARN, "Failed to grab mouse for window %" PRIu32,
+		           windowID);
 		return false;
-	if (!_sdl->setGrabMouse(enable))
-		WLog_Print(_sdl->getWLog(), WLOG_WARN, "Failed to ungrab mouse");
-	return window->grabMouse(enable);
+	}
+	return _sdl->setGrabMouse(status);
 }
 
 sdlInput::sdlInput(SdlContext* sdl)
@@ -681,6 +748,7 @@ sdlInput::sdlInput(SdlContext* sdl)
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
 	_hotkeyDisconnect = prefKeyValue("SDL_Disconnect", SDL_SCANCODE_D);
 	_hotkeyMinimize = prefKeyValue("SDL_Minimize", SDL_SCANCODE_M);
+	_hotkeyInfo = prefKeyValue("SDL_Info", SDL_SCANCODE_I);
 }
 
 sdlInput::~sdlInput()

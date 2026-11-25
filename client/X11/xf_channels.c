@@ -79,8 +79,8 @@ void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 		else
 			xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
 	}
-	else
-		freerdp_client_OnChannelConnectedEventHandler(context, e);
+
+	freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
 void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
@@ -127,6 +127,6 @@ void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 		else
 			xf_video_control_uninit(xfc, (VideoClientContext*)e->pInterface);
 	}
-	else
-		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
+
+	freerdp_client_OnChannelDisconnectedEventHandler(context, e);
 }

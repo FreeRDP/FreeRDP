@@ -51,6 +51,7 @@ typedef struct
 	UINT32 MaxNumMonitors;
 	UINT32 MaxMonitorAreaFactorA;
 	UINT32 MaxMonitorAreaFactorB;
+	CRITICAL_SECTION lock;
 } DISP_PLUGIN;
 
 /**
@@ -197,17 +198,11 @@ static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(disp);
 
-	if ((error = disp_read_header(s, &header)))
+	if ((error = disp_read_header(s, &header, nullptr)))
 	{
 		WLog_Print(disp->base.log, WLOG_ERROR, "disp_read_header failed with error %" PRIu32 "!",
 		           error);
 		return error;
-	}
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, header.length - 8))
-	{
-		WLog_Print(disp->base.log, WLOG_ERROR, "not enough remaining data");
-		return ERROR_INVALID_DATA;
 	}
 
 	switch (header.type)
@@ -239,7 +234,20 @@ static UINT disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
  */
 static UINT disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	free(pChannelCallback);
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+
+	if (callback)
+	{
+		DISP_PLUGIN* disp = (DISP_PLUGIN*)callback->plugin;
+		WINPR_ASSERT(disp);
+
+		/* Lock here to ensure that no disp_send_monitor_layout is in progress. */
+		EnterCriticalSection(&disp->lock);
+		if (disp->base.listener_callback->channel_callback == callback)
+			disp->base.listener_callback->channel_callback = nullptr;
+		free(callback);
+		LeaveCriticalSection(&disp->lock);
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -263,9 +271,14 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
 	disp = (DISP_PLUGIN*)context->handle;
 	WINPR_ASSERT(disp);
 
+	UINT rc = CHANNEL_RC_NOT_OPEN;
+	EnterCriticalSection(&disp->lock);
 	callback = disp->base.listener_callback->channel_callback;
-
-	return disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
+	/* The channel might have been closed by the server in the meantime */
+	if (callback)
+		rc = disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
+	LeaveCriticalSection(&disp->lock);
+	return rc;
 }
 
 /**
@@ -284,6 +297,7 @@ static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base,
 	disp->MaxNumMonitors = 16;
 	disp->MaxMonitorAreaFactorA = 8192;
 	disp->MaxMonitorAreaFactorB = 8192;
+	InitializeCriticalSection(&disp->lock);
 
 	context = (DispClientContext*)calloc(1, sizeof(DispClientContext));
 	if (!context)
@@ -306,6 +320,7 @@ static void disp_plugin_terminated(GENERIC_DYNVC_PLUGIN* base)
 
 	WINPR_ASSERT(disp);
 
+	DeleteCriticalSection(&disp->lock);
 	free(disp->context);
 }
 

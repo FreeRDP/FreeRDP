@@ -227,6 +227,128 @@ static BOOL test_copy_no_overlap(BOOL verbose, UINT32 srcFormat, UINT32 dstForma
 	return rc;
 }
 
+static BOOL test_copy_32_to_24_off(UINT32 srcFormat, UINT32 dstFormat, UINT32 flags, UINT32 w,
+                                   UINT32 h, UINT32 dxoff, UINT32 dyoff, UINT32 sxoff, UINT32 syoff)
+{
+	BOOL rc = FALSE;
+	const BYTE canary = 0xA5;
+	const UINT32 pad = 5;
+	const UINT32 dmargin = 2;
+	const UINT32 sbpp = FreeRDPGetBytesPerPixel(srcFormat);
+	const UINT32 dbpp = FreeRDPGetBytesPerPixel(dstFormat);
+	const UINT32 sstride = (w + sxoff) * sbpp + pad;
+	const UINT32 dstride = (w + dxoff + dmargin) * dbpp + pad;
+	const size_t ssize = 1ull * sstride * (h + syoff);
+	const size_t dsize = 1ull * dstride * (h + dyoff + dmargin);
+	const BOOL vflip = (flags & FREERDP_FLIP_VERTICAL) != 0;
+
+	primitives_t* gen = primitives_get_generic();
+	primitives_t* prims = primitives_get();
+	BYTE* src = calloc(1, ssize);
+	BYTE* expected = calloc(1, dsize);
+	BYTE* dst = calloc(1, dsize);
+	if (!gen || !prims || !src || !expected || !dst)
+		goto fail;
+
+	if (winpr_RAND(src, ssize) < 0)
+		goto fail;
+
+	memset(expected, canary, dsize);
+	for (size_t y = 0; y < h; y++)
+	{
+		/* A vertical flip reads the source rows bottom up */
+		const size_t sy = vflip ? (h - 1 - y - syoff) : (y + syoff);
+		const BYTE* sline = &src[sy * sstride];
+		BYTE* dline = &expected[(y + dyoff) * dstride];
+		for (size_t x = 0; x < w; x++)
+		{
+			const UINT32 color = FreeRDPReadColor(&sline[(x + sxoff) * sbpp], srcFormat);
+			const UINT32 dcolor = FreeRDPConvertColor(color, srcFormat, dstFormat, nullptr);
+			if (!FreeRDPWriteColor(&dline[(x + dxoff) * dbpp], dstFormat, dcolor))
+				goto fail;
+		}
+	}
+
+	for (size_t i = 0; i < 3; i++)
+	{
+		memset(dst, canary, dsize);
+		switch (i)
+		{
+			case 0:
+				if (!freerdp_image_copy_no_overlap(dst, dstFormat, dstride, dxoff, dyoff, w, h, src,
+				                                   srcFormat, sstride, sxoff, syoff, nullptr,
+				                                   flags))
+					goto fail;
+				break;
+			case 1:
+				if (gen->copy_no_overlap(dst, dstFormat, dstride, dxoff, dyoff, w, h, src,
+				                         srcFormat, sstride, sxoff, syoff, nullptr,
+				                         flags) != PRIMITIVES_SUCCESS)
+					goto fail;
+				break;
+			default:
+				if (prims->copy_no_overlap(dst, dstFormat, dstride, dxoff, dyoff, w, h, src,
+				                           srcFormat, sstride, sxoff, syoff, nullptr,
+				                           flags) != PRIMITIVES_SUCCESS)
+					goto fail;
+				break;
+		}
+
+		if (memcmp(dst, expected, dsize) != 0)
+			goto fail;
+	}
+
+	rc = TRUE;
+
+fail:
+	if (!rc)
+	{
+		(void)fprintf(stderr,
+		              "failed copy_no_overlap(%s -> %s [0x%08" PRIx32 "]) %" PRIu32 "x%" PRIu32
+		              ", soff=%" PRIu32 "x%" PRIu32 ", doff=%" PRIu32 "x%" PRIu32 "\n",
+		              FreeRDPGetColorFormatName(srcFormat), FreeRDPGetColorFormatName(dstFormat),
+		              flags, w, h, sxoff, syoff, dxoff, dyoff);
+	}
+	free(src);
+	free(expected);
+	free(dst);
+	return rc;
+}
+
+static BOOL test_copy_32_to_24(void)
+{
+	const UINT32 pairs[][2] = {
+		{ PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGB24 }, { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_RGB24 },
+		{ PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_BGR24 }, { PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_BGR24 },
+		{ PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_BGR24 }, { PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGR24 },
+		{ PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_RGB24 }, { PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGB24 },
+	};
+	const UINT32 flags[] = { FREERDP_FLIP_NONE, FREERDP_FLIP_VERTICAL };
+	const UINT32 widths[] = { 1, 7, 8, 15, 17, 63 };
+	const UINT32 h = 5;
+	BOOL rc = TRUE;
+
+	for (size_t p = 0; p < ARRAYSIZE(pairs); p++)
+	{
+		for (size_t f = 0; f < ARRAYSIZE(flags); f++)
+		{
+			for (size_t i = 0; i < ARRAYSIZE(widths); i++)
+			{
+				for (UINT32 off = 0; off < 3; off++)
+				{
+					/* With a vertical flip the source rows are counted from the bottom of
+					 * the copied rect, so only a zero source y offset stays in bounds */
+					const UINT32 syoff = (flags[f] & FREERDP_FLIP_VERTICAL) ? 0 : off + 1;
+					if (!test_copy_32_to_24_off(pairs[p][0], pairs[p][1], flags[f], widths[i], h,
+					                            off * 3, off + 2, off * 2 + 1, syoff))
+						rc = FALSE;
+				}
+			}
+		}
+	}
+	return rc;
+}
+
 int TestPrimitivesCopy(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -273,6 +395,9 @@ int TestPrimitivesCopy(int argc, char* argv[])
 	};
 
 	int rc = 0;
+	if (!test_copy_32_to_24())
+		rc = -1;
+
 	for (size_t z = 0; z < ARRAYSIZE(flags); z++)
 	{
 		const UINT32 flag = flags[z];

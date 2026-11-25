@@ -52,7 +52,7 @@ static bool checkCombined(const char* what, const char* vendor, const char* prod
 	{
 		(void)fprintf(stderr,
 		              "%s(what=%s, vendor=%s, product=%s, version=%" PRIdz ", separator=%c)\n",
-		              what, vendor, product, version, separator);
+		              __func__, what, vendor, product, version, separator);
 		return false;
 	}
 
@@ -66,7 +66,7 @@ static bool checkCombined(const char* what, const char* vendor, const char* prod
 		(void)fprintf(stderr,
 		              "%s(what=%s, vendor=%s, product=%s, version=%" PRIdz
 		              ", separator=%c) -> got %s\n",
-		              what, vendor, product, version, separator, cmp);
+		              __func__, what, vendor, product, version, separator, cmp);
 	}
 	free(cmp);
 	return rc;
@@ -265,6 +265,7 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 	}
 
 #if defined(BUILD_TESTING_INTERNAL)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* pcmp = create(vendor, product, version, '\\');
 		if (!pcmp)
@@ -296,6 +297,7 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 		if (!rc)
 			return false;
 	}
+#endif
 	{
 		char* comb = freerdp_getApplicatonDetailsCombined('/');
 		const bool rc = checkCombined(comb, vendor, product, version, '/');

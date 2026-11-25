@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>@SDL_CLIENT_BINARY_NAME@</string>
+	<key>CFBundleIdentifier</key>
+	<string>@SDL_CLIENT_UUID@</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>FreeRDP SDL@_sdl_major@</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@FREERDP_VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@FREERDP_VERSION@</string>
+	<key>NSCameraUsageDescription</key>
+	<string>FreeRDP uses your camera when you enable camera redirection to a remote desktop.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FreeRDP uses your microphone when you enable microphone redirection to a remote desktop.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>FreeRDP connects to remote desktops and gateways on your local network.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>FreeRDP accesses your Desktop folder when you enable drive redirection.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>FreeRDP accesses your Documents folder when you enable drive redirection.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>FreeRDP accesses your Downloads folder when you enable drive redirection.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>FreeRDP accesses files on network drives when you enable drive redirection.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>FreeRDP accesses files on removable drives when you enable drive redirection.</string>
+</dict>
+</plist>

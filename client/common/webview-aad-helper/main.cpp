@@ -80,8 +80,8 @@ namespace
 		}
 
 		bool navigate(const std::string& title, const std::string& url,
-		              const std::string& redirectUri, uint32_t timeoutMs, std::string& redirectUrl,
-		              std::string& error)
+		              const std::string& redirectUri, uint32_t timeoutMs,
+		              const std::string& userAgent, std::string& redirectUrl, std::string& error)
 		{
 			PendingResult pending;
 			{
@@ -96,7 +96,7 @@ namespace
 			}
 
 			w.dispatch(
-			    [this, title, url]()
+			    [this, title, url, userAgent]()
 			    {
 #if defined(__linux__)
 				    /* the window may have been hidden (see below) by a previous navigate() on
@@ -107,6 +107,22 @@ namespace
 #endif
 				    w.set_title(title);
 				    w.set_size(800, 600, WEBVIEW_HINT_NONE);
+#if defined(__linux__)
+				    {
+					    auto widget = w.widget();
+					    if (widget.ok())
+					    {
+						    WebKitSettings* settings =
+						        webkit_web_view_get_settings(WEBKIT_WEB_VIEW(widget.value()));
+						    /* NULL restores WebKit's default UA, so an omitted/empty
+						     * user_agent undoes an earlier override - the webview is reused
+						     * across navigates within one helper process. */
+						    if (settings)
+							    webkit_settings_set_user_agent(
+							        settings, userAgent.empty() ? nullptr : userAgent.c_str());
+					    }
+				    }
+#endif
 				    w.navigate(url);
 			    });
 
@@ -397,11 +413,13 @@ namespace
 				const std::string title = getStringField(params, "title");
 				const std::string url = getStringField(params, "url");
 				const std::string redirectUri = getStringField(params, "redirect_uri");
+				const std::string userAgent = getStringField(params, "user_agent");
 				const uint32_t timeoutMs = getUintField(params, "timeout_ms", kDefaultTimeoutMs);
 
 				std::string redirectUrl;
 				std::string error;
-				if (session.navigate(title, url, redirectUri, timeoutMs, redirectUrl, error))
+				if (session.navigate(title, url, redirectUri, timeoutMs, userAgent, redirectUrl,
+				                     error))
 					sendNavigateResult(id, redirectUrl);
 				else
 					sendError(id, 1, error);

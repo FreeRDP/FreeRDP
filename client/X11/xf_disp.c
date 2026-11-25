@@ -537,6 +537,13 @@ static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
 	xfDisp->activated = TRUE;
 
+	/* A resize queued before the channel opened would go out on the timer's next tick, which can
+	 * be right after the caps, and Windows ignores a layout sent that early. Count the caps as a
+	 * send so the first layout waits the full delay. */
+	xfDisp->lastSentDate = winpr_GetTickCount64NS();
+	if ((xfDisp->timerID != 0) && !update_timer(xfDisp, RESIZE_MIN_DELAY_NS))
+		return CHANNEL_RC_NO_MEMORY;
+
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return CHANNEL_RC_OK;
 

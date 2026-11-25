@@ -32,12 +32,46 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/assert.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/log.h>
 
 #include "x509_utils.h"
 
 #define TAG FREERDP_TAG("crypto")
+
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+/* SHAKE256 with 512 bits of output over the DER encoding of the cert */
+static void* ed448_cert_digest(const X509* cert, size_t* pLength)
+{
+	WINPR_ASSERT(pLength);
+
+	*pLength = 0;
+
+	int ok = 0;
+	unsigned char* der = nullptr;
+	const int derlen = i2d_X509(cert, &der);
+	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+	void* out = calloc(32, sizeof(BYTE));
+	if ((derlen <= 0) || !ctx || !out || !der)
+		goto fail;
+
+	ok = EVP_DigestInit_ex(ctx, EVP_shake256(), nullptr) &&
+	     EVP_DigestUpdate(ctx, der, (size_t)derlen) && EVP_DigestFinalXOF(ctx, out, 32);
+
+fail:
+
+	EVP_MD_CTX_free(ctx);
+	OPENSSL_free(der);
+	if (!ok)
+	{
+		free(out);
+		return nullptr;
+	}
+	*pLength = 32;
+	return out;
+}
+#endif
 
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
@@ -67,12 +101,83 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	if (X509_digest(xcert, md, fp, &fp_len) != 1)
 	{
 		free(fp);
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+		if (_stricmp("shake256", hash) == 0)
+		{
+			fp = ed448_cert_digest(xcert, length);
+			return fp;
+		}
+#endif
 		WLog_ERR(TAG, "certificate does not have a %s hash!", hash);
 		return nullptr;
 	}
 
 	*length = fp_len;
 	return fp;
+}
+
+WINPR_ATTR_NODISCARD
+static long ASN1_STRING_length_wrapper(const ASN1_STRING* asn)
+{
+	if (!asn)
+		return 0;
+#if (OPENSSL_VERSION_NUMBER >= 0x40100000L)
+	const size_t rc = ASN1_STRING_get_length(asn);
+	if (rc > LONG_MAX)
+		return 0;
+	return WINPR_ASSERTING_INT_CAST(long, rc);
+#else
+	return ASN1_STRING_length(asn);
+#endif
+}
+
+BYTE* x509_utils_get_hashless_signature_hash(const X509* xcert, size_t* length)
+{
+	WINPR_ASSERT(xcert);
+	WINPR_ASSERT(length);
+
+	/* RFC 5929 section 4.1 leaves tls-server-end-point undefined when the certificate's
+	 * signatureAlgorithm uses no hash (Ed25519, Ed448, ML-DSA, SLH-DSA). Use the hash
+	 * X509_digest_sig() picks for these: SHA-512 for Ed25519 (the RFC 8419 default), SHA-256
+	 * for ML-DSA and SLH-DSA. Ed448 (SHAKE256) gives no result with OpenSSL 3.5, which needs an
+	 * output length for it. RSA-PSS and the algorithms with a hash are not handled here. */
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L) && !defined(LIBRESSL_VERSION_NUMBER)
+	const int nid = X509_get_signature_nid(xcert);
+	int md_nid = NID_undef;
+	int pk_nid = NID_undef;
+	if ((nid == NID_rsassaPss) || (OBJ_find_sigid_algs(nid, &md_nid, &pk_nid) != 1) ||
+	    (md_nid != NID_undef) || (pk_nid == NID_undef))
+		return nullptr;
+
+	int fallback = 0;
+	BYTE* hash = nullptr;
+	ASN1_OCTET_STRING* digest = X509_digest_sig(xcert, nullptr, &fallback);
+	const long len = ASN1_STRING_length_wrapper(digest);
+	if (fallback)
+	{
+		if (len > 0)
+		{
+			hash = calloc((size_t)len + 1, sizeof(BYTE));
+			if (hash)
+			{
+				memcpy(hash, ASN1_STRING_get0_data(digest), (size_t)len);
+				*length = (size_t)len;
+			}
+#if (OPENSSL_VERSION_NUMBER >= 0x30500000L)
+		}
+		else if (nid == NID_ED448)
+		{
+			hash = x509_utils_get_hash(xcert, "shake256", length);
+#endif
+		}
+	}
+	ASN1_OCTET_STRING_free(digest);
+	return hash;
+#else
+	WINPR_UNUSED(xcert);
+	WINPR_UNUSED(length);
+	return nullptr;
+#endif
 }
 
 WINPR_ATTR_NODISCARD
@@ -136,10 +241,13 @@ mapper is called for all the names,  else it's called only for names
 of the given type.
 
 
-We implement two extractors:
+We implement the following extractors:
 
  -  a string extractor that can be used to get the subjectAltNames of
     the following types: GEN_URI,  GEN_DNS,  GEN_EMAIL
+
+ -  an IP address extractor that converts the binary GEN_IPADD value
+    into its presentation format
 
  - a ASN1_OBJECT filter/extractor that can be used to get the
    subjectAltNames of OTHERNAME type.
@@ -150,7 +258,7 @@ We implement two extractors:
    object.
 
 Not implemented yet: extractors for the types: GEN_X400, GEN_DIRNAME,
-GEN_EDIPARTY, GEN_RID, GEN_IPADD (the later can contain nul-bytes).
+GEN_EDIPARTY, GEN_RID.
 
 
 mapper(name, data, index, count)
@@ -325,7 +433,7 @@ static BOOL check_string_is_email(WINPR_ATTR_UNUSED const X509* x509, const unsi
 	const char* domain = &email[at_pos + 1];
 	size_t domain_len = strnlen(domain, len);
 
-	if (!winpr_str_is_valid_urlN(domain, domain_len))
+	if (!winpr_str_is_valid_hostnameN(domain, domain_len))
 		return FALSE;
 
 	/* local part */
@@ -348,7 +456,40 @@ static BOOL check_string_is_host_or_ip(WINPR_ATTR_UNUSED const X509* x509,
 	const char* str = (const char*)ustr;
 	if (strnlen(str, length) != length)
 		return FALSE;
-	return winpr_str_is_valid_urlN(str, length);
+	return winpr_str_is_valid_hostnameN(str, length);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_string_is_dns_name(const X509* x509, const unsigned char* ustr, size_t length)
+{
+	/* RFC 6125 wildcard DNS names (e.g. *.example.com): validate the part after
+	 * the leading label; tls_match_hostname applies the single-label rule.
+	 * Like OpenSSL, require at least two non-empty labels after the wildcard,
+	 * so *.com, *..com and *.com. are rejected. */
+	if ((length > 2) && (ustr[0] == '*') && (ustr[1] == '.'))
+	{
+		const unsigned char* suffix = &ustr[2];
+		const size_t suffixLength = length - 2;
+		size_t dots = 0;
+
+		if ((suffix[0] == '.') || (suffix[suffixLength - 1] == '.'))
+			return FALSE;
+
+		for (size_t x = 1; x < suffixLength; x++)
+		{
+			if (suffix[x] == '.')
+			{
+				if (suffix[x - 1] == '.')
+					return FALSE;
+				dots++;
+			}
+		}
+
+		if (dots == 0)
+			return FALSE;
+		return check_string_is_host_or_ip(x509, suffix, suffixLength);
+	}
+	return check_string_is_host_or_ip(x509, ustr, length);
 }
 
 WINPR_ATTR_NODISCARD
@@ -358,6 +499,33 @@ static BOOL check_string_is_host_or_ip_or_email(WINPR_ATTR_UNUSED const X509* x5
 	if (check_string_is_host_or_ip(x509, ustr, length))
 		return TRUE;
 	return check_string_is_email(x509, ustr, length);
+}
+
+static char* ip_address_to_string(const ASN1_STRING* str)
+{
+	WINPR_ASSERT(str);
+
+	const long length = ASN1_STRING_length_wrapper(str);
+	int family = AF_UNSPEC;
+
+	switch (length)
+	{
+		case 4:
+			family = AF_INET;
+			break;
+		case 16:
+			family = AF_INET6;
+			break;
+		default:
+			return nullptr;
+	}
+
+	char buffer[INET6_ADDRSTRLEN] = WINPR_C_ARRAY_INIT;
+	const void* data = ASN1_STRING_get0_data(str);
+	if (!inet_ntop(family, data, buffer, sizeof(buffer)))
+		return nullptr;
+
+	return OPENSSL_strdup(buffer);
 }
 
 WINPR_ATTR_NODISCARD
@@ -434,12 +602,52 @@ extract_string_generic(const X509* x509, GENERAL_NAME* name, void* data, int ind
 WINPR_ATTR_NODISCARD
 static int extract_string(const X509* x509, GENERAL_NAME* name, void* data, int index, int count)
 {
-	return extract_string_generic(x509, name, data, index, count, check_string_is_host_or_ip);
+	return extract_string_generic(x509, name, data, index, count, check_string_is_dns_name);
 }
 
 static int extract_email(const X509* x509, GENERAL_NAME* name, void* data, int index, int count)
 {
 	return extract_string_generic(x509, name, data, index, count, check_string_is_email);
+}
+
+static int extract_ip_address(const X509* x509, GENERAL_NAME* name, void* data, int index,
+                              int count)
+{
+	string_list* list = data;
+	WINPR_ASSERT(list);
+	WINPR_ASSERT(name);
+	WINPR_UNUSED(x509);
+	WINPR_UNUSED(index);
+
+	if (name->type != GEN_IPADD)
+		return 1;
+
+	char* address = ip_address_to_string(name->d.iPAddress);
+	if (!address)
+	{
+		WLog_ERR(TAG, "Failed to convert %s to a string", general_name_type_label(name->type));
+		return 1;
+	}
+
+	if (!string_list_allocate(list, WINPR_ASSERTING_INT_CAST(size_t, count)) ||
+	    (list->allocated <= 0))
+	{
+		WLog_ERR(TAG, "Failed to allocate %s list", general_name_type_label(name->type));
+		OPENSSL_free(address);
+		return 0;
+	}
+
+	list->strings[list->count] = address;
+	list->lengths[list->count] = strlen(address);
+	list->count++;
+
+	if (list->count >= list->maximum)
+	{
+		WLog_ERR(TAG, "Too many %s entries", general_name_type_label(name->type));
+		return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -664,10 +872,12 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 	}
 }
 
-char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengths)
+WINPR_ATTR_NODISCARD
+static char** x509_utils_get_names(const X509* xcert, int general_name_type,
+                                   general_name_mapper_pr mapper, size_t* count, size_t** lengths)
 {
 	string_list list = string_list_initialize();
-	map_subject_alt_name(xcert, GEN_DNS, extract_string, &list);
+	map_subject_alt_name(xcert, general_name_type, mapper, &list);
 	(*count) = list.count;
 
 	if (list.count <= 0)
@@ -699,6 +909,45 @@ char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengt
 
 	string_list_free(&list);
 	return result;
+}
+
+char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** pplengths)
+{
+	return x509_utils_get_names(xcert, GEN_DNS, extract_string, count, pplengths);
+}
+
+char** x509_utils_get_ip_names(const X509* xcert, size_t* count, size_t** pplengths)
+{
+	return x509_utils_get_names(xcert, GEN_IPADD, extract_ip_address, count, pplengths);
+}
+
+WINPR_ATTR_NODISCARD
+static int found_name(WINPR_ATTR_UNUSED const X509* x509, WINPR_ATTR_UNUSED GENERAL_NAME* name,
+                      void* data, WINPR_ATTR_UNUSED int index, WINPR_ATTR_UNUSED int count)
+{
+	BOOL* found = data;
+	WINPR_ASSERT(found);
+
+	*found = TRUE;
+	return 0; /* one is enough, stop the iteration */
+}
+
+BOOL x509_utils_has_dns_names(const X509* xcert)
+{
+	/* Unlike x509_utils_get_dns_names this does not filter the entries:
+	 * a malformed dNSName can never match, but it is still a DNS SAN. */
+	BOOL found = FALSE;
+	map_subject_alt_name(xcert, GEN_DNS, found_name, &found);
+	return found;
+}
+
+BOOL x509_utils_has_ip_names(const X509* xcert)
+{
+	/* Unlike x509_utils_get_dns_names this does not filter the entries:
+	 * a malformed dNSName can never match, but it is still a DNS SAN. */
+	BOOL found = FALSE;
+	map_subject_alt_name(xcert, GEN_IPADD, found_name, &found);
+	return found;
 }
 
 char* x509_utils_get_issuer(const X509* xcert)
@@ -879,7 +1128,7 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 
 	/* Decode the structure. */
 	inp = ASN1_STRING_get0_data(sequence);
-	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length(sequence));
+	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length_wrapper(sequence));
 	if (params == nullptr)
 		goto end;
 
@@ -913,7 +1162,8 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 			goto end;
 		mgf_param_sequence = mgf_param_value;
 		inp = ASN1_STRING_get0_data(mgf_param_sequence);
-		mgf1_digest_alg = d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length(mgf_param_sequence));
+		mgf1_digest_alg =
+		    d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length_wrapper(mgf_param_sequence));
 		if (mgf1_digest_alg == nullptr)
 			goto end;
 
@@ -981,8 +1231,7 @@ char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
 		return nullptr;
 
 	char* common_name = nullptr;
-	if (check_string_is_host_or_ip(xcert, common_name_raw,
-	                               WINPR_ASSERTING_INT_CAST(size_t, length)))
+	if (check_string_is_dns_name(xcert, common_name_raw, WINPR_ASSERTING_INT_CAST(size_t, length)))
 	{
 		if (plength)
 			*plength = (size_t)length;
@@ -1116,4 +1365,9 @@ char* x509_utils_bio_read(BIO* bio, size_t* plen)
 fail:
 	free(buffer);
 	return nullptr;
+}
+
+void x509_utils_ip_names_free(size_t count, size_t* lengths, char** dns_names)
+{
+	x509_utils_dns_names_free(count, lengths, dns_names);
 }

@@ -65,7 +65,19 @@ static BOOL test_client(const uint8_t* Data, size_t Size)
 		UINT16 length = 0;
 		UINT16 pduSource = 0;
 		UINT16 pduLength = 0;
-		update_recv_order(update, s);
+
+		/* update/order PDUs are rejected unless the session is active */
+		rdp->state = CONNECTION_STATE_ACTIVE;
+
+		/* orders carry state between each other, so parse a whole sequence */
+		if (!Stream_SetPosition(s, 0))
+			goto fail;
+		while (Stream_GetRemainingLength(s) > 0)
+		{
+			if (!update_recv_order(update, s))
+				break;
+		}
+
 		update_recv_altsec_window_order(update, s);
 		update_recv_play_sound(update, s);
 		update_recv_pointer(update, s);
@@ -98,10 +110,12 @@ static BOOL test_client(const uint8_t* Data, size_t Size)
 		autodetect_recv_response_packet(rdp->autodetect, RDP_TRANSPORT_TCP, s);
 	}
 	{
+		rdp->state = CONNECTION_STATE_ACTIVE;
 		rdp_recv_deactivate_all(rdp, s);
 		rdp_recv_server_synchronize_pdu(rdp, s);
 		rdp_recv_client_synchronize_pdu(rdp, s);
 
+		rdp->state = CONNECTION_STATE_ACTIVE;
 		rdp_recv_data_pdu(rdp, s);
 		rdp_recv_font_map_pdu(rdp, s);
 	}

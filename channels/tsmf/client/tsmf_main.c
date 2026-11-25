@@ -201,6 +201,13 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 						goto out;
 					}
 
+					/* Allow setting only once */
+					const UUID zero = WINPR_C_ARRAY_INIT;
+					if (memcmp(&zero, callback->presentation_id, sizeof(zero)) != 0)
+					{
+						error = ERROR_INVALID_DATA;
+						goto out;
+					}
 					CopyMemory(callback->presentation_id, Stream_Pointer(input), GUID_SIZE);
 					Stream_Seek(input, GUID_SIZE);
 					Stream_Read_UINT32(input, callback->stream_id);

@@ -26,6 +26,7 @@
 
 #include <freerdp/codec/jpeg.h>
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #ifdef WITH_JPEG
 
 /* jpeg decompress */
@@ -54,7 +55,16 @@ BOOL jpeg_decompress(const BYTE* input, BYTE* output, int width, int height, int
 	    (image->bitsPerPixel != WINPR_ASSERTING_INT_CAST(size_t, bpp)))
 		goto fail;
 
-	memcpy(output, image->data, 1ull * image->scanline * image->height);
+	const size_t stride = image->width * image->bitsPerPixel / 8;
+	if (stride < image->scanline)
+		goto fail;
+
+	for (UINT32 y = 0; y < image->height; y++)
+	{
+		const void* src = &image->data[y * image->scanline];
+		void* dst = &output[y * stride];
+		memcpy(dst, src, stride);
+	}
 	rc = TRUE;
 
 fail:
@@ -72,4 +82,5 @@ BOOL jpeg_decompress(WINPR_ATTR_UNUSED const BYTE* input, WINPR_ATTR_UNUSED BYTE
 	return 0;
 }
 
+#endif
 #endif

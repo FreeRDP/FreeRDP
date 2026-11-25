@@ -116,6 +116,12 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 
 BOOL tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 {
+	if (length > UINT8_MAX)
+	{
+		WLog_WARN(TAG, "tpdu invalid length, got %" PRIu16 ", maximum supported is %d", length,
+		          UINT8_MAX);
+		return FALSE;
+	}
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 3))
 		return FALSE;
 

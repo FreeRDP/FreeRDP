@@ -617,6 +617,27 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
 	return TRUE;
 }
 
+/* 8bpp data is resolved through the palette for every single pixel, so check the palette once
+ * per image instead of logging an error for each pixel with an unusable palette. */
+static BOOL freerdp_image_palette_is_valid(const gdiPalette* WINPR_RESTRICT palette)
+{
+	if (!palette)
+	{
+		WLog_ERR(TAG, "%s data requires a palette", FreeRDPGetColorFormatName(PIXEL_FORMAT_RGB8));
+		return FALSE;
+	}
+
+	if (FreeRDPGetBitsPerPixel(palette->format) <= 8)
+	{
+		WLog_ERR(TAG, "%s data requires a palette with a true color format, got %s",
+		         FreeRDPGetColorFormatName(PIXEL_FORMAT_RGB8),
+		         FreeRDPGetColorFormatName(palette->format));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL freerdp_image_copy_from_pointer_data_xbpp(
     BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT xorMask, UINT32 xorMaskLength,
@@ -644,10 +665,10 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 	xorStep = 1ULL * nWidth * xorBytesPerPixel;
 	xorStep += (xorStep % 2);
 
-	if (xorBpp == 8 && !palette)
+	if (xorBpp == 8 && !freerdp_image_palette_is_valid(palette))
 	{
-		WLog_ERR(TAG, "null palette in conversion from %" PRIu32 " bpp to %" PRIu32 " bpp", xorBpp,
-		         dstBitsPerPixel);
+		WLog_ERR(TAG, "invalid palette in conversion from %" PRIu32 " bpp to %" PRIu32 " bpp",
+		         xorBpp, dstBitsPerPixel);
 		return FALSE;
 	}
 
@@ -1021,6 +1042,9 @@ BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep
 		return FALSE;
 	if (FreeRDPGetBitsPerPixel(DstFormat) == 0)
 		return FALSE;
+	if ((SrcFormat == PIXEL_FORMAT_RGB8) && (SrcFormat != DstFormat) &&
+	    !freerdp_image_palette_is_valid(palette))
+		return FALSE;
 
 	WINPR_ASSERT(1ull * nXDst + nWidth <= UINT32_MAX);
 	WINPR_ASSERT(1ull * nXSrc + nWidth <= UINT32_MAX);
@@ -1283,11 +1307,38 @@ static enum AVPixelFormat av_format_for_buffer(UINT32 format)
 }
 #endif
 
+static freerdp_image_scale_fkt s_scale_fkt = nullptr;
+static void* s_scale_user_arg = nullptr;
+
+BOOL freerdp_set_image_scaling_function(freerdp_image_scale_fkt scale, void* user)
+{
+	s_scale_fkt = scale;
+	s_scale_user_arg = user;
+	return TRUE;
+}
+
+BOOL freerdp_image_scaling_supported(void)
+{
+	if (s_scale_fkt)
+		return TRUE;
+
+#if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
+
 BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep,
                          UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
                          const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                          UINT32 nXSrc, UINT32 nYSrc, UINT32 nSrcWidth, UINT32 nSrcHeight)
 {
+	if (s_scale_fkt)
+		return s_scale_fkt(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+		                   pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, nSrcWidth, nSrcHeight,
+		                   s_scale_user_arg);
+
 	BOOL rc = FALSE;
 	if (FreeRDPGetBitsPerPixel(SrcFormat) == 0)
 		return FALSE;
@@ -1306,8 +1357,10 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 	WINPR_ASSERT(nSrcStep / FreeRDPGetBytesPerPixel(SrcFormat) >= nXSrc + nSrcWidth);
 
 #if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
-	const BYTE* src = &pSrcData[nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
-	BYTE* dst = &pDstData[nXDst * FreeRDPGetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+	const BYTE* src =
+	    &pSrcData[1ULL * nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + 1ULL * nYSrc * nSrcStep];
+	BYTE* dst =
+	    &pDstData[1ULL * nXDst * FreeRDPGetBytesPerPixel(DstFormat) + 1ULL * nYDst * nDstStep];
 #endif
 
 	/* direct copy is much faster than scaling, so check if we can simply copy... */
@@ -1333,6 +1386,19 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 		if (!freerdp_swscale_available())
 		{
 			WLog_WARN(TAG, "swscale not available");
+			return FALSE;
+		}
+
+		/* swscale addresses lines as line * stride in int arithmetic, every byte of an image must
+		 * be addressable with a signed int (see av_image_check_size). For larger images the
+		 * offset wraps and the last lines are read or written 4GiB in front of the buffer. */
+		if ((1ULL * nSrcStep * nSrcHeight > INT32_MAX) ||
+		    (1ULL * nDstStep * nDstHeight > INT32_MAX))
+		{
+			WLog_ERR(TAG,
+			         "image too large to scale: source %" PRIu32 " x %" PRIu32
+			         " bytes, destination %" PRIu32 " x %" PRIu32 " bytes",
+			         nSrcStep, nSrcHeight, nDstStep, nDstHeight);
 			return FALSE;
 		}
 
@@ -1366,6 +1432,10 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 			return FALSE;
 
 		if ((nDstWidth > INT_MAX) || (nDstHeight > INT_MAX) || (nDstStep > INT_MAX))
+			return FALSE;
+
+		/* cairo (pixman) addresses lines as line * stride in int arithmetic as well */
+		if ((1ULL * nSrcStep * nSrcHeight > INT_MAX) || (1ULL * nDstStep * nDstHeight > INT_MAX))
 			return FALSE;
 
 		csrc = cairo_image_surface_create_for_data((void*)src, CAIRO_FORMAT_ARGB32, (int)nSrcWidth,
@@ -1979,6 +2049,9 @@ BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstForma
 	if (FreeRDPGetBitsPerPixel(SrcFormat) == 0)
 		return FALSE;
 	if (FreeRDPGetBitsPerPixel(DstFormat) == 0)
+		return FALSE;
+	if ((SrcFormat == PIXEL_FORMAT_RGB8) && (SrcFormat != DstFormat) &&
+	    !freerdp_image_palette_is_valid(palette))
 		return FALSE;
 
 	if ((nWidth == 0) || (nHeight == 0))

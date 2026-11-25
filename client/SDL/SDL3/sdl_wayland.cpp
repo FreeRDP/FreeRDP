@@ -211,6 +211,20 @@ bool sdl_wayland_begin_resize(SDL_Window* window, uint32_t xdgEdge)
 	return sdl_wayland_begin_interactive(window, false, xdgEdge);
 }
 
+bool sdl_wayland_set_app_id(SDL_Window* window, const char* appId)
+{
+	if (!window || !appId || !sdl::utils::isWaylandDriver())
+		return false;
+
+	auto toplevel = static_cast<xdg_toplevel*>(SDL_GetPointerProperty(
+	    SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_POINTER, nullptr));
+	if (!toplevel)
+		return false;
+
+	xdg_toplevel_set_app_id(toplevel, appId);
+	return true;
+}
+
 #else /* !WITH_SDL_WAYLAND_NATIVE */
 
 void sdl_wayland_move_prepare(WINPR_ATTR_UNUSED SDL_Window* window)
@@ -224,6 +238,12 @@ bool sdl_wayland_begin_move(WINPR_ATTR_UNUSED SDL_Window* window)
 
 bool sdl_wayland_begin_resize(WINPR_ATTR_UNUSED SDL_Window* window,
                               WINPR_ATTR_UNUSED uint32_t xdgEdge)
+{
+	return false;
+}
+
+bool sdl_wayland_set_app_id(WINPR_ATTR_UNUSED SDL_Window* window,
+                            WINPR_ATTR_UNUSED const char* appId)
 {
 	return false;
 }

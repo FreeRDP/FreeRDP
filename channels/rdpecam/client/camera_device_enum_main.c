@@ -19,6 +19,7 @@
 
 #include <winpr/assert.h>
 #include <winpr/cast.h>
+#include <winpr/cmdline.h>
 #include <winpr/string.h>
 
 #include "camera.h"
@@ -281,6 +282,10 @@ static UINT ecam_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	WINPR_ASSERT(hchannel);
 
 	WLog_DBG(TAG, "entered");
+	CameraPlugin* ecam = (CameraPlugin*)hchannel->plugin;
+	WINPR_ASSERT(ecam);
+
+	ecam->connected = FALSE;
 
 	free(hchannel);
 	return CHANNEL_RC_OK;
@@ -303,6 +308,16 @@ static UINT ecam_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 		return ERROR_INTERNAL_ERROR;
 
 	WLog_DBG(TAG, "entered");
+
+	CameraPlugin* ecam = (CameraPlugin*)hlistener->plugin;
+	WINPR_ASSERT(ecam);
+
+	if (ecam->connected)
+	{
+		WLog_ERR(TAG, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
+
 	GENERIC_CHANNEL_CALLBACK* hchannel =
 	    (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
@@ -318,7 +333,8 @@ static UINT ecam_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 	hchannel->plugin = hlistener->plugin;
 	hchannel->channel_mgr = hlistener->channel_mgr;
 	hchannel->channel = pChannel;
-	*ppCallback = (IWTSVirtualChannelCallback*)hchannel;
+	*ppCallback = &hchannel->iface;
+	ecam->connected = TRUE;
 	return CHANNEL_RC_OK;
 }
 
@@ -520,6 +536,42 @@ static UINT ecam_load_hal_plugin(CameraPlugin* ecam, const char* name, const ADD
 /**
  * Function description
  *
+ * picks the subsystem given by sys:<name>, the other arguments are left to the subsystem
+ *
+ * @return TRUE on success
+ */
+WINPR_ATTR_NODISCARD
+static BOOL ecam_process_addin_args(CameraPlugin* ecam, const ADDIN_ARGV* args)
+{
+	WINPR_ASSERT(ecam);
+
+	COMMAND_LINE_ARGUMENT_A ecam_args[] = { { "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>",
+		                                      nullptr, nullptr, -1, nullptr, "subsystem" },
+		                                    { nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr,
+		                                      nullptr } };
+
+	if (!args || (args->argc <= 1))
+		return TRUE;
+
+	const DWORD flags =
+	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	const int status = CommandLineParseArgumentsA(args->argc, args->argv, ecam_args, flags, ecam,
+	                                              nullptr, nullptr);
+	if (status != 0)
+		return FALSE;
+
+	const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(ecam_args, "sys");
+	if (arg && (arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+	{
+		/* the value points into args, which outlive the plugin */
+		ecam->subsystem = arg->Value;
+	}
+	return TRUE;
+}
+
+/**
+ * Function description
+ *
  * @return 0 on success, otherwise a Win32 error code
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpecam_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
@@ -549,18 +601,28 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpecam_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS*
 	ecam->iface.Attached = ecam_plugin_attached;
 	ecam->iface.Detached = ecam_plugin_detached;
 
-	/* TODO: camera redirect only supported for platforms with Video4Linux or Android */
+	/* TODO: camera redirect only supported for platforms with Video4Linux, Android or macOS/iOS */
 #if defined(WITH_V4L)
 	ecam->subsystem = "v4l";
 #elif defined(__ANDROID__)
 	ecam->subsystem = "android";
+#elif defined(__APPLE__)
+	ecam->subsystem = "avfoundation";
 #else
 	ecam->subsystem = nullptr;
 #endif
 
+	const ADDIN_ARGV* args = pEntryPoints->GetPluginData(pEntryPoints);
+	if (!ecam_process_addin_args(ecam, args))
+	{
+		WLog_ERR(TAG, "Invalid rdpecam arguments");
+		error = ERROR_INVALID_PARAMETER;
+		goto out;
+	}
+
 	if (ecam->subsystem)
 	{
-		if ((error = ecam_load_hal_plugin(ecam, ecam->subsystem, nullptr /*args*/)))
+		if ((error = ecam_load_hal_plugin(ecam, ecam->subsystem, args)))
 		{
 			WLog_ERR(TAG,
 			         "Unable to load camera redirection subsystem %s because of error %" PRIu32 "",

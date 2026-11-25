@@ -30,12 +30,12 @@ if(WITH_TIMEZONE_FROM_FILE)
 
   winpr_definition_add(WITH_TIMEZONE_FROM_FILE)
 
-  install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
+  install(FILES TimeZoneNameMap.json TimeZoneIanaAliases.json DESTINATION ${WINPR_RESOURCE_ROOT})
 endif()
 
-set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h timezone.c timezone.h)
+set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h TimeZoneIanaAliases.c TimeZoneIanaAliases.h timezone.c timezone.h)
 if(WITH_TIMEZONE_COMPILED)
-  list(APPEND SRCS TimeZoneNameMap_static.h)
+  list(APPEND SRCS TimeZoneNameMap_static.h TimeZoneIanaAliases_static.h)
 endif()
 
 if(NOT WIN32)
@@ -55,6 +55,26 @@ else()
 endif()
 
 winpr_module_add(${SRCS})
+
+if(EMSCRIPTEN)
+  # The JavaScript side of timezone.c, for the executable's link: a link item, so that it also
+  # reaches the executable through static libraries (link options of their private dependencies
+  # don't).
+  set(_js timezone_emscripten.js)
+  set(_js_dir "${CMAKE_INSTALL_LIBDIR}/winpr${WINPR_VERSION_MAJOR}")
+  winpr_library_add_public(
+    "--js-library=$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${_js_dir}>/${_js}"
+  )
+  # so that editing the JavaScript recompiles this file, and so relinks the executables
+  set_source_files_properties(timezone.c PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_js})
+  if(NOT BUILD_SHARED_LIBS)
+    install(FILES ${_js} DESTINATION ${_js_dir})
+  endif()
+endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 if(WIN32)
   option(WITH_TIMEZONE_UPDATER "Build C# tzextract" OFF)

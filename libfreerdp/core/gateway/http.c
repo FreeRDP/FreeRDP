@@ -309,7 +309,7 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context)
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	return http_context_set_header(context, "RDG-Connection-Id", "{%s}",
-	                               guid2str(&RdgConnectionId, buffer, sizeof(buffer)));
+	                               freerdp_guid2str(&RdgConnectionId, buffer, sizeof(buffer)));
 }
 
 BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCorrelationId)
@@ -319,7 +319,7 @@ BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCo
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	return http_context_set_header(context, "RDG-Correlation-Id", "{%s}",
-	                               guid2str(RdgCorrelationId, buffer, sizeof(buffer)));
+	                               freerdp_guid2str(RdgCorrelationId, buffer, sizeof(buffer)));
 }
 
 BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
@@ -1124,7 +1124,6 @@ BOOL sleep_or_timeout_(BIO* bio, rdpContext* context, UINT64 startMS, UINT32 tim
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(context);
 
-	USleep(100);
 	const UINT64 nowMS = GetTickCount64();
 	if (nowMS - startMS > timeoutMS)
 	{
@@ -1149,6 +1148,7 @@ BOOL sleep_or_timeout_(BIO* bio, rdpContext* context, UINT64 startMS, UINT32 tim
 	if (freerdp_shall_disconnect_context(context))
 		return TRUE;
 
+	SwitchToThread();
 	return FALSE;
 }
 
@@ -1211,7 +1211,7 @@ out_error:
 }
 
 static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL readContentLength,
-                                    size_t payloadOffset, size_t bodyLength)
+                                    size_t bodyLength)
 {
 	BOOL rc = FALSE;
 
@@ -1253,8 +1253,6 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 			}
 		} while (ctx.state != ChunkStateEnd);
 		response->BodyLength = WINPR_ASSERTING_INT_CAST(uint32_t, full_len);
-		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 	}
 	else
 	{
@@ -1288,9 +1286,6 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 				goto out_error;
 			}
 		}
-
-		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 
 		if (bodyLength != response->BodyLength)
 		{
@@ -1407,6 +1402,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 				else
 					readContentLength = FALSE; /* prevent chunked read */
 
+				if (*cur == '\0')
+					break;
 				cur = strchr(cur + 1, ';');
 			}
 		}
@@ -1419,8 +1416,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		}
 
 		/* Fetch remaining body! */
-		if (!http_response_recv_body(tls, response, readContentLength,
-		                             WINPR_ASSERTING_INT_CAST(size_t, payloadOffset), bodyLength))
+		if (!http_response_recv_body(tls, response, readContentLength, bodyLength))
 			goto out_error;
 	}
 	Stream_SealLength(response->data);
@@ -1429,6 +1425,11 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 	if (!Stream_EnsureRemainingCapacity(response->data, 2))
 		goto out_error;
 	Stream_Write_UINT16(response->data, 0);
+
+	/* The stream buffer may have been reallocated by any of the writes above,
+	 * so only take the pointer to the body now that no more writes follow. */
+	if (response->BodyLength > 0)
+		response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 
 	return response;
 out_error:

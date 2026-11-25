@@ -904,8 +904,9 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 
 	if (style & WS_POPUP)
 	{
-		window_type = xfc->NET_WM_WINDOW_TYPE_DIALOG;
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
+		if (!redirect)
+			window_type = xfc->NET_WM_WINDOW_TYPE_DIALOG;
 
 		if (!((ex_style & WS_EX_DLGMODALFRAME) || (ex_style & WS_EX_LAYERED) ||
 		      (style & WS_SYSMENU)))
@@ -934,6 +935,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		 */
 		XSetWindowAttributes attrs = WINPR_C_ARRAY_INIT;
 		attrs.override_redirect = redirect ? True : False;
+		appWindow->override_redirect = redirect;
 		LogDynAndXChangeWindowAttributes(xfc->log, xfc->display, appWindow->handle,
 		                                 CWOverrideRedirect, &attrs);
 	}
@@ -1041,21 +1043,36 @@ static void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width, 
 	}
 }
 
-int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow, BOOL hidden)
 {
+	BOOL redraw = FALSE;
 	if (!xfc || !appWindow)
-		return -1;
+		return FALSE;
 
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
 	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
-	xf_ShowWindow(xfc, appWindow, WINDOW_SHOW);
 	LogDynAndXClearWindow(xfc->log, xfc->display, appWindow->handle);
+
+	/* A window the server creates hidden stays unmapped until the server shows it, see
+	 * xf_ShowWindow(). Mapping it here and withdrawing it right after races with the window
+	 * manager: the later map request can be lost, leaving a withdrawn window that is never
+	 * shown while the application waits on it, e.g. a modal dialog. */
+	if (hidden)
+	{
+		xf_SetWindowText(xfc, appWindow, appWindow->title);
+		return FALSE;
+	}
+
+	if (xf_ShowWindow(xfc, appWindow, WINDOW_SHOW))
+		redraw = TRUE;
 	LogDynAndXMapWindow(xfc->log, xfc->display, appWindow->handle);
 	/* Move doesn't seem to work until window is mapped. */
-	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width, appWindow->height);
+	if (xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width,
+	                  appWindow->height))
+		redraw = TRUE;
 	xf_SetWindowText(xfc, appWindow, appWindow->title);
-	return 1;
+	return redraw;
 }
 
 BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
@@ -1080,6 +1097,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
 	appWindow->is_mapped = FALSE;
 	appWindow->is_transient = FALSE;
+	appWindow->override_redirect = FALSE;
 	appWindow->rail_state = 0;
 	appWindow->maxVert = FALSE;
 	appWindow->maxHorz = FALSE;
@@ -1222,18 +1240,18 @@ void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
 }
 
-void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
+BOOL xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
 	BOOL resize = FALSE;
 
 	if ((width * height) < 1)
-		return;
+		return FALSE;
 
 	if ((appWindow->width != width) || (appWindow->height != height))
 		resize = TRUE;
 
 	if (appWindow->local_move.state == LMS_STARTING || appWindow->local_move.state == LMS_ACTIVE)
-		return;
+		return FALSE;
 
 	appWindow->x = x;
 	appWindow->y = y;
@@ -1243,7 +1261,7 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	if (resize)
 	{
 		if (!xf_AppWindowResize(xfc, appWindow))
-			return;
+			return FALSE;
 
 		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle, x, y,
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, width),
@@ -1252,18 +1270,22 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	else
 		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, x, y);
 
-	xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
+	return xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
 }
 
-void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
+BOOL xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 {
+	BOOL redraw = FALSE;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
 	switch (state)
 	{
 		case WINDOW_HIDE:
-			LogDynAndXWithdrawWindow(xfc->log, xfc->display, appWindow->handle, xfc->screen_number);
+			/* Nothing to withdraw if the window was never shown, see xf_AppWindowInit(). */
+			if (appWindow->rail_state != WINDOW_HIDE)
+				LogDynAndXWithdrawWindow(xfc->log, xfc->display, appWindow->handle,
+				                         xfc->screen_number);
 			break;
 
 		case WINDOW_SHOW_MINIMIZED:
@@ -1289,9 +1311,10 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			 */
 			if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
 			{
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
-				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
-				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
+				if (xf_UpdateWindowArea(xfc, appWindow, 0, 0,
+				                        WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
+				                        WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight)))
+					redraw = TRUE;
 			}
 
 			break;
@@ -1315,6 +1338,14 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 				xf_SetWindowUnlisted(xfc, appWindow->handle);
 
 			LogDynAndXMapWindow(xfc->log, xfc->display, appWindow->handle);
+			/* Move doesn't work until the window is mapped, see xf_AppWindowInit(). */
+			if ((appWindow->rail_state == WINDOW_HIDE) && (appWindow->width > 0) &&
+			    (appWindow->height > 0))
+				LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle,
+				                           WINPR_ASSERTING_INT_CAST(int, appWindow->x),
+				                           WINPR_ASSERTING_INT_CAST(int, appWindow->y),
+				                           WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width),
+				                           WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height));
 			break;
 		default:
 			break;
@@ -1323,19 +1354,20 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 	/* Save the current rail state of this window */
 	appWindow->rail_state = state;
 	LogDynAndXFlush(xfc->log, xfc->display);
+	return redraw;
 }
 
-void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, const RECTANGLE_16* rects,
+                       size_t nrects)
 {
-	XRectangle* xrects = nullptr;
-
-	if (nrects < 1)
-		return;
 
 #ifdef WITH_XEXT
-	xrects = (XRectangle*)calloc(WINPR_ASSERTING_INT_CAST(uint32_t, nrects), sizeof(XRectangle));
+	if (nrects > INT32_MAX)
+		nrects = INT32_MAX;
 
-	for (int i = 0; i < nrects; i++)
+	XRectangle* xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
+
+	for (size_t i = 0; i < nrects; i++)
 	{
 		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
 		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
@@ -1344,24 +1376,24 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
-	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects,
-	                        ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects,
+	                        (int)nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 }
 
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX,
-                                 UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, INT32 rectsOffsetX,
+                                 INT32 rectsOffsetY, const RECTANGLE_16* rects, size_t nrects)
 {
 	XRectangle* xrects = nullptr;
 
-	if (nrects < 1)
-		return;
+	if (nrects > INT32_MAX)
+		nrects = INT32_MAX;
 
 #ifdef WITH_XEXT
-	xrects = (XRectangle*)calloc(WINPR_ASSERTING_INT_CAST(uint32_t, nrects), sizeof(XRectangle));
+	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
 
-	for (int i = 0; i < nrects; i++)
+	for (size_t i = 0; i < nrects; i++)
 	{
 		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
 		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
@@ -1370,9 +1402,8 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
-	XShapeCombineRectangles(
-	    xfc->display, appWindow->handle, ShapeBounding, WINPR_ASSERTING_INT_CAST(int, rectsOffsetX),
-	    WINPR_ASSERTING_INT_CAST(int, rectsOffsetY), xrects, nrects, ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, rectsOffsetX,
+	                        rectsOffsetY, xrects, (int)nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 }
@@ -1387,7 +1418,7 @@ void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
 #endif
 }
 
-void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
+BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height)
 {
 	int ax = 0;
@@ -1400,10 +1431,35 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	WINPR_ASSERT(settings);
 
 	if (appWindow == nullptr)
-		return;
+		return FALSE;
 
 	if (appWindow->surfaceId < UINT16_MAX)
-		return;
+	{
+		/* need a full window update */
+		if (appWindow->is_mapped && appWindow->surfaceStale)
+			return TRUE;
+		/* The pixmap holds what xf_AppUpdateWindowFromSurface() painted last. */
+		else if (!appWindow->surfaceStale && (appWindow->pixmap != 0) && (x >= 0) && (y >= 0) &&
+		         (width > 0) && (height > 0))
+		{
+			LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle,
+			                   appWindow->gc, x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
+			                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
+			LogDynAndXFlush(xfc->log, xfc->display);
+		}
+		return FALSE;
+	}
+
+	/*
+	 * With GFX a RemoteApp window shows its own surface, see xf_AppUpdateWindowFromSurface().
+	 * Until the server maps a surface to the window it has no content. xfc->image contains the
+	 * hidden server desktop (black, wallpaper), painting from it flashes that in a new window,
+	 * e.g. the Snap bar when dragging a window. Leave the window empty until its surface is
+	 * mapped.
+	 */
+	const rdpGdi* gdi = xfc->common.context.gdi;
+	if (gdi && gdi->gfx)
+		return FALSE;
 
 	ax = x + appWindow->windowOffsetX;
 	ay = y + appWindow->windowOffsetY;
@@ -1425,6 +1481,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	                   x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
 	                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
 	LogDynAndXFlush(xfc->log, xfc->display);
+	return FALSE;
 }
 
 void xf_AppWindowDestroyImage(xfAppWindow* appWindow)
@@ -1481,8 +1538,8 @@ static xfAppWindow* get_windowUnlocked(xfContext* xfc, UINT64 id)
 	return HashTable_GetItemValue(xfc->railWindows, &id);
 }
 
-xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
-                                    const char* fkt, size_t line)
+xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, BOOL haveX11Lock,
+                                    const char* file, const char* fkt, size_t line)
 {
 	if (!xfc)
 		return nullptr;
@@ -1491,18 +1548,18 @@ xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocke
 		return nullptr;
 
 	if (!alreadyLocked)
-		xfAppWindowsLockFrom(xfc, file, fkt, line);
+		xfAppWindowsLockFrom(xfc, haveX11Lock, file, fkt, line);
 
 	xfAppWindow* window = get_windowUnlocked(xfc, id);
 
 	if (!window && !alreadyLocked)
-		xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+		xfAppWindowsUnlockFrom(xfc, haveX11Lock, file, fkt, line);
 
 	return window;
 }
 
-xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const char* file,
-                                           const char* fkt, size_t line)
+xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, BOOL haveX11Lock,
+                                           const char* file, const char* fkt, size_t line)
 {
 	ULONG_PTR* pKeys = nullptr;
 
@@ -1510,7 +1567,7 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 	if (!xfc->railWindows)
 		return nullptr;
 
-	xfAppWindowsLockFrom(xfc, file, fkt, line);
+	xfAppWindowsLockFrom(xfc, haveX11Lock, file, fkt, line);
 	size_t count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
 	for (size_t index = 0; index < count; index++)
@@ -1519,7 +1576,7 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 
 		if (!appWindow)
 		{
-			xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+			xfAppWindowsUnlockFrom(xfc, haveX11Lock, file, fkt, line);
 			free(pKeys);
 			return nullptr;
 		}
@@ -1531,12 +1588,13 @@ xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const cha
 		}
 	}
 
-	xfAppWindowsUnlockFrom(xfc, file, fkt, line);
+	xfAppWindowsUnlockFrom(xfc, haveX11Lock, file, fkt, line);
 	free(pKeys);
 	return nullptr;
 }
 
-UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
+UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface, BOOL alreadyLocked,
+                                   BOOL keepX11Lock)
 {
 	XImage* image = nullptr;
 	UINT rc = ERROR_INTERNAL_ERROR;
@@ -1544,7 +1602,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
 
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, alreadyLocked, keepX11Lock);
 	if (!appWindow)
 	{
 		WLog_VRB(TAG, "Failed to find a window for id=0x%08" PRIx64, surface->windowId);
@@ -1566,7 +1624,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	{
 		appWindow->surfaceStale = TRUE;
 		region16_clear(&surface->invalidRegion);
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, alreadyLocked, keepX11Lock);
 		return CHANNEL_RC_OK;
 	}
 
@@ -1677,13 +1735,14 @@ fail:
 	 * output mapped surfaces. Otherwise the damage accumulates across frames until
 	 * the whole window is uploaded again on every single update. */
 	region16_clear(&surface->invalidRegion);
-	xf_rail_return_window(appWindow, FALSE);
+	xf_rail_return_window(appWindow, alreadyLocked, keepX11Lock);
 	LogDynAndXFlush(xfc->log, xfc->display);
 
 	return rc;
 }
 
-BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId)
+BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId,
+                                    BOOL alreadyLocked, BOOL keepX11Lock)
 {
 	WINPR_ASSERT(xfc);
 
@@ -1696,10 +1755,21 @@ BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surf
 
 	RdpgfxClientContext* gfx = gdi->gfx;
 	UINT rc = CHANNEL_RC_OK;
-	EnterCriticalSection(&gfx->mux);
+
+	/* Called on the X11 event thread with the X11 lock held. The GFX channel thread takes
+	 * gfx->mux first and the X11 lock second (UpdateSurfaces and DeleteSurface reach
+	 * xf_rail_get_window()), so blocking here would deadlock. Like xf_OutputExpose, repaint
+	 * on a best-effort basis: if the mux is busy, the window stays surfaceStale and the next
+	 * UpdateSurfaces pass repaints it fully. */
+	if (!TryEnterCriticalSection(&gfx->mux))
+	{
+		WLog_VRB(TAG, "gfx mux busy, deferring repaint of window 0x%08" PRIx64, windowId);
+		return TRUE;
+	}
+
 	gdiGfxSurface* surface = gfx->GetSurfaceData(gfx, (UINT16)surfaceId);
 	if (surface && surface->windowMapped && (surface->windowId == windowId))
-		rc = xf_AppUpdateWindowFromSurface(xfc, surface);
+		rc = xf_AppUpdateWindowFromSurface(xfc, surface, alreadyLocked, keepX11Lock);
 	LeaveCriticalSection(&gfx->mux);
 	return rc == CHANNEL_RC_OK;
 }
@@ -1709,15 +1779,29 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
+	const UINT32 width = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
+	const UINT32 height = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
+
+	/* Called on every ConfigureNotify, also for plain moves: keep the pixmap and its content
+	 * when the size did not change, it is what an Expose is repainted from. */
+	if ((appWindow->pixmap != 0) && (appWindow->pixmapWidth == width) &&
+	    (appWindow->pixmapHeight == height))
+		return TRUE;
+
 	if (appWindow->pixmap != 0)
 		LogDynAndXFreePixmap(xfc->log, xfc->display, appWindow->pixmap);
 
 	WINPR_ASSERT(xfc->depth != 0);
-	appWindow->pixmap = LogDynAndXCreatePixmap(
-	    xfc->log, xfc->display, xfc->drawable, WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width),
-	    WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height),
-	    WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	appWindow->pixmap = LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, width, height,
+	                                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	appWindow->pixmapWidth = width;
+	appWindow->pixmapHeight = height;
 	xf_AppWindowDestroyImage(appWindow);
+
+	/* The new pixmap has undefined content, the next paint from the surface has to cover the
+	 * whole window. */
+	if (appWindow->surfaceId < UINT16_MAX)
+		appWindow->surfaceStale = TRUE;
 
 	return appWindow->pixmap != 0;
 }
@@ -1730,15 +1814,15 @@ void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window)
 	if (window->ownerWindowId == 0)
 		return;
 
-	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId, TRUE);
+	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId, TRUE, FALSE);
 	if (!parent)
 		return;
 
 	(void)LogDynAndXSetTransientForHint(xfc->log, xfc->display, window->handle, parent->handle);
-	xf_rail_return_window(parent, TRUE);
+	xf_rail_return_window(parent, TRUE, FALSE);
 }
 
-void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
+void xfAppWindowsLockFrom(xfContext* xfc, BOOL haveX11Lock, WINPR_ATTR_UNUSED const char* file,
                           WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT(xfc);
@@ -1748,18 +1832,22 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 	if (WLog_IsLevelActive(xfc->log, level))
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] locking [%s]", fkt);
 #endif
+	if (!haveX11Lock)
+		xf_lock_x11(xfc);
 
-	xf_lock_x11(xfc);
 	if (xfc->railWindows)
 		HashTable_Lock(xfc->railWindows);
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	WINPR_ASSERT(!xfc->isRailWindowsLocked);
 	xfc->isRailWindowsLocked = TRUE;
+	xfc->whereFile = file;
+	xfc->whereFkt = fkt;
+	xfc->whereLine = line;
 #endif
 }
 
-void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
+void xfAppWindowsUnlockFrom(xfContext* xfc, BOOL keepX11Lock, WINPR_ATTR_UNUSED const char* file,
                             WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT(xfc);
@@ -1770,10 +1858,18 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] unocking [%s]", fkt);
 
 	WINPR_ASSERT(xfc->isRailWindowsLocked);
-	xfc->isRailWindowsLocked = FALSE;
 #endif
 
 	if (xfc->railWindows)
 		HashTable_Unlock(xfc->railWindows);
-	xf_unlock_x11(xfc);
+
+	if (!keepX11Lock)
+		xf_unlock_x11(xfc);
+
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
+	xfc->isRailWindowsLocked = FALSE;
+	xfc->whereFile = nullptr;
+	xfc->whereFkt = nullptr;
+	xfc->whereLine = 0;
+#endif
 }

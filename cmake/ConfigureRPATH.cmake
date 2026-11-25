@@ -1,3 +1,7 @@
+if(POLICY CMP0177)
+  cmake_policy(SET CMP0177 NEW)
+endif()
+
 # RPATH configuration
 option(CMAKE_SKIP_BUILD_RPATH "skip build RPATH" OFF)
 option(CMAKE_BUILD_WITH_INSTALL_RPATH "build with install RPATH" OFF)

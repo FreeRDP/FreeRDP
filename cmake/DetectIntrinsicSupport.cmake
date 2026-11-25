@@ -10,6 +10,13 @@ if(WITH_NEON)
   set(WITH_SIMD ON CACHE BOOL "WITH_NEON")
 endif()
 
+# WebAssembly has no runtime CPU detection: a module using SIMD only loads where SIMD is
+# supported, so build everything with it. This also lets winpr report the SSE levels
+# emscripten lowers onto it, see IsProcessorFeaturePresent.
+if(WITH_SIMD AND EMSCRIPTEN)
+  add_compile_options(-msimd128)
+endif()
+
 macro(set_simd_source_file_properties INTRINSIC_TYPE)
   if(ARGC LESS_EQUAL 1)
     message(FATAL_ERROR "set_simd_source_file_properties called with invalid arguments: [${ARGC}] {${ARGN}")
@@ -29,7 +36,10 @@ macro(set_simd_source_file_properties INTRINSIC_TYPE)
     message(WARNING "Intrinsic type ${INTRINSIC_TYPE} not supported, only ${SUPPORTED_INTRINSICS_LIST} are available")
   else()
     set(SIMD_LINK_ARG "")
-    if(MSVC)
+    # clang-cl sets MSVC but (unlike MSVC, which accepts every intrinsic)
+    # requires explicit target-feature flags, which the compiler-id branch
+    # below emits in the -m form it accepts.
+    if(MSVC AND NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
       # https://learn.microsoft.com/en-us/cpp/build/reference/arch-x64?view=msvc-140
       if("${SYSTEM_PROCESSOR}" IN_LIST SSE_LIST)
         if("${SYSTEM_PROCESSOR}" IN_LIST SSE_X86_LIST)

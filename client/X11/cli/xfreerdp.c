@@ -29,6 +29,7 @@
 #include <freerdp/client/cmdline.h>
 
 #include "../xf_client.h"
+#include "../xf_cmdline.h"
 #include "../xfreerdp.h"
 
 static void xfreerdp_print_help(void)
@@ -75,10 +76,10 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 	xfc = (xfContext*)context;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	status = xf_client_settings_parse_command_line(xfc, argc, argv);
 	if (status)
 	{
-		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		rc = xf_client_settings_command_line_status_print(xfc, status, argc, argv);
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			xf_list_monitors(xfc);

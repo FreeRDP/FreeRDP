@@ -35,7 +35,7 @@ public class PrintJobMonitor extends FileObserver
 
 	public PrintJobMonitor(Listener listener)
 	{
-		super(new File(WATCH_DIR), CLOSE_WRITE);
+		super(WATCH_DIR, CLOSE_WRITE);
 		this.listener = listener;
 	}
 

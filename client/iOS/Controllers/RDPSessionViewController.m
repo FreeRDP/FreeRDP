@@ -13,23 +13,32 @@
 #import <objc/runtime.h>
 #import "RDPSessionViewController.h"
 #import "RDPSessionToolbar.h"
+#import "RDPOverlayStyle.h"
 #import "RDPKeyboard.h"
 #import "Utils.h"
 #import "Toast+UIView.h"
 #import "ConnectionParams.h"
-#import "CredentialsInputController.h"
-#import "VerifyCertificateController.h"
 
 #define TOOLBAR_HEIGHT 44
-#define ADVANCED_KEYBOARD_HEIGHT 200
+#define KEYBOARD_CURSOR_MARGIN 44.0
 
 @interface RDPSessionViewController (Private)
 - (void)showSessionToolbar:(BOOL)show;
-- (UIToolbar *)keyboardToolbar;
 - (void)initGestureRecognizers;
 - (void)suspendSession;
 - (void)fitSessionViewToViewport;
 - (void)centerSessionViewInViewport;
+- (void)setKeyboardOverlap:(CGFloat)overlap;
+- (CGRect)sessionViewportFrame;
+- (void)installHingeInteraction;
+- (BOOL)hasHinge;
+- (BOOL)isHingeOpen;
+- (void)showConnectingViewWithText:(NSString *)text;
+- (void)hideConnectingView;
+- (void)endBackgroundTask;
+- (void)scheduleRemoteResize;
+- (void)cancelRemoteResize;
+- (void)sendRemoteResize;
 - (CGPoint)remotePositionForSessionViewPosition:(CGPoint)position;
 - (CGPoint)sessionViewPositionForRemotePosition:(CGPoint)position;
 - (CGPoint)clampedSessionViewCursorPosition:(CGPoint)position;
@@ -40,6 +49,26 @@
 - (void)moveCursorToSessionViewPosition:(CGPoint)position;
 - (void)sendMouseButtonEvent:(int)event;
 - (BOOL)isKeyboardActive;
+- (BOOL)isLandscape;
+- (CGFloat)advancedKeyboardHeight;
+- (void)resetTextInput;
+- (void)commitTextInput;
+@end
+
+// dummy text field
+@interface RDPSessionTextField : UITextField
+@end
+
+@implementation RDPSessionTextField
+
+- (void)deleteBackward
+{
+	// send backspace to remote session if dummy text field is empty.
+	if ([[self text] length] == 0)
+		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
+	[super deleteBackward];
+}
+
 @end
 
 @implementation RDPSessionViewController
@@ -58,6 +87,7 @@
 		_session_initilized = NO;
 
 		_advanced_keyboard_view = nil;
+		_sent_text = [@"" retain];
 		_last_session_viewport_size = CGSizeZero;
 
 		_session_toolbar_visible = NO;
@@ -84,10 +114,37 @@
 	// let pointer input pass through the session toolbar to the remote session
 	object_setClass(_session_toolbar, [RDPSessionToolbar class]);
 	[(RDPSessionToolbar *)_session_toolbar setPassthroughView:_session_scrollview];
+	if (RDPSupportLiquidGlass() == NO)
+	{
+		// before ios 26, the gray background has been displayed in toolbar
+		UIToolbarAppearance *appearance = [[[UIToolbarAppearance alloc] init] autorelease];
+
+		// set transparent background
+		[appearance configureWithTransparentBackground];
+		[_session_toolbar setStandardAppearance:appearance];
+		[_session_toolbar setCompactAppearance:appearance];
+		[_session_toolbar setScrollEdgeAppearance:appearance];
+		[_session_toolbar setCompactScrollEdgeAppearance:appearance];
+	}
 
 	// init keyboard toolbar
-	_keyboard_toolbar = [[self keyboardToolbar] retain];
+	_keyboard_toolbar = [[RDPKeyboardToolbarView alloc] initWithTarget:self];
 	[_dummy_textfield setInputAccessoryView:_keyboard_toolbar];
+
+	// the text field must not alter when typed
+	[_dummy_textfield setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+	[_dummy_textfield setSpellCheckingType:UITextSpellCheckingTypeNo];
+	[_dummy_textfield setSmartQuotesType:UITextSmartQuotesTypeNo];
+	[_dummy_textfield setSmartDashesType:UITextSmartDashesTypeNo];
+	[_dummy_textfield setSmartInsertDeleteType:UITextSmartInsertDeleteTypeNo];
+	[_dummy_textfield addTarget:self
+	                     action:@selector(textInputChanged:)
+	           forControlEvents:UIControlEventEditingChanged];
+
+	// the undo/redo/paste shortcuts of the iPad keyboard act on the hidden text field, not on
+	// the remote session, so don't show them
+	[[_dummy_textfield inputAssistantItem] setLeadingBarButtonGroups:@[]];
+	[[_dummy_textfield inputAssistantItem] setTrailingBarButtonGroups:@[]];
 
 	// init gesture recognizers
 	[self initGestureRecognizers];
@@ -102,6 +159,9 @@
 {
 	[super viewDidLoad];
 
+	// shown around the session when it avoids the screen edges
+	[[self view] setBackgroundColor:[UIColor blackColor]];
+
 	[_session_scrollview setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
 	[_session_scrollview setContentInset:UIEdgeInsetsZero];
 	[_session_scrollview setScrollIndicatorInsets:UIEdgeInsetsZero];
@@ -110,18 +170,23 @@
 	[_session_scrollview setAlwaysBounceHorizontal:NO];
 	[_session_scrollview setAlwaysBounceVertical:NO];
 	[_session_scrollview setBounces:NO];
+
+	[self installHingeInteraction];
 }
 
 - (void)viewDidLayoutSubviews
 {
 	[super viewDidLayoutSubviews];
 
-	CGRect viewportFrame = [[self view] bounds];
+	CGRect viewportFrame = [self sessionViewportFrame];
 	[_session_scrollview setFrame:viewportFrame];
 
 	CGSize viewportSize = [_session_scrollview bounds].size;
 	if (!CGSizeEqualToSize(viewportSize, _last_session_viewport_size))
+	{
 		[self fitSessionViewToViewport];
+		[self scheduleRemoteResize];
+	}
 	else
 		[self centerSessionViewInViewport];
 }
@@ -139,6 +204,24 @@
 - (UIStatusBarAnimation)preferredStatusBarUpdateAnimation
 {
 	return UIStatusBarAnimationSlide;
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size
+       withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+	[super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+
+	// the system keyboard changes its height with the orientation, so follow it
+	[coordinator
+	    animateAlongsideTransition:nil
+	                    completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+		                    if (!_advanced_keyboard_view)
+			                    return;
+		                    CGRect frame = [_advanced_keyboard_view frame];
+		                    frame.size.height = [self advancedKeyboardHeight];
+		                    [_advanced_keyboard_view setFrame:frame];
+		                    [_dummy_textfield reloadInputViews];
+	                    }];
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -193,6 +276,7 @@
 		{
 			[_session resume];
 			[self sessionBitmapContextDidChange:_session];
+			[self scheduleRemoteResize];
 		}
 		else
 			[_session connect];
@@ -235,6 +319,7 @@
 
 	[_advanced_keyboard_view release];
 	[_keyboard_toolbar release];
+	[_sent_text release];
 	[_session release];
 	[super dealloc];
 }
@@ -274,74 +359,98 @@
 	return YES;
 }
 
-- (BOOL)textField:(UITextField *)textField
-    shouldChangeCharactersInRange:(NSRange)range
-                replacementString:(NSString *)string
+- (void)textFieldDidEndEditing:(UITextField *)textField
 {
-	if ([string length] > 0)
-	{
-		for (int i = 0; i < [string length]; i++)
-		{
-			unichar curChar = [string characterAtIndex:i];
+	[self commitTextInput];
+}
 
-			// special handling for return/enter key
-			if (curChar == '\n')
-				[[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-			else
-				[[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+	[self commitTextInput];
+	[[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+
+	// turn off default action
+	return NO;
+}
+
+// sends what changed in the text field since the last time
+- (void)textInputChanged:(UITextField *)textField
+{
+	// send marked text (chinese, japanese) only once committed, sending every change
+	// arrives out of order on the server
+	if ([textField markedTextRange] != nil)
+		return;
+
+	// a letter typed with a toolbar modifier is a shortcut (e.g. ctrl+a). read it before
+	// sending, which releases the modifiers
+	RDPKeyboard *keyboard = [RDPKeyboard getSharedRDPKeyboard];
+	BOOL modifierPressed = [keyboard ctrlPressed] || [keyboard altPressed] ||
+	                       [keyboard winPressed] || [keyboard altGrPressed];
+
+	NSString *text = [textField text] != nil ? [textField text] : @"";
+	NSUInteger length = MIN([text length], [_sent_text length]);
+	NSUInteger common = 0;
+
+	while (common < length)
+	{
+		if ([text characterAtIndex:common] != [_sent_text characterAtIndex:common])
+		{
+			break;
 		}
+		common++;
+	}
+
+	// don't split a multi code point character (e.g. emoji)
+	if (common < [_sent_text length])
+		common = MIN(common, [_sent_text rangeOfComposedCharacterSequenceAtIndex:common].location);
+	if (common < [text length])
+		common = MIN(common, [text rangeOfComposedCharacterSequenceAtIndex:common].location);
+
+	for (NSUInteger i = common; i < [_sent_text length];)
+	{
+		NSRange range = [_sent_text rangeOfComposedCharacterSequenceAtIndex:i];
+		[keyboard sendBackspaceKeyStroke];
+		i = NSMaxRange(range);
+	}
+
+	for (NSUInteger i = common; i < [text length]; i++)
+	{
+		[keyboard sendUnicode:[text characterAtIndex:i]];
+	}
+
+	BOOL isLastCharLetter = NO;
+	if ([text length] > 0)
+	{
+		isLastCharLetter = [[NSCharacterSet letterCharacterSet]
+		    characterIsMember:[text characterAtIndex:[text length] - 1]];
+	}
+
+	// some keyboard (korean) composes with the letters before the cursor
+	// keep it
+	if (modifierPressed || !isLastCharLetter)
+	{
+		[self resetTextInput];
 	}
 	else
 	{
-		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
+		[_sent_text release];
+		_sent_text = [text copy];
 	}
-
-	return NO;
 }
 
 #pragma mark -
 #pragma mark AdvancedKeyboardDelegate functions
 - (void)advancedKeyPressedVKey:(NSInteger)key
 {
+	[self commitTextInput];
 	[[RDPKeyboard getSharedRDPKeyboard] sendVirtualKeyCode:key];
-}
-
-- (void)advancedKeyPressedUnicode:(NSInteger)key
-{
-	[[RDPKeyboard getSharedRDPKeyboard] sendUnicode:key];
 }
 
 #pragma mark - RDP keyboard handler
 
 - (void)modifiersChangedForKeyboard:(RDPKeyboard *)keyboard
 {
-	UIBarButtonItem *curItem;
-
-	// shift button (only on iPad)
-	int objectIdx = 0;
-	if (IsPad())
-	{
-		objectIdx = 2;
-		curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
-		[curItem setStyle:[keyboard shiftPressed] ? UIBarButtonItemStyleDone
-		                                          : UIBarButtonItemStylePlain];
-	}
-
-	// ctrl button
-	objectIdx += 2;
-	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
-	[curItem
-	    setStyle:[keyboard ctrlPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
-
-	// win button
-	objectIdx += 2;
-	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
-	[curItem setStyle:[keyboard winPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
-
-	// alt button
-	objectIdx += 2;
-	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
-	[curItem setStyle:[keyboard altPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
+	[_keyboard_toolbar updateModifiersWithKeyboard:keyboard];
 }
 
 #pragma mark -
@@ -349,10 +458,7 @@
 
 - (void)session:(RDPSession *)session didFailToConnect:(int)reason
 {
-	// remove and release connecting view
-	[_connecting_indicator_view stopAnimating];
-	[_connecting_view removeFromSuperview];
-	[_connecting_view autorelease];
+	[self hideConnectingView];
 
 	// return to bookmark list
 	[[self navigationController] popViewControllerAnimated:YES];
@@ -360,21 +466,30 @@
 
 - (void)sessionWillConnect:(RDPSession *)session
 {
-	// load connecting view
-	[[NSBundle mainBundle] loadNibNamed:@"RDPConnectingView" owner:self options:nil];
+	[self showConnectingViewWithText:NSLocalizedString(@"Connecting",
+	                                                   @"Connecting progress view - label")];
+}
 
-	// set strings
-	[_lbl_connecting setText:NSLocalizedString(@"Connecting", @"Connecting progress view - label")];
-	[_cancel_connect_button setTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
-	                        forState:UIControlStateNormal];
+- (void)sessionWillReconnect:(RDPSession *)session
+{
+	(void)session;
+	[self showConnectingViewWithText:NSLocalizedString(
+	                                     @"Reconnecting",
+	                                     @"Connecting progress view - reconnect label")];
+}
 
-	// center view and give it round corners
-	[_connecting_view setCenter:[[self view] center]];
-	[[_connecting_view layer] setCornerRadius:10];
+- (void)sessionDidReconnect:(RDPSession *)session
+{
+	(void)session;
+	[self hideConnectingView];
+}
 
-	// display connecting view and start indicator
-	[[self view] addSubview:_connecting_view];
-	[_connecting_indicator_view startAnimating];
+- (void)sessionDidActivateDisplayControl:(RDPSession *)session
+{
+	(void)session;
+	// a request made before the (re)connected channel was ready got dropped
+	_requested_remote_size = CGSizeZero;
+	[self scheduleRemoteResize];
 }
 
 - (void)sessionDidConnect:(RDPSession *)session
@@ -404,10 +519,29 @@
 	                                           object:nil];
 	[self hardwareKeyboardChanged:nil];
 
-	// remove and release connecting view
-	[_connecting_indicator_view stopAnimating];
-	[_connecting_view removeFromSuperview];
-	[_connecting_view autorelease];
+	// another app may have changed the clipboard while this one was inactive
+	[[NSNotificationCenter defaultCenter] addObserver:self
+	                                         selector:@selector(localClipboardChanged:)
+	                                             name:UIApplicationDidBecomeActiveNotification
+	                                           object:nil];
+	[self localClipboardChanged:nil];
+
+	// ios can suspends the app soon after it switched to the background and may then take its
+	// socket away
+	[[NSNotificationCenter defaultCenter] addObserver:self
+	                                         selector:@selector(applicationDidEnterBackground:)
+	                                             name:UIApplicationDidEnterBackgroundNotification
+	                                           object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
+	                                         selector:@selector(applicationWillEnterForeground:)
+	                                             name:UIApplicationWillEnterForegroundNotification
+	                                           object:nil];
+
+	[self hideConnectingView];
+
+	// not on every bitmap change: with dynamic resolution that happens whenever the view resizes
+	[_session setToolbarVisible:YES];
+	[self showSessionToolbar:[_session toolbarVisible]];
 
 	// check if session settings changed ...
 	// The 2nd width check is to ignore changes in resolution settings due to the RDVH display bug
@@ -439,6 +573,10 @@
 
 - (void)sessionDidDisconnect:(RDPSession *)session
 {
+	[self hideConnectingView];
+	[self endBackgroundTask];
+	[self cancelRemoteResize];
+
 	// return to bookmark list
 	[[self navigationController] popViewControllerAnimated:YES];
 }
@@ -460,12 +598,8 @@
 	_has_cursor_view_position = NO;
 	_has_user_moved_cursor = NO;
 	_last_session_viewport_size = CGSizeZero;
+	_requested_remote_size = CGSizeZero;
 	[self fitSessionViewToViewport];
-
-	// show/hide toolbar
-	[_session
-	    setToolbarVisible:![[NSUserDefaults standardUserDefaults] boolForKey:@"ui.hide_tool_bar"]];
-	[self showSessionToolbar:[_session toolbarVisible]];
 }
 
 - (void)sessionBitmapContextDidChange:(RDPSession *)session
@@ -525,35 +659,132 @@
 	[_session_view setDefaultRemoteCursor];
 }
 
+- (void)session:(RDPSession *)session didChangeRemoteClipboardText:(NSString *)text
+{
+	(void)session;
+	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+	[pasteboard setString:text];
+
+	// don't announce the server's own text back to it
+	_pasteboard_change_count = [pasteboard changeCount];
+}
+
+- (void)session:(RDPSession *)session requestsClipboardTextWithParams:(NSMutableDictionary *)params
+{
+	(void)session;
+	NSString *text = [[UIPasteboard generalPasteboard] string];
+	if (text)
+		[params setObject:text forKey:@"text"];
+}
+
 - (void)session:(RDPSession *)session requestsAuthenticationWithParams:(NSMutableDictionary *)params
 {
-	CredentialsInputController *view_controller =
-	    [[[CredentialsInputController alloc] initWithNibName:@"CredentialsInputView"
-	                                                  bundle:nil
-	                                                 session:_session
-	                                                  params:params] autorelease];
-	[self presentViewController:view_controller animated:YES completion:nil];
+	// custom view --> stock UIAlertController
+	__block UIAlertController *alert = [UIAlertController
+	    alertControllerWithTitle:NSLocalizedString(@"Credentials", @"Credentials title")
+	                     message:NSLocalizedString(@"Please provide the missing user information.",
+	                                               @"Credentials input view message")
+	              preferredStyle:UIAlertControllerStyleAlert];
+
+	// username input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField
+		    setPlaceholder:NSLocalizedString(@"Username", @"Credentials Input Username hint")];
+		[textField setText:[params valueForKey:@"username"]];
+		[textField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+		[textField setAutocorrectionType:UITextAutocorrectionTypeNo];
+	}];
+
+	// password input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField
+		    setPlaceholder:NSLocalizedString(@"Password", @"Credentials Input Password hint")];
+		[textField setText:[params valueForKey:@"password"]];
+		[textField setSecureTextEntry:YES];
+	}];
+
+	// domain input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField setPlaceholder:NSLocalizedString(@"Domain", @"Credentials Input Domain hint")];
+		[textField setText:[params valueForKey:@"domain"]];
+		[textField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+		[textField setAutocorrectionType:UITextAutocorrectionTypeNo];
+	}];
+
+	// cancel btn
+	UIAlertAction *cancelAction =
+	    [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
+	                             style:UIAlertActionStyleCancel
+	                           handler:^(UIAlertAction *action) {
+		                           [params setValue:[NSNumber numberWithBool:NO] forKey:@"result"];
+		                           [[session uiRequestCompleted] signal];
+	                           }];
+	[alert addAction:cancelAction];
+
+	// login btn
+	UIAlertAction *loginAction = [UIAlertAction
+	    actionWithTitle:NSLocalizedString(@"Login", @"Login Button")
+	              style:UIAlertActionStyleDefault
+	            handler:^(UIAlertAction *action) {
+		            NSArray *fields = [alert textFields];
+		            [params setValue:[[fields objectAtIndex:0] text] forKey:@"username"];
+		            [params setValue:[[fields objectAtIndex:1] text] forKey:@"password"];
+		            [params setValue:[[fields objectAtIndex:2] text] forKey:@"domain"];
+		            [params setValue:[NSNumber numberWithBool:YES] forKey:@"result"];
+		            [[session uiRequestCompleted] signal];
+	            }];
+	[alert addAction:loginAction];
+
+	[alert setPreferredAction:loginAction];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params
 {
-	VerifyCertificateController *view_controller =
-	    [[[VerifyCertificateController alloc] initWithNibName:@"VerifyCertificateView"
-	                                                   bundle:nil
-	                                                  session:_session
-	                                                   params:params] autorelease];
-	[self presentViewController:view_controller animated:YES completion:nil];
+	NSString *message = [NSString
+	    stringWithFormat:@"%@\n\n%@ %@",
+	                     NSLocalizedString(@"The identity of the remote computer cannot be "
+	                                       @"verified. Do you want to connect anyway?",
+	                                       @"Verify certificate view message"),
+	                     NSLocalizedString(@"Issuer:", @"Verify certificate view issuer label"),
+	                     [params valueForKey:@"issuer"]];
+	UIAlertController *alert =
+	    [UIAlertController alertControllerWithTitle:nil
+	                                        message:message
+	                                 preferredStyle:UIAlertControllerStyleAlert];
+
+	[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"No", @"No Button")
+	                                          style:UIAlertActionStyleCancel
+	                                        handler:^(UIAlertAction *action) {
+		                                        [params setValue:[NSNumber numberWithBool:NO]
+		                                                  forKey:@"result"];
+		                                        [[session uiRequestCompleted] signal];
+	                                        }]];
+
+	[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Yes", @"Yes Button")
+	                                          style:UIAlertActionStyleDefault
+	                                        handler:^(UIAlertAction *action) {
+		                                        [params setValue:[NSNumber numberWithBool:YES]
+		                                                  forKey:@"result"];
+		                                        [[session uiRequestCompleted] signal];
+	                                        }]];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session
 {
 	// set remote resolution that matches the on-screen viewport.
-	CGSize size = [self view].bounds.size;
-	UIScreen *screen = [[self view] window] ? [[[self view] window] screen] : [UIScreen mainScreen];
-	CGFloat scale =
-	    [screen respondsToSelector:@selector(nativeScale)] ? [screen nativeScale] : [screen scale];
+	CGSize size = [self sessionViewportFrame].size;
+	// not the main screen: the scene can move between displays (iphone duo, external display)
+	UIScreen *screen = [[[[self view] window] windowScene] screen];
+	CGFloat scale = screen ? [screen nativeScale] : [[self traitCollection] displayScale];
 	if (scale <= 0.0f)
 		scale = 1.0f;
+
+	// 'Automatic (75%/50%)': a smaller remote desktop drawn scaled up, so its text looks larger
+	scale *= FitScreenScale([[session params] intForKey:@"screen_resolution_type"]);
 
 	size.width = ceilf(size.width * scale);
 	size.height = ceilf(size.height * scale);
@@ -566,8 +797,9 @@
 		size.height = floorf(size.height * downscale);
 	}
 
-	size.width = MAX(64.0f, size.width);
-	size.height = MAX(64.0f, size.height);
+	size.width = (UINT32)MAX(200.0f, size.width) & ~1u;
+	size.height = (UINT32)MAX(200.0f, size.height) & ~1u;
+
 	return size;
 }
 
@@ -579,11 +811,12 @@
 	if (_advanced_keyboard_view)
 		return;
 
-	CGRect rect = CGRectMake(0, 0, [[self view] bounds].size.width, ADVANCED_KEYBOARD_HEIGHT);
+	CGRect rect = CGRectMake(0, 0, [[self view] bounds].size.width, [self advancedKeyboardHeight]);
 	_advanced_keyboard_view = [[AdvancedKeyboardView alloc] initWithFrame:rect delegate:self];
 
 	[_dummy_textfield setInputView:_advanced_keyboard_view];
 	[_dummy_textfield reloadInputViews];
+	[_keyboard_toolbar setExtendedKeyboardActive:YES];
 }
 
 - (void)destroyAdvancedKeyboard
@@ -595,6 +828,7 @@
 	[_dummy_textfield setInputView:nil];
 	[_advanced_keyboard_view autorelease];
 	_advanced_keyboard_view = nil;
+	[_keyboard_toolbar setExtendedKeyboardActive:NO];
 }
 
 // toggle advanced keyboard (not keyboard)
@@ -633,9 +867,27 @@
 	[[RDPKeyboard getSharedRDPKeyboard] toggleAltKey];
 }
 
+- (IBAction)toggleAltGrKey:(id)sender
+{
+	[[RDPKeyboard getSharedRDPKeyboard] toggleAltGrKey];
+}
+
 - (IBAction)pressEscKey:(id)sender
 {
+	[self commitTextInput];
 	[[RDPKeyboard getSharedRDPKeyboard] sendEscapeKeyStroke];
+}
+
+- (IBAction)pressDeleteKey:(id)sender
+{
+	[self commitTextInput];
+	[[RDPKeyboard getSharedRDPKeyboard] sendDeleteKeyStroke];
+}
+
+- (IBAction)pressTabKey:(id)sender
+{
+	[self commitTextInput];
+	[[RDPKeyboard getSharedRDPKeyboard] sendTabKeyStroke];
 }
 
 #pragma mark -
@@ -654,19 +906,6 @@
 		[_dummy_textfield resignFirstResponder];
 }
 
-- (IBAction)toggleExtKeyboard:(id)sender
-{
-	// if the sys kb is shown but not the advanced kb then toggle the advanced kb
-	if ([self isKeyboardActive] && !_advanced_keyboard_view)
-		[self toggleKeyboardWhenOtherVisible:nil];
-	else
-	{
-		if (![self isKeyboardActive])
-			[self showAdvancedKeyboardAnimated];
-		[self toggleKeyboard:nil];
-	}
-}
-
 - (IBAction)disconnectSession:(id)sender
 {
 	[_session disconnect];
@@ -682,14 +921,40 @@
 
 - (void)keyboardWillShow:(NSNotification *)notification
 {
-	(void)notification;
+	// remember the system keyboard's height (to show advanced keyboard view)
+	if (!_advanced_keyboard_view)
+	{
+		CGRect frame =
+		    [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+		CGFloat height = frame.size.height - [_keyboard_toolbar bounds].size.height;
+
+		// 100.0 is heuristic value.
+		if (height >= 100.0)
+		{
+			if ([self isLandscape])
+				_keyboard_height_landscape = height;
+			else
+				_keyboard_height_portrait = height;
+		}
+	}
+
 	[self centerSessionViewInViewport];
+
+	// get covered area (keyboard)
+	CGRect keyboardFrame =
+	    [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+	keyboardFrame = [[self view] convertRect:keyboardFrame fromView:nil];
+
+	CGRect coveredArea = CGRectIntersection([_session_scrollview frame], keyboardFrame);
+
+	[self setKeyboardOverlap:CGRectGetHeight(coveredArea)];
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification
 {
 	(void)notification;
 	[self centerSessionViewInViewport];
+	[self setKeyboardOverlap:0.0];
 }
 
 - (void)keyboardDidHide:(NSNotification *)notification
@@ -712,6 +977,39 @@
 		[_session_view becomeFirstResponder];
 	else if (!connected)
 		[_session_view resignFirstResponder];
+}
+
+- (void)localClipboardChanged:(NSNotification *)notification
+{
+	// hasStrings does not show the paste permission alert, unlike reading the string
+	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+	if ([pasteboard changeCount] == _pasteboard_change_count)
+		return;
+
+	_pasteboard_change_count = [pasteboard changeCount];
+	[_session sendClipboardHasText:[pasteboard hasStrings]];
+}
+
+- (void)applicationDidEnterBackground:(NSNotification *)notification
+{
+	// keeps the connection alive for a short visit to another app
+	// after a longer one the session will reconnect
+	[self endBackgroundTask];
+	_background_task =
+	    [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+		    [self endBackgroundTask];
+	    }];
+
+	// ios lays the window out in other orientations for the app switcher snapshots
+	[self cancelRemoteResize];
+}
+
+- (void)applicationWillEnterForeground:(NSNotification *)notification
+{
+	[self endBackgroundTask];
+
+	// the device may have been rotated while the app was in the background
+	[self scheduleRemoteResize];
 }
 
 #pragma mark -
@@ -911,6 +1209,159 @@
 #pragma mark -
 #pragma mark Helper functions
 
+- (void)showConnectingViewWithText:(NSString *)text
+{
+	[self hideConnectingView];
+
+	// load connecting view
+	[[NSBundle mainBundle] loadNibNamed:@"RDPConnectingView" owner:self options:nil];
+
+	// set strings
+	[_lbl_connecting setText:text];
+	[_cancel_connect_button setTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
+	                        forState:UIControlStateNormal];
+
+	// center view and give it round corners
+	[_connecting_view setCenter:[[self view] center]];
+	[[_connecting_view layer] setCornerRadius:10];
+
+	// display connecting view and start indicator
+	[[self view] addSubview:_connecting_view];
+	[_connecting_indicator_view startAnimating];
+}
+
+- (void)hideConnectingView
+{
+	if (!_connecting_view)
+		return;
+
+	// remove and release connecting view
+	[_connecting_indicator_view stopAnimating];
+	[_connecting_view removeFromSuperview];
+	[_connecting_view autorelease];
+	_connecting_view = nil;
+}
+
+- (void)endBackgroundTask
+{
+	if (_background_task == UIBackgroundTaskInvalid)
+		return;
+
+	[[UIApplication sharedApplication] endBackgroundTask:_background_task];
+	_background_task = UIBackgroundTaskInvalid;
+}
+
+- (void)scheduleRemoteResize
+{
+	// a fixed resolution bookmark keeps its remote size
+	if (!IsFitScreenOption([[_session params] intForKey:@"screen_resolution_type"]))
+		return;
+
+	// wait until the size settles, e.g. while a window is dragged or the device unfolds
+	[self cancelRemoteResize];
+	[self performSelector:@selector(sendRemoteResize) withObject:nil afterDelay:0.5];
+}
+
+- (void)cancelRemoteResize
+{
+	[NSObject cancelPreviousPerformRequestsWithTarget:self
+	                                         selector:@selector(sendRemoteResize)
+	                                           object:nil];
+}
+
+- (void)sendRemoteResize
+{
+	UIWindowScene *scene = [[[self view] window] windowScene];
+	if (!scene || [scene activationState] == UISceneActivationStateBackground)
+		return;
+
+	CGSize size = [self sizeForFitScreenForSession:_session];
+
+	// check pending resize (server will resize soon)
+	CGSize current = _requested_remote_size;
+	if (CGSizeEqualToSize(current, CGSizeZero))
+	{
+		// no pending
+		rdpSettings *settings = [_session getSessionParams];
+		current = CGSizeMake(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                     freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	}
+
+	// ignore same size
+	if (CGSizeEqualToSize(size, current))
+		return;
+
+	_requested_remote_size = size;
+	[_session sendMonitorLayoutWithSize:size];
+}
+
+- (CGRect)sessionViewportFrame
+{
+	// use full screen (ipad or 'Avoid Screen Edges' disabled)
+	if (IsPad() || ![[NSUserDefaults standardUserDefaults] boolForKey:@"ui.avoid_screen_edges"])
+		return [[self view] bounds];
+
+	// if 'Avoid Screen Edges' enabled (only for iphone)
+	UIEdgeInsets insets = [[self view] safeAreaInsets];
+	CGRect bounds = [[self view] bounds];
+
+	// landscape or iphone duo --> fill the home indicator area
+	if ([self hasHinge] || bounds.size.width > bounds.size.height)
+		insets.bottom = 0.0f;
+
+	// opened iphone duo --> set gap at right side band
+	if ([self isHingeOpen] && insets.right > insets.left)
+		insets.left = insets.right;
+
+	return UIEdgeInsetsInsetRect(bounds, insets);
+}
+
+- (void)installHingeInteraction
+{
+#if defined(__IPHONE_27_1) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_27_1)
+	if (@available(iOS 27.1, *))
+	{
+		__block RDPSessionViewController *weakSelf = self;
+		UIHingeInteraction *interaction = [[UIHingeInteraction alloc]
+		    initWithUpdateHandler:^(UIHingeInteraction *hingeInteraction,
+		                            UIHingeInteractionUpdate *update) {
+			    (void)hingeInteraction;
+			    UIHinge *hinge = [update hinge];
+
+			    // this device is not iphone duo
+			    if (!hinge)
+				    return;
+
+			    weakSelf->_has_hinge = YES;
+
+			    UIHingeStatus hingeStatus = [hinge status];
+			    BOOL open = (hingeStatus == UIHingeStatusPartiallyOpen ||
+			                 hingeStatus == UIHingeStatusFullyOpen);
+			    if (weakSelf->_hinge_open == open)
+				    return;
+
+			    weakSelf->_hinge_open = open;
+			    [[weakSelf view] setNeedsLayout];
+		    }];
+
+		[[self view] addInteraction:interaction];
+		[interaction release];
+	}
+#endif
+}
+
+// return YES (iphone duo)
+// return NO (other devices)
+- (BOOL)hasHinge
+{
+	return _has_hinge;
+}
+
+- (BOOL)isHingeOpen
+{
+	return _hinge_open;
+}
+
 - (void)fitSessionViewToViewport
 {
 	CGSize viewportSize = [_session_scrollview bounds].size;
@@ -946,6 +1397,33 @@
 	                              MAX(viewportSize.height, sessionFrame.size.height))];
 }
 
+- (void)setKeyboardOverlap:(CGFloat)overlap
+{
+	// extend the scrollable area to push up using 2 finger
+	UIEdgeInsets inset = [_session_scrollview contentInset];
+	inset.bottom = overlap;
+	[_session_scrollview setContentInset:inset];
+
+	CGPoint offset = [_session_scrollview contentOffset];
+	CGFloat viewportHeight = [_session_scrollview bounds].size.height;
+
+	// cursor is usually located in typing area
+	if (overlap > 0.0 && _has_cursor_view_position)
+	{
+		CGPoint cursor = [_session_scrollview convertPoint:_cursor_view_position
+		                                          fromView:_session_view];
+		CGFloat visibleBottom = offset.y + viewportHeight - overlap;
+		CGFloat hiddenHeight = cursor.y + KEYBOARD_CURSOR_MARGIN - visibleBottom;
+		if (hiddenHeight > 0.0)
+			offset.y += hiddenHeight;
+	}
+
+	// stay within the scrollable range or scrolls back once the keyboard hides
+	CGFloat maxOffsetY = [_session_scrollview contentSize].height + overlap - viewportHeight;
+	offset.y = MAX(MIN(offset.y, maxOffsetY), 0.0);
+	[_session_scrollview setContentOffset:offset animated:YES];
+}
+
 - (void)showSessionToolbar:(BOOL)show
 {
 	// already shown or hidden?
@@ -956,6 +1434,9 @@
 	// the status bar / notch / Dynamic Island on modern devices (and side notch
 	// in landscape).
 	UIEdgeInsets safe = [[self view] safeAreaInsets];
+	// devices without a notch (e.g. iPad) have no top inset once the status bar is hidden,
+	// so keep at least the system margin to the top edge
+	safe.top = MAX(safe.top, [self systemMinimumLayoutMargins].leading);
 	CGFloat toolbarWidth = [[self view] bounds].size.width - safe.left - safe.right;
 
 	if (show)
@@ -984,73 +1465,6 @@
 	}
 }
 
-- (UIToolbar *)keyboardToolbar
-{
-	UIToolbar *keyboard_toolbar = [[[UIToolbar alloc] initWithFrame:CGRectNull] autorelease];
-	[keyboard_toolbar setBarStyle:UIBarStyleBlack];
-
-	UIBarButtonItem *esc_btn =
-	    [[[UIBarButtonItem alloc] initWithTitle:@"Esc"
-	                                      style:UIBarButtonItemStylePlain
-	                                     target:self
-	                                     action:@selector(pressEscKey:)] autorelease];
-	UIImage *win_icon =
-	    [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"toolbar_icon_win"
-	                                                                     ofType:@"png"]];
-	UIBarButtonItem *win_btn =
-	    [[[UIBarButtonItem alloc] initWithImage:win_icon
-	                                      style:UIBarButtonItemStylePlain
-	                                     target:self
-	                                     action:@selector(toggleWinKey:)] autorelease];
-	UIBarButtonItem *ctrl_btn =
-	    [[[UIBarButtonItem alloc] initWithTitle:@"Ctrl"
-	                                      style:UIBarButtonItemStylePlain
-	                                     target:self
-	                                     action:@selector(toggleCtrlKey:)] autorelease];
-	UIBarButtonItem *alt_btn =
-	    [[[UIBarButtonItem alloc] initWithTitle:@"Alt"
-	                                      style:UIBarButtonItemStylePlain
-	                                     target:self
-	                                     action:@selector(toggleAltKey:)] autorelease];
-	UIBarButtonItem *ext_btn = [[[UIBarButtonItem alloc]
-	    initWithTitle:@"Ext"
-	            style:UIBarButtonItemStylePlain
-	           target:self
-	           action:@selector(toggleKeyboardWhenOtherVisible:)] autorelease];
-	UIBarButtonItem *done_btn = [[[UIBarButtonItem alloc]
-	    initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-	                         target:self
-	                         action:@selector(toggleKeyboard:)] autorelease];
-	UIBarButtonItem *flex_spacer =
-	    [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
-	                                                   target:nil
-	                                                   action:nil] autorelease];
-
-	// iPad gets a shift button, iphone doesn't (there's just not enough space ...)
-	NSArray *items;
-	if (IsPad())
-	{
-		UIBarButtonItem *shift_btn =
-		    [[[UIBarButtonItem alloc] initWithTitle:@"Shift"
-		                                      style:UIBarButtonItemStylePlain
-		                                     target:self
-		                                     action:@selector(toggleShiftKey:)] autorelease];
-		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, shift_btn, flex_spacer, ctrl_btn,
-		                                  flex_spacer, win_btn, flex_spacer, alt_btn, flex_spacer,
-		                                  ext_btn, flex_spacer, done_btn, nil];
-	}
-	else
-	{
-		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, ctrl_btn, flex_spacer, win_btn,
-		                                  flex_spacer, alt_btn, flex_spacer, ext_btn, flex_spacer,
-		                                  done_btn, nil];
-	}
-
-	[keyboard_toolbar setItems:items];
-	[keyboard_toolbar sizeToFit];
-	return keyboard_toolbar;
-}
-
 - (void)initGestureRecognizers
 {
 	// single tap recognizer. A double-click is just two quick taps, which the server
@@ -1066,7 +1480,7 @@
 	UILongPressGestureRecognizer *longPressRecognizer = [[[UILongPressGestureRecognizer alloc]
 	    initWithTarget:self
 	            action:@selector(handleLongPress:)] autorelease];
-	[longPressRecognizer setMinimumPressDuration:0.45];
+	[longPressRecognizer setMinimumPressDuration:0.3];
 	[longPressRecognizer setAllowableMovement:12.0];
 	[longPressRecognizer setDelegate:self];
 
@@ -1106,7 +1520,7 @@
 	    initWithTarget:self
 	            action:@selector(handleDoubleLongPress:)] autorelease];
 	[doubleLongPressRecognizer setNumberOfTouchesRequired:2];
-	[doubleLongPressRecognizer setMinimumPressDuration:0.5];
+	[doubleLongPressRecognizer setMinimumPressDuration:0.3];
 
 	// 3 finger, single tap gesture for showing/hiding the toolbar
 	UITapGestureRecognizer *single3FingersTapRecognizer = [[[UITapGestureRecognizer alloc]
@@ -1254,6 +1668,8 @@
 
 - (void)sendMouseButtonEvent:(int)event
 {
+	// typed text can not be changed anymore.
+	[self commitTextInput];
 	CGPoint position = [self currentCursorViewPosition];
 	[_session sendInputEvent:[self eventDescriptorForMouseEvent:event position:position]];
 }
@@ -1266,6 +1682,40 @@
 - (BOOL)isKeyboardActive
 {
 	return [_dummy_textfield isFirstResponder];
+}
+
+- (void)resetTextInput
+{
+	[_dummy_textfield setText:@""];
+	[_sent_text release];
+	_sent_text = [@"" retain];
+}
+
+- (void)commitTextInput
+{
+	if ([[_dummy_textfield text] length] == 0)
+		return;
+
+	// send the text being composed as it is
+	[_dummy_textfield unmarkText];
+	[self textInputChanged:_dummy_textfield];
+	[self resetTextInput];
+}
+
+- (BOOL)isLandscape
+{
+	CGSize size = [[self view] bounds].size;
+	return size.width > size.height;
+}
+
+- (CGFloat)advancedKeyboardHeight
+{
+	// before the system keyboard was shown in this orientation, use a typical height
+	if ([self isLandscape])
+		return (_keyboard_height_landscape > 0.0) ? _keyboard_height_landscape
+		                                          : (IsPad() ? 400.0 : 200.0);
+	return (_keyboard_height_portrait > 0.0) ? _keyboard_height_portrait
+	                                         : (IsPad() ? 320.0 : 290.0);
 }
 
 @end

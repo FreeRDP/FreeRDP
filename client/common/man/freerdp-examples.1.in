@@ -1,0 +1,71 @@
+.SH "DETAILS (client common)"
+.PP
+/app:command-pipe
+.RS 4
+Launches remote application programs by writing to a pipe\&.
+.br
+
+Launch format is JSON
+.RE
+.PP
+Supported JSON object elements:
+.RS 4
+.PP
+\fIflags\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON integer\fR
+.br
+
+Mask of flags as documented in [MS-RDPERP] 2.2.2.3.1 Client Execute PDU (TS_RAIL_ORDER_EXEC)
+.RE
+.RE
+.PP
+\fIprogram\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON string\fR
+.br
+
+The program to launch.
+This option is required.
+.RE
+.RE
+.PP
+\fIworkingdir\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON string\fR
+.br
+
+The working directory for the application to launch
+.RE
+.RE
+.PP
+\fIarguments\fR
+.RS 4
+.PP
+\fIJSON string\fR
+.RS 4
+The arguments to pass to the application
+.RE
+.RE
+.RE
+.RE
+.br
+
+.PP
+Example
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+echo '{"flags":1234,"program":"notepad","workingdir": "c:\\Users\\demo1\\Documents","arguments": "/PT file.txt printername printer.dll 1234"}' > $XDG_RUNTIME_DIR/freerdp-rail-v1-<connection hash>.fifo
+.if n \{\
+.RE
+.\}
+

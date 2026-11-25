@@ -179,6 +179,24 @@ extern "C"
 	WINPR_API double WINPR_JSON_GetNumberValue(const WINPR_JSON* item);
 
 	/**
+	 * @brief Return the Integer value of a JSON item
+	 * @param item the JSON item to query
+	 * @return The Integer value
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API INT64 WINPR_JSON_GetIntegerValue(const WINPR_JSON* item);
+
+	/**
+	 * @brief Return the unsigned Integer value of a JSON item
+	 * @param item the JSON item to query
+	 * @return The unsigned Integer value
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API UINT64 WINPR_JSON_GetUIntegerValue(const WINPR_JSON* item);
+
+	/**
 	 * @brief Check if JSON item is valid
 	 * @param item the JSON item to query
 	 * @return \b TRUE if valid, \b FALSE otherwise
@@ -388,6 +406,17 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name,
 	                                                    int64_t number);
+
+	/**
+	 * @brief WINPR_JSON_AddUIntegerToObject
+	 * @param object The JSON object the new item is added to
+	 * @param name The name of the object
+	 * @return the new JSON item added
+	 * @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API WINPR_JSON* WINPR_JSON_AddUIntegerToObject(WINPR_JSON* object, const char* name,
+	                                                     uint64_t number);
 
 	/**
 	 * @brief WINPR_JSON_AddStringToObject

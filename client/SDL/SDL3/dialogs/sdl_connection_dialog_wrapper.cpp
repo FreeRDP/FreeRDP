@@ -39,8 +39,16 @@ void SdlConnectionDialogWrapper::create(rdpContext* context)
 	const auto enabled =
 	    freerdp_settings_get_bool(context->settings, FreeRDP_UseCommonStdioCallbacks);
 	_connection_dialog.reset();
+#if defined(__EMSCRIPTEN__)
+	/* Every SDL window of an Emscripten build draws on the page's one canvas, so a dialog
+	 * window would take over the session's canvas. SDL 3.2 also throws from creating a
+	 * window while another one is open (FS.mkdir of its drop directory; SDL 3.4 catches
+	 * it), which unwinds the main thread while it holds _mux. The messages go to the log. */
+	WINPR_UNUSED(enabled);
+#else
 	if (!enabled)
 		_connection_dialog = std::make_unique<SDLConnectionDialog>(context);
+#endif
 }
 
 void SdlConnectionDialogWrapper::destroy()
@@ -51,6 +59,11 @@ void SdlConnectionDialogWrapper::destroy()
 bool SdlConnectionDialogWrapper::isRunning() const
 {
 	std::unique_lock lock(_mux);
+	/* Messages are queued here and handled on the main thread, so the dialog is still busy
+	 * while the queue is not empty. Without this the event loop can leave before an error
+	 * pushed by the RDP thread was ever shown. */
+	if (!_queue.empty())
+		return true;
 	if (!_connection_dialog)
 		return false;
 	return _connection_dialog->running();
@@ -161,7 +174,8 @@ void SdlConnectionDialogWrapper::handleShow()
 	std::unique_lock lock(_mux);
 	while (!_queue.empty())
 	{
-		auto arg = _queue.front();
+		/* take the message out of the queue: pop() destroys the queued one */
+		auto arg = std::move(_queue.front());
 		_queue.pop();
 
 		if (arg.hasTitle() && _connection_dialog)

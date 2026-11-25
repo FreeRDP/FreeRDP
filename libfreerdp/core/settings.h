@@ -23,6 +23,7 @@
 
 #include <winpr/string.h>
 #include <winpr/sspi.h>
+#include <winpr/json.h>
 
 #include <freerdp/config.h>
 
@@ -119,5 +120,16 @@ FREERDP_LOCAL BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_target_net_addresses_resize(rdpSettings* settings, size_t count);
+
+/** @brief A function that reads \b rdpSettings values from a JSON file
+ *
+ *  @param settings The settings to store the updated values in
+ *  @param json The JSON to read the data from
+ *
+ *  @return TRUE for success, FALSE on failure
+ *  @since version 3.33.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL freerdp_settings_apply_from_json(rdpSettings* settings, WINPR_JSON* json);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */

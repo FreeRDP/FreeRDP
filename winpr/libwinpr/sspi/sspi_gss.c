@@ -96,6 +96,10 @@ BOOL sspi_gss_unwrap_token(const SecBuffer* buf, WinPrAsn1_OID* oid, uint16_t* t
 	WINPR_ASSERT(oid);
 	WINPR_ASSERT(token);
 
+	/* The peer might not have sent a token at all */
+	if (!buf->pvBuffer || (buf->cbBuffer == 0))
+		return FALSE;
+
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, buf->pvBuffer, buf->cbBuffer);
 
 	if (!WinPrAsn1DecReadApp(&dec, &tag, &dec2) || tag != 0)

@@ -22,6 +22,6 @@ set(${MODULE_PREFIX}_SRCS addin.c settings.c settings_getters.c settings_str.c s
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

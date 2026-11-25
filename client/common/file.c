@@ -973,9 +973,15 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
-		LPCWSTR uc = WINPR_PACKED_ALIGN_CAST(LPCWSTR, (&buffer[2]));
-		const size_t charlen = size / sizeof(WCHAR) - 1;
+		/* algignment unknown, so create a copy. */
+		const size_t nobomsize = size - 2;
+		WCHAR* uc = calloc(nobomsize + 2, 1);
+		if (!uc)
+			return FALSE;
+		memcpy(uc, &buffer[2], nobomsize);
+		const size_t charlen = nobomsize / sizeof(WCHAR);
 		copy = ConvertWCharNToUtf8Alloc(uc, charlen, &size);
+		winpr_znfree(uc, nobomsize);
 		if (!copy)
 		{
 			WLog_ERR(TAG, "Failed to convert RDP file from UCS2 to UTF8");
@@ -1049,6 +1055,8 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 		WLog_ERR(TAG, "RDP file %s is empty", name);
 		goto fail;
 	}
+	if ((UINT64)file_size > SIZE_MAX - 2)
+		goto fail;
 
 	buffer = (BYTE*)malloc((size_t)file_size + 2);
 
@@ -1190,6 +1198,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->ConnectionType = freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType);
 
 	file->ScreenModeId = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ? 2 : 1;
+	file->SmartSizing = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ? 1 : 0;
 
 	LoadBalanceInfoLength = freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
 	if (LoadBalanceInfoLength > 0)
@@ -1378,7 +1387,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		size_t offset = 0;
 		UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 		const UINT32* MonitorIds = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
+
 		/* String size: 10 char UINT32 max string length, 1 char separator, one element nullptr */
+		if (count > UINT32_MAX / 11 - 1)
+			return FALSE;
 		size_t size = count * (10 + 1) + 1;
 
 		char* str = calloc(size, sizeof(char));
@@ -2220,7 +2232,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 
 	if (~file->GatewayUsageMethod)
 	{
-		if (!freerdp_set_gateway_usage_method(settings, file->GatewayUsageMethod))
+		UINT32 GatewayUsageMethod = file->GatewayUsageMethod;
+		const char* host = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+
+		/* If a gateway is requested ensure that there is also a gateway host set. Without one log
+		 * the file inconsistency. */
+		if ((GatewayUsageMethod != TSC_PROXY_MODE_NONE_DIRECT) &&
+		    (GatewayUsageMethod != TSC_PROXY_MODE_NONE_DETECT) && utils_str_is_empty(host))
+		{
+			WLog_WARN(TAG, "[rdp file] Inconsistent gateway settings: gatewayhostname empty or "
+			               "missing.");
+		}
+		if (!freerdp_set_gateway_usage_method(settings, GatewayUsageMethod))
 			return FALSE;
 	}
 
@@ -2559,6 +2582,15 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook))
 			return FALSE;
+
+		/* clients only read GrabKeyboard, 2 (full screen only) keeps its default */
+		if ((file->KeyboardHook == KEYBOARD_HOOK_LOCAL) ||
+		    (file->KeyboardHook == KEYBOARD_HOOK_REMOTE))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GrabKeyboard,
+			                               file->KeyboardHook == KEYBOARD_HOOK_REMOTE))
+				return FALSE;
+		}
 	}
 
 	if (~(size_t)file->SelectedMonitors)
@@ -2668,6 +2700,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
+	{
+		const char* url = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+		return freerdp_utils_aad_apply_known_configuration_by_url(settings, url);
+	}
 	return TRUE;
 }
 

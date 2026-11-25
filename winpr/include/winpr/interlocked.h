@@ -100,7 +100,8 @@ extern "C"
 
 #ifdef _WIN64
 	WINPR_DEPRECATED_VAR(
-	    "[since 3.27.0]", typedef union DECLSPEC_ALIGN(16) {
+	    "[since 3.27.0]",
+	    typedef union DECLSPEC_ALIGN(16) {
 		    struct
 		    {
 			    ULONGLONG Alignment;
@@ -126,12 +127,14 @@ extern "C"
 			    ULONGLONG Reserved : 3;
 			    ULONGLONG NextEntry : 60;
 		    } HeaderX64;
-	    } WINPR_SLIST_HEADER);
+	    } WINPR_SLIST_HEADER),
+	    *WINPR_PSLIST_HEADER;
 
 #else /* _WIN64 */
 
 	WINPR_DEPRECATED_VAR(
-	    "[since 3.27.0]", typedef union {
+	    "[since 3.27.0]",
+	    typedef union {
 		    ULONGLONG Alignment;
 
 		    struct
@@ -140,10 +143,9 @@ extern "C"
 			    WORD Depth;
 			    WORD Sequence;
 		    } DUMMYSTRUCTNAME;
-	    } WINPR_SLIST_HEADER);
+	    } WINPR_SLIST_HEADER),
+	    *WINPR_PSLIST_HEADER;
 #endif /* _WIN64 */
-
-	typedef WINPR_SLIST_HEADER* WINPR_PSLIST_HEADER;
 
 	/* Singly-Linked List */
 

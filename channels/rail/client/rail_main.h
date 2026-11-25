@@ -57,4 +57,6 @@ WINPR_ATTR_NODISCARD FREERDP_LOCAL RailClientContext* rail_get_client_interface(
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_send_channel_data(railPlugin* rail, wStream* s);
 
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_send_client_status(RailClientContext* context);
+
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H */

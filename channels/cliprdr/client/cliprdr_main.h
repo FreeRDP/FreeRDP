@@ -47,7 +47,6 @@ typedef struct
 	BOOL fileClipNoFilePaths;
 	BOOL canLockClipData;
 	BOOL hasHugeFileSupport;
-	BOOL initialFormatListSent;
 } cliprdrPlugin;
 
 WINPR_ATTR_NODISCARD

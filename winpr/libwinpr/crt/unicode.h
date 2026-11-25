@@ -29,4 +29,32 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
                             LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                             LPBOOL lpUsedDefaultChar);
+
+/** @brief Helper function converting a utf escaped string (e.g. '\\u1234\\u10cdef' or similar)
+ * to proper UTF-8
+ *
+ *  @param str The utf escaped string to unescape
+ *  @param len The length of the string in bytes. (strlen)
+ *
+ *  @return -1 for failure, the length of the resulting string otherwise. (must be less than
+ * \ref len)
+ *  @since version 3.32.2
+ */
+WINPR_ATTR_NODISCARD
+SSIZE_T winpr_utfEscapedStringToUtf8(char* str, size_t len);
+
+/** @brief Helper function converting a utf-8 string to a utf escaped string (e.g. result is
+ * like '\\u1234\\u10cdef')
+ *
+ *  @param str The utf-8 string to escape
+ *  @param len The length of the string in bytes. (strlen)
+ *  @param pDstLen an optional pointer that will be set to the length of the resulting string in
+ * bytes. (strlen)
+ *
+ *  @return NULL for failure, the utf-escaped string otherwise
+ *  @since version 3.32.2
+ */
+WINPR_ATTR_MALLOC(free, 1)
+char* winpr_utf8ToUtfEscapedString(char* str, size_t len, size_t* pDstLen);
+
 #endif

@@ -1,3 +1,5 @@
+#include <freerdp/config.h>
+
 #include <freerdp/client.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/settings.h>
@@ -115,6 +117,20 @@ static BOOL check_settings_gateway_response_timeout_default(rdpSettings* setting
 static BOOL check_settings_gateway_response_timeout_custom(rdpSettings* settings)
 {
 	return check_settings_gateway_response_timeout(settings, 120000);
+}
+
+static const char test_aad_user_agent[] = "TestAgent/1.0 (KHTML, like Gecko)";
+
+static BOOL check_settings_aad_user_agent(rdpSettings* settings)
+{
+	const char* ua = freerdp_settings_get_string(settings, FreeRDP_AadAuthUserAgent);
+	if (!ua || (strcmp(ua, test_aad_user_agent) != 0))
+	{
+		TEST_FAILURE("Expected AadAuthUserAgent = \"%s\", but got %s!\n", test_aad_user_agent,
+		             ua ? ua : "(null)");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
@@ -256,6 +272,262 @@ static BOOL check_settings_smart_sizing_size(rdpSettings* settings)
 	return result;
 }
 
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+/* a pick: the AV codecs as given, and the codecs not picked are off */
+static BOOL check_gfx_codecs(const rdpSettings* settings, BOOL av1, BOOL av2)
+{
+	BOOL result = TRUE;
+	const FreeRDP_Settings_Keys_Bool off[] = { FreeRDP_GfxH264, FreeRDP_GfxAVC444,
+		                                       FreeRDP_GfxAVC444v2, FreeRDP_RemoteFxCodec,
+		                                       FreeRDP_GfxProgressive };
+
+	for (size_t x = 0; x < ARRAYSIZE(off); x++)
+	{
+		if (freerdp_settings_get_bool(settings, off[x]))
+		{
+			TEST_FAILURE("Expected %s = FALSE, the codec was not picked!\n",
+			             freerdp_settings_get_name_for_key(off[x]));
+			result = FALSE;
+		}
+	}
+#if defined(WITH_GFX_AV1)
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1) != av1)
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = %d!\n", av1);
+		result = FALSE;
+	}
+#else
+	WINPR_UNUSED(av1);
+#endif
+#if defined(WITH_GFX_AV2)
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV2) != av2)
+	{
+		TEST_FAILURE("Expected GfxCodecAV2 = %d!\n", av2);
+		result = FALSE;
+	}
+#else
+	WINPR_UNUSED(av2);
+#endif
+	return result;
+}
+
+/* the default: no codec picked, both AV codecs offered and the server chooses */
+static BOOL check_settings_gfx_av_default(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+#if defined(WITH_GFX_AV1)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = TRUE without a pick, but it is FALSE!\n");
+		result = FALSE;
+	}
+#endif
+#if defined(WITH_GFX_AV2)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV2))
+	{
+		TEST_FAILURE("Expected GfxCodecAV2 = TRUE without a pick, but it is FALSE!\n");
+		result = FALSE;
+	}
+#endif
+	return result;
+}
+
+#if defined(WITH_GFX_H264)
+/* AVC420 picked: the AV codecs are not picked, so they are not offered */
+static BOOL check_settings_gfx_avc420_only(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+	const FreeRDP_Settings_Keys_Bool off[] = {
+#if defined(WITH_GFX_AV1)
+		FreeRDP_GfxCodecAV1,
+#endif
+#if defined(WITH_GFX_AV2)
+		FreeRDP_GfxCodecAV2,
+#endif
+		FreeRDP_GfxAVC444, FreeRDP_RemoteFxCodec, FreeRDP_GfxProgressive
+	};
+	for (size_t x = 0; x < ARRAYSIZE(off); x++)
+	{
+		if (freerdp_settings_get_bool(settings, off[x]))
+		{
+			TEST_FAILURE("Expected %s = FALSE with /gfx:AVC420, but it is TRUE!\n",
+			             freerdp_settings_get_name_for_key(off[x]));
+			result = FALSE;
+		}
+	}
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxH264))
+	{
+		TEST_FAILURE("Expected GfxH264 = TRUE, but GfxH264 = FALSE!\n");
+		result = FALSE;
+	}
+	return result;
+}
+#endif
+#endif
+
+#if defined(WITH_GFX_AV1)
+/* AV1 picked: AV1 alone is offered, AV2 and the other codecs are not */
+static BOOL check_settings_gfx_av1(rdpSettings* settings)
+{
+	return check_gfx_codecs(settings, TRUE, FALSE);
+}
+
+static BOOL check_settings_gfx_av1_i420(rdpSettings* settings)
+{
+	BOOL result = check_gfx_codecs(settings, TRUE, FALSE);
+	if (freerdp_settings_get_uint32(settings, FreeRDP_GfxCodecAV1Profile) != 0)
+	{
+		TEST_FAILURE("Expected GfxCodecAV1Profile = 0 for AV1:i420!\n");
+		result = FALSE;
+	}
+	return result;
+}
+#endif
+
+#if defined(WITH_GFX_AV2)
+/* AV2 picked: AV2 alone is offered */
+static BOOL check_settings_gfx_av2(rdpSettings* settings)
+{
+	return check_gfx_codecs(settings, FALSE, TRUE);
+}
+
+/* AV2:off picks nothing: only AV2 goes, AV1 stays as it was */
+static BOOL check_settings_gfx_av2_off(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+#if defined(WITH_GFX_AV1)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV1))
+	{
+		TEST_FAILURE("Expected GfxCodecAV1 = TRUE after AV2:off, but it is FALSE!\n");
+		result = FALSE;
+	}
+#endif
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxCodecAV2))
+	{
+		TEST_FAILURE("Expected GfxCodecAV2 = FALSE after AV2:off, but it is TRUE!\n");
+		result = FALSE;
+	}
+	return result;
+}
+#endif
+
+#if defined(WITH_GFX_AV1) && defined(WITH_GFX_AV2)
+static BOOL check_settings_gfx_av1_av2(rdpSettings* settings)
+{
+	return check_gfx_codecs(settings, TRUE, TRUE);
+}
+#endif
+
+static BOOL check_settings_gfx_without_h264(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) != CONNECTION_TYPE_AUTODETECT)
+	{
+		TEST_FAILURE("Expected ConnectionType = AUTODETECT, but ConnectionType = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType));
+		result = FALSE;
+	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
+	    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444) ||
+	    freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444v2))
+	{
+		TEST_FAILURE(
+		    "Expected the H.264 codecs off as /gfx asked, but /network:auto turned them on!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive))
+	{
+		TEST_FAILURE("Expected GfxProgressive = TRUE, but GfxProgressive = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_network_auto_h264(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GfxH264) ||
+	    !freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444))
+	{
+		TEST_FAILURE("Expected /network:auto alone to turn the H.264 codecs on!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_modem_with_fonts(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) != CONNECTION_TYPE_MODEM)
+	{
+		TEST_FAILURE("Expected ConnectionType = MODEM, but ConnectionType = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType));
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AllowFontSmoothing))
+	{
+		TEST_FAILURE("Expected AllowFontSmoothing = TRUE as +fonts asked, but /network:modem "
+		             "turned it off!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_DisableWallpaper))
+	{
+		TEST_FAILURE("Expected DisableWallpaper = TRUE, the default of /network:modem!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+/* Mirrors the position bits private to parse_floatbar_options() in cmdline.c. */
+#define FLOATBAR_FLAG_POSITION_MASK 0xC0u
+#define FLOATBAR_FLAG_POSITION_LEFT 0x40u
+#define FLOATBAR_FLAG_POSITION_RIGHT 0x80u
+
+WINPR_ATTR_NODISCARD
+static BOOL check_floatbar_position(rdpSettings* settings, UINT32 expected_position_bits)
+{
+	const UINT32 floatbar = freerdp_settings_get_uint32(settings, FreeRDP_Floatbar);
+	const UINT32 actual_position_bits = floatbar & FLOATBAR_FLAG_POSITION_MASK;
+
+	if (actual_position_bits != expected_position_bits)
+	{
+		TEST_FAILURE("Expected Floatbar position bits 0x%02" PRIx32 ", got 0x%02" PRIx32
+		             " (Floatbar=0x%08" PRIx32 ")\n",
+		             expected_position_bits, actual_position_bits, floatbar);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_settings_floatbar_position_default(rdpSettings* settings)
+{
+	return check_floatbar_position(settings, 0);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_settings_floatbar_position_left(rdpSettings* settings)
+{
+	return check_floatbar_position(settings, FLOATBAR_FLAG_POSITION_LEFT);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL check_settings_floatbar_position_right(rdpSettings* settings)
+{
+	return check_floatbar_position(settings, FLOATBAR_FLAG_POSITION_RIGHT);
+}
+
 typedef struct
 {
 	int expected_status;
@@ -380,6 +652,11 @@ static const test tests[] = {
 	    nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 	{ 0,
+	  check_settings_aad_user_agent,
+	  { "testfreerdp", "/azure:tenantid:common,\"user-agent:TestAgent/1.0 (KHTML, like Gecko)\"",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
 	  check_settings_multimon_disabled,
 	  { "testfreerdp", DISABLED_DISPLAY_OPTIONS_RDP, "/multimon:off", nullptr },
 	  { WINPR_C_ARRAY_INIT },
@@ -424,6 +701,101 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_multimon_enabled,
 	  { "testfreerdp", "+multimon", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#if defined(WITH_GFX_H264)
+	{ 0,
+	  check_settings_gfx_without_h264,
+	  { "testfreerdp", "/gfx:progressive,AVC420:off,AVC444:off", "/network:auto",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_without_h264,
+	  { "testfreerdp", "/network:auto", "/gfx:progressive,AVC420:off,AVC444:off",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_network_auto_h264,
+	  { "testfreerdp", "/network:auto", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#if defined(WITH_GFX_AV1) || defined(WITH_GFX_AV2)
+	{ 0,
+	  check_settings_gfx_av_default,
+	  { "testfreerdp", "/gfx", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#if defined(WITH_GFX_H264)
+	{ 0,
+	  check_settings_gfx_avc420_only,
+	  { "testfreerdp", "/gfx:AVC420", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#endif
+#if defined(WITH_GFX_AV1)
+	{ 0,
+	  check_settings_gfx_av1,
+	  { "testfreerdp", "/gfx:AV1", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av1,
+	  { "testfreerdp", "/gfx:AV1:on", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av1,
+	  { "testfreerdp", "/gfx:AV1:i444", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av1_i420,
+	  { "testfreerdp", "/gfx:AV1:i420", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#if defined(WITH_GFX_AV2)
+	{ 0,
+	  check_settings_gfx_av2,
+	  { "testfreerdp", "/gfx:AV2", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av2,
+	  { "testfreerdp", "/gfx:AV2:i420", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gfx_av2_off,
+	  { "testfreerdp", "/gfx:AV2:off", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+#if defined(WITH_GFX_AV1) && defined(WITH_GFX_AV2)
+	{ 0,
+	  check_settings_gfx_av1_av2,
+	  { "testfreerdp", "/gfx:AV1,AV2", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
+	{ 0,
+	  check_settings_modem_with_fonts,
+	  { "testfreerdp", "+fonts", "/network:modem", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_default,
+	  { "testfreerdp", "/floatbar", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_left,
+	  { "testfreerdp", "/floatbar:position:left", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_right,
+	  { "testfreerdp", "/floatbar:position:right", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_default,
+	  { "testfreerdp", "/floatbar:position:center", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_floatbar_position_left,
+	  { "testfreerdp", "/floatbar:sticky:on,default:visible,show:always,position:left",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/floatbar:position:bogus", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 };
 // NOLINTEND(bugprone-suspicious-missing-comma)

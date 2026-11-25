@@ -21,6 +21,12 @@
 #pragma once
 
 #if !defined(_WIN32)
-char* setNewAndSaveOldTZ(const char* val);
+
+#include <winpr/wtypes.h>
+
 void restoreSavedTZ(char* saved);
+
+WINPR_ATTR_MALLOC(restoreSavedTZ, 1)
+char* setNewAndSaveOldTZ(const char* val);
+
 #endif

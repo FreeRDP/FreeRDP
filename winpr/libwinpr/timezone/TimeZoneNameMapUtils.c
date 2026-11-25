@@ -40,6 +40,7 @@
 #endif
 
 #include "TimeZoneNameMap.h"
+#include "TimeZoneIanaAliases.h"
 
 #if defined(WITH_TIMEZONE_COMPILED)
 #include "TimeZoneNameMap_static.h"
@@ -67,6 +68,7 @@ static void tz_entry_free(TimeZoneNameMapEntry* entry)
 	*entry = empty;
 }
 
+#if defined(WITH_TIMEZONE_COMPILED)
 static TimeZoneNameMapEntry tz_entry_clone(const TimeZoneNameMapEntry* entry)
 {
 	TimeZoneNameMapEntry clone = WINPR_C_ARRAY_INIT;
@@ -85,6 +87,7 @@ static TimeZoneNameMapEntry tz_entry_clone(const TimeZoneNameMapEntry* entry)
 		clone.StandardName = _strdup(entry->StandardName);
 	return clone;
 }
+#endif
 
 static void tz_context_free(void)
 {
@@ -96,7 +99,7 @@ static void tz_context_free(void)
 }
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
-static char* tz_get_object_str(WINPR_JSON* json, size_t pos, const char* name)
+char* TimeZoneJsonGetString(WINPR_JSON* json, size_t pos, const char* name)
 {
 	WINPR_ASSERT(json);
 	if (!WINPR_JSON_IsObject(json) || !WINPR_JSON_HasObjectItem(json, name))
@@ -135,11 +138,11 @@ static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEnt
 		return FALSE;
 	}
 
-	entry->Id = tz_get_object_str(json, pos, "Id");
-	entry->StandardName = tz_get_object_str(json, pos, "StandardName");
-	entry->DisplayName = tz_get_object_str(json, pos, "DisplayName");
-	entry->DaylightName = tz_get_object_str(json, pos, "DaylightName");
-	entry->Iana = tz_get_object_str(json, pos, "Iana");
+	entry->Id = TimeZoneJsonGetString(json, pos, "Id");
+	entry->StandardName = TimeZoneJsonGetString(json, pos, "StandardName");
+	entry->DisplayName = TimeZoneJsonGetString(json, pos, "DisplayName");
+	entry->DaylightName = TimeZoneJsonGetString(json, pos, "DaylightName");
+	entry->Iana = TimeZoneJsonGetString(json, pos, "Iana");
 	if (!entry->Id || !entry->StandardName || !entry->DisplayName || !entry->DaylightName ||
 	    !entry->Iana)
 	{
@@ -149,7 +152,7 @@ static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEnt
 	return TRUE;
 }
 
-static WINPR_JSON* load_timezones_from_file(const char* filename)
+WINPR_JSON* TimeZoneJsonParseFile(const char* filename)
 {
 	WINPR_JSON* json = WINPR_JSON_ParseFromFile(filename);
 	if (!json)
@@ -199,7 +202,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 			goto end;
 		}
 
-		json = load_timezones_from_file(filename);
+		json = TimeZoneJsonParseFile(filename);
 		if (!json)
 			goto end;
 
@@ -325,8 +328,15 @@ static char* get_wzid_icu(const UChar* utzid, size_t utzid_len)
 			UErrorCode error2 = U_ZERO_ERROR;
 			int32_t rc2 = ucal_getWindowsTimeZoneID(
 			    utzid, WINPR_ASSERTING_INT_CAST(int32_t, utzid_len), wzid, rc, &error2);
-			if (U_SUCCESS(error2) && (rc2 > 0))
-				res = ConvertWCharNToUtf8Alloc(wzid, (size_t)rc, nullptr);
+			if (U_SUCCESS(error2) && (rc2 > 0) && (rc2 < rc))
+			{
+#if U_IS_BIG_ENDIAN
+				const WCHAR* wzid_le = ByteSwapUnicode(wzid, (size_t)rc2);
+#else
+				const WCHAR* wzid_le = wzid;
+#endif
+				res = ConvertWCharNToUtf8Alloc(wzid_le, (size_t)rc2 + 1, nullptr);
+			}
 			free(wzid);
 		}
 	}
@@ -340,7 +350,12 @@ static char* get(const char* iana)
 	if (!utzid)
 		return nullptr;
 
-	char* wzid = get_wzid_icu(utzid, utzid_len);
+#if U_IS_BIG_ENDIAN
+	const UChar* utzid_native = ByteSwapUnicode(utzid, utzid_len);
+#else
+	const UChar* utzid_native = utzid;
+#endif
+	char* wzid = get_wzid_icu(utzid_native, utzid_len);
 	free(utzid);
 	return wzid;
 }
@@ -393,11 +408,9 @@ static const char* map_fallback(const char* iana, WINPR_ATTR_UNUSED TimeZoneName
 }
 #endif
 
-const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
+WINPR_ATTR_NODISCARD
+static const char* iana_to_windows(const char* iana, TimeZoneNameType type)
 {
-	if (!iana)
-		return nullptr;
-
 	const char* val = get_for_type(iana, type, iana_cmp);
 	if (val)
 		return val;
@@ -407,4 +420,22 @@ const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
 		return nullptr;
 
 	return get_for_type(wzid, type, id_cmp);
+}
+
+const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
+{
+	if (!iana)
+		return nullptr;
+
+	const char* val = iana_to_windows(iana, type);
+	if (val)
+		return val;
+
+	/* The tables (CLDR) and the system (tzdata, browsers) may each use either the current or the
+	 * legacy name of a renamed zone, so try the other spelling too. */
+	const char* alias = TimeZoneIanaAlias(iana);
+	if (!alias)
+		return nullptr;
+
+	return iana_to_windows(alias, type);
 }

@@ -14,6 +14,7 @@
 #import "RDPSessionView.h"
 #import "RDPCursor.h"
 #import "AdvancedKeyboardView.h"
+#import "RDPKeyboardToolbarView.h"
 
 @interface RDPSessionViewController
     : UIViewController <RDPSessionDelegate, AdvancedKeyboardDelegate, RDPKeyboardDelegate,
@@ -33,6 +34,9 @@
 	// dummy text field used to display the keyboard
 	IBOutlet UITextField *_dummy_textfield;
 
+	// dummy text field that has already been sent to the remote session
+	NSString *_sent_text;
+
 	// connecting view and the controls within that view
 	IBOutlet UIView *_connecting_view;
 	IBOutlet UILabel *_lbl_connecting;
@@ -40,7 +44,7 @@
 	IBOutlet UIButton *_cancel_connect_button;
 
 	// extended keyboard toolbar
-	UIToolbar *_keyboard_toolbar;
+	RDPKeyboardToolbarView *_keyboard_toolbar;
 
 	// rdp session
 	RDPSession *_session;
@@ -48,7 +52,19 @@
 
 	// keyboard extension view
 	AdvancedKeyboardView *_advanced_keyboard_view;
+
+	// height of the system keyboard per orientation
+	CGFloat _keyboard_height_portrait;
+	CGFloat _keyboard_height_landscape;
 	CGSize _last_session_viewport_size;
+
+	// iphone duo: the session also fills the home indicator area in portrait
+	BOOL _has_hinge;
+	// iphone duo: unfolded (hinge partially or fully open)
+	BOOL _hinge_open;
+
+	// sent but not applied by the server yet
+	CGSize _requested_remote_size;
 
 	CGPoint _prev_long_press_position;
 	CGPoint _cursor_view_position;
@@ -59,6 +75,12 @@
 	BOOL _long_press_active;
 	BOOL _mouse_drag_active;
 	BOOL _pointer_is_indirect;
+
+	// last local clipboard change already sent to the server
+	NSInteger _pasteboard_change_count;
+
+	// keeps the session running for a moment when app switched background
+	UIBackgroundTaskIdentifier _background_task;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil

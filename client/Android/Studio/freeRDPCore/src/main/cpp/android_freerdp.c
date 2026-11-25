@@ -37,6 +37,7 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client.h>
 #include <freerdp/constants.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/primitives.h>
@@ -61,6 +62,8 @@
 
 /* Defines the JNI version supported by this library. */
 #define FREERDP_JNI_VERSION FREERDP_VERSION_FULL
+
+#define ANDROID_RECONNECT_MAX_DELAY_MS 3000
 
 static jclass gJavaActivityClass;
 static jmethodID gOnPointerSetMethod;
@@ -332,7 +335,11 @@ done:
 
 static BOOL android_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	WINPR_ASSERT(context);
+	if (!context)
+		return FALSE;
+
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse))
+		return TRUE;
 
 	return TRUE;
 }
@@ -603,6 +610,31 @@ static DWORD android_verify_changed_certificate_ex(freerdp* instance, const char
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
+static SSIZE_T android_retry_dialog(freerdp* instance, const char* what, size_t current,
+                                    void* userarg)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(what);
+	androidContext* afc = (androidContext*)instance->context;
+	WINPR_ASSERT(afc);
+
+	SSIZE_T delay = client_common_retry_dialog(instance, what, current, userarg);
+	if ((delay < 0) || (strcmp(what, "connection") != 0))
+		return delay;
+
+	if (delay > ANDROID_RECONNECT_MAX_DELAY_MS)
+		delay = ANDROID_RECONNECT_MAX_DELAY_MS;
+
+	if (WaitForSingleObject(afc->foregroundEvent, INFINITE) != WAIT_OBJECT_0)
+		return -1;
+	if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_CANCELLED)
+		return -1;
+
+	freerdp_callback("OnReconnecting", "(J)V", (jlong)instance);
+	return delay;
+}
+
 static int android_freerdp_run(freerdp* instance)
 {
 	WINPR_ASSERT(instance);
@@ -719,8 +751,14 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	if (!android_event_queue_init(instance))
 		return FALSE;
 
+	androidContext* afc = (androidContext*)context;
+	afc->foregroundEvent = CreateEvent(nullptr, TRUE, TRUE, nullptr);
+	if (!afc->foregroundEvent)
+		return FALSE;
+
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
+	instance->RetryDialog = android_retry_dialog;
 	instance->PostDisconnect = android_post_disconnect;
 	instance->PostFinalDisconnect = android_post_final_disconnect;
 	instance->AuthenticateEx = android_authenticate_ex;
@@ -734,6 +772,10 @@ static void android_client_free(freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;
+
+	androidContext* afc = (androidContext*)context;
+	if (afc->foregroundEvent && !CloseHandle(afc->foregroundEvent))
+		WLog_WARN(TAG, "CloseHandle failed");
 
 	android_event_queue_uninit(instance);
 }
@@ -864,6 +906,20 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 #endif
 }
 
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1foreground(
+    JNIEnv* env, jclass cls, jlong instance, jboolean foreground)
+{
+	freerdp* inst = (freerdp*)instance;
+
+	if (inst && inst->context)
+	{
+		androidContext* afc = (androidContext*)inst->context;
+		if (afc->foregroundEvent &&
+		    !(foreground ? SetEvent(afc->foregroundEvent) : ResetEvent(afc->foregroundEvent)))
+			WLog_WARN(TAG, "failed to update the foreground event");
+	}
+}
+
 JNIEXPORT jstring JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1get_1last_1error_1string(JNIEnv* env,
                                                                                    jclass cls,
@@ -961,8 +1017,14 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 		return JNI_FALSE;
 	}
 
+	/* The abort keeps an existing error, so force the cancel. */
+	freerdp_set_last_error_log(inst->context, FREERDP_ERROR_CONNECT_CANCELLED);
 	if (!freerdp_abort_connect_context(inst->context))
 		return JNI_FALSE;
+
+	/* Wake a held reconnect. */
+	if (ctx->foregroundEvent && !SetEvent(ctx->foregroundEvent))
+		WLog_WARN(TAG, "SetEvent failed");
 
 	return JNI_TRUE;
 }
@@ -1088,6 +1150,50 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1even
 	return JNI_TRUE;
 }
 
+/* Leaves the choice between the character and the key's scancode to
+ * freerdp_client_send_key_as_unicode, as the X11 and SDL clients do. */
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1as_1unicode_1event(
+    JNIEnv* env, jclass cls, jlong instance, jint keycode, jstring text, jint modmask,
+    jboolean down)
+{
+	/* LibFreeRDP.KBD_MOD_* in Java mirror these values. */
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LSHIFT == 0x01);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RSHIFT == 0x02);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LMENU == 0x04);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RMENU == 0x08);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LCONTROL == 0x10);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RCONTROL == 0x20);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_LWIN == 0x40);
+	WINPR_STATIC_ASSERT(FREERDP_CLIENT_KBD_MOD_RWIN == 0x80);
+
+	freerdp* inst = (freerdp*)instance;
+	const DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode((DWORD)keycode, 4);
+	const UINT16 flags = (down == JNI_TRUE) ? 0 : KBD_FLAGS_RELEASE;
+	const jsize len = text ? (*env)->GetStringLength(env, text) : 0;
+	const jchar* chars = (len > 0) ? (*env)->GetStringChars(env, text, nullptr) : nullptr;
+	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_key_as_unicode_new(
+	    flags, scancode, (const WCHAR*)chars, chars ? (size_t)len : 0, modmask);
+
+	if (chars)
+		(*env)->ReleaseStringChars(env, text, chars);
+
+	if (!event)
+		return JNI_FALSE;
+
+	if (!android_push_event(inst, event))
+	{
+		android_event_free(event);
+		return JNI_FALSE;
+	}
+
+	WLog_DBG(TAG,
+	         "send_key_as_unicode_event: %" PRIu32 ", %" PRId32 " UTF-16 units, 0x%02" PRIX32
+	         ", %d",
+	         scancode, (INT32)len, (UINT32)modmask, flags);
+	return JNI_TRUE;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1is_1unicode_1input_1supported(
     JNIEnv* env, jclass cls, jlong instance)
@@ -1148,7 +1254,8 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data(
 	freerdp* inst = (freerdp*)instance;
 	const char* data = jdata != nullptr ? (*env)->GetStringUTFChars(env, jdata, nullptr) : nullptr;
 	const size_t data_length = data ? (*env)->GetStringUTFLength(env, jdata) : 0;
-	jboolean ret = android_push_clipboard_event(inst, data, data_length, "text/plain");
+	jboolean ret =
+	    android_push_clipboard_event(inst, data, data_length, "text/plain;charset=utf-8");
 	WLog_DBG(TAG, "send_clipboard_data: (%s)", data);
 
 	if (data)

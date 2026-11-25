@@ -7,17 +7,40 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(DRIVER ${MODULE_NAME}.c)
 
-set(TESTS TestVersion.c TestSettings.c TestUtils.c)
+set(TESTS TestVersion.c TestSettings.c TestUtils.c TestPluginServices.c)
 
 if(BUILD_TESTING_INTERNAL)
-  list(APPEND TESTS TestStreamDump.c TestRdstls.c TestServerChannels.c)
+  list(
+    APPEND
+    TESTS
+    TestStreamDump.c
+    TestRdstls.c
+    TestServerChannels.c
+    TestDisconnect.c
+    TestMcs.c
+    TestUpdateBitmap.c
+    TestRdpPacketLengths.c
+    TestTransportWriteFail.c
+    TestInputWriteFail.c
+    TestRemoteSettings.c
+  )
+  if(WITH_RDPEUDP)
+    list(APPEND TESTS TestRdpUdp.c TestClientStaticBridge.c)
+  endif()
+  if(WITH_RDPEUDP_SERVER)
+    list(APPEND TESTS TestServerTunnel.c TestUdpListener.c)
+  endif()
 endif()
 
-set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCryptoCertificateDataSetPEM.c)
+set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c TestFuzzCryptoCertificateDataSetPEM.c)
 
 # TestFuzzServer generates a live cert via winpr-tools (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
+endif()
+
+if(WITH_RDPEUDP_SERVER)
+  list(APPEND FUZZERS TestFuzzRdpUdpServer.c TestFuzzRdpUdpTunnel.c)
 endif()
 
 # Test not compatible with package tests, disable
@@ -28,9 +51,19 @@ else()
   message("Skipping connection tests, requires BUILD_TESTING_INTERNAL, WITH_SAMPLE and WITH_SERVER set!")
 endif()
 
+# the interfaces of freerdp/wts_services.h between C and C++, when there is a
+# C++ compiler
+include(CheckLanguage)
+check_language(CXX)
+if(CMAKE_CXX_COMPILER)
+  enable_language(CXX)
+  list(APPEND TESTS TestWtsServicesC.c)
+  set(CXX_SRCS TestWtsServicesCxx.cpp TestWtsServicesCxx.h)
+endif()
+
 create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 
-add_executable(${MODULE_NAME} ${SRCS})
+add_executable(${MODULE_NAME} ${SRCS} ${CXX_SRCS})
 
 if(WITH_RESOURCE_VERSIONING)
   target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RESOURCE_VERSIONING)
@@ -45,21 +78,24 @@ endif()
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
-# TestCore does not call winpr-tools APIs. The link was added with
-# TestFuzzServer's on-the-fly cert generation and broke -DWITH_WINPR_TOOLS=OFF.
+# TestCore optionally uses winpr-tools: TestUdpListener requires makecert to create a
+# certificate for its tunnel test; otherwise, that test is omitted.
 target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
+if(WITH_WINPR_TOOLS AND WITH_RDPEUDP_SERVER AND BUILD_TESTING_INTERNAL)
+  target_link_libraries(${MODULE_NAME} PRIVATE winpr-tools)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_WINPR_TOOLS)
+endif()
+set(CORE_FUZZER_LIBS freerdp-client ${OPENSSL_LIBRARIES})
 if(WITH_WINPR_TOOLS)
-  set(CORE_FUZZER_LIBS "freerdp-client winpr-tools")
-else()
-  set(CORE_FUZZER_LIBS "freerdp-client")
+  list(APPEND CORE_FUZZER_LIBS winpr-tools)
 endif()
 
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "${CORE_FUZZER_LIBS}")
 
-# Seed corpus generator for the test TestFuzzServer, used to
-# (re)generate the seed corpus. Requires the client library,
-# POSIX sockets, and winpr-tools (makecert).
+# Seed corpus generator for the test TestFuzzServer, used to (re)generate the
+# seed corpus. Requires the client library, POSIX sockets, and winpr-tools
+# (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
   find_package(Threads REQUIRED)
   add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)
@@ -72,7 +108,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST
 
 foreach(test ${TESTS})
   get_filename_component(TestName ${test} NAME_WE)
-  add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
+  add_test(NAME ${TestName} COMMAND ${MODULE_NAME} ${TestName})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Core/Test")

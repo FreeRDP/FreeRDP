@@ -42,6 +42,11 @@ option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
 option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
+# Avoid a second SDL copy in the process.
+if(WITH_SDL_AUDIO AND NOT WITH_SDL_LINK_SHARED)
+  message(FATAL_ERROR "-DWITH_SDL_AUDIO=ON requires -DWITH_SDL_LINK_SHARED=ON")
+endif()
+
 if(WITH_WIN_CONSOLE)
   add_compile_definitions("WITH_WIN_CONSOLE")
   set(WIN32_GUI_FLAG "TRUE")
@@ -99,4 +104,22 @@ if(WITH_CLIENT_SDL3)
   else()
     message(WARNING "SDL3 requested but not found, continuing build without SDL3 client")
   endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  foreach(_sdl_major RANGE 2 3)
+    set(_sdl_target "sdl${_sdl_major}-freerdp")
+    if(TARGET ${_sdl_target})
+      get_target_property(_sdl_binary_dir ${_sdl_target} BINARY_DIR)
+      get_target_property(SDL_CLIENT_BINARY_NAME ${_sdl_target} OUTPUT_NAME)
+      set(SDL_CLIENT_UUID "com.freerdp.client.sdl${_sdl_major}")
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in ${_sdl_binary_dir}/Info.plist @ONLY)
+      set_target_properties(${_sdl_target} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${_sdl_binary_dir}/Info.plist)
+
+      # Standalone executables need an embedded plist for macOS privacy descriptions.
+      # MACOSX_BUNDLE_INFO_PLIST alone only applies when building an app bundle.
+      target_link_options(${_sdl_target} PRIVATE "LINKER:-sectcreate,__TEXT,__info_plist,${_sdl_binary_dir}/Info.plist")
+      set_property(TARGET ${_sdl_target} APPEND PROPERTY LINK_DEPENDS ${_sdl_binary_dir}/Info.plist)
+    endif()
+  endforeach()
 endif()

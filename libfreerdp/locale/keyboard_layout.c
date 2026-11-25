@@ -581,7 +581,7 @@ static const RDP_KEYBOARD_LAYOUT sRDP_KEYBOARD_LAYOUT_TABLE[] = {
 	{ 0x00000c0c, "Canadian French (Legacy)" },
 	{ 0x00011009, "Canadian Multilingual Standard" },
 	{ 0x0000085f, "Central Atlas Tamazight" },
-	{ 0x00000429, "Central Kurdish" },
+	{ 0x00000492, "Central Kurdish" },
 	{ 0x0000045c, "Cherokee Nation" },
 	{ 0x0001045c, "Cherokee Nation Phonetic" },
 	{ 0x00000804, "Chinese (Simplified) - US Keyboard" },
@@ -646,6 +646,7 @@ static const RDP_KEYBOARD_LAYOUT sRDP_KEYBOARD_LAYOUT_TABLE[] = {
 	{ 0x00000440, "Kyrgyz Cyrillic" },
 	{ 0x00000454, "Lao" },
 	{ 0x0000080a, "Latin American" },
+	{ 0x00000426, "Latvian" },
 	{ 0x00020426, "Latvian (Standard)" },
 	{ 0x00010426, "Latvian (Legacy)" },
 	{ 0x00070c00, "Lisu (Basic)" },
@@ -732,7 +733,6 @@ static const RDP_KEYBOARD_LAYOUT sRDP_KEYBOARD_LAYOUT_TABLE[] = {
 	{ 0x0001041f, "Turkish F" },
 	{ 0x0000041f, "Turkish Q" },
 	{ 0x00000442, "Turkmen" },
-	{ 0x00010408, "Uyghur" },
 	{ 0x00000480, "Uyghur (Legacy)" },
 	{ 0x00000422, "Ukrainian" },
 	{ 0x00020422, "Ukrainian (Enhanced)" },
@@ -844,7 +844,7 @@ static BOOL append_layout(WINPR_JSON* json)
 		WINPR_JSON* obj = WINPR_JSON_CreateObject();
 		if (!obj)
 			return FALSE;
-		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddIntegerToObject(obj, "code", ime->code);
 		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
 
 		if (!WINPR_JSON_AddItemToArray(array, obj))
@@ -866,8 +866,8 @@ static BOOL append_variant(WINPR_JSON* json)
 		WINPR_JSON* obj = WINPR_JSON_CreateObject();
 		if (!obj)
 			return FALSE;
-		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
-		WINPR_JSON_AddNumberToObject(obj, "id", ime->id);
+		WINPR_JSON_AddIntegerToObject(obj, "code", ime->code);
+		WINPR_JSON_AddIntegerToObject(obj, "id", ime->id);
 		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
 
 		if (!WINPR_JSON_AddItemToArray(array, obj))
@@ -889,7 +889,7 @@ static BOOL append_ime(WINPR_JSON* json)
 		WINPR_JSON* obj = WINPR_JSON_CreateObject();
 		if (!obj)
 			return FALSE;
-		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddIntegerToObject(obj, "code", ime->code);
 		WINPR_JSON_AddStringToObject(obj, "file", ime->file);
 		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
 
@@ -1062,7 +1062,7 @@ static UINT32 get_object_integer(WINPR_JSON* json, size_t pos, const char* name)
 		return 0;
 	}
 
-	return (UINT32)WINPR_JSON_GetNumberValue(obj);
+	return (UINT32)WINPR_JSON_GetUIntegerValue(obj);
 }
 
 static bool parse_json_layout_entry_id(WINPR_JSON* json, size_t pos, RDP_KEYBOARD_LAYOUT* entry)

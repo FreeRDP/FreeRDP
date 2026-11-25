@@ -214,8 +214,6 @@ struct S_PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
 
-	wBufferPool* bufferPool;
-
 	UINT32 format;
 	UINT32 state;
 

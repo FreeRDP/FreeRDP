@@ -161,6 +161,7 @@ struct rdp_rdp
 	rdpSettings* settings;
 	rdpSettings* originalSettings;
 	rdpSettings* remoteSettings;
+	UINT32 redirectionCount;
 	rdpTransport* transport;
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;
@@ -210,6 +211,7 @@ struct rdp_rdp
 	WINPR_JSON* wellknown;
 	FreeRDPTimer* timer;
 	WINPR_ATTR_NODISCARD pGetCommonAccessToken GetCommonAccessToken;
+	BOOL is_redirecting;
 };
 
 WINPR_ATTR_NODISCARD

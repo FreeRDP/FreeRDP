@@ -43,6 +43,8 @@
 
 BOOL Stream_ResizeToCapacity(wStream* s, size_t size)
 {
+	WINPR_ASSERT(s);
+
 	const size_t old_capacity = s->capacity;
 	const size_t new_capacity = size;
 	size_t position = Stream_GetPosition(s);
@@ -75,18 +77,32 @@ BOOL Stream_ResizeToCapacity(wStream* s, size_t size)
 	return Stream_SetPosition(s, position);
 }
 
+/* The capacity grows in fixed steps, never exponentially. A stream filled chunk by chunk must not
+ * reallocate for every chunk, and a small stream must not be padded out to megabytes: a pool keeps
+ * its streams, so every message that waits in a queue would hold that padding.
+ * With these steps a stream of N bytes wastes less than 4 KiB, 64 KiB or 1 MiB depending on its
+ * size and is reallocated at most about 31 + N / 1 MiB times while it is filled. */
+static size_t stream_capacity_step(size_t size)
+{
+	if (size < 64ull * 1024ull)
+		return 4ull * 1024ull;
+	if (size < 1024ull * 1024ull)
+		return 64ull * 1024ull;
+	return 1024ull * 1024ull;
+}
+
 BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 {
 	WINPR_ASSERT(s);
 	if (s->capacity >= size)
 		return TRUE;
 
-	const size_t increment = 128ull;
-	if (size > SIZE_MAX - increment)
+	const size_t increment = stream_capacity_step(size);
+	const size_t padding = (increment - size % increment) % increment;
+	if (size > SIZE_MAX - padding)
 		return FALSE;
 
-	const size_t new_capacity = size + increment - size % increment;
-	return Stream_ResizeToCapacity(s, new_capacity);
+	return Stream_ResizeToCapacity(s, size + padding);
 }
 
 BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
@@ -94,9 +110,11 @@ BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 	const size_t pos = Stream_GetPosition(s);
 	if (pos > SIZE_MAX - size)
 		return FALSE;
-	if (pos + size > Stream_Capacity(s))
-		return Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
-	return TRUE;
+	if (pos + size <= Stream_Capacity(s))
+		return TRUE;
+	if (Stream_Capacity(s) > SIZE_MAX - size)
+		return FALSE;
+	return Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
 }
 
 wStream* Stream_New(BYTE* buffer, size_t size)
@@ -126,9 +144,9 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	s->length = size;
 
 	s->pool = nullptr;
-	s->count = 1;
 	s->isAllocatedStream = TRUE;
 	s->isOwner = TRUE;
+	Stream_AddRef(s);
 	return s;
 }
 
@@ -155,9 +173,9 @@ wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;
 	s->pool = nullptr;
-	s->count = 1;
 	s->isAllocatedStream = FALSE;
 	s->isOwner = FALSE;
+	Stream_AddRef(s);
 	return s;
 }
 

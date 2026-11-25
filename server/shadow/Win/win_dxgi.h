@@ -19,9 +19,7 @@
 #ifndef FREERDP_SERVER_SHADOW_WIN_DXGI_H
 #define FREERDP_SERVER_SHADOW_WIN_DXGI_H
 
-#if _WIN32_WINNT >= 0x0602
-//#define WITH_DXGI_1_2	1
-#endif
+/* WITH_DXGI_1_2 comes from -DWITH_SHADOW_WIN_DXGI=ON (Win/CMakeLists.txt) */
 
 #ifdef WITH_DXGI_1_2
 
@@ -29,7 +27,7 @@
 #define CINTERFACE
 #endif
 
-#include <D3D11.h>
+#include <d3d11.h>
 #include <dxgi1_2.h>
 
 #endif
@@ -45,6 +43,7 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD int win_shadow_dxgi_init(winShadowSubsystem* subsystem);
 	WINPR_ATTR_NODISCARD int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_dxgi_restart_duplication(winShadowSubsystem* subsystem);
 
 	WINPR_ATTR_NODISCARD int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	                                                          BYTE** ppDstData, int* pnDstStep,

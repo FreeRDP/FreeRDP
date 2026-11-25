@@ -118,7 +118,7 @@ static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* con
 		/* _Unwind_GetLanguageSpecificData has various return value definitions,
 		 * cast to the type we expect and disable linter warnings
 		 */
-		// NOLINTNEXTLINE(google-readability-casting,readability-redundant-casting)
+		// NOLINTNEXTLINE(google-readability-casting,readability-redundant-casting,modernize-avoid-c-style-cast)
 		info->langSpecificData.pv = (void*)_Unwind_GetLanguageSpecificData(context);
 	}
 

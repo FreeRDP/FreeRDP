@@ -817,7 +817,8 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 	WINPR_ASSERT(gdi->drawing);
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
+	HGDI_PEN originalPen = gdi->drawing->hdc->pen;
+	gdi->drawing->hdc->pen = hPen;
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, lineTo->bRop2));
 	if (!gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, nullptr))
 		goto fail;
@@ -826,6 +827,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 	rc = TRUE;
 fail:
+	gdi->drawing->hdc->pen = originalPen;
 	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return rc;
 }
@@ -851,7 +853,8 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	if (!hPen)
 		return FALSE;
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
+	HGDI_PEN originalPen = gdi->drawing->hdc->pen;
+	gdi->drawing->hdc->pen = hPen;
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, polyline->bRop2));
 	INT32 x = polyline->xStart;
 	INT32 y = polyline->yStart;
@@ -871,6 +874,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 
 	rc = TRUE;
 fail:
+	gdi->drawing->hdc->pen = originalPen;
 	gdi_DeleteObject((HGDIOBJECT)hPen);
 	return rc;
 }
@@ -1180,6 +1184,22 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 
 		case RDP_CODEC_ID_NONE:
 			format = gdi_get_pixel_format(cmd->bmp.bpp);
+			if ((cmd->bmp.width == 0) || (cmd->bmp.height == 0) ||
+			    (FreeRDPGetBytesPerPixel(format) == 0))
+			{
+				WLog_ERR(TAG,
+				         "invalid dimensions of bitmap: got %" PRIu32 "x%" PRIu32
+				         ", color depth=%" PRIu32,
+				         cmd->bmp.width, cmd->bmp.height, FreeRDPGetBytesPerPixel(format));
+				goto out;
+			}
+			size = 1ull * cmd->bmp.width;
+			if (size > SIZE_MAX / cmd->bmp.height / FreeRDPGetBytesPerPixel(format))
+			{
+				WLog_ERR(TAG, "dimensions out of range");
+				goto out;
+			}
+
 			size = 1ull * cmd->bmp.width * cmd->bmp.height * FreeRDPGetBytesPerPixel(format);
 			if (size > cmd->bmp.bitmapDataLength)
 			{
@@ -1391,10 +1411,15 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	WINPR_ASSERT(gdi->context);
 	WINPR_ASSERT(gdi->context->update);
 
-	/* EndPaint might not have been called, ensure the update lock is released */
-	if (!update_end_paint(gdi->context->update))
-		return FALSE;
+	/* Take the (recursive) update lock first, this waits for a paint in progress on another
+	 * thread. A paint still open afterwards belongs to this thread: EndPaint might not have
+	 * been called, ensure its update lock is released */
 	rdp_update_lock(gdi->context->update);
+	if (!update_end_paint(gdi->context->update))
+	{
+		rdp_update_unlock(gdi->context->update);
+		return FALSE;
+	}
 
 	if (gdi->drawing == gdi->primary)
 		gdi->drawing = nullptr;
@@ -1480,6 +1505,10 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		goto fail;
 
 	gdi->hdc->format = gdi->dstFormat;
+
+	/* The palette is all black until the first palette update, but must always have a valid
+	 * format: 8bpp data received before that update is resolved through it for every pixel. */
+	gdi->palette.format = gdi->dstFormat;
 
 	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;

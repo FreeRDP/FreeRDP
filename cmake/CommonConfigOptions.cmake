@@ -7,6 +7,10 @@ option(WITH_BINARY_VERSIONING "Use binary versioning" OFF)
 option(WITH_RESOURCE_VERSIONING "Use resource versioning" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
+if(WITH_BINARY_VERSIONING)
+  add_compile_definitions(WITH_BINARY_VERSIONING)
+endif()
+
 if(CMAKE_EXPORT_COMPILE_COMMANDS STREQUAL "")
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "project default" FORCE)
 endif()

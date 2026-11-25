@@ -43,6 +43,15 @@ struct win_shadow_subsystem
 	int width;
 	int height;
 
+	/* Ctrl and Alt held on the remote keyboard: with Delete, the secure
+	 * attention sequence */
+	BOOL ctrlDown;
+	BOOL altDown;
+
+	/* the sound capture (win_audio.c) */
+	HANDLE audioThread;
+	HANDLE audioStopEvent;
+
 #ifdef WITH_WDS_API
 	HWND hWnd;
 	shwContext* shw;
@@ -74,6 +83,12 @@ struct win_shadow_subsystem
 	DXGI_OUTDUPL_FRAME_INFO dxgiFrameInfo;
 	ID3D11DeviceContext* dxgiDeviceContext;
 	IDXGIOutputDuplication* dxgiOutputDuplication;
+	/* the input desktop is one this process may not capture (the secure desktop for a process
+	 * in the user's session): capture is paused */
+	BOOL dxgiDenied;
+	/* the earliest time the capture loop may create a missing duplication again: soon after a
+	 * refused desktop, at a low rate after a failure which does not recover by itself */
+	UINT64 dxgiRetryTime;
 #endif
 };
 
@@ -81,6 +96,12 @@ struct win_shadow_subsystem
 extern "C"
 {
 #endif
+
+	/* Refreshes the monitor definition and the shadow screen when the
+	 * desktop display mode changed. Returns 1 when the geometry changed,
+	 * 0 when it did not and <0 on fatal error. */
+	WINPR_ATTR_NODISCARD
+	int win_shadow_check_resize(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

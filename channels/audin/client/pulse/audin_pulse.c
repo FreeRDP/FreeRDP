@@ -413,11 +413,18 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	pulse->bytes_per_frame = pa_frame_size(&pulse->sample_spec);
 	pa_stream_set_state_callback(pulse->stream, audin_pulse_stream_state_callback, pulse);
 	pa_stream_set_read_callback(pulse->stream, audin_pulse_stream_request_callback, pulse);
-	buffer_attr.maxlength = (UINT32)-1;
-	buffer_attr.tlength = (UINT32)-1;
-	buffer_attr.prebuf = (UINT32)-1;
-	buffer_attr.minreq = (UINT32)-1;
+	buffer_attr.maxlength = UINT32_MAX;
+	buffer_attr.tlength = UINT32_MAX;
+	buffer_attr.prebuf = UINT32_MAX;
+	buffer_attr.minreq = UINT32_MAX;
 	/* 500ms latency */
+	if ((pulse->bytes_per_frame == 0) || (pulse->frames_per_packet == 0) ||
+	    (pulse->bytes_per_frame > UINT32_MAX / pulse->frames_per_packet))
+	{
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+		return CHANNEL_RC_BAD_INIT_HANDLE;
+	}
+
 	const size_t frag = pulse->bytes_per_frame * pulse->frames_per_packet;
 	WINPR_ASSERT(frag <= UINT32_MAX);
 	buffer_attr.fragsize = (uint32_t)frag;

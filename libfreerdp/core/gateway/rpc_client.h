@@ -27,12 +27,20 @@
 #include "rpc.h"
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId);
+FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(wLog* log, RpcClient* client,
+                                                        UINT32 CallId);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rpc_client_call_add(wLog* log, RpcClient* client, RpcClientCall* call);
+
+FREERDP_LOCAL void rpc_client_call_advance(wLog* log, RpcClient* client, UINT32 CallId,
+                                           RPC_CLIENT_CALL_STATE expected, BOOL success);
+
+FREERDP_LOCAL void rpc_client_call_discard(wLog* log, RpcClient* client, UINT32 CallId);
 
 FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* clientCall);
 
 WINPR_ATTR_MALLOC(rpc_client_call_free, 1)
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
 
 WINPR_ATTR_NODISCARD

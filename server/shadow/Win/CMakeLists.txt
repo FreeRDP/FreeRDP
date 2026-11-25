@@ -2,15 +2,48 @@ include(WarnUnmaintained)
 warn_unmaintained("windows shadow server subsystem" "-DWITH_SHADOW_SUBSYSTEM=OFF")
 
 add_compile_definitions(WITH_SHADOW_WIN)
-add_library(
-  freerdp-shadow-subsystem-impl STATIC
-  win_dxgi.c
-  win_dxgi.h
-  win_rdp.c
-  win_rdp.h
-  win_shadow.c
-  win_shadow.h
-  win_wds.c
-  win_wds.h
+
+# The capture backend: the Windows Desktop Sharing API (the default) or DXGI
+# desktop duplication, which also captures the secure desktop (logon, lock
+# screen, UAC) when the server runs as SYSTEM on the console session
+option(WITH_SHADOW_WIN_DXGI "Capture with DXGI desktop duplication instead of the Windows Desktop Sharing API" OFF)
+set(SRCS
+    win_audio.c
+    win_audio.h
+    win_dxgi.h
+    win_rdp.h
+    win_sas.h
+    win_shadow.c
+    win_shadow.h
+    win_shadow_cliprdr.c
+    win_shadow_cliprdr.h
+    win_wasapi.c
+    win_wasapi.h
+    win_wds.h
 )
-target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-client freerdp winpr)
+if(WITH_SHADOW_WIN_DXGI)
+  add_compile_definitions(WITH_DXGI_1_2)
+  list(APPEND SRCS win_dxgi.c)
+else()
+  # win_shadow.h gates the loopback client members on WITH_WDS_API, and
+  # win_wds.h defines it only for the translation unit that includes it
+  # first: the backend needs it for all of them or it does not compile.
+  add_compile_definitions(WITH_WDS_API)
+  list(APPEND SRCS win_rdp.c win_wds.c)
+endif()
+add_library(freerdp-shadow-subsystem-impl STATIC ${SRCS})
+# advapi32: the startup integrity level check (OpenProcessToken, GetSidSubAuthority)
+target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-client freerdp winpr ole32 advapi32)
+if(CHANNEL_CLIPRDR_SERVER)
+  # iphlpapi/ws2_32: local-client detection (GetAdaptersAddresses/inet_pton)
+  target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE freerdp-server shell32 iphlpapi ws2_32)
+endif()
+
+# freerdp-shadow-service: runs freerdp-shadow-cli as SYSTEM on the console
+# session (logon and lock screens, UAC prompts; DXGI capture needed)
+option(WITH_SHADOW_WIN_SERVICE "Build freerdp-shadow-service, which runs the shadow server on the console session" OFF)
+if(WITH_SHADOW_WIN_SERVICE)
+  add_executable(freerdp-shadow-service shadow_service.c win_sas.h)
+  target_link_libraries(freerdp-shadow-service PRIVATE winpr wtsapi32 advapi32 shell32)
+  install(TARGETS freerdp-shadow-service DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+endif()

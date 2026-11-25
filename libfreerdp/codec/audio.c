@@ -101,7 +101,7 @@ const char* audio_format_get_tag_string(UINT16 wFormatTag)
 			return "WAVE_FORMAT_MSG723";
 
 		case WAVE_FORMAT_DSPGROUP_TRUESPEECH:
-			return "WAVE_FORMAT_DSPGROUP_TRUESPEECH	";
+			return "WAVE_FORMAT_DSPGROUP_TRUESPEECH";
 
 		case WAVE_FORMAT_MPEGLAYER3:
 			return "WAVE_FORMAT_MPEGLAYER3";
@@ -111,6 +111,10 @@ const char* audio_format_get_tag_string(UINT16 wFormatTag)
 
 		case WAVE_FORMAT_AAC_MS:
 			return "WAVE_FORMAT_AAC_MS";
+
+		case WAVE_FORMAT_OPUS:
+			return "WAVE_FORMAT_OPUS";
+
 		default:
 			return "WAVE_FORMAT_UNKNOWN";
 	}
@@ -161,6 +165,10 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 	Stream_Read_UINT16(s, format->wBitsPerSample);
 	Stream_Read_UINT16(s, format->cbSize);
 
+	/* if the format does not have an alignment ensure it is 1 */
+	if (format->nBlockAlign == 0)
+		format->nBlockAlign = 1;
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, format->cbSize))
 		return FALSE;
 
@@ -176,12 +184,21 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 		Stream_Read(s, format->data, format->cbSize);
 	}
 
+	if (!audio_format_is_valid(format))
+	{
+		free(format->data);
+		format->data = nullptr;
+		return FALSE;
+	}
 	return TRUE;
 }
 
 BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 {
 	if (!s || !format)
+		return FALSE;
+
+	if (!audio_format_is_valid(format))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, 18ull + format->cbSize))
@@ -207,6 +224,9 @@ BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	if (!srcFormat || !dstFormat)
 		return FALSE;
 
+	if (!audio_format_is_valid(srcFormat))
+		return FALSE;
+
 	*dstFormat = *srcFormat;
 
 	if (srcFormat->cbSize > 0)
@@ -222,9 +242,41 @@ BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	return TRUE;
 }
 
+BOOL audio_format_is_valid(const AUDIO_FORMAT* format)
+{
+	if (!format)
+		return FALSE;
+	if (format->wFormatTag == WAVE_FORMAT_UNKNOWN)
+		return FALSE;
+	if (format->nBlockAlign == 0)
+		return FALSE;
+	if (format->nChannels == 0)
+		return FALSE;
+	if (format->nChannels > 128)
+		return FALSE;
+	if (format->wBitsPerSample == 0)
+	{
+		/* only allow WAVE_FORMAT_GSM610 which is variable-length and has 0 wBitsPerSample */
+		if (format->wFormatTag != WAVE_FORMAT_GSM610)
+			return FALSE;
+	}
+	if (format->wBitsPerSample > 1024)
+		return FALSE;
+	if (format->nSamplesPerSec == 0)
+		return FALSE;
+	if (format->nSamplesPerSec > 1000000)
+		return FALSE;
+	return TRUE;
+}
+
 BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 {
 	if (!with || !what)
+		return FALSE;
+
+	/* with is a filter: a field that is WAVE_FORMAT_UNKNOWN or 0 matches any value (the
+	 * /sound:format: and /microphone:format: options, or a resampler that ignores the tag) */
+	if (!audio_format_is_valid(what))
 		return FALSE;
 
 	if (with->wFormatTag != WAVE_FORMAT_UNKNOWN)

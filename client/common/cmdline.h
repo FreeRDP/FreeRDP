@@ -30,7 +30,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "azure", COMMAND_LINE_VALUE_REQUIRED,
 	  "[tenantid:<id>],[use-tenantid[:[on|off]],[ad:<url>]"
 	  "[avd-access:<format string>],[avd-token:<format string>],[avd-scope:<format string>],"
-	  "[auth-helper:<path|autodetect>]",
+	  "[user-agent:<string>],[auth-helper:<path|autodetect>],"
+	  "cloud:[commercial|usgov|<name from aad-clouds.json>]",
 	  nullptr, nullptr, -1, nullptr, "AzureAD options" },
 	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file-name>", "~/.config/freerdp/action.sh",
 	  nullptr, -1, nullptr, "Action script" },
@@ -40,7 +41,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "desktop composition" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED,
 	  "program:[<path>|<||alias>],cmd:<command>,file:<filename>,guid:<guid>,icon:<filename>,name:<"
-	  "name>,workdir:<directory>,hidef:[on|off]",
+	  "name>,workdir:<directory>,hidef:[on|off],command-pipe[:on|off]",
 	  nullptr, nullptr, -1, nullptr, "Remote application program" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", nullptr, nullptr, -1, nullptr,
@@ -174,9 +175,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Fullscreen mode (<Ctrl>+<Alt>+<Enter> toggles fullscreen)" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, nullptr, nullptr, nullptr, -1, nullptr, "FIPS mode" },
 	{ "floatbar", COMMAND_LINE_VALUE_OPTIONAL,
-	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window]", nullptr, nullptr,
-	  -1, nullptr,
-	  "floatbar is disabled by default (when enabled defaults to sticky in fullscreen mode)" },
+	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window],position:[left|"
+	  "center|right]",
+	  nullptr, nullptr, -1, nullptr,
+	  "floatbar is disabled by default (when enabled defaults to sticky, centered, in fullscreen "
+	  "mode)" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "smooth fonts (ClearType)" },
 	{ "force-console-callbacks", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1,
@@ -210,25 +213,28 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Geometry tracking channel" },
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Consume multitouch input locally" },
-#ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-"
-	  "cache[:on|off],thin-client[:on|off],progressive[:on|"
+	  "[[progressive[:on|off]|RFX[:on|off]"
+#ifdef WITH_GFX_H264
+	  "|AVC420[:on|off]AVC444[:on|off]"
+	  "|AVC-mixed[:on|off]"
+#endif
+	  "],mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|"
 	  "off],frame-ack[:on|off]"
 #if defined(WITH_GFX_AV1)
-	  ",AV1[:on|off|i444|i420]]"
+	  ",AV1[:on|off|i444|i420]"
 #endif
-	  ,
+#if defined(WITH_GFX_AV2)
+	  ",AV2[:on|off|i444|i420]"
+#endif
+#if defined(WITH_GFX_AZURE)
+	  ",HEVC[:on|off|i420|i444]"
+#endif
+	  "]",
 	  nullptr, nullptr, -1, nullptr, "RDP8 graphics pipeline" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[[AVC420|AVC444],mask:<value>]", nullptr, nullptr,
 	  -1, nullptr, "[DEPRECATED, use /gfx:avc420] RDP8.1 graphics pipeline using H264 codec" },
-#endif
-#else
-	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-cache["
-	  ":on|off],thin-client[:on|off],progressive[:on|off]]",
-	  nullptr, nullptr, -1, nullptr, "RDP8 graphics pipeline" },
 #endif
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
@@ -317,7 +323,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", nullptr, nullptr, -1,
 	  nullptr, "Load balance info" },
 	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT,
-	  "[kbd|kbd-scancode|kbd-lang[:<value>]|smartcard[:[pkinit-anchors:<path>][,pkcs11-module:<"
+	  "[kbd|kbd-scancode|kbd-lang[:<value>]|clouds|smartcard[:[pkinit-anchors:<path>][,pkcs11-"
+	  "module:<"
 	  "name>]]|"
 	  "monitor|tune|timezones]",
 	  "List available options for subcommand", nullptr, -1, nullptr,
@@ -341,8 +348,12 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, nullptr, nullptr, nullptr, -1,
 	  nullptr, "[DEPRECATED, use /list:monitor] List detected monitors" },
 #endif
-	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", nullptr, nullptr, -1, nullptr,
-	  "[experimental] Select monitors to use (only effective in fullscreen or multimonitor mode)" },
+	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[:<desktop>[:<device>]][,...]", nullptr,
+	  nullptr, -1, nullptr,
+	  "[experimental] Select monitors to use (only effective in fullscreen or multimonitor mode). "
+	  "IDs are shown by /list:monitor. Optionally override the remote scale of a monitor: "
+	  "desktop 100..500, device 100, 140 or 180 (default 100). A monitor without a scale keeps "
+	  "the detected value. Cannot be combined with /scale-desktop or /scale-device" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "Send mouse motion events" },
 	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
@@ -360,8 +371,16 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  BoolValueFalse, nullptr, -1, nullptr, "Use multiple monitors" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Redirect multitouch input" },
+#if defined(WITH_RDPEUDP)
+	{ "multitransport", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL,
+	  "[tcp-only|udp|udp-preferred]", BoolValueTrue, nullptr, -1, nullptr,
+	  "Support multitransport protocol. With tcp-only just enable the capability but deny an "
+	  "actual switch UDP transport. udp (the default) enables the switch to UDP transport, "
+	  "udp-preferred also tunnels the static channels over it" },
+#else
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "Support multitransport protocol" },
+#endif
 	{ "nego", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "protocol security negotiation" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED,
@@ -401,8 +420,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  nullptr, "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>[,default]]", nullptr, nullptr, -1,
 	  nullptr, "Redirect printer device" },
-	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>[:<port>]",
-	  nullptr, nullptr, -1, nullptr,
+	{ "proxy", COMMAND_LINE_VALUE_REQUIRED,
+	  "[ignore|[<proto>://][<user>:<password>@]<host>[:<port>]]", nullptr, nullptr, -1, nullptr,
 	  "Proxy settings: override env. var (see also environment variable below). Protocol "
 	  "\"socks5\" should be given explicitly where \"http\" is default." },
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password-hash>", nullptr, nullptr, -1, "pass-the-hash",
@@ -476,7 +495,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<"
 	  "latency>,][quality:<quality>]",
-	  nullptr, nullptr, -1, "audio", "Audio output (sound)" },
+	  nullptr, nullptr, -1, "audio",
+	  "Audio output (sound). <format> is a format tag (e.g. 0x704F) or its WAVE_FORMAT_ "
+	  "name with or without the prefix (e.g. opus, pcm, alaw, aac_ms)" },
 	{ "span", COMMAND_LINE_VALUE_FLAG, nullptr, nullptr, nullptr, -1, nullptr,
 	  "Span screen over multiple monitors" },
 	{ "spn-class", COMMAND_LINE_VALUE_REQUIRED, "<service-class>", nullptr, nullptr, -1, nullptr,
@@ -537,8 +558,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Let server see real physical pointer button" },
 #ifdef CHANNEL_URBDRC_CLIENT
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED,
-	  "[dbg,][id:<vid>:<pid>#...,][addr:<bus>:<addr>#...,][auto]", nullptr, nullptr, -1, nullptr,
-	  "Redirect USB device" },
+	  "[dbg,][id:<vid>:<pid>#...,][addr:<bus>:<addr>#...,][auto,][filter:<class>#...|none]",
+	  nullptr, nullptr, -1, nullptr, "Redirect USB device" },
 #endif
 	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", nullptr, nullptr, -1, nullptr,
 	  "Server hostname|URL|IPv4|IPv6 or vsock://<number> or /some/path/to/pipe or |:1234 to pass a "

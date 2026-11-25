@@ -224,13 +224,13 @@ static const DWORD KBD8T[KBD_ARRAY_SIZE] = { // break here
 	VK_F6,          VK_F7,
 	VK_F8,          VK_F9,
 	VK_F10,         VK_NUMLOCK,
-	VK_SCROLL,      VK_HOME,
-	VK_UP,          VK_PRIOR,
-	VK_SUBTRACT,    VK_LEFT,
-	VK_CLEAR,       VK_RIGHT,
-	VK_ADD,         VK_END,
-	VK_DOWN,        VK_NEXT,
-	VK_INSERT,      VK_DELETE,
+	VK_SCROLL,      VK_NUMPAD7,
+	VK_NUMPAD8,     VK_NUMPAD9,
+	VK_SUBTRACT,    VK_NUMPAD4,
+	VK_NUMPAD5,     VK_NUMPAD6,
+	VK_ADD,         VK_NUMPAD1,
+	VK_NUMPAD2,     VK_NUMPAD3,
+	VK_NUMPAD0,     VK_DECIMAL,
 	VK_SNAPSHOT,    VK_NONE,
 	VK_OEM_102,     VK_F11,
 	VK_F12,         VK_CLEAR,
@@ -533,27 +533,34 @@ static DWORD GetVirtualKeyCodeFromVirtualScanCodeMap(DWORD scancode, const Scanc
 	return map->normal[codeIndex];
 }
 
+BOOL WinPR_IsKeyboardTypeSupported(DWORD /* WINPR_KBD_TYPE */ dwKeyboardType)
+{
+	switch (dwKeyboardType)
+	{
+		case WINPR_KBD_TYPE_IBM_PC_XT:
+		case WINPR_KBD_TYPE_OLIVETTI_ICO:
+		case WINPR_KBD_TYPE_IBM_PC_AT:
+		case WINPR_KBD_TYPE_IBM_ENHANCED:
+		case WINPR_KBD_TYPE_NOKIA_1050:
+		case WINPR_KBD_TYPE_NOKIA_9140:
+		case WINPR_KBD_TYPE_JAPANESE:
+		case WINPR_KBD_TYPE_KOREAN:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
 	if (!setup())
 		return VK_NONE;
 
-	switch (dwKeyboardType)
-	{
-		/* IBM and compatible */
-		case WINPR_KBD_TYPE_IBM_PC_XT:
-		case WINPR_KBD_TYPE_OLIVETTI_ICO:
-		case WINPR_KBD_TYPE_IBM_PC_AT:
-		case WINPR_KBD_TYPE_IBM_ENHANCED:
-		case WINPR_KBD_TYPE_JAPANESE:
-		case WINPR_KBD_TYPE_KOREAN:
-		case WINPR_KBD_TYPE_NOKIA_1050:
-		case WINPR_KBD_TYPE_NOKIA_9140:
-			return GetVirtualKeyCodeFromVirtualScanCodeMap(scancode, &VKmap[dwKeyboardType - 1]);
-		default:
-			WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
-			return VK_NONE;
-	}
+	if (WinPR_IsKeyboardTypeSupported(dwKeyboardType))
+		return GetVirtualKeyCodeFromVirtualScanCodeMap(scancode, &VKmap[dwKeyboardType - 1]);
+
+	WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
+	return VK_NONE;
 }
 
 WINPR_ATTR_NODISCARD

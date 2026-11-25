@@ -73,6 +73,8 @@ int main(int argc, char** argv)
 		  "hide mouse cursor in RDP client." },
 		{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", nullptr, nullptr, -1, nullptr,
 		  "Select or list monitors" },
+		{ "subsystem", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<name>...]", nullptr, nullptr, -1,
+		  nullptr, "Subsystems to try, in this order, or list them" },
 		{ "max-connections", COMMAND_LINE_VALUE_REQUIRED, "<number>", nullptr, nullptr, -1, nullptr,
 		  "maximum connections allowed to server, 0 to deactivate" },
 		{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, nullptr, nullptr, nullptr, -1, nullptr,
@@ -115,9 +117,17 @@ int main(int argc, char** argv)
 		  "Allow RFX surface bits" },
 		{ "gfx", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX pipeline" },
+#if defined(WITH_RDPEUDP_SERVER)
+		{ "multitransport", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+		  "[experimental] Offer clients the UDP multitransport tunnel" },
+#endif
 #if defined(WITH_GFX_AV1)
 		{ "gfx-av1", COMMAND_LINE_VALUE_OPTIONAL, "[:profile:[low|high|0|1]|off]", BoolValueTrue,
 		  nullptr, -1, nullptr, "Allow GFX pipeline AV1 codec extension" },
+#endif
+#if defined(WITH_GFX_AV2)
+		{ "gfx-av2", COMMAND_LINE_VALUE_OPTIONAL, "[:profile:[low|high|0|1]|off]", BoolValueTrue,
+		  nullptr, -1, nullptr, "Allow GFX pipeline AV2 codec extension" },
 #endif
 		{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX progressive codec" },
@@ -129,6 +139,15 @@ int main(int argc, char** argv)
 		  "Allow GFX AVC420 codec" },
 		{ "gfx-avc444", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX AVC444 codec" },
+		{ "codec", COMMAND_LINE_VALUE_REQUIRED, "<codec>:<key>:<value>[,<codec>:<key>:<value>...]",
+		  nullptr, nullptr, -1, nullptr,
+		  "Encoder settings, bit rates in kbit/s: h264:rate-control:vbr|cqp, h264:bitrate, "
+		  "h264:qp:<0-51>; av1 and av2: rate-control:vbr|cbr|cq|q, bitrate; hevc: "
+		  "rate-control:vbr, bitrate (a codec not built in is refused)" },
+#if defined(WITH_GFX_AZURE)
+		{ "gfx-hevc", COMMAND_LINE_VALUE_OPTIONAL, "[on|off|i420|i444]", BoolValueTrue, nullptr, -1,
+		  nullptr, "Allow GFX pipeline HEVC codec extension" },
+#endif
 		{ "bitmap-compat", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 		  "Limit BitmapUpdate to 1 rectangle (fixes broken windows 11 24H2 clients)" },
 		{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, nullptr, nullptr,

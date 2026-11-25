@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSCameraUsageDescription</key>
-	<string>This application requires camera access to redirect it to the remote host</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This application requires microphone access to redirect it to the remote host</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -34,5 +30,21 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This application requires camera access to redirect it to the remote host</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This application requires microphone access to redirect it to the remote host</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>FreeRDP connects to remote desktops and gateways on your local network.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>FreeRDP accesses your Desktop folder when you enable drive redirection.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>FreeRDP accesses your Documents folder when you enable drive redirection.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>FreeRDP accesses your Downloads folder when you enable drive redirection.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>FreeRDP accesses files on network drives when you enable drive redirection.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>FreeRDP accesses files on removable drives when you enable drive redirection.</string>
 </dict>
 </plist>

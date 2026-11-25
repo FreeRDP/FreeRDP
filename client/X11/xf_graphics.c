@@ -251,12 +251,12 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 	if (xfc->remote_app)
 	{
 		Window w = 0;
-		xf_AppWindowsLock(xfc);
+		xf_AppWindowsLock(xfc, TRUE);
 		if (!xfc->appWindow)
 			WLog_WARN(TAG, "xf_Pointer: Invalid appWindow");
 		else
 			w = xfc->appWindow->handle;
-		xf_AppWindowsUnlock(xfc);
+		xf_AppWindowsUnlock(xfc, TRUE);
 		return w;
 	}
 	else
@@ -353,10 +353,10 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 
 static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
+	BOOL rc = TRUE;
 	WLog_DBG(TAG, "%p", WINPR_CXX_COMPAT_CAST(const void*, pointer));
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
-	Window handle = xf_Pointer_get_window(xfc);
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(pointer);
@@ -364,22 +364,23 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	xfc->pointer = (xfPointer*)pointer;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
-
+	xf_lock_x11(xfc);
+	Window handle = xf_Pointer_get_window(xfc);
 	if (handle)
 	{
 		if (!xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
-			return FALSE;
-		xf_lock_x11(xfc);
-		XDefineCursor(xfc->display, handle, xfc->pointer->cursor);
-		xf_unlock_x11(xfc);
+			rc = FALSE;
+		else
+			XDefineCursor(xfc->display, handle, xfc->pointer->cursor);
 	}
 	else
 	{
 		WLog_WARN(TAG, "handle=%lu", handle);
 	}
 	xfc->isCursorHidden = false;
+	xf_unlock_x11(xfc);
 #endif
-	return TRUE;
+	return rc;
 }
 
 static BOOL xf_Pointer_SetNull(rdpContext* context)
@@ -387,9 +388,9 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 	WLog_DBG(TAG, "called");
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
+	xf_lock_x11(xfc);
 	static Cursor nullcursor = None;
 	Window handle = xf_Pointer_get_window(xfc);
-	xf_lock_x11(xfc);
 
 	if (nullcursor == None)
 	{
@@ -420,8 +421,8 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 	WLog_DBG(TAG, "called");
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
-	Window handle = xf_Pointer_get_window(xfc);
 	xf_lock_x11(xfc);
+	Window handle = xf_Pointer_get_window(xfc);
 	xfc->pointer = nullptr;
 
 	if (handle)
@@ -440,13 +441,11 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	XSetWindowAttributes tmp = WINPR_C_ARRAY_INIT;
 	BOOL ret = FALSE;
 	Status rc = 0;
-	Window handle = xf_Pointer_get_window(xfc);
 
-	if (!handle)
-	{
-		WLog_WARN(TAG, "focus %d, handle%lu", xfc->focused, handle);
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_GrabMouse))
 		return TRUE;
-	}
+	if (!xfc->common.mouse_grabbed)
+		return TRUE;
 
 	WLog_DBG(TAG, "%" PRIu32 "x%" PRIu32, x, y);
 	if (!xfc->focused)
@@ -455,7 +454,13 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	xf_adjust_coordinates_to_screen(xfc, &x, &y);
 
 	xf_lock_x11(xfc);
+	Window handle = xf_Pointer_get_window(xfc);
 
+	if (!handle)
+	{
+		WLog_WARN(TAG, "focus %d, handle%lu", xfc->focused, handle);
+		goto out;
+	}
 	rc = LogDynAndXGetWindowAttributes(xfc->log, xfc->display, handle, &current);
 	if (rc != 1)
 		goto out;

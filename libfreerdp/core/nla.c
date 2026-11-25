@@ -43,6 +43,7 @@
 #include <winpr/debug.h>
 #include <winpr/asn1.h>
 #include <winpr/secapi.h>
+#include <winpr/nt.h>
 
 #include "../crypto/tls.h"
 #include "nego.h"
@@ -891,7 +892,10 @@ static int nla_server_authenticate(rdpNla* nla)
 				break;
 			}
 
-			(void)nla_send(nla);
+			if (!nla_send(nla))
+			{
+				WLog_DBG(TAG, "nla_send(ACCESS_DENIED) did not succeed, ignoring");
+			}
 			/* Access Denied */
 			goto fail;
 		}
@@ -938,11 +942,6 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if (res == 1)
 		{
-			if (nla->earlyUserAuth)
-			{
-				if (!nla_send_early_user_auth(nla, TRUE))
-					goto fail;
-			}
 			ret = 1;
 			break;
 		}
@@ -951,6 +950,11 @@ static int nla_server_authenticate(rdpNla* nla)
 	/* Receive encrypted credentials */
 	if (!nla_server_recv_credentials(nla))
 		ret = -1;
+	else if (nla->earlyUserAuth)
+	{
+		if (!nla_send_early_user_auth(nla, ret == 1))
+			goto fail;
+	}
 
 fail:
 	nla_buffer_free(nla);
@@ -1511,7 +1515,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 
 			/* cspData [1] TSCspDataDetail */
 			WinPrAsn1Decoder cspDetails = WinPrAsn1Decoder_init();
-			if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &error, &cspDetails) && error)
+			if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &error, &cspDetails) || error)
 				return FALSE;
 			if (!nla_read_TSCspDataDetail(&cspDetails, settings))
 				return FALSE;
@@ -1835,7 +1839,8 @@ static BOOL nla_encode_ts_password_credentials(rdpNla* nla, WinPrAsn1Encoder* en
 
 	const BOOL enabled =
 	    !freerdp_settings_get_bool(settings, FreeRDP_DisableCredentialsDelegation) &&
-	    !freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired);
+	    !freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_RemoteCredentialGuard);
 	if (enabled && nla->identity)
 	{
 		username.len = nla->identity->UserLength * sizeof(WCHAR);
@@ -2205,11 +2210,13 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		return -1;
 	}
 
+	size_t tagcount = 0;
 	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2) != 0)
 	{
 		WinPrAsn1Decoder dec3 = WinPrAsn1Decoder_init();
 		WinPrAsn1_OctetString octet_string = WINPR_C_ARRAY_INIT;
 
+		tagcount++;
 		switch (tag)
 		{
 			case 1:
@@ -2267,7 +2274,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		}
 	}
 
-	return 1;
+	return tagcount > 0 ? 1 : -1;
 }
 
 int nla_recv_pdu(rdpNla* nla, wStream* s)
@@ -2354,6 +2361,13 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 				case STATUS_LOGON_TYPE_NOT_GRANTED:
 					code = FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED;
+					break;
+
+				case STATUS_NTLM_BLOCKED:
+				/* mstsc shows the same ambiguity for this code: NTLM policy block, or a
+				 * CredSSP encryption oracle remediation mismatch. */
+				case SEC_E_UNSUPPORTED_FUNCTION:
+					code = FREERDP_ERROR_CONNECT_NTLM_BLOCKED;
 					break;
 
 				default:

@@ -19,12 +19,18 @@
  */
 #pragma once
 
+#include <functional>
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <SDL3/SDL.h>
 
 #include <freerdp/settings_types.h>
+
+class SdlOverlay;
+class SdlOverlayPainter;
 
 class SdlWindow
 {
@@ -88,11 +94,25 @@ class SdlWindow
 	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
 
 	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
+	[[nodiscard]] bool upload(SDL_Surface* surface, const SDL_Rect& src);
+	[[nodiscard]] bool render(const SDL_Rect& src, const SDL_Rect& dst);
 	/* Render interactive resize feedback overlay. */
 	bool paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
 	                      const SDL_Rect& inset = { 0, 0, 0, 0 }, bool fillRevealed = true,
 	                      bool dashedBorder = true);
-	void updateSurface();
+	/** Present the picture, with the overlay over it when one is given and shown. */
+	void updateSurface(const SdlOverlay* overlay = nullptr);
+	[[nodiscard]] const char* rendererName() const;
+
+	/** @brief redirected video `id`, drawn over the session at each present at `dst`
+	 *  (render coordinates), only in `clip` (render coordinates) when not empty: what the page
+	 *  draws over the video (player controls) stays visible. `pixels` (BGRA, `w`x`h`) is
+	 *  uploaded when not null */
+	[[nodiscard]] bool setVideoOverlay(Uint64 id, const void* pixels, int pitch, int w, int h,
+	                                   const SDL_FRect& dst, const std::vector<SDL_FRect>& clip,
+	                                   bool visible);
+	/** @brief drops the overlays `keep` returns false for */
+	void pruneVideoOverlays(const std::function<bool(Uint64)>& keep);
 
   protected:
 	SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect, Uint32 flags);
@@ -119,12 +139,27 @@ class SdlWindow
 
   private:
 	void ensureRenderTarget();
+	void drawOverlay(const SdlOverlay& overlay);
 	bool ensureGdiTexture(SDL_Surface* surface);
 
 	SDL_Window* _window = nullptr;
+	/* redirected videos, drawn over the session at each present */
+	struct VideoOverlay
+	{
+		SDL_Texture* texture = nullptr;
+		int w = 0;
+		int h = 0;
+		SDL_FRect dst{};
+		std::vector<SDL_FRect> clip;
+		bool visible = false;
+	};
+	std::map<Uint64, VideoOverlay> _videoOverlays;
+	void drawVideoOverlays();
+
 	SDL_Renderer* _renderer = nullptr;
 	SDL_Texture* _renderTarget = nullptr;
 	SDL_Texture* _gdiTexture = nullptr;
+	std::unique_ptr<SdlOverlayPainter> _overlayPainter;
 	int _gdiTextureW = 0;
 	int _gdiTextureH = 0;
 	int _initialW = 0;

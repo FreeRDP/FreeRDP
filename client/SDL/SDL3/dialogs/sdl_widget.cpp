@@ -64,7 +64,7 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
                      SDL_IOStream* ops)
     : _renderer(renderer),
-      _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
+      _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroyRendererTextEngine),
       _rect(rect)
 {
 	if (ops)

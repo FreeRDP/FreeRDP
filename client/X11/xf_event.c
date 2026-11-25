@@ -420,8 +420,8 @@ BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL 
 	if (app)
 	{
 		/* make sure window exists */
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
-		xf_rail_return_window(appWindow, FALSE);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window, TRUE);
+		xf_rail_return_window(appWindow, FALSE, TRUE);
 		if (!appWindow)
 			return TRUE;
 
@@ -506,7 +506,11 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
+			{
+				if (!xf_keyboard_flush_deferred_alt(xfc))
+					return FALSE;
 				freerdp_client_send_wheel_event(&xfc->common, flags);
+			}
 		}
 		else
 		{
@@ -528,8 +532,8 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 			if (app)
 			{
 				/* make sure window exists */
-				xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
-				xf_rail_return_window(appWindow, FALSE);
+				xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window, FALSE);
+				xf_rail_return_window(appWindow, FALSE, FALSE);
 				if (!appWindow)
 					return TRUE;
 
@@ -540,6 +544,8 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 
 			xf_event_adjust_coordinates(xfc, &x, &y);
 
+			if (!xf_keyboard_flush_deferred_alt(xfc))
+				return FALSE;
 			if (extended)
 				freerdp_client_send_extended_button_event(&xfc->common, FALSE, flags, x, y);
 			else
@@ -695,13 +701,13 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 
 	if (app)
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 		/* Update the server with any window changes that occurred while the window was not focused.
 		 */
 		if (appWindow)
 			xf_rail_adjust_position(xfc, appWindow);
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 
 	xf_keyboard_focus_in(xfc);
@@ -718,6 +724,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 	if (event->mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
+	/* NotifyGrab matters even when the WM consumes Tab without changing focus. */
 	xf_keyboard_release_all_keypress(xfc);
 	if (app)
 	{
@@ -764,11 +771,11 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, const XClientMessageEvent* ev
 		if (app)
 		{
 			BOOL rc = TRUE;
-			xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+			xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 			if (appWindow)
 				rc = xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
-			xf_rail_return_window(appWindow, FALSE);
+			xf_rail_return_window(appWindow, FALSE, FALSE);
 			return rc;
 		}
 		else
@@ -798,11 +805,11 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 	}
 	else
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 		/* keep track of which window has focus so that we can apply pointer updates */
 		xfc->appWindow = appWindow;
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 
 	return TRUE;
@@ -819,12 +826,12 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 	}
 	else
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 		/* keep track of which window has focus so that we can apply pointer updates */
 		if (xfc->appWindow == appWindow)
 			xfc->appWindow = nullptr;
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 	return TRUE;
 }
@@ -895,7 +902,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 	}
 	else
 	{
-		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 		if (appWindow)
 		{
@@ -928,7 +935,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 					xf_rail_adjust_position(xfc, appWindow);
 			}
 		}
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 	return xf_pointer_update_scale(xfc);
 }
@@ -943,7 +950,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 	}
 	else
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 		if (appWindow)
 		{
@@ -958,11 +965,11 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 			{
 				const UINT64 windowId = appWindow->windowId;
 				const UINT32 surfaceId = appWindow->surfaceId;
-				xf_rail_return_window(appWindow, FALSE);
-				return xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
+				xf_rail_return_window(appWindow, FALSE, FALSE);
+				return xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId, FALSE, FALSE);
 			}
 		}
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 
 	return TRUE;
@@ -980,11 +987,11 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 		return gdi_send_suppress_output(xfc->common.context.gdi, TRUE);
 
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 		if (appWindow)
 			appWindow->is_mapped = FALSE;
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 
 	return TRUE;
@@ -1023,7 +1030,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 
 		if (app)
 		{
-			appWindow = xf_AppWindowFromX11Window(xfc, event->window);
+			appWindow = xf_AppWindowFromX11Window(xfc, event->window, FALSE);
 
 			if (!appWindow)
 				goto fail;
@@ -1169,7 +1176,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			rc = gdi_send_suppress_output(xfc->common.context.gdi, minimized);
 
 	fail:
-		xf_rail_return_window(appWindow, FALSE);
+		xf_rail_return_window(appWindow, FALSE, FALSE);
 	}
 
 	return rc;
@@ -1283,7 +1290,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 
 	if (xfc->remote_app)
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window, TRUE);
 
 		if (appWindow)
 		{
@@ -1291,7 +1298,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			xfc->appWindow = appWindow;
 
 			const BOOL rc = xf_event_suppress_events(xfc, appWindow, event);
-			xf_rail_return_window(appWindow, FALSE);
+			xf_rail_return_window(appWindow, FALSE, TRUE);
 			if (rc)
 				return TRUE;
 		}
@@ -1465,7 +1472,11 @@ BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down,
 		if (flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL))
 		{
 			if (down)
+			{
+				if (!xf_keyboard_flush_deferred_alt(xfc))
+					return FALSE;
 				freerdp_client_send_wheel_event(&xfc->common, flags);
+			}
 		}
 		else
 		{
@@ -1484,6 +1495,8 @@ BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down,
 					flags |= PTR_FLAGS_DOWN;
 			}
 
+			if (!xf_keyboard_flush_deferred_alt(xfc))
+				return FALSE;
 			if (extended)
 				freerdp_client_send_extended_button_event(&xfc->common, TRUE, flags, 0, 0);
 			else
@@ -1520,11 +1533,20 @@ BOOL xf_event_update_screen(freerdp* instance)
 	}
 	else
 	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xfc->exposedWindow);
+		BOOL redraw = FALSE;
+		UINT32 surfaceId = 0;
+		UINT64 windowId = 0;
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xfc->exposedWindow, FALSE);
 		if (appWindow)
-			xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
-			                    xfc->exposedArea.w, xfc->exposedArea.h);
-		xf_rail_return_window(appWindow, FALSE);
+		{
+			redraw = xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
+			                             xfc->exposedArea.w, xfc->exposedArea.h);
+			surfaceId = appWindow->surfaceId;
+			windowId = appWindow->windowId;
+		}
+		xf_rail_return_window(appWindow, FALSE, FALSE);
+		if (redraw)
+			xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId, FALSE, FALSE);
 	}
 	return TRUE;
 }

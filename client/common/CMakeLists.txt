@@ -24,15 +24,20 @@ set(PUB_LIBS "")
 
 set(SRCS
     client.c
+    client_stats.c
     cmdline.c
     cmdline.h
     file.c
     client_cliprdr_file.c
     geometry.c
+    monitor.c
+    window_info_service.c
     smartcard_cli.c
     aad_helper.c
     oauth2.h
     oauth2.c
+    rail_ipc.h
+    rail_ipc.c
 )
 
 add_compile_definitions(CMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
@@ -73,6 +78,18 @@ if(WITH_FUSE)
   add_compile_definitions(_FILE_OFFSET_BITS=64)
 endif()
 
+cmake_dependent_option(WITH_CLIPRDR_FILE_APPLE "Pasteboard file support" ON "NOT WITH_FUSE;APPLE;NOT IOS" OFF)
+if(WITH_CLIPRDR_FILE_APPLE)
+  # Server files are offered and local files read on the pasteboard instead
+  list(APPEND SRCS client_cliprdr_file_apple.h client_cliprdr_file_apple.m)
+  set_source_files_properties(client_cliprdr_file_apple.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+  add_compile_definitions(WITH_CLIPRDR_FILE_APPLE)
+
+  find_library(APPKIT_FRAMEWORK AppKit REQUIRED)
+  find_library(UTI_FRAMEWORK UniformTypeIdentifiers REQUIRED)
+  list(APPEND PRIV_LIBS ${APPKIT_FRAMEWORK} ${UTI_FRAMEWORK})
+endif()
+
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 if(WITH_SSO_MIB)
@@ -94,6 +111,7 @@ endif()
 list(APPEND PUB_LIBS freerdp winpr)
 
 include(CheckLibraryExists)
+include(PackageConfigDependencies)
 check_library_exists(m lround "" HAVE_LIB_M)
 if(HAVE_LIB_M)
   list(APPEND PUB_LIBS m)
@@ -103,6 +121,9 @@ target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
 target_link_libraries(${MODULE_NAME} PRIVATE ${PRIV_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${PUB_LIBS})
+# here, where the imported targets freerdp-client links are visible; the config file is made one level up
+package_config_dependencies(${MODULE_NAME} FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES)
+set(FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES "${FREERDP_CLIENT_CMAKE_FIND_DEPENDENCIES}" PARENT_SCOPE)
 
 installwithrpath(
   TARGETS
@@ -149,7 +170,7 @@ if(WITH_XDG_AAD_AUTH_HELPER)
   add_subdirectory(xdg-aad-helper)
 endif()
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 

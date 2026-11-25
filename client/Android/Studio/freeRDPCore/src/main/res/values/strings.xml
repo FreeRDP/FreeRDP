@@ -223,10 +223,14 @@
     <string name="settings_ui_auto_scroll_touchpointer">Touch Pointer Auto Scroll</string>
     <string name="settings_ui_ask_on_exit">Show Dialog on Exit</string>
     <string name="settings_ui_use_back_as_altf4">Use \"back\" button as Alt+F4</string>
+    <string name="settings_ui_physical_keyboard_device_layout">Use Android keyboard layout</string>
+    <string name="settings_ui_physical_keyboard_device_layout_summary_off">Physical keyboard: keys type what the remote computer\'s layout says.</string>
+    <string name="settings_ui_physical_keyboard_device_layout_summary_on">Physical keyboard: keys type what Android\'s layout says.</string>
     <string name="settings_cat_power">Power Saving</string>
     <string name="settings_cat_client">Client</string>
     <string name="settings_power_disconnect_timeout">Close idle Connections</string>
     <string name="settings_power_keep_screen_on_when_connected">Keep screen on when connected</string>
+    <string name="settings_power_auto_reconnect">Reconnect automatically</string>
     <string name="settings_cat_security">Security</string>
     <string name="settings_security_accept_certificates">Accept all Certificates</string>
     <string name="settings_security_clear_certificate_cache">Clear Certificate Cache</string>
@@ -244,6 +248,7 @@
     <string name="error_connection_failure">Could not establish a connection to the server!</string>
     <!-- Info message strings -->
     <string name="info_capabilities_changed">Screen settings changed to ones supported by the server instead.</string>
+    <string name="info_reconnecting">Reconnecting &#8230;</string>
     <string name="info_reset_success">Certificate cache deleted.</string>
     <string name="info_reset_failed">Could not delete the certificate cache!</string>
     <!-- Dialog strings -->
@@ -279,6 +284,7 @@
     <string name="preference_key_security_clear_certificate_cache" translatable="false">security.clear_certificate_cache</string>
     <string name="preference_key_power_disconnect_timeout" translatable="false">power.disconnect_timeout</string>
     <string name="preference_key_power_keep_screen_on_when_connected" translatable="false">power.keep_screen_on_when_connected</string>
+    <string name="preference_key_power_auto_reconnect" translatable="false">power.auto_reconnect</string>
     <string name="preference_key_ui_hide_status_bar" translatable="false">ui.hide_status_bar</string>
     <string name="preference_key_ui_hide_navigation_bar" translatable="false">ui.hide_navigation_bar</string>
     <string name="preference_key_ui_ask_on_exit" translatable="false">ui.ask_on_exit</string>
@@ -286,6 +292,7 @@
     <string name="preference_key_ui_invert_scrolling" translatable="false">ui.invert_scrolling</string>
     <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
     <string name="preference_key_ui_use_back_as_altf4" translatable="false">ui.use_back_as_altf4</string>
+    <string name="preference_key_ui_physical_keyboard_device_layout" translatable="false">ui.physical_keyboard_device_layout</string>
     <string name="preference_key_ui_fit_rounded_corners" translatable="false">ui.fit_rounded_corners</string>
     <string name="settings_ui_fit_rounded_corners">Fit to Rounded Corners</string>
     <string name="pref_key_theme" translatable="false">ui.theme</string>

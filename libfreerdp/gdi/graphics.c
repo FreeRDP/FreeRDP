@@ -399,9 +399,11 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 	if (!brush)
 		return FALSE;
 
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)brush);
+	HGDI_BRUSH originalBrush = gdi->drawing->hdc->brush;
+	gdi->drawing->hdc->brush = brush;
 	rc = gdi_BitBlt(gdi->drawing->hdc, x, y, w, h, gdi_glyph->hdc, sx, sy, GDI_GLYPH_ORDER,
 	                &context->gdi->palette);
+	gdi->drawing->hdc->brush = originalBrush;
 	gdi_DeleteObject((HGDIOBJECT)brush);
 	return rc;
 }

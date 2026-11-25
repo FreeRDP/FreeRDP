@@ -44,4 +44,15 @@ typedef struct
 const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index);
 const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type);
 
+#if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
+#include <winpr/json.h>
+
+/* For the JSON resource files: a copy of the string name of entry pos, or nullptr */
+WINPR_ATTR_NODISCARD
+char* TimeZoneJsonGetString(WINPR_JSON* json, size_t pos, const char* name);
+
+WINPR_ATTR_NODISCARD
+WINPR_JSON* TimeZoneJsonParseFile(const char* filename);
+#endif
+
 #endif

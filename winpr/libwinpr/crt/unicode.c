@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 #include <winpr/error.h>
 #include <winpr/print.h>
+#include <winpr/endian.h>
 
 #ifndef _WIN32
 
@@ -377,6 +378,8 @@ SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
 	}
 
 	const size_t wlen = _wcslen(wstr);
+	if (wlen == SIZE_MAX)
+		return -1;
 	return ConvertWCharNToUtf8(wstr, wlen + 1, str, len);
 }
 
@@ -455,6 +458,8 @@ SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr, size_t wlen)
 	}
 
 	const size_t len = strlen(str);
+	if (len == SIZE_MAX)
+		return -1;
 	return ConvertUtf8NToWChar(str, len + 1, wstr, wlen);
 }
 
@@ -661,4 +666,144 @@ WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 	if (pSize)
 		*pSize = (size_t)rc2;
 	return tmp;
+}
+
+WINPR_ATTR_NODISCARD
+static INT8 nnibble(char c)
+{
+	if ((c >= '0') && (c <= '9'))
+		return (INT8)(c - '0');
+	if ((c >= 'a') && (c <= 'f'))
+		return (INT8)((c - 'a') + 0xa);
+	if ((c >= 'A') && (c <= 'F'))
+		return (INT8)((c - 'A') + 0xa);
+	return -1;
+}
+
+WINPR_ATTR_NODISCARD
+static INT32 escapeToNumber(char* str, char** next)
+{
+	if (strncmp(str, "\\u", 2) != 0)
+		return -1;
+
+	size_t offset = 2;
+	INT32 code = 0;
+	for (size_t x = 0; x < 4; x++)
+	{
+		const INT8 val = nnibble(str[offset++]);
+		if (val < 0)
+			return -1;
+
+		code <<= 4;
+		code |= val;
+	}
+	*next = &str[offset];
+	return code;
+}
+
+SSIZE_T winpr_utfEscapedStringToUtf8(char* str, size_t len)
+{
+	/* A decoded escape is never longer than the escape itself, so decode in place with separate
+	 * read and write positions. Every byte is moved at most once, otherwise a string made of
+	 * escapes costs time quadratic in its length. */
+	char* const end = &str[strnlen(str, len)];
+	char* cur = str;
+	char* dst = str;
+	while (cur < end)
+	{
+		const char* esc = winpr_strnstr(cur, "\\u", (size_t)(end - cur));
+		const size_t plain = (size_t)((esc ? esc : end) - cur);
+		memmove(dst, cur, plain);
+		dst += plain;
+		cur += plain;
+		if (!esc)
+			break;
+
+		char* next = nullptr;
+		const INT32 code = escapeToNumber(cur, &next);
+		if (code < 0)
+		{
+			/* Not a \uXXXX escape (e.g. "C:\users"): keep it as literal text */
+			memmove(dst, cur, 2);
+			dst += 2;
+			cur += 2;
+			continue;
+		}
+
+		WCHAR wc[2] = WINPR_C_ARRAY_INIT;
+		winpr_Data_Write_UINT16(&wc[0], (WCHAR)code);
+
+		// Check for high surrogate
+		if ((code & 0xd800) == 0xd800)
+		{
+			const INT32 code2 = escapeToNumber(next, &next);
+			if (code2 < 0)
+				return -1;
+
+			// low surrogate check. must match
+			if ((code2 & 0xdc00) != 0xdc00)
+				return -1;
+
+			winpr_Data_Write_UINT16(&wc[1], (WCHAR)code2);
+		}
+
+		char utf8[8] = WINPR_C_ARRAY_INIT;
+		const SSIZE_T rc = ConvertWCharNToUtf8(wc, ARRAYSIZE(wc), utf8, ARRAYSIZE(utf8));
+		if (rc < 0)
+			return -1;
+
+		/* Continue after the escape, so the decoded bytes are never decoded again */
+		memcpy(dst, utf8, (size_t)rc);
+		dst += rc;
+		cur = next;
+	}
+
+	if (dst < end)
+		*dst = '\0';
+	return (SSIZE_T)(dst - str);
+}
+
+char* winpr_utf8ToUtfEscapedString(char* str, size_t len, size_t* pDstLen)
+{
+	WINPR_ASSERT(str || (len == 0));
+
+	if (pDstLen)
+		*pDstLen = 0;
+
+	if (len >= SIZE_MAX / 12)
+		return nullptr;
+
+	char* escaped = nullptr;
+	size_t offset = 0;
+	size_t wlen = 0;
+	WCHAR* wstr = ConvertUtf8NToWCharAlloc(str, len, &wlen);
+	if (!wstr || (wlen == 0))
+		goto fail;
+
+	const size_t esclen = len * 12ull;
+	escaped = calloc(len + 1, 12);
+	if (!escaped)
+		goto fail;
+
+	for (size_t x = 0; x < wlen; x++)
+	{
+		const WCHAR wc = winpr_Data_Get_UINT16(&wstr[x]);
+		if ((wc < 0x80) && (wc != '\\'))
+			escaped[offset++] = (char)wc;
+		else
+		{
+			const int rc = snprintf(&escaped[offset], esclen - offset, "\\u%04x", wc);
+			if (rc < 0)
+				break;
+			offset += (size_t)rc;
+		}
+	}
+	escaped[offset] = '\0';
+
+fail:
+	if (pDstLen)
+		*pDstLen = offset;
+
+	winpr_znfree(wstr, wlen * sizeof(WCHAR));
+	return escaped;
 }

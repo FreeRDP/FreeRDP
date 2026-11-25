@@ -76,6 +76,46 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+/** @brief suboption type */
+typedef enum
+{
+	CMDLINE_SUBOPTION_STRING,
+	CMDLINE_SUBOPTION_FILE,
+} CmdLineSubOptionType;
+
+typedef BOOL (*CmdLineSubOptionCb)(const char* value, rdpSettings* settings);
+typedef struct
+{
+	const char* optname;
+	FreeRDP_Settings_Keys_String id;
+	CmdLineSubOptionType opttype;
+	WINPR_ATTR_NODISCARD CmdLineSubOptionCb cb;
+} CmdLineSubOptions;
+
+typedef struct
+{
+	FreeRDP_Settings_Keys_Bool settingId;
+	const char* channelName;
+	void* args;
+} ChannelToLoad;
+
+typedef enum
+{
+	CLIP_DIR_PARSE_ALL,
+	CLIP_DIR_PARSE_OFF,
+	CLIP_DIR_PARSE_LOCAL,
+	CLIP_DIR_PARSE_REMOTE,
+	CLIP_DIR_PARSE_FAIL
+} PARSE_CLIP_DIR_RESULT;
+
+typedef enum
+{
+	PARSE_ON,
+	PARSE_OFF,
+	PARSE_NONE,
+	PARSE_FAIL
+} PARSE_ON_OFF_RESULT;
+
 static const char str_force[] = "force";
 
 static const char* credential_args[] = { "p",         "smartcard-logon",
@@ -85,8 +125,22 @@ static const char* credential_args[] = { "p",         "smartcard-logon",
 	                                     "pth",       "reconnect-cookie",
 	                                     "assistance" };
 
+WINPR_ATTR_NODISCARD
+static int parse_bpp_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg);
+
+WINPR_ATTR_NODISCARD
+static int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg);
+
+WINPR_ATTR_NODISCARD
+static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg);
+
+WINPR_ATTR_NODISCARD
 static const char* option_starts_with(const char* what, const char* val);
+
+WINPR_ATTR_NODISCARD
 static BOOL option_ends_with(const char* str, const char* ext);
+
+WINPR_ATTR_NODISCARD
 static BOOL option_equals(const char* what, const char* val);
 
 static BOOL freerdp_client_print_codepages(const char* arg)
@@ -127,6 +181,7 @@ static BOOL freerdp_client_print_codepages(const char* arg)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_path_valid(const char* path, BOOL* special)
 {
 	const char DynamicDrives[] = "DynamicDrives";
@@ -146,6 +201,7 @@ static BOOL freerdp_path_valid(const char* path, BOOL* special)
 	return isSpecial || isPath;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_sanitize_drive_name(char* name, const char* invalid, const char* replacement)
 {
 	if (!name || !invalid || !replacement)
@@ -165,6 +221,7 @@ static BOOL freerdp_sanitize_drive_name(char* name, const char* invalid, const c
 	return TRUE;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* name_from_path(const char* path)
 {
 	const char* name = "nullptr";
@@ -182,6 +239,7 @@ static char* name_from_path(const char* path)
 	return _strdup(name);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, const char* name)
 {
 	char* dname = nullptr;
@@ -251,6 +309,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
 {
 	long long rc = 0;
@@ -271,6 +330,7 @@ static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONG
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, ULONGLONG max)
 {
 	unsigned long long rc = 0;
@@ -334,6 +394,7 @@ static void freerdp_client_print_scancodes(void)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_delimiter(char c, const char* delimiters)
 {
 	char d = 0;
@@ -345,6 +406,7 @@ static BOOL is_delimiter(char c, const char* delimiters)
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static const char* get_last(const char* start, size_t len, const char* delimiters)
 {
 	const char* last = nullptr;
@@ -357,6 +419,7 @@ static const char* get_last(const char* start, size_t len, const char* delimiter
 	return last;
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T next_delimiter(const char* text, size_t len, size_t max, const char* delimiters)
 {
 	if (len < max)
@@ -369,6 +432,7 @@ static SSIZE_T next_delimiter(const char* text, size_t len, size_t max, const ch
 	return (SSIZE_T)(last - text);
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T forced_newline_at(const char* text, size_t len, size_t limit,
                                  const char* force_newline)
 {
@@ -387,6 +451,7 @@ static SSIZE_T forced_newline_at(const char* text, size_t len, size_t limit,
 	return -1;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL print_align(size_t start_offset, size_t* current)
 {
 	WINPR_ASSERT(current);
@@ -400,6 +465,7 @@ static BOOL print_align(size_t start_offset, size_t* current)
 	return TRUE;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* print_token(char* text, size_t start_offset, size_t* current, size_t limit,
                          const char* delimiters, const char* force_newline)
 {
@@ -442,6 +508,7 @@ static char* print_token(char* text, size_t start_offset, size_t* current, size_
 	return &text[(size_t)rc];
 }
 
+WINPR_ATTR_NODISCARD
 static size_t print_optionals(const char* text, size_t start_offset, size_t current)
 {
 	const size_t limit = 80;
@@ -477,6 +544,7 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	return current;
 }
 
+WINPR_ATTR_NODISCARD
 static int cmp_cmdline_args(const void* pva, const void* pvb)
 {
 	const COMMAND_LINE_ARGUMENT_A* a = (const COMMAND_LINE_ARGUMENT_A*)pva;
@@ -579,6 +647,7 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	return freerdp_client_print_command_line_help_ex(argc, argv, nullptr);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A* custom,
                                                    SSIZE_T count, size_t* pcount)
 {
@@ -699,6 +768,16 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Audio Input Redirection: /microphone:sys:oss,dev:1,format:1\n");
 	printf("Audio Input Redirection: /microphone:sys:alsa\n");
 	printf("\n");
+#if defined(CHANNEL_RDPECAM_CLIENT)
+	printf("Camera Redirection: /dvc:rdpecam[,sys:<sys>]\n");
+	printf("Camera Redirection, playing a movie file as camera (requires FFmpeg):\n");
+	printf("    /dvc:rdpecam,sys:movie,file:<path>[,name:<camera name>]\n");
+	printf("Camera Redirection, GStreamer pipeline as camera (requires GStreamer):\n");
+	printf("    /dvc:rdpecam,sys:gst,pipeline:<pipeline>|pipeline-file:<path>|file:<path>"
+	       "[,name:<camera name>][,loop:on|off]\n");
+	printf("    /dvc:rdpecam,sys:gst,'\"pipeline:pipewiresrc ! video/x-raw,width=640\"'\n");
+	printf("\n");
+#endif
 	printf("Multimedia Redirection: /video\n");
 #ifdef CHANNEL_URBDRC_CLIENT
 	printf("USB Device Redirection: /usb:id:054c:0268#4669:6e6b,addr:04:0c\n");
@@ -717,6 +796,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL option_is_rdp_file(const char* option)
 {
 	WINPR_ASSERT(option);
@@ -728,6 +808,7 @@ static BOOL option_is_rdp_file(const char* option)
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL option_is_incident_file(const char* option)
 {
 	WINPR_ASSERT(option);
@@ -735,6 +816,7 @@ static BOOL option_is_incident_file(const char* option)
 	return (option_ends_with(option, ".msrcIncident"));
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_client_command_line_pre_filter(void* context, int index, int argc, LPSTR* argv)
 {
 	if (index == 1)
@@ -944,6 +1026,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL read_pem_file(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
                           const char* b64OrFile)
 {
@@ -966,22 +1049,7 @@ static BOOL read_pem_file(rdpSettings* settings, FreeRDP_Settings_Keys_String id
 	return rc;
 }
 
-/** @brief suboption type */
-typedef enum
-{
-	CMDLINE_SUBOPTION_STRING,
-	CMDLINE_SUBOPTION_FILE,
-} CmdLineSubOptionType;
-
-typedef BOOL (*CmdLineSubOptionCb)(const char* value, rdpSettings* settings);
-typedef struct
-{
-	const char* optname;
-	FreeRDP_Settings_Keys_String id;
-	CmdLineSubOptionType opttype;
-	WINPR_ATTR_NODISCARD CmdLineSubOptionCb cb;
-} CmdLineSubOptions;
-
+WINPR_ATTR_NODISCARD
 static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts, size_t count,
                             const char* arg)
 {
@@ -1028,6 +1096,7 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
 }
 
 #define fail_at(arg, rc) fail_at_((arg), (rc), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static int fail_at_(const COMMAND_LINE_ARGUMENT_A* arg, int rc, const char* file, const char* fkt,
                     size_t line)
 {
@@ -1051,6 +1120,7 @@ static int fail_at_(const COMMAND_LINE_ARGUMENT_A* arg, int rc, const char* file
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	rdpSettings* settings = (rdpSettings*)context;
@@ -1272,11 +1342,43 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, enable))
 			return fail_at(arg, COMMAND_LINE_ERROR);
 
+		BOOL udp = FALSE;
 		UINT32 flags = 0;
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
 			flags =
 			    (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
 
+#if defined(WITH_RDPEUDP)
+		/* /multitransport advertises multitransport and declines the server's UDP,
+		 * /multitransport:udp also takes it, and :udp-preferred tunnels the static channels too.
+		 * Other values are refused, as for the plain bool switch built without UDP. */
+		BOOL preferred = FALSE;
+		if ((arg->Value != BoolValueTrue) && (arg->Value != BoolValueFalse))
+		{
+			if (option_equals("tcp-only", arg->Value))
+				udp = FALSE;
+			else if (option_equals("udp", arg->Value))
+				udp = TRUE;
+			else if (option_equals("udp-preferred", arg->Value))
+				udp = preferred = TRUE;
+			else
+				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+		}
+		else if (arg->Value == BoolValueTrue)
+			udp = TRUE;
+
+		if (udp)
+		{
+			/* only what the client implements: the reliable transport and Soft-Sync (drdynvc),
+			 * UDP_PREFERRED, tunnelling the static channels ([MS-RDPEDYC] 3.1.5.4), only when
+			 * asked for */
+			flags = TRANSPORT_TYPE_UDP_FECR | SOFTSYNC_TCP_TO_UDP;
+			if (preferred)
+				flags |= TRANSPORT_TYPE_UDP_PREFERRED;
+		}
+#endif
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransportUdp, udp))
+			return fail_at(arg, COMMAND_LINE_ERROR);
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags, flags))
 			return fail_at(arg, COMMAND_LINE_ERROR);
 	}
@@ -1285,12 +1387,14 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	    return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	int status = freerdp_client_command_line_post_filter_int(context, arg);
 	return status == CHANNEL_RC_OK ? 1 : -1;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_parse_username_ptr(const char* username, const char** user, size_t* userlen,
                                        const char** domain, size_t* domainlen)
 {
@@ -1332,6 +1436,7 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_parse_username_settings(const char* username, rdpSettings* settings,
                                             FreeRDP_Settings_Keys_String userID,
                                             FreeRDP_Settings_Keys_String domainID)
@@ -1419,6 +1524,7 @@ BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_apply_connection_type(rdpSettings* settings, UINT32 type)
 {
 	struct network_settings
@@ -1483,16 +1589,6 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 		case CONNECTION_TYPE_AUTODETECT:
 			if (!freerdp_apply_connection_type(settings, type))
 				return FALSE;
-			/* Automatically activate GFX and RFX codec support */
-#ifdef WITH_GFX_H264
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
-				return FALSE;
-#endif
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
-				return FALSE;
 			break;
 		default:
 			WLog_WARN(TAG, "Unknown ConnectionType %" PRIu32 ", aborting", type);
@@ -1502,6 +1598,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, WINPR_ATTR_UNUSED DWORD type)
 {
 	UINT32 res = 0;
@@ -1527,6 +1624,7 @@ fail:
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 freerdp_map_keyboard_layout_name_to_id(const char* name)
 {
 	const UINT32 variants[] = { RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, RDP_KEYBOARD_LAYOUT_TYPE_VARIANT,
@@ -1542,6 +1640,7 @@ static UINT32 freerdp_map_keyboard_layout_name_to_id(const char* name)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_detect_command_line_pre_filter(void* context, int index, int argc, LPSTR* argv)
 {
 	size_t length = 0;
@@ -1574,6 +1673,7 @@ static int freerdp_detect_command_line_pre_filter(void* context, int index, int 
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, size_t* count,
                                                             BOOL ignoreUnknown)
 {
@@ -1614,6 +1714,7 @@ static int freerdp_detect_windows_style_command_line_syntax(int argc, char** arg
 	return detect_status;
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, size_t* count,
                                                           BOOL ignoreUnknown)
 {
@@ -1725,6 +1826,17 @@ static void freerdp_client_print_keyboard_list(void)
 	                                        RDP_KEYBOARD_LAYOUT_TYPE_IME);
 }
 
+static void freerdp_client_print_clouds_list(void)
+{
+	size_t count = 0;
+	const char** list = freerdp_utils_aad_configuration_list(&count);
+
+	for (size_t x = 0; x < count; x++)
+	{
+		printf("%" PRIuz ": '%s'\n", x, list[x]);
+	}
+}
+
 static void freerdp_client_print_timezone_list(void)
 {
 	DWORD index = 0;
@@ -1800,6 +1912,7 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static int evaluate_result(int argc, char* argv[], int rc, rdpSettings* settings,
                            const COMMAND_LINE_ARGUMENT_A* largs)
 {
@@ -1817,6 +1930,8 @@ static int evaluate_result(int argc, char* argv[], int rc, rdpSettings* settings
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
+		if (option_equals("clouds", arg->Value))
+			freerdp_client_print_clouds_list();
 		if (option_equals("timezones", arg->Value))
 			freerdp_client_print_timezone_list();
 		else if (option_equals("tune", arg->Value))
@@ -2029,6 +2144,7 @@ out:
  * @param v2 pointer to output v2
  * @return if the parsing was successful
  */
+WINPR_ATTR_NODISCARD
 static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* v2)
 {
 	const char* xcharpos = nullptr;
@@ -2063,32 +2179,102 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 	return TRUE;
 }
 
-static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args,
-                                     BOOL rdp_file)
+WINPR_ATTR_NODISCARD
+static int prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args)
 {
 	const char* arguments[] = { "network", "gfx", "rfx", "bpp" };
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(args);
 
-	if (rdp_file)
-		return FALSE;
-
+	/* what to do:
+	 *
+	 * 1. if none of the arguments[] elements is found
+	 *   * enable GFX
+	 *   * set /network to auto
+	 *
+	 * 2. if only /network is found
+	 *   * enable GFX
+	 * 3. if any other element is found as well
+	 *   * skip defaults
+	 */
+	BOOL narg = FALSE;
+	BOOL garg = FALSE;
 	for (size_t x = 0; x < ARRAYSIZE(arguments); x++)
 	{
 		const char* arg = arguments[x];
 		const COMMAND_LINE_ARGUMENT_A* p = CommandLineFindArgumentA(args, arg);
-		if (p && (p->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
-			return FALSE;
+		if (!p || ((p->Flags & COMMAND_LINE_ARGUMENT_PRESENT) == 0))
+			continue;
+
+		const BOOL enable = p->Value != nullptr;
+
+		switch (x)
+		{
+			case 0:
+			{
+				const int rc = parse_network_options(settings, p);
+				if (rc != 0)
+					return fail_at(p, rc);
+				narg++;
+			}
+			break;
+			case 1:
+			{
+				int rc = parse_gfx_options(settings, p);
+				if (rc != 0)
+					return fail_at(p, rc);
+				garg = TRUE;
+			}
+			break;
+			case 2:
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, enable))
+					return fail_at(p, COMMAND_LINE_ERROR);
+				garg = TRUE;
+			}
+			break;
+			case 3:
+			{
+				const int rc = parse_bpp_options(settings, p);
+				if (rc != 0)
+					return fail_at(p, rc);
+				garg = TRUE;
+			}
+			break;
+			default:
+				break;
+		}
 	}
 
-	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
+	if (!narg)
+	{
+		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+			return -1;
+	}
+
+	if (!garg)
+	{
+		/* Automatically activate GFX and RFX codec support */
+#ifdef WITH_GFX_H264
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
+			return -1;
+#endif
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+			return -1;
+	}
+	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL setSmartcardEmulation(WINPR_ATTR_UNUSED const char* value, rdpSettings* settings)
 {
 	return freerdp_settings_set_bool(settings, FreeRDP_SmartcardEmulation, TRUE);
 }
 
+WINPR_ATTR_NODISCARD
 const char* option_starts_with(const char* what, const char* val)
 {
 	WINPR_ASSERT(what);
@@ -2120,14 +2306,7 @@ BOOL option_equals(const char* what, const char* val)
 	return _stricmp(what, val) == 0;
 }
 
-typedef enum
-{
-	PARSE_ON,
-	PARSE_OFF,
-	PARSE_NONE,
-	PARSE_FAIL
-} PARSE_ON_OFF_RESULT;
-
+WINPR_ATTR_NODISCARD
 static PARSE_ON_OFF_RESULT parse_on_off_option(const char* value)
 {
 	WINPR_ASSERT(value);
@@ -2157,15 +2336,7 @@ static PARSE_ON_OFF_RESULT parse_on_off_argument(const COMMAND_LINE_ARGUMENT_A* 
 	return PARSE_NONE;
 }
 
-typedef enum
-{
-	CLIP_DIR_PARSE_ALL,
-	CLIP_DIR_PARSE_OFF,
-	CLIP_DIR_PARSE_LOCAL,
-	CLIP_DIR_PARSE_REMOTE,
-	CLIP_DIR_PARSE_FAIL
-} PARSE_CLIP_DIR_RESULT;
-
+WINPR_ATTR_NODISCARD
 static PARSE_CLIP_DIR_RESULT parse_clip_direciton_to_option(const char* value)
 {
 	WINPR_ASSERT(value);
@@ -2183,6 +2354,7 @@ static PARSE_CLIP_DIR_RESULT parse_clip_direciton_to_option(const char* value)
 	return CLIP_DIR_PARSE_FAIL;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tls_ciphers(rdpSettings* settings, const char* Value)
 {
 	const char* ciphers = nullptr;
@@ -2207,6 +2379,7 @@ static int parse_tls_ciphers(rdpSettings* settings, const char* Value)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tls_seclevel(rdpSettings* settings, const char* Value)
 {
 	LONGLONG val = 0;
@@ -2219,6 +2392,7 @@ static int parse_tls_seclevel(rdpSettings* settings, const char* Value)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tls_secrets_file(rdpSettings* settings, const char* Value)
 {
 	if (!Value)
@@ -2229,6 +2403,7 @@ static int parse_tls_secrets_file(rdpSettings* settings, const char* Value)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 {
 	UINT16 version = TLS1_2_VERSION;
@@ -2280,6 +2455,7 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tls_cipher_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	int rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2325,6 +2501,7 @@ static int parse_tls_cipher_options(rdpSettings* settings, const COMMAND_LINE_AR
 	    return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2348,7 +2525,7 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return 0;
 }
 
-static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
@@ -2367,8 +2544,16 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		{
 			BOOL GfxH264 = FALSE;
 			BOOL GfxAVC444 = FALSE;
+			BOOL GfxAVCMixed = FALSE;
 			BOOL RemoteFxCodec = FALSE;
 			BOOL GfxProgressive = FALSE;
+#if defined(WITH_GFX_AV1)
+			BOOL GfxAV1 = FALSE;
+#endif
+#if defined(WITH_GFX_AV2)
+			BOOL GfxAV2 = FALSE;
+#endif
+			/* A codec named and on is picked: then the codecs not picked are offered no more. */
 			BOOL codecSelected = FALSE;
 
 			for (size_t x = 0; x < count; x++)
@@ -2391,6 +2576,15 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
 						GfxH264 = bval != PARSE_OFF;
+					codecSelected = TRUE;
+				}
+				else if (option_starts_with("AVC-mixed", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+						GfxAVCMixed = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else
@@ -2481,16 +2675,91 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 					else
-						enabled = bval == PARSE_ON;
+						enabled = bval != PARSE_OFF;
 
 					if (enabled || (bval != PARSE_FAIL))
 					{
+						/* AV1:off alone turns AV1 off and leaves the others as they are */
+						GfxAV1 = enabled;
+						if (enabled)
+							codecSelected = TRUE;
 						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, enabled))
 							rc = COMMAND_LINE_ERROR;
 						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV1Profile,
 						                                      profile))
 							rc = COMMAND_LINE_ERROR;
 					}
+				}
+#endif
+#if defined(WITH_GFX_AV2)
+				else if (option_starts_with("AV2", val))
+				{
+					uint32_t profile = 1;
+					BOOL enabled = FALSE;
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("av2:i420", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 0;
+						}
+						else if (_stricmp("av2:i444", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 1;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else
+						enabled = bval != PARSE_OFF; /* a bare AV2 turns it on */
+
+					if (enabled || (bval != PARSE_FAIL))
+					{
+						/* AV2:off alone turns AV2 off and leaves the others as they are */
+						GfxAV2 = enabled;
+						if (enabled)
+							codecSelected = TRUE;
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, enabled))
+							rc = COMMAND_LINE_ERROR;
+						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV2Profile,
+						                                      profile))
+							rc = COMMAND_LINE_ERROR;
+					}
+				}
+#endif
+#if defined(WITH_GFX_AZURE)
+				else if (option_starts_with("HEVC", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("hevc:i420", val) == 0)
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, TRUE))
+								rc = COMMAND_LINE_ERROR;
+							else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+							                                    FALSE))
+								rc = COMMAND_LINE_ERROR;
+						}
+						else if (_stricmp("hevc:i444", val) == 0)
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC, TRUE))
+								rc = COMMAND_LINE_ERROR;
+							else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+							                                    TRUE))
+								rc = COMMAND_LINE_ERROR;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecHEVC444,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
 				}
 #endif
 				else
@@ -2501,6 +2770,8 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, GfxAVC444))
 					rc = COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAVCMM, GfxAVCMixed))
+					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, GfxAVC444))
 					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264, GfxH264))
@@ -2509,6 +2780,14 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, GfxProgressive))
 					rc = COMMAND_LINE_ERROR;
+#if defined(WITH_GFX_AV1)
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, GfxAV1))
+					rc = COMMAND_LINE_ERROR;
+#endif
+#if defined(WITH_GFX_AV2)
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV2, GfxAV2))
+					rc = COMMAND_LINE_ERROR;
+#endif
 			}
 		}
 		CommandLineParserFree(ptr);
@@ -2518,6 +2797,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_kbd_layout(rdpSettings* settings, const char* value)
 {
 	WINPR_ASSERT(settings);
@@ -2586,6 +2866,7 @@ static int parse_codec_cache_options(rdpSettings* settings, const COMMAND_LINE_A
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static BOOL check_kbd_remap_valid(const char* token)
 {
 	UINT32 key = 0;
@@ -2604,6 +2885,7 @@ static BOOL check_kbd_remap_valid(const char* token)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2678,6 +2960,7 @@ static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_redirect_prefer_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2724,6 +3007,7 @@ static int parse_redirect_prefer_options(rdpSettings* settings, const COMMAND_LI
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_prevent_session_lock_options(rdpSettings* settings,
                                               const COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -2747,6 +3031,7 @@ static int parse_prevent_session_lock_options(rdpSettings* settings,
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_vmconnect_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2775,6 +3060,7 @@ static int parse_vmconnect_options(rdpSettings* settings, const COMMAND_LINE_ARG
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	int status = 0;
@@ -2857,6 +3143,71 @@ static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL parse_monitor_scale_factor(const char* value, UINT32* result)
+{
+	WINPR_ASSERT(result);
+
+	if (!value || (*value < '0') || (*value > '9'))
+		return FALSE;
+
+	char* end = nullptr;
+	errno = 0;
+	const unsigned long long rc = strtoull(value, &end, 10);
+	if ((errno != 0) || !end || (*end != '\0') || (rc > UINT32_MAX))
+		return FALSE;
+
+	*result = (UINT32)rc;
+	return TRUE;
+}
+
+/* Parse one /monitors entry: <id>[:<desktop>[:<device>]]. Omitted factors are 0 and keep the
+ * detected value; an omitted device factor defaults to 100 if a desktop factor is given. */
+WINPR_ATTR_NODISCARD
+static BOOL parse_monitor_entry(char* value, UINT32* id, rdpMonitorScale* scale)
+{
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(id);
+	WINPR_ASSERT(scale);
+
+	char* desktop = strchr(value, ':');
+	char* device = nullptr;
+	if (desktop)
+	{
+		*desktop++ = '\0';
+		device = strchr(desktop, ':');
+		if (device)
+			*device++ = '\0';
+	}
+
+	LONGLONG val = 0;
+	if (!value_to_int(value, &val, 0, UINT16_MAX))
+		return FALSE;
+	*id = (UINT32)val;
+
+	*scale = (rdpMonitorScale){ 0 };
+	if (!desktop)
+		return TRUE;
+
+	if (!parse_monitor_scale_factor(desktop, &scale->desktopScaleFactor) ||
+	    (scale->desktopScaleFactor < 100) || (scale->desktopScaleFactor > 500))
+	{
+		WLog_ERR(TAG, "/monitors: desktop scale must be 100..500, got '%s'", desktop);
+		return FALSE;
+	}
+
+	scale->deviceScaleFactor = 100;
+	if (device && (!parse_monitor_scale_factor(device, &scale->deviceScaleFactor) ||
+	               ((scale->deviceScaleFactor != 100) && (scale->deviceScaleFactor != 140) &&
+	                (scale->deviceScaleFactor != 180))))
+	{
+		WLog_ERR(TAG, "/monitors: device scale must be 100, 140 or 180, got '%s'", device);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
 static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2864,8 +3215,8 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
+		int rc = COMMAND_LINE_ERROR;
 		size_t count = 0;
-		UINT32* MonitorIds = nullptr;
 		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 		if (!ptr)
@@ -2875,28 +3226,42 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			count = 16;
 
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, count))
-		{
-			CommandLineParserFree(ptr);
-			return COMMAND_LINE_ERROR;
-		}
+			goto fail;
 
-		MonitorIds = freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorIds, 0);
+		BOOL scaled = FALSE;
 		for (UINT32 i = 0; i < count; i++)
 		{
-			LONGLONG val = 0;
+			UINT32 id = 0;
+			rdpMonitorScale scale = { 0 };
 
-			if (!value_to_int(ptr[i], &val, 0, UINT16_MAX))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!parse_monitor_entry(ptr[i], &id, &scale))
+			{
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				goto fail;
+			}
 
-			MonitorIds[i] = (UINT32)val;
+			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorIds, i, &id) ||
+			    !freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorScales, i, &scale))
+				goto fail;
+			if ((scale.desktopScaleFactor != 0) || (scale.deviceScaleFactor != 0))
+				scaled = TRUE;
 		}
 
+		/* The per-monitor scale factors travel in the monitor attributes (CS_MONITOR_EX), which
+		 * are only sent when this is set. */
+		if (scaled && !freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, TRUE))
+			goto fail;
+
+		rc = 0;
+	fail:
 		CommandLineParserFree(ptr);
+		return rc;
 	}
 
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_dynamic_resolution_options(rdpSettings* settings,
                                             const COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -2919,6 +3284,7 @@ static int parse_dynamic_resolution_options(rdpSettings* settings,
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_smart_sizing_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -2967,7 +3333,7 @@ static int parse_smart_sizing_options(rdpSettings* settings, const COMMAND_LINE_
 	return 0;
 }
 
-static int parse_bpp_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+int parse_bpp_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
@@ -2994,6 +3360,7 @@ static int parse_bpp_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3121,6 +3488,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_proxy_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3148,6 +3516,7 @@ static int parse_proxy_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_dump_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3219,6 +3588,7 @@ static int parse_dump_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3321,6 +3691,7 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_audio_mode_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3364,7 +3735,7 @@ static int parse_audio_mode_options(rdpSettings* settings, const COMMAND_LINE_AR
 	return 0;
 }
 
-static int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
@@ -3405,6 +3776,7 @@ static int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUM
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3480,6 +3852,7 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_encryption_methods_options(rdpSettings* settings,
                                             const COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -3513,6 +3886,7 @@ static int parse_encryption_methods_options(rdpSettings* settings,
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3566,6 +3940,7 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3608,12 +3983,13 @@ static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	/* Defaults are enabled, visible, sticky, fullscreen */
+	/* Defaults are enabled, visible, sticky, fullscreen, centered */
 	UINT32 Floatbar = 0x0017;
 
 	if (arg->Value)
@@ -3679,6 +4055,21 @@ static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 				else
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+			/* position:[left|center|right] */
+			else if (option_starts_with("position:", cur))
+			{
+				const char* val = cur + 9;
+				Floatbar &= ~0xC0u;
+
+				if (option_equals("left", val))
+					Floatbar |= 0x40u;
+				else if (option_equals("right", val))
+					Floatbar |= 0x80u;
+				else if (option_equals("center", val))
+					Floatbar &= ~0xC0u;
+				else
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
 			else
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		} while (start);
@@ -3688,6 +4079,7 @@ static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_reconnect_cookie_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3715,6 +4107,7 @@ static int parse_reconnect_cookie_options(rdpSettings* settings, const COMMAND_L
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL set_monitor_override(rdpSettings* settings, uint64_t flag)
 {
 	const FreeRDP_Settings_Keys_UInt64 key = FreeRDP_MonitorOverrideFlags;
@@ -3723,6 +4116,7 @@ static BOOL set_monitor_override(rdpSettings* settings, uint64_t flag)
 	return freerdp_settings_set_uint64(settings, key, mask);
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_scale_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3753,6 +4147,7 @@ static int parse_scale_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_scale_device_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3780,6 +4175,7 @@ static int parse_scale_device_options(rdpSettings* settings, const COMMAND_LINE_
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_smartcard_logon_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3818,6 +4214,7 @@ static int parse_smartcard_logon_options(rdpSettings* settings, const COMMAND_LI
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3848,15 +4245,13 @@ static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	return 0;
 }
 
-static int parse_app_option_program(rdpSettings* settings, const char* cmd)
+WINPR_ATTR_NODISCARD
+static int enable_remote_app(rdpSettings* settings)
 {
 	const FreeRDP_Settings_Keys_Bool ids[] = { FreeRDP_RemoteApplicationMode,
 		                                       FreeRDP_RemoteAppLanguageBarSupported,
 		                                       FreeRDP_Workarea, FreeRDP_DisableWallpaper,
 		                                       FreeRDP_DisableFullWindowDrag };
-
-	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram, cmd))
-		return COMMAND_LINE_ERROR_MEMORY;
 
 	for (size_t y = 0; y < ARRAYSIZE(ids); y++)
 	{
@@ -3866,6 +4261,15 @@ static int parse_app_option_program(rdpSettings* settings, const char* cmd)
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
+static int parse_app_option_program(rdpSettings* settings, const char* cmd)
+{
+	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram, cmd))
+		return COMMAND_LINE_ERROR_MEMORY;
+	return enable_remote_app(settings);
+}
+
+WINPR_ATTR_NODISCARD
 static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3890,57 +4294,76 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			{ "avd-access:", FreeRDP_GatewayAvdAccessAadFormat, nullptr },
 			{ "avd-token:", FreeRDP_GatewayAvdAccessTokenFormat, nullptr },
 			{ "avd-scope:", FreeRDP_GatewayAvdScope, nullptr },
-			{ "auth-helper:", FreeRDP_AadAuthHelper, nullptr }
+			{ "auth-helper:", FreeRDP_AadAuthHelper, nullptr },
+			{ "user-agent:", FreeRDP_AadAuthUserAgent, nullptr }
 		};
 		for (size_t x = 0; x < count; x++)
 		{
-			BOOL handled = FALSE;
 			const char* val = ptr[x];
-
-			if (option_starts_with("use-tenantid", val))
+			if (option_starts_with("cloud:", val))
 			{
-				PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
-				if (bval == PARSE_FAIL)
-				{
+				const char* name = &val[6];
+				if (!freerdp_utils_aad_apply_known_configuration(settings, name))
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					break;
-				}
-				else
+				break;
+			}
+		}
+		if (rc == CHANNEL_RC_OK)
+		{
+			for (size_t x = 0; x < count; x++)
+			{
+				BOOL handled = FALSE;
+				const char* val = ptr[x];
+
+				// already handled
+				if (option_starts_with("cloud:", val))
+					continue;
+
+				if (option_starts_with("use-tenantid", val))
 				{
-					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid,
-					                               bval != PARSE_OFF))
+					PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 					{
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 						break;
 					}
-				}
-				continue;
-			}
-			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
-			{
-				const struct app_map* cur = &amap[y];
-				if (option_starts_with(cur->name, val))
-				{
-					const char* xval = &val[strlen(cur->name)];
-					if (cur->fkt)
-						rc = cur->fkt(settings, xval);
 					else
 					{
-						const char* name = freerdp_settings_get_name_for_key(cur->id);
-						if (!freerdp_settings_set_value_for_name(settings, name, xval))
-							rc = COMMAND_LINE_ERROR_MEMORY;
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid,
+						                               bval != PARSE_OFF))
+						{
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+							break;
+						}
 					}
-
-					handled = TRUE;
-					break;
+					continue;
 				}
+				for (size_t y = 0; y < ARRAYSIZE(amap); y++)
+				{
+					const struct app_map* cur = &amap[y];
+					if (option_starts_with(cur->name, val))
+					{
+						const char* xval = &val[strlen(cur->name)];
+						if (cur->fkt)
+							rc = cur->fkt(settings, xval);
+						else
+						{
+							const char* name = freerdp_settings_get_name_for_key(cur->id);
+							if (!freerdp_settings_set_value_for_name(settings, name, xval))
+								rc = COMMAND_LINE_ERROR_MEMORY;
+						}
+
+						handled = TRUE;
+						break;
+					}
+				}
+
+				if (!handled)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+				if (rc != 0)
+					break;
 			}
-
-			if (!handled)
-				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (rc != 0)
-				break;
 		}
 	}
 
@@ -3948,6 +4371,7 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3980,6 +4404,23 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		{
 			BOOL handled = FALSE;
 			const char* val = ptr[x];
+
+			if (option_equals("command-pipe", val) || option_starts_with("command-pipe:", val))
+			{
+				const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+				if ((bval == PARSE_FAIL) ||
+				    !freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationExecFromPipe,
+				                               bval != PARSE_OFF))
+				{
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					break;
+				}
+				if (bval != PARSE_OFF)
+					rc = enable_remote_app(settings);
+				if (rc != CHANNEL_RC_OK)
+					break;
+				continue;
+			}
 
 			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
 			{
@@ -4021,6 +4462,7 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -4114,6 +4556,7 @@ static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL parse_gateway_host_option(rdpSettings* settings, const char* host)
 {
 	WINPR_ASSERT(settings);
@@ -4140,6 +4583,7 @@ static BOOL parse_gateway_host_option(rdpSettings* settings, const char* host)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL parse_gateway_cred_option(rdpSettings* settings, const char* value,
                                       FreeRDP_Settings_Keys_String what)
 {
@@ -4162,6 +4606,7 @@ static BOOL parse_gateway_cred_option(rdpSettings* settings, const char* value,
 	return freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials, FALSE);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 {
 	BOOL rc = FALSE;
@@ -4209,6 +4654,7 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
 {
 	UINT32 type = 0;
@@ -4236,6 +4682,7 @@ static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
 	return freerdp_set_gateway_usage_method(settings, type);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* unescape(const char* str)
 {
 	char* copy = _strdup(str);
@@ -4270,6 +4717,7 @@ static char* unescape(const char* str)
 	return copy;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	char* argval = nullptr;
@@ -4467,6 +4915,7 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_command_line_option_uint32(rdpSettings* settings,
                                             const COMMAND_LINE_ARGUMENT_A* arg,
                                             FreeRDP_Settings_Keys_UInt32 key, LONGLONG min,
@@ -4792,6 +5241,7 @@ static int parse_deprecated_command_line(rdpSettings* settings, const COMMAND_LI
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static int parse_command_line_option_timezone(rdpSettings* settings,
                                               const COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -4833,6 +5283,7 @@ static int parse_command_line_option_timezone(rdpSettings* settings,
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_command_line_option_window_pos(rdpSettings* settings,
                                                 const COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -4858,6 +5309,7 @@ static int parse_command_line_option_window_pos(rdpSettings* settings,
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg,
                               freerdp_command_line_handle_option_t handle_option,
                               void* handle_userdata, BOOL* promptForPassword, char** user)
@@ -5016,9 +5468,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
-			const int rc = parse_bpp_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "admin")
 		{
@@ -5211,9 +5661,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "network")
 		{
-			const int rc = parse_network_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -5285,15 +5733,12 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "gfx")
 		{
-			int rc = parse_gfx_options(settings, arg);
-			if (rc != 0)
-				return fail_at(arg, rc);
+			/* applied before the other options: see prepare_default_settings */
 		}
 
 		CommandLineSwitchCase(arg, "rfx")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, enable))
-				return fail_at(arg, COMMAND_LINE_ERROR);
+			/* applied before the other options: see prepare_default_settings */
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{
@@ -5734,6 +6179,7 @@ static void warn_credential_args(const COMMAND_LINE_ARGUMENT_A* args)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static int freerdp_client_settings_parse_command_line_arguments_int(
     rdpSettings* settings, int argc, char* argv[], BOOL allowUnknown,
     COMMAND_LINE_ARGUMENT_A* largs, WINPR_ATTR_UNUSED size_t count,
@@ -5800,7 +6246,10 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	if (status < 0)
 		return status;
 
-	prepare_default_settings(settings, largs, ext);
+	status = prepare_default_settings(settings, largs);
+	if (status != 0)
+		return status;
+
 	if ((cmdflags & FREERDP_SETTINGS_CMD_PARSE_SUPPRESS_WARNINGS) == 0)
 		warn_credential_args(largs);
 
@@ -5916,6 +6365,7 @@ static void argv_free(int* pargc, char** pargv[])
 	free((void*)argv);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL argv_append(int* pargc, char** pargv[], char* what)
 {
 	WINPR_ASSERT(pargc);
@@ -5938,6 +6388,7 @@ static BOOL argv_append(int* pargc, char** pargv[], char* what)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL argv_append_dup(int* pargc, char** pargv[], const char* what)
 {
 	char* copy = nullptr;
@@ -5950,6 +6401,7 @@ static BOOL argv_append_dup(int* pargc, char** pargv[], const char* what)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL args_from_fp(FILE* fp, int* aargc, char** aargv[], const char* file, const char* cmd)
 {
 	BOOL success = FALSE;
@@ -6010,6 +6462,7 @@ fail:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL args_from_env(const char* name, int* aargc, char** aargv[], const char* arg,
                           const char* cmd)
 {
@@ -6108,6 +6561,8 @@ int freerdp_client_settings_parse_command_line_arguments_with_flags(
 		{
 			ULONGLONG result = 0;
 			const char* val = strchr(file, ':') + 1;
+			if (!val)
+				return -1;
 			if (!value_to_uint(val, &result, 0, INT_MAX))
 				return -1;
 			fp = fdopen((int)result, "r");
@@ -6116,11 +6571,15 @@ int freerdp_client_settings_parse_command_line_arguments_with_flags(
 		else if (strncmp(file, "env:", 4) == 0)
 		{
 			const char* name = strchr(file, ':') + 1;
+			if (!name)
+				return -1;
 			success = args_from_env(name, &aargc, &aargv, oargv[1], oargv[0]);
 		}
 		else if (strncmp(file, "file:", 5) == 0)
 		{
 			file = strchr(file, ':') + 1;
+			if (!file)
+				return -1;
 			fp = winpr_fopen(file, "r");
 			success = args_from_fp(fp, &aargc, &aargv, file, oargv[0]);
 		}
@@ -6156,6 +6615,7 @@ fail:
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings,
                                                      const char* name, void* data)
 {
@@ -6187,13 +6647,6 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
 
 	return FALSE;
 }
-
-typedef struct
-{
-	FreeRDP_Settings_Keys_Bool settingId;
-	const char* channelName;
-	void* args;
-} ChannelToLoad;
 
 BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
