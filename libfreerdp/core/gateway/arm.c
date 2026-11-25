@@ -1090,7 +1090,13 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_AadSecurity))
+	{
+		/* The profile identifies the desktop, the broker identifies the selected session host. */
+		WINPR_JSON* id = WINPR_JSON_GetObjectItemCaseSensitive(json, "deviceId");
+		aad_set_arm_device_id(arm->context->rdp->aad,
+		                      WINPR_JSON_IsString(id) ? WINPR_JSON_GetStringValue(id) : nullptr);
 		status = TRUE;
+	}
 	else
 		status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
 
