@@ -1959,6 +1959,9 @@ LONG smartcard_pack_redir_scard_context(WINPR_ATTR_UNUSED wLog* log, wStream* s,
 	const UINT32 pbContextNdrPtr = 0x00020000 + *index * 4;
 
 	WINPR_ASSERT(context);
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return SCARD_E_NO_MEMORY;
+
 	if (context->cbContext != 0)
 	{
 		Stream_Write_UINT32(s, context->cbContext); /* cbContext (4 bytes) */
@@ -2018,6 +2021,12 @@ LONG smartcard_pack_redir_scard_context_ref(WINPR_ATTR_UNUSED wLog* log, wStream
 	if (context->cbContext == 0)
 		return SCARD_S_SUCCESS;
 
+	if (context->cbContext > sizeof(context->pbContext))
+		return SCARD_E_INVALID_PARAMETER;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + context->cbContext))
+		return SCARD_E_NO_MEMORY;
+
 	Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
 	Stream_Write(s, &(context->pbContext), context->cbContext);
 
@@ -2060,6 +2069,9 @@ LONG smartcard_pack_redir_scard_handle(WINPR_ATTR_UNUSED wLog* log, wStream* s,
 	const UINT32 pbContextNdrPtr = 0x00020000 + *index * 4;
 
 	WINPR_ASSERT(handle);
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return SCARD_E_NO_MEMORY;
+
 	if (handle->cbHandle != 0)
 	{
 		Stream_Write_UINT32(s, handle->cbHandle); /* cbContext (4 bytes) */
@@ -2116,6 +2128,12 @@ LONG smartcard_pack_redir_scard_handle_ref(WINPR_ATTR_UNUSED wLog* log, wStream*
 
 	if (handle->cbHandle == 0)
 		return SCARD_S_SUCCESS;
+
+	if (handle->cbHandle > sizeof(handle->pbHandle))
+		return SCARD_E_INVALID_PARAMETER;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + handle->cbHandle))
+		return SCARD_E_NO_MEMORY;
 
 	Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 	Stream_Write(s, &(handle->pbHandle), handle->cbHandle);
@@ -3084,6 +3102,9 @@ LONG smartcard_pack_state_return(wStream* s, const State_Return* ret)
 		cbAtrLen = 0;
 	if (cbAtrLen == SCARD_AUTOALLOCATE)
 		cbAtrLen = 0;
+
+	if (!Stream_EnsureRemainingCapacity(s, 12))
+		return SCARD_E_NO_MEMORY;
 
 	Stream_Write_UINT32(s, ret->dwState);    /* dwState (4 bytes) */
 	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
@@ -4940,6 +4961,9 @@ LONG smartcard_pack_control_call(wStream* s, const Control_Call* call)
 	Stream_Write_UINT32(s, call->dwControlCode);
 	Stream_Write_UINT32(s, call->cbInBufferSize);
 	if (!smartcard_ndr_pointer_write(s, &index, call->cbInBufferSize))
+		return SCARD_E_NO_MEMORY;
+
+	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return SCARD_E_NO_MEMORY;
 
 	Stream_Write_INT32(s, call->fpvOutBufferIsNULL);
