@@ -22,6 +22,7 @@
 #include <string>
 #include <map>
 #include <list>
+#include <vector>
 #include <atomic>
 
 #include <winpr/wtypes.h>
@@ -59,6 +60,7 @@ class sdlInput
 
 	[[nodiscard]] bool prefToEnabled();
 	[[nodiscard]] uint32_t prefToMask();
+	[[nodiscard]] bool hotkeyModsMatch(SDL_Keymod mods) const;
 	[[nodiscard]] static uint32_t prefKeyValue(const std::string& key,
 	                                           uint32_t fallback = SDL_SCANCODE_UNKNOWN);
 
@@ -74,6 +76,10 @@ class sdlInput
 
 	// hotkey handling
 	bool _hotkeysEnabled = false;
+	/* One SDL_KeyModMask entry each: a hotkey matches if every entry is satisfied by at
+	 * least one of its bits, so KMOD_CTRL (left or right control) works as expected.
+	 * Must be declared before _hotkeyModmask, which fills it in its initializer. */
+	std::vector<uint32_t> _hotkeyModGroups;
 	uint32_t _hotkeyModmask = 0; // modifier keys mask
 	uint32_t _hotkeyFullscreen = 0;
 	uint32_t _hotkeyResizable = 0;
