@@ -3019,6 +3019,8 @@ update_calculate_window_icon_order(WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* or
 	if (iconInfo->cbBitsMask > 1ul * UINT16_MAX - orderSize)
 		return FALSE;
 
+	orderSize += iconInfo->cbBitsMask;
+
 	if (iconInfo->bpp <= 8)
 	{
 		if (iconInfo->cbColorTable > 1ul * UINT16_MAX - orderSize)
