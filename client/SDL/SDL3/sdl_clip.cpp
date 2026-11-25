@@ -63,7 +63,7 @@ static const char* first_announcement[] = {
 	if (values.empty())
 	{
 		values = std::vector<const char*>(
-		    { mime_text_utf8, "UTF8_STRING", mime_text_plain, "COMPOUND_TEXT", "TEXT", "STRING" });
+		    { mime_text_utf8, "UTF8_STRING", mime_text_plain, "TEXT", "STRING" });
 	}
 	return values;
 }
@@ -802,7 +802,6 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	clipboard->_current_mimetypes.emplace_back(clipboard->_mime_uuid.c_str());
 
 	auto& mime = clipboard->_current_mimetypes;
-	std::sort(mime.begin(), mime.end());
 	mime.erase(std::unique(mime.begin(), mime.end()), mime.end());
 
 	WLog_Print(clipboard->_log, WLOG_TRACE,

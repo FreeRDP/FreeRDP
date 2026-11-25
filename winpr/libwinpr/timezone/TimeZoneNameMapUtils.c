@@ -328,8 +328,15 @@ static char* get_wzid_icu(const UChar* utzid, size_t utzid_len)
 			UErrorCode error2 = U_ZERO_ERROR;
 			int32_t rc2 = ucal_getWindowsTimeZoneID(
 			    utzid, WINPR_ASSERTING_INT_CAST(int32_t, utzid_len), wzid, rc, &error2);
-			if (U_SUCCESS(error2) && (rc2 > 0))
-				res = ConvertWCharNToUtf8Alloc(wzid, (size_t)rc, nullptr);
+			if (U_SUCCESS(error2) && (rc2 > 0) && (rc2 < rc))
+			{
+#if U_IS_BIG_ENDIAN
+				const WCHAR* wzid_le = ByteSwapUnicode(wzid, (size_t)rc2);
+#else
+				const WCHAR* wzid_le = wzid;
+#endif
+				res = ConvertWCharNToUtf8Alloc(wzid_le, (size_t)rc2 + 1, nullptr);
+			}
 			free(wzid);
 		}
 	}
@@ -343,7 +350,12 @@ static char* get(const char* iana)
 	if (!utzid)
 		return nullptr;
 
-	char* wzid = get_wzid_icu(utzid, utzid_len);
+#if U_IS_BIG_ENDIAN
+	const UChar* utzid_native = ByteSwapUnicode(utzid, utzid_len);
+#else
+	const UChar* utzid_native = utzid;
+#endif
+	char* wzid = get_wzid_icu(utzid_native, utzid_len);
 	free(utzid);
 	return wzid;
 }

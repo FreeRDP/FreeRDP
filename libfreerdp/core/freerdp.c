@@ -1337,6 +1337,9 @@ BOOL freerdp_nla_impersonate(rdpContext* context)
 		return FALSE;
 
 	nla = transport_get_nla(context->rdp->transport);
+	if (!nla)
+		return FALSE;
+
 	return nla_impersonate(nla);
 }
 
@@ -1354,6 +1357,9 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 		return FALSE;
 
 	nla = transport_get_nla(context->rdp->transport);
+	if (!nla)
+		return FALSE;
+
 	return nla_revert_to_self(nla);
 }
 
@@ -1366,6 +1372,9 @@ UINT32 freerdp_get_nla_sspi_error(const rdpContext* context)
 	rdpNla* nla = context->rdp->nla;
 	if (!nla)
 		nla = transport_get_nla(context->rdp->transport);
+	if (!nla)
+		return (UINT32)SEC_E_INVALID_HANDLE;
+
 	return (UINT32)nla_get_sspi_error(nla);
 }
 
@@ -1374,7 +1383,11 @@ BOOL freerdp_nla_encrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuff
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
+	/* There is no NLA context on connections that did not use CredSSP (e.g. PROTOCOL_SSL) */
 	rdpNla* nla = context->rdp->nla;
+	if (!nla)
+		return FALSE;
+
 	return nla_encrypt(nla, inBuffer, outBuffer);
 }
 
@@ -1383,7 +1396,11 @@ BOOL freerdp_nla_decrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuff
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
+	/* There is no NLA context on connections that did not use CredSSP (e.g. PROTOCOL_SSL) */
 	rdpNla* nla = context->rdp->nla;
+	if (!nla)
+		return FALSE;
+
 	return nla_decrypt(nla, inBuffer, outBuffer);
 }
 
@@ -1395,8 +1412,8 @@ SECURITY_STATUS freerdp_nla_QueryContextAttributes(rdpContext* context, DWORD ul
 	rdpNla* nla = context->rdp->nla;
 	if (!nla)
 		nla = transport_get_nla(context->rdp->transport);
-
-	WINPR_ASSERT(nla);
+	if (!nla)
+		return SEC_E_INVALID_HANDLE;
 
 	return nla_QueryContextAttributes(nla, ulAttr, pBuffer);
 }
@@ -1409,8 +1426,8 @@ SECURITY_STATUS freerdp_nla_FreeContextBuffer(rdpContext* context, PVOID pBuffer
 	rdpNla* nla = context->rdp->nla;
 	if (!nla)
 		nla = transport_get_nla(context->rdp->transport);
-
-	WINPR_ASSERT(nla);
+	if (!nla)
+		return SEC_E_INVALID_HANDLE;
 
 	return nla_FreeContextBuffer(nla, pBuffer);
 }

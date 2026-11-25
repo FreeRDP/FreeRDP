@@ -1361,6 +1361,9 @@ static BOOL mf_Pointer_SetPosition(rdpContext *context, UINT32 x, UINT32 y)
 	if (!mfc)
 		return FALSE;
 
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse))
+		return TRUE;
+
 	/* TODO: Set pointer position */
 	return TRUE;
 }

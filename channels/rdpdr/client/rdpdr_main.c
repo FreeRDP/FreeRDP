@@ -264,6 +264,11 @@ static DWORD WINAPI drive_hotplug_thread_func(WINPR_ATTR_UNUSED LPVOID arg)
 	return CHANNEL_RC_OK;
 }
 
+static UINT drive_hotplug_thread_initialize(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr)
+{
+	return CHANNEL_RC_OK;
+}
+
 static UINT drive_hotplug_thread_terminate(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr)
 {
 	return CHANNEL_RC_OK;
@@ -424,53 +429,60 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
-	rdpdrPlugin* rdpdr;
-	WNDCLASSEX wnd_cls;
-	HWND hwnd;
-	MSG msg;
-	BOOL bRet;
-	DEV_BROADCAST_HANDLE NotificationFilter;
-	HDEVNOTIFY hDevNotify;
-	rdpdr = (rdpdrPlugin*)arg;
-	/* init windows class */
-	wnd_cls.cbSize = sizeof(WNDCLASSEX);
-	wnd_cls.style = CS_HREDRAW | CS_VREDRAW;
-	wnd_cls.lpfnWndProc = hotplug_proc;
-	wnd_cls.cbClsExtra = 0;
-	wnd_cls.cbWndExtra = 0;
-	wnd_cls.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-	wnd_cls.hCursor = nullptr;
-	wnd_cls.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wnd_cls.lpszMenuName = nullptr;
-	wnd_cls.lpszClassName = L"DRIVE_HOTPLUG";
-	wnd_cls.hInstance = nullptr;
-	wnd_cls.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
-	RegisterClassEx(&wnd_cls);
-	/* create window */
-	hwnd = CreateWindowEx(0, L"DRIVE_HOTPLUG", nullptr, 0, 0, 0, 0, 0, nullptr, nullptr, nullptr,
-	                      nullptr);
-	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)rdpdr);
-	rdpdr->hotplug_wnd = hwnd;
+	BOOL bRet = FALSE;
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*)arg;
+
 	/* register device interface to hwnd */
-	NotificationFilter.dbch_size = sizeof(DEV_BROADCAST_HANDLE);
-	NotificationFilter.dbch_devicetype = DBT_DEVTYP_HANDLE;
-	hDevNotify = RegisterDeviceNotification(hwnd, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
+	DEV_BROADCAST_HANDLE NotificationFilter = { .dbch_size = sizeof(DEV_BROADCAST_HANDLE),
+		                                        .dbch_devicetype = DBT_DEVTYP_HANDLE };
+
+	HDEVNOTIFY hDevNotify = RegisterDeviceNotification(rdpdr->hotplug_wnd, &NotificationFilter,
+	                                                   DEVICE_NOTIFY_WINDOW_HANDLE);
 
 	/* message loop */
-	while ((bRet = GetMessage(&msg, 0, 0, 0)) != 0)
+	MSG msg = WINPR_C_ARRAY_INIT;
+	while ((bRet = GetMessage(&msg, 0, 0, 0)) > 0)
 	{
-		if (bRet == -1)
-		{
-			break;
-		}
-		else
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
 
 	UnregisterDeviceNotification(hDevNotify);
+	return CHANNEL_RC_OK;
+}
+
+static const WCHAR hotplug_class_name[] = L"DRIVE_HOTPLUG";
+
+static UINT drive_hotplug_thread_initialize(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr)
+{
+	/* init windows class */
+	WNDCLASSEXW wnd_cls = { .cbSize = sizeof(WNDCLASSEX),
+		                    .style = CS_HREDRAW | CS_VREDRAW,
+		                    .lpfnWndProc = hotplug_proc,
+		                    .cbClsExtra = 0,
+		                    .cbWndExtra = 0,
+		                    .hIcon = LoadIcon(nullptr, IDI_APPLICATION),
+		                    .hCursor = nullptr,
+		                    .hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH),
+		                    .lpszMenuName = nullptr,
+		                    .lpszClassName = hotplug_class_name,
+		                    .hInstance = nullptr,
+		                    .hIconSm = LoadIcon(nullptr, IDI_APPLICATION) };
+	ATOM rc = RegisterClassExW(&wnd_cls);
+	if (rc == 0)
+	{
+		WLog_Print(rdpdr->log, WLOG_ERROR, "RegisterClassEx failed with %" PRIu32 "",
+		           GetLastError());
+		return CHANNEL_RC_BAD_INIT_HANDLE;
+	}
+	rdpdr->hotplug_class = rc;
+
+	/* create window */
+	HWND hwnd = CreateWindowExW(0, hotplug_class_name, nullptr, 0, 0, 0, 0, 0, nullptr, nullptr,
+	                            nullptr, nullptr);
+	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)rdpdr);
+	rdpdr->hotplug_wnd = hwnd;
+
 	return CHANNEL_RC_OK;
 }
 
@@ -487,6 +499,13 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 	{
 		error = GetLastError();
 		WLog_Print(rdpdr->log, WLOG_ERROR, "PostMessage failed with error %" PRIu32 "", error);
+	}
+
+	if (rdpdr->hotplug_class)
+	{
+		if (!UnregisterClassW(hotplug_class_name, rdpdr->hotplug_class))
+			WLog_Print(rdpdr->log, WLOG_ERROR, "UnregisterClassW failed with %" PRIu32 "",
+			           GetLastError());
 	}
 
 	return error;
@@ -1099,6 +1118,11 @@ out:
 #endif
 
 #if !defined(_WIN32) && !defined(__IOS__)
+static UINT drive_hotplug_thread_initialize(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr)
+{
+	return CHANNEL_RC_OK;
+}
+
 /**
  * Function description
  *
@@ -1236,6 +1260,10 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	}
 	else
 		strncpy(rdpdr->computerName, name, strnlen(name, sizeof(rdpdr->computerName)));
+
+	const UINT rc = drive_hotplug_thread_initialize(rdpdr);
+	if (rc != CHANNEL_RC_OK)
+		return rc;
 
 	return rdpdr_add_devices(rdpdr);
 }

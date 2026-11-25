@@ -1377,9 +1377,15 @@ static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
 			 * xf_cliprdr_send_client_format_list would issue a new TARGETS request,
 			 * and an owner that keeps refusing (Xwayland can) turns that into a
 			 * busy loop that also sends the server a format list on every turn,
-			 * built from the stale TARGETS of the previous owner. Drop what was
-			 * cached and wait for the next owner change. */
-			xf_cliprdr_send_format_list(clipboard, nullptr, 0, nullptr, 0);
+			 * built from the stale TARGETS of the previous owner. Wait for the
+			 * next owner change.
+			 *
+			 * Do not announce an empty format list here: Xwayland refuses while
+			 * it is still handing the selection over (e.g. on focus change), so
+			 * the server would get "empty" squeezed between two real lists, and
+			 * Windows rdpclip then stops requesting data on paste. */
+			WLog_Print(clipboard->log, WLOG_DEBUG,
+			           "TARGETS refused by owner, waiting for next owner change");
 		}
 		else
 		{
@@ -1977,21 +1983,29 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
-	UINT32 numFormats = 0;
-	Atom* atoms = nullptr;
-	size_t atomsCount = 0;
-	CLIPRDR_FORMAT* formats =
-	    xf_cliprdr_get_client_formats(clipboard, &numFormats, &atoms, &atomsCount);
-
-	const UINT ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats, atoms, atomsCount);
-
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{
-		/* Request the owner for TARGETS, and wait for SelectionNotify event */
+		/* Request the owner for TARGETS, and wait for SelectionNotify event.
+		 * The format list is sent from there: what is in property_atom now are
+		 * the TARGETS of the previous owner, announcing them would be stale. */
+		LogDynAndXDeleteProperty(clipboard->log, xfc->display, xfc->drawable,
+		                         clipboard->property_atom);
 		LogDynAndXConvertSelection(clipboard->log, xfc->display, clipboard->clipboard_atom,
 		                           clipboard->targets[1], clipboard->property_atom, xfc->drawable,
 		                           CurrentTime);
+		return CHANNEL_RC_OK;
 	}
+
+	UINT32 numFormats = 0;
+	Atom* atoms = nullptr;
+	size_t atomsCount = 0;
+	CLIPRDR_FORMAT* formats = nullptr;
+
+	/* No owner: the clipboard is empty, whatever property_atom still holds. */
+	if (clipboard->owner)
+		formats = xf_cliprdr_get_client_formats(clipboard, &numFormats, &atoms, &atomsCount);
+
+	const UINT ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats, atoms, atomsCount);
 
 	xf_cliprdr_free_formats(formats, numFormats);
 

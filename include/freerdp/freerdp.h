@@ -332,7 +332,19 @@ extern "C"
 	typedef BOOL (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, const BYTE* data,
 	                                    size_t size, UINT32 flags, size_t totalSize);
 
-	/* type can be one of the GATEWAY_MESSAGE_ type defines */
+	/** @brief Callback used to present a gateway message to the user
+	 *
+	 *  @param instance  Pointer to the freerdp instance.
+	 *  @param type      Type of message shown, \ref GATEWAY_MESSAGE_CONSENT or \ref
+	 * GATEWAY_MESSAGE_SERVICE
+	 *  @param isDisplayMandatory Indicator if the message must be displayed or can be skipped
+	 *  @param isConsentMandatory Indicator if the message needs user consent confirmation or is
+	 * display only
+	 *  @param length The length in bytes of the message
+	 *  @param message A \ref WCHAR string of \ref length bytes
+	 *
+	 *  @return TRUE for success, FALSE otherwise.
+	 */
 	typedef BOOL (*pPresentGatewayMessage)(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
 	                                       BOOL isConsentMandatory, size_t length,
 	                                       const WCHAR* message);

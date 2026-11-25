@@ -892,7 +892,10 @@ static int nla_server_authenticate(rdpNla* nla)
 				break;
 			}
 
-			(void)nla_send(nla);
+			if (!nla_send(nla))
+			{
+				WLog_DBG(TAG, "nla_send(ACCESS_DENIED) did not succeed, ignoring");
+			}
 			/* Access Denied */
 			goto fail;
 		}

@@ -63,6 +63,55 @@ static BOOL test_lShift_16s_func(void)
 	return (status == PRIMITIVES_SUCCESS);
 }
 
+static BOOL test_lShift_16s_inplace_func(void)
+{
+	const UINT32 lengths[] = { 1, 7, 15, 16, 17, 33, FUNC_TEST_SIZE };
+	INT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 d2[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+
+	if (winpr_RAND(d1, sizeof(d1)) < 0)
+		return FALSE;
+	memcpy(d2, d1, sizeof(d1));
+
+	/* Negative tests */
+	if (generic->lShiftC_16s_inplace(d1 + 1, 16, FUNC_TEST_SIZE) == PRIMITIVES_SUCCESS)
+		return FALSE;
+	if (optimized->lShiftC_16s_inplace(d2 + 1, 16, FUNC_TEST_SIZE) == PRIMITIVES_SUCCESS)
+		return FALSE;
+	if (memcmp(d1, d2, sizeof(d1)) != 0)
+		return FALSE;
+
+	for (UINT32 val = 0; val < 16; val++)
+	{
+		for (size_t i = 0; i < ARRAYSIZE(lengths); i++)
+		{
+			/* Aligned and unaligned */
+			for (size_t offset = 0; offset < 2; offset++)
+			{
+				if (winpr_RAND(d1, sizeof(d1)) < 0)
+					return FALSE;
+				memcpy(d2, d1, sizeof(d1));
+
+				if (generic->lShiftC_16s_inplace(d1 + offset, val, lengths[i]) !=
+				    PRIMITIVES_SUCCESS)
+					return FALSE;
+				if (optimized->lShiftC_16s_inplace(d2 + offset, val, lengths[i]) !=
+				    PRIMITIVES_SUCCESS)
+					return FALSE;
+				if (memcmp(d1, d2, sizeof(d1)) != 0)
+				{
+					(void)fprintf(stderr,
+					              "lShiftC_16s_inplace mismatch, val=%" PRIu32 " len=%" PRIu32 "\n",
+					              val, lengths[i]);
+					return FALSE;
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
 static BOOL test_lShift_16u_func(void)
 {
 	pstatus_t status = 0;
@@ -432,6 +481,9 @@ int TestPrimitivesShift(int argc, char* argv[])
 		if (!test_lShift_16s_speed())
 			return 1;
 	}
+
+	if (!test_lShift_16s_inplace_func())
+		return 1;
 
 	if (!test_lShift_16u_func())
 		return 1;

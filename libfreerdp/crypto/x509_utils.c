@@ -921,6 +921,35 @@ char** x509_utils_get_ip_names(const X509* xcert, size_t* count, size_t** ppleng
 	return x509_utils_get_names(xcert, GEN_IPADD, extract_ip_address, count, pplengths);
 }
 
+WINPR_ATTR_NODISCARD
+static int found_name(WINPR_ATTR_UNUSED const X509* x509, WINPR_ATTR_UNUSED GENERAL_NAME* name,
+                      void* data, WINPR_ATTR_UNUSED int index, WINPR_ATTR_UNUSED int count)
+{
+	BOOL* found = data;
+	WINPR_ASSERT(found);
+
+	*found = TRUE;
+	return 0; /* one is enough, stop the iteration */
+}
+
+BOOL x509_utils_has_dns_names(const X509* xcert)
+{
+	/* Unlike x509_utils_get_dns_names this does not filter the entries:
+	 * a malformed dNSName can never match, but it is still a DNS SAN. */
+	BOOL found = FALSE;
+	map_subject_alt_name(xcert, GEN_DNS, found_name, &found);
+	return found;
+}
+
+BOOL x509_utils_has_ip_names(const X509* xcert)
+{
+	/* Unlike x509_utils_get_dns_names this does not filter the entries:
+	 * a malformed dNSName can never match, but it is still a DNS SAN. */
+	BOOL found = FALSE;
+	map_subject_alt_name(xcert, GEN_IPADD, found_name, &found);
+	return found;
+}
+
 char* x509_utils_get_issuer(const X509* xcert)
 {
 	char* issuer = nullptr;

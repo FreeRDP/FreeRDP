@@ -319,9 +319,9 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	}
 
 	Stream_Free(smartcard->device.data, TRUE);
-	ListDictionary_Free(smartcard->rgOutstandingMessages);
 
 	smartcard_call_context_free(smartcard->callctx);
+	ListDictionary_Free(smartcard->rgOutstandingMessages);
 	DeleteCriticalSection(&smartcard->lock);
 
 	free(smartcard);
@@ -417,7 +417,6 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 {
 	LONG status = 0;
 	BOOL asyncIrp = FALSE;
-	SMARTCARD_CONTEXT* pContext = nullptr;
 
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(handled);
@@ -521,7 +520,8 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 				break;
 		}
 
-		pContext = smartcard_call_get_context(smartcard->callctx, element->operation.hContext);
+		SMARTCARD_CONTEXT* pContext =
+		    smartcard_call_get_context(smartcard->callctx, element->operation.hContext);
 
 		if (!pContext)
 			asyncIrp = FALSE;
@@ -534,6 +534,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 			    smartcard_irp_device_control_call(smartcard->callctx, element->irp->output,
 			                                      &element->irp->IoStatus, &element->operation);
 			smartcard_operation_free(&element->operation, TRUE);
+			smartcard_call_return_context(smartcard->callctx, pContext);
 
 			if (status)
 			{
@@ -567,7 +568,10 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 						break;
 				}
 
-				if (!MessageQueue_Post(queue, nullptr, 0, (void*)element, nullptr))
+				const BOOL rc = MessageQueue_Post(queue, nullptr, 0, (void*)element, nullptr);
+				smartcard_call_return_context(smartcard->callctx, pContext);
+
+				if (!rc)
 				{
 					smartcard_operation_free(&element->operation, TRUE);
 					WLog_ERR(TAG, "MessageQueue_Post failed!");

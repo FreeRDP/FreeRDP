@@ -376,7 +376,8 @@ static inline void general_YUV444ToRGB_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UIN
 {
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
-	for (size_t x = 0; x < nWidth; x += 2)
+	size_t x = 0;
+	for (; x < nWidth - nWidth % 2; x += 2)
 	{
 		for (size_t j = 0; j < 2; j++)
 		{
@@ -385,6 +386,14 @@ static inline void general_YUV444ToRGB_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UIN
 			const BYTE v = pV[x + j];
 			pRGB = writeYUVPixel(pRGB, DstFormat, y, u, v, writePixel);
 		}
+	}
+
+	for (; x < nWidth; x++)
+	{
+		const BYTE y = pY[x];
+		const BYTE u = pU[x];
+		const BYTE v = pV[x];
+		pRGB = writeYUVPixel(pRGB, DstFormat, y, u, v, writePixel);
 	}
 }
 
@@ -432,8 +441,8 @@ static inline void general_YUV444ToBGRX_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2],
                                                    const BYTE* WINPR_RESTRICT pU[2],
                                                    const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
 {
-	WINPR_ASSERT(nWidth % 2 == 0);
-	for (size_t x = 0; x < nWidth; x += 2)
+	size_t x = 0;
+	for (; x < nWidth - nWidth % 2; x += 2)
 	{
 		const INT32 subU = pU[0][x + 1] + pU[1][x] + pU[1][x + 1];
 		const INT32 avgU = ((4 * pU[0][x]) - subU);
@@ -456,6 +465,16 @@ static inline void general_YUV444ToBGRX_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2],
 			}
 		}
 	}
+	for (; x < nWidth; x++)
+	{
+		for (size_t i = 0; i < 2; i++)
+		{
+			const BYTE y = pY[i][x];
+			const BYTE u = pU[i][x];
+			const BYTE v = pV[i][x];
+			pRGB[i] = writeYUVPixel(pRGB[i], DstFormat, y, u, v, writePixelBGRX);
+		}
+	}
 }
 
 static inline void general_YUV444ToBGRX_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UINT32 DstFormat,
@@ -463,8 +482,8 @@ static inline void general_YUV444ToBGRX_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UI
                                                    const BYTE* WINPR_RESTRICT pU,
                                                    const BYTE* WINPR_RESTRICT pV, size_t nWidth)
 {
-	WINPR_ASSERT(nWidth % 2 == 0);
-	for (size_t x = 0; x < nWidth; x += 2)
+	size_t x = 0;
+	for (; x < nWidth - nWidth % 2; x += 2)
 	{
 		for (size_t j = 0; j < 2; j++)
 		{
@@ -473,6 +492,14 @@ static inline void general_YUV444ToBGRX_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UI
 			const BYTE V = pV[x + j];
 			pRGB = writeYUVPixel(pRGB, DstFormat, Y, U, V, writePixelBGRX);
 		}
+	}
+
+	for (; x < nWidth; x++)
+	{
+		const BYTE Y = pY[x];
+		const BYTE U = pU[x];
+		const BYTE V = pV[x];
+		pRGB = writeYUVPixel(pRGB, DstFormat, Y, U, V, writePixelBGRX);
 	}
 }
 
@@ -1418,10 +1445,13 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
     BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7, UINT32 width)
 {
+	WINPR_ASSERT((pSrcOdd && b1Odd) || (!pSrcOdd && !b1Odd));
+	const BOOL haveOdd = b1Odd && pSrcOdd;
+
 	for (size_t x = offset; x < width; x += 2)
 	{
 		const BYTE* srcEven = &pSrcEven[4ULL * x];
-		const BYTE* srcOdd = pSrcOdd ? &pSrcOdd[4ULL * x] : nullptr;
+		const BYTE* srcOdd = haveOdd ? &pSrcOdd[4ULL * x] : nullptr;
 		const BOOL lastX = (x + 1) >= width;
 		BYTE Y1e = 0;
 		BYTE Y2e = 0;
@@ -1457,7 +1487,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			V2e = RGB2V(r, g, b);
 		}
 
-		if (b1Odd)
+		if (haveOdd)
 		{
 			const BYTE b = *srcOdd++;
 			const BYTE g = *srcOdd++;
@@ -1468,7 +1498,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			V1o = V2o = RGB2V(r, g, b);
 		}
 
-		if (b1Odd && !lastX)
+		if (haveOdd && !lastX)
 		{
 			const BYTE b = *srcOdd++;
 			const BYTE g = *srcOdd++;
@@ -1483,7 +1513,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		*b1Even++ = Y1e;
 		*b1Even++ = Y2e;
 
-		if (b1Odd)
+		if (haveOdd)
 		{
 			*b1Odd++ = Y1o;
 			*b1Odd++ = Y2o;
@@ -1499,7 +1529,7 @@ static inline void int_general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		}
 
 		/* UV from 2x, 2y+1 */
-		if (b1Odd)
+		if (haveOdd)
 		{
 			*b4++ = U1o;
 			*b5++ = V1o;

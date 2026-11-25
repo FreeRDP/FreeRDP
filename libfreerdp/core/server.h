@@ -79,6 +79,9 @@ struct rdp_peer_channel
 	/* True once the Close Request is posted; set while holding the writeLock. Soft-Sync
 	 * excludes the channel from this point forward. Only the tunnel code sets this. */
 	BOOL closing;
+
+	size_t offset;
+	size_t total;
 };
 
 struct WTSVirtualChannelManager

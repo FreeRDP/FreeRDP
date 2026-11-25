@@ -794,20 +794,20 @@ static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** 
 {
 	/* Cap to a maximum of 256 bytes and set status to more data */
 	UINT16 status = ISO_STATUS_SUCCESS;
-	DWORD remainingBytes = (DWORD)Stream_Length(context->responseData);
+	DWORD remainingBytes = (DWORD)Stream_GetRemainingLength(context->responseData);
 	if (remainingBytes > 256)
 	{
 		status = ISO_STATUS_MORE_DATA;
 		remainingBytes = 256;
 	}
 
-	*response = Stream_Buffer(context->responseData);
+	*response = Stream_ConstPointer(context->responseData);
 	*responseSize = remainingBytes;
 	Stream_Seek(context->responseData, remainingBytes);
 
 	/* Check if there are more than 256 bytes left or if we can already provide the remaining length
 	 * in the status word */
-	remainingBytes = (DWORD)(Stream_Length(context->responseData) - remainingBytes);
+	remainingBytes = (DWORD)Stream_GetRemainingLength(context->responseData);
 	if (remainingBytes < 256 && remainingBytes != 0)
 		status |= (remainingBytes & 0xFF);
 	return status;
@@ -1260,6 +1260,9 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 	/* Perform security operation */
 	if (!vgids_parse_apdu_header(s, &cla, nullptr, &p1, &p2, &lc, nullptr))
 		return FALSE;
+
+	/* free any previous response, a new command invalidates it */
+	vgids_reset_context_response(context);
 
 	if (lc == 0)
 	{

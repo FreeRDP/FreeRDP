@@ -28,6 +28,20 @@ static BOOL test_tz(const char* iana, const char* expected)
 		(void)fprintf(stderr, "%s: expected time zone key '%s', got '%s'\n", iana, expected, key);
 		return FALSE;
 	}
+
+	const size_t expectedLength = strlen(expected);
+	if (expectedLength >= ARRAYSIZE(tzif.TimeZoneKeyName))
+		return FALSE;
+
+	const unsigned char* bytes = (const unsigned char*)tzif.TimeZoneKeyName;
+	for (size_t index = 0; index <= expectedLength; index++)
+	{
+		if ((bytes[2 * index] != (unsigned char)expected[index]) || (bytes[2 * index + 1] != 0))
+		{
+			(void)fprintf(stderr, "%s: time zone key is not UTF-16LE\n", iana);
+			return FALSE;
+		}
+	}
 	return TRUE;
 }
 #endif

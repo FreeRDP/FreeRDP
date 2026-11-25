@@ -30,6 +30,22 @@
 #include <freerdp/api.h>
 #include <freerdp/utils/gfx.h>
 
+/* hard coded limit for update rectangles in any single AVC420/AVC444/HEVC frame.
+ * This is not from the spec but a best effort guess from common data:
+ *
+ * 1. We assume the server properly merges adjacent tiles into a single one reducing the average
+ * update rectangle count significantly.
+ * 2. The regions are for a single surface, which can (for the next decated realistically be)
+ *     -> A 4K monitor can have 2160 64x64 tiles
+ *     -> A 8K monitor can have 7680 64x64 tiles, so 3840
+ * 3. A worst case is a chessboard pattern with every second tile empty.
+ *     -> 4K: 1080
+ *     -> 8K: 3840
+ *
+ * so our best guess is just allow 4K worst case count and see what will happen.
+ */
+#define RDPGFX_MAX_META_REGION_COUNT 1080
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header,
                                       size_t* pPacketLength);

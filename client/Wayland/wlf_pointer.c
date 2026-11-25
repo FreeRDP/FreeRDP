@@ -141,9 +141,15 @@ static BOOL wlf_Pointer_SetDefault(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL wlf_Pointer_SetPosition(WINPR_ATTR_UNUSED rdpContext* context,
-                                    WINPR_ATTR_UNUSED UINT32 x, WINPR_ATTR_UNUSED UINT32 y)
+static BOOL wlf_Pointer_SetPosition(rdpContext* context, WINPR_ATTR_UNUSED UINT32 x,
+                                    WINPR_ATTR_UNUSED UINT32 y)
 {
+	if (!context)
+		return FALSE;
+
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse))
+		return TRUE;
+
 	// TODO
 	WLog_ERR(TAG, "TODO: implement");
 	return TRUE;

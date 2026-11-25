@@ -648,6 +648,12 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	UINT16 topInterBand = 0;
 	WINPR_ASSERT(src);
 	WINPR_ASSERT(dst);
+	WINPR_ASSERT(rect);
+
+	/* An empty (or inverted) rectangle does not add anything to the region. The band splitting
+	 * below relies on left < right and top < bottom, otherwise bands would get duplicated. */
+	if (rectangle_is_empty(rect))
+		return region16_copy(dst, src);
 
 	const RECTANGLE_16* srcExtents = region16_extents(src);
 	RECTANGLE_16* dstExtents = region16_extents_noconst(dst);
