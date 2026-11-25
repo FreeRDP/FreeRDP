@@ -1142,6 +1142,9 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 WINPR_ATTR_NODISCARD
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
+	if (S_ISFIFO(fileStat->st_mode))
+		return INVALID_FILE_ATTRIBUTES;
+
 	DWORD dwFileAttributes = GetDosAttributesFromXAttr(path);
 
 	if (S_ISDIR(fileStat->st_mode))
@@ -1182,6 +1185,13 @@ WINPR_ATTR_NODISCARD
 static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
                              LPWIN32_FIND_DATAA lpFindFileData)
 {
+	WINPR_ASSERT(path);
+	WINPR_ASSERT(fileStat);
+	WINPR_ASSERT(lpFindFileData);
+
+	if (S_ISFIFO(fileStat->st_mode))
+		return FALSE;
+
 	UINT64 ft = 0;
 	lpFindFileData->dwFileAttributes = FileAttributesFromStat(path, fileStat);
 
