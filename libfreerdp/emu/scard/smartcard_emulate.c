@@ -204,6 +204,9 @@ static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, size_t dstSize, c
 	WINPR_ASSERT(srcSize <= UINT32_MAX);
 	WINPR_ASSERT(dstSize <= UINT32_MAX);
 
+	if (!dst)
+		return WINPR_ASSERTING_INT_CAST(UINT32, srcSize);
+
 	if (dstSize == SCARD_AUTOALLOCATE)
 	{
 		if (srcSize == 0)
