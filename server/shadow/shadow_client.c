@@ -2346,6 +2346,48 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 
 /**
  * Function description
+ * Copy the tile described by bitmap to pDstData and extend its width and height to a
+ * multiple of 4 by repeating the last column and line. bitmap->width and bitmap->height
+ * are updated to the padded size, the destination rectangle keeps describing the real area.
+ *
+ * @return TRUE on success
+ */
+WINPR_ATTR_NODISCARD
+static BOOL shadow_client_pad_bitmap_tile(BYTE* pDstData, UINT32 nDstStep, const BYTE* pSrcData,
+                                          UINT32 SrcFormat, UINT32 nSrcStep, BITMAP_DATA* bitmap)
+{
+	const UINT32 width = bitmap->width;
+	const UINT32 height = bitmap->height;
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+
+	if (!freerdp_image_copy_no_overlap(pDstData, SrcFormat, nDstStep, 0, 0, width, height, pSrcData,
+	                                   SrcFormat, nSrcStep, bitmap->destLeft, bitmap->destTop,
+	                                   nullptr, FREERDP_FLIP_NONE))
+		return FALSE;
+
+	if ((width % 4) != 0)
+		bitmap->width += (4 - (width % 4));
+
+	if ((height % 4) != 0)
+		bitmap->height += (4 - (height % 4));
+
+	for (UINT32 y = 0; y < height; y++)
+	{
+		BYTE* line = &pDstData[1ull * y * nDstStep];
+
+		for (UINT32 x = width; x < bitmap->width; x++)
+			CopyMemory(&line[1ull * x * bpp], &line[1ull * (width - 1) * bpp], bpp);
+	}
+
+	for (UINT32 y = height; y < bitmap->height; y++)
+		CopyMemory(&pDstData[1ull * y * nDstStep], &pDstData[1ull * (height - 1) * nDstStep],
+		           1ULL * bitmap->width * bpp);
+
+	return TRUE;
+}
+
+/**
+ * Function description
  *
  * @return TRUE on success
  */
@@ -2355,8 +2397,9 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
                                              UINT16 nWidth, UINT16 nHeight)
 {
 	BOOL ret = TRUE;
-	BYTE* data = nullptr;
+	const BYTE* data = nullptr;
 	BYTE* buffer = nullptr;
+	BYTE* padded = nullptr;
 	UINT32 k = 0;
 	UINT32 yIdx = 0;
 	UINT32 xIdx = 0;
@@ -2425,14 +2468,12 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 
 	bitmapUpdate.rectangles = bitmapData;
 
-	if ((nWidth % 4) != 0)
+	/* The bitmap size must be a multiple of 4, but the caller already clipped the area to what
+	 * is available and shared. Never read beyond it, pad a copy of the tile instead. */
+	if (!(padded = (BYTE*)calloc(64ul * 64ul, 4)))
 	{
-		nWidth += (4 - (nWidth % 4));
-	}
-
-	if ((nHeight % 4) != 0)
-	{
-		nHeight += (4 - (nHeight % 4));
+		ret = FALSE;
+		goto out;
 	}
 
 	for (yIdx = 0; yIdx < rows; yIdx++)
@@ -2455,8 +2496,23 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			bitmap->destBottom = bitmap->destTop + bitmap->height - 1;
 			bitmap->compressed = TRUE;
 
-			if ((bitmap->width < 4) || (bitmap->height < 4))
-				continue;
+			const BYTE* pTileData = pSrcData;
+			UINT32 nTileStep = nSrcStep;
+			UINT32 nXTile = bitmap->destLeft;
+			UINT32 nYTile = bitmap->destTop;
+
+			if (((bitmap->width % 4) != 0) || ((bitmap->height % 4) != 0))
+			{
+				pTileData = padded;
+				nTileStep = 64 * 4;
+				nXTile = 0;
+				nYTile = 0;
+
+				ret = shadow_client_pad_bitmap_tile(padded, nTileStep, pSrcData, SrcFormat,
+				                                    nSrcStep, bitmap);
+				if (!ret)
+					goto out;
+			}
 
 			if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) < 32)
 			{
@@ -2465,9 +2521,9 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 				DstSize = 64 * 64 * 4;
 				buffer = encoder->grid[k];
 
-				ret = interleaved_compress(
-				    encoder->interleaved, buffer, &DstSize, bitmap->width, bitmap->height, pSrcData,
-				    SrcFormat, nSrcStep, bitmap->destLeft, bitmap->destTop, nullptr, bitsPerPixel);
+				ret = interleaved_compress(encoder->interleaved, buffer, &DstSize, bitmap->width,
+				                           bitmap->height, pTileData, SrcFormat, nTileStep, nXTile,
+				                           nYTile, nullptr, bitsPerPixel);
 				if (!ret)
 					goto out;
 				bitmap->bitmapDataStream = buffer;
@@ -2480,11 +2536,11 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			{
 				UINT32 dstSize = 0;
 				buffer = encoder->grid[k];
-				data = &pSrcData[(bitmap->destTop * nSrcStep) + (bitmap->destLeft * 4)];
+				data = &pTileData[(nYTile * nTileStep) + (nXTile * 4)];
 
 				buffer =
 				    freerdp_bitmap_compress_planar(encoder->planar, data, SrcFormat, bitmap->width,
-				                                   bitmap->height, nSrcStep, buffer, &dstSize);
+				                                   bitmap->height, nTileStep, buffer, &dstSize);
 				bitmap->bitmapDataStream = buffer;
 				bitmap->bitmapLength = dstSize;
 				bitmap->bitsPerPixel = 32;
@@ -2555,6 +2611,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	}
 
 out:
+	free(padded);
 	free(bitmapData);
 	return ret;
 }
