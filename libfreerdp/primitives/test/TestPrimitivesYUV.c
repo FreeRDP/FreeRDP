@@ -1947,6 +1947,17 @@ int TestPrimitivesYUV(int argc, char* argv[])
 		if (!compare_yuv444_to_rgb(roi, type))
 			goto end;
 
+#if defined(_M_IX86) || defined(_M_AMD64)
+		const prim_size_t yuv444OddRois[] = {
+			{ 1, 1 }, { 13, 7 }, { 13, 8 }, { 17, 3 }, { 31, 2 }
+		};
+		for (size_t x = 0; x < ARRAYSIZE(yuv444OddRois); x++)
+		{
+			if (!compare_yuv444_to_rgb(yuv444OddRois[x], type))
+				goto end;
+		}
+#endif
+
 		const prim_size_t oddroi = { roi.width - 1, roi.height };
 		if (!compare_i444_to_rgb(roi, type) || !compare_i444_to_rgb(oddroi, type))
 			goto end;
