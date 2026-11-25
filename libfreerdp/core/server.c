@@ -91,6 +91,11 @@ static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const void* Buffer1,
 	/* Ignore empty messages. */
 	if (len == 0)
 		return TRUE;
+
+	/* abort if the channel ID is invalid */
+	if (channel->channelId > UINT16_MAX)
+		return FALSE;
+
 	const size_t tlen = sizeof(wtsChannelMessage) + len;
 	wtsChannelMessage* messageCtx = (wtsChannelMessage*)malloc(tlen);
 	if (!messageCtx)
