@@ -414,9 +414,13 @@ bool sdlDispContext::handleEvent(const SDL_WindowEvent& ev)
 			return updateMonitor(ev.windowID);
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
+			if (!_sdl->getInputChannelContext().mouse_grab(ev.windowID, false))
+				return false;
 			return _sdl->getInputChannelContext().keyboard_grab(ev.windowID, false);
 		case SDL_EVENT_WINDOW_MOUSE_ENTER:
 			WINPR_ASSERT(_sdl);
+			if (!_sdl->getInputChannelContext().mouse_grab(ev.windowID, true))
+				return false;
 			if (!_sdl->getInputChannelContext().keyboard_grab(ev.windowID, true))
 				return false;
 			return _sdl->getInputChannelContext().keyboard_focus_in();

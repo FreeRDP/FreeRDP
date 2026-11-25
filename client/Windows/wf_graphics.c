@@ -331,6 +331,9 @@ static BOOL wf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	if (!context)
 		return FALSE;
 
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse))
+		return TRUE;
+
 	return TRUE;
 }
 
