@@ -350,9 +350,6 @@ bool sdlInput::keyboard_focus_in()
 	auto id = SDL_GetWindowID(w);
 	const auto& pos = _sdl->screenToPixel(id, SDL_FPoint{ fx, fy });
 
-	if (!mouse_grab(id, true))
-		return false;
-
 	return sdl::utils::inputSent(
 	    _sdl->context(), _sdl->getWLog(),
 	    freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
@@ -734,7 +731,11 @@ bool sdlInput::mouse_grab(Uint32 windowID, bool enable)
 
 	auto window = _sdl->getWindowForId(windowID);
 	if (!window)
+	{
+		WLog_Print(_sdl->getWLog(), WLOG_WARN, "Failed to grab mouse for window %" PRIu32,
+		           windowID);
 		return false;
+	}
 	return _sdl->setGrabMouse(status);
 }
 

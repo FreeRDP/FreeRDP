@@ -1044,12 +1044,13 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 	/* special handling for consent messages (show modal dialog) */
 	if (type == GATEWAY_MESSAGE_CONSENT && isConsentMandatory)
 	{
-		int mbRes;
-		WCHAR* msg;
+		const size_t len = length / sizeof(WCHAR);
+		if (len > INT32_MAX)
+			return FALSE;
 
-		msg = wf_format_text(L"%.*s\n\nI understand and agree to the terms of this policy", length,
-		                     message);
-		mbRes = MessageBoxW(nullptr, msg, L"Consent Message", MB_YESNO);
+		WCHAR* msg = wf_format_text(L"%.*s\n\nI understand and agree to the terms of this policy",
+		                            (int)len, message);
+		const int mbRes = MessageBoxW(nullptr, msg, L"Consent Message", MB_YESNO);
 		free(msg);
 
 		if (mbRes != IDYES)

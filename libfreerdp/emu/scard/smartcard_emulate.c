@@ -131,12 +131,8 @@ typedef struct
 
 typedef struct
 {
-	union
-	{
-		void* pv;
-		CHAR* pc;
-		WCHAR* pw;
-	} szReader;
+	CHAR* szReaderA;
+	WCHAR* szReaderW;
 	BOOL unicode;
 	BOOL transaction;
 	DWORD transmitcount;
@@ -203,6 +199,9 @@ static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, size_t dstSize, c
 
 	WINPR_ASSERT(srcSize <= UINT32_MAX);
 	WINPR_ASSERT(dstSize <= UINT32_MAX);
+
+	if (!dst)
+		return WINPR_ASSERTING_INT_CAST(UINT32, srcSize);
 
 	if (dstSize == SCARD_AUTOALLOCATE)
 	{
@@ -295,7 +294,8 @@ static void scard_handle_free(void* handle)
 	SCardHandle* hdl = handle;
 	if (hdl)
 	{
-		free(hdl->szReader.pv);
+		free(hdl->szReaderA);
+		free(hdl->szReaderW);
 		vgids_free(hdl->vgids);
 	}
 	free(hdl);
@@ -315,27 +315,32 @@ static SCardHandle* scard_handle_new(SmartcardEmulationContext* smartcard, SCARD
 
 	/* ATTENTION: Do not use _strdup or _wcsdup!
 	 * These strings are required to be double nullptr terminated!
+	 *
+	 * Keep both the CHAR and the WCHAR form of the name, the handle may be
+	 * queried with either the A or the W variant of the SCard* functions.
 	 */
 	if (unicode)
 	{
 		size_t s = _wcslen(name);
 
-		hdl->szReader.pw = calloc(s + 2, sizeof(WCHAR));
-		if (!hdl->szReader.pw)
+		hdl->szReaderW = calloc(s + 2, sizeof(WCHAR));
+		if (!hdl->szReaderW)
 			goto fail;
-		memcpy(hdl->szReader.pv, name, s * sizeof(WCHAR));
+		memcpy(hdl->szReaderW, name, s * sizeof(WCHAR));
+		hdl->szReaderA = ConvertMszWCharNToUtf8Alloc(hdl->szReaderW, s + 2, nullptr);
 	}
 	else
 	{
 		size_t s = strlen(name);
 
-		hdl->szReader.pc = calloc(s + 2, sizeof(CHAR));
-		if (!hdl->szReader.pc)
+		hdl->szReaderA = calloc(s + 2, sizeof(CHAR));
+		if (!hdl->szReaderA)
 			goto fail;
-		memcpy(hdl->szReader.pv, name, s * sizeof(CHAR));
+		memcpy(hdl->szReaderA, name, s * sizeof(CHAR));
+		hdl->szReaderW = ConvertMszUtf8NToWCharAlloc(hdl->szReaderA, s + 2, nullptr);
 	}
 
-	if (!hdl->szReader.pv)
+	if (!hdl->szReaderA || !hdl->szReaderW)
 		goto fail;
 
 	hdl->vgids = vgids_new(smartcard);
@@ -381,10 +386,11 @@ static LONG scard_reader_name_valid_a(SmartcardEmulationContext* smartcard, SCAR
 {
 	WINPR_ASSERT(smartcard);
 
+	if (!name)
+		return SCARD_E_INVALID_VALUE;
+
 	HashTable_Lock(smartcard->contexts);
 	SCardContext* ctx = HashTable_GetItemValue(smartcard->contexts, (const void*)context);
-
-	WINPR_ASSERT(name);
 	WINPR_ASSERT(ctx);
 
 	LONG rc = SCARD_E_UNKNOWN_READER;
@@ -1701,9 +1707,9 @@ SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szRea
 
 		if (cur->unicode != unicode)
 			continue;
-		if (!unicode && (strcmp(cur->szReader.pc, szReader) != 0))
+		if (!unicode && (strcmp(cur->szReaderA, szReader) != 0))
 			continue;
-		if (unicode && (_wcscmp(cur->szReader.pw, szReader) != 0))
+		if (unicode && (_wcscmp(cur->szReaderW, szReader) != 0))
 			continue;
 		hdl = cur;
 		break;
@@ -1998,7 +2004,7 @@ LONG WINAPI Emulate_SCardState(SmartcardEmulationContext* smartcard, SCARDHANDLE
 				const SCARD_READERSTATEW* readerW = &ctx->readerStateW[x];
 				if (hdl->unicode)
 				{
-					if (_wcscmp(readerW->szReader, hdl->szReader.pw) == 0)
+					if (_wcscmp(readerW->szReader, hdl->szReaderW) == 0)
 					{
 						*pcbAtrLen = scard_copy_strings(ctx, pbAtr, *pcbAtrLen, readerW->rgbAtr,
 						                                readerW->cbAtr);
@@ -2006,7 +2012,7 @@ LONG WINAPI Emulate_SCardState(SmartcardEmulationContext* smartcard, SCARDHANDLE
 				}
 				else
 				{
-					if (strcmp(readerA->szReader, hdl->szReader.pc) == 0)
+					if (strcmp(readerA->szReader, hdl->szReaderA) == 0)
 					{
 						*pcbAtrLen = scard_copy_strings(ctx, pbAtr, *pcbAtrLen, readerA->rgbAtr,
 						                                readerA->cbAtr);
@@ -2044,9 +2050,8 @@ LONG WINAPI Emulate_SCardStatusA(SmartcardEmulationContext* smartcard, SCARDHAND
 		WINPR_ASSERT(ctx);
 
 		if (pcchReaderLen)
-			*pcchReaderLen =
-			    scard_copy_strings(ctx, mszReaderNames, *pcchReaderLen, hdl->szReader.pc,
-			                       (UINT32)strlen(hdl->szReader.pc) + 2);
+			*pcchReaderLen = scard_copy_strings(ctx, mszReaderNames, *pcchReaderLen, hdl->szReaderA,
+			                                    (UINT32)strlen(hdl->szReaderA) + 2);
 
 		if (pdwState)
 			*pdwState = SCARD_SPECIFIC;
@@ -2058,7 +2063,7 @@ LONG WINAPI Emulate_SCardStatusA(SmartcardEmulationContext* smartcard, SCARDHAND
 			for (size_t x = 0; x < MAX_EMULATED_READERS; x++)
 			{
 				const SCARD_READERSTATEA* reader = &ctx->readerStateA[x];
-				if (strcmp(reader->szReader, hdl->szReader.pc) == 0)
+				if (strcmp(reader->szReader, hdl->szReaderA) == 0)
 				{
 					*pcbAtrLen =
 					    scard_copy_strings(ctx, pbAtr, *pcbAtrLen, reader->rgbAtr, reader->cbAtr);
@@ -2096,8 +2101,8 @@ LONG WINAPI Emulate_SCardStatusW(SmartcardEmulationContext* smartcard, SCARDHAND
 
 		if (pcchReaderLen)
 			*pcchReaderLen =
-			    scard_copy_strings(ctx, mszReaderNames, *pcchReaderLen, hdl->szReader.pw,
-			                       (UINT32)(_wcslen(hdl->szReader.pw) + 2) * sizeof(WCHAR)) /
+			    scard_copy_strings(ctx, mszReaderNames, *pcchReaderLen, hdl->szReaderW,
+			                       (UINT32)(_wcslen(hdl->szReaderW) + 2) * sizeof(WCHAR)) /
 			    sizeof(WCHAR);
 
 		if (pdwState)
@@ -2110,7 +2115,7 @@ LONG WINAPI Emulate_SCardStatusW(SmartcardEmulationContext* smartcard, SCARDHAND
 			for (size_t x = 0; x < MAX_EMULATED_READERS; x++)
 			{
 				const SCARD_READERSTATEW* reader = &ctx->readerStateW[x];
-				if (_wcscmp(reader->szReader, hdl->szReader.pw) == 0)
+				if (_wcscmp(reader->szReader, hdl->szReaderW) == 0)
 					*pcbAtrLen =
 					    scard_copy_strings(ctx, pbAtr, *pcbAtrLen, reader->rgbAtr, reader->cbAtr);
 			}

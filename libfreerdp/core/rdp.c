@@ -2924,11 +2924,12 @@ BOOL rdp_reset_runtime_settings(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(rdp->settings);
 
-	freerdp_settings_free(rdp->settings);
-	rdp->context->settings = rdp->settings = freerdp_settings_clone(rdp->originalSettings);
-
-	if (!rdp->settings)
+	/* rdpContext::settings is public and may be in use by other threads of the application
+	 * (e.g. the UI) at any time. Restore the original values in place instead of freeing and
+	 * replacing the object, so the pointer never dangles. */
+	if (!freerdp_settings_copy(rdp->settings, rdp->originalSettings))
 		return FALSE;
 	return rdp_reset_remote_settings(rdp);
 }
