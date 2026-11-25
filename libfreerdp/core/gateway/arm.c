@@ -77,6 +77,11 @@ typedef struct rdp_arm rdpArm;
  * The arrays are accessed by index, which (depending on the JSON backend) is O(n) per element. */
 #define ARM_MAX_TARGET_ADDRESSES 1024
 
+/* Upper limit for redirectedUsername in bytes (UTF-8). The name replaces the user name of the
+ * session and is later written to length limited fields (RDSTLS, Client Info, licensing), a
+ * Server Redirection PDU limits its UserName to 512 bytes as well. */
+#define ARM_MAX_REDIRECTED_USERNAME_LENGTH 512
+
 WINPR_ATTR_NODISCARD
 static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, UINT32 timeout)
 {
@@ -1042,6 +1047,13 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 			if (userNameNode)
 				userName = WINPR_JSON_GetStringValue(userNameNode);
+			if (userName && (strnlen(userName, ARM_MAX_REDIRECTED_USERNAME_LENGTH + 1) >
+			                 ARM_MAX_REDIRECTED_USERNAME_LENGTH))
+			{
+				WLog_Print(arm->log, WLOG_ERROR, "%s exceeds the limit of %d bytes", key,
+				           ARM_MAX_REDIRECTED_USERNAME_LENGTH);
+				goto fail;
+			}
 			if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionUsername, userName))
 				goto fail;
 		}
