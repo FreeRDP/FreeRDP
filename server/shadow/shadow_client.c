@@ -1485,6 +1485,24 @@ static BOOL shadow_client_send_av2(rdpShadowClient* client, const BYTE* pSrcData
 }
 #endif
 
+WINPR_ATTR_NODISCARD
+static UINT wrapRdpgfxSurfaceFrameCommand(rdpShadowEncoder* encoder, RdpgfxServerContext* context,
+                                          const RDPGFX_SURFACE_COMMAND* cmd,
+                                          const RDPGFX_START_FRAME_PDU* startFrame,
+                                          const RDPGFX_END_FRAME_PDU* endFrame)
+{
+	WINPR_ASSERT(encoder);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(cmd);
+	WINPR_ASSERT(startFrame);
+	WINPR_ASSERT(endFrame);
+
+	RDPGFX_START_FRAME_PDU start = *startFrame;
+	start.frameId = shadow_encoder_create_frame_id(encoder);
+	return IFCALLRESULT(CHANNEL_RC_OK, context->SurfaceFrameCommand, context, cmd, &start,
+	                    endFrame);
+}
+
 #if defined(WITH_GFX_AZURE)
 WINPR_ATTR_NODISCARD
 static BOOL shadow_client_hevc_enabled(const rdpShadowClient* client)
@@ -1558,8 +1576,8 @@ static BOOL shadow_client_send_hevc(rdpShadowClient* client, const BYTE* pSrcDat
 		hevc.nalSize = nalArray;
 		cmd->extra = (void*)&hevc;
 
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,
-		          cmdend);
+		error =
+		    wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 		cmd->extra = nullptr;
 	}
 	free_h264_metablock(&hevc.meta);
@@ -1622,8 +1640,8 @@ static BOOL shadow_client_send_avc444(rdpShadowClient* client, const BYTE* pSrcD
 	{
 		avc444.cbAvc420EncodedBitstream1 = rdpgfx_estimate_h264_avc420(&avc444.bitstream[0]);
 		cmd->extra = (void*)&avc444;
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,
-		          cmdend);
+		error =
+		    wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 		cmd->extra = nullptr;
 	}
 
@@ -1681,8 +1699,8 @@ static BOOL shadow_client_send_avc420(rdpShadowClient* client, const BYTE* pSrcD
 	{
 		cmd->codecId = RDPGFX_CODECID_AVC420;
 		cmd->extra = (void*)&avc420;
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,
-		          cmdend);
+		error =
+		    wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 		cmd->extra = nullptr;
 	}
 	free_h264_metablock(&avc420.meta);
@@ -1796,8 +1814,8 @@ static BOOL shadow_client_send_rfx(rdpShadowClient* client, const BYTE* pSrcData
 		cmd->data = Stream_Buffer(s);
 		cmd->length = (UINT32)pos;
 
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,
-		          cmdend);
+		error =
+		    wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 		cmd->data = nullptr;
 	}
 
@@ -1861,8 +1879,8 @@ static BOOL shadow_client_send_progressive(rdpShadowClient* client, const BYTE* 
 	{
 		cmd->codecId = RDPGFX_CODECID_CAPROGRESSIVE;
 
-		IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart,
-		          cmdend);
+		error =
+		    wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 	}
 	cmd->data = nullptr;
 
@@ -1909,7 +1927,7 @@ static BOOL shadow_client_send_planar(rdpShadowClient* client, const BYTE* pSrcD
 
 	cmd->codecId = RDPGFX_CODECID_PLANAR;
 
-	IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart, cmdend);
+	error = wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 	free(cmd->data);
 	cmd->data = nullptr;
 
@@ -1971,7 +1989,7 @@ static BOOL shadow_client_send_uncompressed(rdpShadowClient* client, const BYTE*
 	cmd->length = length;
 	cmd->codecId = RDPGFX_CODECID_UNCOMPRESSED;
 
-	IFCALLRET(client->rdpgfx->SurfaceFrameCommand, error, client->rdpgfx, cmd, cmdstart, cmdend);
+	error = wrapRdpgfxSurfaceFrameCommand(client->encoder, client->rdpgfx, cmd, cmdstart, cmdend);
 	free(data);
 	cmd->data = nullptr;
 	if (error)
@@ -2060,7 +2078,6 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		client->first_frame = FALSE;
 	}
 
-	cmdstart.frameId = shadow_encoder_create_frame_id(encoder);
 	GetSystemTime(&sTime);
 	cmdstart.timestamp = (UINT32)(sTime.wHour << 22U | sTime.wMinute << 16U | sTime.wSecond << 10U |
 	                              sTime.wMilliseconds);
