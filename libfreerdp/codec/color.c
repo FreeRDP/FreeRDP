@@ -1428,6 +1428,15 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 		cairo_t* cairo_context;
 		cairo_surface_t *csrc, *cdst;
 
+		/* both buffers are handed to cairo as CAIRO_FORMAT_ARGB32, it reads and writes 4 bytes
+		 * per pixel. With a smaller pixel size every line would run past its end. */
+		if ((FreeRDPGetBytesPerPixel(SrcFormat) != 4) || (FreeRDPGetBytesPerPixel(DstFormat) != 4))
+		{
+			WLog_ERR(TAG, "scaling from %s to %s is not supported",
+			         FreeRDPGetColorFormatName(SrcFormat), FreeRDPGetColorFormatName(DstFormat));
+			return FALSE;
+		}
+
 		if ((nSrcWidth > INT_MAX) || (nSrcHeight > INT_MAX) || (nSrcStep > INT_MAX))
 			return FALSE;
 

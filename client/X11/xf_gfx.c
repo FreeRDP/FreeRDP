@@ -60,9 +60,6 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	surfaceRect.top = 0;
 	surfaceRect.right = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedWidth);
 	surfaceRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedHeight);
-	LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
-	LogDynAndXSetFunction(xfc->log, xfc->display, xfc->gc, GXcopy);
-	LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
 	if (!region16_intersect_rect(&(surface->gdi.invalidRegion), &(surface->gdi.invalidRegion),
 	                             &surfaceRect))
 		return ERROR_INTERNAL_ERROR;
@@ -76,6 +73,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		return CHANNEL_RC_OK;
 
 	xf_lock_x11(xfc);
+	LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
+	LogDynAndXSetFunction(xfc->log, xfc->display, xfc->gc, GXcopy);
+	LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
 	for (UINT32 x = 0; x < nbRects; x++)
 	{
 		const RECTANGLE_16* rect = &rects[x];

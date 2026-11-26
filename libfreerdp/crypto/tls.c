@@ -1773,6 +1773,29 @@ fail:
 	return rc;
 }
 
+/* The RDP file property 'authentication level:i:0' (connect without warning if server
+ * authentication fails) only applies to non-RDG connections and must never overrule a
+ * certificate policy explicitly requested with /cert:deny, /cert:tofu or /cert:fingerprint */
+WINPR_ATTR_NODISCARD
+static BOOL tls_auth_level_skips_verification(const rdpTls* tls, const rdpSettings* settings)
+{
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(settings);
+
+	if (tls->isGatewayTransport)
+		return FALSE;
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_AuthenticationLevel) != 0)
+		return FALSE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_AutoDenyCertificate) ||
+	    freerdp_settings_get_bool(settings, FreeRDP_AutoAcceptCertificate) ||
+	    freerdp_settings_get_string(settings, FreeRDP_CertificateAcceptedFingerprints))
+		return FALSE;
+
+	return TRUE;
+}
+
 int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
                            UINT16 port)
 {
@@ -1859,8 +1882,12 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		          "[DANGER] Avoid using this unless in a secure LAN (=no internet) environment");
 		verification_status = 1; /* success! */
 	}
-	else if (!tls->isGatewayTransport && (settings->AuthenticationLevel == 0))
+	else if (tls_auth_level_skips_verification(tls, settings))
+	{
+		WLog_WARN(TAG, "[DANGER] Certificate not checked, 'authentication level:i:0' in use.");
+		WLog_WARN(TAG, "[DANGER] This prevents MITM attacks from being detected!");
 		verification_status = 1; /* success! */
+	}
 	else
 	{
 		/* if user explicitly specified a certificate name, use it instead of the hostname */

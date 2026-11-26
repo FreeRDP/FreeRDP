@@ -39,6 +39,12 @@
 
 #include "geometry_main.h"
 
+/* Upper limits for what the server can make the client keep: a mapping and its region stay
+ * allocated until the server clears the mapping or the plugin is terminated. One mapping tracks
+ * one video window, so both values are far above what a real server uses. */
+#define GEOMETRY_MAX_MAPPINGS 1024
+#define GEOMETRY_MAX_RECTS 4096
+
 typedef struct
 {
 	GENERIC_DYNVC_PLUGIN base;
@@ -128,6 +134,13 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 	if (len / (4 * 4) < rgndata->nRectCount)
 	{
 		WLog_Print(logger, WLOG_ERROR, "not enough data for region rectangles");
+		return ERROR_INVALID_DATA;
+	}
+
+	if (rgndata->nRectCount > GEOMETRY_MAX_RECTS)
+	{
+		WLog_Print(logger, WLOG_ERROR, "too many region rectangles: %" PRIu32 " > %d",
+		           rgndata->nRectCount, GEOMETRY_MAX_RECTS);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -245,6 +258,14 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 		if (!mappedGeometry)
 		{
+			if (HashTable_Count(context->geometries) >= GEOMETRY_MAX_MAPPINGS)
+			{
+				WLog_Print(logger, WLOG_ERROR,
+				           "already tracking %d geometries, rejecting geometry 0x%" PRIx64,
+				           GEOMETRY_MAX_MAPPINGS, id);
+				return ERROR_INVALID_DATA;
+			}
+
 			newOne = TRUE;
 			WLog_Print(logger, WLOG_DEBUG, "creating geometry 0x%" PRIx64 "", id);
 			mappedGeometry = calloc(1, sizeof(MAPPED_GEOMETRY));

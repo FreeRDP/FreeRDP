@@ -2633,7 +2633,12 @@ BOOL license_answer_license_request(rdpLicense* license)
 	{
 		WINPR_ASSERT(license->ClientUserName);
 		const size_t len = strlen(username) + 1;
-		WINPR_ASSERT(len <= UINT16_MAX);
+		if (len > UINT16_MAX)
+		{
+			WLog_Print(license->log, WLOG_ERROR, "ClientUserName length %" PRIuz " > UINT16_MAX",
+			           len);
+			goto fail;
+		}
 
 		license->ClientUserName->data = (BYTE*)username;
 		license->ClientUserName->length = (UINT16)len;
@@ -2642,13 +2647,19 @@ BOOL license_answer_license_request(rdpLicense* license)
 	{
 		WINPR_ASSERT(license->ClientMachineName);
 		const size_t len = strlen(license->rdp->settings->ClientHostname) + 1;
-		WINPR_ASSERT(len <= UINT16_MAX);
+		if (len > UINT16_MAX)
+		{
+			WLog_Print(license->log, WLOG_ERROR, "ClientMachineName length %" PRIuz " > UINT16_MAX",
+			           len);
+			goto fail;
+		}
 
 		license->ClientMachineName->data = (BYTE*)license->rdp->settings->ClientHostname;
 		license->ClientMachineName->length = (UINT16)len;
 	}
 	status = license_write_new_license_request_packet(license, s);
 
+fail:
 	WINPR_ASSERT(license->ClientUserName);
 	license->ClientUserName->data = nullptr;
 	license->ClientUserName->length = 0;
