@@ -25,6 +25,7 @@
 #include <winpr/credssp.h>
 #include <winpr/custom-crypto.h>
 #include <winpr/stream.h>
+#include <winpr/endian.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/x509.h>
@@ -43,14 +44,42 @@
  * Negotiate package's advertised cbMaxToken, so never allocate less than this. */
 #define CREDSSP_MIN_NEGO_TOKEN 0x10000
 
-static WCHAR NEGOTIATE_NAMEW[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
+static WCHAR NEGOTIATE_NAMEW[10];
 
 /* Negotiate auth package list for Remote Credential Guard: Kerberos (U2U included), no NTLM. */
-static WCHAR CREDSSP_REDIRECT_PACKAGESW[] = { 'k', 'e', 'r', 'b', 'e', 'r', 'o', 's',
-	                                          ',', '!', 'n', 't', 'l', 'm', '\0' };
+static WCHAR CREDSSP_REDIRECT_PACKAGESW[15];
+
+static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
+
+static BOOL CALLBACK InitializeSspiModuleInt(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                             WINPR_ATTR_UNUSED PVOID param,
+                                             WINPR_ATTR_UNUSED PVOID* context)
+{
+	const WCHAR namew[] = { winpr_wchar_ToLE('N'), winpr_wchar_ToLE('e'), winpr_wchar_ToLE('g'),
+		                    winpr_wchar_ToLE('o'), winpr_wchar_ToLE('t'), winpr_wchar_ToLE('i'),
+		                    winpr_wchar_ToLE('a'), winpr_wchar_ToLE('t'), winpr_wchar_ToLE('e'),
+		                    winpr_wchar_ToLE('\0') };
+
+	/* Negotiate auth package list for Remote Credential Guard: Kerberos (U2U included), no NTLM. */
+	const WCHAR packagesw[] = {
+		winpr_wchar_ToLE('k'), winpr_wchar_ToLE('e'), winpr_wchar_ToLE('r'), winpr_wchar_ToLE('b'),
+		winpr_wchar_ToLE('e'), winpr_wchar_ToLE('r'), winpr_wchar_ToLE('o'), winpr_wchar_ToLE('s'),
+		winpr_wchar_ToLE(','), winpr_wchar_ToLE('!'), winpr_wchar_ToLE('n'), winpr_wchar_ToLE('t'),
+		winpr_wchar_ToLE('l'), winpr_wchar_ToLE('m'), winpr_wchar_ToLE('\0')
+	};
+
+	WINPR_STATIC_ASSERT(sizeof(NEGOTIATE_NAMEW) == sizeof(namew));
+	WINPR_STATIC_ASSERT(sizeof(CREDSSP_REDIRECT_PACKAGESW) == sizeof(packagesw));
+
+	memcpy(NEGOTIATE_NAMEW, namew, sizeof(NEGOTIATE_NAMEW));
+	memcpy(CREDSSP_REDIRECT_PACKAGESW, packagesw, sizeof(CREDSSP_REDIRECT_PACKAGESW));
+	return TRUE;
+}
 
 static PSecurityFunctionTableW credssp_winpr_table(void)
 {
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr))
+		return nullptr;
 	return InitSecurityInterfaceExW(SSPI_INTERFACE_WINPR);
 }
 
