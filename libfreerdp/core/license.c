@@ -874,13 +874,13 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT16 sec_
 	DEBUG_LICENSE("Sending %s Packet", license_request_type_string(type));
 	const size_t length = Stream_GetPosition(s);
 	if (length < license->PacketHeaderLength)
-		return FALSE;
+		goto fail;
 	if (length > UINT16_MAX + license->PacketHeaderLength)
-		return FALSE;
+		goto fail;
 
 	const UINT16 wMsgSize = (UINT16)(length - license->PacketHeaderLength);
 	if (!Stream_SetPosition(s, license->PacketHeaderLength))
-		return FALSE;
+		goto fail;
 	BYTE flags = PREAMBLE_VERSION_3_0;
 
 	/**
@@ -892,10 +892,7 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT16 sec_
 		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
 
 	if (!license_write_preamble(s, type, flags, wMsgSize))
-	{
-		Stream_Release(s);
-		return FALSE;
-	}
+		goto fail;
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_Print(license->log, WLOG_DEBUG, "Sending %s Packet, length %" PRIu16 "",
@@ -904,9 +901,13 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT16 sec_
 	                 wMsgSize);
 #endif
 	if (!Stream_SetPosition(s, length))
-		return FALSE;
+		goto fail;
 	const BOOL ret = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID, sec_flags);
 	return ret;
+
+fail:
+	Stream_Release(s);
+	return FALSE;
 }
 
 BOOL license_write_server_upgrade_license(const rdpLicense* license, wStream* s)
