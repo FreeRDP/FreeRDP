@@ -1,0 +1,10 @@
+FROM debian:trixie
+RUN printf "Types: deb deb-src\nURIs: http://deb.debian.org/debian/\nSuites: trixie trixie-updates\nComponents: main contrib non-free non-free-firmware\nSigned-By: /usr/share/keyrings/debian-archive-keyring.pgp\n" > /etc/apt/sources.list.d/debian-src.sources
+RUN printf "Types: deb deb-src\nURIs: http://security.debian.org/debian-security/\nSuites: trixie-security\nComponents: main contrib non-free non-free-firmware\nSigned-By: /usr/share/keyrings/debian-archive-keyring.pgp\n" >> /etc/apt/sources.list.d/debian-src.sources
+RUN printf "Types: deb deb-src\nURIs: http://deb.debian.org/debian\nSuites: trixie-backports\nComponents: main contrib non-free non-free-firmware\nEnabled: yes\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n" > /etc/apt/sources.list.d/debian-backports.sources
+RUN apt update
+RUN apt install -y cmake-curses-gui clang clang-format ninja-build libopenh264-dev libmp3lame-dev libfaad-dev libsoxr-dev libaom-dev libdav1d-dev cgdb ccache
+RUN apt build-dep -y freerdp3
+RUN mkdir /source
+ENV CTEST_OUTPUT_ON_FAILURE=1
+CMD cmake -GNinja -B/tmp/build -S/source --preset full-binaries -DCMAKE_BUILD_TYPE=Debug -DWITH_FAAC=OFF -DWITH_FDK_AAC=OFF -DBUILD_TESTING=ON -DBUILD_TESTING_INTERNAL=ON -DCMAKE_INSTALL_PREFIX=/tmp/install ; cmake --build /tmp/build --target install ; cmake --build /tmp/build --target test
