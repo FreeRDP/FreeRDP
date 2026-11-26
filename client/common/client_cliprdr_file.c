@@ -159,6 +159,7 @@ typedef struct
 {
 	UINT32 lockId;
 	BOOL locked;
+	UINT64 generation;
 	size_t count;
 	CliprdrLocalFile* files;
 	CliprdrFileContext* context;
@@ -207,7 +208,8 @@ struct cliprdr_file_context
 	BOOL file_formats_registered;
 	UINT32 file_capability_flags;
 
-	UINT32 local_lock_id;
+	CliprdrLocalStream* local_current_stream;
+	UINT64 local_generation;
 
 	wHashTable* local_streams;
 	wLog* log;
@@ -700,6 +702,9 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 #if defined(WITH_CLIPRDR_FILE_APPLE)
 	apple_new_generation(file_context);
 #endif
+	HashTable_Lock(file_context->local_streams);
+	file_context->local_generation++;
+	HashTable_Unlock(file_context->local_streams);
 #if defined(WITH_FUSE)
 	if (!clear_no_cdi_entry(file_context))
 		return ERROR_INTERNAL_ERROR;
@@ -714,6 +719,7 @@ static CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context,
                                                     const char* data, size_t size);
 static void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread);
 static BOOL local_stream_discard(const void* key, void* value, void* arg);
+static void cliprdr_local_stream_free(void* obj);
 
 WINPR_ATTR_FORMAT_ARG(6, 7)
 static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line,
@@ -1986,11 +1992,12 @@ static BOOL dump_streams(const void* key, void* value, WINPR_ATTR_UNUSED void* a
 }
 
 static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 lockId,
-                                               UINT32 listIndex)
+                                               UINT32 listIndex, BOOL haveLockId)
 {
 	WINPR_ASSERT(file);
 
-	CliprdrLocalStream* cur = HashTable_GetItemValue(file->local_streams, &lockId);
+	CliprdrLocalStream* cur = haveLockId ? HashTable_GetItemValue(file->local_streams, &lockId)
+	                                     : file->local_current_stream;
 	if (cur)
 	{
 		if (listIndex < cur->count)
@@ -2018,9 +2025,10 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 	return nullptr;
 }
 
-static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockId, UINT32 listIndex)
+static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockId, UINT32 listIndex,
+                                          BOOL haveLockId)
 {
-	CliprdrLocalFile* f = file_info_for_request(file, lockId, listIndex);
+	CliprdrLocalFile* f = file_info_for_request(file, lockId, listIndex, haveLockId);
 	if (f)
 	{
 		if (!f->fp)
@@ -2084,7 +2092,8 @@ static UINT cliprdr_file_context_server_file_size_request(
 
 	UINT res = CHANNEL_RC_OK;
 	CliprdrLocalFile* rfile =
-	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
+	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex,
+	                     fileContentsRequest->haveClipDataId);
 	if (!rfile)
 		res = cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 	else
@@ -2120,7 +2129,8 @@ static UINT cliprdr_file_context_server_file_range_request(
 
 	HashTable_Lock(file->local_streams);
 	CliprdrLocalFile* rfile =
-	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
+	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex,
+	                     fileContentsRequest->haveClipDataId);
 	if (!rfile)
 		goto fail;
 
@@ -2150,43 +2160,53 @@ fail:
 	return cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 }
 
-static void cliprdr_local_stream_free(void* obj);
+/* Locked file lists are snapshots; clipboard ownership changes must not
+ * discard them or replace them with a different copied file. */
+static BOOL copy_local_files(CliprdrLocalStream* dst, const CliprdrLocalStream* src)
+{
+	if (!src || !src->count)
+		return TRUE;
+	WINPR_ASSERT(dst->count == 0);
+	dst->files = calloc(src->count, sizeof(CliprdrLocalFile));
+	if (!dst->files)
+		return FALSE;
+	for (size_t x = 0; x < src->count; x++)
+	{
+		CliprdrLocalFile* f = &dst->files[x];
+		f->context = dst->context;
+		f->size = src->files[x].size;
+		f->name = _strdup(src->files[x].name);
+		if (!f->name)
+			return FALSE;
+		dst->count++;
+	}
+	return TRUE;
+}
 
 static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 {
 	UINT rc = CHANNEL_RC_OK;
-
 	WINPR_ASSERT(file);
-
 	HashTable_Lock(file->local_streams);
-
-	{
-		CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
-		if (lock && !stream)
-		{
-			stream = cliprdr_local_stream_new(file, lockId, nullptr, 0);
-			if (!HashTable_Insert(file->local_streams, &lockId, stream))
-			{
-				rc = ERROR_INTERNAL_ERROR;
-				cliprdr_local_stream_free(stream);
-				stream = nullptr;
-			}
-			file->local_lock_id = lockId;
-		}
-		if (stream)
-		{
-			stream->locked = lock;
-			stream->lockId = lockId;
-		}
-	}
-
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert ownership stream
 	if (!lock)
+		HashTable_Remove(file->local_streams, &lockId);
+	else if (!HashTable_GetItemValue(file->local_streams, &lockId))
 	{
-		if (!HashTable_Foreach(file->local_streams, local_stream_discard, file))
+		CliprdrLocalStream* stream = cliprdr_local_stream_new(file, lockId, nullptr, 0);
+		if (!stream)
 			rc = ERROR_INTERNAL_ERROR;
+		else
+		{
+			stream->locked = TRUE;
+			stream->generation = file->local_generation;
+			if (!copy_local_files(stream, file->local_current_stream) ||
+			    !HashTable_Insert(file->local_streams, &lockId, stream))
+			{
+				cliprdr_local_stream_free(stream);
+				rc = ERROR_INTERNAL_ERROR;
+			}
+		}
 	}
-
 	HashTable_Unlock(file->local_streams);
 	return rc;
 }
@@ -2771,6 +2791,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 		DeleteCriticalSection(&file->apple_lock);
 	}
 #endif
+	cliprdr_local_stream_free(file->local_current_stream);
 	HashTable_Free(file->local_streams);
 	winpr_RemoveDirectory(file->path);
 	free(file->path);
@@ -3190,6 +3211,8 @@ BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 	WLog_Print(file->log, WLOG_DEBUG, "clear file clipboard...");
 
 	HashTable_Lock(file->local_streams);
+	cliprdr_local_stream_free(file->local_current_stream);
+	file->local_current_stream = nullptr;
 	const BOOL res = HashTable_Foreach(file->local_streams, local_stream_discard, file);
 	HashTable_Unlock(file->local_streams);
 
@@ -3198,35 +3221,29 @@ BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 	return res;
 }
 
+static BOOL populate_pending_local_lock(const void* key, void* value, void* arg)
+{
+	WINPR_UNUSED(key);
+	CliprdrFileContext* file = arg;
+	CliprdrLocalStream* stream = value;
+	if (stream->locked && stream->generation == file->local_generation && !stream->count)
+		return copy_local_files(stream, file->local_current_stream);
+	return TRUE;
+}
+
 BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file, const char* data,
                                              size_t size)
 {
-	BOOL rc = FALSE;
-
 	WINPR_ASSERT(file);
 	if (!cliprdr_file_client_content_changed_and_update(file, data, size))
 		return TRUE;
-
 	if (!cliprdr_file_context_clear(file))
 		return FALSE;
-
-	UINT32 lockId = file->local_lock_id;
-
 	HashTable_Lock(file->local_streams);
-	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
-
-	WLog_Print(file->log, WLOG_DEBUG, "update client file list (stream=%p)...", (void*)stream);
-	if (stream)
-		rc = cliprdr_local_stream_update(stream, data, size);
-	else
-	{
-		stream = cliprdr_local_stream_new(file, lockId, data, size);
-		rc = HashTable_Insert(file->local_streams, &stream->lockId, stream);
-		if (!rc)
-			cliprdr_local_stream_free(stream);
-	}
-	// HashTable_Insert owns stream
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
+	file->local_current_stream = cliprdr_local_stream_new(file, 0, data, size);
+	BOOL rc = file->local_current_stream != nullptr;
+	if (rc)
+		rc = HashTable_Foreach(file->local_streams, populate_pending_local_lock, file);
 	HashTable_Unlock(file->local_streams);
 	return rc;
 }
@@ -3241,8 +3258,8 @@ UINT32 cliprdr_file_context_current_flags(CliprdrFileContext* file)
 	if (!file->file_formats_registered)
 		return 0;
 
-	return CB_STREAM_FILECLIP_ENABLED | CB_FILECLIP_NO_FILE_PATHS |
-	       CB_HUGE_FILE_SUPPORT_ENABLED; // |	       CB_CAN_LOCK_CLIPDATA;
+	return CB_STREAM_FILECLIP_ENABLED | CB_FILECLIP_NO_FILE_PATHS | CB_HUGE_FILE_SUPPORT_ENABLED |
+	       CB_CAN_LOCK_CLIPDATA;
 }
 
 BOOL cliprdr_file_context_set_locally_available(CliprdrFileContext* file, BOOL available)
