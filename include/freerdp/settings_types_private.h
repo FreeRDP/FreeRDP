@@ -564,7 +564,11 @@ struct rdp_settings
 		                                                             * native UA.
 		                                                             * @since version 3.32.2
 		                                                             */
-	UINT64 padding2112[2112 - 2030];                                /* 2030 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL AadUseLoginHint);              /** 2030
+		                                                             * Add a login_hint=<user> to requests
+		                                                             * @since version 3.34.0
+		                                                             */
+	UINT64 padding2112[2112 - 2031];                                /* 2031 */
 
 	/**
 	 * RemoteApp

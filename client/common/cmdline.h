@@ -28,7 +28,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, "<addin>[,<options>]", nullptr, nullptr, -1, "addin",
 	  "Addin" },
 	{ "azure", COMMAND_LINE_VALUE_REQUIRED,
-	  "[tenantid:<id>],[use-tenantid[:[on|off]],[ad:<url>]"
+	  ",[use-login-hint[:[on|off]],[tenantid:<id>],[use-tenantid[:[on|off]],[ad:<url>]"
 	  "[avd-access:<format string>],[avd-token:<format string>],[avd-scope:<format string>],"
 	  "[user-agent:<string>],[auth-helper:<path|autodetect>],"
 	  "cloud:[commercial|usgov|<name from aad-clouds.json>]",

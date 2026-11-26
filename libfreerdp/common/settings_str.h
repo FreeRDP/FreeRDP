@@ -31,6 +31,7 @@ struct settings_str_entry
 };
 static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_AadSecurity, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_AadSecurity" },
+	{ FreeRDP_AadUseLoginHint, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_AadUseLoginHint" },
 	{ FreeRDP_AllowCacheWaitingList, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_AllowCacheWaitingList" },
 	{ FreeRDP_AllowDesktopComposition, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_AllowDesktopComposition" },
