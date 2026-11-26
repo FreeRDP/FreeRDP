@@ -1315,8 +1315,7 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 		return FALSE;
 	}
 
-	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
-	license->EncryptedPremasterSecret->length = sizeof(license->PremasterSecret);
+	UINT16 EncryptedPremasterSecretLength = sizeof(license->PremasterSecret);
 #ifndef LICENSE_NULL_PREMASTER_SECRET
 	{
 		const SSIZE_T length =
@@ -1329,9 +1328,15 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 			winpr_znfree(EncryptedPremasterSecret, info->ModulusLength);
 			return FALSE;
 		}
-		license->EncryptedPremasterSecret->length = (UINT16)length;
+		EncryptedPremasterSecretLength = (UINT16)length;
 	}
 #endif
+
+	/* only replace the old blob after encryption succeeded, data and length must always match */
+	winpr_znfree(license->EncryptedPremasterSecret->data,
+	             license->EncryptedPremasterSecret->length);
+	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
+	license->EncryptedPremasterSecret->length = EncryptedPremasterSecretLength;
 	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
 	return TRUE;
 }
