@@ -3064,6 +3064,9 @@ WINPR_ATTR_MALLOC(free, 1)
 static char* get_login_hint(const rdpSettings* settings, FreeRDP_Settings_Keys_String primary,
                             FreeRDP_Settings_Keys_String secondary)
 {
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AadUseLoginHint))
+		return _strdup("");
+
 	const FreeRDP_Settings_Keys_String keys[] = { primary, secondary };
 	for (size_t x = 0; x < ARRAYSIZE(keys); x++)
 	{

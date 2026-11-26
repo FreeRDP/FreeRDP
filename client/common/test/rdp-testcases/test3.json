@@ -1,6 +1,7 @@
 {
 	"FREERDP_SETTINGS_TYPE_BOOL": {
 		"FreeRDP_ServerMode": false,
+		"FreeRDP_AadUseLoginHint": true,
 		"FreeRDP_GfxCodecAV1": true,
 		"FreeRDP_GfxCodecAV2": true,
 		"FreeRDP_GfxCodecAVCMM": false,

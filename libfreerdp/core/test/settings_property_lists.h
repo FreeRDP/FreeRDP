@@ -4,6 +4,7 @@
 #define have_bool_list_indices
 static const size_t bool_list_indices[] = {
 	FreeRDP_AadSecurity,
+	FreeRDP_AadUseLoginHint,
 	FreeRDP_AllowCacheWaitingList,
 	FreeRDP_AllowDesktopComposition,
 	FreeRDP_AllowFontSmoothing,

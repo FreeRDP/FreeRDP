@@ -63,6 +63,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_AadSecurity:
 			return settings->AadSecurity;
 
+		case FreeRDP_AadUseLoginHint:
+			return settings->AadUseLoginHint;
+
 		case FreeRDP_AllowCacheWaitingList:
 			return settings->AllowCacheWaitingList;
 
@@ -695,6 +698,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 	{
 		case FreeRDP_AadSecurity:
 			settings->AadSecurity = cnv.c;
+			break;
+
+		case FreeRDP_AadUseLoginHint:
+			settings->AadUseLoginHint = cnv.c;
 			break;
 
 		case FreeRDP_AllowCacheWaitingList:

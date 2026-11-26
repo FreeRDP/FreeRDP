@@ -140,6 +140,8 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DCMAKE_IGNORE_PREFIX_PATH='/opt/local;/usr/local;/opt/homebrew;/Library;~/Library'
 	"
 
+mkdir -p $BUILD
+
 if [ $BUILD_DEPS -ne 0 ];
 then
     if [ ! -d $SRC ]; then
@@ -167,7 +169,6 @@ then
       rm -rf $BUILD
     fi
 
-    mkdir -p $BUILD
     cd $BUILD
 
     cmake -GNinja -Bzlib -S$SRC/zlib $CMAKE_ARGS
