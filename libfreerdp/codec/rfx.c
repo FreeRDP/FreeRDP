@@ -2135,6 +2135,7 @@ void rfx_message_list_free(RFX_MESSAGE_LIST* messages)
 		return;
 	for (size_t x = 0; x < messages->count; x++)
 		rfx_message_clear(messages->context, &messages->list[x]);
+	winpr_aligned_free(messages->list);
 	free(messages);
 }
 

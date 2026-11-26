@@ -21,7 +21,8 @@ static int test_query_package(void)
 		return -1;
 	}
 
-	WCHAR name[] = { 'T', 'S', 'S', 'S', 'P', '\0' };
+	WCHAR name[] = { winpr_wchar_ToLE('T'), winpr_wchar_ToLE('S'), winpr_wchar_ToLE('S'),
+		             winpr_wchar_ToLE('S'), winpr_wchar_ToLE('P'), winpr_wchar_ToLE('\0') };
 	const SECURITY_STATUS status = table->QuerySecurityPackageInfoW(name, &info);
 	if (status != SEC_E_OK)
 	{

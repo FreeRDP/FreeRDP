@@ -259,9 +259,8 @@ static SCardContext* scard_context_cancel(SmartcardEmulationContext* smartcard,
 	return ctx;
 }
 
-static void scard_context_free(void* context)
+static void scard_context_free(SCardContext* ctx)
 {
-	SCardContext* ctx = context;
 	if (ctx)
 	{
 		/* HACK: There might be long running calls in background still active.
@@ -278,6 +277,12 @@ static void scard_context_free(void* context)
 		HashTable_Free(ctx->cache);
 	}
 	free(ctx);
+}
+
+static void scard_context_free_pv(void* context)
+{
+	SCardContext* ctx = context;
+	scard_context_free(ctx);
 }
 
 WINPR_ATTR_MALLOC(scard_context_free, 1)
@@ -317,9 +322,8 @@ fail:
 	return nullptr;
 }
 
-static void scard_handle_free(void* handle)
+static void scard_handle_free(SCardHandle* hdl)
 {
-	SCardHandle* hdl = handle;
 	if (hdl)
 	{
 		free(hdl->szReaderA);
@@ -329,15 +333,19 @@ static void scard_handle_free(void* handle)
 	free(hdl);
 }
 
+static void scard_handle_free_pv(void* ptr)
+{
+	SCardHandle* hdl = ptr;
+	scard_handle_free(hdl);
+}
+
 WINPR_ATTR_MALLOC(scard_handle_free, 1)
 static SCardHandle* scard_handle_new(SmartcardEmulationContext* smartcard, SCARDCONTEXT context,
                                      const void* name, BOOL unicode)
 {
-	SCardHandle* hdl = nullptr;
-
 	WINPR_ASSERT(smartcard);
 
-	hdl = calloc(1, sizeof(SCardHandle));
+	SCardHandle* hdl = calloc(1, sizeof(SCardHandle));
 	if (!hdl)
 		goto fail;
 
@@ -2949,7 +2957,7 @@ SmartcardEmulationContext* Emulate_New(const rdpSettings* settings)
 	{
 		wObject* obj = HashTable_ValueObject(smartcard->contexts);
 		WINPR_ASSERT(obj);
-		obj->fnObjectFree = scard_context_free;
+		obj->fnObjectFree = scard_context_free_pv;
 	}
 
 	smartcard->handles = HashTable_New(TRUE);
@@ -2967,7 +2975,7 @@ SmartcardEmulationContext* Emulate_New(const rdpSettings* settings)
 	{
 		wObject* obj = HashTable_ValueObject(smartcard->handles);
 		WINPR_ASSERT(obj);
-		obj->fnObjectFree = scard_handle_free;
+		obj->fnObjectFree = scard_handle_free_pv;
 	}
 
 	smartcard->pinCounters = HashTable_New(TRUE);

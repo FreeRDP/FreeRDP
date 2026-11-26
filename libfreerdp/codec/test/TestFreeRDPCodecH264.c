@@ -427,12 +427,16 @@ static BOOL testEncodeAvc444v2NarrowFrame(void)
 		              b, sizeA, sizeB);
 		winpr_HexDump(__func__, WLOG_ERROR, a, sizeA);
 		winpr_HexDump(__func__, WLOG_ERROR, b, sizeB);
-		for (size_t x = 0; x < MIN(sizeA, sizeB); x++)
+
+		if (a && b)
 		{
-			const BYTE ba = a[x];
-			const BYTE bb = b[x];
-			if (ba != bb)
-				(void)fprintf(stderr, "[%s] diff at position %" PRIuz "\n", __func__, x);
+			for (size_t x = 0; x < MIN(sizeA, sizeB); x++)
+			{
+				const BYTE ba = a[x];
+				const BYTE bb = b[x];
+				if (ba != bb)
+					(void)fprintf(stderr, "[%s] diff at position %" PRIuz "\n", __func__, x);
+			}
 		}
 #if defined(WITH_APPLE_VIDEOTOOLBOX)
 		WLog_WARN(__func__, "TODO: WITH_APPLE_VIDEOTOOLBOX backend does produce differing output");
