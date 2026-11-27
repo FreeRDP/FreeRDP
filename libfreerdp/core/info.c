@@ -722,7 +722,8 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 		return FALSE;
 	}
 
-	return TRUE;
+	const char* str = freerdp_settings_get_string(settings, id);
+	return !winpr_str_has_control_char(str);
 }
 
 /**
