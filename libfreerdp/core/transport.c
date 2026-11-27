@@ -1263,7 +1263,26 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 					goto out_cleanup;
 				}
 
-				if (BIO_wait_write(transport->frontBio, 100) < 0)
+				/* blocking must not outlive the connection: the peer may never let us continue */
+				if (freerdp_shall_disconnect_context(context))
+				{
+					status = -1;
+					goto out_cleanup;
+				}
+
+				/* Wait for what the BIO asked for: a TLS BIO that has to read first (e.g. a
+				 * renegotiation) only makes progress once the peer has sent something, and
+				 * the socket stays writable all that time. */
+				if (BIO_should_read(transport->frontBio) && !BIO_should_write(transport->frontBio))
+				{
+					if (BIO_wait_read(transport->frontBio, 100) < 0)
+					{
+						WLog_ERR_BIO(transport, "BIO_wait_read", transport->frontBio);
+						status = -1;
+						goto out_cleanup;
+					}
+				}
+				else if (BIO_wait_write(transport->frontBio, 100) < 0)
 				{
 					WLog_ERR_BIO(transport, "BIO_wait_write", transport->frontBio);
 					status = -1;
@@ -1278,6 +1297,12 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 			{
 				while (BIO_write_blocked(transport->frontBio))
 				{
+					if (freerdp_shall_disconnect_context(context))
+					{
+						status = -1;
+						goto out_cleanup;
+					}
+
 					if (BIO_wait_write(transport->frontBio, 100) < 0)
 					{
 						WLog_Print(transport->log, WLOG_ERROR, "error when selecting for write");
