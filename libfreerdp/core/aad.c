@@ -391,28 +391,51 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 	if (!get_encoded_rsa_params(aad->log, aad->key, &e, &n))
 		return nullptr;
 
-	/* Construct the base64url encoded JWS payload */
-	char* buffer = nullptr;
 	size_t bufferlen = 0;
-	const int length =
-	    winpr_asprintf(&buffer, &bufferlen,
-	                   "{"
-	                   "\"ts\":\"%li\","
-	                   "\"at\":\"%s\","
-	                   "\"u\":\"%s\","
-	                   "\"nonce\":\"%s\","
-	                   "\"cnf\":{\"jwk\":{\"kty\":\"RSA\",\"e\":\"%s\",\"n\":\"%s\"}},"
-	                   "\"client_claims\":\"{\\\"aad_nonce\\\":\\\"%s\\\"}\""
-	                   "}",
-	                   ts, aad->access_token, aad->resourceUri, ts_nonce, e, n, aad->nonce);
-	free(e);
-	free(n);
+	char* buffer = nullptr;
+	char* jws_payload = nullptr;
+	/* Construct the base64url encoded JWS payload */
+	WINPR_JSON* json = WINPR_JSON_CreateObject();
+	if (!json)
+		goto fail;
 
-	if (length < 0)
-		return nullptr;
+	if (!WINPR_JSON_AddIntegerToObject(json, "ts", ts))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(json, "at", aad->access_token))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(json, "u", aad->resourceUri))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(json, "nonce", ts_nonce))
+		goto fail;
 
-	char* jws_payload = crypto_base64url_encode((BYTE*)buffer, bufferlen);
-	free(buffer);
+	WINPR_JSON* cnf = WINPR_JSON_AddObjectToObject(json, "cnf");
+	WINPR_JSON* claims = WINPR_JSON_AddObjectToObject(json, "client_claims");
+	if (!cnf || !claims)
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(claims, "aad_nonce", aad->nonce))
+		goto fail;
+
+	WINPR_JSON* jwk = WINPR_JSON_AddObjectToObject(cnf, "jwk");
+	if (!jwk)
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(jwk, "kty", "RSA"))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(jwk, "e", "e"))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(jwk, "n", n))
+		goto fail;
+
+	buffer = WINPR_JSON_PrintUnformatted(json);
+	if (!buffer)
+		goto fail;
+	bufferlen = strlen(buffer);
+
+	jws_payload = crypto_base64url_encode((BYTE*)buffer, bufferlen);
+fail:
+	WINPR_JSON_Delete(json);
+	winpr_znfree(buffer, bufferlen);
+	winpr_zfree(e);
+	winpr_zfree(n);
 	return jws_payload;
 }
 
