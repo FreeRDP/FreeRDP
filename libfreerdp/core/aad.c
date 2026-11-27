@@ -63,31 +63,6 @@ static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, cha
 WINPR_ATTR_NODISCARD
 static BOOL generate_pop_key(rdpAad* aad);
 
-WINPR_ATTR_FORMAT_ARG(2, 3)
-static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
-{
-	va_list ap = WINPR_C_ARRAY_INIT;
-	va_start(ap, fmt);
-	const int rc = vsnprintf(nullptr, 0, fmt, ap);
-	va_end(ap);
-
-	if (rc < 0)
-		return rc;
-
-	if (!Stream_EnsureRemainingCapacity(s, (size_t)rc + 1ull))
-		return -1;
-
-	char* ptr = Stream_PointerAs(s, char);
-	va_start(ap, fmt);
-	const int rc2 = vsnprintf(ptr, WINPR_ASSERTING_INT_CAST(size_t, rc) + 1, fmt, ap);
-	va_end(ap);
-	if (rc != rc2)
-		return -23;
-	if (!Stream_SafeSeek(s, (size_t)rc2))
-		return -3;
-	return rc2;
-}
-
 WINPR_ATTR_NODISCARD
 static BOOL json_get_object(wLog* wlog, WINPR_JSON* json, const char* key, WINPR_JSON** obj)
 {
@@ -532,6 +507,27 @@ fail:
 	return jws_signature;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
+static char* create_rdp_assertion(const char* header, const char* payload, const char* signature)
+{
+	char* str = nullptr;
+	char* buffer = nullptr;
+	size_t blen = 0;
+
+	winpr_asprintf(&buffer, &blen, "%s.%s.%s", header, payload, signature);
+	WINPR_JSON* json = WINPR_JSON_CreateObject();
+	if (!json || !buffer)
+		goto fail;
+
+	if (!WINPR_JSON_AddStringToObject(json, "rdp_assertion", buffer))
+		goto fail;
+	str = WINPR_JSON_PrintUnformatted(json);
+fail:
+	WINPR_JSON_Delete(json);
+	winpr_znfree(buffer, blen);
+	return str;
+}
+
 WINPR_ATTR_NODISCARD
 static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 {
@@ -539,6 +535,7 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 	char* jws_header = nullptr;
 	char* jws_payload = nullptr;
 	char* jws_signature = nullptr;
+	char* jws_assertion = nullptr;
 
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(ts_nonce);
@@ -563,8 +560,15 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 		goto fail;
 
 	/* Construct the Authentication Request PDU with the JWS as the RDP Assertion */
-	if (stream_sprintf(s, "{\"rdp_assertion\":\"%s.%s.%s\"}", jws_header, jws_payload,
-	                   jws_signature) < 0)
+	jws_assertion = create_rdp_assertion(jws_header, jws_payload, jws_signature);
+	if (!jws_assertion)
+		goto fail;
+
+	const size_t len = strlen(jws_assertion);
+	if (!Stream_EnsureRemainingCapacity(s, len))
+		goto fail;
+	Stream_Write(s, jws_assertion, len);
+	if (!Stream_EnsureRemainingCapacity(s, 1))
 		goto fail;
 
 	/* Include null terminator in PDU */
@@ -591,6 +595,7 @@ fail:
 	winpr_zfree(jws_header);
 	winpr_zfree(jws_payload);
 	winpr_zfree(jws_signature);
+	winpr_zfree(jws_assertion);
 
 	return ret;
 }
