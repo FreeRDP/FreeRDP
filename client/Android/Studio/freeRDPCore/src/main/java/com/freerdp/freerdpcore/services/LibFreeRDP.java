@@ -502,7 +502,10 @@ public class LibFreeRDP
 		}
 
 		args.add("/kbd:unicode:on");
-		args.add("/cert:ignore");
+		if (ApplicationSettingsActivity.getAcceptAllCertificates(context))
+		{
+			args.add("/cert:ignore");
+		}
 		args.add("/log-level:" + debug.getDebugLevel());
 		String[] arrayArgs = args.toArray(new String[0]);
 		return freerdp_parse_arguments(inst, arrayArgs);
