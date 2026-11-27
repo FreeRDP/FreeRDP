@@ -463,8 +463,13 @@ static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* 
 BOOL rdp_set_target_certificate(rdpSettings* settings, const rdpCertificate* tcert)
 {
 	rdpCertificate* cert = freerdp_certificate_clone(tcert);
-	if (!freerdp_settings_set_pointer(settings, FreeRDP_RedirectionTargetCertificate, cert))
+	const BOOL rc =
+	    freerdp_settings_set_pointer(settings, FreeRDP_RedirectionTargetCertificate, cert);
+	if (!rc)
+	{
+		freerdp_certificate_free(cert);
 		return FALSE;
+	}
 
 	BOOL pres = FALSE;
 	size_t length = 0;
