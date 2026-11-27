@@ -27,8 +27,8 @@ if [ $# -ne 0 ]; then
 fi
 
 if [ ! -n "$REST_ARGS" ]; then
-  CMAKE_FILES=$(find ${SRC_PATH} -name "*.cmake" -o -name "CMakeLists.txt")
-  CMAKE_CI_FILES=$(find ${SRC_PATH}/ci -name "*.txt")
+  CMAKE_FILES=$(git ls-files -- '*.cmake'; git ls-files -- '**/CMakeLists.txt')
+  CMAKE_CI_FILES=$(git ls-files -- 'ci/**/*.txt')
 fi
 
 for FILE in $CMAKE_FILES $CMAKE_CI_FILES $REST_ARGS; do
