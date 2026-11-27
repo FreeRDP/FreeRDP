@@ -413,6 +413,9 @@ bool sdlDispContext::handleEvent(const SDL_WindowEvent& ev)
 		case SDL_EVENT_WINDOW_RESIZED:
 			return updateMonitor(ev.windowID);
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+			/* The keyboard grab follows focus, not the pointer. */
+			return true;
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			WINPR_ASSERT(_sdl);
 			if (!_sdl->getInputChannelContext().mouse_grab(ev.windowID, false))
 				return false;
@@ -425,6 +428,10 @@ bool sdlDispContext::handleEvent(const SDL_WindowEvent& ev)
 				return false;
 			return _sdl->getInputChannelContext().keyboard_focus_in();
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+			WINPR_ASSERT(_sdl);
+			/* Re-grab on focus: keyboard focus can return without a pointer enter event. */
+			if (!_sdl->getInputChannelContext().keyboard_grab(ev.windowID, true))
+				return false;
 			return _sdl->getInputChannelContext().keyboard_focus_in();
 
 		default:
