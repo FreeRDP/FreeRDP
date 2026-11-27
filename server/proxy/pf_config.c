@@ -57,6 +57,9 @@
 #define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, (config)->key)
 #define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, (config)->key)
 
+/* Time in milliseconds a peer has to finish the connection sequence, 0 to disable */
+#define PROXY_DEFAULT_HANDSHAKE_TIMEOUT_MS 30000
+
 static const char* bool_str_true = "true";
 static const char* bool_str_false = "false";
 
@@ -70,6 +73,7 @@ static const char* section_server = "Server";
 static const char* key_host = "Host";
 static const char* key_port = "Port";
 static const char* key_sam_file = "SamFile";
+static const char* key_handshake_timeout = "HandshakeTimeout"; /** @since version 3.34.0 */
 
 static const char* section_target = "Target";
 static const char* key_target_fixed = "FixedTarget";
@@ -278,6 +282,10 @@ static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 	}
 
 	if (!pf_config_get_uint16(ini, section_server, key_port, &config->Port, FALSE))
+		return FALSE;
+
+	if (!pf_config_get_uint32(ini, section_server, key_handshake_timeout,
+	                          &config->ServerHandshakeTimeout, FALSE))
 		return FALSE;
 
 	const char* sam = pf_config_get_str(ini, section_server, key_sam_file, FALSE);
@@ -772,6 +780,7 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 	{
 		/* Set default values != 0 */
 		config->TargetTlsSecLevel = 1;
+		config->ServerHandshakeTimeout = PROXY_DEFAULT_HANDSHAKE_TIMEOUT_MS;
 
 		/* Load from ini */
 		if (!pf_config_load_server(ini, config))
@@ -825,6 +834,9 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_server, key_sam_file,
 	                              "optional/path/some/file.sam") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueInt(ini, section_server, key_handshake_timeout,
+	                           PROXY_DEFAULT_HANDSHAKE_TIMEOUT_MS) < 0)
 		goto fail;
 
 	/* Target configuration */
@@ -1057,6 +1069,7 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_STR(config, Host);
 	CONFIG_PRINT_STR(config, SamFile);
 	CONFIG_PRINT_UINT16(config, Port);
+	CONFIG_PRINT_UINT32(config, ServerHandshakeTimeout);
 
 	if (config->FixedTarget)
 	{

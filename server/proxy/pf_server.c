@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/timer.h>
 #include <freerdp/utils/helpers.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/channels/wtsvc.h>
@@ -625,6 +626,36 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer, proxyData* 
 }
 
 /**
+ * Timer callback, aborts a peer that did not finish the connection sequence in time.
+ * Runs on the timer thread of the peer context.
+ */
+WINPR_ATTR_NODISCARD
+static uint64_t pf_server_handshake_timeout(rdpContext* context, WINPR_ATTR_UNUSED void* userdata,
+                                            WINPR_ATTR_UNUSED FreeRDP_TimerID timerID,
+                                            WINPR_ATTR_UNUSED uint64_t timestamp,
+                                            WINPR_ATTR_UNUSED uint64_t interval)
+{
+	pServerContext* ps = (pServerContext*)context;
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->pdata);
+
+	const freerdp_peer* peer = context->peer;
+	WINPR_ASSERT(peer);
+
+	if (!peer->connected)
+	{
+		PROXY_LOG_WARN(TAG, ps, "peer %s did not finish the connection sequence in time, aborting",
+		               peer->hostname);
+
+		/* Wake up the peer thread, both in pf_server_handle_peer and in libfreerdp */
+		proxy_data_abort_connect(ps->pdata);
+		(void)freerdp_abort_connect_context(context);
+	}
+
+	return 0;
+}
+
+/**
  * Handles an incoming client connection, to be run in it's own thread.
  *
  * arg is a pointer to a freerdp_peer representing the client.
@@ -668,6 +699,18 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	WINPR_ASSERT(client->Initialize);
 	if (!client->Initialize(client))
 		goto out_free_peer;
+
+	/* Do not let a peer hold its resources forever without finishing the connection sequence */
+	if (pdata->config->ServerHandshakeTimeout > 0)
+	{
+		const uint64_t timeoutNS = pdata->config->ServerHandshakeTimeout * 1000000ull;
+		if (freerdp_timer_add(client->context, timeoutNS, pf_server_handshake_timeout, nullptr,
+		                      false) == 0)
+		{
+			PROXY_LOG_ERR(TAG, ps, "Failed to start the handshake timeout timer");
+			goto out_free_peer;
+		}
+	}
 
 	PROXY_LOG_INFO(TAG, ps, "new connection: proxy address: %s, client address: %s",
 	               pdata->config->Host, client->hostname);
