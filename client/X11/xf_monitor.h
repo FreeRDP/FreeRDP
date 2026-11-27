@@ -30,4 +30,6 @@ FREERDP_API int xf_list_monitors(xfContext* xfc);
 FREERDP_API BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight);
 FREERDP_API void xf_monitors_free(xfContext* xfc);
 
+void xf_monitor_apply_scale(xfContext* xfc, rdpMonitor* monitor);
+
 #endif /* FREERDP_CLIENT_X11_MONITOR_H */

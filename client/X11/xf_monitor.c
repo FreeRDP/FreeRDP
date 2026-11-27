@@ -31,6 +31,7 @@
 #include <winpr/cast.h>
 #include <winpr/crt.h>
 
+#include <freerdp/client/monitor.h>
 #include <freerdp/log.h>
 
 #define TAG CLIENT_TAG("x11")
@@ -51,6 +52,19 @@
 
 #include "xf_monitor.h"
 #include "xf_utils.h"
+
+void xf_monitor_apply_scale(xfContext* xfc, rdpMonitor* monitor)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(monitor);
+	const rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+	monitor->attributes.desktopScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+	monitor->attributes.deviceScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
+	freerdp_client_apply_monitor_scale(settings, monitor);
+}
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
@@ -673,6 +687,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE))
 				goto fail;
 		}
+
+		for (UINT32 i = 0; i < nmonitors; i++)
+			xf_monitor_apply_scale(xfc, &rdpmonitors[i]);
 
 		rc = freerdp_settings_set_monitor_def_array_sorted(settings, rdpmonitors, nmonitors);
 	}
