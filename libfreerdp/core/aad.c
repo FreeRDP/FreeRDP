@@ -54,8 +54,13 @@ struct rdp_aad
 
 #ifdef WITH_AAD
 
+WINPR_ATTR_NODISCARD
 static BOOL aad_fetch_wellknown(wLog* log, rdpContext* context);
+
+WINPR_ATTR_NODISCARD
 static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, char** n);
+
+WINPR_ATTR_NODISCARD
 static BOOL generate_pop_key(rdpAad* aad);
 
 WINPR_ATTR_FORMAT_ARG(2, 3)
@@ -83,6 +88,7 @@ static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 	return rc2;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL json_get_object(wLog* wlog, WINPR_JSON* json, const char* key, WINPR_JSON** obj)
 {
 	WINPR_ASSERT(json);
@@ -104,6 +110,7 @@ static BOOL json_get_object(wLog* wlog, WINPR_JSON* json, const char* key, WINPR
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL json_get_number(wLog* wlog, WINPR_JSON* json, const char* key, UINT64* result)
 {
 	BOOL rc = FALSE;
@@ -124,6 +131,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL json_get_const_string(wLog* wlog, WINPR_JSON* json, const char* key,
                                   const char** result)
 {
@@ -154,6 +162,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL json_get_string_alloc(wLog* wlog, WINPR_JSON* json, const char* key, char** result)
 {
 	const char* str = nullptr;
@@ -166,6 +175,7 @@ static BOOL json_get_string_alloc(wLog* wlog, WINPR_JSON* json, const char* key,
 	return *result != nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static inline const char* aad_auth_result_to_string(DWORD code)
 {
 #define ERROR_CASE(cd, x)   \
@@ -184,6 +194,7 @@ static inline const char* aad_auth_result_to_string(DWORD code)
 	return "Unknown error";
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ensure_wellknown(rdpContext* context)
 {
 	if (context->rdp->wellknown)
@@ -198,6 +209,7 @@ static BOOL ensure_wellknown(rdpContext* context)
 	return context->rdp->wellknown != nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL aad_get_nonce(rdpAad* aad)
 {
 	BOOL ret = FALSE;
@@ -363,6 +375,7 @@ int aad_client_begin(rdpAad* aad)
 	return 1;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* aad_create_jws_header(rdpAad* aad)
 {
 	WINPR_ASSERT(aad);
@@ -380,6 +393,7 @@ static char* aad_create_jws_header(rdpAad* aad)
 	return jws_header;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 {
 	const time_t ts = time(nullptr);
@@ -416,6 +430,7 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 	return jws_payload;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL aad_update_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx, const char* what)
 {
 	WINPR_ASSERT(aad);
@@ -431,6 +446,7 @@ static BOOL aad_update_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx, const char* wh
 	return TRUE;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* aad_final_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx)
 {
 	char* jws_signature = nullptr;
@@ -478,6 +494,7 @@ fail:
 	return jws_signature;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* aad_create_jws_signature(rdpAad* aad, const char* jws_header, const char* jws_payload)
 {
 	char* jws_signature = nullptr;
@@ -504,6 +521,7 @@ fail:
 	return jws_signature;
 }
 
+WINPR_ATTR_NODISCARD
 static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 {
 	int ret = -1;
@@ -559,13 +577,14 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 
 fail:
 	Stream_Free(s, TRUE);
-	free(jws_header);
-	free(jws_payload);
-	free(jws_signature);
+	winpr_zfree(jws_header);
+	winpr_zfree(jws_payload);
+	winpr_zfree(jws_signature);
 
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static int aad_parse_state_initial(rdpAad* aad, wStream* s)
 {
 	const char* jstr = Stream_PointerAs(s, char);
@@ -594,6 +613,7 @@ fail:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 {
 	int rc = -1;
@@ -649,12 +669,14 @@ int aad_recv(rdpAad* aad, wStream* s)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL generate_rsa_2048(rdpAad* aad)
 {
 	WINPR_ASSERT(aad);
 	return freerdp_key_generate(aad->key, "RSA", 1, 2048);
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* generate_rsa_digest_base64_str(rdpAad* aad, const char* input, size_t ilen)
 {
 	char* b64 = nullptr;
@@ -694,6 +716,7 @@ fail:
 	return b64;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL generate_json_base64_str(rdpAad* aad, const char* b64_hash)
 {
 	WINPR_ASSERT(aad);
@@ -747,13 +770,14 @@ BOOL generate_pop_key(rdpAad* aad)
 	ret = generate_json_base64_str(aad, b64_hash);
 
 fail:
-	free(b64_hash);
-	free(buffer);
-	free(e);
-	free(n);
+	winpr_zfree(b64_hash);
+	winpr_zfree(buffer);
+	winpr_zfree(e);
+	winpr_zfree(n);
 	return ret;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* bn_to_base64_url(wLog* wlog, rdpPrivateKey* key, enum FREERDP_KEY_PARAM param)
 {
 	WINPR_ASSERT(wlog);
@@ -805,8 +829,8 @@ BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** pe, char** pn
 fail:
 	if (!rc)
 	{
-		free(e);
-		free(n);
+		winpr_zfree(e);
+		winpr_zfree(n);
 	}
 	else
 	{
