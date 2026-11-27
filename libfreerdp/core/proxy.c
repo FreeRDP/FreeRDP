@@ -208,18 +208,37 @@ static BOOL no_proxy_match_host(const char* val, const char* hostname)
 	if (val[0] == '.')
 		val++;
 
-	/* Match suffix */
-	return option_ends_with(hostname, val);
+	const size_t vlen = strlen(val);
+	if ((vlen == 0) || !option_ends_with(hostname, val))
+		return FALSE;
+
+	/* Exact match */
+	const size_t offset = strlen(hostname) - vlen;
+	if (offset == 0)
+		return TRUE;
+
+	/* Match suffix, but only whole labels of a DNS name:
+	 * 'example.com' matches 'www.example.com' but not 'nonexample.com'
+	 * and '0.0.1' does not match the IP address '10.0.0.1'
+	 */
+	if (hostname[offset - 1] != '.')
+		return FALSE;
+	return !freerdp_is_valid_ip(hostname);
 }
 
+/* The prefix must end at a component boundary:
+ * '10.0' and '10.0.' match '10.0.3.3', but '10.0.0.1' does not match '10.0.0.123'
+ */
 WINPR_ATTR_NODISCARD
-static BOOL starts_with(const char* val, const char* prefix)
+static BOOL starts_with(const char* val, const char* prefix, char separator)
 {
 	const size_t plen = strlen(prefix);
 	const size_t vlen = strlen(val);
-	if (vlen < plen)
+	if ((plen == 0) || (vlen < plen))
 		return FALSE;
-	return _strnicmp(val, prefix, plen) == 0;
+	if (_strnicmp(val, prefix, plen) != 0)
+		return FALSE;
+	return (val[plen] == '\0') || (val[plen] == separator) || (prefix[plen - 1] == separator);
 }
 
 WINPR_ATTR_NODISCARD
@@ -234,7 +253,7 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 	if (inet_pton(AF_INET, hostname, &sa4.sin_addr) == 1)
 	{
 		/* Prefix match */
-		if (starts_with(hostname, val))
+		if (starts_with(hostname, val, '.'))
 			return TRUE;
 
 		char* sub = strchr(val, '/');
@@ -271,8 +290,9 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 				str[len - 1] = '\0';
 		}
 
-		/* Prefix match */
-		if (starts_with(hostname, str))
+		/* Prefix match, a complete address like '::1' is not a prefix of '::1:2' */
+		if (starts_with(hostname, str, ':') &&
+		    (option_ends_with(str, ":") || !freerdp_is_valid_ipV6(str)))
 			return TRUE;
 
 		char* sub = strchr(str, '/');
