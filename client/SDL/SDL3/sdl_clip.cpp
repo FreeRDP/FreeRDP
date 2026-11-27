@@ -286,6 +286,9 @@ bool sdlClip::uninit(CliprdrClientContext* clip)
 #endif
 	ClipboardLockGuard systemlock(_system);
 	std::scoped_lock lock(_lock);
+	/* The object outlives the channel: after a reconnect or redirect the new channel must see
+	 * its Monitor Ready before we announce the local clipboard ([MS-RDPECLIP] 1.3.2.1). */
+	_sync = false;
 	if (!cliprdr_file_context_uninit(_file, _ctx))
 		return false;
 	_ctx = nullptr;
@@ -501,7 +504,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	/* The RDP thread may have closed the channel since the check above (see uninit) */
 	ClipboardLockGuard systemlock(_system);
 	std::scoped_lock lock(_lock);
-	if (!_ctx)
+	if (!_ctx || !_sync)
 		return true;
 
 	if (cliprdr_file_context_notify_new_client_format_list(_file) != CHANNEL_RC_OK)

@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 #include <winpr/path.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -205,6 +206,26 @@ static void SamResetEntryUser(WINPR_SAM_ENTRY* entry)
 	entry->DomainLength = 0;
 }
 
+/* A hash is made up of hex digits only. A placeholder like 'NO PASSWORD*********************'
+ * is no hash and must not be converted to one. */
+WINPR_ATTR_NODISCARD
+static BOOL SamIsHexString(const char* str, size_t length)
+{
+	for (size_t x = 0; x < length; x++)
+	{
+		if (!isxdigit((unsigned char)str[x]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL SamEntryHasNtHash(const WINPR_SAM_ENTRY* entry)
+{
+	const BYTE empty[sizeof(entry->NtHash)] = WINPR_C_ARRAY_INIT;
+	return memcmp(entry->NtHash, empty, sizeof(entry->NtHash)) != 0;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
@@ -262,7 +283,7 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	else
 		entry->Domain = nullptr;
 
-	if (LmHashLength == 32)
+	if ((LmHashLength == 32) && SamIsHexString(p[2], LmHashLength))
 	{
 		const size_t rc =
 		    winpr_HexStringToBinBuffer(p[2], LmHashLength, entry->LmHash, sizeof(entry->LmHash));
@@ -270,7 +291,7 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 			goto fail;
 	}
 
-	if (NtHashLength == 32)
+	if ((NtHashLength == 32) && SamIsHexString(p[3], NtHashLength))
 	{
 		const size_t rc = winpr_HexStringToBinBuffer(p[3], NtHashLength, (BYTE*)entry->NtHash,
 		                                             sizeof(entry->NtHash));
@@ -333,7 +354,13 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPCSTR User, UINT32 UserLength, 
 
 				if (SamAreEntriesEqual(entry, search))
 				{
-					found = 1;
+					/* An entry without a NT hash can not be used to authenticate.
+					 * Do not return it with a well known all zero hash. */
+					if (SamEntryHasNtHash(entry))
+						found = 1;
+					else
+						WLog_WARN(TAG, "Ignoring SAM entry for user '%s', no valid NT hash",
+						          entry->User);
 					break;
 				}
 			}

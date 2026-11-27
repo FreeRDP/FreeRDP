@@ -42,10 +42,14 @@ class SDLConnectionDialog : public SdlWidgetList
 	SDLConnectionDialog& operator=(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog& operator=(SDLConnectionDialog&& other) = delete;
 
-	[[nodiscard]] bool setTitle(const char* fmt, ...);
-	[[nodiscard]] bool showInfo(const char* fmt, ...);
-	[[nodiscard]] bool showWarn(const char* fmt, ...);
-	[[nodiscard]] bool showError(const char* fmt, ...);
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	[[nodiscard]] bool setTitle(WINPR_FORMAT_ARG const char* fmt, ...);
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	[[nodiscard]] bool showInfo(WINPR_FORMAT_ARG const char* fmt, ...);
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	[[nodiscard]] bool showWarn(WINPR_FORMAT_ARG const char* fmt, ...);
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	[[nodiscard]] bool showError(WINPR_FORMAT_ARG const char* fmt, ...);
 
 	[[nodiscard]] bool show();
 	[[nodiscard]] bool hide();

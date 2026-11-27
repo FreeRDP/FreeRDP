@@ -745,6 +745,9 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	free(wst->gwpath);
 	wst->gwpath = nullptr;
 
+	if (!winpr_str_is_valid_url(url))
+		return FALSE;
+
 	if (strncmp("wss://", url, 6) != 0)
 	{
 		if (strncmp("https://", url, 8) != 0)

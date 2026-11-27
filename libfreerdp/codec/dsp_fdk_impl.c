@@ -438,6 +438,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		//,	{ AACENC_GRANULE_LENGTH, frames_per_packet }
 	};
 
+	int rc = -1;
 	HANDLE_AACENCODER self = nullptr;
 	if (encoder)
 		self = (HANDLE_AACENCODER)handle;
@@ -460,7 +461,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		{
 			log(WLOG_ERROR, "aacEncoder_SetParam(%s, %d) failed with %s",
 			    aac_enc_param_str(param->param), param->value, enc_err_str(err));
-			return -1;
+			goto fail;
 		}
 	}
 
@@ -468,7 +469,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 	if (err != AACENC_OK)
 	{
 		log(WLOG_ERROR, "aacEncEncode failed with %s", enc_err_str(err));
-		return -1;
+		goto fail;
 	}
 
 	AACENC_InfoStruct info = { 0 };
@@ -476,21 +477,16 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 	if (err != AACENC_OK)
 	{
 		log(WLOG_ERROR, "aacEncInfo failed with %s", enc_err_str(err));
-		return -1;
+		goto fail;
 	}
 
 	if (encoder)
 	{
 		*pbuffersize = info.maxOutBufBytes;
 		log_enc_info(&info, log);
-		return 0;
 	}
 	else
 	{
-		err = aacEncClose(&self);
-		if (err != AACENC_OK)
-			log(WLOG_WARN, "aacEncClose failed with %s", enc_err_str(err));
-
 		*pbuffersize = sizeof(INT_PCM) * info.frameLength * info.inputChannels;
 
 		HANDLE_AACDECODER aacdec = (HANDLE_AACDECODER)handle;
@@ -504,10 +500,21 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		if (decerr != AAC_DEC_OK)
 		{
 			log(WLOG_ERROR, "aacDecoder_ConfigRaw failed with %s", dec_err_str(decerr));
-			return -1;
+			goto fail;
 		}
-		return 0;
 	}
+
+	rc = 0;
+
+fail:
+	if (!encoder)
+	{
+		/* The temporary encoder was only opened to create the decoder configuration */
+		const AACENC_ERROR cerr = aacEncClose(&self);
+		if (cerr != AACENC_OK)
+			log(WLOG_WARN, "aacEncClose failed with %s", enc_err_str(cerr));
+	}
+	return rc;
 }
 
 ssize_t fdk_aac_dsp_impl_decode_fill(void* handle, const void* data, size_t size, fdk_log_fkt_t log)

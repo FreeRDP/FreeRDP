@@ -979,6 +979,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 	if (!server && !remote)
 	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_AadUseLoginHint, TRUE))
+			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpUserAgent,
 		                                 FREERDP_USER_AGENT))
 			goto out_fail;

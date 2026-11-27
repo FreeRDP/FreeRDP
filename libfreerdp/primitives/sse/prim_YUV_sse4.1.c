@@ -432,9 +432,20 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(
 		sse41_BGRX_fillRGB(dstp, Y, U, V);
 	}
 
-	for (; x < nWidth; x += 2)
+	for (; x < nWidth - nWidth % 2; x += 2)
 	{
 		BGRX_fillRGB(x, pDst, YData, UData, VData, TRUE);
+	}
+
+	for (; x < nWidth; x++)
+	{
+		for (size_t i = 0; i < 2; i++)
+		{
+			const BYTE Y = YData[i][x];
+			const BYTE U = UData[i][x];
+			const BYTE V = VData[i][x];
+			writeYUVPixel(&pDst[i][x * 4], PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX);
+		}
 	}
 
 	return PRIMITIVES_SUCCESS;
@@ -465,9 +476,18 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
     BYTE* WINPR_RESTRICT pDst, const BYTE* WINPR_RESTRICT YData, const BYTE* WINPR_RESTRICT UData,
     const BYTE* WINPR_RESTRICT VData, UINT32 nWidth)
 {
-	for (size_t x = 0; x < nWidth; x += 2)
+	size_t x = 0;
+	for (; x < nWidth - nWidth % 2; x += 2)
 	{
 		BGRX_fillRGB_single(x, pDst, YData, UData, VData, TRUE);
+	}
+
+	for (; x < nWidth; x++)
+	{
+		const BYTE Y = YData[x];
+		const BYTE U = UData[x];
+		const BYTE V = VData[x];
+		writeYUVPixel(&pDst[x * 4], PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX);
 	}
 
 	return PRIMITIVES_SUCCESS;

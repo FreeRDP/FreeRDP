@@ -226,6 +226,7 @@ struct rdp_tsg
 	BOOL reauthSequence;
 	rdpTransport* transport;
 	UINT64 ReauthTunnelContext;
+	UINT32 DeniedRedirections;
 	CONTEXT_HANDLE TunnelContext;
 	CONTEXT_HANDLE ChannelContext;
 	CONTEXT_HANDLE NewTunnelContext;
@@ -1879,6 +1880,21 @@ static UINT32 tsg_redir_to_flags(const TSG_REDIRECTION_FLAGS* redirect)
 	return flags;
 }
 
+/* The redirections a policy denies, see utils_apply_gateway_policy */
+WINPR_ATTR_NODISCARD
+static UINT32 tsg_redir_denied(UINT32 flags)
+{
+	const UINT32 all = HTTP_TUNNEL_REDIR_DISABLE_DRIVE | HTTP_TUNNEL_REDIR_DISABLE_PRINTER |
+	                   HTTP_TUNNEL_REDIR_DISABLE_PORT | HTTP_TUNNEL_REDIR_DISABLE_CLIPBOARD |
+	                   HTTP_TUNNEL_REDIR_DISABLE_PNP;
+
+	if (flags & HTTP_TUNNEL_REDIR_ENABLE_ALL)
+		return 0;
+	if (flags & HTTP_TUNNEL_REDIR_DISABLE_ALL)
+		return all;
+	return flags & all;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL tsg_redirect_apply(rdpTsg* tsg, const TSG_REDIRECTION_FLAGS* redirect)
 {
@@ -1889,7 +1905,31 @@ static BOOL tsg_redirect_apply(rdpTsg* tsg, const TSG_REDIRECTION_FLAGS* redirec
 	WINPR_ASSERT(transport);
 
 	rdpContext* context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
 	UINT32 redirFlags = tsg_redir_to_flags(redirect);
+	const UINT32 denied = tsg_redir_denied(redirFlags);
+
+	if (tsg->reauthSequence)
+	{
+		/* A reauthentication happens in the middle of a session. The channels are connected and
+		 * their threads use the devices of the settings, so the policy must not be applied again.
+		 * If it denies more than the policy the session was set up with, end the session: a new
+		 * connection then enforces it. */
+		if ((denied & ~tsg->DeniedRedirections) == 0)
+			return TRUE;
+		if (freerdp_settings_get_bool(context->settings, FreeRDP_GatewayIgnoreRedirectionPolicy))
+			return TRUE;
+
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_Print(tsg->log, WLOG_ERROR,
+		           "[TSG] reauthentication policy %s denies redirections the session was "
+		           "established with, aborting",
+		           utils_redir_flags_to_string(redirFlags, buffer, sizeof(buffer)));
+		return FALSE;
+	}
+
+	tsg->DeniedRedirections = denied;
 	return utils_apply_gateway_policy(tsg->log, context, redirFlags, "TSG");
 }
 

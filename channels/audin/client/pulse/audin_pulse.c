@@ -362,17 +362,23 @@ static UINT audin_pulse_close(IAudinDevice* device)
 	if (!pulse)
 		return ERROR_INVALID_PARAMETER;
 
+	/* Stream callbacks run with the mainloop lock held, so once it is released here no
+	 * capture callback is running and none will use receive/user_data again. */
+	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pulse->stream)
 	{
-		pa_threaded_mainloop_lock(pulse->mainloop);
+		/* pa_stream_disconnect only requests the removal: data that arrives before the
+		 * server confirms it would still be passed to the read callback. */
+		pa_stream_set_read_callback(pulse->stream, nullptr, nullptr);
+		pa_stream_set_state_callback(pulse->stream, nullptr, nullptr);
 		pa_stream_disconnect(pulse->stream);
 		pa_stream_unref(pulse->stream);
 		pulse->stream = nullptr;
-		pa_threaded_mainloop_unlock(pulse->mainloop);
 	}
 
 	pulse->receive = nullptr;
 	pulse->user_data = nullptr;
+	pa_threaded_mainloop_unlock(pulse->mainloop);
 	return CHANNEL_RC_OK;
 }
 
@@ -396,8 +402,6 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	if (!pulse->sample_spec.rate || pulse->stream)
 		return ERROR_INVALID_PARAMETER;
 
-	pulse->receive = receive;
-	pulse->user_data = user_data;
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	pulse->stream = pa_stream_new(pulse->context, pulse->stream_name, &pulse->sample_spec, nullptr);
 
@@ -442,6 +446,10 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		const int rc = pa_context_errno(pulse->context);
 		return (UINT)rc;
 	}
+
+	/* Only a connected stream delivers data, a failed open must not leave these set. */
+	pulse->receive = receive;
+	pulse->user_data = user_data;
 
 	while (pulse->stream)
 	{

@@ -2981,8 +2981,9 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, D
 				PCSC_DWORD cbAtrLen = 0;
 				PCSC_DWORD dwProtocol = 0;
 				PCSC_DWORD cchReaderLen = 0;
-				status = g_PCSC.pfnSCardStatus(hCard, nullptr, &cchReaderLen, &dwState, &dwProtocol,
-				                               nullptr, &cbAtrLen);
+				const PCSC_LONG rc = g_PCSC.pfnSCardStatus(hCard, nullptr, &cchReaderLen, &dwState,
+				                                           &dwProtocol, nullptr, &cbAtrLen);
+				status = PCSC_MapErrorCodeToWinSCard(rc);
 
 				if (status == SCARD_S_SUCCESS)
 				{

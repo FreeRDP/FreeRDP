@@ -22,9 +22,11 @@
 #include <winpr/stream.h>
 #include <winpr/smartcard.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/scard.h>
 #include <freerdp/utils/rdpdr_utils.h>
+#include <freerdp/utils/smartcard_call.h>
 #include <freerdp/utils/smartcard_operations.h>
 #include <freerdp/utils/smartcard_pack.h>
 
@@ -1525,6 +1527,29 @@ static BOOL test_decode_responses(void)
 	return success;
 }
 
+static BOOL test_missing_call_context(void)
+{
+	rdpContext context = WINPR_C_ARRAY_INIT;
+	context.settings = freerdp_settings_new(0);
+	if (!context.settings)
+		return FALSE;
+
+	scard_call_context* calls = smartcard_call_context_new_with_context(&context);
+	BOOL success = (calls != nullptr);
+	/* EstablishContext has no context to borrow. Returning that lookup must
+	 * leave the table available for the next request. */
+	for (size_t i = 0; success && (i < 2); i++)
+	{
+		void* borrowed = smartcard_call_get_context(calls, 0);
+		success = (borrowed == nullptr);
+		smartcard_call_return_context(calls, borrowed);
+	}
+
+	smartcard_call_context_free(calls);
+	freerdp_settings_free(context.settings);
+	return success;
+}
+
 int TestSmartcardOperations(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -1534,6 +1559,9 @@ int TestSmartcardOperations(int argc, char* argv[])
 		return -1;
 
 	if (!test_decode_responses())
+		return -1;
+
+	if (!test_missing_call_context())
 		return -1;
 
 	return 0;

@@ -871,11 +871,11 @@ static void* winpr_convert_to_jpeg(WINPR_ATTR_UNUSED const void* data,
 			goto fail;
 	}
 
-	WINPR_ASSERT(outsize <= UINT32_MAX);
-	*pSize = (UINT32)outsize;
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
+	WINPR_ASSERT(outsize <= UINT32_MAX);
+	*pSize = (UINT32)outsize;
 	return outbuffer;
 
 fail:

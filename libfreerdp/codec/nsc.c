@@ -264,7 +264,12 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream*
 	if (!nsc_stream_initialize(context, s))
 		return FALSE;
 
-	const size_t blength = 4ull * context->width * context->height;
+	/* 4 bytes per pixel, the 16 bytes of padding added below must not wrap a (32bit) size_t */
+	const UINT64 bsize = 4ull * context->width * context->height;
+	if (bsize > SIZE_MAX - 16ull)
+		return FALSE;
+
+	const size_t blength = (size_t)bsize;
 
 	if (!context->BitmapData || (blength > context->BitmapDataLength))
 	{
@@ -280,7 +285,7 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream*
 	const UINT32 tempWidth = ROUND_UP_TO(context->width, 8);
 	const UINT32 tempHeight = ROUND_UP_TO(context->height, 2);
 	/* The maximum length a decoded plane can reach in all cases */
-	const size_t plength = 1ull * tempWidth * tempHeight;
+	const UINT64 plength = 1ull * tempWidth * tempHeight;
 	if (plength > UINT32_MAX)
 		return FALSE;
 
@@ -288,8 +293,8 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream*
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
-			void* tmp = (BYTE*)winpr_aligned_recalloc(context->priv->PlaneBuffers[i], plength,
-			                                          sizeof(BYTE), 32);
+			void* tmp = (BYTE*)winpr_aligned_recalloc(context->priv->PlaneBuffers[i],
+			                                          (size_t)plength, sizeof(BYTE), 32);
 
 			if (!tmp)
 				return FALSE;

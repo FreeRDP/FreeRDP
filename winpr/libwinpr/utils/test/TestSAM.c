@@ -9,6 +9,13 @@
 #include <winpr/path.h>
 
 const char* sam_entries[] = {
+	/* entries without a valid NT hash */
+	"nohash1::::::", "nohash2:::XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:::",
+	"nohash3:::NO PASSWORD*********************:::",
+	"nohash4:::00000000000000000000000000000000:::",
+	"nohash5:domain::1910bd9285a6b8c9344d9f5cc74e087g:::",
+	/* test4, xxxxxx, LM hash placeholder */
+	"test4::NO PASSWORD*********************:1910bd9285a6b8c9344d9f5cc74e0878:::",
 	"test1:::1910bd9285a6b8c9344d9f5cc74e0878:::",      /* test1, xxxxxx */
 	"test2:::1bfc28ca2a4c218b032f4a0309b31f20:::",      /* test2, aaaaaabbbbbb */
 	"test1:domain::eab3412c36d6bbb1e3f6eaaf2775696e:::" /* test1, domain, pppppppp */
@@ -174,6 +181,37 @@ fail:
 	return rc;
 }
 
+/* entries without a valid NT hash must not be returned */
+static BOOL testNoHash(WINPR_SAM* sam, const char* name, const char* domain)
+{
+	const size_t nlen = strlen(name);
+	const size_t dlen = domain ? strlen(domain) : 0;
+
+	WINPR_SAM_ENTRY* entry = SamLookupUserA(sam, name, (UINT32)nlen, domain, (UINT32)dlen);
+	if (entry)
+	{
+		SamFreeEntry(sam, entry);
+		return FALSE;
+	}
+
+	WCHAR* nameW = ConvertUtf8ToWCharAlloc(name, nullptr);
+	WCHAR* domainW = nullptr;
+	if (domain)
+		domainW = ConvertUtf8ToWCharAlloc(domain, nullptr);
+
+	BOOL rc = FALSE;
+	if (nameW && (!domain || domainW))
+	{
+		entry = SamLookupUserW(sam, nameW, (UINT32)(nlen * sizeof(WCHAR)), domainW,
+		                       (UINT32)(dlen * sizeof(WCHAR)));
+		rc = (entry == nullptr);
+		SamFreeEntry(sam, entry);
+	}
+	free(nameW);
+	free(domainW);
+	return rc;
+}
+
 WINPR_ATTR_MALLOC(free, 1)
 static char* prepare(void)
 {
@@ -227,6 +265,18 @@ int TestSAM(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 	if (!test(sam, "test3", nullptr, "xxxxxx", FALSE))
 		goto fail;
 	if (!test(sam, "test1", nullptr, "xxxxxxe", FALSE))
+		goto fail;
+	if (!test(sam, "test4", nullptr, "xxxxxx", TRUE))
+		goto fail;
+	if (!testNoHash(sam, "nohash1", nullptr))
+		goto fail;
+	if (!testNoHash(sam, "nohash2", nullptr))
+		goto fail;
+	if (!testNoHash(sam, "nohash3", nullptr))
+		goto fail;
+	if (!testNoHash(sam, "nohash4", nullptr))
+		goto fail;
+	if (!testNoHash(sam, "nohash5", "domain"))
 		goto fail;
 
 	res = 0;

@@ -64,7 +64,11 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* WINPR_RESTRICT context)
 	const UINT32 tempWidth = ROUND_UP_TO(context->width, 8);
 	const UINT32 tempHeight = ROUND_UP_TO(context->height, 2);
 	/* The maximum length a decoded plane can reach in all cases */
-	const UINT32 length = tempWidth * tempHeight + 16;
+	const UINT64 size = 1ull * tempWidth * tempHeight + 16;
+	if (size > UINT32_MAX)
+		return FALSE;
+
+	const UINT32 length = (UINT32)size;
 
 	if (length > context->priv->PlaneBuffersLength)
 	{
