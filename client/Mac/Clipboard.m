@@ -324,10 +324,14 @@ static UINT
 mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
                                         const CLIPRDR_FORMAT_DATA_RESPONSE *formatDataResponse)
 {
-	UINT32 formatId;
+	WINPR_ASSERT(cliprdr);
 	CLIPRDR_FORMAT *format = nullptr;
 	mfContext *mfc = (mfContext *)cliprdr->custom;
+	WINPR_ASSERT(mfc);
+
 	MRDPView *view = (MRDPView *)mfc->view;
+	WINPR_ASSERT(view);
+	WINPR_ASSERT(formatDataResponse);
 
 	if (formatDataResponse->common.msgFlags & CB_RESPONSE_FAIL)
 	{
@@ -347,11 +351,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (format->formatName)
-		formatId = ClipboardRegisterFormat(mfc->clipboard, format->formatName);
-	else
-		formatId = format->formatId;
-
+	const UINT32 formatId = format->formatId;
 	const size_t size = formatDataResponse->common.dataLen;
 
 	ClipboardSetData(mfc->clipboard, formatId, formatDataResponse->requestedFormatData, size);
@@ -360,10 +360,10 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) || (formatId == CF_UNICODETEXT))
 	{
-		formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain;charset=utf-8");
+		const UINT32 utf8 = ClipboardRegisterFormat(mfc->clipboard, "text/plain;charset=utf-8");
 
 		UINT32 dstSize = 0;
-		char *data = ClipboardGetData(mfc->clipboard, formatId, &dstSize);
+		char *data = ClipboardGetData(mfc->clipboard, utf8, &dstSize);
 
 		dstSize = strnlen(data, dstSize); /* we need the size without the null terminator */
 

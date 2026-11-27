@@ -436,10 +436,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	UINT32 formatId = format->formatId;
-	if (format->formatName)
-		formatId = ClipboardRegisterFormat(afc->clipboard, format->formatName);
-
+	const UINT32 formatId = format->formatId;
 	uint32_t size = formatDataResponse->common.dataLen;
 
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))

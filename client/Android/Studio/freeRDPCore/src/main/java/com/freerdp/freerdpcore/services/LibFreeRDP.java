@@ -502,7 +502,10 @@ public class LibFreeRDP
 		}
 
 		args.add("/kbd:unicode:on");
-		args.add("/cert:ignore");
+		if (ApplicationSettingsActivity.getAcceptAllCertificates(context))
+		{
+			args.add("/cert:ignore");
+		}
 		args.add("/log-level:" + debug.getDebugLevel());
 		String[] arrayArgs = args.toArray(new String[0]);
 		return freerdp_parse_arguments(inst, arrayArgs);
@@ -563,8 +566,17 @@ public class LibFreeRDP
 				if (key.equals("drive") && value.equals("sdcard"))
 				{
 					// Special for sdcard redirect
-					String path = android.os.Environment.getExternalStorageDirectory().getPath();
+					final String path =
+					    android.os.Environment.getExternalStorageDirectory().getPath();
 					value = "sdcard," + path;
+				}
+				else if (key.equals("drive"))
+				{
+					final File path = android.os.Environment.getDataDirectory();
+					final File val = new File(value);
+					if ((value.compareTo(path) == 0) ||
+					    val.getCanonicalPath().contains(path.getCanonicalPath()))
+						return false;
 				}
 
 				args.add("/" + key + ":" + value);

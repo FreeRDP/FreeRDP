@@ -469,13 +469,13 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 	UINT16 msgType = 0;
 	UINT16 msgFlags = 0;
 	UINT32 dataLen = 0;
-	UINT error = 0;
+	UINT error = ERROR_INVALID_DATA;
 
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(cliprdr->log, s, 8))
-		return ERROR_INVALID_DATA;
+		goto fail;
 
 	Stream_Read_UINT16(s, msgType);  /* msgType (2 bytes) */
 	Stream_Read_UINT16(s, msgFlags); /* msgFlags (2 bytes) */
@@ -505,7 +505,7 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 		}
 	}
 	else if (!Stream_CheckAndLogRequiredLengthWLog(cliprdr->log, s, dataLen))
-		return ERROR_INVALID_DATA;
+		goto fail;
 
 	char buffer1[64] = WINPR_C_ARRAY_INIT;
 	char buffer2[64] = WINPR_C_ARRAY_INIT;
@@ -597,6 +597,7 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 			break;
 	}
 
+fail:
 	Stream_Free(s, TRUE);
 	return error;
 }

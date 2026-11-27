@@ -942,7 +942,8 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 		           requestTypeStr);
 	}
 
-	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) &&
+	    (autodetectReqPdu.requestType == RDP_BW_START_REQUEST_TYPE_CONNECTTIME))
 	{
 		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
@@ -1125,7 +1126,8 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 		           requestStr);
 	}
 
-	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) &&
+	    (autodetectRspPdu.responseType == RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME))
 	{
 		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 

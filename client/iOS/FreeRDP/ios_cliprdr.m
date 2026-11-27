@@ -369,22 +369,17 @@ static UINT
 ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
                                         const CLIPRDR_FORMAT_DATA_RESPONSE *formatDataResponse)
 {
-	BYTE *data;
-	UINT32 size;
-	UINT32 formatId;
 	CLIPRDR_FORMAT *format = nullptr;
-	mfContext *afc;
-	freerdp *instance;
 
 	if (!cliprdr || !formatDataResponse)
 		return ERROR_INVALID_PARAMETER;
 
-	afc = (mfContext *)cliprdr->custom;
+	mfContext *afc = (mfContext *)cliprdr->custom;
 
 	if (!afc)
 		return ERROR_INVALID_PARAMETER;
 
-	instance = ((rdpContext *)afc)->instance;
+	freerdp *instance = ((rdpContext *)afc)->instance;
 
 	if (!instance)
 		return ERROR_INVALID_PARAMETER;
@@ -408,12 +403,8 @@ ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 		return CHANNEL_RC_OK;
 	}
 
-	if (format->formatName)
-		formatId = ClipboardRegisterFormat(afc->clipboard, format->formatName);
-	else
-		formatId = format->formatId;
-
-	size = formatDataResponse->common.dataLen;
+	const UINT32 formatId = format->formatId;
+	const UINT32 size = formatDataResponse->common.dataLen;
 
 	ClipboardLock(afc->clipboard);
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))
@@ -426,12 +417,12 @@ ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if ((formatId == CF_TEXT) || (formatId == CF_UNICODETEXT))
 	{
-		formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
-		data = (BYTE *)ClipboardGetData(afc->clipboard, formatId, &size);
+		const UINT32 utf8 = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
+		char *data = (BYTE *)ClipboardGetData(afc->clipboard, utf8, &size);
 		if (data)
 		{
-			size = (UINT32)strnlen((const char *)data, size);
-			ios_ui_set_clipboard_text((rdpContext *)afc, (const char *)data, size);
+			const size_t len = strnlen(data, size);
+			ios_ui_set_clipboard_text(&afc->_p, data, len);
 		}
 		free(data);
 	}

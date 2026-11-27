@@ -263,6 +263,13 @@ bool SdlWindow::resizeToScale()
 	if (pd <= 0.0f)
 		pd = 1.0f;
 
+	/* On macOS window sizes are in points, and a HighDPI display has more than one pixel
+	 * per point. Keep the requested size in points, like the native mac client did, and let
+	 * local scaling fill the window. Dividing by the pixel density would make the window a
+	 * quarter of the expected area on a Retina display. */
+	if (isHighDPIWindowsMode(_window) == MODE_MACOS)
+		pd = 1.0f;
+
 	const int targetW = static_cast<int>(std::ceil(static_cast<float>(_initialW) / pd));
 	const int targetH = static_cast<int>(std::ceil(static_cast<float>(_initialH) / pd));
 

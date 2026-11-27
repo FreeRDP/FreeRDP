@@ -142,7 +142,12 @@ void SdlContext::setMetadata()
 		wmclass = SDL_CLIENT_UUID;
 
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, wmclass);
+#if !defined(__APPLE__)
+	/* On macOS SDL names the application menu (About, Hide, Quit) after this. Leave it unset
+	 * so SDL takes CFBundleName from the bundle's Info.plist, the name the user sees in the
+	 * Dock and Finder. */
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, SDL_CLIENT_NAME);
+#endif
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SDL_CLIENT_VERSION);
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, SDL_CLIENT_VENDOR);
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
@@ -235,9 +240,13 @@ BOOL SdlContext::preConnect(freerdp* instance)
 
 		/* The server takes the scale of a single monitor from the core data only, so put the
 		 * display scale there too. Otherwise the session starts at 100% and is redone once the
-		 * display channel sends the layout. */
+		 * display channel sends the layout.
+		 * Only when the session covers whole displays: a window of a fixed /size is sized in
+		 * pixels, so at the display's scale everything in it would be twice as big. */
 		const auto overrides = freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags);
-		if (((overrides & FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
+		const bool coversDisplays = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ||
+		                            freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
+		if (coversDisplays && ((overrides & FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE) == 0) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			UINT32 scale = 0;
@@ -333,7 +342,12 @@ BOOL SdlContext::preConnect(freerdp* instance)
 	if (dialog && !freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
 		sdl->getDialog().create(instance->context);
-		sdl->getDialog().setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
+		/* Name the server as the session window will (/t), when one was given. Through a
+		 * local proxy the server name is only the proxy's address. */
+		const char* title = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
+		if (!title || (strlen(title) == 0))
+			title = freerdp_settings_get_server_name(settings);
+		sdl->getDialog().setTitle("Connecting to '%s'", title);
 		sdl->getDialog().showInfo("The connection is being established\n\nPlease wait...");
 	}
 
