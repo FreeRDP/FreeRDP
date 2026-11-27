@@ -698,7 +698,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 	if (count > 0)
 	{
 		WINPR_ASSERT(root_dir);
-		if (!winpr_PathFileExists(root_dir))
+		if (PathIsRelativeA(root_dir))
 			path = GetCombinedPath(FREERDP_INSTALL_PREFIX, root_dir);
 		else
 			path = _strdup(root_dir);
