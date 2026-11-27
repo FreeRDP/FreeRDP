@@ -380,16 +380,27 @@ static char* aad_create_jws_header(rdpAad* aad)
 {
 	WINPR_ASSERT(aad);
 
-	/* Construct the base64url encoded JWS header */
-	char* buffer = nullptr;
 	size_t bufferlen = 0;
-	const int length =
-	    winpr_asprintf(&buffer, &bufferlen, "{\"alg\":\"RS256\",\"kid\":\"%s\"}", aad->kid);
-	if (length < 0)
+	char* buffer = nullptr;
+	char* jws_header = nullptr;
+	WINPR_JSON* json = WINPR_JSON_CreateObject();
+	if (!json)
 		return nullptr;
 
-	char* jws_header = crypto_base64url_encode((const BYTE*)buffer, bufferlen);
-	free(buffer);
+	if (!WINPR_JSON_AddStringToObject(json, "alg", "RS256"))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(json, "kid", aad->kid))
+		goto fail;
+
+	buffer = WINPR_JSON_PrintUnformatted(json);
+	if (!buffer)
+		goto fail;
+	bufferlen = strlen(buffer);
+
+	jws_header = crypto_base64url_encode((const BYTE*)buffer, bufferlen);
+fail:
+	WINPR_JSON_Delete(json);
+	winpr_znfree(buffer, bufferlen);
 	return jws_header;
 }
 
@@ -721,16 +732,31 @@ static BOOL generate_json_base64_str(rdpAad* aad, const char* b64_hash)
 {
 	WINPR_ASSERT(aad);
 
+	free(aad->kid);
+	aad->kid = nullptr;
 	char* buffer = nullptr;
 	size_t blen = 0;
-	const int length = winpr_asprintf(&buffer, &blen, "{\"kid\":\"%s\"}", b64_hash);
-	if (length < 0)
+
+	WINPR_JSON* json = WINPR_JSON_CreateObject();
+	if (!json)
 		return FALSE;
 
+	if (!WINPR_JSON_AddStringToObject(json, "kid", b64_hash))
+		goto fail;
+
+	buffer = WINPR_JSON_PrintUnformatted(json);
+	if (!buffer)
+		goto fail;
+
+	blen = strlen(buffer);
+
 	/* Finally, base64url encode the JSON text to form the kid */
-	free(aad->kid);
-	aad->kid = crypto_base64url_encode((const BYTE*)buffer, (size_t)length);
-	free(buffer);
+
+	aad->kid = crypto_base64url_encode((const BYTE*)buffer, blen);
+
+fail:
+	WINPR_JSON_Delete(json);
+	winpr_znfree(buffer, blen);
 
 	return aad->kid != nullptr;
 }
