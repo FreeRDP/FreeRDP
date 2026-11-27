@@ -117,7 +117,7 @@ WINPR_ATTR_NODISCARD
 static BOOL tls_keep_peer_certificate(rdpTls* tls, const rdpCertificate* cert)
 {
 	WINPR_ASSERT(tls);
-	if (tls->isGatewayTransport || !tls->context || !tls->context->rdp)
+	if (tls->isGatewayTransport || !tls->context || !tls->context->rdp || tls->isHttpRequest)
 		return TRUE;
 	rdpSettings* remoteSettings = tls->context->rdp->remoteSettings;
 	if (!remoteSettings)
@@ -1491,6 +1491,9 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	FreeRDP_Settings_Keys_String keyAccepted = FreeRDP_AcceptedCert;
 	FreeRDP_Settings_Keys_UInt32 keyLength = FreeRDP_AcceptedCertLength;
 
+	if (!tls->isHttpRequest)
+		return FALSE;
+
 	if (tls->isGatewayTransport)
 	{
 		keyAccepted = FreeRDP_GatewayAcceptedCert;
@@ -1611,6 +1614,9 @@ static BOOL accept_cert(rdpTls* tls, const rdpCertificate* cert)
 
 	rdpSettings* settings = tls->context->settings;
 	WINPR_ASSERT(settings);
+
+	if (tls->isHttpRequest)
+		return TRUE;
 
 	if (tls->isGatewayTransport)
 	{
@@ -1782,7 +1788,7 @@ static BOOL tls_auth_level_skips_verification(const rdpTls* tls, const rdpSettin
 	WINPR_ASSERT(tls);
 	WINPR_ASSERT(settings);
 
-	if (tls->isGatewayTransport)
+	if (tls->isGatewayTransport || tls->isHttpRequest)
 		return FALSE;
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_AuthenticationLevel) != 0)
@@ -1834,10 +1840,13 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		goto end;
 	}
 
-	if (is_accepted_fingerprint(cert, settings->CertificateAcceptedFingerprints))
+	if (!tls->isHttpRequest)
 	{
-		verification_status = 1;
-		goto end;
+		if (is_accepted_fingerprint(cert, settings->CertificateAcceptedFingerprints))
+		{
+			verification_status = 1;
+			goto end;
+		}
 	}
 
 	if (tls->isGatewayTransport || is_redirected(tls))
@@ -1891,7 +1900,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	else
 	{
 		/* if user explicitly specified a certificate name, use it instead of the hostname */
-		if (!tls->isGatewayTransport && settings->CertificateName)
+		if (!tls->isGatewayTransport && !tls->isHttpRequest && settings->CertificateName)
 			hostname = settings->CertificateName;
 
 		/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
