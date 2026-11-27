@@ -400,12 +400,8 @@ BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRe
 	rectangles = calloc(wc * hc, sizeof(RECTANGLE_16));
 	if (!rectangles)
 		return FALSE;
+
 	if (!firstFrameDone)
-	{
-		rectangles[0] = *regionRect;
-		count = 1;
-	}
-	else
 	{
 		for (size_t y = 0; y < regionRect->bottom - regionRect->top; y += 64)
 		{
@@ -426,6 +422,11 @@ BOOL detect_changes(BOOL firstFrameDone, UINT32 QP, const RECTANGLE_16* regionRe
 					rectangles[count++] = rect;
 			}
 		}
+	}
+	if (!firstFrameDone || (count > 1080))
+	{
+		rectangles[0] = *regionRect;
+		count = 1;
 	}
 	if (!allocate_h264_metablock(QP, rectangles, meta, count))
 		return FALSE;
