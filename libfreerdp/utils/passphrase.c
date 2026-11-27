@@ -303,15 +303,64 @@ error:
 	return nullptr;
 }
 
+/* Escape a string for use inside a single quoted shell word.
+ *
+ * Between single quotes the shell treats only the single quote itself special, so replace each
+ * one with '\'' (close the quoting, add an escaped quote, reopen the quoting)
+ */
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
+static char* escape_single_quoted(const char* str)
+{
+	static const char quote[] = "'\\''";
+	const size_t quotelen = sizeof(quote) - 1;
+
+	if (!str)
+		str = "";
+
+	size_t len = 1;
+	for (const char* cur = str; *cur != '\0'; cur++)
+		len += (*cur == '\'') ? quotelen : 1;
+
+	char* escaped = calloc(len, sizeof(char));
+	if (!escaped)
+		return nullptr;
+
+	char* dst = escaped;
+	for (const char* cur = str; *cur != '\0'; cur++)
+	{
+		if (*cur == '\'')
+		{
+			memcpy(dst, quote, quotelen);
+			dst += quotelen;
+		}
+		else
+			*dst++ = *cur;
+	}
+	return escaped;
+}
+
 static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
                                                    char const* askpass_env)
 {
-	char command[4096] = WINPR_C_ARRAY_INIT;
+	char* command = nullptr;
+	size_t commandlen = 0;
 
-	(void)sprintf_s(command, sizeof(command), "%s 'FreeRDP authentication\n%s'", askpass_env,
-	                prompt);
+	/* The prompt may contain data from untrusted sources (e.g. a server name), so it must not
+	 * be able to terminate the quoted argument passed to the askpass program.
+	 * The command is allocated as truncation would cut off the closing quote. */
+	char* escaped = escape_single_quoted(prompt);
+	if (!escaped)
+		return nullptr;
+
+	(void)winpr_asprintf(&command, &commandlen, "%s 'FreeRDP authentication\n%s'", askpass_env,
+	                     escaped);
+	winpr_zfree(escaped);
+	if (!command)
+		return nullptr;
+
 	// NOLINTNEXTLINE(clang-analyzer-optin.taint.GenericTaint,bugprone-command-processor)
 	FILE* askproc = popen(command, "r");
+	winpr_zfree(command);
 	if (!askproc)
 		return nullptr;
 	WINPR_ASSERT(bufsiz <= INT32_MAX);
