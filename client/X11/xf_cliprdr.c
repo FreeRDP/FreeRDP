@@ -122,6 +122,7 @@ struct xf_clipboard
 
 	Window owner;
 	BOOL sync;
+	BOOL local_files_via_uri;
 
 	/* INCR mechanism */
 	Atom incr_atom;
@@ -859,8 +860,24 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_client_formats(xfClipboard* clipboard, UIN
 		*atoms = nullptr;
 	}
 
+	clipboard->local_files_via_uri = FALSE;
 	if (xf_cliprdr_is_raw_transfer_available(clipboard))
+	{
 		formats = xf_cliprdr_get_raw_server_formats(clipboard, numFormats);
+		/* Raw file descriptors alone cannot relay the source client's file contents. */
+		for (UINT32 i = 0; i < *numFormats; i++)
+		{
+			if (formats[i].formatName &&
+			    strcmp(formats[i].formatName, type_FileGroupDescriptorW) == 0)
+			{
+				clipboard->local_files_via_uri = TRUE;
+				xf_cliprdr_free_formats(formats, *numFormats);
+				formats = nullptr;
+				*numFormats = 0;
+				break;
+			}
+		}
+	}
 
 	if (*numFormats == 0)
 	{
@@ -1702,8 +1719,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				                                      &nullTerminated);
 
 				HashTable_Lock(clipboard->cachedRawData);
-				cached_raw_data =
-				    HashTable_GetItemValue(clipboard->cachedRawData, (void*)(UINT_PTR)srcFormatId);
+				cached_raw_data = HashTable_GetItemValue(clipboard->cachedRawData,
+				                                         format_to_cache_slot(srcFormatId));
 				HashTable_Unlock(clipboard->cachedRawData);
 
 				DEBUG_CLIPRDR("hasCachedRawData: %u, rawDataLength: %u", cached_raw_data ? 1u : 0u,
@@ -2306,7 +2323,8 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 		if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE) == 0)
 			return xf_cliprdr_send_data_response(clipboard, format, nullptr, 0);
 	}
-	const BOOL rawTransfer = xf_cliprdr_is_raw_transfer_available(clipboard);
+	const BOOL rawTransfer =
+	    !clipboard->local_files_via_uri && xf_cliprdr_is_raw_transfer_available(clipboard);
 
 	if (rawTransfer)
 	{
@@ -2497,7 +2515,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 				{
 					if (!(bRawCached =
 					          HashTable_Insert(clipboard->cachedRawData,
-					                           (void*)(UINT_PTR)srcFormatId, cached_raw_data)))
+					                           format_to_cache_slot(srcFormatId), cached_raw_data)))
 					{
 						WLog_Print(clipboard->log, WLOG_WARN, "Failed to cache clipboard data");
 						xf_cached_data_free(cached_raw_data);
