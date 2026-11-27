@@ -82,6 +82,7 @@ static snd_pcm_format_t audin_alsa_format(UINT32 wFormatTag, UINT32 bitPerChanne
 
 static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_handle)
 {
+	BOOL rc = FALSE;
 	int error = 0;
 	SSIZE_T s = 0;
 	UINT32 channels = alsa->aformat.nChannels;
@@ -95,23 +96,68 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 		return FALSE;
 	}
 
-	snd_pcm_hw_params_any(capture_handle, hw_params);
-	snd_pcm_hw_params_set_access(capture_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(capture_handle, hw_params, format);
-	snd_pcm_hw_params_set_rate_near(capture_handle, hw_params, &alsa->aformat.nSamplesPerSec,
-	                                nullptr);
-	snd_pcm_hw_params_set_channels_near(capture_handle, hw_params, &channels);
-	snd_pcm_hw_params(capture_handle, hw_params);
-	snd_pcm_hw_params_free(hw_params);
-	snd_pcm_prepare(capture_handle);
+	if ((error = snd_pcm_hw_params_any(capture_handle, hw_params)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_hw_params_any (%s)", snd_strerror(error));
+		goto fail;
+	}
+
+	if ((error = snd_pcm_hw_params_set_access(capture_handle, hw_params,
+	                                          SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_hw_params_set_access (%s)", snd_strerror(error));
+		goto fail;
+	}
+
+	/* The capture buffer is sized for this sample format. If the device does not support it
+	 * the configuration space is left untouched and snd_pcm_hw_params would pick some other
+	 * (possibly wider) format, so this must not be ignored. */
+	if ((error = snd_pcm_hw_params_set_format(capture_handle, hw_params, format)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_hw_params_set_format %s (%s)",
+		           snd_pcm_format_name(format), snd_strerror(error));
+		goto fail;
+	}
+
+	if ((error = snd_pcm_hw_params_set_rate_near(capture_handle, hw_params,
+	                                             &alsa->aformat.nSamplesPerSec, nullptr)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_hw_params_set_rate_near (%s)",
+		           snd_strerror(error));
+		goto fail;
+	}
+
+	if ((error = snd_pcm_hw_params_set_channels_near(capture_handle, hw_params, &channels)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_hw_params_set_channels_near (%s)",
+		           snd_strerror(error));
+		goto fail;
+	}
+
+	if ((error = snd_pcm_hw_params(capture_handle, hw_params)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_hw_params (%s)", snd_strerror(error));
+		goto fail;
+	}
+
+	if ((error = snd_pcm_prepare(capture_handle)) < 0)
+	{
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_prepare (%s)", snd_strerror(error));
+		goto fail;
+	}
+
 	if (channels > UINT16_MAX)
-		return FALSE;
+		goto fail;
 	s = snd_pcm_format_size(format, 1);
 	if ((s < 0) || (s > UINT16_MAX))
-		return FALSE;
+		goto fail;
 	alsa->aformat.nChannels = (UINT16)channels;
 	alsa->bytes_per_frame = (size_t)s * channels;
-	return TRUE;
+	rc = TRUE;
+
+fail:
+	snd_pcm_hw_params_free(hw_params);
+	return rc;
 }
 
 static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
@@ -136,6 +182,7 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 	if (!audin_alsa_set_params(alsa, capture_handle))
 	{
 		WLog_Print(alsa->log, WLOG_ERROR, "audin_alsa_set_params failed");
+		error = CHANNEL_RC_INITIALIZATION_ERROR;
 		goto out;
 	}
 
@@ -200,6 +247,7 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		}
 	}
 
+out:
 	free(buffer);
 
 	if (capture_handle)
@@ -209,7 +257,6 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 			WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_close (%s)", snd_strerror(res));
 	}
 
-out:
 	WLog_Print(alsa->log, WLOG_DEBUG, "out");
 
 	if (error && alsa->rdpcontext)

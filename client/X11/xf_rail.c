@@ -109,6 +109,11 @@ typedef struct
 BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
+
+	/* The channel threads (e.g. RDPGFX) use the windows replaced here.
+	 * Keep the lock order of BeginPaint/EndPaint: update lock first, X11 lock second */
+	rdp_update_lock(xfc->common.context.update);
+	xf_lock_x11(xfc);
 	if (!xfc->remote_app)
 	{
 		rdpGdi* gdi = xfc->common.context.gdi;
@@ -123,12 +128,20 @@ BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc)
 
 		gdi->suppressOutput = old;
 	}
+	xf_unlock_x11(xfc);
+	rdp_update_unlock(xfc->common.context.update);
 	return TRUE;
 }
 
 BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
+
+	/* Also called outside of BeginPaint/EndPaint (logon error info): the window, image, GCs
+	 * and pixmaps replaced here are used by DesktopResize and EndPaint on the channel threads.
+	 * Keep the lock order of BeginPaint/EndPaint: update lock first, X11 lock second */
+	rdp_update_lock(xfc->common.context.update);
+	xf_lock_x11(xfc);
 	if (xfc->remote_app)
 	{
 		rdpGdi* gdi = xfc->common.context.gdi;
@@ -145,6 +158,8 @@ BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 		gdi->suppressOutput = old;
 	}
+	xf_unlock_x11(xfc);
+	rdp_update_unlock(xfc->common.context.update);
 	return TRUE;
 }
 
@@ -450,8 +465,8 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 
 		const RECTANGLE_16 updateRect = {
 			.left = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, l)),
-			.top = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, r)),
-			.right = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, t)),
+			.top = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, t)),
+			.right = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, r)),
 			.bottom = WINPR_ASSERTING_INT_CAST(UINT16, MIN(UINT16_MAX, b))
 		};
 

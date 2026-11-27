@@ -826,9 +826,17 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 			case AV_PIX_FMT_GBRP:
 				h264->yuv444 = TRUE;
 				break;
-			default:
+			case AV_PIX_FMT_YUV420P:
+			case AV_PIX_FMT_YUVJ420P:
 				h264->yuv444 = FALSE;
 				break;
+			default:
+				/* The bitstream selects the format. Only 8 bit planar 4:2:0 and 4:4:4 can be
+				 * converted, anything else (e.g. monochrome, which has no chroma planes) must
+				 * not be passed on. */
+				WLog_Print(h264->log, WLOG_ERROR, "Unsupported decoder pixel format %d",
+				           sys->videoFrame->format);
+				goto fail;
 		}
 
 		pYUVData[0] = sys->videoFrame->data[0];

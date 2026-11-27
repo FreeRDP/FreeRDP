@@ -2756,19 +2756,20 @@ BOOL smarcard_call_set_callbacks(scard_call_context* ctx, void* userdata,
 	return TRUE;
 }
 
-void smartcard_call_return_context(scard_call_context* ctx, WINPR_ATTR_UNUSED void* context)
+void smartcard_call_return_context(scard_call_context* ctx, void* context)
 {
 	WINPR_ASSERT(ctx);
-	HashTable_Unlock(ctx->rgSCardContextList);
+	if (context)
+		HashTable_Unlock(ctx->rgSCardContextList);
 }
 
 void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext)
 {
 	WINPR_ASSERT(ctx);
 	HashTable_Lock(ctx->rgSCardContextList);
-	struct s_scard_context_element* element =
+	const struct s_scard_context_element* element =
 	    HashTable_GetItemValue(ctx->rgSCardContextList, (void*)hContext);
-	if (!element)
+	if (!element || !element->context)
 	{
 		HashTable_Unlock(ctx->rgSCardContextList);
 		return nullptr;

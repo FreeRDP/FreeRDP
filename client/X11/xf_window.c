@@ -1858,6 +1858,12 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, BOOL keepX11Lock, WINPR_ATTR_UNUSED 
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] unocking [%s]", fkt);
 
 	WINPR_ASSERT(xfc->isRailWindowsLocked);
+
+	/* Reset the lock state while the locks are still held, the next owner checks it. */
+	xfc->isRailWindowsLocked = FALSE;
+	xfc->whereFile = nullptr;
+	xfc->whereFkt = nullptr;
+	xfc->whereLine = 0;
 #endif
 
 	if (xfc->railWindows)
@@ -1865,11 +1871,4 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, BOOL keepX11Lock, WINPR_ATTR_UNUSED 
 
 	if (!keepX11Lock)
 		xf_unlock_x11(xfc);
-
-#if defined(WITH_VERBOSE_WINPR_ASSERT)
-	xfc->isRailWindowsLocked = FALSE;
-	xfc->whereFile = nullptr;
-	xfc->whereFkt = nullptr;
-	xfc->whereLine = 0;
-#endif
 }

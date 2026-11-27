@@ -1,9 +1,11 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include <freerdp/config.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
 
+#if defined(WITH_OPUS)
 #define OPUS_TEST_FRAMES 960 /* 20 ms at 48 kHz */
 
 static AUDIO_FORMAT opus_format(UINT32 samplesPerSec)
@@ -208,7 +210,9 @@ fail:
 	freerdp_dsp_context_free(decoder);
 	return rc;
 }
+#endif
 
+#if defined(WITH_GSM)
 /* Input in whatever amounts the capture device delivers, in buffers that end with the last sample.
  * Every packet must consist of whole blocks of 65 bytes that decode to 320 samples each. */
 static BOOL test_gsm_chunks(void)
@@ -352,11 +356,13 @@ fail:
 	freerdp_dsp_context_free(decoder);
 	return rc;
 }
+#endif
 
 int TestFreeRDPCodecDsp(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 {
 	int rc = 0;
 
+#if defined(WITH_OPUS)
 	if (!test_opus_samplerates())
 		rc = -1;
 	if (!test_opus_roundtrip())
@@ -365,9 +371,12 @@ int TestFreeRDPCodecDsp(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv
 		rc = -1;
 	if (!test_opus_other_format())
 		rc = -1;
+#endif
+#if defined(WITH_GSM)
 	if (!test_gsm_chunks())
 		rc = -1;
 	if (!test_gsm_split_block())
 		rc = -1;
+#endif
 	return rc;
 }

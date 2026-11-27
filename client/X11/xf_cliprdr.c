@@ -279,9 +279,6 @@ static BOOL xf_cliprdr_update_owner(xfClipboard* clipboard)
 	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
-	if (!clipboard->sync)
-		return FALSE;
-
 	Window owner =
 	    LogDynAndXGetSelectionOwner(clipboard->log, xfc->display, clipboard->clipboard_atom);
 	if (clipboard->owner == owner)
@@ -293,7 +290,8 @@ static BOOL xf_cliprdr_update_owner(xfClipboard* clipboard)
 
 static void xf_cliprdr_check_owner(xfClipboard* clipboard)
 {
-	if (xf_cliprdr_update_owner(clipboard))
+	/* Track the owner before Monitor Ready too: Monitor Ready announces it. */
+	if (xf_cliprdr_update_owner(clipboard) && clipboard->sync)
 		xf_cliprdr_send_client_format_list(clipboard);
 }
 
@@ -2995,5 +2993,8 @@ void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr)
 		cliprdr_file_context_uninit(xfc->clipboard->file, cliprdr);
 		ClipboardUnlock(xfc->clipboard->system);
 		xfc->clipboard->context = nullptr;
+		/* The clipboard outlives the channel: after a reconnect or redirect the new channel must
+		 * see its Monitor Ready before we announce the local clipboard ([MS-RDPECLIP] 1.3.2.1). */
+		xfc->clipboard->sync = FALSE;
 	}
 }
