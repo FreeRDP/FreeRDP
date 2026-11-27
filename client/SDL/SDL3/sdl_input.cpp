@@ -693,6 +693,25 @@ bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 	                             "key event");
 }
 
+bool sdlInput::handleEvent(const SDL_TextInputEvent& ev)
+{
+	// Ignore these for the time being. We do not support input text events
+
+	return true;
+}
+
+bool sdlInput::handleEvent([[maybe_unused]] const SDL_TextEditingEvent& ev)
+{
+	// Ignore these for the time being. We do not support input edit events
+	return true;
+}
+
+bool sdlInput::handleEvent([[maybe_unused]] const SDL_TextEditingCandidatesEvent& ev)
+{
+	// Ignore these for the time being. We do not support input edit events
+	return true;
+}
+
 bool sdlInput::keyboard_grab(Uint32 windowID, bool enable)
 {
 	const auto window = _sdl->getWindowForId(windowID);
