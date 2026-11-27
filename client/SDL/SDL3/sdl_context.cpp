@@ -142,7 +142,12 @@ void SdlContext::setMetadata()
 		wmclass = SDL_CLIENT_UUID;
 
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, wmclass);
+#if !defined(__APPLE__)
+	/* On macOS SDL names the application menu (About, Hide, Quit) after this. Leave it unset
+	 * so SDL takes CFBundleName from the bundle's Info.plist, the name the user sees in the
+	 * Dock and Finder. */
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, SDL_CLIENT_NAME);
+#endif
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SDL_CLIENT_VERSION);
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, SDL_CLIENT_VENDOR);
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
@@ -337,7 +342,12 @@ BOOL SdlContext::preConnect(freerdp* instance)
 	if (dialog && !freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
 		sdl->getDialog().create(instance->context);
-		sdl->getDialog().setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
+		/* Name the server as the session window will (/t), when one was given. Through a
+		 * local proxy the server name is only the proxy's address. */
+		const char* title = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
+		if (!title || (strlen(title) == 0))
+			title = freerdp_settings_get_server_name(settings);
+		sdl->getDialog().setTitle("Connecting to '%s'", title);
 		sdl->getDialog().showInfo("The connection is being established\n\nPlease wait...");
 	}
 
