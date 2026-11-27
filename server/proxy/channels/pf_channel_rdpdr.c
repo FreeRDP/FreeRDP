@@ -503,9 +503,14 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 	Stream_Read(s, rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
 
 	UINT32 len = rdpdr->common.computerNameLen;
+
+	/* pc->computerName* is read by the proxy client thread, which does not share
+	 * rdpdr->common.lock with us. The lock of pc->interceptContextMap is common to both. */
+	HashTable_Lock(pc->interceptContextMap);
 	tmp = realloc(pc->computerName.v, len);
 	if (!tmp)
 	{
+		HashTable_Unlock(pc->interceptContextMap);
 		rc = CHANNEL_RC_NO_MEMORY;
 		goto fail;
 	}
@@ -513,6 +518,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 	pc->computerName.v = tmp;
 	pc->computerNameUnicode = rdpdr->common.computerNameUnicode;
 	memcpy(pc->computerName.v, rdpdr->common.computerName.v, pc->computerNameLen);
+	HashTable_Unlock(pc->interceptContextMap);
 
 	rc = CHANNEL_RC_OK;
 fail:
@@ -527,11 +533,16 @@ static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pc);
 
+	/* pc->computerName* is written by the proxy server thread, which does not share
+	 * rdpdr->common.lock with us. The lock of pc->interceptContextMap is common to both, take it
+	 * first (same order as when the map frees this context). */
+	HashTable_Lock(pc->interceptContextMap);
 	EnterCriticalSection(&rdpdr->common.lock);
 	{
 		void* tmp = realloc(rdpdr->common.computerName.v, pc->computerNameLen);
 		if (!tmp)
 		{
+			HashTable_Unlock(pc->interceptContextMap);
 			rc = CHANNEL_RC_NO_MEMORY;
 			goto fail;
 		}
@@ -540,6 +551,7 @@ static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client
 		rdpdr->common.computerNameUnicode = pc->computerNameUnicode;
 		memcpy(rdpdr->common.computerName.v, pc->computerName.v, pc->computerNameLen);
 	}
+	HashTable_Unlock(pc->interceptContextMap);
 	wStream* s = rdpdr_client_get_send_buffer(rdpdr, RDPDR_CTYP_CORE, PAKID_CORE_CLIENT_NAME,
 	                                          12U + rdpdr->common.computerNameLen);
 	if (!s)

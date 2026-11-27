@@ -2054,6 +2054,13 @@ BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
 	if (!cookie)
 		return TRUE;
 
+	/* the cookie is sent as a single CRLF terminated line, it must not be multiline. */
+	if (winpr_str_has_control_char(cookie))
+	{
+		WLog_Print(nego->log, WLOG_ERROR, "Invalid cookie, must not contain CR or LF");
+		return FALSE;
+	}
+
 	nego->cookie = _strdup(cookie);
 
 	return (nego->cookie != nullptr);

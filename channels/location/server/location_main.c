@@ -42,6 +42,9 @@ typedef struct
 
 	HANDLE thread;
 	void* location_channel;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	DWORD SessionId;
 
@@ -480,8 +483,13 @@ static DWORD WINAPI location_server_thread_func(LPVOID arg)
 		}
 	}
 
-	(void)WTSVirtualChannelClose(location->location_channel);
+	/* Detach the handle before closing it: a send in progress has returned by then, later
+	 * ones find no channel. */
+	EnterCriticalSection(&location->lock);
+	void* channel = location->location_channel;
 	location->location_channel = nullptr;
+	LeaveCriticalSection(&location->lock);
+	(void)WTSVirtualChannelClose(channel);
 
 	if (error && location->context.rdpcontext)
 		setChannelError(location->context.rdpcontext, error,
@@ -598,8 +606,11 @@ static UINT location_server_packet_send(LocationServerContext* context, wStream*
 
 	const size_t pos = Stream_GetPosition(s);
 	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(location->location_channel, Stream_BufferAs(s, char), (ULONG)pos,
-	                            &written))
+	EnterCriticalSection(&location->lock);
+	const BOOL rc = WTSVirtualChannelWrite(location->location_channel, Stream_BufferAs(s, char),
+	                                       (ULONG)pos, &written);
+	LeaveCriticalSection(&location->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -655,6 +666,7 @@ LocationServerContext* location_server_context_new(HANDLE vcm)
 	if (!location)
 		return nullptr;
 
+	InitializeCriticalSection(&location->lock);
 	location->context.vcm = vcm;
 	location->context.Initialize = location_server_initialize;
 	location->context.Open = location_server_open;
@@ -685,6 +697,7 @@ void location_server_context_free(LocationServerContext* context)
 	{
 		location_server_close(context);
 		Stream_Free(location->buffer, TRUE);
+		DeleteCriticalSection(&location->lock);
 	}
 
 	free(location);

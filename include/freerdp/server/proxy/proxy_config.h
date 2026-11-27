@@ -155,6 +155,9 @@ extern "C"
 		size_t TargetCertPEMLength;               /** @since version 3.32.0 */
 		char* TargetCertHash;                     /** @since version 3.32.0 */
 		char* CertStorePath;                      /** @since version 3.33.0 */
+
+		UINT32 ServerHandshakeTimeout; /**< Handshake timeout in milliseconds.
+		                                * @since version 3.34.0 */
 	};
 
 	/**

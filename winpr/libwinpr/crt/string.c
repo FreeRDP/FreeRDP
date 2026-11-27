@@ -962,13 +962,40 @@ char* winpr_strnstr(const char* haystack, const char* needle, size_t hlen)
 #endif
 }
 
+BOOL winpr_str_has_control_char(const char* str)
+{
+	if (!str)
+		return FALSE;
+
+	for (const BYTE* cur = (const BYTE*)str; *cur != '\0'; cur++)
+	{
+		BYTE c = *cur;
+
+		/* C0 control characters (including CR, LF, ESC) and DEL */
+		if ((c < 0x20) || (c == 0x7F))
+			return TRUE;
+
+		/* C1 control characters U+0080 ... U+009F (including NEL, CSI) */
+		else if ((c == 0xC2) && (cur[1] >= 0x80) && (cur[1] <= 0x9F))
+			return TRUE;
+
+		/* U+2028 line separator, U+2029 paragraph separator */
+		else if ((c == 0xE2) && (cur[1] == 0x80) && ((cur[2] == 0xA8) || (cur[2] == 0xA9)))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 BOOL winpr_str_has_newlines(const char* str)
 {
 	if (!str)
 		return FALSE;
+
 	do
 	{
 		char c = *str++;
+
 		switch (c)
 		{
 			case '\r':

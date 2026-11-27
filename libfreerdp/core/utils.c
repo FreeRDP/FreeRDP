@@ -433,7 +433,8 @@ static BOOL disable_drive(rdpSettings* settings)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectHomeDrive, FALSE))
 		return FALSE;
-
+	if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect, nullptr))
+		return FALSE;
 	return remove_rdpdr_type(settings, RDPDR_DTYP_FILESYSTEM);
 }
 

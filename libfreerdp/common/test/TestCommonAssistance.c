@@ -102,7 +102,16 @@ static const char* fail_tests[] = {
 	"<UPLOADINFOTYPE=\"Escalated\"><UPLOADDATARCTICKET=\"65538,1, ,*,,*,*,\"/></UPLOADINFO>",
 	"<UPLOADINFO>(E><UPLOADDATA  "
 	"FOTYPE=\"Escalated\"æÁATAPassStub=\"␕:&A&amp;␅RCTICKET=\"65538,1,ü,*,n,*,*,\"am␡/>␂</"
-	"UPLOADINFO>"
+	"UPLOADINFO>",
+	/* machine addresses must not select a local socket or descriptor as transport */
+	"<UPLOADINFO TYPE=\"Escalated\"><UPLOADDATA USERNAME=\"Administrator\" "
+	"RCTICKET=\"65538,1,/tmp/service.sock:3389,*,rb+v0oPmEISmi8N2zK/vuhgul/ABqlDt6wW0VxMyxK8=,*,*,"
+	"IuaRySSbPDNna4+2mKcsKxsbJFI=\" RCTICKETENCRYPTED=\"1\" DtStart=\"1314905741\" "
+	"DtLength=\"180\" PassStub=\"RT=0PvIndan52*\" L=\"0\" /></UPLOADINFO>",
+	"<UPLOADINFO TYPE=\"Escalated\"><UPLOADDATA USERNAME=\"Administrator\" "
+	"RCTICKET=\"65538,1,10.0.3.105:3389;|:3,*,rb+v0oPmEISmi8N2zK/vuhgul/ABqlDt6wW0VxMyxK8=,*,*,"
+	"IuaRySSbPDNna4+2mKcsKxsbJFI=\" RCTICKETENCRYPTED=\"1\" DtStart=\"1314905741\" "
+	"DtLength=\"180\" PassStub=\"RT=0PvIndan52*\" L=\"0\" /></UPLOADINFO>"
 };
 
 static const char connectionstr3[] =

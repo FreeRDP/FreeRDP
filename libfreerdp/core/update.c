@@ -3174,49 +3174,56 @@ WINPR_ATTR_NODISCARD static BOOL update_send_window_delete(rdpContext* context,
 	return TRUE;
 }
 
-WINPR_ATTR_NODISCARD static UINT16 update_calculate_new_or_existing_notification_icons_order(
-    const WINDOW_ORDER_INFO* orderInfo, const NOTIFY_ICON_STATE_ORDER* iconStateOrder)
+WINPR_ATTR_NODISCARD static BOOL update_calculate_new_or_existing_notification_icons_order(
+    const WINDOW_ORDER_INFO* orderInfo, const NOTIFY_ICON_STATE_ORDER* iconStateOrder,
+    UINT16* pOrderSize)
 {
-	UINT16 orderSize = 15;
+	WINPR_ASSERT(pOrderSize);
+	*pOrderSize = 0;
+
+	UINT64 orderSize = 15ull;
 
 	WINPR_ASSERT(orderInfo);
 	WINPR_ASSERT(iconStateOrder);
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION) != 0)
-		orderSize += 4;
+		orderSize += 4ull;
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_TIP) != 0)
 	{
-		orderSize += 2 + iconStateOrder->toolTip.length;
+		orderSize += 2ull + iconStateOrder->toolTip.length;
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) != 0)
 	{
 		NOTIFY_ICON_INFOTIP infoTip = iconStateOrder->infoTip;
-		orderSize += 12 + infoTip.text.length + infoTip.title.length;
+		orderSize += 12ull + infoTip.text.length + infoTip.title.length;
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_STATE) != 0)
 	{
-		orderSize += 4;
+		orderSize += 4ull;
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_ICON) != 0)
 	{
 		ICON_INFO iconInfo = iconStateOrder->icon;
-		orderSize += 12;
+		orderSize += 12ull;
 
-		if (iconInfo.bpp <= 8)
-			orderSize += 2 + iconInfo.cbColorTable;
+		if (iconInfo.bpp <= 8ull)
+			orderSize += 2ull + iconInfo.cbColorTable;
 
-		orderSize += iconInfo.cbBitsMask + iconInfo.cbBitsColor;
+		orderSize += 1ull * iconInfo.cbBitsMask + iconInfo.cbBitsColor;
 	}
 	else if ((orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON) != 0)
 	{
-		orderSize += 3;
+		orderSize += 3ull;
 	}
 
-	return orderSize;
+	if (orderSize > UINT16_MAX)
+		return FALSE;
+	*pOrderSize = WINPR_ASSERTING_INT_CAST(UINT16, orderSize);
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD static BOOL update_send_new_or_existing_order_icon(const ICON_INFO* iconInfo,
@@ -3273,8 +3280,11 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 {
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	BOOL versionFieldPresent = FALSE;
-	const UINT16 orderSize =
-	    update_calculate_new_or_existing_notification_icons_order(orderInfo, iconStateOrder);
+	UINT16 orderSize = 0;
+
+	if (!update_calculate_new_or_existing_notification_icons_order(orderInfo, iconStateOrder,
+	                                                               &orderSize))
+		return FALSE;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(orderInfo);

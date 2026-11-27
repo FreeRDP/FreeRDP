@@ -38,6 +38,7 @@
 #include <freerdp/assistance.h>
 
 #include "../core/settings.h"
+#include "../core/utils.h"
 
 #define TAG FREERDP_TAG("common")
 
@@ -266,6 +267,15 @@ static BOOL append_address_to_list(wArrayList* MachineAddresses, const char* str
 		copy = strndup(str, len);
 	if (!copy)
 		return FALSE;
+
+	/* These select a local socket, an inherited descriptor or a vsock as transport
+	 * (see freerdp_tcp_default_connect), a file must not be able to choose that. */
+	if ((copy[0] == '/') || (copy[0] == '|') || utils_is_vsock(copy))
+	{
+		WLog_ERR(TAG, "Failed to parse ASSISTANCE file: invalid machine address '%s'", copy);
+		free(copy);
+		return FALSE;
+	}
 
 	const BOOL rc = ArrayList_Append(MachineAddresses, copy);
 	if (!rc)

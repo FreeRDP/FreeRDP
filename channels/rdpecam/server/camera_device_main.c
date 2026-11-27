@@ -43,6 +43,9 @@ typedef struct
 
 	HANDLE thread;
 	void* device_channel;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	DWORD SessionId;
 
@@ -653,8 +656,13 @@ static DWORD WINAPI device_server_thread_func(LPVOID arg)
 		}
 	}
 
-	(void)WTSVirtualChannelClose(device->device_channel);
+	/* Detach the handle before closing it: a send in progress has returned by then, later
+	 * ones find no channel. */
+	EnterCriticalSection(&device->lock);
+	void* channel = device->device_channel;
 	device->device_channel = nullptr;
+	LeaveCriticalSection(&device->lock);
+	(void)WTSVirtualChannelClose(channel);
 
 	if (error && device->context.rdpcontext)
 		setChannelError(device->context.rdpcontext, error,
@@ -788,8 +796,11 @@ static UINT device_server_packet_send(CameraDeviceServerContext* context, wStrea
 
 	const size_t len = Stream_GetPosition(s);
 	WINPR_ASSERT(len <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(device->device_channel, Stream_BufferAs(s, char), (UINT32)len,
-	                            &written))
+	EnterCriticalSection(&device->lock);
+	const BOOL rc = WTSVirtualChannelWrite(device->device_channel, Stream_BufferAs(s, char),
+	                                       (UINT32)len, &written);
+	LeaveCriticalSection(&device->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -1002,6 +1013,7 @@ CameraDeviceServerContext* camera_device_server_context_new(HANDLE vcm)
 	if (!device)
 		return nullptr;
 
+	InitializeCriticalSection(&device->lock);
 	device->context.vcm = vcm;
 	device->context.Initialize = device_server_initialize;
 	device->context.Open = device_server_open;
@@ -1045,6 +1057,7 @@ void camera_device_server_context_free(CameraDeviceServerContext* context)
 	{
 		device_server_close(context);
 		Stream_Free(device->buffer, TRUE);
+		DeleteCriticalSection(&device->lock);
 	}
 
 	free(context->virtualChannelName);

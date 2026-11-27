@@ -651,12 +651,6 @@ static INT32 av1_convert_planar(FREERDP_AV1_CONTEXT* av1, BOOL i444, const BYTE*
 #endif
 
 #if defined(WITH_DAV1D)
-static void av1_dav1d_data_free(WINPR_ATTR_UNUSED const uint8_t* buf,
-                                WINPR_ATTR_UNUSED void* cookie)
-{
-	/* pSrcData is owned by the caller of freerdp_av1_decompress(), dav1d must not free it. */
-}
-
 static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic, BYTE* pDstData,
                                DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
                                UINT32 nDstHeight, const RECTANGLE_16* regionRects,
@@ -770,13 +764,18 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 #endif
 
 #if defined(WITH_DAV1D)
+	/* dav1d holds on to its input beyond this call (the OBUs behind a picture that was refused,
+	 * the tile groups of a frame that is not complete yet), but pSrcData is owned by the caller
+	 * and only valid until we return: the decoder gets its own, reference counted copy. */
 	Dav1dData data = WINPR_C_ARRAY_INIT;
-	const int wrc = dav1d_data_wrap(&data, pSrcData, SrcSize, av1_dav1d_data_free, nullptr);
-	if (wrc < 0)
+	uint8_t* copy = dav1d_data_create(&data, SrcSize);
+	if (!copy)
 	{
-		WLog_Print(av1->log, WLOG_WARN, "dav1d_data_wrap: %d", wrc);
+		WLog_Print(av1->log, WLOG_WARN, "dav1d_data_create: %" PRIu32 " bytes failed", SrcSize);
 		return -1;
 	}
+	if (SrcSize > 0)
+		memcpy(copy, pSrcData, SrcSize);
 
 	while (data.sz > 0)
 	{

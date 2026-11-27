@@ -39,6 +39,9 @@ typedef struct
 
 	HANDLE thread;
 	void* mouse_cursor_channel;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	DWORD SessionId;
 
@@ -416,8 +419,13 @@ static DWORD WINAPI mouse_cursor_server_thread_func(LPVOID arg)
 		}
 	}
 
-	(void)WTSVirtualChannelClose(mouse_cursor->mouse_cursor_channel);
+	/* Detach the handle before closing it: a send in progress has returned by then, later
+	 * ones find no channel. */
+	EnterCriticalSection(&mouse_cursor->lock);
+	void* channel = mouse_cursor->mouse_cursor_channel;
 	mouse_cursor->mouse_cursor_channel = nullptr;
+	LeaveCriticalSection(&mouse_cursor->lock);
+	(void)WTSVirtualChannelClose(channel);
 
 	if (error && mouse_cursor->context.rdpcontext)
 		setChannelError(mouse_cursor->context.rdpcontext, error,
@@ -558,8 +566,11 @@ static UINT mouse_cursor_server_packet_send(MouseCursorServerContext* context, w
 	const size_t pos = Stream_GetPosition(s);
 
 	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(mouse_cursor->mouse_cursor_channel, Stream_BufferAs(s, char),
-	                            (ULONG)pos, &written))
+	EnterCriticalSection(&mouse_cursor->lock);
+	const BOOL rc = WTSVirtualChannelWrite(mouse_cursor->mouse_cursor_channel,
+	                                       Stream_BufferAs(s, char), (ULONG)pos, &written);
+	LeaveCriticalSection(&mouse_cursor->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -737,6 +748,7 @@ MouseCursorServerContext* mouse_cursor_server_context_new(HANDLE vcm)
 	if (!mouse_cursor)
 		return nullptr;
 
+	InitializeCriticalSection(&mouse_cursor->lock);
 	mouse_cursor->context.vcm = vcm;
 	mouse_cursor->context.Initialize = mouse_cursor_server_initialize;
 	mouse_cursor->context.Open = mouse_cursor_server_open;
@@ -768,6 +780,7 @@ void mouse_cursor_server_context_free(MouseCursorServerContext* context)
 	{
 		mouse_cursor_server_close(context);
 		Stream_Free(mouse_cursor->buffer, TRUE);
+		DeleteCriticalSection(&mouse_cursor->lock);
 	}
 
 	free(mouse_cursor);
