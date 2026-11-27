@@ -362,15 +362,30 @@ static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
 	return is_enabled != 0;
 }
 
-static BOOL xf_cliprdr_formats_equal(const CLIPRDR_FORMAT* server, const xfCliprdrFormat* client)
+static BOOL xf_cliprdr_formats_equal(const xfClipboard* clipboard, const CLIPRDR_FORMAT* server,
+                                     const xfCliprdrFormat* client)
 {
+	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(server);
 	WINPR_ASSERT(client);
 
 	if (server->formatName && client->formatName)
 	{
 		/* The server may be using short format names while we store them in full form. */
-		return (0 == strncmp(server->formatName, client->formatName, strlen(server->formatName)));
+		if (strncmp(server->formatName, client->formatName, strlen(server->formatName)) != 0)
+			return FALSE;
+
+		/* The channel filters file formats by their full name only, so a shortened name
+		 * accepted as file list here must respect the clipboard file policy as well. */
+		if (strcmp(client->formatName, type_FileGroupDescriptorW) == 0)
+		{
+			WINPR_ASSERT(clipboard->xfc);
+			const UINT32 mask = freerdp_settings_get_uint32(clipboard->xfc->common.context.settings,
+			                                                FreeRDP_ClipboardFeatureMask);
+			if ((mask & CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES) == 0)
+				return FALSE;
+		}
+		return TRUE;
 	}
 
 	if (!server->formatName && !client->formatName)
@@ -461,7 +476,7 @@ static const CLIPRDR_FORMAT* xf_cliprdr_get_server_format_by_atom(xfClipboard* c
 			{
 				const CLIPRDR_FORMAT* server_format = &(clipboard->serverFormats[j]);
 
-				if (xf_cliprdr_formats_equal(server_format, client_format))
+				if (xf_cliprdr_formats_equal(clipboard, server_format, client_format))
 					return server_format;
 			}
 		}
@@ -2231,7 +2246,7 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 		for (size_t j = 0; j < clipboard->numClientFormats; j++)
 		{
 			const xfCliprdrFormat* clientFormat = &clipboard->clientFormats[j];
-			if (xf_cliprdr_formats_equal(format, clientFormat))
+			if (xf_cliprdr_formats_equal(clipboard, format, clientFormat))
 			{
 				if ((clientFormat->formatName != nullptr) &&
 				    (strcmp(type_FileGroupDescriptorW, clientFormat->formatName) == 0))
