@@ -25,6 +25,24 @@
 
 #include <credssp.h>
 
+/* mingw-w64's credssp.h lacks the CREDSSP_CRED_EX additions of the Windows SDK */
+#if !defined(CREDSSP_FLAG_REDIRECT)
+#define CredsspCredEx 100
+
+#define CREDSSP_CRED_EX_VERSION 0
+
+typedef struct
+{
+	CREDSPP_SUBMIT_TYPE Type;
+	DWORD Version;
+	DWORD Flags;
+	DWORD Reserved;
+	CREDSSP_CRED Cred;
+} CREDSSP_CRED_EX, *PCREDSSP_CRED_EX;
+
+#define CREDSSP_FLAG_REDIRECT 0x00000001
+#endif /* !CREDSSP_FLAG_REDIRECT */
+
 #else
 
 typedef enum
