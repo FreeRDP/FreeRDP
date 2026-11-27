@@ -50,6 +50,9 @@ struct s_rdpei_server_private
 {
 	HANDLE channelHandle;
 	HANDLE eventHandle;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	HANDLE stopEvent;
 	HANDLE thread;
@@ -213,8 +216,13 @@ static DWORD WINAPI rdpei_server_thread_func(LPVOID arg)
 		}
 	}
 
-	(void)WTSVirtualChannelClose(priv->channelHandle);
+	/* Detach the handle before closing it: a send in progress has returned by then, later
+	 * ones find no channel. */
+	EnterCriticalSection(&priv->lock);
+	HANDLE channel = priv->channelHandle;
 	priv->channelHandle = nullptr;
+	LeaveCriticalSection(&priv->lock);
+	(void)WTSVirtualChannelClose(channel);
 
 	ExitThread(error);
 	return error;
@@ -290,6 +298,7 @@ RdpeiServerContext* rdpei_server_context_new(HANDLE vcm)
 	ret->priv = calloc(1, sizeof(*ret->priv));
 	if (!ret->priv)
 		goto fail;
+	InitializeCriticalSection(&ret->priv->lock);
 
 	ret->priv->inputStream = Stream_New(nullptr, 256);
 	if (!ret->priv->inputStream)
@@ -360,6 +369,7 @@ void rdpei_server_context_free(RdpeiServerContext* context)
 			(void)WTSVirtualChannelClose(priv->channelHandle);
 		Stream_Free(priv->inputStream, TRUE);
 		Stream_Free(priv->outputStream, TRUE);
+		DeleteCriticalSection(&priv->lock);
 	}
 	free(priv);
 	free(context);
@@ -843,8 +853,11 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 	const size_t pos = Stream_GetPosition(priv->outputStream);
 
 	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
-	                            (ULONG)pos, &written))
+	EnterCriticalSection(&priv->lock);
+	const BOOL rc = WTSVirtualChannelWrite(
+	    priv->channelHandle, Stream_BufferAs(priv->outputStream, char), (ULONG)pos, &written);
+	LeaveCriticalSection(&priv->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -889,8 +902,11 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
 	const size_t pos = Stream_GetPosition(priv->outputStream);
 
 	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
-	                            (ULONG)pos, &written))
+	EnterCriticalSection(&priv->lock);
+	const BOOL rc = WTSVirtualChannelWrite(
+	    priv->channelHandle, Stream_BufferAs(priv->outputStream, char), (ULONG)pos, &written);
+	LeaveCriticalSection(&priv->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -935,8 +951,11 @@ UINT rdpei_server_resume(RdpeiServerContext* context)
 	const size_t pos = Stream_GetPosition(priv->outputStream);
 
 	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
-	                            (ULONG)pos, &written))
+	EnterCriticalSection(&priv->lock);
+	const BOOL rc = WTSVirtualChannelWrite(
+	    priv->channelHandle, Stream_BufferAs(priv->outputStream, char), (ULONG)pos, &written);
+	LeaveCriticalSection(&priv->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;

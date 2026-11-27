@@ -49,6 +49,9 @@ typedef struct
 
 	HANDLE thread;
 	void* echo_channel;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	DWORD SessionId;
 
@@ -118,6 +121,17 @@ static UINT echo_server_open_channel(echo_server* echo)
 	}
 
 	return echo->echo_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
+}
+
+static void echo_server_close_channel(echo_server* echo)
+{
+	/* Detach the handle before closing it: a request in progress has returned by then,
+	 * later ones find no channel. */
+	EnterCriticalSection(&echo->lock);
+	void* channel = echo->echo_channel;
+	echo->echo_channel = nullptr;
+	LeaveCriticalSection(&echo->lock);
+	(void)WTSVirtualChannelClose(channel);
 }
 
 static DWORD WINAPI echo_server_thread_func(LPVOID arg)
@@ -219,7 +233,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		(void)WTSVirtualChannelClose(echo->echo_channel);
+		echo_server_close_channel(echo);
 		ExitThread(ERROR_NOT_ENOUGH_MEMORY);
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
@@ -274,8 +288,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	}
 
 	Stream_Free(s, TRUE);
-	(void)WTSVirtualChannelClose(echo->echo_channel);
-	echo->echo_channel = nullptr;
+	echo_server_close_channel(echo);
 out:
 
 	if (error && echo->context.rdpcontext)
@@ -357,7 +370,10 @@ static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer
 	echo_server* echo = (echo_server*)context;
 	WINPR_ASSERT(echo);
 
-	return WTSVirtualChannelWrite(echo->echo_channel, cnv.pv, length, nullptr);
+	EnterCriticalSection(&echo->lock);
+	const BOOL rc = WTSVirtualChannelWrite(echo->echo_channel, cnv.pv, length, nullptr);
+	LeaveCriticalSection(&echo->lock);
+	return rc;
 }
 
 echo_server_context* echo_server_context_new(HANDLE vcm)
@@ -367,6 +383,7 @@ echo_server_context* echo_server_context_new(HANDLE vcm)
 
 	if (echo)
 	{
+		InitializeCriticalSection(&echo->lock);
 		echo->context.vcm = vcm;
 		echo->context.Open = echo_server_open;
 		echo->context.Close = echo_server_close;
@@ -382,5 +399,6 @@ void echo_server_context_free(echo_server_context* context)
 {
 	echo_server* echo = (echo_server*)context;
 	echo_server_close(context);
+	DeleteCriticalSection(&echo->lock);
 	free(echo);
 }

@@ -43,6 +43,9 @@ typedef struct
 
 	HANDLE thread;
 	void* enumerator_channel;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	DWORD SessionId;
 
@@ -428,8 +431,13 @@ static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 		}
 	}
 
-	(void)WTSVirtualChannelClose(enumerator->enumerator_channel);
+	/* Detach the handle before closing it: a send in progress has returned by then, later
+	 * ones find no channel. */
+	EnterCriticalSection(&enumerator->lock);
+	void* channel = enumerator->enumerator_channel;
 	enumerator->enumerator_channel = nullptr;
+	LeaveCriticalSection(&enumerator->lock);
+	(void)WTSVirtualChannelClose(channel);
 
 	if (error && enumerator->context.rdpcontext)
 		setChannelError(enumerator->context.rdpcontext, error,
@@ -543,8 +551,11 @@ static UINT enumerator_server_packet_send(CamDevEnumServerContext* context, wStr
 
 	const size_t len = Stream_GetPosition(s);
 	WINPR_ASSERT(len <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(enumerator->enumerator_channel, Stream_BufferAs(s, char),
-	                            (UINT32)len, &written))
+	EnterCriticalSection(&enumerator->lock);
+	const BOOL rc = WTSVirtualChannelWrite(enumerator->enumerator_channel, Stream_BufferAs(s, char),
+	                                       (UINT32)len, &written);
+	LeaveCriticalSection(&enumerator->lock);
+	if (!rc)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -588,6 +599,7 @@ CamDevEnumServerContext* cam_dev_enum_server_context_new(HANDLE vcm)
 	if (!enumerator)
 		return nullptr;
 
+	InitializeCriticalSection(&enumerator->lock);
 	enumerator->context.vcm = vcm;
 	enumerator->context.Initialize = enumerator_server_initialize;
 	enumerator->context.Open = enumerator_server_open;
@@ -618,6 +630,7 @@ void cam_dev_enum_server_context_free(CamDevEnumServerContext* context)
 	{
 		enumerator_server_close(context);
 		Stream_Free(enumerator->buffer, TRUE);
+		DeleteCriticalSection(&enumerator->lock);
 	}
 
 	free(enumerator);

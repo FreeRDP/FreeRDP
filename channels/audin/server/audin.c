@@ -56,6 +56,9 @@ typedef struct
 
 	HANDLE thread;
 	void* audin_channel;
+	/* Guards the channel handle: the channel thread releases it while the calls of the
+	 * context may use it from other threads */
+	CRITICAL_SECTION lock;
 
 	DWORD SessionId;
 
@@ -475,8 +478,13 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 out_capacity:
 	Stream_Free(s, TRUE);
 out:
-	(void)WTSVirtualChannelClose(audin->audin_channel);
+	/* Detach the handle before closing it: a send in progress has returned by then, later
+	 * ones find no channel. */
+	EnterCriticalSection(&audin->lock);
+	void* channel = audin->audin_channel;
 	audin->audin_channel = nullptr;
+	LeaveCriticalSection(&audin->lock);
+	(void)WTSVirtualChannelClose(channel);
 
 	if (error && audin->context.rdpcontext)
 		setChannelError(audin->context.rdpcontext, error,
@@ -615,8 +623,11 @@ static UINT audin_server_packet_send(audin_server_context* context, wStream* s)
 
 	const size_t pos = Stream_GetPosition(s);
 	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(audin->audin_channel, Stream_BufferAs(s, char), (UINT32)pos,
-	                            &written))
+	EnterCriticalSection(&audin->lock);
+	const BOOL rc = WTSVirtualChannelWrite(audin->audin_channel, Stream_BufferAs(s, char),
+	                                       (UINT32)pos, &written);
+	LeaveCriticalSection(&audin->lock);
+	if (!rc)
 	{
 		WLog_Print(audin->log, WLOG_ERROR, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -873,6 +884,7 @@ audin_server_context* audin_server_context_new(HANDLE vcm)
 		WLog_ERR(AUDIN_TAG, "calloc failed!");
 		return nullptr;
 	}
+	InitializeCriticalSection(&audin->lock);
 	audin->log = WLog_Get(AUDIN_TAG);
 	audin->context.vcm = vcm;
 	audin->context.Open = audin_server_open;
@@ -905,6 +917,7 @@ void audin_server_context_free(audin_server_context* context)
 	audin_server_close(context);
 	audio_formats_free(audin->audin_server_formats, audin->audin_n_server_formats);
 	audin->audin_server_formats = nullptr;
+	DeleteCriticalSection(&audin->lock);
 	free(audin);
 }
 

@@ -1709,6 +1709,11 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 		}
 		else
 		{
+			/* A write in progress holds this lock and uses the channel until it returns. Wait
+			 * for it in every open state: the client may already have closed the channel.
+			 * Soft-Sync holds this lock while moving the channel to ensure the Close
+			 * Request is sent on the same transport as preceding data. */
+			EnterCriticalSection(&channel->writeLock);
 			if (channel->dvc_open_state == DVC_OPEN_STATE_SUCCEEDED)
 			{
 				ULONG written = 0;
@@ -1725,16 +1730,13 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 
 					const size_t pos = Stream_GetPosition(s);
 					WINPR_ASSERT(pos <= UINT32_MAX);
-					/* Soft-Sync holds this lock while moving the channel to ensure the Close
-					 * Request is sent on the same transport as preceding data. */
-					EnterCriticalSection(&channel->writeLock);
 					if (!wts_tunnel_close_request(channel, Stream_Buffer(s), pos, &ret))
 						ret = WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_BufferAs(s, char),
 						                             (UINT32)pos, &written);
-					LeaveCriticalSection(&channel->writeLock);
 					Stream_Free(s, TRUE);
 				}
 			}
+			LeaveCriticalSection(&channel->writeLock);
 			/* Soft-Sync waits for channels lacking a Create Response; removing this
 			 * channel may allow it to proceed. */
 			const BOOL waited = (channel->dvc_open_state == DVC_OPEN_STATE_NONE);
