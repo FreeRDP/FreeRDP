@@ -101,7 +101,16 @@ struct S_FREERDP_AV1_CONTEXT
 	UINT32 yuvWidth;
 	UINT32 yuvStride[3];
 	UINT32 yuvHeight;
+	FREERDP_DECODE_RESULT lastDecode;
 };
+
+#if defined(WITH_DAV1D)
+#define AV1_SOFTWARE_DECODER "dav1d"
+#elif defined(WITH_LIBAOM)
+#define AV1_SOFTWARE_DECODER "libaom"
+#else
+#define AV1_SOFTWARE_DECODER nullptr
+#endif
 
 #if defined(WITH_LIBAOM)
 static void av1_aom_destroy(FREERDP_AV1_CONTEXT* av1)
@@ -705,12 +714,27 @@ static INT32 av1_dav1d_drain_one(FREERDP_AV1_CONTEXT* av1, BYTE* pDstData, DWORD
 }
 #endif
 
+BOOL freerdp_av1_context_get_last_decode(const FREERDP_AV1_CONTEXT* av1,
+                                         FREERDP_DECODE_RESULT* result)
+{
+	if (!av1 || !result)
+		return FALSE;
+	*result = av1->lastDecode;
+	return TRUE;
+}
+
 INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UINT32 SrcSize,
                              BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
                              UINT32 nDstHeight, const RECTANGLE_16* regionRects,
                              UINT32 numRegionRect)
 {
 	WINPR_ASSERT(av1);
+
+	/* A failure is what remains unless the decode gets to its end */
+	const FREERDP_DECODE_RESULT start = { .status = FREERDP_DECODE_FAILED,
+		                                  .backend = AV1_SOFTWARE_DECODER };
+	av1->lastDecode = start;
+
 	if (av1->encoder)
 	{
 		WLog_Print(av1->log, WLOG_ERROR, "av1->encoder: %d", av1->encoder);
@@ -723,14 +747,23 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 #if defined(WITH_AV1_VIDEOTOOLBOX)
 	if (av1->vt && av1->vtStream)
 	{
+		av1->lastDecode.backend = "VideoToolbox";
 		AV1_VT_PICTURE pic = WINPR_C_ARRAY_INIT;
 		const INT32 vrc = av1_vt_decode(av1->vt, pSrcData, SrcSize, &pic);
 		if (vrc == TRUE)
-			return av1_convert_planar(av1, pic.i444, pic.planes, pic.strides, pic.width, pic.height,
-			                          pDstData, DstFormat, nDstStep, nDstWidth, nDstHeight,
-			                          regionRects, numRegionRect);
+		{
+			const INT32 crc = av1_convert_planar(av1, pic.i444, pic.planes, pic.strides, pic.width,
+			                                     pic.height, pDstData, DstFormat, nDstStep,
+			                                     nDstWidth, nDstHeight, regionRects, numRegionRect);
+			if (crc >= 0)
+				av1->lastDecode.status = FREERDP_DECODE_PICTURE;
+			return crc;
+		}
 		if (vrc == FALSE)
+		{
+			av1->lastDecode.status = FREERDP_DECODE_NO_PICTURE;
 			return TRUE;
+		}
 		/* bad input: refused, the stream stays with VideoToolbox */
 		if (vrc == AV1_VT_INVALID)
 			return -1;
@@ -748,6 +781,7 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			return vrc;
 		}
 		/* This temporal unit starts the stream, the software decoder starts with it. */
+		av1->lastDecode.backend = AV1_SOFTWARE_DECODER;
 	}
 #endif
 
@@ -757,7 +791,11 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 		const INT32 wrc = av1_wc_decode(av1->webcodecs, pSrcData, SrcSize, pDstData, DstFormat,
 		                                nDstStep, nDstWidth, nDstHeight);
 		if (wrc >= 0)
+		{
+			av1->lastDecode.backend = "WebCodecs";
+			av1->lastDecode.status = (wrc > 0) ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 			return TRUE;
+		}
 		/* fall back to the software decoder for the rest of the session */
 		if (wrc == AV1_WC_UNSUPPORTED)
 			WLog_Print(av1->log, WLOG_DEBUG, "surface format needs dav1d instead of WebCodecs");
@@ -770,6 +808,7 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 #endif
 
 #if defined(WITH_DAV1D)
+	BOOL picture = FALSE;
 	Dav1dData data = WINPR_C_ARRAY_INIT;
 	const int wrc = dav1d_data_wrap(&data, pSrcData, SrcSize, av1_dav1d_data_free, nullptr);
 	if (wrc < 0)
@@ -795,6 +834,8 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			dav1d_data_unref(&data);
 			return rc;
 		}
+		if (rc == TRUE)
+			picture = TRUE;
 	}
 	dav1d_data_unref(&data);
 
@@ -807,10 +848,13 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			break;
 		if (rc != TRUE)
 			return rc;
+		picture = TRUE;
 	}
 
+	av1->lastDecode.status = picture ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 	return TRUE;
 #elif defined(WITH_LIBAOM)
+	BOOL picture = FALSE;
 	const aom_codec_err_t rc = aom_codec_decode(&av1->ctx, pSrcData, SrcSize, nullptr);
 	if (rc != AOM_CODEC_OK)
 	{
@@ -889,8 +933,10 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 			WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
 			return -1;
 		}
+		picture = TRUE;
 	}
 
+	av1->lastDecode.status = picture ? FREERDP_DECODE_PICTURE : FREERDP_DECODE_NO_PICTURE;
 	return TRUE;
 #endif
 }
