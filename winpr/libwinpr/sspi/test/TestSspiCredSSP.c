@@ -23,7 +23,9 @@ int TestSspiCredSSP(int argc, char* argv[])
 		return -1;
 	}
 
-	WCHAR pkg[] = { 'C', 'R', 'E', 'D', 'S', 'S', 'P', '\0' };
+	WCHAR pkg[] = { winpr_wchar_ToLE('C'), winpr_wchar_ToLE('R'), winpr_wchar_ToLE('E'),
+		            winpr_wchar_ToLE('D'), winpr_wchar_ToLE('S'), winpr_wchar_ToLE('S'),
+		            winpr_wchar_ToLE('P'), winpr_wchar_ToLE('\0') };
 
 	/* the package must resolve by name */
 	PSecPkgInfoW info = nullptr;
@@ -35,16 +37,21 @@ int TestSspiCredSSP(int argc, char* argv[])
 	if (table->FreeContextBuffer)
 		(void)table->FreeContextBuffer(info);
 
-	WCHAR user[] = { 't', 'e', 's', 't', 'u', 's', 'e', 'r', '\0' };
-	WCHAR domain[] = { 'T', 'E', 'S', 'T', '\0' };
-	WCHAR pass[] = { 'S', 'e', 'c', 'r', 'e', 't', '1', '!', '\0' };
+	WCHAR user[] = { winpr_wchar_ToLE('t'), winpr_wchar_ToLE('e'), winpr_wchar_ToLE('s'),
+		             winpr_wchar_ToLE('t'), winpr_wchar_ToLE('u'), winpr_wchar_ToLE('s'),
+		             winpr_wchar_ToLE('e'), winpr_wchar_ToLE('r'), winpr_wchar_ToLE('\0') };
+	WCHAR domain[] = { winpr_wchar_ToLE('T'), winpr_wchar_ToLE('E'), winpr_wchar_ToLE('S'),
+		               winpr_wchar_ToLE('T'), winpr_wchar_ToLE('\0') };
+	WCHAR pass[] = { winpr_wchar_ToLE('S'), winpr_wchar_ToLE('e'), winpr_wchar_ToLE('c'),
+		             winpr_wchar_ToLE('r'), winpr_wchar_ToLE('e'), winpr_wchar_ToLE('t'),
+		             winpr_wchar_ToLE('1'), winpr_wchar_ToLE('!'), winpr_wchar_ToLE('\0') };
 	SEC_WINNT_AUTH_IDENTITY_W identity = WINPR_C_ARRAY_INIT;
 	identity.User = (UINT16*)user;
-	identity.UserLength = 8;
+	identity.UserLength = _wcsnlen(user, ARRAYSIZE(user));
 	identity.Domain = (UINT16*)domain;
-	identity.DomainLength = 4;
+	identity.DomainLength = _wcsnlen(domain, ARRAYSIZE(domain));
 	identity.Password = (UINT16*)pass;
-	identity.PasswordLength = 8;
+	identity.PasswordLength = _wcsnlen(pass, ARRAYSIZE(pass));
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	CREDSSP_CRED cred = { .Type = CredsspSubmitBufferBothOld };

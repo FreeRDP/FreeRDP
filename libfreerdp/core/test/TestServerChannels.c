@@ -96,9 +96,22 @@ fail:
 	return rc;
 }
 
+/* A server that fails to set up a peer frees a context that never got a channel
+ * manager, closing that handle must be a no-op. */
+static BOOL test_close_unopened_handle(void)
+{
+	WTSCloseServer(nullptr);
+	WTSCloseServer(INVALID_HANDLE_VALUE);
+	return TRUE;
+}
+
 int TestServerChannels(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 {
 	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return -1;
+
+	/* Must run first: no handle was opened yet. */
+	if (!test_close_unopened_handle())
 		return -1;
 
 	if (!test_truncated_dynvc_pdu())

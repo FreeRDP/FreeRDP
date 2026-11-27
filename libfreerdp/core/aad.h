@@ -35,6 +35,10 @@ typedef enum
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL aad_is_supported(void);
 
+#ifdef WITH_AAD
+FREERDP_LOCAL void aad_set_arm_device_id(rdpAad* aad, const char* deviceId);
+#endif
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int aad_client_begin(rdpAad* aad);
 

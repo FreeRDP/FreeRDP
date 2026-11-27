@@ -99,6 +99,11 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 			if (!tmp1 || !tmp2)
 				return FALSE;
 		}
+		/* An encoder takes the frame size from its caller, so the YUV context must follow it:
+		 * AVC444v2 converts whole rows of that width (yuv444_context_encode) and would read the
+		 * source beside the frame with a stale, wider one. A decoder keeps its surface size. */
+		if (h264->Compressor && !yuv_context_reset(h264->yuv, width, height))
+			return FALSE;
 		/* Only update the strides after the buffers were successfully allocated */
 		memcpy(h264->iStride, iStride, sizeof(h264->iStride));
 		h264->width = width;

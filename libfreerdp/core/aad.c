@@ -27,9 +27,11 @@
 #include "../crypto/privatekey.h"
 #include <freerdp/utils/http.h>
 #include <freerdp/utils/aad.h>
+#include <freerdp/utils/helpers.h>
 
 #include <winpr/crypto.h>
 #include <winpr/json.h>
+#include <winpr/rpc.h>
 
 #include "transport.h"
 #include "rdp.h"
@@ -44,7 +46,8 @@ struct rdp_aad
 	rdpPrivateKey* key;
 	char* kid;
 	char* nonce;
-	char* hostname;
+	GUID armDeviceId;
+	char* resourceUri;
 	char* scope;
 	wLog* log;
 };
@@ -261,6 +264,32 @@ fail:
 	return ret;
 }
 
+void aad_set_arm_device_id(rdpAad* aad, const char* deviceId)
+{
+	WINPR_ASSERT(aad);
+	if (deviceId && *deviceId)
+	{
+		char text[37] = WINPR_C_ARRAY_INIT;
+		size_t len = strlen(deviceId);
+		if ((len == sizeof(text) + 1) && (deviceId[0] == '{') && (deviceId[len - 1] == '}'))
+		{
+			deviceId++;
+			len -= 2;
+		}
+		if (len == sizeof(text) - 1)
+		{
+			RPC_STATUS status = RPC_S_OK;
+			memcpy(text, deviceId, len);
+			if ((UuidFromStringA((RPC_CSTR)text, &aad->armDeviceId) == RPC_S_OK) &&
+			    !UuidIsNil(&aad->armDeviceId, &status))
+				return;
+		}
+		WLog_Print(aad->log, WLOG_WARN,
+		           "Ignoring invalid ARM deviceId; using the hostname for RDS AAD");
+	}
+	(void)UuidCreateNil(&aad->armDeviceId);
+}
+
 int aad_client_begin(rdpAad* aad)
 {
 	size_t size = 0;
@@ -271,31 +300,35 @@ int aad_client_begin(rdpAad* aad)
 	rdpSettings* settings = aad->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	/* Get the host part of the hostname */
-	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_AadServerHostname);
-	if (!hostname)
-		hostname = freerdp_settings_get_server_name(settings);
-	if (!hostname)
+	char deviceId[37] = WINPR_C_ARRAY_INIT;
+	RPC_STATUS status = RPC_S_OK;
+	const char* target = freerdp_settings_get_string(settings, FreeRDP_AadServerHostname);
+	const BOOL byId = !target && !UuidIsNil(&aad->armDeviceId, &status);
+	if (!target)
+		target = byId ? freerdp_guid2str(&aad->armDeviceId, deviceId, sizeof(deviceId))
+		              : freerdp_settings_get_server_name(settings);
+	if (!target)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "hostname == nullptr");
+		WLog_Print(aad->log, WLOG_ERROR, "Missing RDS AAD target");
 		return -1;
 	}
 
-	aad->hostname = _strdup(hostname);
-	if (!aad->hostname)
-	{
-		WLog_Print(aad->log, WLOG_ERROR, "_strdup(hostname) == nullptr");
+	/* MS-RDPBCGR: the token scope and the signed assertion identify the same resource. */
+	const size_t len = strcspn(target, ".");
+	free(aad->resourceUri);
+	aad->resourceUri = nullptr;
+	if ((len > INT_MAX) || (winpr_asprintf(&aad->resourceUri, &size,
+	                                       "ms-device-service://termsrv.wvd.microsoft.com/%s/%.*s",
+	                                       byId ? "id" : "name", (int)len, target) <= 0))
 		return -1;
-	}
 
-	char* p = strchr(aad->hostname, '.');
-	if (p)
-		*p = '\0';
-
-	if (winpr_asprintf(&aad->scope, &size,
-	                   "ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%2F%s%%"
-	                   "2Fuser_impersonation",
-	                   aad->hostname) <= 0)
+	char* encoded = winpr_str_url_encode(aad->resourceUri, size);
+	if (!encoded)
+		return -1;
+	free(aad->scope);
+	const int rc = winpr_asprintf(&aad->scope, &size, "%s%%2Fuser_impersonation", encoded);
+	free(encoded);
+	if (rc <= 0)
 		return -1;
 
 	if (!generate_pop_key(aad))
@@ -366,12 +399,12 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 	                   "{"
 	                   "\"ts\":\"%li\","
 	                   "\"at\":\"%s\","
-	                   "\"u\":\"ms-device-service://termsrv.wvd.microsoft.com/name/%s\","
+	                   "\"u\":\"%s\","
 	                   "\"nonce\":\"%s\","
 	                   "\"cnf\":{\"jwk\":{\"kty\":\"RSA\",\"e\":\"%s\",\"n\":\"%s\"}},"
 	                   "\"client_claims\":\"{\\\"aad_nonce\\\":\\\"%s\\\"}\""
 	                   "}",
-	                   ts, aad->access_token, aad->hostname, ts_nonce, e, n, aad->nonce);
+	                   ts, aad->access_token, aad->resourceUri, ts_nonce, e, n, aad->nonce);
 	free(e);
 	free(n);
 
@@ -833,7 +866,7 @@ void aad_free(rdpAad* aad)
 	if (!aad)
 		return;
 
-	free(aad->hostname);
+	free(aad->resourceUri);
 	free(aad->scope);
 	free(aad->nonce);
 	free(aad->access_token);

@@ -766,13 +766,13 @@ static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, wStream* s,
 
 	rdpInput* input = fastpath->rdp->input;
 
-	/* only pass input if we are actually connected */
-	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
-		return TRUE;
-
 	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	Stream_Read_UINT16(s, xPos);         /* xPos (2 bytes) */
 	Stream_Read_UINT16(s, yPos);         /* yPos (2 bytes) */
+
+	/* only pass input if we are actually connected */
+	if (!rdp_has_reached_state(input->context->rdp, CONNECTION_STATE_ACTIVE))
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->MouseEvent, input, pointerFlags, xPos, yPos);
 }
 
@@ -942,14 +942,11 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(s);
 
-	if (!rdp_is_active_state(fastpath->rdp))
-	{
-		WLog_Print(fastpath->log, WLOG_WARN, "Input event before activation, ignoring");
-		return TRUE;
-	}
-
 	if (!fastpath_read_input_event_header(fastpath->log, s, &eventFlags, &eventCode))
 		return FALSE;
+
+	if (!rdp_is_active_state(fastpath->rdp))
+		WLog_Print(fastpath->log, WLOG_WARN, "Input event before activation, ignoring");
 
 	switch (eventCode)
 	{

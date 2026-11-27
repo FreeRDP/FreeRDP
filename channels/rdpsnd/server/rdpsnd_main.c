@@ -198,7 +198,7 @@ static void rdpsnd_server_client_format_free(RdpsndServerContext* context)
  */
 static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(context);
 
@@ -232,7 +232,8 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	if (!context->client_formats)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out_free;
 	}
 
 	context->num_client_formats = wNumberOfFormats;
@@ -380,13 +381,13 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	EnterCriticalSection(&context->priv->lock);
 	if ((client_format_index >= context->num_client_formats) || (!context->src_format))
 	{
 		WLog_ERR(TAG, "index %" PRIu16 " is not correct.", client_format_index);
-		return ERROR_INVALID_DATA;
+		goto out;
 	}
 
-	EnterCriticalSection(&context->priv->lock);
 	// Invalidate currently selected format. Should anything fail no function will touch the
 	// buffers.
 	context->selected_client_format = UINT16_MAX;
@@ -1046,16 +1047,10 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		goto out_close;
 	}
 
-	if (!InitializeCriticalSectionEx(&context->priv->lock, 0, 0))
-	{
-		WLog_ERR(TAG, "InitializeCriticalSectionEx failed!");
-		goto out_pdu;
-	}
-
 	if ((error = rdpsnd_server_send_formats(context)))
 	{
 		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %" PRIu32 "", error);
-		goto out_lock;
+		goto out_pdu;
 	}
 
 	if (priv->ownThread)
@@ -1065,7 +1060,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		if (!context->priv->StopEvent)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			goto out_lock;
+			goto out_pdu;
 		}
 
 		context->priv->Thread =
@@ -1082,8 +1077,6 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 out_stopEvent:
 	(void)CloseHandle(context->priv->StopEvent);
 	context->priv->StopEvent = nullptr;
-out_lock:
-	DeleteCriticalSection(&context->priv->lock);
 out_pdu:
 	Stream_Free(context->priv->rdpsnd_pdu, TRUE);
 	context->priv->rdpsnd_pdu = nullptr;
@@ -1127,8 +1120,6 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 			context->priv->StopEvent = nullptr;
 		}
 	}
-
-	DeleteCriticalSection(&context->priv->lock);
 
 	if (context->priv->rdpsnd_pdu)
 	{
@@ -1189,6 +1180,12 @@ RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 		goto fail;
 	}
 
+	if (!InitializeCriticalSectionEx(&priv->lock, 0, 0))
+	{
+		WLog_ERR(TAG, "InitializeCriticalSectionEx failed!");
+		goto fail;
+	}
+
 	priv->expectedBytes = 4;
 	priv->waitingHeader = TRUE;
 	priv->ownThread = TRUE;
@@ -1227,10 +1224,12 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 
 		if (context->priv->input_stream)
 			Stream_Free(context->priv->input_stream, TRUE);
+
+		rdpsnd_server_client_format_free(context);
+		DeleteCriticalSection(&context->priv->lock);
 	}
 
 	free(context->server_formats);
-	rdpsnd_server_client_format_free(context);
 	free(context->priv);
 	free(context);
 }
@@ -1352,4 +1351,17 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 	LeaveCriticalSection(&priv->lock);
 	Stream_ResetPosition(s);
 	return ret;
+}
+
+void rdpsnd_server_context_lock(RdpsndServerContext* context)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	EnterCriticalSection(&context->priv->lock);
+}
+void rdpsnd_server_context_unlock(RdpsndServerContext* context)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	LeaveCriticalSection(&context->priv->lock);
 }
