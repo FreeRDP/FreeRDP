@@ -735,6 +735,29 @@ static BOOL generate_json_base64_str(rdpAad* aad, const char* b64_hash)
 	return aad->kid != nullptr;
 }
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
+static char* json_rsa_param(const char* e, const char* n)
+{
+	WINPR_ASSERT(e);
+	WINPR_ASSERT(n);
+
+	char* str = nullptr;
+	WINPR_JSON* json = WINPR_JSON_CreateObject();
+	if (!json)
+		return nullptr;
+
+	if (!WINPR_JSON_AddStringToObject(json, "e", e))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(json, "n", n))
+		goto fail;
+	if (!WINPR_JSON_AddStringToObject(json, "kty", "RSA"))
+		goto fail;
+	str = WINPR_JSON_PrintUnformatted(json);
+fail:
+	WINPR_JSON_Delete(json);
+	return str;
+}
+
 BOOL generate_pop_key(rdpAad* aad)
 {
 	BOOL ret = FALSE;
@@ -753,18 +776,15 @@ BOOL generate_pop_key(rdpAad* aad)
 	if (!get_encoded_rsa_params(aad->log, aad->key, &e, &n))
 		goto fail;
 
-	{
-		size_t blen = 0;
-		const int alen =
-		    winpr_asprintf(&buffer, &blen, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}", e, n);
-		if (alen < 0)
-			goto fail;
+	buffer = json_rsa_param(e, n);
+	if (!buffer)
+		goto fail;
+	const size_t blen = strlen(buffer);
 
-		/* Hash the encoded public key */
-		b64_hash = generate_rsa_digest_base64_str(aad, buffer, blen);
-		if (!b64_hash)
-			goto fail;
-	}
+	/* Hash the encoded public key */
+	b64_hash = generate_rsa_digest_base64_str(aad, buffer, blen);
+	if (!b64_hash)
+		goto fail;
 
 	/* Encode a JSON object with a single property "kid" whose value is the encoded hash */
 	ret = generate_json_base64_str(aad, b64_hash);
