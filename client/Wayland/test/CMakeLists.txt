@@ -1,0 +1,4 @@
+add_executable(TestWaylandClipboard TestWaylandClipboard.c)
+target_link_libraries(TestWaylandClipboard PRIVATE freerdp-client winpr)
+add_test(NAME TestWaylandClipboard COMMAND TestWaylandClipboard)
+set_tests_properties(TestWaylandClipboard PROPERTIES TIMEOUT 30)

@@ -104,5 +104,5 @@ endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "uwac")
 
 if(BUILD_TESTING)
-  #	add_subdirectory(test)
+  add_subdirectory(test)
 endif()
