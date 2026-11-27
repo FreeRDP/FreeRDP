@@ -18,11 +18,11 @@
 #include <freerdp/config.h>
 #include <X11/extensions/Xrandr.h>
 #include "../xfreerdp.h"
+#include "../xf_cmdline.h"
 #include "../xf_monitor.h"
 
 #include "../xf_client.h"
 #include "../xf_disp.h"
-#include <freerdp/client/cmdline.h>
 static BOOL layout_seen;
 
 static UINT capture_layout(DispClientContext* disp, UINT32 count,
@@ -31,7 +31,7 @@ static UINT capture_layout(DispClientContext* disp, UINT32 count,
 	WINPR_UNUSED(disp);
 	layout_seen = TRUE;
 	if (count != 2 || layouts[0].DesktopScaleFactor != 150 || layouts[0].DeviceScaleFactor != 140 ||
-	    layouts[1].DesktopScaleFactor != 100 || layouts[1].DeviceScaleFactor != 100)
+	    layouts[1].DesktopScaleFactor != 125 || layouts[1].DeviceScaleFactor != 100)
 		return ERROR_INVALID_DATA;
 	return CHANNEL_RC_OK;
 }
@@ -53,11 +53,8 @@ static BOOL check_scale(Display* display)
 	xfc->screen = DefaultScreenOfDisplay(display);
 	xfc->vscreen.monitors = monitors;
 	char* argv[] = { "xfreerdp", "/v:localhost", "/multimon", "/scale-desktop:125",
-		             "/monitor-scale:0:150:140,1:100:100" };
-	size_t count = 0;
-	COMMAND_LINE_ARGUMENT_A* args = xf_monitor_arguments(&count);
-	if (freerdp_client_settings_parse_command_line_ex(settings, ARRAYSIZE(argv), argv, FALSE, args,
-	                                                  count, xf_monitor_handle_option, xfc) != 0)
+	             "/monitors:0:150:140" };
+	if (xf_client_settings_parse_command_line(xfc, ARRAYSIZE(argv), argv) != 0)
 		goto out;
 	UINT32 width = 0, height = 0;
 	if (!xf_detect_monitors(xfc, &width, &height))
@@ -68,7 +65,7 @@ static BOOL check_scale(Display* display)
 	    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, 0);
 	if (!result || result[0].attributes.desktopScaleFactor != 150 ||
 	    result[0].attributes.deviceScaleFactor != 140 ||
-	    result[1].attributes.desktopScaleFactor != 100 ||
+	    result[1].attributes.desktopScaleFactor != 125 ||
 	    result[1].attributes.deviceScaleFactor != 100)
 		goto out;
 	xfDispContext* xfdisp = xf_disp_new(xfc);
@@ -87,26 +84,6 @@ static BOOL check_scale(Display* display)
 	xf_disp_free(xfdisp);
 	if (!rc || !layout_seen)
 		goto out;
-	const char* bad[] = { "",
-		                  "0:99:100",
-		                  "0:501:100",
-		                  "0:150:150",
-		                  "16:150:100",
-		                  "-1:150:100",
-		                  "0:150:100,",
-		                  "0:150:100,,1:100:100",
-		                  "0:150:100,0:100:100",
-		                  "0:150:100x",
-		                  "0:150",
-		                  "0:9999999999999999999999999:100" };
-	for (size_t i = 0; i < ARRAYSIZE(bad); i++)
-	{
-		COMMAND_LINE_ARGUMENT_A arg = { 0 };
-		arg.Name = "monitor-scale";
-		arg.Value = (char*)bad[i];
-		if (xf_monitor_handle_option(&arg, xfc) >= 0 || xfc->monitorScales[0][0] != 150)
-			goto out;
-	}
 	rdpMonitor fallback = { 0 };
 	fallback.orig_screen = 2;
 	xf_monitor_apply_scale(xfc, &fallback);

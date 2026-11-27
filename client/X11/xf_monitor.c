@@ -22,7 +22,6 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -32,6 +31,7 @@
 #include <winpr/cast.h>
 #include <winpr/crt.h>
 
+#include <freerdp/client/monitor.h>
 #include <freerdp/log.h>
 
 #define TAG CLIENT_TAG("x11")
@@ -53,59 +53,6 @@
 #include "xf_monitor.h"
 #include "xf_utils.h"
 
-static COMMAND_LINE_ARGUMENT_A monitor_args[] = {
-	{ "monitor-scale", COMMAND_LINE_VALUE_REQUIRED, "id:desktop:device[,id:desktop:device...]",
-	  nullptr, nullptr, -1, nullptr,
-	  "Per-monitor scale percentages (desktop: 100-500; device: 100, 140 or 180)" },
-	{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
-};
-
-COMMAND_LINE_ARGUMENT_A* xf_monitor_arguments(size_t* count)
-{
-	WINPR_ASSERT(count);
-	*count = ARRAYSIZE(monitor_args) - 1;
-	return monitor_args;
-}
-
-int xf_monitor_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* userData)
-{
-	xfContext* xfc = userData;
-	UINT32 scales[16][2] = { 0 };
-	WINPR_ASSERT(arg);
-	WINPR_ASSERT(xfc);
-	if (strcmp(arg->Name, "monitor-scale") != 0)
-		return 0;
-	const char* value = arg->Value;
-	if (!value || !*value)
-		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-	for (;;)
-	{
-		unsigned long fields[3] = { 0 };
-		for (size_t i = 0; i < ARRAYSIZE(fields); i++)
-		{
-			char* end = nullptr;
-			if (*value < '0' || *value > '9')
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			errno = 0;
-			fields[i] = strtoul(value, &end, 10);
-			if (errno || ((i < 2) && *end != ':'))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			value = end + (i < 2 ? 1 : 0);
-		}
-		if (fields[0] >= ARRAYSIZE(scales) || fields[1] < 100 || fields[1] > 500 ||
-		    (fields[2] != 100 && fields[2] != 140 && fields[2] != 180) || scales[fields[0]][0])
-			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		scales[fields[0]][0] = (UINT32)fields[1];
-		scales[fields[0]][1] = (UINT32)fields[2];
-		if (*value == '\0')
-			break;
-		if (*value++ != ',')
-			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-	}
-	memcpy(xfc->monitorScales, scales, sizeof(scales));
-	return 0;
-}
-
 void xf_monitor_apply_scale(xfContext* xfc, rdpMonitor* monitor)
 {
 	WINPR_ASSERT(xfc);
@@ -116,15 +63,7 @@ void xf_monitor_apply_scale(xfContext* xfc, rdpMonitor* monitor)
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	monitor->attributes.deviceScaleFactor =
 	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-	if (monitor->orig_screen < ARRAYSIZE(xfc->monitorScales))
-	{
-		const UINT32* scale = xfc->monitorScales[monitor->orig_screen];
-		if (scale[0])
-		{
-			monitor->attributes.desktopScaleFactor = scale[0];
-			monitor->attributes.deviceScaleFactor = scale[1];
-		}
-	}
+	freerdp_client_apply_monitor_scale(settings, monitor);
 }
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
