@@ -122,8 +122,6 @@ void xf_video_control_init(xfContext* xfc, VideoClientContext* video)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(video);
 
-	gdi_video_control_init(xfc->common.context.gdi, video);
-
 	/* X11 needs to be able to handle 32bpp colors directly. */
 	if (xfc->depth >= 24)
 	{

@@ -47,6 +47,8 @@ void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
+	freerdp_client_OnChannelConnectedEventHandler(context, e);
+
 	if (FALSE)
 	{
 	}
@@ -74,13 +76,9 @@ void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
-			gdi_video_control_init(xfc->common.context.gdi, (VideoClientContext*)e->pInterface);
-		else
+		if (!freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 			xf_video_control_init(xfc, (VideoClientContext*)e->pInterface);
 	}
-
-	freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
 
 void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
@@ -122,9 +120,7 @@ void xf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 	}
 	else if (strcmp(e->name, VIDEO_CONTROL_DVC_CHANNEL_NAME) == 0)
 	{
-		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
-			gdi_video_control_uninit(xfc->common.context.gdi, (VideoClientContext*)e->pInterface);
-		else
+		if (!freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 			xf_video_control_uninit(xfc, (VideoClientContext*)e->pInterface);
 	}
 

@@ -578,17 +578,12 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = nullptr;
 	const rdpSettings* settings = nullptr;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(gfx);
 
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
-
-	gdi = xfc->common.context.gdi;
-
-	gdi_graphics_pipeline_init(gdi, gfx);
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
@@ -605,10 +600,8 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 	gfx->UpdateWindowFromSurface = xf_UpdateWindowFromSurface;
 }
 
-void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
+void xf_graphics_pipeline_uninit(WINPR_ATTR_UNUSED xfContext* xfc,
+                                 WINPR_ATTR_UNUSED RdpgfxClientContext* gfx)
 {
 	WINPR_ASSERT(xfc);
-
-	rdpGdi* gdi = xfc->common.context.gdi;
-	gdi_graphics_pipeline_uninit(gdi, gfx);
 }
