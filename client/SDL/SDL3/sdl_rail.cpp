@@ -31,6 +31,7 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/client/rail.h>
+#include <freerdp/timer.h>
 
 #include "sdl_rail.hpp"
 #include "sdl_context.hpp"
@@ -541,6 +542,26 @@ void SdlRail::noteLogonPrompt()
 		WLog_WARN(TAG, "sdl_push_user_event failed");
 }
 
+/* Mainloop timer, so it runs on the RDP thread: a redirect or reconnect there frees the transport
+ * a PDU is sent with, the main thread must not send one itself. */
+static uint64_t refreshRectTimer(rdpContext* ctx, [[maybe_unused]] void* userdata,
+                                 [[maybe_unused]] FreeRDP_TimerID timerID,
+                                 [[maybe_unused]] uint64_t timestamp,
+                                 [[maybe_unused]] uint64_t interval)
+{
+	/* The session this was queued for may be gone, its successor asks again (see uninit). */
+	if (!freerdp_is_active_state(ctx))
+		return 0;
+	const auto dw =
+	    static_cast<UINT16>(freerdp_settings_get_uint32(ctx->settings, FreeRDP_DesktopWidth));
+	const auto dh =
+	    static_cast<UINT16>(freerdp_settings_get_uint32(ctx->settings, FreeRDP_DesktopHeight));
+	const RECTANGLE_16 all = { 0, 0, dw, dh };
+	if (ctx->update && ctx->update->RefreshRect)
+		(void)ctx->update->RefreshRect(ctx, 1, &all);
+	return 0;
+}
+
 bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
                     const std::vector<SDL_Rect>& damage)
 {
@@ -676,15 +697,11 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			if (it.second.isPopup() || !it.second.window())
 				continue;
 			auto* ctx = &_context->common()->context;
-			const auto dw = static_cast<UINT16>(
-			    freerdp_settings_get_uint32(ctx->settings, FreeRDP_DesktopWidth));
-			const auto dh = static_cast<UINT16>(
-			    freerdp_settings_get_uint32(ctx->settings, FreeRDP_DesktopHeight));
-			const RECTANGLE_16 all = { 0, 0, dw, dh };
-			if (ctx->update && ctx->update->RefreshRect)
-				(void)ctx->update->RefreshRect(ctx, 1, &all);
+			/* Not sent from here (main thread), the RDP thread does it as soon as it can. */
+			if (freerdp_timer_add(ctx, 1, refreshRectTimer, nullptr, true) == 0)
+				WLog_WARN(TAG, "could not queue the refresh-rect");
 			_refreshSent = true;
-			WLog_DBG(TAG, "refresh-rect sent (first app window realized)");
+			WLog_DBG(TAG, "refresh-rect queued (first app window realized)");
 			break;
 		}
 	}
