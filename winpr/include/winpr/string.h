@@ -101,6 +101,15 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_str_has_newlines(const char* str);
 
+	/** @brief checks if a string contains control characters including newlines
+	 *
+	 *  @param str The string to check
+	 *  @return \b TRUE if it has any control character (including newlines), \b FALSE otherwise
+	 *  @since version 3.34.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL winpr_str_has_control_char(const char* str);
+
 	WINPR_API BOOL winpr_str_append(const char* what, char* buffer, size_t size,
 	                                const char* separator);
 
