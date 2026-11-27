@@ -135,3 +135,12 @@ The `[MS-RDPEWA]` WebAuthn Virtual Channel Extension allows forwarding WebAuthn/
 
 Enabled automatically when the required libraries are found. Requires:
 * **libcbor** (CBOR encoding/decoding)
+
+### 12. Session Shadowing (Optional)
+
+`/shadow:<session-id>[,control][,noconsent]` joins a session that is already logged in on the server, like `mstsc /shadow`: the user of that session stays logged in and sees the same screen. The client asks the server for an invitation with the `[MS-TSTS]` `RpcShadow2` call over the `\pipe\SessEnvPublicRpc` named pipe (SMB, TCP port 445) and then connects to the listener the invitation names. Enable with `-DWITH_LIBSMB2=ON`; without it the client has no `/shadow` option.
+
+Requires:
+* **libsmb2** (SMB2/3 client library, 4.0 or newer)
+
+The server needs the shadowing policy ("Set rules for remote control of Remote Desktop Services user sessions") and inbound access to TCP port 445 and to `RdpSa.exe` (the "Remote Desktop - Shadow (TCP-In)" firewall rule).

@@ -299,6 +299,81 @@ fail:
 	return rc;
 }
 
+/* Seal a message split into several data buffers the way DCE/RPC does: the header and trailer
+ * are signed only, the stub between them is signed and encrypted. The receiver must get the
+ * stub back and must detect a change to a buffer that was only signed. */
+WINPR_ATTR_NODISCARD
+static BOOL test_multi_buffer_seal(SecurityFunctionTable* sender, CtxtHandle* senderContext,
+                                   SecurityFunctionTable* receiver, CtxtHandle* receiverContext)
+{
+	const BYTE header[8] = { 'h', 'e', 'a', 'd', 'e', 'r', '0', '1' };
+	const BYTE stub[12] = { 's', 't', 'u', 'b', ' ', 'p', 'a', 'y', 'l', 'o', 'a', 'd' };
+	const BYTE trailer[4] = { 't', 'r', 'l', 'r' };
+	const size_t split = 5;
+	const size_t receiverSplit = 7;
+	BYTE msg[sizeof(header) + sizeof(stub) + sizeof(trailer) + 16] = WINPR_C_ARRAY_INIT;
+	BYTE* const pstub = &msg[sizeof(header)];
+	BYTE* const ptrailer = &msg[sizeof(header) + sizeof(stub)];
+	BYTE* const ptoken = &msg[sizeof(header) + sizeof(stub) + sizeof(trailer)];
+	const ULONG readOnly = (ULONG)SECBUFFER_DATA | (ULONG)SECBUFFER_READONLY;
+	const ULONG withChecksum = (ULONG)SECBUFFER_DATA | (ULONG)SECBUFFER_READONLY_WITH_CHECKSUM;
+
+	WINPR_ASSERT(sender);
+	WINPR_ASSERT(receiver);
+
+	/* round 0 must decrypt, round 1 has a changed header, round 2 a changed trailer */
+	for (size_t round = 0; round < 3; round++)
+	{
+		memcpy(msg, header, sizeof(header));
+		memcpy(pstub, stub, sizeof(stub));
+		memcpy(ptrailer, trailer, sizeof(trailer));
+
+		/* the sender seals the stub as two buffers: the RC4 key stream runs on across them */
+		SecBuffer sent[5] = { { sizeof(header), readOnly, msg },
+			                  { split, SECBUFFER_DATA, pstub },
+			                  { sizeof(stub) - split, SECBUFFER_DATA, &pstub[split] },
+			                  { sizeof(trailer), withChecksum, ptrailer },
+			                  { 16, SECBUFFER_TOKEN, ptoken } };
+		SecBufferDesc sentDesc = { SECBUFFER_VERSION, ARRAYSIZE(sent), sent };
+
+		if (sender->EncryptMessage(senderContext, 0, &sentDesc, (ULONG)round) != SEC_E_OK)
+			return FALSE;
+
+		/* the read only buffers stay readable, both parts of the stub are encrypted */
+		if ((memcmp(msg, header, sizeof(header)) != 0) ||
+		    (memcmp(ptrailer, trailer, sizeof(trailer)) != 0) ||
+		    (memcmp(pstub, stub, split) == 0) ||
+		    (memcmp(&pstub[split], &stub[split], sizeof(stub) - split) == 0))
+			return FALSE;
+
+		if (round == 1)
+			msg[0] ^= 0x01u;
+		else if (round == 2)
+			ptrailer[0] ^= 0x01u;
+
+		/* the receiver splits the stub elsewhere: the key stream does not depend on buffer bounds
+		 */
+		SecBuffer received[5] = { { sizeof(header), readOnly, msg },
+			                      { receiverSplit, SECBUFFER_DATA, pstub },
+			                      { sizeof(stub) - receiverSplit, SECBUFFER_DATA,
+			                        &pstub[receiverSplit] },
+			                      { sizeof(trailer), withChecksum, ptrailer },
+			                      { 16, SECBUFFER_TOKEN, ptoken } };
+		SecBufferDesc receivedDesc = { SECBUFFER_VERSION, ARRAYSIZE(received), received };
+
+		const SECURITY_STATUS status =
+		    receiver->DecryptMessage(receiverContext, &receivedDesc, (ULONG)round, nullptr);
+		if (round == 0)
+		{
+			if ((status != SEC_E_OK) || (memcmp(pstub, stub, sizeof(stub)) != 0))
+				return FALSE;
+		}
+		else if (status != SEC_E_MESSAGE_ALTERED)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static void* getServerAuthData(TEST_NTLM_SERVER* ntlm, const struct test_input_t* arg,
                                psSspiNtlmHashCallback fkt)
@@ -965,6 +1040,13 @@ static BOOL test_default(const struct test_input_t* arg, psSspiNtlmHashCallback 
 	if (!test_short_signature(server->table, &server->context))
 	{
 		printf("test_short_signature failure\n");
+		goto fail;
+	}
+
+	if (arg->dynamic &&
+	    !test_multi_buffer_seal(client->table, &client->context, server->table, &server->context))
+	{
+		printf("test_multi_buffer_seal failure\n");
 		goto fail;
 	}
 

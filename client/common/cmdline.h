@@ -476,6 +476,13 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 #endif
 	{ "server-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", nullptr, nullptr, -1, nullptr,
 	  "User-specified server name to use for validation (TLS, Kerberos)" },
+#if defined(WITH_LIBSMB2)
+	{ "shadow", COMMAND_LINE_VALUE_REQUIRED, "<session-id>[,control][,noconsent]", nullptr, nullptr,
+	  -1, nullptr,
+	  "Shadow (view) a session of the server, like mstsc /shadow, keeping its user logged in. "
+	  "control: take control of keyboard and mouse; noconsent: do not ask the session user "
+	  "(needs the server's shadow policy to allow it)" },
+#endif
 	{ "shell", COMMAND_LINE_VALUE_REQUIRED, "<shell>", nullptr, nullptr, -1, nullptr,
 	  "Alternate shell" },
 	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, "<dir>", nullptr, nullptr, -1, nullptr,

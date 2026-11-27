@@ -271,7 +271,11 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemdeskVirtualChannel);          /* 1030 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL LyncRdpMode);                    /* 1031 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteAssistanceRequestControl); /* 1032 */
-	UINT64 padding1088[1088 - 1033];                                  /* 1033 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteShadowMode);               /* 1033 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteShadowSessionId);        /* 1034 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteShadowControl);            /* 1035 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteShadowNoConsentPrompt);    /* 1036 */
+	UINT64 padding1088[1088 - 1037];                                  /* 1037 */
 
 	/**
 	 * X.224 Connection Request/Confirm

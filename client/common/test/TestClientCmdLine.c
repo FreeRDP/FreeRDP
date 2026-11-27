@@ -157,6 +157,43 @@ static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 #endif
 #define DISABLED_DISPLAY_OPTIONS_RDP TEST_SOURCE_DIR "/rdp-cmdline/disabled-display-options.rdp"
 
+#if defined(WITH_LIBSMB2)
+static BOOL check_settings_shadow(rdpSettings* settings, UINT32 id, BOOL control, BOOL noConsent)
+{
+	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteShadowMode) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_RemoteShadowSessionId) != id) ||
+	    (freerdp_settings_get_bool(settings, FreeRDP_RemoteShadowControl) != control) ||
+	    (freerdp_settings_get_bool(settings, FreeRDP_RemoteShadowNoConsentPrompt) != noConsent))
+	{
+		TEST_FAILURE("Expected shadow session %" PRIu32 ", control %d, noconsent %d!\n", id,
+		             control, noConsent);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL check_settings_shadow_view(rdpSettings* settings)
+{
+	return check_settings_shadow(settings, 2, FALSE, FALSE);
+}
+
+static BOOL check_settings_shadow_control_noconsent(rdpSettings* settings)
+{
+	return check_settings_shadow(settings, UINT32_MAX, TRUE, TRUE);
+}
+
+static BOOL check_settings_shadow_control(rdpSettings* settings)
+{
+	return check_settings_shadow(settings, 2, TRUE, FALSE);
+}
+
+/* a leading zero is decimal, not octal */
+static BOOL check_settings_shadow_decimal_noconsent(rdpSettings* settings)
+{
+	return check_settings_shadow(settings, 10, FALSE, TRUE);
+}
+#endif
+
 static BOOL check_settings_multimon_disabled(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -702,6 +739,44 @@ static const test tests[] = {
 	  check_settings_multimon_enabled,
 	  { "testfreerdp", "+multimon", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
+#if defined(WITH_LIBSMB2)
+	{ 0,
+	  check_settings_shadow_view,
+	  { "testfreerdp", "/shadow:2", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_shadow_control,
+	  { "testfreerdp", "/shadow:2,control", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_shadow_decimal_noconsent,
+	  { "testfreerdp", "/shadow:010,noconsent", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_shadow_control_noconsent,
+	  { "testfreerdp", "/shadow:4294967295,noconsent,control", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/shadow:4294967296", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/shadow:abc", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/shadow:1x", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/shadow:-1", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  nullptr,
+	  { "testfreerdp", "/shadow:1,bogus", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+#endif
 #if defined(WITH_GFX_H264)
 	{ 0,
 	  check_settings_gfx_without_h264,

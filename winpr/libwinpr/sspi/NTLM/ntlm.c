@@ -1620,102 +1620,128 @@ static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(WINPR_ATTR_UNUSED PC
 	return SEC_E_OK;
 }
 
+#define NTLM_READONLY_FLAGS ((ULONG)SECBUFFER_READONLY | (ULONG)SECBUFFER_READONLY_WITH_CHECKSUM)
+
+/* A data buffer is checksummed; it is also sealed unless marked read only. DCE/RPC uses this to
+ * sign the PDU header and trailer while encrypting only the stub ([MS-RPCE] 3.3.1.5.2.2).
+ * Unlike Kerberos, NTLM checksums plain SECBUFFER_READONLY buffers too, although sspi.h calls
+ * them "no checksum": the header is signed whether or not header signing was negotiated, as
+ * Windows, Samba (ntlmssp_sign.c) and Wine (msv1_0) do. */
+WINPR_ATTR_NODISCARD
+static BOOL ntlm_is_data_buffer(const SecBuffer* buffer)
+{
+	WINPR_ASSERT(buffer);
+	return (buffer->BufferType & ~NTLM_READONLY_FLAGS) == SECBUFFER_DATA;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL ntlm_is_sealed_buffer(const SecBuffer* buffer)
+{
+	return ntlm_is_data_buffer(buffer) && ((buffer->BufferType & NTLM_READONLY_FLAGS) == 0);
+}
+
+WINPR_ATTR_NODISCARD
+static PSecBuffer ntlm_find_buffers(PSecBufferDesc pMessage, size_t* dataCount)
+{
+	PSecBuffer signature_buffer = nullptr;
+
+	WINPR_ASSERT(dataCount);
+	*dataCount = 0;
+	if (!pMessage || !pMessage->pBuffers)
+		return nullptr;
+
+	for (ULONG index = 0; index < pMessage->cBuffers; index++)
+	{
+		SecBuffer* cur = &pMessage->pBuffers[index];
+
+		if (ntlm_is_data_buffer(cur))
+			(*dataCount)++;
+		else if ((cur->BufferType & ~SECBUFFER_READONLY) == SECBUFFER_TOKEN)
+			signature_buffer = cur;
+	}
+	return signature_buffer;
+}
+
+/* HMAC-MD5 of ConcatenationOf(seq_num, data buffers in order) */
+WINPR_ATTR_NODISCARD
+static BOOL ntlm_compute_digest(const BYTE* key, UINT32 SeqNo, PSecBufferDesc pMessage,
+                                BYTE digest[WINPR_MD5_DIGEST_LENGTH])
+{
+	BOOL success = FALSE;
+	UINT32 value = 0;
+	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
+
+	if (!hmac)
+		goto fail;
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, key, WINPR_MD5_DIGEST_LENGTH))
+		goto fail;
+
+	winpr_Data_Write_UINT32(&value, SeqNo);
+	if (!winpr_HMAC_Update(hmac, (void*)&value, 4))
+		goto fail;
+
+	for (ULONG index = 0; index < pMessage->cBuffers; index++)
+	{
+		const SecBuffer* cur = &pMessage->pBuffers[index];
+		if (!ntlm_is_data_buffer(cur) || (cur->cbBuffer == 0))
+			continue;
+		if (!winpr_HMAC_Update(hmac, cur->pvBuffer, cur->cbBuffer))
+			goto fail;
+	}
+
+	success = winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
+fail:
+	winpr_HMAC_Free(hmac);
+	return success;
+}
+
+/* RC4 is a stream cipher: seal the buffers in message order with one key stream */
+WINPR_ATTR_NODISCARD
+static BOOL ntlm_rc4_buffers(WINPR_RC4_CTX* rc4, PSecBufferDesc pMessage)
+{
+	for (ULONG index = 0; index < pMessage->cBuffers; index++)
+	{
+		SecBuffer* cur = &pMessage->pBuffers[index];
+		if (!ntlm_is_sealed_buffer(cur) || (cur->cbBuffer == 0))
+			continue;
+		if (!winpr_RC4_Update(rc4, cur->cbBuffer, (const BYTE*)cur->pvBuffer, (BYTE*)cur->pvBuffer))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
                                                      WINPR_ATTR_UNUSED ULONG fQOP,
                                                      PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	const UINT32 SeqNo = MessageSeqNo;
-	UINT32 value = 0;
 	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BYTE checksum[8] = WINPR_C_ARRAY_INIT;
 	ULONG version = 1;
-	PSecBuffer data_buffer = nullptr;
-	PSecBuffer signature_buffer = nullptr;
+	size_t dataCount = 0;
 	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 	if (!check_context(context))
 		return SEC_E_INVALID_HANDLE;
 
-	for (ULONG index = 0; index < pMessage->cBuffers; index++)
-	{
-		SecBuffer* cur = &pMessage->pBuffers[index];
-
-		if (cur->BufferType & SECBUFFER_DATA)
-			data_buffer = cur;
-		else if (cur->BufferType & SECBUFFER_TOKEN)
-			signature_buffer = cur;
-	}
-
-	if (!data_buffer)
-		return SEC_E_INVALID_TOKEN;
-
-	if (!signature_buffer)
+	PSecBuffer signature_buffer = ntlm_find_buffers(pMessage, &dataCount);
+	if ((dataCount == 0) || !signature_buffer)
 		return SEC_E_INVALID_TOKEN;
 
 	if (signature_buffer->cbBuffer < 16)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	/* Copy original data buffer */
-	ULONG length = data_buffer->cbBuffer;
-	void* data = malloc(length);
-
-	if (!data)
+	/* The checksum covers the plain text of every data buffer */
+	if (!ntlm_compute_digest(context->SendSigningKey, SeqNo, pMessage, digest))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	CopyMemory(data, data_buffer->pvBuffer, length);
-	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
-
-	BOOL success = FALSE;
+	/* Encrypt the buffers that are not read only with RC4, in place */
+	if (context->confidentiality)
 	{
-		if (!hmac)
-			goto hmac_fail;
-		if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
-			goto hmac_fail;
-
-		winpr_Data_Write_UINT32(&value, SeqNo);
-
-		if (!winpr_HMAC_Update(hmac, (void*)&value, 4))
-			goto hmac_fail;
-		if (!winpr_HMAC_Update(hmac, data, length))
-			goto hmac_fail;
-		if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
-			goto hmac_fail;
+		if (!ntlm_rc4_buffers(context->SendRc4Seal, pMessage))
+			return SEC_E_INSUFFICIENT_MEMORY;
 	}
 
-	success = TRUE;
-
-hmac_fail:
-	winpr_HMAC_Free(hmac);
-	if (!success)
-	{
-		free(data);
-		return SEC_E_INSUFFICIENT_MEMORY;
-	}
-
-	/* Encrypt message using with RC4, result overwrites original buffer */
-	if ((data_buffer->BufferType & SECBUFFER_READONLY) == 0)
-	{
-		if (context->confidentiality)
-		{
-			if (!winpr_RC4_Update(context->SendRc4Seal, length, (BYTE*)data,
-			                      (BYTE*)data_buffer->pvBuffer))
-			{
-				free(data);
-				return SEC_E_INSUFFICIENT_MEMORY;
-			}
-		}
-		else
-			CopyMemory(data_buffer->pvBuffer, data, length);
-	}
-
-#ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "Data Buffer (length = %" PRIu32 ")", length);
-	winpr_HexDump(TAG, WLOG_DEBUG, data, length);
-	WLog_DBG(TAG, "Encrypted Data Buffer (length = %" PRIu32 ")", data_buffer->cbBuffer);
-	winpr_HexDump(TAG, WLOG_DEBUG, data_buffer->pvBuffer, data_buffer->cbBuffer);
-#endif
-	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
 	if (!winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum))
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1740,94 +1766,33 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
                                                      WINPR_ATTR_UNUSED PULONG pfQOP)
 {
 	const UINT32 SeqNo = (UINT32)MessageSeqNo;
-	UINT32 value = 0;
 	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BYTE checksum[8] = WINPR_C_ARRAY_INIT;
 	UINT32 version = 1;
 	BYTE expected_signature[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
-	PSecBuffer data_buffer = nullptr;
-	PSecBuffer signature_buffer = nullptr;
+	size_t dataCount = 0;
 	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 	if (!check_context(context))
 		return SEC_E_INVALID_HANDLE;
 
-	for (ULONG index = 0; index < pMessage->cBuffers; index++)
-	{
-		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
-			data_buffer = &pMessage->pBuffers[index];
-		else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN)
-			signature_buffer = &pMessage->pBuffers[index];
-	}
-
-	if (!data_buffer)
-		return SEC_E_INVALID_TOKEN;
-
-	if (!signature_buffer)
+	PSecBuffer signature_buffer = ntlm_find_buffers(pMessage, &dataCount);
+	if ((dataCount == 0) || !signature_buffer)
 		return SEC_E_INVALID_TOKEN;
 
 	if (signature_buffer->cbBuffer < 16)
 		return SEC_E_INVALID_TOKEN;
 
-	/* Copy original data buffer */
-	const ULONG length = data_buffer->cbBuffer;
-	void* data = malloc(length);
-
-	if (!data)
-		return SEC_E_INSUFFICIENT_MEMORY;
-
-	CopyMemory(data, data_buffer->pvBuffer, length);
-
-	/* Decrypt message using with RC4, result overwrites original buffer */
-
+	/* Decrypt the buffers that are not read only with RC4, in place */
 	if (context->confidentiality)
 	{
-		if (!winpr_RC4_Update(context->RecvRc4Seal, length, (BYTE*)data,
-		                      (BYTE*)data_buffer->pvBuffer))
-		{
-			free(data);
+		if (!ntlm_rc4_buffers(context->RecvRc4Seal, pMessage))
 			return SEC_E_INSUFFICIENT_MEMORY;
-		}
 	}
-	else
-		CopyMemory(data_buffer->pvBuffer, data, length);
 
-	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
-
-	BOOL success = FALSE;
-	{
-		if (!hmac)
-			goto hmac_fail;
-
-		if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
-			goto hmac_fail;
-
-		winpr_Data_Write_UINT32(&value, SeqNo);
-
-		if (!winpr_HMAC_Update(hmac, (void*)&value, 4))
-			goto hmac_fail;
-		if (!winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer))
-			goto hmac_fail;
-		if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
-			goto hmac_fail;
-
-		success = TRUE;
-	}
-hmac_fail:
-	winpr_HMAC_Free(hmac);
-	if (!success)
-	{
-		free(data);
+	/* The checksum covers the plain text of every data buffer */
+	if (!ntlm_compute_digest(context->RecvSigningKey, SeqNo, pMessage, digest))
 		return SEC_E_INSUFFICIENT_MEMORY;
-	}
 
-#ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "Encrypted Data Buffer (length = %" PRIu32 ")", length);
-	winpr_HexDump(TAG, WLOG_DEBUG, data, length);
-	WLog_DBG(TAG, "Data Buffer (length = %" PRIu32 ")", data_buffer->cbBuffer);
-	winpr_HexDump(TAG, WLOG_DEBUG, data_buffer->pvBuffer, data_buffer->cbBuffer);
-#endif
-	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
 	if (!winpr_RC4_Update(context->RecvRc4Seal, 8, digest, checksum))
 		return SEC_E_MESSAGE_ALTERED;

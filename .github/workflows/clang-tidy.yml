@@ -17,11 +17,11 @@ jobs:
         split_workflow: true
         clang_tidy_checks: ''
         apt_packages: devscripts,equivs
-        install_commands: 'ln -s packaging/deb/freerdp-nightly debian; mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"'
+        install_commands: 'ln -s packaging/deb/freerdp-nightly debian; mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"; apt-get install --no-install-recommends -y libsmb2-dev'
 
         # CMake command to run in order to generate compile_commands.json
         build_dir: tidy
-        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -C ci/cmake-preloads/config-qa.cmake
+        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -C ci/cmake-preloads/config-qa.cmake -DWITH_LIBSMB2=ON
 
     # Uploads an artefact containing clang_fixes.json
     - uses: ZedThree/clang-tidy-review/upload@v0.23.1

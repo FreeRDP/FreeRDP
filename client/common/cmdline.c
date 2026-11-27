@@ -3360,6 +3360,51 @@ int parse_bpp_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 	return 0;
 }
 
+#if defined(WITH_LIBSMB2)
+WINPR_ATTR_NODISCARD
+static int parse_shadow_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(arg);
+
+	int rc = CHANNEL_RC_OK;
+	size_t count = 0;
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	if (!ptr || (count == 0))
+		rc = COMMAND_LINE_ERROR;
+	else
+	{
+		/* decimal digits only: "1x", "-1" or "010" (octal) must not pick another user's session */
+		const size_t digits = strspn(ptr[0], "0123456789");
+		errno = 0;
+		const unsigned long long id = strtoull(ptr[0], nullptr, 10);
+		if ((digits == 0) || (ptr[0][digits] != '\0') || (errno != 0) || (id > UINT32_MAX) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteShadowSessionId, (UINT32)id) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_RemoteShadowMode, TRUE))
+			rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+		for (size_t x = 1; (rc == CHANNEL_RC_OK) && (x < count); x++)
+		{
+			const char* val = ptr[x];
+			FreeRDP_Settings_Keys_Bool key = FreeRDP_RemoteShadowControl;
+			if (option_equals(val, "control"))
+				key = FreeRDP_RemoteShadowControl;
+			else if (option_equals(val, "noconsent"))
+				key = FreeRDP_RemoteShadowNoConsentPrompt;
+			else
+			{
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				break;
+			}
+			if (!freerdp_settings_set_bool(settings, key, TRUE))
+				rc = COMMAND_LINE_ERROR;
+		}
+	}
+	CommandLineParserFree(ptr);
+	return rc;
+}
+#endif
+
 WINPR_ATTR_NODISCARD
 static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
@@ -5662,6 +5707,14 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (!freerdp_settings_set_string(settings, FreeRDP_UserSpecifiedServerName, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
+#if defined(WITH_LIBSMB2)
+		CommandLineSwitchCase(arg, "shadow")
+		{
+			const int rc = parse_shadow_options(settings, arg);
+			if (rc != 0)
+				return fail_at(arg, rc);
+		}
+#endif
 		CommandLineSwitchCase(arg, "shell")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_AlternateShell, arg->Value))
@@ -6934,13 +6987,23 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_RemoteShadowMode))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_EncomspVirtualChannel, TRUE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RemdeskVirtualChannel, TRUE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+			return FALSE;
+	}
+
+	/* a shadow connection is a remote assistance connection authenticated with NLA */
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteShadowMode))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_EncomspVirtualChannel, TRUE))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemdeskVirtualChannel, TRUE))
 			return FALSE;
 	}
 
