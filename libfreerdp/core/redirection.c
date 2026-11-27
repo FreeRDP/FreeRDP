@@ -747,7 +747,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_USERNAME)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->Username), 512) ||
-		    winpr_str_has_newlines(redirection->Username))
+		    winpr_str_has_control_char(redirection->Username))
 		{
 			WLog_ERR(TAG, "Username: %s invalid", redirection->Username);
 			return STATE_RUN_FAILED;
@@ -758,7 +758,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_DOMAIN)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->Domain), 52) ||
-		    winpr_str_has_newlines(redirection->Domain))
+		    winpr_str_has_control_char(redirection->Domain))
 		{
 			WLog_ERR(TAG, "Domain: %s invalid", redirection->Domain);
 			return STATE_RUN_FAILED;
