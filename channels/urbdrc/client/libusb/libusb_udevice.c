@@ -1642,11 +1642,11 @@ static int libusb_udev_bulk_or_interrupt_transfer(
 			break;
 
 		case INTERRUPT_TRANSFER:
-			/**  Interrupt Transfer */
+			/**  Interrupt Transfer: no timeout, an idle device must not fail the pending read */
 			libusb_fill_interrupt_transfer(
 			    transfer, pdev->libusb_handle, WINPR_ASSERTING_INT_CAST(uint8_t, EndpointAddress),
 			    Stream_Pointer(user_data->data), WINPR_ASSERTING_INT_CAST(int, BufferSize),
-			    func_bulk_transfer_cb, user_data, Timeout);
+			    func_bulk_transfer_cb, user_data, 0);
 			break;
 
 		default:
