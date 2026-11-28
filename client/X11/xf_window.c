@@ -1439,8 +1439,8 @@ BOOL xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 		if (appWindow->is_mapped && appWindow->surfaceStale)
 			return TRUE;
 		/* The pixmap holds what xf_AppUpdateWindowFromSurface() painted last. */
-		else if (!appWindow->surfaceStale && (appWindow->pixmap != 0) && (x >= 0) && (y >= 0) &&
-		         (width > 0) && (height > 0))
+		else if (!appWindow->surfaceStale && (appWindow->pixmap != 0) &&
+		         (appWindow->gc != nullptr) && (x >= 0) && (y >= 0) && (width > 0) && (height > 0))
 		{
 			LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle,
 			                   appWindow->gc, x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
